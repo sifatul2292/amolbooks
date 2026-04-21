@@ -1,0 +1,5 @@
+id,title,item_group_id,description,availability,condition,price,sale_price,link,image_link,additional_image_link,brand,fb_product_category
+68f0afbcbba7b60ebe60f115,546745,68f0afbcbba7b60ebe60f115,Your product description will be here,in stock,new,666 BDT,666 BDT,https://alambook.com/product-details/tyertyertyety,https://cdn.saleecom.com/upload/images/placeholder.png,,unknown,
+68f104b6f26221818941dd0b,ertwer,68f104b6f26221818941dd0b,Your product description will be here,in stock,new,345 BDT,345 BDT,https://alambook.com/product-details/wertwert-3,https://cdn.saleecom.com/upload/images/placeholder.png,,unknown,
+68f4e81187c33b393380532f,456745,68f4e81187c33b393380532f,Your product description will be here,out of stock,new,null BDT,null BDT,https://alambook.com/product-details/45674567-12,https://cdn.saleecom.com/upload/images/placeholder.png,,unknown,
+68f5d0b1984fa43bfa7e1837,test-product,68f5d0b1984fa43bfa7e1837,Your product description will be here,in stock,new,400 BDT,400 BDT,https://alambook.com/product-details/test-product4-92,https://cdn.saleecom.com/upload/images/placeholder.png,,unknown,

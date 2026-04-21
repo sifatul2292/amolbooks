@@ -1,0 +1,34 @@
+import { Model } from 'mongoose';
+import { Product } from '../../interfaces/common/product.interface';
+import { Request } from 'express';
+export declare class UtilsService {
+    private readonly productModel;
+    private logger;
+    constructor(productModel: Model<Product>);
+    getDateString(date: Date): string;
+    getPdfDateString(date: Date, format?: string): string;
+    getNextDateString(date: Date, day: any): string;
+    getDateMonth(fromZero: boolean, date?: any): number;
+    getDateYear(date?: any): number;
+    getLocalDateTime(): Date;
+    createRegexFromString(inputString: string): RegExp;
+    createRegexFromString1(inputString: string): RegExp;
+    getClientIp(req: Request): string | undefined;
+    private isPrivateOrLoopback;
+    getDateWithCurrentTime(date: Date): Date;
+    getDateDifference(date1: Date | string, date2: Date | string, unit?: string): number;
+    generateInvoicePdf(orderData: any): Promise<void>;
+    isValidFacebookPixelId(pixelId: string): boolean;
+    isValidFacebookAccessTokenFormat(token: string): boolean;
+    calculateDiscount(item: any, type: any): any;
+    transformToSlug(value: string, salt?: boolean): string;
+    getRandomInt(min: number, max: number): number;
+    padLeadingZeros(num: any): string;
+    updateProductsOnOfferStart(products: any[]): Promise<void>;
+    updateProductsOnOfferEnd(products: any[]): Promise<void>;
+    getRandomOtpCode4(): string;
+    getRandomOtpCode6(): string;
+    addMinuteInCurrentTime(time: number): Date;
+    transform(product: Product, type: string, quantity?: number): number;
+    roundNumber(num: number): number;
+}

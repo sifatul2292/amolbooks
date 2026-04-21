@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"}],"uuid":"0da51872f2bd4598aa31707897714169","collectionName":"jobschedulers","type":"collection"}

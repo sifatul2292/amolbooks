@@ -1,0 +1,54 @@
+import { Model } from 'mongoose';
+import { ConfigService } from '@nestjs/config';
+import { UtilsService } from '../../shared/utils/utils.service';
+import { Product } from '../../interfaces/common/product.interface';
+import { ResponsePayload } from '../../interfaces/core/response-payload.interface';
+import { AddProductDto, FilterAndPaginationProductDto, GetProductByIdsDto, OptionProductDto, UpdateProductDto } from '../../dto/product.dto';
+import { Cache } from 'cache-manager';
+import { Category } from '../../interfaces/common/category.interface';
+import { Brand } from '../../interfaces/common/brand.interface';
+import { Publisher } from '../../interfaces/common/publisher.interface';
+import { ShopInformation } from '../../interfaces/common/shop-information.interface';
+import { RedirectUrl } from '../../interfaces/common/redirect-url.interface';
+import { FbCatalogService } from '../../shared/fb-catalog/fb-catalog.service';
+import { Setting } from '../customization/setting/interface/setting.interface';
+export declare class ProductService {
+    private readonly productModel;
+    private readonly categoryModel;
+    private readonly brandModel;
+    private readonly publisherModel;
+    private readonly settingModel;
+    private readonly redirectUrlModel;
+    private readonly shopInformationModel;
+    private configService;
+    private utilsService;
+    private fbCatalogService;
+    private cacheManager;
+    private logger;
+    private readonly cacheProductPage;
+    private readonly cacheProductCount;
+    constructor(productModel: Model<Product>, categoryModel: Model<Category>, brandModel: Model<Brand>, publisherModel: Model<Publisher>, settingModel: Model<Setting>, redirectUrlModel: Model<RedirectUrl>, shopInformationModel: Model<ShopInformation>, configService: ConfigService, utilsService: UtilsService, fbCatalogService: FbCatalogService, cacheManager: Cache);
+    addProduct(addProductDto: AddProductDto): Promise<ResponsePayload>;
+    private productUpdateOnFbCatalog;
+    cloneSingleProduct(id: string): Promise<ResponsePayload>;
+    insertManyProduct(addProductsDto: AddProductDto[], optionProductDto: OptionProductDto): Promise<ResponsePayload>;
+    getAllProductForUi(payload: any): Promise<ResponsePayload>;
+    getAllProducts(filterProductDto: FilterAndPaginationProductDto, searchQuery?: string): Promise<ResponsePayload>;
+    getProductById(id: string, select: string): Promise<ResponsePayload>;
+    updateSpecificProduct(productId: string): Promise<{
+        updated: boolean;
+    }>;
+    getProductBySlug(slug: string, select: string): Promise<ResponsePayload>;
+    getProductByIds(getProductByIdsDto: GetProductByIdsDto, select: string): Promise<ResponsePayload>;
+    updateProductById(id: string, updateProductDto: UpdateProductDto): Promise<ResponsePayload>;
+    updateMultipleProductById(ids: string[], updateProductDto: UpdateProductDto): Promise<ResponsePayload>;
+    deleteProductById(id: string): Promise<ResponsePayload>;
+    deleteMultipleProductById(ids: string[]): Promise<ResponsePayload>;
+    setProductQtyNotNull(): Promise<ResponsePayload>;
+    setProductImageHttpToHttps(): Promise<ResponsePayload>;
+    getRelatedProductsByMultiCategoryId(dto: {
+        ids: string[];
+        limit: number;
+    }): Promise<ResponsePayload>;
+    findAllPublished(): Promise<Product[]>;
+}

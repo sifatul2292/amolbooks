@@ -1,0 +1,1 @@
+{"version":3,"file":"unique-id.schema.js","sourceRoot":"","sources":["../../src/schema/unique-id.schema.ts"],"names":[],"mappings":";;;AAAA,qCAAqC;AAExB,QAAA,cAAc,GAAG,IAAI,QAAQ,CAAC,MAAM,CAC/C;IACE,OAAO,EAAE;QACP,IAAI,EAAE,MAAM;QACZ,QAAQ,EAAE,KAAK;KAChB;CACF,EACD;IACE,UAAU,EAAE,KAAK;IACjB,UAAU,EAAE,KAAK;CAClB,CACF,CAAC"}
