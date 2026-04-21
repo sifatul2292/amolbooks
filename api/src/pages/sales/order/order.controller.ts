@@ -83,9 +83,9 @@ export class OrderController {
   @Version(VERSION_NEUTRAL)
   @Post('/check-fraud-spy')
   async checkFraudSpy(
-    @Body() body: { phoneNo: string },
+    @Body() body: { phone: string },
   ): Promise<ResponsePayload> {
-    return await this.orderService.checkFraudSpy(body.phoneNo);
+    return await this.orderService.checkFraudSpy(body.phone);
   }
 
   @Post('/add-order-by-user')

@@ -1524,7 +1524,7 @@
     fetch(API + '/api/order/check-fraud-spy', {
       method: 'POST',
       headers: authHeaders(),
-      body: JSON.stringify({ phone: phone }),
+      body: JSON.stringify({ phoneNo: phone }),
     })
       .then(function (r) { return r.json(); })
       .then(function (resp) {
