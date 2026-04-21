@@ -422,15 +422,25 @@ export class OrderService {
 
       return {
         success: true,
-        message: `Success`,
-      } as ResponsePayload;
-    } catch (error) {
-      // console.log(error);
-      if (error?.code && error?.code?.toString() === ErrorCodes.UNIQUE_FIELD) {
-        throw new ConflictException('Slug Must be Unique');
-      } else {
-        throw new InternalServerErrorException(error.message);
-      }
+        message: 'Date updated successfully!',
+        data: null,
+      };
+    } catch (err) {
+      throw new InternalServerErrorException(err.message);
+    }
+  }
+
+  async checkFraudSpy(phoneNo: string): Promise<ResponsePayload> {
+    try {
+      const fraudData = await this.courierService.checkFraudOrder(phoneNo);
+      return {
+        success: true,
+        message: 'Fraud check completed',
+        data: fraudData,
+      };
+    } catch (err) {
+      this.logger.error('Fraud check failed: ' + err.message);
+      throw new InternalServerErrorException(err.message);
     }
   }
 

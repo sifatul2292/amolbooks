@@ -80,6 +80,13 @@ export class OrderController {
     return await this.orderService.updateDate();
   }
 
+  @Post('/check-fraud-spy')
+  async checkFraudSpy(
+    @Body() body: { phoneNo: string },
+  ): Promise<ResponsePayload> {
+    return await this.orderService.checkFraudSpy(body.phoneNo);
+  }
+
   @Post('/add-order-by-user')
   @UsePipes(ValidationPipe)
   @UseGuards(UserJwtAuthGuard)

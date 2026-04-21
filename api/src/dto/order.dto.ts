@@ -90,6 +90,9 @@ export class UpdateOrderDto {
   phoneNo: string;
 
   @IsOptional()
+  fraudChecker: any;
+
+  @IsOptional()
   orderStatus: any;
 
   @IsOptional()
