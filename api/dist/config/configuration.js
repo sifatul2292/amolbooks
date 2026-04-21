@@ -7,7 +7,7 @@ exports.default = () => ({
     port: parseInt(process.env.PORT, 10) || 3000,
     mongoCluster: process.env.PRODUCTION_BUILD === 'true'
         ? `mongodb://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@127.0.0.1:${process.env.DB_PORT}/${process.env.DB_NAME}?authSource=${process.env.AUTH_SOURCE}`
-        : `mongodb+srv://rejakazi02:tsVvjOhOIqgbsa23@test-softlab-project.wesh3ba.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`,
+        : `mongodb+srv://rejakazi02:tsVvjOhOIqgbsa23@test-softlab-project.wesh3ba.mongodb.net/alambooks?retryWrites=true&w=majority`,
     userJwtSecret: process.env.JWT_PRIVATE_KEY_USER,
     adminJwtSecret: process.env.JWT_PRIVATE_KEY_ADMIN,
     userTokenExpiredTime: 604800,

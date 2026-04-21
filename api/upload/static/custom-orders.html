@@ -1106,9 +1106,9 @@
   'use strict';
 
   /* ── Config ── */
-  // Updated for Amolbooks - Change these for production
-  var API = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://api.amolbooks.com';
-  var ADMIN_URL = window.location.hostname === 'localhost' ? 'http://localhost:3007' : 'https://admin.amolbooks.com';
+  var HOST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:3000' : 'https://api.amolbooks.com';
+  var API = HOST;
+  var ADMIN_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:3008' : 'https://admin.amolbooks.com';
   
   var allOrders = []; // cache for export
   var allOrdersById = {}; // string _id → order  (O(1) lookup, avoids type mismatch)
