@@ -64,4 +64,7 @@ export default () => ({
   googleRefreshToken:
     '1//04pvQHjbzuCmLCgYIARAAGAQSNwF-L9Irh0V61NXGh4Zawa0A9MX_zsLQSO1n8jyn610KUQxFF0V-xcduxcJ_genZpPTA1R2VT6A',
   accountGmail: 'softlabit.drive@gmail.com',
+
+  // FraudSpy API
+  fraudspyApiKey: process.env.FRAUDSPY_API_KEY || 'fs_live_4b3b_7dc0067d-8ed2-4322-915e-37b419008ae9_110e494edd31cc0f',
 });

@@ -729,27 +729,27 @@ export class CourierService {
   }
 
   public async checkFraudOrder(phoneNo: string) {
-    const url = 'https://bdcourier.com/api/courier-check';
+    const url = 'https://fraudspy.com.bd/api/v1/search';
+    const apiKey = this.configService.get<string>('fraudspyApiKey');
 
     try {
       const response = await firstValueFrom(
         this.httpService.post(
           url,
-          {},
+          { phone: phoneNo },
           {
             headers: {
-              Authorization:
-                'Bearer ' +
-                'aRUj4qcT84gyCH4nIqbB2RTMD6jfqQa8n1DytJbe1VKAUE7NnWQP3UHiI6ZF',
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+              Authorization: apiKey,
             },
-            params: { phone: phoneNo },
           },
         ),
       );
 
       return response.data;
     } catch (error) {
-      this.logger.error('Failed to call api', error.response?.data);
+      this.logger.error('Failed to call FraudSpy API', error.response?.data);
       throw error;
     }
   }
