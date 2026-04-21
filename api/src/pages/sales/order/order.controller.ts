@@ -80,6 +80,7 @@ export class OrderController {
     return await this.orderService.updateDate();
   }
 
+  @Version(VERSION_NEUTRAL)
   @Post('/check-fraud-spy')
   async checkFraudSpy(
     @Body() body: { phoneNo: string },
