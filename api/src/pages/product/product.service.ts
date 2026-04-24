@@ -938,9 +938,23 @@ export class ProductService {
     }
   }
 
-  async getBoughtTogetherProducts(): Promise<ResponsePayload> {
+  async getBoughtTogetherProducts(referer?: string): Promise<ResponsePayload> {
     try {
       const BT_SELECT = '_id name slug images salePrice discountAmount discountType discountPercent costPrice quantity weight ratingAverage ratingCount';
+      // Try per-product priority via referer URL (e.g. /product/some-slug)
+      if (referer) {
+        const slugMatch = referer.match(/\/product\/([^/?#]+)/);
+        if (slugMatch) {
+          const slug = decodeURIComponent(slugMatch[1]);
+          const productDoc = await this.productModel.findOne({ slug }).select('boughtTogetherIds _id');
+          const perProductIds: string[] = (productDoc as any)?.boughtTogetherIds ?? [];
+          if (perProductIds.length > 0) {
+            const mIds = perProductIds.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
+            const products = await this.productModel.find({ _id: { $in: mIds } }).select(BT_SELECT).limit(3);
+            return { success: true, message: 'Success', data: { productIds: perProductIds, products } } as ResponsePayload;
+          }
+        }
+      }
       const config = await this.boughtTogetherConfigModel.findOne({});
       const productIds: string[] = config?.productIds ?? [];
       if (!productIds.length) {

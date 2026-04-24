@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Logger,
   Param,
   Post,
@@ -136,8 +137,8 @@ export class ProductController {
 
   @Version(VERSION_NEUTRAL)
   @Get('/get-bought-together')
-  async getBoughtTogetherProducts(): Promise<ResponsePayload> {
-    return await this.productService.getBoughtTogetherProducts();
+  async getBoughtTogetherProducts(@Headers('referer') referer: string): Promise<ResponsePayload> {
+    return await this.productService.getBoughtTogetherProducts(referer);
   }
 
   @Version(VERSION_NEUTRAL)
