@@ -465,7 +465,7 @@ let CourierService = CourierService_1 = class CourierService {
                 headers: {
                     Accept: 'application/json',
                     'Content-Type': 'application/json',
-                    Authorization: apiKey,
+                    Authorization: `Bearer ${apiKey}`,
                 },
             }));
             return response.data;

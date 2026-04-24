@@ -741,7 +741,7 @@ export class CourierService {
             headers: {
               Accept: 'application/json',
               'Content-Type': 'application/json',
-              Authorization: apiKey,
+              Authorization: `Bearer ${apiKey}`,
             },
           },
         ),
