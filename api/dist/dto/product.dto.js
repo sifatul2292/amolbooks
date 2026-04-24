@@ -117,6 +117,13 @@ __decorate([
     (0, class_validator_1.ArrayMaxSize)(50),
     __metadata("design:type", Array)
 ], UpdateProductDto.prototype, "ids", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsString)({ each: true }),
+    (0, class_validator_1.ArrayMaxSize)(3),
+    __metadata("design:type", Array)
+], UpdateProductDto.prototype, "boughtTogetherIds", void 0);
 exports.UpdateProductDto = UpdateProductDto;
 class GetProductByIdsDto {
 }

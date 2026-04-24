@@ -48,6 +48,7 @@ export class ProductService {
     private readonly redirectUrlModel: Model<RedirectUrl>,
     @InjectModel('ShopInformation')
     private readonly shopInformationModel: Model<ShopInformation>,
+    @InjectModel('BoughtTogetherConfig') private readonly boughtTogetherConfigModel: Model<any>,
     private configService: ConfigService,
     private utilsService: UtilsService,
     private fbCatalogService: FbCatalogService,
@@ -901,12 +902,79 @@ export class ProductService {
       //   }
       // }
 
-      // this.updateSpecificProduct('65db41b467e6bde2558cf9a2');
+      if (data) {
+        let btIds: string[] = (data as any).boughtTogetherIds?.length > 0
+          ? (data as any).boughtTogetherIds
+          : null;
+        if (!btIds) {
+          const globalConfig = await this.boughtTogetherConfigModel.findOne({});
+          btIds = globalConfig ? globalConfig.productIds : [];
+        }
+        if (btIds && btIds.length > 0) {
+          const btProducts = await this.productModel
+            .find({ _id: { $in: btIds } })
+            .select('name nameEn slug images salePrice price quantity');
+          const plain: any = (data as any).toObject ? (data as any).toObject() : data;
+          plain.boughtTogetherProducts = btProducts;
+          return { success: true, message: 'Success', data: plain } as ResponsePayload;
+        }
+      }
       return {
         success: true,
         message: 'Success',
         data,
       } as ResponsePayload;
+    } catch (err) {
+      throw new InternalServerErrorException(err.message);
+    }
+  }
+
+  async getBoughtTogetherProducts(): Promise<ResponsePayload> {
+    try {
+      const config = await this.boughtTogetherConfigModel.findOne({});
+      const productIds = config ? config.productIds : [];
+      let products = [];
+      if (productIds.length > 0) {
+        products = await this.productModel
+          .find({ _id: { $in: productIds } })
+          .select('name nameEn slug images salePrice price quantity');
+      }
+      return { success: true, message: 'Success', data: { productIds, products } } as ResponsePayload;
+    } catch (err) {
+      throw new InternalServerErrorException(err.message);
+    }
+  }
+
+  async setBoughtTogetherProducts(productIds: string[]): Promise<ResponsePayload> {
+    try {
+      let config = await this.boughtTogetherConfigModel.findOne({});
+      if (config) {
+        config.productIds = productIds;
+        await config.save();
+      } else {
+        config = new this.boughtTogetherConfigModel({ productIds });
+        await config.save();
+      }
+      return { success: true, message: 'Bought together products updated successfully' } as ResponsePayload;
+    } catch (err) {
+      throw new InternalServerErrorException(err.message);
+    }
+  }
+
+  async getBoughtTogetherByProduct(productId: string): Promise<ResponsePayload> {
+    try {
+      const product = await this.productModel.findById(productId).select('boughtTogetherIds');
+      if (!product) throw new NotFoundException('Product not found');
+      const btIds: string[] = (product as any).boughtTogetherIds?.length > 0
+        ? (product as any).boughtTogetherIds
+        : [];
+      let products = [];
+      if (btIds.length > 0) {
+        products = await this.productModel
+          .find({ _id: { $in: btIds } })
+          .select('name nameEn slug images salePrice price quantity');
+      }
+      return { success: true, message: 'Success', data: { productIds: btIds, products } } as ResponsePayload;
     } catch (err) {
       throw new InternalServerErrorException(err.message);
     }

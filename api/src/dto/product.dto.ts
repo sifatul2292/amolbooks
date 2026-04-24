@@ -94,6 +94,12 @@ export class UpdateProductDto {
   @ArrayMinSize(1)
   @ArrayMaxSize(50)
   ids: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @ArrayMaxSize(3)
+  boughtTogetherIds: string[];
 }
 
 export class GetProductByIdsDto {

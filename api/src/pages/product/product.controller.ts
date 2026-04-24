@@ -242,14 +242,23 @@ export class ProductController {
     return await this.productService.setProductImageHttpToHttps();
   }
 
-  // @Version(VERSION_NEUTRAL)
-  // @Post('/:slug')
-  // async getProductBySlug(
-  //   @Param('slug') slug: string,
-  //   @Query() select: string,
-  // ): Promise<ResponsePayload> {
-  //   return await this.productService.getProductBySlug(slug, select);
-  // }
+  @Version(VERSION_NEUTRAL)
+  @Get('/bought-together')
+  async getBoughtTogetherProducts(): Promise<ResponsePayload> {
+    return await this.productService.getBoughtTogetherProducts();
+  }
 
+  @Version(VERSION_NEUTRAL)
+  @Post('/bought-together')
+  @UseGuards(AdminJwtAuthGuard)
+  async setBoughtTogetherProducts(@Body() body: { productIds: string[] }): Promise<ResponsePayload> {
+    return await this.productService.setBoughtTogetherProducts(body.productIds);
+  }
+
+  @Version(VERSION_NEUTRAL)
+  @Get('/bought-together-by-product/:id')
+  async getBoughtTogetherByProduct(@Param('id') id: string): Promise<ResponsePayload> {
+    return await this.productService.getBoughtTogetherByProduct(id);
+  }
 
 }

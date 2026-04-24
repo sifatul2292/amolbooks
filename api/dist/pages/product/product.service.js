@@ -23,7 +23,7 @@ const error_code_enum_1 = require("../../enum/error-code.enum");
 const fb_catalog_service_1 = require("../../shared/fb-catalog/fb-catalog.service");
 const ObjectId = mongoose_2.Types.ObjectId;
 let ProductService = ProductService_1 = class ProductService {
-    constructor(productModel, categoryModel, brandModel, publisherModel, settingModel, redirectUrlModel, shopInformationModel, configService, utilsService, fbCatalogService, cacheManager) {
+    constructor(productModel, categoryModel, brandModel, publisherModel, settingModel, redirectUrlModel, shopInformationModel, boughtTogetherConfigModel, configService, utilsService, fbCatalogService, cacheManager) {
         this.productModel = productModel;
         this.categoryModel = categoryModel;
         this.brandModel = brandModel;
@@ -31,6 +31,7 @@ let ProductService = ProductService_1 = class ProductService {
         this.settingModel = settingModel;
         this.redirectUrlModel = redirectUrlModel;
         this.shopInformationModel = shopInformationModel;
+        this.boughtTogetherConfigModel = boughtTogetherConfigModel;
         this.configService = configService;
         this.utilsService = utilsService;
         this.fbCatalogService = fbCatalogService;
@@ -600,11 +601,28 @@ let ProductService = ProductService_1 = class ProductService {
     }
     async getProductBySlug(slug, select) {
         try {
-            let productById;
             const data = await this.productModel
                 .findOne({ slug: slug })
                 .select(select)
                 .populate('tags');
+            if (data) {
+                let btIds = (data.boughtTogetherIds && data.boughtTogetherIds.length > 0)
+                    ? data.boughtTogetherIds
+                    : null;
+                if (!btIds) {
+                    const globalConfig = await this.boughtTogetherConfigModel.findOne({});
+                    btIds = globalConfig ? globalConfig.productIds : [];
+                }
+                if (btIds && btIds.length > 0) {
+                    const btProducts = await this.productModel
+                        .find({ _id: { $in: btIds } })
+                        .select('name nameEn slug images salePrice price quantity');
+                    data._doc = data._doc || {};
+                    const plain = data.toObject ? data.toObject() : data;
+                    plain.boughtTogetherProducts = btProducts;
+                    return { success: true, message: 'Success', data: plain };
+                }
+            }
             return {
                 success: true,
                 message: 'Success',
@@ -818,6 +836,60 @@ let ProductService = ProductService_1 = class ProductService {
             throw new common_1.InternalServerErrorException(err.message);
         }
     }
+    async getBoughtTogetherProducts() {
+        try {
+            const config = await this.boughtTogetherConfigModel.findOne({});
+            const productIds = config ? config.productIds : [];
+            let products = [];
+            if (productIds.length > 0) {
+                products = await this.productModel
+                    .find({ _id: { $in: productIds } })
+                    .select('name nameEn slug images salePrice price quantity');
+            }
+            return { success: true, message: 'Success', data: { productIds, products } };
+        }
+        catch (err) {
+            throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
+    async setBoughtTogetherProducts(productIds) {
+        try {
+            let config = await this.boughtTogetherConfigModel.findOne({});
+            if (config) {
+                config.productIds = productIds;
+                await config.save();
+            }
+            else {
+                config = new this.boughtTogetherConfigModel({ productIds });
+                await config.save();
+            }
+            return { success: true, message: 'Bought together products updated successfully' };
+        }
+        catch (err) {
+            throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
+    async getBoughtTogetherByProduct(productId) {
+        try {
+            const product = await this.productModel.findById(productId).select('boughtTogetherIds');
+            if (!product) {
+                throw new common_1.NotFoundException('Product not found');
+            }
+            const btIds = (product.boughtTogetherIds && product.boughtTogetherIds.length > 0)
+                ? product.boughtTogetherIds
+                : [];
+            let products = [];
+            if (btIds.length > 0) {
+                products = await this.productModel
+                    .find({ _id: { $in: btIds } })
+                    .select('name nameEn slug images salePrice price quantity');
+            }
+            return { success: true, message: 'Success', data: { productIds: btIds, products } };
+        }
+        catch (err) {
+            throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
     async findAllPublished() {
         return this.productModel.find({}).select('slug title').exec();
     }
@@ -831,8 +903,10 @@ ProductService = ProductService_1 = __decorate([
     __param(4, (0, mongoose_1.InjectModel)('Setting')),
     __param(5, (0, mongoose_1.InjectModel)('RedirectUrl')),
     __param(6, (0, mongoose_1.InjectModel)('ShopInformation')),
-    __param(10, (0, common_1.Inject)(common_1.CACHE_MANAGER)),
+    __param(7, (0, mongoose_1.InjectModel)('BoughtTogetherConfig')),
+    __param(11, (0, common_1.Inject)(common_1.CACHE_MANAGER)),
     __metadata("design:paramtypes", [mongoose_2.Model,
+        mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,

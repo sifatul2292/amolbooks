@@ -438,6 +438,11 @@ exports.ProductSchema = new mongoose.Schema({
         type: Number,
         required: false,
     },
+    boughtTogetherIds: {
+        type: [String],
+        required: false,
+        default: [],
+    },
 }, {
     versionKey: false,
     timestamps: true,

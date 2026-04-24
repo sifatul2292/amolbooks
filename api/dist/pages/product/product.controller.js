@@ -75,6 +75,15 @@ let ProductController = ProductController_1 = class ProductController {
     async setProductImageHttpToHttps() {
         return await this.productService.setProductImageHttpToHttps();
     }
+    async getBoughtTogetherProducts() {
+        return await this.productService.getBoughtTogetherProducts();
+    }
+    async setBoughtTogetherProducts(body) {
+        return await this.productService.setBoughtTogetherProducts(body.productIds);
+    }
+    async getBoughtTogetherByProduct(id) {
+        return await this.productService.getBoughtTogetherByProduct(id);
+    }
 };
 __decorate([
     (0, common_1.Get)('/get-all-data'),
@@ -239,6 +248,30 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], ProductController.prototype, "setProductImageHttpToHttps", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Get)('/bought-together'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], ProductController.prototype, "getBoughtTogetherProducts", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Post)('/bought-together'),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], ProductController.prototype, "setBoughtTogetherProducts", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Get)('/bought-together-by-product/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], ProductController.prototype, "getBoughtTogetherByProduct", null);
 ProductController = ProductController_1 = __decorate([
     (0, common_1.Controller)('product'),
     __metadata("design:paramtypes", [product_service_1.ProductService])

@@ -18,6 +18,7 @@ const publisher_schema_1 = require("../../schema/publisher.schema");
 const shop_information_schema_1 = require("../../schema/shop-information.schema");
 const redirect_url_schema_1 = require("../../schema/redirect-url.schema");
 const setting_schema_1 = require("../customization/setting/schema/setting.schema");
+const bought_together_config_schema_1 = require("../../schema/bought-together-config.schema");
 let ProductModule = class ProductModule {
 };
 ProductModule = __decorate([
@@ -31,6 +32,7 @@ ProductModule = __decorate([
                 { name: 'RedirectUrl', schema: redirect_url_schema_1.RedirectUrlSchema },
                 { name: 'ShopInformation', schema: shop_information_schema_1.ShopInformationSchema },
                 { name: 'Setting', schema: setting_schema_1.SettingSchema },
+                { name: 'BoughtTogetherConfig', schema: bought_together_config_schema_1.BoughtTogetherConfigSchema },
             ]),
         ],
         providers: [product_service_1.ProductService],

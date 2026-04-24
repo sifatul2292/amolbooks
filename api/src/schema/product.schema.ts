@@ -490,6 +490,11 @@ export const ProductSchema = new mongoose.Schema(
       type: Number,
       required: false,
     },
+    boughtTogetherIds: {
+      type: [String],
+      required: false,
+      default: [],
+    },
   },
   {
     versionKey: false,

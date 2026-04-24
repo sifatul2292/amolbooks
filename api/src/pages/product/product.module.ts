@@ -9,6 +9,7 @@ import { PublisherSchema } from 'src/schema/publisher.schema';
 import { ShopInformationSchema } from '../../schema/shop-information.schema';
 import { RedirectUrlSchema } from '../../schema/redirect-url.schema';
 import { SettingSchema } from '../customization/setting/schema/setting.schema';
+import { BoughtTogetherConfigSchema } from '../../schema/bought-together-config.schema';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { SettingSchema } from '../customization/setting/schema/setting.schema';
       { name: 'RedirectUrl', schema: RedirectUrlSchema },
       { name: 'ShopInformation', schema: ShopInformationSchema },
       { name: 'Setting', schema: SettingSchema },
+      { name: 'BoughtTogetherConfig', schema: BoughtTogetherConfigSchema },
     ]),
   ],
   providers: [ProductService],
