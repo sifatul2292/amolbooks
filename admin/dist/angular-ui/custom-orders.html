@@ -1344,15 +1344,11 @@
     if (state.paymentType)   filter.paymentType   = state.paymentType;
     if (state.orderStatus !== '') filter.orderStatus = Number(state.orderStatus);
 
-    // Date range filters
+    // Date range filters (createdAt is stored as YYYY-MM-DD string)
     if (state.createdFrom || state.createdTo) {
       filter.createdAt = {};
-      if (state.createdFrom) filter.createdAt.$gte = new Date(state.createdFrom).toISOString();
-      if (state.createdTo) {
-        var to = new Date(state.createdTo);
-        to.setDate(to.getDate() + 1);
-        filter.createdAt.$lt = to.toISOString();
-      }
+      if (state.createdFrom) filter.createdAt.$gte = state.createdFrom;
+      if (state.createdTo) filter.createdAt.$lte = state.createdTo;
     }
     if (state.deliveryFrom || state.deliveryTo) {
       filter.deliveryDate = {};
@@ -1913,13 +1909,11 @@
     var now = new Date();
     var y = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,'0'), d = String(now.getDate()).padStart(2,'0');
     var todayStr = y + '-' + m + '-' + d;
-    var todayStart = new Date(todayStr + 'T00:00:00').toISOString();
-    var todayEnd   = new Date(todayStr + 'T23:59:59.999').toISOString();
     fetch(API + '/api/order/get-all', {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify({
-        filter: { createdAt: { $gte: todayStart, $lte: todayEnd } },
+        filter: { createdAt: { $gte: todayStr, $lte: todayStr } },
         pagination: { pageSize: 1, currentPage: 0 },
         sort: { createdAt: -1 },
         select: { orderId: 1, grandTotal: 1 },
