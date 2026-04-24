@@ -250,14 +250,14 @@ __decorate([
 ], ProductController.prototype, "setProductImageHttpToHttps", null);
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
-    (0, common_1.Get)('/bought-together'),
+    (0, common_1.Get)('/get-bought-together'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], ProductController.prototype, "getBoughtTogetherProducts", null);
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
-    (0, common_1.Post)('/bought-together'),
+    (0, common_1.Post)('/set-bought-together'),
     (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -266,7 +266,7 @@ __decorate([
 ], ProductController.prototype, "setBoughtTogetherProducts", null);
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
-    (0, common_1.Get)('/bought-together-by-product/:id'),
+    (0, common_1.Get)('/get-bought-together-by-product/:id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),

@@ -243,20 +243,20 @@ export class ProductController {
   }
 
   @Version(VERSION_NEUTRAL)
-  @Get('/bought-together')
+  @Get('/get-bought-together')
   async getBoughtTogetherProducts(): Promise<ResponsePayload> {
     return await this.productService.getBoughtTogetherProducts();
   }
 
   @Version(VERSION_NEUTRAL)
-  @Post('/bought-together')
+  @Post('/set-bought-together')
   @UseGuards(AdminJwtAuthGuard)
   async setBoughtTogetherProducts(@Body() body: { productIds: string[] }): Promise<ResponsePayload> {
     return await this.productService.setBoughtTogetherProducts(body.productIds);
   }
 
   @Version(VERSION_NEUTRAL)
-  @Get('/bought-together-by-product/:id')
+  @Get('/get-bought-together-by-product/:id')
   async getBoughtTogetherByProduct(@Param('id') id: string): Promise<ResponsePayload> {
     return await this.productService.getBoughtTogetherByProduct(id);
   }
