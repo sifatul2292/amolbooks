@@ -94,7 +94,7 @@
       span.innerHTML = buildLinkHTML(innerA.innerHTML, item);
       span.addEventListener('click', function (e) {
         e.stopPropagation(); e.preventDefault();
-        window.open(pageUrl, '_blank');
+        window.location.href = pageUrl;
       }, true);
       newEl.appendChild(span);
       newEl.id = item.id + '-wrap';
@@ -102,7 +102,7 @@
       newEl.innerHTML = buildLinkHTML(afterEl.innerHTML, item);
       newEl.addEventListener('click', function (e) {
         e.stopPropagation(); e.preventDefault();
-        window.open(pageUrl, '_blank');
+        window.location.href = pageUrl;
       }, true);
     }
     if (afterEl.nextSibling) {
