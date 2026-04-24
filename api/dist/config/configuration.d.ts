@@ -36,5 +36,6 @@ declare const _default: () => {
     googleClientSecret: string;
     googleRefreshToken: string;
     accountGmail: string;
+    fraudspyApiKey: string;
 };
 export default _default;

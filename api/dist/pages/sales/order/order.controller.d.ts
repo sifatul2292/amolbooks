@@ -9,6 +9,9 @@ export declare class OrderController {
     constructor(orderService: OrderService);
     addOrder(addOrderDto: AddOrderDto, admin: Admin): Promise<ResponsePayload>;
     updateDate(): Promise<ResponsePayload>;
+    checkFraudSpy(body: {
+        phone: string;
+    }): Promise<ResponsePayload>;
     addOrderByUser(addOrderDto: AddOrderDto, user: User): Promise<ResponsePayload>;
     addOrderByAnonymous(addOrderDto: AddOrderDto): Promise<ResponsePayload>;
     insertManyOrder(body: {

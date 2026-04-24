@@ -458,19 +458,20 @@ let CourierService = CourierService_1 = class CourierService {
     }
     async checkFraudOrder(phoneNo) {
         var _a;
-        const url = 'https://bdcourier.com/api/courier-check';
+        const url = 'https://fraudspy.com.bd/api/v1/search';
+        const apiKey = this.configService.get('fraudspyApiKey');
         try {
-            const response = await (0, rxjs_1.firstValueFrom)(this.httpService.post(url, {}, {
+            const response = await (0, rxjs_1.firstValueFrom)(this.httpService.post(url, { phone: phoneNo }, {
                 headers: {
-                    Authorization: 'Bearer ' +
-                        'aRUj4qcT84gyCH4nIqbB2RTMD6jfqQa8n1DytJbe1VKAUE7NnWQP3UHiI6ZF',
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    Authorization: apiKey,
                 },
-                params: { phone: phoneNo },
             }));
             return response.data;
         }
         catch (error) {
-            this.logger.error('Failed to call api', (_a = error.response) === null || _a === void 0 ? void 0 : _a.data);
+            this.logger.error('Failed to call FraudSpy API', (_a = error.response) === null || _a === void 0 ? void 0 : _a.data);
             throw error;
         }
     }

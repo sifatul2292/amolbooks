@@ -22,6 +22,7 @@ export declare class OptionOrderDto {
 export declare class UpdateOrderDto {
     name: string;
     phoneNo: string;
+    fraudChecker: any;
     orderStatus: any;
     city: string;
     shippingAddress: string;

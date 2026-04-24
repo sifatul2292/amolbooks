@@ -42,6 +42,7 @@ export declare class OrderService {
     addOrderByUser(addOrderDto: AddOrderDto, user: User): Promise<ResponsePayload>;
     addOrderByAnonymous(addOrderDto: AddOrderDto): Promise<ResponsePayload>;
     updateDate(): Promise<ResponsePayload>;
+    checkFraudSpy(phoneNo: string): Promise<ResponsePayload>;
     private buildInvoicePayload;
     generateInvoicesByIds(ids: string[]): Promise<ResponsePayload>;
     generateInvoiceById(shop: string, id: string): Promise<ResponsePayload>;

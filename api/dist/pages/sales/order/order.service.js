@@ -235,7 +235,6 @@ let OrderService = OrderService_1 = class OrderService {
         return this.addOrder(addOrderDto);
     }
     async updateDate() {
-        var _a;
         try {
             const data = await this.orderModel.find();
             if (data) {
@@ -248,16 +247,26 @@ let OrderService = OrderService_1 = class OrderService {
             }
             return {
                 success: true,
-                message: `Success`,
+                message: 'Date updated successfully!',
+                data: null,
             };
         }
-        catch (error) {
-            if ((error === null || error === void 0 ? void 0 : error.code) && ((_a = error === null || error === void 0 ? void 0 : error.code) === null || _a === void 0 ? void 0 : _a.toString()) === error_code_enum_1.ErrorCodes.UNIQUE_FIELD) {
-                throw new common_1.ConflictException('Slug Must be Unique');
-            }
-            else {
-                throw new common_1.InternalServerErrorException(error.message);
-            }
+        catch (err) {
+            throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
+    async checkFraudSpy(phoneNo) {
+        try {
+            const fraudData = await this.courierService.checkFraudOrder(phoneNo);
+            return {
+                success: true,
+                message: 'Fraud check completed',
+                data: fraudData,
+            };
+        }
+        catch (err) {
+            this.logger.error('Fraud check failed: ' + err.message);
+            throw new common_1.InternalServerErrorException(err.message);
         }
     }
     async buildInvoicePayload(fOrderData) {

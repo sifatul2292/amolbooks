@@ -110,6 +110,10 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Object)
+], UpdateOrderDto.prototype, "fraudChecker", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
 ], UpdateOrderDto.prototype, "orderStatus", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
