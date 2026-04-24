@@ -759,6 +759,20 @@ let OrderService = OrderService_1 = class OrderService {
             throw new common_1.InternalServerErrorException(err.message);
         }
     }
+    async sendToCourier(id) {
+        var _a;
+        try {
+            const fSetting = await this.settingModel.findOne();
+            const courierMethods = (_a = fSetting === null || fSetting === void 0 ? void 0 : fSetting.courierMethods) !== null && _a !== void 0 ? _a : [];
+            const courierMethod = courierMethods.find((f) => f.status === 'active');
+            await this.addSingleOrderToCourier({ orderStatus: 8, courierMethod, id });
+            await this.orderModel.findByIdAndUpdate(id, { $set: { orderStatus: 8 } });
+            return { success: true, message: 'Order sent to courier successfully' };
+        }
+        catch (err) {
+            throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
     async addSingleOrderToCourier(data) {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
         const { orderStatus, courierMethod, id } = data;

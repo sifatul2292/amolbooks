@@ -234,6 +234,15 @@ export class OrderController {
   }
 
   @Version(VERSION_NEUTRAL)
+  @Post('/send-to-courier/:id')
+  @UseGuards(AdminJwtAuthGuard)
+  async sendToCourier(
+    @Param('id', MongoIdValidationPipe) id: string,
+  ): Promise<ResponsePayload> {
+    return await this.orderService.sendToCourier(id);
+  }
+
+  @Version(VERSION_NEUTRAL)
   @Put('/change-status/:id')
   @UsePipes(ValidationPipe)
   @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.SALESMAN)

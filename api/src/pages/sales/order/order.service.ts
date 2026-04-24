@@ -1081,6 +1081,19 @@ export class OrderService {
     }
   }
 
+  async sendToCourier(id: string): Promise<ResponsePayload> {
+    try {
+      const fSetting = await this.settingModel.findOne();
+      const courierMethods = fSetting?.courierMethods ?? [];
+      const courierMethod = courierMethods.find((f: any) => f.status === 'active');
+      await this.addSingleOrderToCourier({ orderStatus: 8, courierMethod, id });
+      await this.orderModel.findByIdAndUpdate(id, { $set: { orderStatus: 8 } });
+      return { success: true, message: 'Order sent to courier successfully' } as ResponsePayload;
+    } catch (err) {
+      throw new InternalServerErrorException(err.message);
+    }
+  }
+
   /**
    * Courier Methods
    * addSingleOrderToCourier()

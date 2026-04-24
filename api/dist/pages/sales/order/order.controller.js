@@ -75,6 +75,9 @@ let OrderController = OrderController_1 = class OrderController {
     async updateOrderSessionKey(id, updateOrderDto) {
         return await this.orderService.updateOrderSessionKey(id, updateOrderDto);
     }
+    async sendToCourier(id) {
+        return await this.orderService.sendToCourier(id);
+    }
     async changeOrderStatus(id, updateOrderStatusDto) {
         return await this.orderService.changeOrderStatus(id, updateOrderStatusDto);
     }
@@ -231,6 +234,15 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], OrderController.prototype, "updateOrderSessionKey", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Post)('/send-to-courier/:id'),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __param(0, (0, common_1.Param)('id', mongo_id_validation_pipe_1.MongoIdValidationPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "sendToCourier", null);
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Put)('/change-status/:id'),
