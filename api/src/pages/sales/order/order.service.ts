@@ -1142,11 +1142,13 @@ export class OrderService {
         if (fOrder?.courierData && fOrder?.courierData?.consignmentId) {
         } else {
           const getFullAddress = () => {
-            return `Division: ${fOrder?.division?.name}, Area: ${
-              fOrder?.area
-            }, Zone: ${fOrder?.zone?.name ?? 'n/a'}, ${
-              fOrder?.shippingAddress
-            }`;
+            const parts: string[] = [];
+            if (fOrder?.division?.name) parts.push(fOrder.division.name);
+            const area = typeof fOrder?.area === 'object' ? fOrder?.area?.name : fOrder?.area;
+            if (area) parts.push(area);
+            if (fOrder?.zone?.name) parts.push(fOrder.zone.name);
+            if (fOrder?.shippingAddress) parts.push(fOrder.shippingAddress);
+            return parts.join(', ');
           };
 
           const cashOnDeliveryAmount = () => {
@@ -1164,7 +1166,7 @@ export class OrderService {
             recipient_address: getFullAddress(),
             cod_amount: cashOnDeliveryAmount(),
             item_description:
-              fOrder?.orderedItems?.map((i) => i.name).join(', ') || '',
+              fOrder?.orderedItems?.map((i: any) => `${i.name} x${i.quantity || 1}`).join(', ') || '',
             note: fOrder?.deliveryNote
               ? `${fOrder.deliveryNote} (${
                   courierMethod?.specialInstruction || ''
@@ -1323,11 +1325,13 @@ export class OrderService {
           if (fOrder?.courierData && fOrder?.courierData?.consignmentId) {
           } else {
             const getFullAddress = () => {
-              return `Division: ${fOrder?.division?.name}, Area: ${
-                fOrder?.area
-              }, Zone: ${fOrder?.zone?.name ?? 'n/a'}, ${
-                fOrder?.shippingAddress
-              }`;
+              const parts: string[] = [];
+              if (fOrder?.division?.name) parts.push(fOrder.division.name);
+              const area = typeof fOrder?.area === 'object' ? fOrder?.area?.name : fOrder?.area;
+              if (area) parts.push(area);
+              if (fOrder?.zone?.name) parts.push(fOrder.zone.name);
+              if (fOrder?.shippingAddress) parts.push(fOrder.shippingAddress);
+              return parts.join(', ');
             };
 
             const cashOnDeliveryAmount = () => {
@@ -1344,7 +1348,7 @@ export class OrderService {
               recipient_address: getFullAddress(),
               cod_amount: cashOnDeliveryAmount(),
               item_description:
-                fOrder?.orderedItems?.map((i) => i.name).join(', ') || '',
+                fOrder?.orderedItems?.map((i: any) => `${i.name} x${i.quantity || 1}`).join(', ') || '',
               note: fOrder?.deliveryNote
                 ? `${fOrder.deliveryNote} (${
                     courierMethod?.specialInstruction || ''

@@ -849,6 +849,11 @@
         </div>
       </div>
 
+      <!-- Filter Today button -->
+      <div style="margin-bottom:8px">
+        <button class="btn-today" onclick="filterToday()" style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px"><i class="fas fa-calendar-day"></i> Today's Orders</button>
+      </div>
+
       <!-- Stats -->
       <div class="stats-row">
         <div class="stat-card blue">
@@ -863,6 +868,20 @@
           <div class="stat-info">
             <label>Total Amount</label>
             <div class="stat-value" id="totalAmount">—</div>
+          </div>
+        </div>
+        <div class="stat-card" style="background:linear-gradient(135deg,#10b981,#059669)">
+          <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+          <div class="stat-info">
+            <label>Today's Orders</label>
+            <div class="stat-value" id="todayOrders">—</div>
+          </div>
+        </div>
+        <div class="stat-card" style="background:linear-gradient(135deg,#8b5cf6,#6c3fc5)">
+          <div class="stat-icon"><i class="fas fa-coins"></i></div>
+          <div class="stat-info">
+            <label>Today's Amount</label>
+            <div class="stat-value" id="todayAmount">—</div>
           </div>
         </div>
       </div>
@@ -1889,8 +1908,62 @@
       .catch(function () { loadOrders(); }); // fallback: load orders even if this fails
   }
 
+  /* ── Today's Stats ── */
+  function loadTodayStats() {
+    var now = new Date();
+    var y = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,'0'), d = String(now.getDate()).padStart(2,'0');
+    var todayStr = y + '-' + m + '-' + d;
+    var todayStart = new Date(todayStr + 'T00:00:00').toISOString();
+    var todayEnd   = new Date(todayStr + 'T23:59:59.999').toISOString();
+    fetch(API + '/api/order/get-all', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        filter: { createdAt: { $gte: todayStart, $lte: todayEnd } },
+        pagination: { pageSize: 1, currentPage: 0 },
+        sort: { createdAt: -1 },
+        select: { orderId: 1, grandTotal: 1 },
+      }),
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(resp) {
+      var count = resp.count || 0;
+      var total = (resp.calculation && resp.calculation.grandTotal) ? resp.calculation.grandTotal : 0;
+      document.getElementById('todayOrders').textContent = count.toLocaleString();
+      document.getElementById('todayAmount').textContent = '৳' + Number(total).toLocaleString('en-BD', { maximumFractionDigits: 0 });
+    })
+    .catch(function() {
+      document.getElementById('todayOrders').textContent = '—';
+      document.getElementById('todayAmount').textContent = '—';
+    });
+  }
+
+  /* ── Filter to Today ── */
+  window.filterToday = function () {
+    var now = new Date();
+    var y = now.getFullYear();
+    var m = String(now.getMonth() + 1).padStart(2, '0');
+    var d = String(now.getDate()).padStart(2, '0');
+    var today = y + '-' + m + '-' + d;
+    document.getElementById('createdFrom').value = today;
+    document.getElementById('createdTo').value   = today;
+    state.createdFrom = today;
+    state.createdTo   = today;
+    state.page = 0;
+    loadOrders();
+  };
+
+  /* ── Date input change listeners ── */
+  ['createdFrom','createdTo','deliveryFrom','deliveryTo'].forEach(function(id) {
+    document.getElementById(id).addEventListener('change', function() {
+      state[id] = this.value;
+      state.page = 0;
+      loadOrders();
+    });
+  });
+
   /* ── Init ── */
-  if (getToken()) { hideLoginOverlay(); loadRepeatCustomers(); }
+  if (getToken()) { hideLoginOverlay(); loadRepeatCustomers(); loadTodayStats(); }
   else { showLoginOverlay(); }
 })();
 </script>

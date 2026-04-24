@@ -813,8 +813,14 @@ let OrderService = OrderService_1 = class OrderService {
                 }
                 else {
                     const getFullAddress = () => {
-                        var _a, _b, _c;
-                        return `Division: ${(_a = fOrder === null || fOrder === void 0 ? void 0 : fOrder.division) === null || _a === void 0 ? void 0 : _a.name}, Area: ${fOrder === null || fOrder === void 0 ? void 0 : fOrder.area}, Zone: ${(_c = (_b = fOrder === null || fOrder === void 0 ? void 0 : fOrder.zone) === null || _b === void 0 ? void 0 : _b.name) !== null && _c !== void 0 ? _c : 'n/a'}, ${fOrder === null || fOrder === void 0 ? void 0 : fOrder.shippingAddress}`;
+                        var _a, _b;
+                        const parts = [];
+                        if ((_a = fOrder === null || fOrder === void 0 ? void 0 : fOrder.division) === null || _a === void 0 ? void 0 : _a.name) parts.push(fOrder.division.name);
+                        const area = typeof (fOrder === null || fOrder === void 0 ? void 0 : fOrder.area) === 'object' ? (_b = fOrder === null || fOrder === void 0 ? void 0 : fOrder.area) === null || _b === void 0 ? void 0 : _b.name : fOrder === null || fOrder === void 0 ? void 0 : fOrder.area;
+                        if (area) parts.push(area);
+                        if (fOrder === null || fOrder === void 0 ? void 0 : fOrder.zone) { var zn = fOrder.zone.name || fOrder.zone; if (zn) parts.push(zn); }
+                        if (fOrder === null || fOrder === void 0 ? void 0 : fOrder.shippingAddress) parts.push(fOrder.shippingAddress);
+                        return parts.join(', ');
                     };
                     const cashOnDeliveryAmount = () => {
                         var _a;
@@ -832,7 +838,7 @@ let OrderService = OrderService_1 = class OrderService {
                         recipient_email: (_b = fOrder === null || fOrder === void 0 ? void 0 : fOrder.email) !== null && _b !== void 0 ? _b : null,
                         recipient_address: getFullAddress(),
                         cod_amount: cashOnDeliveryAmount(),
-                        item_description: ((_c = fOrder === null || fOrder === void 0 ? void 0 : fOrder.orderedItems) === null || _c === void 0 ? void 0 : _c.map((i) => i.name).join(', ')) || '',
+                        item_description: (fOrder === null || fOrder === void 0 ? void 0 : fOrder.orderedItems) ? fOrder.orderedItems.map((i) => `${i.name} x${i.quantity || 1}`).join(', ') : '',
                         note: (fOrder === null || fOrder === void 0 ? void 0 : fOrder.deliveryNote)
                             ? `${fOrder.deliveryNote} (${(courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.specialInstruction) || ''})`
                             : (courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.specialInstruction) || '',
@@ -963,8 +969,14 @@ let OrderService = OrderService_1 = class OrderService {
                     }
                     else {
                         const getFullAddress = () => {
-                            var _a, _b, _c;
-                            return `Division: ${(_a = fOrder === null || fOrder === void 0 ? void 0 : fOrder.division) === null || _a === void 0 ? void 0 : _a.name}, Area: ${fOrder === null || fOrder === void 0 ? void 0 : fOrder.area}, Zone: ${(_c = (_b = fOrder === null || fOrder === void 0 ? void 0 : fOrder.zone) === null || _b === void 0 ? void 0 : _b.name) !== null && _c !== void 0 ? _c : 'n/a'}, ${fOrder === null || fOrder === void 0 ? void 0 : fOrder.shippingAddress}`;
+                            var _a, _b;
+                            const parts = [];
+                            if ((_a = fOrder === null || fOrder === void 0 ? void 0 : fOrder.division) === null || _a === void 0 ? void 0 : _a.name) parts.push(fOrder.division.name);
+                            const area = typeof (fOrder === null || fOrder === void 0 ? void 0 : fOrder.area) === 'object' ? (_b = fOrder === null || fOrder === void 0 ? void 0 : fOrder.area) === null || _b === void 0 ? void 0 : _b.name : fOrder === null || fOrder === void 0 ? void 0 : fOrder.area;
+                            if (area) parts.push(area);
+                            if (fOrder === null || fOrder === void 0 ? void 0 : fOrder.zone) { var zn = fOrder.zone.name || fOrder.zone; if (zn) parts.push(zn); }
+                            if (fOrder === null || fOrder === void 0 ? void 0 : fOrder.shippingAddress) parts.push(fOrder.shippingAddress);
+                            return parts.join(', ');
                         };
                         const cashOnDeliveryAmount = () => {
                             var _a;
@@ -981,7 +993,7 @@ let OrderService = OrderService_1 = class OrderService {
                             recipient_phone: fOrder === null || fOrder === void 0 ? void 0 : fOrder.phoneNo,
                             recipient_address: getFullAddress(),
                             cod_amount: cashOnDeliveryAmount(),
-                            item_description: ((_c = fOrder === null || fOrder === void 0 ? void 0 : fOrder.orderedItems) === null || _c === void 0 ? void 0 : _c.map((i) => i.name).join(', ')) || '',
+                            item_description: (fOrder === null || fOrder === void 0 ? void 0 : fOrder.orderedItems) ? fOrder.orderedItems.map((i) => `${i.name} x${i.quantity || 1}`).join(', ') : '',
                             note: (fOrder === null || fOrder === void 0 ? void 0 : fOrder.deliveryNote)
                                 ? `${fOrder.deliveryNote} (${(courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.specialInstruction) || ''})`
                                 : (courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.specialInstruction) || '',
