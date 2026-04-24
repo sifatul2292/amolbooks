@@ -78,8 +78,8 @@ let ProductController = ProductController_1 = class ProductController {
     async setProductImageHttpToHttps() {
         return await this.productService.setProductImageHttpToHttps();
     }
-    async getBoughtTogetherProducts(referer) {
-        return await this.productService.getBoughtTogetherProducts(referer);
+    async getBoughtTogetherProducts(productSlug) {
+        return await this.productService.getBoughtTogetherProducts(productSlug);
     }
     async setBoughtTogetherProducts(body) {
         return await this.productService.setBoughtTogetherProducts(body.productIds);
@@ -165,7 +165,7 @@ __decorate([
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Get)('/get-bought-together'),
-    __param(0, (0, common_1.Headers)('referer')),
+    __param(0, (0, common_1.Query)('productSlug')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
