@@ -802,6 +802,9 @@ export class ProductService {
   }
 
   async getProductById(id: string, select: string): Promise<ResponsePayload> {
+    if (!ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid ID format');
+    }
     try {
       const data = await this.productModel
         .findById(id)

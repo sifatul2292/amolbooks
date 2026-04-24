@@ -156,9 +156,12 @@ export class ProductController {
   @Version(VERSION_NEUTRAL)
   @Get('/:id')
   async getProductById(
-    @Param('id', MongoIdValidationPipe) id: string,
+    @Param('id') id: string,
     @Query() select: string,
   ): Promise<ResponsePayload> {
+    if (id === 'get-bought-together') {
+      return await this.productService.getBoughtTogetherProducts();
+    }
     return await this.productService.getProductById(id, select);
   }
 

@@ -572,6 +572,9 @@ let ProductService = ProductService_1 = class ProductService {
         }
     }
     async getProductById(id, select) {
+        if (!ObjectId.isValid(id)) {
+            throw new common_1.BadRequestException('Invalid ID format');
+        }
         try {
             const data = await this.productModel
                 .findById(id)

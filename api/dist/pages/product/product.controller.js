@@ -52,6 +52,9 @@ let ProductController = ProductController_1 = class ProductController {
         return await this.productService.getRelatedProductsByMultiCategoryId(body);
     }
     async getProductById(id, select) {
+        if (id === 'get-bought-together') {
+            return await this.productService.getBoughtTogetherProducts();
+        }
         return await this.productService.getProductById(id, select);
     }
     async getProductBySlug(slug, select) {
@@ -186,7 +189,7 @@ __decorate([
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Get)('/:id'),
-    __param(0, (0, common_1.Param)('id', mongo_id_validation_pipe_1.MongoIdValidationPipe)),
+    __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
