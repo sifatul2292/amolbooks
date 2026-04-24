@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Custom Orders — Amolbooks Admin</title>
+  <title>Amolbooks Order List</title>
   <link rel="icon" type="image/x-icon" href="favicon.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
   <style>
@@ -159,68 +159,109 @@
     /* ── Date Filters ── */
     .date-filters {
       display: flex;
-      gap: 14px;
+      gap: 12px;
       margin-bottom: 20px;
       flex-wrap: wrap;
+      align-items: stretch;
     }
     .date-filter-box {
       display: flex;
       align-items: center;
       gap: 10px;
       background: #fff;
-      border: 1px solid var(--gray-200);
-      border-radius: 10px;
-      padding: 10px 16px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 12px;
+      padding: 10px 14px;
       flex: 1;
-      min-width: 240px;
-      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      min-width: 220px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.05);
+      transition: border-color .2s;
     }
-    .date-filter-box i { color: var(--purple); font-size: 16px; }
-    .date-filter-box label { font-size: 11px; font-weight: 700; color: var(--gray-500); margin-bottom: 2px; display: block; }
-    .date-range { display: flex; align-items: center; gap: 8px; }
+    .date-filter-box:focus-within { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(108,63,197,.08); }
+    .date-filter-box i { color: var(--purple); font-size: 15px; flex-shrink: 0; }
+    .date-filter-box label { font-size: 10px; font-weight: 800; color: var(--gray-500); margin-bottom: 3px; display: block; text-transform: uppercase; letter-spacing: .04em; }
+    .date-range { display: flex; align-items: center; gap: 6px; }
     .date-range input {
       border: none;
       outline: none;
       font-size: 13px;
+      font-weight: 500;
       color: #1e293b;
       background: none;
       cursor: pointer;
-      width: 120px;
+      width: 130px;
     }
     .date-range span { color: var(--gray-300); font-size: 12px; }
+    .btn-today {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: linear-gradient(135deg, #6c3fc5, #4f46e5);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(108,63,197,.3);
+      transition: opacity .15s;
+    }
+    .btn-today:hover { opacity: .88; }
+    .btn-today i { font-size: 13px; }
 
     /* ── Stats Cards ── */
     .stats-row {
-      display: flex;
-      gap: 16px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
       margin-bottom: 20px;
-      flex-wrap: wrap;
     }
+    @media(max-width:900px){ .stats-row { grid-template-columns: repeat(2,1fr); } }
+    @media(max-width:500px){ .stats-row { grid-template-columns: 1fr; } }
     .stat-card {
-      flex: 1;
-      min-width: 200px;
-      border-radius: 14px;
-      padding: 20px 24px;
+      border-radius: 16px;
+      padding: 18px 20px;
       display: flex;
       align-items: center;
-      gap: 16px;
-      box-shadow: 0 4px 16px rgba(0,0,0,.1);
+      gap: 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.10);
       color: #fff;
+      position: relative;
+      overflow: hidden;
     }
-    .stat-card.blue  { background: linear-gradient(135deg, #0284c7, #0369a1); }
-    .stat-card.orange { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      top: -20px; right: -20px;
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.1);
+    }
+    .stat-card.blue   { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); }
+    .stat-card.orange { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+    .stat-card.green  { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+    .stat-card.purple { background: linear-gradient(135deg, #8b5cf6 0%, #6c3fc5 100%); }
+    .stat-card-divider {
+      width: 1.5px; height: 36px;
+      background: rgba(255,255,255,.25);
+      margin: 0 2px;
+    }
+    .stat-card-sub { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; opacity: .75; margin-bottom: 4px; }
     .stat-icon {
-      width: 52px; height: 52px;
+      width: 48px; height: 48px;
       background: rgba(255,255,255,.2);
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
+      font-size: 20px;
+      flex-shrink: 0;
       flex-shrink: 0;
     }
-    .stat-info label { font-size: 12px; font-weight: 700; opacity: .85; text-transform: uppercase; letter-spacing: .04em; }
-    .stat-info .stat-value { font-size: 28px; font-weight: 800; line-height: 1.1; margin-top: 2px; }
+    .stat-info label { font-size: 10px; font-weight: 800; opacity: .75; text-transform: uppercase; letter-spacing: .06em; }
+    .stat-info .stat-value { font-size: 26px; font-weight: 800; line-height: 1.1; margin-top: 3px; letter-spacing: -.01em; }
 
     /* ── Filter Bar ── */
     .filter-bar {
@@ -355,16 +396,21 @@
     .badge-unpaid    { background: #fef3c7; color: #b45309; }
     .badge-paid      { background: #d1fae5; color: #065f46; }
     .badge-cod       { background: #e0f2fe; color: #0369a1; }
-    .badge-pending   { background: #fef3c7; color: #b45309; }
-    .badge-confirm   { background: #dbeafe; color: #1d4ed8; }
-    .badge-processing { background: #ede9fe; color: #6d28d9; }
-    .badge-shipping  { background: #cffafe; color: #0e7490; }
-    .badge-delivered { background: #d1fae5; color: #065f46; }
-    .badge-cancel    { background: #fee2e2; color: #b91c1c; }
-    .badge-courier   { background: #cffafe; color: #0e7490; }
-    .badge-refund    { background: #fce7f3; color: #9d174d; }
-    .badge-return    { background: #fef9c3; color: #854d0e; }
-    .badge-hold      { background: #f3f4f6; color: #374151; }
+    .badge-pending    { background: #fef3c7; color: #b45309; }
+    .badge-confirm    { background: #dbeafe; color: #1d4ed8; }
+    .badge-processing { background: #ede9fe; color: #6d28d9; border: 1px solid #c4b5fd; font-weight: 800; }
+    .badge-shipping   { background: #cffafe; color: #0e7490; }
+    .badge-delivered  { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; font-weight: 800; }
+    .badge-cancel     { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; font-weight: 800; }
+    .badge-courier    { background: #cffafe; color: #0e7490; }
+    .badge-refund     { background: #fce7f3; color: #9d174d; }
+    .badge-return     { background: #fef9c3; color: #854d0e; }
+    .badge-hold       { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-weight: 800; }
+    /* Row status accent border */
+    tr.row-processing { border-left: 3px solid #7c3aed !important; }
+    tr.row-completed  { border-left: 3px solid #059669 !important; background: #f0fdf4 !important; }
+    tr.row-cancelled  { border-left: 3px solid #dc2626 !important; background: #fff5f5 !important; }
+    tr.row-trash      { border-left: 3px solid #94a3b8 !important; background: #f8fafc !important; opacity: .75; }
     .courier-cell { font-size: 11px; line-height: 1.6; }
     .courier-cell .courier-name { font-weight: 700; color: #334155; }
     .courier-cell .tracking-link { color: var(--blue); text-decoration: none; font-weight: 600; }
@@ -420,10 +466,10 @@
     }
     .modal-overlay.open { display: flex; }
     .modal-box {
-      background: #fff; border-radius: 20px; width: 100%; max-width: 680px;
-      max-height: 92vh; overflow: hidden; display: flex; flex-direction: column;
-      box-shadow: 0 32px 80px rgba(0,0,0,.25);
-      animation: modalIn .2s ease;
+      background: #fff; border-radius: 20px; width: 100%; max-width: 820px;
+      max-height: 94vh; overflow: hidden; display: flex; flex-direction: column;
+      box-shadow: 0 32px 80px rgba(0,0,0,.28);
+      animation: modalIn .22s ease;
     }
     @keyframes modalIn { from { opacity:0; transform:translateY(12px) scale(.98); } to { opacity:1; transform:none; } }
 
@@ -469,28 +515,43 @@
     .mic-value a { color: #2563eb; text-decoration: none; }
     .mic-value a:hover { text-decoration: underline; }
 
+    /* Fraud section in modal */
+    .modal-fraud-row {
+      padding: 12px 20px; background: #fafbff;
+      border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    .modal-fraud-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--gray-500); }
+    .modal-fraud-stats { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .modal-fraud-chip { display: flex; gap: 8px; align-items: center; font-size: 12px; font-weight: 700; }
+    .mfc-all   { color: #334155; }
+    .mfc-ok    { color: #059669; }
+    .mfc-ret   { color: #dc2626; }
+    .mfc-ratio { font-size: 14px; font-weight: 800; }
+    .mfc-ratio.good { color: #059669; }
+    .mfc-ratio.mid  { color: #d97706; }
+    .mfc-ratio.bad  { color: #dc2626; }
+    .modal-fraud-btn { margin-left: auto; }
+
     /* Products section */
     .modal-section-title {
       font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em;
-      color: var(--gray-500); padding: 16px 20px 8px;
+      color: var(--gray-500); padding: 14px 20px 8px;
     }
     .product-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
-    /* pixel widths on fixed cols; product col gets all remaining space automatically */
-    .product-table col.col-product { width: auto; }
-    .product-table col.col-price   { width: 78px; }
-    .product-table col.col-qty     { width: 44px; }
-    .product-table col.col-total   { width: 82px; }
     .product-table th {
-      padding: 8px 12px; font-size: 11px; font-weight: 700; color: var(--gray-500);
-      text-transform: uppercase; letter-spacing: .04em; background: #f8fafc;
+      padding: 9px 14px; font-size: 10px; font-weight: 800; color: var(--gray-500);
+      text-transform: uppercase; letter-spacing: .05em; background: #f8fafc;
       border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; text-align: left;
     }
     .product-table th.th-price, .product-table th.th-total { text-align: right; }
     .product-table th.th-qty { text-align: center; }
-    .product-table td { padding: 10px 12px; border-bottom: 1px solid #f8fafc; vertical-align: middle; }
+    .product-table td { padding: 11px 14px; border-bottom: 1px solid #f8fafc; vertical-align: middle; overflow: hidden; }
+    .product-table td.td-price, .product-table td.td-total { white-space: nowrap; text-align: right; }
+    .product-table td.td-qty { text-align: center; white-space: nowrap; }
     .product-table tbody tr:last-child td { border-bottom: none; }
-    .product-table tbody tr:hover td { background: #fafbff; }
-    .product-name { font-weight: 700; color: #1e293b; font-size: 13px; word-break: break-word; }
+    .product-table tbody tr:hover td { background: #f8faff; }
+    .product-name { font-weight: 700; color: #1e293b; font-size: 13px; line-height: 1.5; overflow-wrap: break-word; word-break: normal; hyphens: auto; }
     .product-author { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
 
     /* Footer */
@@ -612,23 +673,29 @@
       .btn-add .btn-text { display: none; }
       .btn-add { padding: 7px 12px; border-radius: 50%; width: 36px; height: 36px; justify-content: center; }
 
-      /* Date filters: stack vertically so nothing overflows */
-      .date-filters { flex-direction: column; gap: 8px; }
-      .date-filter-box { min-width: 0; width: 100%; padding: 9px 12px; }
-      .date-range input { width: 110px; font-size: 12px; }
+      /* Date filters: both boxes side-by-side in a 2-col grid, Today button full-width below */
+      .date-filters { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+      .date-filters .btn-today { grid-column: 1 / -1; padding: 9px 12px; font-size: 12px; border-radius: 8px; }
+      .date-filter-box { min-width: 0; padding: 8px 10px; }
+      .date-filter-box > i { display: none; } /* hide the icon to save space */
+      .date-filter-box label { font-size: 9px; letter-spacing: .04em; margin-bottom: 3px; }
+      .date-range { flex-direction: column; gap: 3px; align-items: stretch; }
+      .date-range input { width: 100%; min-width: 0; font-size: 11px; }
+      .date-range span { display: none; } /* hide the dash, inputs are stacked */
 
-      /* Stats: side by side, more compact */
-      .stats-row { gap: 8px; }
-      .stat-card { padding: 12px 14px; gap: 10px; min-width: 0; border-radius: 12px; }
-      .stat-icon { width: 40px; height: 40px; font-size: 18px; border-radius: 10px; }
-      .stat-info label { font-size: 10px; }
-      .stat-info .stat-value { font-size: 22px; }
+      /* Stats: always 2x2 grid, compact cards */
+      .stats-row { grid-template-columns: repeat(2,1fr) !important; gap: 8px; }
+      .stat-card { padding: 10px 12px; gap: 8px; min-width: 0; border-radius: 12px; }
+      .stat-icon { width: 34px; height: 34px; font-size: 15px; border-radius: 8px; flex-shrink: 0; }
+      .stat-card-sub { font-size: 9px; margin-bottom: 2px; }
+      .stat-info .stat-value { font-size: 18px; }
 
-      /* Filter bar: wrap tightly */
+      /* Filter bar: 2 per row, compact */
       .filter-bar { gap: 6px; }
-      .filter-btn { padding: 7px 10px; font-size: 12px; }
-      .per-page-select { padding: 6px 8px; font-size: 12px; }
-      .btn-export { padding: 7px 12px; font-size: 12px; }
+      .filter-bar > div, .filter-bar > select, .filter-bar > button { flex: 1 1 calc(50% - 6px); min-width: 0; }
+      .filter-btn { padding: 8px 8px; font-size: 12px; width: 100%; justify-content: space-between; }
+      .per-page-select { padding: 8px 6px; font-size: 12px; width: 100%; }
+      .btn-export { padding: 8px 10px; font-size: 12px; }
 
       /* ── Table: show only 6 key columns ── */
       /* Visible: checkbox(1) ORDER_NO(2) PHONE(3) NAME(4) PRICE(7) VIEW(10) */
@@ -697,12 +764,36 @@
       .mic-icon { width: 28px; height: 28px; font-size: 11px; margin-bottom: 6px; }
       .mic-value { font-size: 12px; }
 
-      /* Product table in modal */
+      /* Product table → card layout on mobile */
       .modal-section-title { padding: 12px 14px 6px; font-size: 10px; }
-      .product-table { font-size: 12px; }
-      .product-table th { padding: 7px 6px; }
-      .product-table td { padding: 8px 6px; }
-      .product-name { font-size: 12px; }
+      .product-table { table-layout: auto; }
+      /* Hide the thead — we'll show labels inline */
+      .product-table thead { display: none; }
+      /* Each row becomes a card */
+      .product-table tbody tr {
+        display: flex; flex-direction: column;
+        padding: 12px 14px; border-bottom: 1px solid #f1f5f9;
+      }
+      .product-table tbody tr:last-child { border-bottom: none; }
+      /* All cells become block, full width */
+      .product-table td {
+        display: block; width: 100% !important;
+        padding: 0; border: none; white-space: normal;
+        text-align: left !important;
+      }
+      /* Product name first, full width */
+      .product-table td.td-product { margin-bottom: 6px; }
+      /* Price / Qty / Total on one line below */
+      .product-table td.td-price,
+      .product-table td.td-qty,
+      .product-table td.td-total {
+        display: inline-block; width: auto !important;
+        font-size: 12px; margin-right: 12px;
+      }
+      .product-table td.td-price::before  { content: 'Price: '; font-size: 10px; color: #94a3b8; font-weight: 600; }
+      .product-table td.td-qty::before    { content: 'Qty: ';   font-size: 10px; color: #94a3b8; font-weight: 600; }
+      .product-table td.td-total::before  { content: 'Total: '; font-size: 10px; color: #94a3b8; font-weight: 600; }
+      .product-name { font-size: 13px; }
       .product-author { font-size: 10px; }
 
       /* Modal footer */
@@ -751,7 +842,7 @@
 <!-- Login Overlay -->
 <div id="login-overlay">
   <div class="login-box">
-    <div class="login-logo">📚</div>
+    <div class="login-logo">🛒</div>
     <div class="login-title">Admin Login</div>
     <div class="login-sub">Sign in to view custom orders</div>
     <div class="login-field"><label>Username</label><input type="text" id="login-username" placeholder="Enter username" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('login-password').focus()" /></div>
@@ -775,7 +866,10 @@
           <i class="fas fa-list-ul"></i> Orders List (Angular)
         </a>
         <a href="custom-orders.html" class="nav-item active">
-          <i class="fas fa-sliders-h"></i> Custom Orders
+          <i class="fas fa-sliders-h"></i> Amolbooks Order List
+        </a>
+        <a href="import-woo-orders.html" class="nav-item">
+          <i class="fas fa-file-import"></i> Import WooCommerce
         </a>
       </div>
       <div class="nav-section">
@@ -798,7 +892,7 @@
     <div class="topbar">
       <div class="topbar-title">
         <i class="fas fa-shopping-cart"></i>
-        Custom Order List
+        Amolbooks Order List
       </div>
       <div class="topbar-right">
         <div class="search-box">
@@ -822,31 +916,34 @@
         <div class="date-filter-box">
           <i class="fas fa-calendar-alt"></i>
           <div style="flex:1">
-            <label>Filter Created Date Range</label>
+            <label>Order Date Range</label>
             <div class="date-range">
               <input type="date" id="createdFrom" />
               <span>—</span>
               <input type="date" id="createdTo" />
             </div>
           </div>
-          <button onclick="clearDateFilter('created')" style="border:none;background:none;color:#94a3b8;cursor:pointer;font-size:12px;padding:4px">
+          <button onclick="clearDateFilter('created')" title="Clear" style="border:none;background:none;color:#94a3b8;cursor:pointer;font-size:12px;padding:4px;flex-shrink:0">
             <i class="fas fa-times"></i>
           </button>
         </div>
         <div class="date-filter-box">
           <i class="fas fa-truck" style="color:#f59e0b"></i>
           <div style="flex:1">
-            <label>Filter Delivery Date Range</label>
+            <label>Delivery Date Range</label>
             <div class="date-range">
               <input type="date" id="deliveryFrom" />
               <span>—</span>
               <input type="date" id="deliveryTo" />
             </div>
           </div>
-          <button onclick="clearDateFilter('delivery')" style="border:none;background:none;color:#94a3b8;cursor:pointer;font-size:12px;padding:4px">
+          <button onclick="clearDateFilter('delivery')" title="Clear" style="border:none;background:none;color:#94a3b8;cursor:pointer;font-size:12px;padding:4px;flex-shrink:0">
             <i class="fas fa-times"></i>
           </button>
         </div>
+        <button class="btn-today" onclick="filterToday()">
+          <i class="fas fa-calendar-day"></i> Today's Orders
+        </button>
       </div>
 
       <!-- Stats -->
@@ -854,15 +951,29 @@
         <div class="stat-card blue">
           <div class="stat-icon"><i class="fas fa-shopping-bag"></i></div>
           <div class="stat-info">
-            <label>Total Order</label>
+            <div class="stat-card-sub">Total Orders</div>
             <div class="stat-value" id="totalOrders">—</div>
           </div>
         </div>
         <div class="stat-card orange">
           <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
           <div class="stat-info">
-            <label>Total Amount</label>
+            <div class="stat-card-sub">Total Amount</div>
             <div class="stat-value" id="totalAmount">—</div>
+          </div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+          <div class="stat-info">
+            <div class="stat-card-sub">Today's Orders</div>
+            <div class="stat-value" id="todayOrders">—</div>
+          </div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-icon"><i class="fas fa-coins"></i></div>
+          <div class="stat-info">
+            <div class="stat-card-sub">Today's Amount</div>
+            <div class="stat-value" id="todayAmount">—</div>
           </div>
         </div>
       </div>
@@ -911,16 +1022,10 @@
           </button>
           <div class="dropdown" id="orderStatusDropdown">
             <div class="dropdown-item" onclick="setFilter('orderStatus', '', 'Order Status')"> All</div>
-            <div class="dropdown-item" onclick="setFilter('orderStatus', 1, 'Pending')"> Pending</div>
-            <div class="dropdown-item" onclick="setFilter('orderStatus', 2, 'Confirm')"> Confirm</div>
-            <div class="dropdown-item" onclick="setFilter('orderStatus', 3, 'Processing')"> Processing</div>
-            <div class="dropdown-item" onclick="setFilter('orderStatus', 4, 'Shipping')"> Shipping</div>
-            <div class="dropdown-item" onclick="setFilter('orderStatus', 5, 'Delivered')"> Delivered</div>
-            <div class="dropdown-item" onclick="setFilter('orderStatus', 6, 'Cancel')"> Cancel</div>
-            <div class="dropdown-item" onclick="setFilter('orderStatus', 7, 'Refund')"> Refund</div>
-            <div class="dropdown-item" onclick="setFilter('orderStatus', 8, 'Courier')"> Courier</div>
-            <div class="dropdown-item" onclick="setFilter('orderStatus', 9, 'Return')"> Return</div>
-            <div class="dropdown-item" onclick="setFilter('orderStatus', 10, 'Hold')"> Hold</div>
+            <div class="dropdown-item" onclick="setFilter('orderStatus', 3, 'Processing')">⏳ Processing</div>
+            <div class="dropdown-item" onclick="setFilter('orderStatus', 5, 'Completed')">✅ Completed</div>
+            <div class="dropdown-item" onclick="setFilter('orderStatus', 6, 'Cancelled')">❌ Cancelled</div>
+            <div class="dropdown-item" onclick="setFilter('orderStatus', 10, 'Trash')">🗑️ Trash</div>
           </div>
         </div>
 
@@ -950,16 +1055,10 @@
         <span id="bulkCount" style="color:#c4b5fd;font-size:13px;font-weight:700"></span>
         <select id="bulkStatus" style="border:1px solid #4c1d95;background:#2e1065;color:#e9d5ff;border-radius:7px;padding:7px 12px;font-size:13px;font-weight:600;outline:none">
           <option value="">— Select new status —</option>
-          <option value="1">Pending</option>
-          <option value="2">Confirm</option>
-          <option value="3">Processing</option>
-          <option value="4">Shipping</option>
-          <option value="5">Delivered</option>
-          <option value="6">Cancel</option>
-          <option value="7">Refund</option>
-          <option value="8">Courier</option>
-          <option value="9">Return</option>
-          <option value="10">Hold</option>
+          <option value="3">⏳ Processing</option>
+          <option value="5">✅ Completed</option>
+          <option value="6">❌ Cancelled</option>
+          <option value="10">🗑️ Trash</option>
         </select>
         <button onclick="applyBulkStatus()" style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer">Apply</button>
         <button onclick="clearSelection()" style="background:transparent;color:#94a3b8;border:1px solid #334155;border-radius:7px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer">Clear</button>
@@ -1054,14 +1153,25 @@
         </div>
       </div>
 
+      <!-- Fraud Checker -->
+      <div class="modal-fraud-row" id="modalFraudRow">
+        <div class="modal-fraud-label"><i class="fas fa-shield-alt" style="margin-right:5px"></i>Fraud Check</div>
+        <div class="modal-fraud-stats" id="modalFraudStats">
+          <span style="color:#94a3b8;font-size:12px">Not checked yet</span>
+        </div>
+        <div class="modal-fraud-btn">
+          <button id="modalFraudBtn" class="btn-fraud-check" style="padding:5px 14px;font-size:12px" onclick="modalCheckFraud()">Check</button>
+        </div>
+      </div>
+
       <!-- Products -->
-      <div class="modal-section-title">Ordered Items</div>
+      <div class="modal-section-title">📦 Ordered Items</div>
       <table class="product-table">
         <colgroup>
-          <col class="col-product">
-          <col class="col-price">
-          <col class="col-qty">
-          <col class="col-total">
+          <col><!-- product: flexible -->
+          <col style="width:90px">
+          <col style="width:56px">
+          <col style="width:90px">
         </colgroup>
         <thead>
           <tr>
@@ -1106,9 +1216,8 @@
   'use strict';
 
   /* ── Config ── */
-  var API = window.location.origin;
-  var ADMIN_URL = window.location.origin.replace('api', 'admin');
-  
+  var API = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://apisub.amolbooks.com';
+  var ADMIN_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://adminsub.amolbooks.com';
   var allOrders = []; // cache for export
   var allOrdersById = {}; // string _id → order  (O(1) lookup, avoids type mismatch)
   var repeatMap = {}; // phoneNo → total order count
@@ -1159,7 +1268,7 @@
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      if (data && data.token) { saveToken(data.token); hideLoginOverlay(); loadOrders(); }
+      if (data && data.token) { saveToken(data.token); hideLoginOverlay(); loadRepeatCustomers(); loadTodayStats(); }
       else { errEl.textContent = 'Invalid username or password.'; errEl.style.display = 'block'; }
     })
     .catch(function() { errEl.textContent = 'Connection error. Try again.'; errEl.style.display = 'block'; })
@@ -1330,24 +1439,18 @@
     if (state.paymentType)   filter.paymentType   = state.paymentType;
     if (state.orderStatus !== '') filter.orderStatus = Number(state.orderStatus);
 
-    // Date range filters
+    // Date range — use createdAt (Mongoose timestamp, always a proper Date).
+    // Parse with 'T00:00:00' (no Z) so JS uses LOCAL timezone, matching Bangladesh time.
+    // Backend converts these strings back to Date objects before querying MongoDB.
     if (state.createdFrom || state.createdTo) {
       filter.createdAt = {};
-      if (state.createdFrom) filter.createdAt.$gte = new Date(state.createdFrom).toISOString();
-      if (state.createdTo) {
-        var to = new Date(state.createdTo);
-        to.setDate(to.getDate() + 1);
-        filter.createdAt.$lt = to.toISOString();
-      }
+      if (state.createdFrom) filter.createdAt.$gte = new Date(state.createdFrom + 'T00:00:00').toISOString();
+      if (state.createdTo)   filter.createdAt.$lte = new Date(state.createdTo   + 'T23:59:59.999').toISOString();
     }
     if (state.deliveryFrom || state.deliveryTo) {
       filter.deliveryDate = {};
-      if (state.deliveryFrom) filter.deliveryDate.$gte = new Date(state.deliveryFrom).toISOString();
-      if (state.deliveryTo) {
-        var tod = new Date(state.deliveryTo);
-        tod.setDate(tod.getDate() + 1);
-        filter.deliveryDate.$lt = tod.toISOString();
-      }
+      if (state.deliveryFrom) filter.deliveryDate.$gte = new Date(state.deliveryFrom + 'T00:00:00').toISOString();
+      if (state.deliveryTo)   filter.deliveryDate.$lte = new Date(state.deliveryTo   + 'T23:59:59.999').toISOString();
     }
 
     var body = {
@@ -1421,16 +1524,62 @@
     document.getElementById('totalAmount').textContent = '৳' + Number(grandTotal).toLocaleString('en-BD', { maximumFractionDigits: 0 });
   }
 
+  /* ── Today's Stats ── */
+  function loadTodayStats() {
+    var now = new Date();
+    var y = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,'0'), d = String(now.getDate()).padStart(2,'0');
+    var todayStr = y + '-' + m + '-' + d;
+    var todayStart = new Date(todayStr + 'T00:00:00').toISOString(); // local midnight → ISO
+    var todayEnd   = new Date(todayStr + 'T23:59:59.999').toISOString();
+    fetch(API + '/api/order/get-all', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        filter: { createdAt: { $gte: todayStart, $lte: todayEnd } },
+        pagination: { pageSize: 1, currentPage: 0 },
+        sort: { createdAt: -1 },
+        select: { orderId: 1, grandTotal: 1 },
+      }),
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(resp) {
+      var count = resp.count || 0;
+      var total = (resp.calculation && resp.calculation.grandTotal) ? resp.calculation.grandTotal : 0;
+      document.getElementById('todayOrders').textContent = count.toLocaleString();
+      document.getElementById('todayAmount').textContent = '৳' + Number(total).toLocaleString('en-BD', { maximumFractionDigits: 0 });
+    })
+    .catch(function() {
+      document.getElementById('todayOrders').textContent = '—';
+      document.getElementById('todayAmount').textContent = '—';
+    });
+  }
+
+  /* ── Filter to Today ── */
+  window.filterToday = function () {
+    // Use local date, not UTC
+    var now = new Date();
+    var y = now.getFullYear();
+    var m = String(now.getMonth() + 1).padStart(2, '0');
+    var d = String(now.getDate()).padStart(2, '0');
+    var today = y + '-' + m + '-' + d;
+    document.getElementById('createdFrom').value = today;
+    document.getElementById('createdTo').value   = today;
+    state.createdFrom = today;
+    state.createdTo   = today;
+    state.page = 0;
+    loadOrders();
+  };
+
   /* ── Order Status helpers ── */
   var STATUS_NAMES = {
-    0: 'None', 1: 'Pending', 2: 'Confirm', 3: 'Processing',
-    4: 'Shipping', 5: 'Delivered', 6: 'Cancel', 7: 'Refund',
-    8: 'Courier', 9: 'Return', 10: 'Hold',
+    0: 'Processing', 1: 'Processing', 2: 'Processing', 3: 'Processing',
+    4: 'Processing', 5: 'Completed',  6: 'Cancelled',  7: 'Cancelled',
+    8: 'Processing', 9: 'Cancelled',  10: 'Trash',
   };
   var STATUS_CLASSES = {
-    1: 'pending', 2: 'confirm', 3: 'processing', 4: 'shipping',
-    5: 'delivered', 6: 'cancel', 7: 'refund', 8: 'courier',
-    9: 'return', 10: 'hold',
+    0: 'processing', 1: 'processing', 2: 'processing', 3: 'processing',
+    4: 'processing', 5: 'delivered',  6: 'cancel',     7: 'cancel',
+    8: 'processing', 9: 'cancel',     10: 'hold',
   };
 
   function statusBadge(code) {
@@ -1524,7 +1673,7 @@
     fetch(API + '/api/order/check-fraud-spy', {
       method: 'POST',
       headers: authHeaders(),
-      body: JSON.stringify({ phoneNo: phone }),
+      body: JSON.stringify({ phone: phone }),
     })
       .then(function (r) { return r.json(); })
       .then(function (resp) {
@@ -1559,6 +1708,44 @@
         var btn2 = document.getElementById('fc-' + mongoId);
         if (btn2) { btn2.textContent = 'Check'; btn2.classList.remove('loading'); btn2.disabled = false; }
       });
+  };
+
+  /* ── Fraud check inside modal ── */
+  window.modalCheckFraud = function () {
+    var btn = document.getElementById('modalFraudBtn');
+    var mongoId = btn.dataset.mongoId;
+    var phone   = btn.dataset.phone;
+    if (!phone) { showToast('No phone number on this order', 'error'); return; }
+    btn.textContent = '…'; btn.disabled = true;
+    fetch(API + '/api/order/check-fraud-spy', {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({ phone: phone }),
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(resp) {
+      btn.disabled = false;
+      if (!resp.success) { showToast(resp.message || 'FraudSpy failed', 'error'); btn.textContent = 'Check'; return; }
+      var d = resp.data || {};
+      var overall = (d.overall && typeof d.overall === 'object') ? d.overall : {};
+      var ratio = typeof overall.success_ratio === 'number' ? overall.success_ratio : 0;
+      var rCls = ratio >= 80 ? 'good' : ratio >= 50 ? 'mid' : 'bad';
+      document.getElementById('modalFraudStats').innerHTML =
+        '<span class="modal-fraud-chip mfc-all">📦 All: <strong>' + (overall.total||0) + '</strong></span>' +
+        '<span class="modal-fraud-chip mfc-ok">✓ Delivered: <strong>' + (overall.delivered||0) + '</strong></span>' +
+        '<span class="modal-fraud-chip mfc-ret">✗ Returned: <strong>' + (overall.returned||0) + '</strong></span>' +
+        '<span class="mfc-ratio ' + rCls + '">' + ratio.toFixed(2) + '% success</span>';
+      btn.textContent = 'Recheck';
+      showToast('Orders: ' + (overall.total||0) + ' | Success: ' + ratio.toFixed(2) + '%', ratio >= 80 ? 'success' : 'error');
+      // Persist
+      if (mongoId) fetch(API + '/api/order/update/' + mongoId, {
+        method: 'PUT', headers: authHeaders(),
+        body: JSON.stringify({ fraudChecker: d }),
+      }).catch(function(){});
+      // Sync row in table
+      var order = allOrdersById[String(mongoId)];
+      if (order) { order.fraudChecker = d; }
+    })
+    .catch(function(err){ btn.textContent = 'Check'; btn.disabled = false; showToast('Error: ' + err.message, 'error'); });
   };
 
   /* ── Products modal ── */
@@ -1605,8 +1792,28 @@
     document.getElementById('modalPaymentStatus').innerHTML =
       '<span class="badge badge-' + (ps === 'paid' ? 'paid' : 'unpaid') + '">' + ps + '</span>';
 
-    // Invoice link
     document.getElementById('modalInvoiceLink').href = API + '/invoice/' + mongoId + '.pdf';
+
+    // Fraud checker section
+    var fraudBtn = document.getElementById('modalFraudBtn');
+    var fraudStats = document.getElementById('modalFraudStats');
+    fraudBtn.dataset.mongoId = mongoId;
+    fraudBtn.dataset.phone = phone;
+    var fc = order.fraudChecker;
+    if (fc && fc.overall && typeof fc.overall === 'object') {
+      var o = fc.overall;
+      var ratio = typeof o.success_ratio === 'number' ? o.success_ratio : 0;
+      var rCls = ratio >= 80 ? 'good' : ratio >= 50 ? 'mid' : 'bad';
+      fraudStats.innerHTML =
+        '<span class="modal-fraud-chip mfc-all">📦 All: <strong>' + (o.total||0) + '</strong></span>' +
+        '<span class="modal-fraud-chip mfc-ok">✓ Delivered: <strong>' + (o.delivered||0) + '</strong></span>' +
+        '<span class="modal-fraud-chip mfc-ret">✗ Returned: <strong>' + (o.returned||0) + '</strong></span>' +
+        '<span class="mfc-ratio ' + rCls + '">' + ratio.toFixed(2) + '% success</span>';
+      fraudBtn.textContent = 'Recheck';
+    } else {
+      fraudStats.innerHTML = '<span style="color:#94a3b8;font-size:12px">Not checked yet</span>';
+      fraudBtn.textContent = 'Check';
+    }
 
     // Courier button — show if order hasn't been sent to courier yet
     currentModalOrderId = mongoId;
@@ -1638,10 +1845,10 @@
         var author = item.author && item.author.name
           ? '<div class="product-author">' + esc(item.author.name) + '</div>' : '';
         return '<tr>' +
-          '<td><div class="product-name">' + esc(item.name || item.nameEn || 'Unknown') + '</div>' + author + '</td>' +
-          '<td style="text-align:right;color:#334155;white-space:nowrap">৳' + Number(unitPrice).toLocaleString() + '</td>' +
-          '<td style="text-align:center;font-weight:700;color:#334155">' + qty + '</td>' +
-          '<td style="text-align:right;font-weight:700;color:#334155;white-space:nowrap">৳' + Number(subtotal).toLocaleString() + '</td>' +
+          '<td class="td-product"><div class="product-name">' + esc(item.name || item.nameEn || 'Unknown') + '</div>' + author + '</td>' +
+          '<td class="td-price" style="color:#334155">৳' + Number(unitPrice).toLocaleString() + '</td>' +
+          '<td class="td-qty" style="font-weight:700;color:#334155">' + qty + '</td>' +
+          '<td class="td-total" style="font-weight:800;color:var(--purple)">৳' + Number(subtotal).toLocaleString() + '</td>' +
           '</tr>';
       }).join('');
     }
@@ -1678,9 +1885,18 @@
 
   /* ── Status Change dropdown ── */
   function statusSelect(orderId, mongoId, current) {
-    var opts = Object.entries(STATUS_NAMES).map(function (entry) {
-      var val = entry[0], name = entry[1];
-      return '<option value="' + val + '"' + (Number(val) === current ? ' selected' : '') + '>' + name + '</option>';
+    var SELECT_OPTIONS = [
+      { val: 3,  label: '⏳ Processing' },
+      { val: 5,  label: '✅ Completed'  },
+      { val: 6,  label: '❌ Cancelled'  },
+      { val: 10, label: '🗑️ Trash'      },
+    ];
+    // Map old statuses → nearest new bucket for display selection
+    var displayVal = current;
+    if ([0,1,2,4,8].includes(current)) displayVal = 3;
+    if (current === 7 || current === 9) displayVal = 6;
+    var opts = SELECT_OPTIONS.map(function (o) {
+      return '<option value="' + o.val + '"' + (o.val === displayVal ? ' selected' : '') + '>' + o.label + '</option>';
     }).join('');
     return '<select class="status-select" onchange="changeStatus(\'' + mongoId + '\', this.value)">' + opts + '</select>';
   }
@@ -1712,15 +1928,13 @@
       var orderBy = (o.admin && o.admin.name) ? esc(o.admin.name) : (o.user ? 'User' : '—');
       var itemCount = o.orderedItems ? o.orderedItems.length : 0;
 
-      var ROW_COLORS = {
-        1: '#fffbeb', 2: '#eff6ff', 3: '#f5f3ff', 4: '#ecfeff',
-        5: '#f0fdf4', 6: '#fff1f2', 7: '#fdf4ff', 8: '#ecfeff',
-        9: '#fff7ed', 10: '#f8fafc',
-      };
-      var rowBg = ROW_COLORS[o.orderStatus] || '#fff';
+      var rowClass = 'row-processing';
+      if (o.orderStatus === 5) rowClass = 'row-completed';
+      else if (o.orderStatus === 6 || o.orderStatus === 7 || o.orderStatus === 9) rowClass = 'row-cancelled';
+      else if (o.orderStatus === 10) rowClass = 'row-trash';
 
       return [
-        '<tr style="background:' + rowBg + '">',
+        '<tr class="' + rowClass + '">',
         '<td><input type="checkbox" class="row-check" value="' + o._id + '" onchange="updateBulkBar()" /></td>',
         '<td><a href="' + ADMIN_URL + '/sales/order-details/' + o._id + '" target="_blank" class="order-no">' + esc(o.orderId || o._id.slice(-6)) + '</a></td>',
         '<td>' + phoneCell(o.phoneNo) + '</td>',
@@ -1906,7 +2120,7 @@
   }
 
   /* ── Init ── */
-  if (getToken()) { hideLoginOverlay(); loadRepeatCustomers(); }
+  if (getToken()) { hideLoginOverlay(); loadRepeatCustomers(); loadTodayStats(); }
   else { showLoginOverlay(); }
 })();
 </script>
