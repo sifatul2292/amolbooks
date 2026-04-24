@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Import WooCommerce Orders — Amolbooks</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2d3147;
+      --accent: #6c63ff;
+      --accent2: #4f46e5;
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --text: #e2e8f0;
+      --text2: #94a3b8;
+      --sidebar-w: 220px;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+    }
+    .sidebar-logo {
+      display: flex; align-items: center; gap: 10px;
+      padding: 18px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-logo img { width: 44px; height: 44px; object-fit: contain; border-radius: 8px; }
+    .sidebar-logo span { font-size: 15px; font-weight: 800; color: #fff; }
+    .sidebar-nav { padding: 12px 0; flex: 1; }
+    .nav-section { margin-bottom: 8px; }
+    .nav-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .08em;
+      color: var(--text2); text-transform: uppercase;
+      padding: 6px 16px 4px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: 9px 16px;
+      color: var(--text2); text-decoration: none;
+      font-size: 13px; font-weight: 500;
+      border-left: 3px solid transparent;
+      transition: all .15s;
+    }
+    .nav-item:hover { color: var(--text); background: rgba(108,99,255,.08); }
+    .nav-item.active { color: var(--accent); background: rgba(108,99,255,.12); border-left-color: var(--accent); }
+    .nav-item i { width: 16px; text-align: center; }
+    .nav-back {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+    }
+    .nav-back a { color: var(--text2); text-decoration: none; font-size: 12px; }
+    .nav-back a:hover { color: var(--text); }
+
+    /* ── Main ── */
+    .main { margin-left: var(--sidebar-w); flex: 1; min-width: 0; padding: 32px 28px; }
+
+    .page-title {
+      font-size: 22px; font-weight: 800; color: var(--text);
+      margin-bottom: 6px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .page-title i { color: var(--accent); }
+    .page-sub { color: var(--text2); font-size: 13px; margin-bottom: 28px; }
+
+    /* ── Stepper ── */
+    .steps {
+      display: flex; gap: 0; margin-bottom: 32px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
+    }
+    .step {
+      flex: 1; padding: 14px 12px;
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px; color: var(--text2); font-weight: 500;
+      border-right: 1px solid var(--border);
+      transition: all .2s;
+    }
+    .step:last-child { border-right: none; }
+    .step-num {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: var(--surface2); color: var(--text2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; flex-shrink: 0;
+    }
+    .step.active { color: var(--text); background: rgba(108,99,255,.07); }
+    .step.active .step-num { background: var(--accent); color: #fff; }
+    .step.done { color: var(--green); }
+    .step.done .step-num { background: rgba(34,197,94,.15); color: var(--green); }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 15px; font-weight: 700; color: var(--text);
+      margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-title i { color: var(--accent); }
+
+    /* ── Upload Zone ── */
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: var(--accent);
+      background: rgba(108,99,255,.05);
+    }
+    .upload-zone i { font-size: 40px; color: var(--accent); margin-bottom: 12px; }
+    .upload-zone h3 { font-size: 16px; color: var(--text); margin-bottom: 6px; }
+    .upload-zone p { font-size: 13px; color: var(--text2); }
+    .upload-zone input[type=file] { display: none; }
+
+    /* ── Mapping Table ── */
+    .map-table { width: 100%; border-collapse: collapse; }
+    .map-table th {
+      background: var(--surface2); color: var(--text2);
+      font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+      padding: 10px 12px; text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .map-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px; color: var(--text);
+    }
+    .map-table tr:last-child td { border-bottom: none; }
+    .badge-found { background: rgba(34,197,94,.12); color: var(--green); padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .badge-missing { background: rgba(239,68,68,.12); color: var(--red); padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .badge-optional { background: rgba(245,158,11,.1); color: var(--yellow); padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+
+    /* ── Preview Table ── */
+    .preview-wrap { overflow-x: auto; }
+    .preview-table { width: 100%; border-collapse: collapse; min-width: 700px; }
+    .preview-table th {
+      background: var(--surface2); color: var(--text2);
+      font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+      padding: 9px 10px; text-align: left;
+      border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    .preview-table td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px; color: var(--text);
+      white-space: nowrap; max-width: 160px;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    .preview-table tr:last-child td { border-bottom: none; }
+    .preview-table tr:hover td { background: rgba(108,99,255,.04); }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 10px 20px; border-radius: 8px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      border: none; transition: all .15s; text-decoration: none;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent2); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-outline {
+      background: transparent; color: var(--text2);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { color: var(--text); border-color: var(--text2); }
+    .btn-green { background: rgba(34,197,94,.15); color: var(--green); border: 1px solid rgba(34,197,94,.25); }
+    .btn-green:hover { background: rgba(34,197,94,.25); }
+
+    .btn-row { display: flex; gap: 10px; align-items: center; margin-top: 20px; }
+
+    /* ── Progress ── */
+    .progress-bar-wrap {
+      background: var(--surface2); border-radius: 99px; height: 8px;
+      margin: 12px 0;
+    }
+    .progress-bar {
+      height: 8px; border-radius: 99px;
+      background: linear-gradient(90deg, var(--accent), var(--green));
+      transition: width .3s;
+    }
+
+    /* ── Alert boxes ── */
+    .alert {
+      padding: 12px 16px; border-radius: 8px;
+      font-size: 13px; display: flex; align-items: flex-start; gap: 10px;
+      margin-bottom: 14px;
+    }
+    .alert-info { background: rgba(108,99,255,.1); border: 1px solid rgba(108,99,255,.2); color: var(--text); }
+    .alert-success { background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.2); color: var(--green); }
+    .alert-error { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.2); color: var(--red); }
+    .alert-warn { background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.2); color: var(--yellow); }
+
+    /* ── Summary stat chips ── */
+    .stat-chips { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+    .stat-chip {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 16px;
+      display: flex; flex-direction: column; gap: 2px; min-width: 100px;
+    }
+    .stat-chip-val { font-size: 22px; font-weight: 800; color: var(--text); }
+    .stat-chip-lbl { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; }
+
+    /* ── Log ── */
+    .log-box {
+      background: #0a0c14; border: 1px solid var(--border);
+      border-radius: 8px; padding: 14px; font-size: 12px; color: var(--text2);
+      font-family: monospace; max-height: 200px; overflow-y: auto;
+      line-height: 1.7;
+    }
+    .log-ok { color: var(--green); }
+    .log-err { color: var(--red); }
+    .log-info { color: #60a5fa; }
+
+    @media (max-width: 700px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 16px; }
+      .steps { flex-direction: column; }
+      .step { border-right: none; border-bottom: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ Sidebar ══ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <img src="favicon.png" alt="Amolbooks" onerror="this.style.display='none'">
+    <span>Amolbooks</span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-label">Sales</div>
+      <a href="https://adminsub.amolbooks.com/dashboard" class="nav-item">
+        <i class="fas fa-list-ul"></i> Orders List (Angular)
+      </a>
+      <a href="custom-orders.html" class="nav-item">
+        <i class="fas fa-sliders-h"></i> Custom Orders
+      </a>
+      <a href="import-woo-orders.html" class="nav-item active">
+        <i class="fas fa-file-import"></i> Import WooCommerce
+      </a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Navigation</div>
+      <a href="https://adminsub.amolbooks.com/dashboard" class="nav-item">
+        <i class="fas fa-arrow-left"></i> Back to Admin
+      </a>
+    </div>
+  </nav>
+  <div class="nav-back">
+    <a href="https://adminsub.amolbooks.com/dashboard"><i class="fas fa-home"></i> Return to Dashboard</a>
+  </div>
+</aside>
+
+<!-- ══ Main ══ -->
+<div class="main">
+  <div class="page-title"><i class="fas fa-file-import"></i> Import WooCommerce Orders</div>
+  <div class="page-sub">Upload a WooCommerce CSV export to migrate historical orders into Amolbooks.</div>
+
+  <!-- Stepper -->
+  <div class="steps">
+    <div class="step active" id="step1-tab"><div class="step-num">1</div><span>Upload CSV</span></div>
+    <div class="step" id="step2-tab"><div class="step-num">2</div><span>Map Fields</span></div>
+    <div class="step" id="step3-tab"><div class="step-num">3</div><span>Preview</span></div>
+    <div class="step" id="step4-tab"><div class="step-num">4</div><span>Import</span></div>
+  </div>
+
+  <!-- ── Step 1: Upload ── -->
+  <div id="step1">
+    <div class="card">
+      <div class="card-title"><i class="fas fa-upload"></i> Select WooCommerce CSV</div>
+
+      <div class="alert alert-info">
+        <i class="fas fa-info-circle" style="margin-top:2px;flex-shrink:0;"></i>
+        <div>
+          In your WordPress admin, go to <strong>WooCommerce → Orders</strong>, then click <strong>Export</strong>
+          (or use a plugin like <em>WooCommerce Customer / Order CSV Export</em>). Download the CSV and upload it here.
+          The CSV must include columns for customer name, phone number, and address.
+        </div>
+      </div>
+
+      <label class="upload-zone" id="dropZone" for="csvFile">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <h3>Drop your CSV here or click to browse</h3>
+        <p>Supports standard WooCommerce order exports (.csv)</p>
+        <input type="file" id="csvFile" accept=".csv,text/csv" />
+      </label>
+
+      <div id="fileInfo" style="display:none; margin-top:14px;" class="alert alert-success">
+        <i class="fas fa-check-circle"></i>
+        <div id="fileInfoText"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="nextToMapping" onclick="goToStep2()" disabled>
+          Next: Map Fields <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Step 2: Column Mapping ── -->
+  <div id="step2" style="display:none;">
+    <div class="card">
+      <div class="card-title"><i class="fas fa-map"></i> Column Mapping</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">
+        These WooCommerce columns have been detected and mapped to Amolbooks order fields. Required fields must be present for import to succeed.
+      </p>
+      <div style="overflow-x:auto;">
+        <table class="map-table">
+          <thead>
+            <tr>
+              <th>Amolbooks Field</th>
+              <th>Required</th>
+              <th>Detected WC Column</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="mappingBody"></tbody>
+        </table>
+      </div>
+      <div id="mappingWarn" style="display:none;margin-top:14px;"></div>
+      <div class="btn-row">
+        <button class="btn btn-outline" onclick="goToStep(1)"><i class="fas fa-arrow-left"></i> Back</button>
+        <button class="btn btn-primary" id="nextToPreview" onclick="goToStep3()">
+          Next: Preview <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Step 3: Preview ── -->
+  <div id="step3" style="display:none;">
+    <div class="card">
+      <div class="card-title"><i class="fas fa-eye"></i> Preview (first 10 rows)</div>
+      <div class="stat-chips" id="previewStats"></div>
+      <div class="preview-wrap">
+        <table class="preview-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Address</th>
+              <th>Total (৳)</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Items</th>
+            </tr>
+          </thead>
+          <tbody id="previewBody"></tbody>
+        </table>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-outline" onclick="goToStep(2)"><i class="fas fa-arrow-left"></i> Back</button>
+        <button class="btn btn-primary" onclick="goToStep4()">
+          <i class="fas fa-file-import"></i> Import All &nbsp;<span id="importCountLabel"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Step 4: Import ── -->
+  <div id="step4" style="display:none;">
+    <div class="card">
+      <div class="card-title"><i class="fas fa-rocket"></i> Importing Orders</div>
+      <div id="importStatus"></div>
+      <div class="progress-bar-wrap" id="progressWrap" style="display:none;">
+        <div class="progress-bar" id="progressBar" style="width:0%"></div>
+      </div>
+      <div id="importLog" class="log-box" style="display:none;"></div>
+      <div class="btn-row" id="importDoneRow" style="display:none;">
+        <a href="custom-orders.html" class="btn btn-green"><i class="fas fa-list"></i> View Orders</a>
+        <button class="btn btn-outline" onclick="resetAll()"><i class="fas fa-redo"></i> Import Another File</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+  // ─── Config ───────────────────────────────────────────────────────────────
+  const API = (
+    window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ) ? 'http://localhost:3000' : 'https://apisub.amolbooks.com';
+
+  const BATCH_SIZE = 200; // rows per POST request
+
+  // ─── Auth guard ───────────────────────────────────────────────────────────
+  const TOKEN = localStorage.getItem('co_admin_token');
+  if (!TOKEN) {
+    alert('Please log in via the Custom Orders page first.');
+    window.location.href = 'custom-orders.html';
+  }
+
+  // ─── WC status → OrderStatus enum ─────────────────────────────────────────
+  const WC_STATUS_MAP = {
+    'completed':   5,
+    'wc-completed': 5,
+    'delivered':   5,
+    'processing':  3,
+    'wc-processing': 3,
+    'cancelled':   6,
+    'canceled':    6,
+    'wc-cancelled': 6,
+    'wc-canceled':  6,
+    'refunded':    7,
+    'wc-refunded': 7,
+    'on-hold':     10,
+    'wc-on-hold':  10,
+    'hold':        10,
+    'pending':     1,
+    'wc-pending':  1,
+    'trash':       10,
+  };
+
+  const STATUS_NAMES = {1:'Pending', 3:'Processing', 5:'Completed', 6:'Cancelled', 7:'Refunded', 10:'Hold'};
+
+  // ─── Column mapping definition ────────────────────────────────────────────
+  // Each entry: { field, label, required, candidates[] }
+  const FIELD_MAP = [
+    { field: 'firstName',     label: 'First Name',       required: true,  candidates: ['billing_first_name','billing first name','first name','customer name'] },
+    { field: 'lastName',      label: 'Last Name',        required: false, candidates: ['billing_last_name','billing last name','last name'] },
+    { field: 'phoneNo',       label: 'Phone',            required: true,  candidates: ['billing_phone','billing phone','phone','phone number','mobile'] },
+    { field: 'address1',      label: 'Billing Address 1',required: true,  candidates: ['billing_address_1','billing address 1','billing address','address 1','address','shipping address'] },
+    { field: 'address2',      label: 'Billing Address 2',required: false, candidates: ['billing_address_2','billing address 2','address 2'] },
+    { field: 'city',          label: 'City',             required: false, candidates: ['billing_city','billing city','city'] },
+    { field: 'email',         label: 'Email',            required: false, candidates: ['billing_email','billing email','email','customer email'] },
+    { field: 'grandTotal',    label: 'Order Total',      required: false, candidates: ['order_total','order total','total','grand total','amount'] },
+    { field: 'subTotal',      label: 'Order Subtotal',   required: false, candidates: ['order_subtotal','order subtotal','subtotal','sub total'] },
+    { field: 'deliveryCharge',label: 'Shipping Total',   required: false, candidates: ['shipping_total','shipping total','shipping','delivery charge'] },
+    { field: 'paymentType',   label: 'Payment Method',   required: false, candidates: ['payment_method_title','payment method title','payment method','payment','payment_method'] },
+    { field: 'status',        label: 'Order Status',     required: false, candidates: ['status','order_status','order status'] },
+    { field: 'dateCreated',   label: 'Date Created',     required: false, candidates: ['order_date','order date','date_created','date created','date created (gmt)','date_created_gmt','created_at','created at','date (gmt)','post_date','date'] },
+    { field: 'note',          label: 'Customer Note',    required: false, candidates: ['customer_note','customer note','order note','notes','note'] },
+    { field: 'lineItems',     label: 'Line Items',       required: false, candidates: ['line_items','line items','items','products','order items'] },
+  ];
+
+  // ─── State ────────────────────────────────────────────────────────────────
+  let parsedRows = [];        // raw CSV rows (array of objects, header→value)
+  let detectedCols = {};      // field → actual CSV header name (or null)
+  let mappedOrders = [];      // converted order objects ready to POST
+  let csvHeaders = [];
+
+  // ─── Stepper UI ───────────────────────────────────────────────────────────
+  let currentStep = 1;
+  function goToStep(n) {
+    document.getElementById('step' + currentStep).style.display = 'none';
+    document.getElementById('step' + currentStep + '-tab').classList.remove('active');
+    if (currentStep < n) document.getElementById('step' + currentStep + '-tab').classList.add('done');
+    currentStep = n;
+    document.getElementById('step' + n).style.display = '';
+    document.getElementById('step' + n + '-tab').classList.add('active');
+  }
+
+  // ─── File handling ────────────────────────────────────────────────────────
+  const dropZone = document.getElementById('dropZone');
+  const csvFile  = document.getElementById('csvFile');
+
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+  csvFile.addEventListener('change', () => { if (csvFile.files[0]) handleFile(csvFile.files[0]); });
+
+  function handleFile(file) {
+    if (!file.name.endsWith('.csv') && file.type !== 'text/csv') {
+      alert('Please select a .csv file.'); return;
+    }
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        parsedRows = results.data;
+        csvHeaders = results.meta.fields || [];
+        const info = document.getElementById('fileInfo');
+        document.getElementById('fileInfoText').textContent =
+          `✓  ${file.name} — ${parsedRows.length.toLocaleString()} orders detected, ${csvHeaders.length} columns`;
+        info.style.display = 'flex';
+        document.getElementById('nextToMapping').disabled = parsedRows.length === 0;
+      },
+      error: (err) => alert('CSV parse error: ' + err.message),
+    });
+  }
+
+  // ─── Step 2: build mapping ────────────────────────────────────────────────
+  function goToStep2() {
+    detectColumns();
+    renderMappingTable();
+    goToStep(2);
+  }
+
+  function detectColumns() {
+    const lower = csvHeaders.map(h => h.toLowerCase().trim());
+    detectedCols = {};
+    FIELD_MAP.forEach(({ field, candidates }) => {
+      let found = null;
+      for (const cand of candidates) {
+        const idx = lower.indexOf(cand.toLowerCase());
+        if (idx >= 0) { found = csvHeaders[idx]; break; }
+      }
+      detectedCols[field] = found;
+    });
+  }
+
+  function renderMappingTable() {
+    const tbody = document.getElementById('mappingBody');
+    tbody.innerHTML = '';
+    let missingRequired = [];
+    FIELD_MAP.forEach(({ field, label, required }) => {
+      const col = detectedCols[field];
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>${label}</strong></td>
+        <td>${required ? '<span class="badge-found">Required</span>' : '<span class="badge-optional">Optional</span>'}</td>
+        <td style="color:var(--text2)">${col ? col : '—'}</td>
+        <td>${col
+          ? '<span class="badge-found"><i class="fas fa-check"></i> Found</span>'
+          : (required
+              ? '<span class="badge-missing"><i class="fas fa-times"></i> Missing</span>'
+              : '<span style="color:var(--text2);font-size:12px">not detected</span>'
+            )
+        }</td>`;
+      tbody.appendChild(tr);
+      if (required && !col) missingRequired.push(label);
+    });
+
+    const warnDiv = document.getElementById('mappingWarn');
+    const nextBtn = document.getElementById('nextToPreview');
+
+    // Show unmatched CSV columns so user can spot naming mismatches
+    const matchedCols = new Set(Object.values(detectedCols).filter(Boolean));
+    const unmatchedCols = csvHeaders.filter(h => !matchedCols.has(h));
+    let warnHtml = '';
+    if (unmatchedCols.length > 0) {
+      warnHtml += `<div class="alert alert-warn" style="margin-bottom:8px"><i class="fas fa-question-circle" style="flex-shrink:0;margin-top:2px"></i>
+        <div><strong>Unrecognized columns in your CSV</strong> (not mapped to any field):<br>
+        <span style="font-family:monospace;font-size:12px">${unmatchedCols.join(', ')}</span><br>
+        <span style="font-size:12px;opacity:.8">If your date/phone/address column appears above, it was correctly detected. If not, its name didn't match — contact support.</span>
+        </div></div>`;
+    }
+
+    if (missingRequired.length > 0) {
+      warnHtml += `<div class="alert alert-error"><i class="fas fa-exclamation-triangle"></i>
+        <div>Missing required columns: <strong>${missingRequired.join(', ')}</strong>.<br>
+        Make sure your CSV export includes these fields. Column names are case-insensitive.</div></div>`;
+      warnDiv.style.display = '';
+      warnDiv.innerHTML = warnHtml;
+      nextBtn.disabled = true;
+    } else {
+      warnDiv.style.display = warnHtml ? '' : 'none';
+      warnDiv.innerHTML = warnHtml;
+      nextBtn.disabled = false;
+    }
+  }
+
+  // ─── Parse line items text ────────────────────────────────────────────────
+  function parseLineItems(text) {
+    if (!text) return [];
+    // WooCommerce formats items like: "Product Name (qty: 2)", "Name × 2 @ ৳200.00", "Name x2"
+    const items = [];
+    // Split on common delimiters between items
+    const parts = text.split(/\s*[,;|]\s*(?=[A-Z\u0980-\u09FF])/i);
+    parts.forEach(part => {
+      part = part.trim();
+      if (!part) return;
+      // Try "Name × 2 @ ৳price" or "Name x 2 @ price"
+      let m = part.match(/^(.+?)\s*[×x]\s*(\d+)\s*@\s*[৳\$]?([\d.,]+)/i);
+      if (m) { items.push({ name: m[1].trim(), quantity: parseInt(m[2]), salePrice: parseFloat(m[3].replace(',','')) }); return; }
+      // Try "Name (qty: 2)"
+      m = part.match(/^(.+?)\s*\(qty:\s*(\d+)\)/i);
+      if (m) { items.push({ name: m[1].trim(), quantity: parseInt(m[2]), salePrice: 0 }); return; }
+      // Try "Name × 2"
+      m = part.match(/^(.+?)\s*[×x]\s*(\d+)/i);
+      if (m) { items.push({ name: m[1].trim(), quantity: parseInt(m[2]), salePrice: 0 }); return; }
+      // Fallback: treat whole as product name qty=1
+      items.push({ name: part, quantity: 1, salePrice: 0 });
+    });
+    return items;
+  }
+
+  // ─── Map CSV row → order object ───────────────────────────────────────────
+  function mapRow(row) {
+    const g = (field) => {
+      const col = detectedCols[field];
+      return col ? (row[col] || '').toString().trim() : '';
+    };
+
+    const firstName = g('firstName');
+    const lastName  = g('lastName');
+    const name = (firstName + ' ' + lastName).trim() || 'Unknown';
+
+    const address1 = g('address1');
+    const address2 = g('address2');
+    const city     = g('city');
+    const shippingAddress = [address1, address2, city].filter(Boolean).join(', ');
+
+    const rawDate = g('dateCreated');
+    let checkoutDate = '';
+    if (rawDate) {
+      // Normalise to YYYY-MM-DD
+      const d = new Date(rawDate);
+      if (!isNaN(d.getTime())) {
+        checkoutDate = d.toISOString().slice(0, 10);
+      } else {
+        // Try DD/MM/YYYY or DD-MM-YYYY
+        const m = rawDate.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+        if (m) checkoutDate = `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+      }
+    }
+
+    const rawStatus = g('status').toLowerCase();
+    const orderStatus = WC_STATUS_MAP[rawStatus] ?? 3; // default Processing
+
+    const lineItems = parseLineItems(g('lineItems'));
+
+    return {
+      name,
+      phoneNo: g('phoneNo').replace(/\s+/g, ''),
+      email:   g('email'),
+      city:    g('city'),
+      shippingAddress: shippingAddress || 'N/A',
+      grandTotal:     parseFloat(g('grandTotal'))     || 0,
+      subTotal:       parseFloat(g('subTotal'))       || 0,
+      deliveryCharge: parseFloat(g('deliveryCharge')) || 0,
+      paymentType:    g('paymentType') || 'COD',
+      orderStatus,
+      checkoutDate,
+      note:        g('note'),
+      orderedItems: lineItems,
+    };
+  }
+
+  // ─── Step 3: Preview ──────────────────────────────────────────────────────
+  function goToStep3() {
+    mappedOrders = parsedRows.map(mapRow);
+
+    // Stats chips
+    const totalAmt = mappedOrders.reduce((s, o) => s + o.grandTotal, 0);
+    const statuses = {};
+    mappedOrders.forEach(o => { statuses[o.orderStatus] = (statuses[o.orderStatus] || 0) + 1; });
+    const statsHtml = `
+      <div class="stat-chip"><div class="stat-chip-val">${mappedOrders.length.toLocaleString()}</div><div class="stat-chip-lbl">Total Orders</div></div>
+      <div class="stat-chip"><div class="stat-chip-val">৳${totalAmt.toLocaleString()}</div><div class="stat-chip-lbl">Total Amount</div></div>
+      ${Object.entries(statuses).map(([s,c]) =>
+        `<div class="stat-chip"><div class="stat-chip-val">${c}</div><div class="stat-chip-lbl">${STATUS_NAMES[s]||'Other'}</div></div>`
+      ).join('')}
+    `;
+    document.getElementById('previewStats').innerHTML = statsHtml;
+    document.getElementById('importCountLabel').textContent = `(${mappedOrders.length.toLocaleString()} orders)`;
+
+    // Preview table — first 10
+    const tbody = document.getElementById('previewBody');
+    tbody.innerHTML = '';
+    const preview = mappedOrders.slice(0, 10);
+    preview.forEach((o, i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${i + 1}</td>
+        <td title="${o.name}">${o.name}</td>
+        <td>${o.phoneNo || '<span style="color:var(--red)">missing</span>'}</td>
+        <td title="${o.shippingAddress}">${o.shippingAddress}</td>
+        <td>${o.grandTotal ? '৳' + o.grandTotal.toLocaleString() : '—'}</td>
+        <td>${STATUS_NAMES[o.orderStatus] || o.orderStatus}</td>
+        <td>${o.checkoutDate || '—'}</td>
+        <td>${o.orderedItems.length ? o.orderedItems.map(it => it.name).join(', ') : '—'}</td>`;
+      tbody.appendChild(tr);
+    });
+    if (mappedOrders.length > 10) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td colspan="8" style="text-align:center;color:var(--text2);font-style:italic;padding:12px">… and ${mappedOrders.length - 10} more orders</td>`;
+      tbody.appendChild(tr);
+    }
+
+    goToStep(3);
+  }
+
+  // ─── Step 4: Import ───────────────────────────────────────────────────────
+  function goToStep4() {
+    goToStep(4);
+    runImport();
+  }
+
+  async function runImport() {
+    const statusDiv = document.getElementById('importStatus');
+    const progressWrap = document.getElementById('progressWrap');
+    const bar = document.getElementById('progressBar');
+    const logBox = document.getElementById('importLog');
+    const doneRow = document.getElementById('importDoneRow');
+
+    progressWrap.style.display = '';
+    logBox.style.display = '';
+    statusDiv.innerHTML = `<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Importing ${mappedOrders.length} orders in batches of ${BATCH_SIZE}…</div>`;
+
+    const total = mappedOrders.length;
+    let inserted = 0;
+    let failed = 0;
+    const batches = [];
+    for (let i = 0; i < total; i += BATCH_SIZE) batches.push(mappedOrders.slice(i, i + BATCH_SIZE));
+
+    function log(msg, cls) {
+      logBox.innerHTML += `<div class="${cls || ''}">${msg}</div>`;
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    for (let b = 0; b < batches.length; b++) {
+      const batch = batches[b];
+      log(`<span class="log-info">[Batch ${b+1}/${batches.length}]</span> Sending ${batch.length} orders…`);
+      try {
+        const res = await fetch(`${API}/api/order/import-woocommerce`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'administrator': TOKEN,
+          },
+          body: JSON.stringify({ orders: batch }),
+        });
+        const json = await res.json();
+        if (json.success) {
+          inserted += batch.length;
+          log(`<span class="log-ok">✓ Batch ${b+1} OK — ${json.message}</span>`, 'log-ok');
+        } else {
+          failed += batch.length;
+          log(`✗ Batch ${b+1} failed: ${json.message || 'Unknown error'}`, 'log-err');
+        }
+      } catch (err) {
+        failed += batch.length;
+        log(`✗ Batch ${b+1} network error: ${err.message}`, 'log-err');
+      }
+      bar.style.width = (((b + 1) / batches.length) * 100) + '%';
+    }
+
+    // Done
+    bar.style.width = '100%';
+    if (failed === 0) {
+      statusDiv.innerHTML = `<div class="alert alert-success"><i class="fas fa-check-circle"></i>
+        <div><strong>Import complete!</strong> ${inserted} orders were successfully imported into Amolbooks.</div></div>`;
+    } else {
+      statusDiv.innerHTML = `<div class="alert alert-warn"><i class="fas fa-exclamation-triangle"></i>
+        <div><strong>Partial import.</strong> ${inserted} orders imported, ${failed} failed. Check the log below for details.</div></div>`;
+    }
+    doneRow.style.display = 'flex';
+  }
+
+  function resetAll() {
+    parsedRows = []; detectedCols = {}; mappedOrders = []; csvHeaders = [];
+    document.getElementById('fileInfo').style.display = 'none';
+    document.getElementById('nextToMapping').disabled = true;
+    document.getElementById('csvFile').value = '';
+    // Reset stepper
+    for (let i = 1; i <= 4; i++) {
+      document.getElementById('step' + i).style.display = i === 1 ? '' : 'none';
+      const tab = document.getElementById('step' + i + '-tab');
+      tab.classList.remove('active','done');
+      if (i === 1) tab.classList.add('active');
+    }
+    currentStep = 1;
+  }
+</script>
+</body>
+</html>
