@@ -28,81 +28,94 @@
     // });
   </script>
 <script src="runtime.4d6409d0d8e15ba5.js" type="module"></script><script src="polyfills.c1e84e3ec74f52fd.js" type="module"></script><script src="scripts.b4bc902bbfe75cc2.js" defer></script><script src="main.9800a67c3b9d8239.js" type="module"></script>
+<style>
+  #co-fab{position:fixed;bottom:24px;left:16px;z-index:99999;display:flex;align-items:center;gap:8px;background:#6c3fc5;color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:700;font-family:'Nunito Sans','Segoe UI',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(108,63,197,.45);text-decoration:none;letter-spacing:.01em;transition:background .15s,transform .1s;}
+  #co-fab:hover{background:#5530a0;transform:translateY(-1px);}
+  #co-fab i{font-size:15px;}
+</style>
 <script>
-(function injectCustomOrdersLink() {
-  var INJECTED_ID = 'custom-orders-nav-link';
-  var TARGET_TEXTS = ['Order List', 'order list', 'অর্ডার লিস্ট'];
+(function() {
+  // ── Floating button (always visible) ──────────────────────────────────────
+  function addFloatingButton() {
+    if (document.getElementById('co-fab')) return;
+    var btn = document.createElement('a');
+    btn.id = 'co-fab';
+    btn.href = '/upload/static/custom-orders.html';
+    btn.target = '_blank';
+    btn.innerHTML = '<i class="fas fa-list-alt"></i> Custom Orders';
+    document.body.appendChild(btn);
+  }
+
+  // ── Sidebar injection (mat-nav-list / mat-list-item) ──────────────────────
+  var INJECTED_ID = 'co-sidebar-item';
 
   function findOrderListItem() {
-    var all = document.querySelectorAll('a, mat-list-item, [role="listitem"], li');
-    for (var i = 0; i < all.length; i++) {
-      var el = all[i];
-      var text = el.textContent || '';
-      for (var t = 0; t < TARGET_TEXTS.length; t++) {
-        if (text.trim().indexOf(TARGET_TEXTS[t]) !== -1) {
-          return el;
-        }
+    // Try mat-list-item first, then anchors, then any clickable
+    var candidates = document.querySelectorAll('mat-list-item, a[routerlink], a[ng-reflect-router-link], .mat-list-item');
+    for (var i = 0; i < candidates.length; i++) {
+      var t = (candidates[i].textContent || '').trim();
+      if (/order\s*list|order\s*লিস্ট|অর্ডার/i.test(t) && t.length < 80) {
+        return candidates[i];
       }
     }
     return null;
   }
 
-  function buildLink(referenceEl) {
-    var clone = referenceEl.cloneNode(true);
-    clone.id = INJECTED_ID;
-
-    // Update href/routerLink to point to the custom orders page
-    clone.removeAttribute('ng-reflect-router-link');
-    clone.removeAttribute('routerlink');
-    clone.href = '/upload/static/custom-orders.html';
-    clone.target = '_blank';
-    clone.removeAttribute('routerLinkActive');
-    clone.removeAttribute('ng-reflect-router-link-active');
-    clone.classList.remove('active-link', 'ng-star-inserted');
-
-    // Update text — find the text node or span that holds the label
-    var spans = clone.querySelectorAll('span, .nav-text, .menu-title');
-    var replaced = false;
-    spans.forEach(function(span) {
-      if (span.textContent.trim().indexOf('Order') !== -1 || span.textContent.trim().indexOf('অর্ডার') !== -1) {
-        span.textContent = 'Custom Orders';
-        replaced = true;
-      }
-    });
-    if (!replaced) {
-      // fallback: replace last text node
-      var walker = document.createTreeWalker(clone, NodeFilter.SHOW_TEXT);
-      var node, last;
-      while ((node = walker.nextNode())) last = node;
-      if (last && last.textContent.trim()) last.textContent = ' Custom Orders';
+  function buildSidebarLink(ref) {
+    var el = ref.cloneNode(true);
+    el.id = INJECTED_ID;
+    el.removeAttribute('routerlink');
+    el.removeAttribute('routerlinkactive');
+    el.removeAttribute('ng-reflect-router-link');
+    el.removeAttribute('ng-reflect-router-link-active');
+    // Make it a real anchor
+    if (el.tagName !== 'A') {
+      var wrap = document.createElement('a');
+      wrap.id = INJECTED_ID;
+      wrap.href = '/upload/static/custom-orders.html';
+      wrap.target = '_blank';
+      wrap.style.cssText = ref.style.cssText || '';
+      wrap.className = el.className;
+      wrap.innerHTML = el.innerHTML;
+      el = wrap;
+    } else {
+      el.href = '/upload/static/custom-orders.html';
+      el.target = '_blank';
     }
-
-    // Update icon if font-awesome is used
-    var icon = clone.querySelector('i[class*="fa-"]');
+    // Replace text label
+    var textNodes = [];
+    var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    var n;
+    while ((n = walker.nextNode())) { if (n.textContent.trim()) textNodes.push(n); }
+    if (textNodes.length) textNodes[textNodes.length - 1].textContent = ' Custom Orders';
+    // Replace icon
+    var icon = el.querySelector('i[class*="fa-"], mat-icon');
     if (icon) {
-      icon.className = icon.className.replace(/fa-\S+/, 'fa-list-alt');
+      if (icon.tagName === 'I') icon.className = icon.className.replace(/fa-\S+/g, 'fa-list-alt');
+      else icon.textContent = 'list_alt';
     }
-
-    return clone;
+    return el;
   }
 
-  function inject() {
+  function injectSidebar() {
     if (document.getElementById(INJECTED_ID)) return;
     var ref = findOrderListItem();
     if (!ref) return;
-    var link = buildLink(ref);
+    var link = buildSidebarLink(ref);
     ref.parentNode.insertBefore(link, ref.nextSibling);
   }
 
-  var observer = new MutationObserver(function() {
-    if (!document.getElementById(INJECTED_ID)) inject();
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
+  // ── Bootstrap ─────────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', addFloatingButton);
 
-  // Also try on load
-  window.addEventListener('load', inject);
-  setTimeout(inject, 2000);
-  setTimeout(inject, 4000);
+  var obs = new MutationObserver(function() {
+    addFloatingButton();
+    injectSidebar();
+  });
+  obs.observe(document.body, { childList: true, subtree: true });
+
+  setTimeout(function() { addFloatingButton(); injectSidebar(); }, 1500);
+  setTimeout(function() { addFloatingButton(); injectSidebar(); }, 3500);
 })();
 </script>
 
