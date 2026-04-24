@@ -161,6 +161,30 @@ __decorate([
 ], ProductController.prototype, "getRelatedProductsByMultiCategoryId", null);
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Get)('/get-bought-together'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], ProductController.prototype, "getBoughtTogetherProducts", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Post)('/set-bought-together'),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], ProductController.prototype, "setBoughtTogetherProducts", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Get)('/get-bought-together-by-product/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], ProductController.prototype, "getBoughtTogetherByProduct", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Get)('/:id'),
     __param(0, (0, common_1.Param)('id', mongo_id_validation_pipe_1.MongoIdValidationPipe)),
     __param(1, (0, common_1.Query)()),
@@ -248,30 +272,6 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], ProductController.prototype, "setProductImageHttpToHttps", null);
-__decorate([
-    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
-    (0, common_1.Get)('/get-bought-together'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Promise)
-], ProductController.prototype, "getBoughtTogetherProducts", null);
-__decorate([
-    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
-    (0, common_1.Post)('/set-bought-together'),
-    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], ProductController.prototype, "setBoughtTogetherProducts", null);
-__decorate([
-    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
-    (0, common_1.Get)('/get-bought-together-by-product/:id'),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Promise)
-], ProductController.prototype, "getBoughtTogetherByProduct", null);
 ProductController = ProductController_1 = __decorate([
     (0, common_1.Controller)('product'),
     __metadata("design:paramtypes", [product_service_1.ProductService])
