@@ -269,6 +269,20 @@ let OrderService = OrderService_1 = class OrderService {
             throw new common_1.InternalServerErrorException(err.message);
         }
     }
+    async getRepeatCustomers() {
+        try {
+            const data = await this.orderModel.aggregate([
+                { $match: { phoneNo: { $exists: true, $ne: null } } },
+                { $group: { _id: '$phoneNo', count: { $sum: 1 } } },
+                { $match: { count: { $gt: 1 } } },
+                { $project: { _id: 0, phoneNo: '$_id', count: 1 } },
+            ]);
+            return { success: true, message: 'Success', data };
+        }
+        catch (err) {
+            throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
     async buildInvoicePayload(fOrderData) {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
         const fShopInfo = await this.shopInformationModel.findOne({});
@@ -766,7 +780,7 @@ let OrderService = OrderService_1 = class OrderService {
             const courierMethods = (_a = fSetting === null || fSetting === void 0 ? void 0 : fSetting.courierMethods) !== null && _a !== void 0 ? _a : [];
             const courierMethod = courierMethods.find((f) => f.status === 'active');
             await this.addSingleOrderToCourier({ orderStatus: 8, courierMethod, id });
-            await this.orderModel.findByIdAndUpdate(id, { $set: { orderStatus: 8 } });
+            await this.orderModel.findByIdAndUpdate(id, { $set: { orderStatus: 2 } });
             return { success: true, message: 'Order sent to courier successfully' };
         }
         catch (err) {

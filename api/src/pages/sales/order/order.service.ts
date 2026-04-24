@@ -444,6 +444,20 @@ export class OrderService {
     }
   }
 
+  async getRepeatCustomers(): Promise<ResponsePayload> {
+    try {
+      const data = await this.orderModel.aggregate([
+        { $match: { phoneNo: { $exists: true, $ne: null, $ne: '' } } },
+        { $group: { _id: '$phoneNo', count: { $sum: 1 } } },
+        { $match: { count: { $gt: 1 } } },
+        { $project: { _id: 0, phoneNo: '$_id', count: 1 } },
+      ]);
+      return { success: true, message: 'Success', data } as ResponsePayload;
+    } catch (err) {
+      throw new InternalServerErrorException(err.message);
+    }
+  }
+
   private async buildInvoicePayload(fOrderData: any) {
     const fShopInfo = await this.shopInformationModel.findOne({});
 
@@ -1087,7 +1101,7 @@ export class OrderService {
       const courierMethods = fSetting?.courierMethods ?? [];
       const courierMethod = courierMethods.find((f: any) => f.status === 'active');
       await this.addSingleOrderToCourier({ orderStatus: 8, courierMethod, id });
-      await this.orderModel.findByIdAndUpdate(id, { $set: { orderStatus: 8 } });
+      await this.orderModel.findByIdAndUpdate(id, { $set: { orderStatus: 2 } });
       return { success: true, message: 'Order sent to courier successfully' } as ResponsePayload;
     } catch (err) {
       throw new InternalServerErrorException(err.message);

@@ -88,6 +88,13 @@ export class OrderController {
     return await this.orderService.checkFraudSpy(body.phone);
   }
 
+  @Version(VERSION_NEUTRAL)
+  @Post('/repeat-customers')
+  @UseGuards(AdminJwtAuthGuard)
+  async getRepeatCustomers(): Promise<ResponsePayload> {
+    return await this.orderService.getRepeatCustomers();
+  }
+
   @Post('/add-order-by-user')
   @UsePipes(ValidationPipe)
   @UseGuards(UserJwtAuthGuard)

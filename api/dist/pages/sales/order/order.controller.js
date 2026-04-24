@@ -42,6 +42,9 @@ let OrderController = OrderController_1 = class OrderController {
     async checkFraudSpy(body) {
         return await this.orderService.checkFraudSpy(body.phone);
     }
+    async getRepeatCustomers() {
+        return await this.orderService.getRepeatCustomers();
+    }
     async addOrderByUser(addOrderDto, user) {
         return await this.orderService.addOrderByUser(addOrderDto, user);
     }
@@ -122,6 +125,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], OrderController.prototype, "checkFraudSpy", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Post)('/repeat-customers'),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "getRepeatCustomers", null);
 __decorate([
     (0, common_1.Post)('/add-order-by-user'),
     (0, common_1.UsePipes)(common_1.ValidationPipe),
