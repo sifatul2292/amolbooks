@@ -140,6 +140,65 @@
 <!--  <noscript><img height="1" width="1" style="display:none"-->
 <!--                 src="https://www.facebook.com/tr?id=1241342743955873&ev=PageView&noscript=1"-->
 <!--  /></noscript>-->
+<script>
+(function(){
+  window.dataLayer=window.dataLayer||[];
+  var _xhrOpen=XMLHttpRequest.prototype.open;
+  var _xhrSend=XMLHttpRequest.prototype.send;
+  function pushEvent(url,method,data,body){
+    try{
+      if(!data||!data.success)return;
+      // view_item
+      if(url.indexOf('/api/product/get-by-slug/')!==-1){
+        var p=data.data;
+        if(p)window.dataLayer.push({event:'view_item',ecommerce:{items:[{item_id:p._id,item_name:p.name||p.nameEn,item_category:p.category&&p.category.name,price:p.salePrice,currency:'BDT',quantity:1}]}});
+      }
+      // add_to_cart
+      if(url.indexOf('/api/cart/add-to-cart')!==-1&&method==='POST'){
+        var req={};try{req=JSON.parse(body);}catch(e){}
+        window.dataLayer.push({event:'add_to_cart',ecommerce:{items:[{item_id:req.product,quantity:req.selectedQty||1,currency:'BDT'}]}});
+      }
+      // view_cart + begin_checkout
+      if(url.indexOf('/api/cart/get-carts-by-user')!==-1&&data.data){
+        var cartItems=(data.data||[]).filter(function(i){return i.product;}).map(function(i){return{item_id:i.product&&i.product._id||i.product,item_name:i.product&&i.product.name,price:i.product&&i.product.salePrice,quantity:i.selectedQty||1,currency:'BDT'};});
+        if(cartItems.length>0){
+          window.dataLayer.push({event:'view_cart',ecommerce:{items:cartItems}});
+          if(window.location.href.indexOf('checkout')!==-1||window.location.href.indexOf('order')!==-1){
+            window.dataLayer.push({event:'begin_checkout',ecommerce:{items:cartItems}});
+          }
+        }
+      }
+      // purchase
+      if((url.indexOf('/api/order/add-order-by-user')!==-1||url.indexOf('/api/order/add-order-by-ano')!==-1)&&method==='POST'){
+        var order=data.data;
+        if(order)window.dataLayer.push({event:'purchase',ecommerce:{transaction_id:order._id,value:order.grandTotal,currency:'BDT',items:(order.orderedItems||[]).map(function(i){return{item_id:i._id,item_name:i.name,price:i.salePrice,quantity:i.quantity,currency:'BDT'};})}});
+      }
+    }catch(e){}
+  }
+  XMLHttpRequest.prototype.open=function(m,u){this._gm=m;this._gu=u;return _xhrOpen.apply(this,arguments);};
+  XMLHttpRequest.prototype.send=function(body){
+    var self=this;
+    self.addEventListener('load',function(){
+      try{
+        var data;try{data=JSON.parse(self.responseText);}catch(e){return;}
+        pushEvent(self._gu||'',((self._gm||'').toUpperCase()),data,body);
+      }catch(e){}
+    });
+    return _xhrSend.apply(this,arguments);
+  };
+  var _fetch=window.fetch;
+  window.fetch=function(url,opts){
+    return _fetch.apply(this,arguments).then(function(resp){
+      var u=typeof url==='string'?url:(url&&url.url)||'';
+      var m=opts&&opts.method?opts.method.toUpperCase():'GET';
+      if(u.indexOf('apisub.amolbooks.com/api/')!==-1){
+        resp.clone().json().then(function(data){pushEvent(u,m,data,opts&&opts.body);}).catch(function(){});
+      }
+      return resp;
+    });
+  };
+})();
+</script>
 <script src="runtime.deefcb56ab2829c1.js" type="module"></script><script src="polyfills.b72e2d7f79d77247.js" type="module"></script><script src="main.2db4411763e9d7e5.js" type="module"></script>
 
 
