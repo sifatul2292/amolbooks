@@ -27,6 +27,8 @@ async function bootstrap() {
             'https://adminsub.amolbooks.com',
             'https://uisub.amolbooks.com',
             'https://apisub.amolbooks.com',
+            'https://amolbooks.com',
+            'https://www.amolbooks.com',
         ],
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
         allowedHeaders: 'Content-Type,Authorization,administrator',

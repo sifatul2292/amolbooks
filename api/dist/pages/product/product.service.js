@@ -610,6 +610,10 @@ let ProductService = ProductService_1 = class ProductService {
                 .select(select)
                 .populate('tags');
             if (!data) {
+                const redirect = await this.redirectUrlModel.findOne({ fromUrl: slug });
+                if (redirect === null || redirect === void 0 ? void 0 : redirect.toUrl) {
+                    return { success: false, message: 'Redirect', redirectTo: redirect.toUrl };
+                }
                 return { success: false, message: 'Product not found', data: null };
             }
             let boughtTogetherProducts = [];

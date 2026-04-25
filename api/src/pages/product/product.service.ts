@@ -906,6 +906,10 @@ export class ProductService {
       // }
 
       if (!data) {
+        const redirect = await this.redirectUrlModel.findOne({ fromUrl: slug });
+        if (redirect?.toUrl) {
+          return { success: false, message: 'Redirect', redirectTo: redirect.toUrl } as any;
+        }
         return { success: false, message: 'Product not found', data: null } as ResponsePayload;
       }
       const BT_SELECT = '_id name slug images salePrice discountAmount';
