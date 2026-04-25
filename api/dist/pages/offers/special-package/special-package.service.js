@@ -185,8 +185,10 @@ let SpecialPackageService = SpecialPackageService_1 = class SpecialPackageServic
         }
     }
     async getSpecialPackageByIds(ids, select) {
+        if (!(ids === null || ids === void 0 ? void 0 : ids.ids) || ids.ids.length === 0) {
+            return { success: true, message: 'Success', data: [] };
+        }
         try {
-            console.log(ids);
             const mIds = ids.ids.map((m) => new ObjectId(m));
             const data = await this.specialPackageModel
                 .find({ _id: { $in: mIds } })

@@ -74,7 +74,7 @@ import { PreOrderModule } from './pages/pre-order/pre-order.module';
         serveRoot: '/invoice',
       },
       {
-        rootPath: join(__dirname, '..', 'ui', 'dist', 'angular-ui', 'browser'),
+        rootPath: join(__dirname, '..', '..', 'ui', 'dist', 'angular-ui', 'browser'),
         serveRoot: '/',
       },
     ),

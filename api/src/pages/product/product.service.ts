@@ -906,10 +906,6 @@ export class ProductService {
       // }
 
       if (!data) {
-        const redirect = await this.redirectUrlModel.findOne({ fromUrl: slug });
-        if (redirect?.toUrl) {
-          return { success: false, message: 'Redirect', redirectTo: redirect.toUrl } as any;
-        }
         return { success: false, message: 'Product not found', data: null } as ResponsePayload;
       }
       const BT_SELECT = '_id name slug images salePrice discountAmount';
@@ -1018,6 +1014,9 @@ export class ProductService {
     getProductByIdsDto: GetProductByIdsDto,
     select: string,
   ): Promise<ResponsePayload> {
+    if (!getProductByIdsDto.ids || getProductByIdsDto.ids.length === 0) {
+      return { success: true, message: 'Success', data: [] } as ResponsePayload;
+    }
     try {
       const mIds = getProductByIdsDto.ids.map((m) => new ObjectId(m));
       const data = await this.productModel.find({ _id: { $in: mIds } });

@@ -241,8 +241,10 @@ export class SpecialPackageService {
     ids: any,
     select: string,
   ): Promise<ResponsePayload> {
+    if (!ids?.ids || ids.ids.length === 0) {
+      return { success: true, message: 'Success', data: [] } as ResponsePayload;
+    }
     try {
-      console.log(ids);
       const mIds = ids.ids.map((m) => new ObjectId(m));
       // const data = await this.productModel.find({ _id: { $in: mIds } });
       const data: any[] = await this.specialPackageModel

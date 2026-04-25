@@ -84,7 +84,7 @@ AppModule = __decorate([
                 rootPath: (0, path_1.join)(__dirname, '..', 'upload', 'invoice'),
                 serveRoot: '/invoice',
             }, {
-                rootPath: (0, path_1.join)(__dirname, '..', 'ui', 'dist', 'angular-ui', 'browser'),
+                rootPath: (0, path_1.join)(__dirname, '..', '..', 'ui', 'dist', 'angular-ui', 'browser'),
                 serveRoot: '/',
             }),
             config_1.ConfigModule.forRoot({

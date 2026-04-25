@@ -610,10 +610,6 @@ let ProductService = ProductService_1 = class ProductService {
                 .select(select)
                 .populate('tags');
             if (!data) {
-                const redirect = await this.redirectUrlModel.findOne({ fromUrl: slug });
-                if (redirect === null || redirect === void 0 ? void 0 : redirect.toUrl) {
-                    return { success: false, message: 'Redirect', redirectTo: redirect.toUrl };
-                }
                 return { success: false, message: 'Product not found', data: null };
             }
             let boughtTogetherProducts = [];
@@ -651,6 +647,9 @@ let ProductService = ProductService_1 = class ProductService {
         }
     }
     async getProductByIds(getProductByIdsDto, select) {
+        if (!getProductByIdsDto.ids || getProductByIdsDto.ids.length === 0) {
+            return { success: true, message: 'Success', data: [] };
+        }
         try {
             const mIds = getProductByIdsDto.ids.map((m) => new ObjectId(m));
             const data = await this.productModel.find({ _id: { $in: mIds } });
