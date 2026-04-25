@@ -151,27 +151,27 @@
       // view_item
       if(url.indexOf('/api/product/get-by-slug/')!==-1){
         var p=data.data;
-        if(p)window.dataLayer.push({event:'view_item',ecommerce:{items:[{item_id:p._id,item_name:p.name||p.nameEn,item_category:p.category&&p.category.name,price:p.salePrice,currency:'BDT',quantity:1}]}});
+        if(p)window.dataLayer.push({event:'view_item_stape',ecommerce:{items:[{item_id:p._id,item_name:p.name||p.nameEn,item_category:p.category&&p.category.name,price:p.salePrice,currency:'BDT',quantity:1}]}});
       }
       // add_to_cart
       if(url.indexOf('/api/cart/add-to-cart')!==-1&&method==='POST'){
         var req={};try{req=JSON.parse(body);}catch(e){}
-        window.dataLayer.push({event:'add_to_cart',ecommerce:{items:[{item_id:req.product,quantity:req.selectedQty||1,currency:'BDT'}]}});
+        window.dataLayer.push({event:'add_to_cart_stape',ecommerce:{items:[{item_id:req.product,quantity:req.selectedQty||1,currency:'BDT'}]}});
       }
       // view_cart + begin_checkout
       if(url.indexOf('/api/cart/get-carts-by-user')!==-1&&data.data){
         var cartItems=(data.data||[]).filter(function(i){return i.product;}).map(function(i){return{item_id:i.product&&i.product._id||i.product,item_name:i.product&&i.product.name,price:i.product&&i.product.salePrice,quantity:i.selectedQty||1,currency:'BDT'};});
         if(cartItems.length>0){
-          window.dataLayer.push({event:'view_cart',ecommerce:{items:cartItems}});
+          window.dataLayer.push({event:'view_cart_stape',ecommerce:{items:cartItems}});
           if(window.location.href.indexOf('checkout')!==-1||window.location.href.indexOf('order')!==-1){
-            window.dataLayer.push({event:'begin_checkout',ecommerce:{items:cartItems}});
+            window.dataLayer.push({event:'begin_checkout_stape',ecommerce:{items:cartItems}});
           }
         }
       }
       // purchase
       if((url.indexOf('/api/order/add-order-by-user')!==-1||url.indexOf('/api/order/add-order-by-ano')!==-1)&&method==='POST'){
         var order=data.data;
-        if(order)window.dataLayer.push({event:'purchase',ecommerce:{transaction_id:order._id,value:order.grandTotal,currency:'BDT',items:(order.orderedItems||[]).map(function(i){return{item_id:i._id,item_name:i.name,price:i.salePrice,quantity:i.quantity,currency:'BDT'};})}});
+        if(order)window.dataLayer.push({event:'purchase_stape',ecommerce:{transaction_id:order._id,value:order.grandTotal,currency:'BDT',items:(order.orderedItems||[]).map(function(i){return{item_id:i._id,item_name:i.name,price:i.salePrice,quantity:i.quantity,currency:'BDT'};})}});
       }
     }catch(e){}
   }
