@@ -83,9 +83,6 @@ AppModule = __decorate([
             serve_static_1.ServeStaticModule.forRoot({
                 rootPath: (0, path_1.join)(__dirname, '..', 'upload', 'invoice'),
                 serveRoot: '/invoice',
-            }, {
-                rootPath: (0, path_1.join)(__dirname, '..', '..', 'ui', 'dist', 'angular-ui', 'browser'),
-                serveRoot: '/',
             }),
             config_1.ConfigModule.forRoot({
                 load: [configuration_1.default],

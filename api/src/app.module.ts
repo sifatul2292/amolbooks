@@ -73,10 +73,6 @@ import { PreOrderModule } from './pages/pre-order/pre-order.module';
         rootPath: join(__dirname, '..', 'upload', 'invoice'),
         serveRoot: '/invoice',
       },
-      {
-        rootPath: join(__dirname, '..', '..', 'ui', 'dist', 'angular-ui', 'browser'),
-        serveRoot: '/',
-      },
     ),
     ConfigModule.forRoot({
       load: [configuration],
