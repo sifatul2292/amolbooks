@@ -912,13 +912,25 @@ export class ProductService {
       let boughtTogetherProducts: any[] = [];
       const productIds = (data as any).boughtTogetherIds as string[];
       if (productIds && productIds.length > 0) {
-        const mIds = productIds.slice(0, 3)
+        // Fetch up to 2 per-product selections (current product occupies slot 1)
+        const mIds = productIds.slice(0, 2)
           .filter((id) => ObjectId.isValid(id))
           .map((id) => new ObjectId(id));
-        boughtTogetherProducts = await this.productModel
+        const perItems = await this.productModel
           .find({ _id: { $in: mIds } })
           .select(BT_SELECT)
-          .limit(3);
+          .limit(2);
+        // Build a plain object for the current product with only the BT fields
+        const selfRaw = (data as any).toObject ? (data as any).toObject() : (data as any);
+        const self = {
+          _id: selfRaw._id,
+          name: selfRaw.name,
+          slug: selfRaw.slug,
+          images: selfRaw.images,
+          salePrice: selfRaw.salePrice,
+          discountAmount: selfRaw.discountAmount,
+        };
+        boughtTogetherProducts = [self, ...perItems];
       } else {
         const globalConfig = await this.boughtTogetherConfigModel.findOne();
         if (globalConfig?.productIds?.length > 0) {
@@ -950,9 +962,14 @@ export class ProductService {
         const productDoc = await this.productModel.findOne({ slug: productSlug }).select('boughtTogetherIds _id');
         const perProductIds: string[] = (productDoc as any)?.boughtTogetherIds ?? [];
         if (perProductIds.length > 0) {
-          // Fill remaining slots from global config if per-product has fewer than 3
-          const remaining = globalIds.filter((id) => !perProductIds.includes(id));
-          finalIds = [...perProductIds, ...remaining].slice(0, 3);
+          // Current product first, then per-product selections (total 3)
+          const currentId = (productDoc as any)._id.toString();
+          const perPart = perProductIds.slice(0, 2); // max 2 per-product alongside current product
+          const slotsLeft = 3 - 1 - perPart.length;
+          const globalFill = slotsLeft > 0
+            ? globalIds.filter((id) => !perProductIds.includes(id) && id !== currentId).slice(0, slotsLeft)
+            : [];
+          finalIds = [currentId, ...perPart, ...globalFill];
         }
       }
 
@@ -965,7 +982,10 @@ export class ProductService {
       }
 
       const mIds = finalIds.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
-      const products = await this.productModel.find({ _id: { $in: mIds } }).select(BT_SELECT);
+      const rawProducts = await this.productModel.find({ _id: { $in: mIds } }).select(BT_SELECT);
+      // Sort by finalIds order so current product is always first
+      const productMap = new Map(rawProducts.map((p: any) => [p._id.toString(), p]));
+      const products = finalIds.map((id) => productMap.get(id)).filter(Boolean);
       return { success: true, message: 'Success', data: { productIds: finalIds, products } } as ResponsePayload;
     } catch (err) {
       throw new InternalServerErrorException(err.message);

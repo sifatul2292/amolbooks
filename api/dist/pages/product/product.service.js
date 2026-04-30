@@ -617,13 +617,23 @@ let ProductService = ProductService_1 = class ProductService {
             let boughtTogetherProducts = [];
             const productIds = data.boughtTogetherIds;
             if (productIds && productIds.length > 0) {
-                const mIds = productIds.slice(0, 3)
+                const mIds = productIds.slice(0, 2)
                     .filter((id) => ObjectId.isValid(id))
                     .map((id) => new ObjectId(id));
-                boughtTogetherProducts = await this.productModel
+                const perItems = await this.productModel
                     .find({ _id: { $in: mIds } })
                     .select(BT_SELECT)
-                    .limit(3);
+                    .limit(2);
+                const selfRaw = data.toObject ? data.toObject() : data;
+                const self = {
+                    _id: selfRaw._id,
+                    name: selfRaw.name,
+                    slug: selfRaw.slug,
+                    images: selfRaw.images,
+                    salePrice: selfRaw.salePrice,
+                    discountAmount: selfRaw.discountAmount,
+                };
+                boughtTogetherProducts = [self, ...perItems];
             }
             else {
                 const globalConfig = await this.boughtTogetherConfigModel.findOne();
@@ -655,8 +665,13 @@ let ProductService = ProductService_1 = class ProductService {
                 const productDoc = await this.productModel.findOne({ slug: productSlug }).select('boughtTogetherIds _id');
                 const perProductIds = (_b = productDoc === null || productDoc === void 0 ? void 0 : productDoc.boughtTogetherIds) !== null && _b !== void 0 ? _b : [];
                 if (perProductIds.length > 0) {
-                    const remaining = globalIds.filter((id) => !perProductIds.includes(id));
-                    finalIds = [...perProductIds, ...remaining].slice(0, 3);
+                    const currentId = productDoc._id.toString();
+                    const perPart = perProductIds.slice(0, 2);
+                    const slotsLeft = 3 - 1 - perPart.length;
+                    const globalFill = slotsLeft > 0
+                        ? globalIds.filter((id) => !perProductIds.includes(id) && id !== currentId).slice(0, slotsLeft)
+                        : [];
+                    finalIds = [currentId, ...perPart, ...globalFill];
                 }
             }
             if (!finalIds.length) {
@@ -666,7 +681,9 @@ let ProductService = ProductService_1 = class ProductService {
                 return { success: true, message: 'No bought-together configured', data: { productIds: [], products: [] } };
             }
             const mIds = finalIds.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
-            const products = await this.productModel.find({ _id: { $in: mIds } }).select(BT_SELECT);
+            const rawProducts = await this.productModel.find({ _id: { $in: mIds } }).select(BT_SELECT);
+            const productMap = new Map(rawProducts.map((p) => [p._id.toString(), p]));
+            const products = finalIds.map((id) => productMap.get(id)).filter(Boolean);
             return { success: true, message: 'Success', data: { productIds: finalIds, products } };
         }
         catch (err) {
