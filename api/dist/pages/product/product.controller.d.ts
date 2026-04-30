@@ -18,6 +18,11 @@ export declare class ProductController {
         ids: string[];
         limit: number;
     }): Promise<ResponsePayload>;
+    getBoughtTogetherProducts(productSlug: string): Promise<ResponsePayload>;
+    setBoughtTogetherProducts(body: {
+        productIds: string[];
+    }): Promise<ResponsePayload>;
+    getBoughtTogetherByProduct(id: string): Promise<ResponsePayload>;
     getProductById(id: string, select: string): Promise<ResponsePayload>;
     getProductBySlug(slug: string, select: string): Promise<ResponsePayload>;
     updateProductById(id: string, updateProductDto: UpdateProductDto): Promise<ResponsePayload>;

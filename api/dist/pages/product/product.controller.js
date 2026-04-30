@@ -51,6 +51,15 @@ let ProductController = ProductController_1 = class ProductController {
     async getRelatedProductsByMultiCategoryId(body) {
         return await this.productService.getRelatedProductsByMultiCategoryId(body);
     }
+    async getBoughtTogetherProducts(productSlug) {
+        return await this.productService.getBoughtTogetherProducts(productSlug);
+    }
+    async setBoughtTogetherProducts(body) {
+        return await this.productService.setBoughtTogetherProducts(body.productIds);
+    }
+    async getBoughtTogetherByProduct(id) {
+        return await this.productService.getBoughtTogetherByProduct(id);
+    }
     async getProductById(id, select) {
         if (id === 'get-bought-together') {
             return await this.productService.getBoughtTogetherProducts();
@@ -77,15 +86,6 @@ let ProductController = ProductController_1 = class ProductController {
     }
     async setProductImageHttpToHttps() {
         return await this.productService.setProductImageHttpToHttps();
-    }
-    async getBoughtTogetherProducts(productSlug) {
-        return await this.productService.getBoughtTogetherProducts(productSlug);
-    }
-    async setBoughtTogetherProducts(body) {
-        return await this.productService.setBoughtTogetherProducts(body.productIds);
-    }
-    async getBoughtTogetherByProduct(id) {
-        return await this.productService.getBoughtTogetherByProduct(id);
     }
 };
 __decorate([

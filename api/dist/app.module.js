@@ -12,6 +12,7 @@ const banner_carosel_module_1 = require("./pages/customization/banner/banner-car
 const common_1 = require("@nestjs/common");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
+const seo_bot_middleware_1 = require("./middleware/seo-bot.middleware");
 const config_1 = require("@nestjs/config");
 const configuration_1 = require("./config/configuration");
 const mongoose_1 = require("@nestjs/mongoose");
@@ -76,6 +77,11 @@ const gtm_module_1 = require("./pages/gtm/gtm.module");
 const courier_module_1 = require("./shared/courier/courier.module");
 const pre_order_module_1 = require("./pages/pre-order/pre-order.module");
 let AppModule = class AppModule {
+    configure(consumer) {
+        consumer
+            .apply(seo_bot_middleware_1.SeoBotMiddleware)
+            .forRoutes('product-details/*');
+    }
 };
 AppModule = __decorate([
     (0, common_1.Module)({
@@ -83,6 +89,10 @@ AppModule = __decorate([
             serve_static_1.ServeStaticModule.forRoot({
                 rootPath: (0, path_1.join)(__dirname, '..', 'upload', 'invoice'),
                 serveRoot: '/invoice',
+            }, {
+                rootPath: (0, path_1.join)(__dirname, '..', '..', 'ui', 'dist', 'angular-ui', 'browser'),
+                exclude: ['/api/(.*)'],
+                serveStaticOptions: { index: false },
             }),
             config_1.ConfigModule.forRoot({
                 load: [configuration_1.default],
@@ -154,7 +164,7 @@ AppModule = __decorate([
             pre_order_module_1.PreOrderModule,
         ],
         controllers: [app_controller_1.AppController],
-        providers: [app_service_1.AppService],
+        providers: [app_service_1.AppService, seo_bot_middleware_1.SeoBotMiddleware],
     })
 ], AppModule);
 exports.AppModule = AppModule;

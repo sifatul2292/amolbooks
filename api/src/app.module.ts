@@ -1,8 +1,9 @@
 import { ProductModule } from './pages/product/product.module';
 import { BannerCaroselModule } from './pages/customization/banner/banner-carosel.module';
-import { CacheModule, Module } from '@nestjs/common';
+import { CacheModule, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { SeoBotMiddleware } from './middleware/seo-bot.middleware';
 import { ConfigModule } from '@nestjs/config';
 import configuration from './config/configuration';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -72,6 +73,14 @@ import { PreOrderModule } from './pages/pre-order/pre-order.module';
       {
         rootPath: join(__dirname, '..', 'upload', 'invoice'),
         serveRoot: '/invoice',
+      },
+      // Serve the Angular SPA for all non-API routes.
+      // Bots hitting /product-details/:slug are intercepted first by
+      // SeoBotMiddleware before reaching ServeStatic.
+      {
+        rootPath: join(__dirname, '..', '..', 'ui', 'dist', 'angular-ui', 'browser'),
+        exclude: ['/api/(.*)'],
+        serveStaticOptions: { index: false },
       },
     ),
     ConfigModule.forRoot({
@@ -144,6 +153,14 @@ import { PreOrderModule } from './pages/pre-order/pre-order.module';
     PreOrderModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, SeoBotMiddleware],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    // Apply bot-detection middleware to all product-detail routes.
+    // Bots get OG-tagged HTML; regular browsers fall through to the Angular SPA.
+    consumer
+      .apply(SeoBotMiddleware)
+      .forRoutes('product-details/*');
+  }
+}

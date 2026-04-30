@@ -43,6 +43,7 @@ export declare class OrderService {
     addOrderByAnonymous(addOrderDto: AddOrderDto): Promise<ResponsePayload>;
     updateDate(): Promise<ResponsePayload>;
     checkFraudSpy(phoneNo: string): Promise<ResponsePayload>;
+    getRepeatCustomers(): Promise<ResponsePayload>;
     private buildInvoicePayload;
     generateInvoicesByIds(ids: string[]): Promise<ResponsePayload>;
     generateInvoiceById(shop: string, id: string): Promise<ResponsePayload>;
@@ -54,6 +55,7 @@ export declare class OrderService {
     getOrderById(id: string, select: string): Promise<ResponsePayload>;
     updateOrderById(id: string, updateOrderDto: UpdateOrderDto): Promise<ResponsePayload>;
     updateMultipleOrderById(ids: string[], updateOrderDto: UpdateOrderDto): Promise<ResponsePayload>;
+    sendToCourier(id: string): Promise<ResponsePayload>;
     private addSingleOrderToCourier;
     getOrderItemProductNames(orderItems: any[]): string;
     private addMultipleOrderToCourier;

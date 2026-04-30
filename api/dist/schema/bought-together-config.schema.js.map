@@ -1,0 +1,1 @@
+{"version":3,"file":"bought-together-config.schema.js","sourceRoot":"","sources":["../../src/schema/bought-together-config.schema.ts"],"names":[],"mappings":";;;AAAA,qCAAqC;AAExB,QAAA,0BAA0B,GAAG,IAAI,QAAQ,CAAC,MAAM,CAC3D;IACE,UAAU,EAAE,EAAE,IAAI,EAAE,CAAC,MAAM,CAAC,EAAE,QAAQ,EAAE,IAAI,EAAE,OAAO,EAAE,EAAE,EAAE;CAC5D,EACD,EAAE,UAAU,EAAE,KAAK,EAAE,UAAU,EAAE,IAAI,EAAE,CACxC,CAAC"}

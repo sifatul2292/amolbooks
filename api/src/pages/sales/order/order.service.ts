@@ -447,7 +447,7 @@ export class OrderService {
   async getRepeatCustomers(): Promise<ResponsePayload> {
     try {
       const data = await this.orderModel.aggregate([
-        { $match: { phoneNo: { $exists: true, $ne: null, $ne: '' } } },
+        { $match: { phoneNo: { $exists: true, $not: { $in: [null, ''] } } } },
         { $group: { _id: '$phoneNo', count: { $sum: 1 } } },
         { $match: { count: { $gt: 1 } } },
         { $project: { _id: 0, phoneNo: '$_id', count: 1 } },

@@ -603,8 +603,9 @@ let ProductService = ProductService_1 = class ProductService {
         return { updated: true };
     }
     async getProductBySlug(slug, select) {
+        var _a;
         try {
-            const BT_SELECT = '_id name slug images salePrice discountAmount';
+            let productById;
             const data = await this.productModel
                 .findOne({ slug: slug })
                 .select(select)
@@ -612,6 +613,7 @@ let ProductService = ProductService_1 = class ProductService {
             if (!data) {
                 return { success: false, message: 'Product not found', data: null };
             }
+            const BT_SELECT = '_id name slug images salePrice discountAmount';
             let boughtTogetherProducts = [];
             const productIds = data.boughtTogetherIds;
             if (productIds && productIds.length > 0) {
@@ -625,7 +627,7 @@ let ProductService = ProductService_1 = class ProductService {
             }
             else {
                 const globalConfig = await this.boughtTogetherConfigModel.findOne();
-                if (globalConfig && globalConfig.productIds && globalConfig.productIds.length > 0) {
+                if (((_a = globalConfig === null || globalConfig === void 0 ? void 0 : globalConfig.productIds) === null || _a === void 0 ? void 0 : _a.length) > 0) {
                     const mIds = globalConfig.productIds.slice(0, 3)
                         .filter((id) => ObjectId.isValid(id))
                         .map((id) => new ObjectId(id));
@@ -636,11 +638,76 @@ let ProductService = ProductService_1 = class ProductService {
                 }
             }
             const responseData = Object.assign(Object.assign({}, data.toObject()), { boughtTogetherProducts });
-            return {
-                success: true,
-                message: 'Success',
-                data: responseData,
-            };
+            return { success: true, message: 'Success', data: responseData };
+        }
+        catch (err) {
+            throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
+    async getBoughtTogetherProducts(productSlug) {
+        var _a, _b;
+        try {
+            const BT_SELECT = '_id name slug images salePrice discountAmount discountType discountPercent costPrice quantity weight ratingAverage ratingCount';
+            const config = await this.boughtTogetherConfigModel.findOne({});
+            const globalIds = (_a = config === null || config === void 0 ? void 0 : config.productIds) !== null && _a !== void 0 ? _a : [];
+            let finalIds = [];
+            if (productSlug) {
+                const productDoc = await this.productModel.findOne({ slug: productSlug }).select('boughtTogetherIds _id');
+                const perProductIds = (_b = productDoc === null || productDoc === void 0 ? void 0 : productDoc.boughtTogetherIds) !== null && _b !== void 0 ? _b : [];
+                if (perProductIds.length > 0) {
+                    const remaining = globalIds.filter((id) => !perProductIds.includes(id));
+                    finalIds = [...perProductIds, ...remaining].slice(0, 3);
+                }
+            }
+            if (!finalIds.length) {
+                finalIds = globalIds.slice(0, 3);
+            }
+            if (!finalIds.length) {
+                return { success: true, message: 'No bought-together configured', data: { productIds: [], products: [] } };
+            }
+            const mIds = finalIds.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
+            const products = await this.productModel.find({ _id: { $in: mIds } }).select(BT_SELECT);
+            return { success: true, message: 'Success', data: { productIds: finalIds, products } };
+        }
+        catch (err) {
+            throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
+    async setBoughtTogetherProducts(productIds) {
+        try {
+            const clean = [...new Set(productIds)].filter((id) => ObjectId.isValid(id)).slice(0, 3);
+            const existing = await this.boughtTogetherConfigModel.findOne({});
+            if (existing) {
+                await this.boughtTogetherConfigModel.findByIdAndUpdate(existing._id, { $set: { productIds: clean } });
+            }
+            else {
+                await this.boughtTogetherConfigModel.create({ productIds: clean });
+            }
+            return { success: true, message: 'Bought together updated successfully' };
+        }
+        catch (err) {
+            throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
+    async getBoughtTogetherByProduct(productId) {
+        var _a, _b;
+        try {
+            const BT_SELECT = '_id name slug images salePrice discountAmount discountType discountPercent costPrice quantity weight ratingAverage ratingCount';
+            const product = await this.productModel.findById(productId).select('boughtTogetherIds');
+            const perProductIds = (_a = product === null || product === void 0 ? void 0 : product.boughtTogetherIds) !== null && _a !== void 0 ? _a : [];
+            if (perProductIds.length > 0) {
+                const mIds = perProductIds.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
+                const products = await this.productModel.find({ _id: { $in: mIds } }).select(BT_SELECT);
+                return { success: true, message: 'Success', data: { source: 'product', productIds: perProductIds, products } };
+            }
+            const config = await this.boughtTogetherConfigModel.findOne({});
+            const globalIds = (_b = config === null || config === void 0 ? void 0 : config.productIds) !== null && _b !== void 0 ? _b : [];
+            if (!globalIds.length) {
+                return { success: true, message: 'No bought-together configured', data: { source: 'global', productIds: [], products: [] } };
+            }
+            const mGlobalIds = globalIds.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
+            const products = await this.productModel.find({ _id: { $in: mGlobalIds } }).select(BT_SELECT);
+            return { success: true, message: 'Success', data: { source: 'global', productIds: globalIds, products } };
         }
         catch (err) {
             throw new common_1.InternalServerErrorException(err.message);
@@ -847,83 +914,6 @@ let ProductService = ProductService_1 = class ProductService {
                 message: 'Success',
                 data: data,
             };
-        }
-        catch (err) {
-            throw new common_1.InternalServerErrorException(err.message);
-        }
-    }
-    async getBoughtTogetherProducts(productSlug) {
-        var _a;
-        try {
-            const BT_SELECT = '_id name slug images salePrice discountAmount discountType discountPercent costPrice quantity weight ratingAverage ratingCount';
-            const config = await this.boughtTogetherConfigModel.findOne({});
-            const globalIds = (_a = config === null || config === void 0 ? void 0 : config.productIds) !== null && _a !== void 0 ? _a : [];
-            let finalIds = [];
-            if (productSlug) {
-                const productDoc = await this.productModel.findOne({ slug: productSlug }).select('boughtTogetherIds _id');
-                const perProductIds = (productDoc === null || productDoc === void 0 ? void 0 : productDoc.boughtTogetherIds) || [];
-                if (perProductIds.length > 0) {
-                    const remaining = globalIds.filter((id) => !perProductIds.includes(id));
-                    finalIds = [...perProductIds, ...remaining].slice(0, 3);
-                }
-            }
-            if (!finalIds.length) {
-                finalIds = globalIds.slice(0, 3);
-            }
-            if (!finalIds.length) {
-                return { success: true, message: 'No bought-together configured', data: { productIds: [], products: [] } };
-            }
-            const mIds = finalIds
-                .filter((id) => ObjectId.isValid(id))
-                .map((id) => new ObjectId(id));
-            const products = await this.productModel
-                .find({ _id: { $in: mIds } })
-                .select(BT_SELECT);
-            return { success: true, message: 'Success', data: { productIds: finalIds, products } };
-        }
-        catch (err) {
-            throw new common_1.InternalServerErrorException(err.message);
-        }
-    }
-    async setBoughtTogetherProducts(productIds) {
-        try {
-            const clean = [...new Set(productIds)].filter((id) => ObjectId.isValid(id)).slice(0, 3);
-            const existing = await this.boughtTogetherConfigModel.findOne({});
-            if (existing) {
-                await this.boughtTogetherConfigModel.findByIdAndUpdate(existing._id, { $set: { productIds: clean } });
-            }
-            else {
-                await this.boughtTogetherConfigModel.create({ productIds: clean });
-            }
-            return { success: true, message: 'Bought together updated successfully' };
-        }
-        catch (err) {
-            throw new common_1.InternalServerErrorException(err.message);
-        }
-    }
-    async getBoughtTogetherByProduct(productId) {
-        var _a, _b;
-        try {
-            const BT_SELECT = '_id name slug images salePrice discountAmount discountType discountPercent costPrice quantity weight ratingAverage ratingCount';
-            const product = await this.productModel.findById(productId).select('boughtTogetherIds');
-            const perProductIds = (_a = product === null || product === void 0 ? void 0 : product.boughtTogetherIds) !== null && _a !== void 0 ? _a : [];
-            if (perProductIds.length > 0) {
-                const mIds = perProductIds.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
-                const products = await this.productModel
-                    .find({ _id: { $in: mIds } })
-                    .select(BT_SELECT);
-                return { success: true, message: 'Success', data: { source: 'product', productIds: perProductIds, products } };
-            }
-            const config = await this.boughtTogetherConfigModel.findOne({});
-            const globalIds = (_b = config === null || config === void 0 ? void 0 : config.productIds) !== null && _b !== void 0 ? _b : [];
-            if (!globalIds.length) {
-                return { success: true, message: 'No bought-together configured', data: { source: 'global', productIds: [], products: [] } };
-            }
-            const mGlobalIds = globalIds.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
-            const products = await this.productModel
-                .find({ _id: { $in: mGlobalIds } })
-                .select(BT_SELECT);
-            return { success: true, message: 'Success', data: { source: 'global', productIds: globalIds, products } };
         }
         catch (err) {
             throw new common_1.InternalServerErrorException(err.message);
