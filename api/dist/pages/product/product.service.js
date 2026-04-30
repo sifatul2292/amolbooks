@@ -654,13 +654,22 @@ let ProductService = ProductService_1 = class ProductService {
             else {
                 const globalConfig = await this.boughtTogetherConfigModel.findOne();
                 if (((_b = globalConfig === null || globalConfig === void 0 ? void 0 : globalConfig.productIds) === null || _b === void 0 ? void 0 : _b.length) > 0) {
-                    const mIds = globalConfig.productIds.slice(0, 3)
-                        .filter((id) => ObjectId.isValid(id))
+                    const selfRaw2 = data.toObject ? data.toObject() : data;
+                    const selfId2 = selfRaw2._id.toString();
+                    const mIds = globalConfig.productIds
+                        .filter((id) => ObjectId.isValid(id) && id !== selfId2)
+                        .slice(0, 2)
                         .map((id) => new ObjectId(id));
-                    boughtTogetherProducts = await this.productModel
-                        .find({ _id: { $in: mIds, $ne: data._id } })
-                        .select(BT_SELECT)
-                        .limit(3);
+                    const others = await this.productModel.find({ _id: { $in: mIds } }).select(BT_SELECT).limit(2);
+                    const self2 = {
+                        _id: selfRaw2._id,
+                        name: selfRaw2.name,
+                        slug: selfRaw2.slug,
+                        images: selfRaw2.images,
+                        salePrice: selfRaw2.salePrice,
+                        discountAmount: selfRaw2.discountAmount,
+                    };
+                    boughtTogetherProducts = [self2, ...others];
                 }
             }
             const responseData = Object.assign(Object.assign({}, data.toObject()), { boughtTogetherProducts });
@@ -680,14 +689,18 @@ let ProductService = ProductService_1 = class ProductService {
             if (productSlug) {
                 const productDoc = await this.productModel.findOne({ slug: productSlug }).select('boughtTogetherIds _id');
                 const perProductIds = (_b = productDoc === null || productDoc === void 0 ? void 0 : productDoc.boughtTogetherIds) !== null && _b !== void 0 ? _b : [];
+                const currentId = productDoc === null || productDoc === void 0 ? void 0 : productDoc._id.toString();
                 if (perProductIds.length > 0) {
-                    const currentId = productDoc._id.toString();
                     const perPart = perProductIds.slice(0, 2);
                     const slotsLeft = 3 - 1 - perPart.length;
                     const globalFill = slotsLeft > 0
                         ? globalIds.filter((id) => !perProductIds.includes(id) && id !== currentId).slice(0, slotsLeft)
                         : [];
                     finalIds = [currentId, ...perPart, ...globalFill];
+                }
+                else if (currentId) {
+                    const globalFill = globalIds.filter((id) => id !== currentId).slice(0, 2);
+                    finalIds = [currentId, ...globalFill];
                 }
             }
             if (!finalIds.length) {

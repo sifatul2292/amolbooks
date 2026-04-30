@@ -951,13 +951,22 @@ export class ProductService {
       } else {
         const globalConfig = await this.boughtTogetherConfigModel.findOne();
         if (globalConfig?.productIds?.length > 0) {
-          const mIds = globalConfig.productIds.slice(0, 3)
-            .filter((id: string) => ObjectId.isValid(id))
+          const selfRaw2 = (data as any).toObject ? (data as any).toObject() : (data as any);
+          const selfId2 = selfRaw2._id.toString();
+          const mIds = globalConfig.productIds
+            .filter((id: string) => ObjectId.isValid(id) && id !== selfId2)
+            .slice(0, 2)
             .map((id: string) => new ObjectId(id));
-          boughtTogetherProducts = await this.productModel
-            .find({ _id: { $in: mIds, $ne: (data as any)._id } })
-            .select(BT_SELECT)
-            .limit(3);
+          const others = await this.productModel.find({ _id: { $in: mIds } }).select(BT_SELECT).limit(2);
+          const self2 = {
+            _id: selfRaw2._id,
+            name: selfRaw2.name,
+            slug: selfRaw2.slug,
+            images: selfRaw2.images,
+            salePrice: selfRaw2.salePrice,
+            discountAmount: selfRaw2.discountAmount,
+          };
+          boughtTogetherProducts = [self2, ...others];
         }
       }
       const responseData = { ...(data as any).toObject(), boughtTogetherProducts };
@@ -978,15 +987,19 @@ export class ProductService {
       if (productSlug) {
         const productDoc = await this.productModel.findOne({ slug: productSlug }).select('boughtTogetherIds _id');
         const perProductIds: string[] = (productDoc as any)?.boughtTogetherIds ?? [];
+        const currentId: string | undefined = (productDoc as any)?._id?.toString();
         if (perProductIds.length > 0) {
           // Current product first, then per-product selections (total 3)
-          const currentId = (productDoc as any)._id.toString();
-          const perPart = perProductIds.slice(0, 2); // max 2 per-product alongside current product
+          const perPart = perProductIds.slice(0, 2);
           const slotsLeft = 3 - 1 - perPart.length;
           const globalFill = slotsLeft > 0
             ? globalIds.filter((id) => !perProductIds.includes(id) && id !== currentId).slice(0, slotsLeft)
             : [];
           finalIds = [currentId, ...perPart, ...globalFill];
+        } else if (currentId) {
+          // No per-product config — still put current product first, fill rest from global
+          const globalFill = globalIds.filter((id) => id !== currentId).slice(0, 2);
+          finalIds = [currentId, ...globalFill];
         }
       }
 
