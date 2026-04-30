@@ -62,7 +62,7 @@ let ProductController = ProductController_1 = class ProductController {
     }
     async getProductById(id, select) {
         if (id === 'get-bought-together') {
-            return await this.productService.getBoughtTogetherProducts();
+            return await this.productService.getBoughtTogetherProducts(select && select.productSlug);
         }
         return await this.productService.getProductById(id, select);
     }

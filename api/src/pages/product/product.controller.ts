@@ -157,10 +157,12 @@ export class ProductController {
   @Get('/:id')
   async getProductById(
     @Param('id') id: string,
-    @Query() select: string,
+    @Query() select: any,
   ): Promise<ResponsePayload> {
     if (id === 'get-bought-together') {
-      return await this.productService.getBoughtTogetherProducts();
+      // Fallback: /:id sometimes intercepts /get-bought-together.
+      // Pass the productSlug query param so per-product items are returned.
+      return await this.productService.getBoughtTogetherProducts(select?.productSlug);
     }
     return await this.productService.getProductById(id, select);
   }
