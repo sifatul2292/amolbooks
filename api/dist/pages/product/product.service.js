@@ -603,7 +603,7 @@ let ProductService = ProductService_1 = class ProductService {
         return { updated: true };
     }
     async getProductBySlug(slug, select) {
-        var _a;
+        var _a, _b;
         try {
             let productById;
             const data = await this.productModel
@@ -617,14 +617,30 @@ let ProductService = ProductService_1 = class ProductService {
             let boughtTogetherProducts = [];
             const productIds = data.boughtTogetherIds;
             if (productIds && productIds.length > 0) {
+                const selfRaw = data.toObject ? data.toObject() : data;
+                const selfId = selfRaw._id.toString();
                 const mIds = productIds.slice(0, 2)
                     .filter((id) => ObjectId.isValid(id))
                     .map((id) => new ObjectId(id));
-                const perItems = await this.productModel
+                let perItems = await this.productModel
                     .find({ _id: { $in: mIds } })
                     .select(BT_SELECT)
                     .limit(2);
-                const selfRaw = data.toObject ? data.toObject() : data;
+                if (perItems.length < 2) {
+                    const slotsLeft = 2 - perItems.length;
+                    const usedIds = new Set([selfId, ...perItems.map((p) => p._id.toString())]);
+                    const globalConfig = await this.boughtTogetherConfigModel.findOne();
+                    if (((_a = globalConfig === null || globalConfig === void 0 ? void 0 : globalConfig.productIds) === null || _a === void 0 ? void 0 : _a.length) > 0) {
+                        const fillIds = globalConfig.productIds
+                            .filter((id) => ObjectId.isValid(id) && !usedIds.has(id))
+                            .slice(0, slotsLeft)
+                            .map((id) => new ObjectId(id));
+                        if (fillIds.length > 0) {
+                            const fillItems = await this.productModel.find({ _id: { $in: fillIds } }).select(BT_SELECT);
+                            perItems = [...perItems, ...fillItems];
+                        }
+                    }
+                }
                 const self = {
                     _id: selfRaw._id,
                     name: selfRaw.name,
@@ -633,11 +649,11 @@ let ProductService = ProductService_1 = class ProductService {
                     salePrice: selfRaw.salePrice,
                     discountAmount: selfRaw.discountAmount,
                 };
-                boughtTogetherProducts = [self, ...perItems];
+                boughtTogetherProducts = [self, ...perItems.slice(0, 2)];
             }
             else {
                 const globalConfig = await this.boughtTogetherConfigModel.findOne();
-                if (((_a = globalConfig === null || globalConfig === void 0 ? void 0 : globalConfig.productIds) === null || _a === void 0 ? void 0 : _a.length) > 0) {
+                if (((_b = globalConfig === null || globalConfig === void 0 ? void 0 : globalConfig.productIds) === null || _b === void 0 ? void 0 : _b.length) > 0) {
                     const mIds = globalConfig.productIds.slice(0, 3)
                         .filter((id) => ObjectId.isValid(id))
                         .map((id) => new ObjectId(id));

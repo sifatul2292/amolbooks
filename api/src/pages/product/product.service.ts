@@ -912,16 +912,33 @@ export class ProductService {
       let boughtTogetherProducts: any[] = [];
       const productIds = (data as any).boughtTogetherIds as string[];
       if (productIds && productIds.length > 0) {
+        const selfRaw = (data as any).toObject ? (data as any).toObject() : (data as any);
+        const selfId = selfRaw._id.toString();
         // Fetch up to 2 per-product selections (current product occupies slot 1)
         const mIds = productIds.slice(0, 2)
           .filter((id) => ObjectId.isValid(id))
           .map((id) => new ObjectId(id));
-        const perItems = await this.productModel
+        let perItems: any[] = await this.productModel
           .find({ _id: { $in: mIds } })
           .select(BT_SELECT)
           .limit(2);
+        // If fewer than 2 per-product items, fill remaining slots from global config
+        if (perItems.length < 2) {
+          const slotsLeft = 2 - perItems.length;
+          const usedIds = new Set([selfId, ...perItems.map((p: any) => p._id.toString())]);
+          const globalConfig = await this.boughtTogetherConfigModel.findOne();
+          if (globalConfig?.productIds?.length > 0) {
+            const fillIds = globalConfig.productIds
+              .filter((id: string) => ObjectId.isValid(id) && !usedIds.has(id))
+              .slice(0, slotsLeft)
+              .map((id: string) => new ObjectId(id));
+            if (fillIds.length > 0) {
+              const fillItems = await this.productModel.find({ _id: { $in: fillIds } }).select(BT_SELECT);
+              perItems = [...perItems, ...fillItems];
+            }
+          }
+        }
         // Build a plain object for the current product with only the BT fields
-        const selfRaw = (data as any).toObject ? (data as any).toObject() : (data as any);
         const self = {
           _id: selfRaw._id,
           name: selfRaw.name,
@@ -930,7 +947,7 @@ export class ProductService {
           salePrice: selfRaw.salePrice,
           discountAmount: selfRaw.discountAmount,
         };
-        boughtTogetherProducts = [self, ...perItems];
+        boughtTogetherProducts = [self, ...perItems.slice(0, 2)];
       } else {
         const globalConfig = await this.boughtTogetherConfigModel.findOne();
         if (globalConfig?.productIds?.length > 0) {
