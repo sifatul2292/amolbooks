@@ -95,6 +95,7 @@ export declare const ProductSchema: mongoose.Schema<any, mongoose.Model<any, any
     redeemValue?: number;
     discountStartDateTime?: Date;
     discountEndDateTime?: Date;
+    boughtTogetherIds?: string[];
     isFacebookCatalog?: boolean;
     hasVariations?: boolean;
     unit?: string;

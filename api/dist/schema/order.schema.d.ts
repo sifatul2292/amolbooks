@@ -78,6 +78,7 @@ export declare const OrderSchema: mongoose.Schema<any, mongoose.Model<any, any, 
     user?: mongoose.Types.ObjectId;
     paymentType?: string;
     coupon?: mongoose.Types.ObjectId;
+    fraudChecker?: any;
     courierLink?: string;
     discountTypes?: any[];
     courierData?: {
@@ -101,7 +102,6 @@ export declare const OrderSchema: mongoose.Schema<any, mongoose.Model<any, any, 
     productDiscount?: number;
     orderSmsSent?: boolean;
     orderFrom?: string;
-    fraudChecker?: any;
     orderDiscountFromApps?: number;
     bkashPaymentId?: string;
     nagadPaymentId?: string;

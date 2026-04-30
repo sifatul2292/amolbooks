@@ -26,6 +26,7 @@ export declare class UpdateProductDto {
     slug: string;
     quantity: number;
     ids: string[];
+    boughtTogetherIds: string[];
 }
 export declare class GetProductByIdsDto {
     ids: string[];

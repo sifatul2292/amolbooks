@@ -12,6 +12,7 @@ export declare class OrderController {
     checkFraudSpy(body: {
         phone: string;
     }): Promise<ResponsePayload>;
+    getRepeatCustomers(): Promise<ResponsePayload>;
     addOrderByUser(addOrderDto: AddOrderDto, user: User): Promise<ResponsePayload>;
     addOrderByAnonymous(addOrderDto: AddOrderDto): Promise<ResponsePayload>;
     insertManyOrder(body: {
@@ -26,6 +27,7 @@ export declare class OrderController {
     updateOrderById(id: string, updateOrderDto: UpdateOrderDto): Promise<ResponsePayload>;
     updateMultipleOrderById(updateOrderDto: UpdateOrderDto): Promise<ResponsePayload>;
     updateOrderSessionKey(id: string, updateOrderDto: any): Promise<ResponsePayload>;
+    sendToCourier(id: string): Promise<ResponsePayload>;
     changeOrderStatus(id: string, updateOrderStatusDto: UpdateOrderStatusDto): Promise<ResponsePayload>;
     generateInvoiceById(id: string, shop: string): Promise<ResponsePayload>;
     getOrderByOrderId(orderId: string, select: string): Promise<ResponsePayload>;
