@@ -145,33 +145,73 @@
   window.dataLayer=window.dataLayer||[];
   var _xhrOpen=XMLHttpRequest.prototype.open;
   var _xhrSend=XMLHttpRequest.prototype.send;
+  var _purchasedOrderIds={};
   function pushEvent(url,method,data,body){
     try{
       if(!data||!data.success)return;
       // view_item
       if(url.indexOf('/api/product/get-by-slug/')!==-1){
         var p=data.data;
-        if(p)window.dataLayer.push({event:'view_item_stape',ecommerce:{items:[{item_id:p._id,item_name:p.name||p.nameEn,item_category:p.category&&p.category.name,price:p.salePrice,currency:'BDT',quantity:1}]}});
+        if(p){
+          var viItem={item_id:p._id,item_name:p.name||p.nameEn,item_category:p.category&&p.category.name,price:p.salePrice,currency:'BDT',quantity:1};
+          window.dataLayer.push({ecommerce:null});
+          window.dataLayer.push({event:'view_item',ecommerce:{currency:'BDT',value:p.salePrice||0,items:[viItem]}});
+          window.dataLayer.push({event:'view_item_stape',ecommerce:{items:[viItem]}});
+        }
       }
       // add_to_cart
       if(url.indexOf('/api/cart/add-to-cart')!==-1&&method==='POST'){
         var req={};try{req=JSON.parse(body);}catch(e){}
-        window.dataLayer.push({event:'add_to_cart_stape',ecommerce:{items:[{item_id:req.product,quantity:req.selectedQty||1,currency:'BDT'}]}});
+        var atcItem={item_id:req.product,quantity:req.selectedQty||1,currency:'BDT'};
+        if(data.data&&data.data.product){
+          var pr=data.data.product;
+          atcItem.item_name=pr.name||pr.nameEn;
+          atcItem.price=pr.salePrice||0;
+          if(pr.category)atcItem.item_category=pr.category.name||pr.category;
+        }
+        var atcVal=(atcItem.price||0)*(atcItem.quantity||1);
+        window.dataLayer.push({ecommerce:null});
+        window.dataLayer.push({event:'add_to_cart',ecommerce:{currency:'BDT',value:atcVal,items:[atcItem]}});
+        window.dataLayer.push({event:'add_to_cart_stape',ecommerce:{currency:'BDT',value:atcVal,items:[atcItem]}});
       }
       // view_cart + begin_checkout
       if(url.indexOf('/api/cart/get-carts-by-user')!==-1&&data.data){
-        var cartItems=(data.data||[]).filter(function(i){return i.product;}).map(function(i){return{item_id:i.product&&i.product._id||i.product,item_name:i.product&&i.product.name,price:i.product&&i.product.salePrice,quantity:i.selectedQty||1,currency:'BDT'};});
+        var cartItems=(data.data||[]).filter(function(i){return i.product;}).map(function(i){return{item_id:i.product&&i.product._id||i.product,item_name:i.product&&i.product.name,price:i.product&&i.product.salePrice||0,quantity:i.selectedQty||1,currency:'BDT'};});
         if(cartItems.length>0){
-          window.dataLayer.push({event:'view_cart_stape',ecommerce:{items:cartItems}});
-          if(window.location.href.indexOf('checkout')!==-1||window.location.href.indexOf('order')!==-1){
-            window.dataLayer.push({event:'begin_checkout_stape',ecommerce:{items:cartItems}});
+          var cartVal=cartItems.reduce(function(s,i){return s+(i.price||0)*(i.quantity||1);},0);
+          window.dataLayer.push({ecommerce:null});
+          window.dataLayer.push({event:'view_cart',ecommerce:{currency:'BDT',value:cartVal,items:cartItems}});
+          window.dataLayer.push({event:'view_cart_stape',ecommerce:{currency:'BDT',value:cartVal,items:cartItems}});
+          if(window.location.href.indexOf('checkout')!==-1){
+            window.dataLayer.push({ecommerce:null});
+            window.dataLayer.push({event:'begin_checkout',ecommerce:{currency:'BDT',value:cartVal,items:cartItems}});
+            window.dataLayer.push({event:'begin_checkout_stape',ecommerce:{currency:'BDT',value:cartVal,items:cartItems}});
           }
         }
       }
-      // purchase
+      // purchase — fires when order is placed (POST add-order)
       if((url.indexOf('/api/order/add-order-by-user')!==-1||url.indexOf('/api/order/add-order-by-ano')!==-1)&&method==='POST'){
         var order=data.data;
-        if(order)window.dataLayer.push({event:'purchase_stape',ecommerce:{transaction_id:order._id,value:order.grandTotal,currency:'BDT',items:(order.orderedItems||[]).map(function(i){return{item_id:i._id,item_name:i.name,price:i.salePrice,quantity:i.quantity,currency:'BDT'};})}});
+        if(order&&order._id&&!_purchasedOrderIds[order._id]){
+          _purchasedOrderIds[order._id]=1;
+          var purchaseItems=(order.orderedItems||[]).map(function(i){return{item_id:i._id,item_name:i.name,price:i.salePrice||0,quantity:i.quantity||1,currency:'BDT'};});
+          window.dataLayer.push({ecommerce:null});
+          window.dataLayer.push({event:'purchase',ecommerce:{transaction_id:order._id,value:order.grandTotal||0,currency:'BDT',items:purchaseItems}});
+          window.dataLayer.push({event:'purchase_stape',ecommerce:{transaction_id:order._id,value:order.grandTotal||0,currency:'BDT',items:purchaseItems}});
+        }
+      }
+      // purchase + page_view — fires on order-success page (GET order by orderId)
+      if(url.indexOf('/api/order/get-order-by-order-id/')!==-1&&method==='GET'){
+        var ord=data.data;
+        if(ord&&ord._id&&!_purchasedOrderIds[ord._id]){
+          _purchasedOrderIds[ord._id]=1;
+          var ordItems=(ord.orderedItems||[]).map(function(i){return{item_id:i._id,item_name:i.name,price:i.salePrice||0,quantity:i.quantity||1,currency:'BDT'};});
+          window.dataLayer.push({ecommerce:null});
+          window.dataLayer.push({event:'purchase',ecommerce:{transaction_id:ord._id,value:ord.grandTotal||0,currency:'BDT',items:ordItems}});
+          window.dataLayer.push({event:'purchase_stape',ecommerce:{transaction_id:ord._id,value:ord.grandTotal||0,currency:'BDT',items:ordItems}});
+        }
+        // Track order-success page view for SPA
+        window.dataLayer.push({event:'page_view',page_path:window.location.pathname,page_title:'Order Success'});
       }
     }catch(e){}
   }
