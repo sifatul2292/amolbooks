@@ -386,6 +386,14 @@
     .badge-shipping  { background: #cffafe; color: #0e7490; }
     .badge-refund    { background: #fce7f3; color: #9d174d; }
 
+    /* Status tab bar */
+    .status-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--g100); margin-bottom: 14px; flex-wrap: wrap; background: #fff; border-radius: 10px 10px 0 0; padding: 0 4px; }
+    .status-tab { padding: 10px 14px; font-size: 13px; font-weight: 600; color: var(--g400); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color .15s,border-color .15s; white-space: nowrap; user-select: none; }
+    .status-tab:hover { color: var(--p); }
+    .status-tab.active { color: var(--p); border-bottom-color: var(--p); }
+    .status-tab .tab-count { font-size: 11px; font-weight: 700; background: var(--g100); color: var(--g500); border-radius: 10px; padding: 1px 7px; margin-left: 5px; transition: background .15s,color .15s; }
+    .status-tab.active .tab-count { background: var(--p); color: #fff; }
+
     /* Status select */
     .status-select {
       border: 1.5px solid var(--g200); border-radius: 7px;
@@ -792,7 +800,7 @@
       <a href="#" onclick="this.href=ADMIN_URL+'/sales/add-order';return true" target="_blank" class="topbar-btn">
         <i class="fas fa-plus"></i><span class="btn-label"> Add Order</span>
       </a>
-      <button class="topbar-btn" onclick="loadRepeatCustomers();loadTodayStats();" title="Refresh">
+      <button class="topbar-btn" onclick="loadRepeatCustomers();loadTodayStats();loadStatusCounts();" title="Refresh">
         <i class="fas fa-sync-alt"></i>
       </button>
       <button class="topbar-btn danger" onclick="doLogout()">
@@ -810,9 +818,9 @@
           <div style="flex:1">
             <label>Order Date Range</label>
             <div class="date-inputs">
-              <input type="date" id="createdFrom">
+              <input type="date" id="createdFrom" onchange="onDateChange()">
               <span>—</span>
-              <input type="date" id="createdTo">
+              <input type="date" id="createdTo" onchange="onDateChange()">
             </div>
           </div>
           <button class="date-clear" onclick="clearDateFilter('created')" title="Clear"><i class="fas fa-times"></i></button>
@@ -822,9 +830,9 @@
           <div style="flex:1">
             <label>Delivery Date Range</label>
             <div class="date-inputs">
-              <input type="date" id="deliveryFrom">
+              <input type="date" id="deliveryFrom" onchange="onDateChange()">
               <span>—</span>
-              <input type="date" id="deliveryTo">
+              <input type="date" id="deliveryTo" onchange="onDateChange()">
             </div>
           </div>
           <button class="date-clear" onclick="clearDateFilter('delivery')" title="Clear"><i class="fas fa-times"></i></button>
@@ -838,7 +846,7 @@
       <div class="stats-row">
         <div class="stat-card c1">
           <div class="stat-icon"><i class="fas fa-shopping-bag"></i></div>
-          <div class="stat-info"><label>Total Orders</label><div class="val" id="totalOrders">—</div></div>
+          <div class="stat-info"><label>Processing Orders</label><div class="val" id="totalOrders">—</div></div>
         </div>
         <div class="stat-card c2">
           <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
@@ -852,6 +860,16 @@
           <div class="stat-icon"><i class="fas fa-coins"></i></div>
           <div class="stat-info"><label>Today Amount</label><div class="val" id="todayAmount">—</div></div>
         </div>
+      </div>
+
+      <!-- Status Tabs -->
+      <div class="status-tabs" id="statusTabs">
+        <div class="status-tab active" id="tab-all" onclick="setStatusTab('')">All <span class="tab-count" id="tabCount-all">—</span></div>
+        <div class="status-tab" id="tab-3" onclick="setStatusTab(3)">Processing <span class="tab-count" id="tabCount-3">—</span></div>
+        <div class="status-tab" id="tab-2" onclick="setStatusTab(2)">Confirmed <span class="tab-count" id="tabCount-2">—</span></div>
+        <div class="status-tab" id="tab-5" onclick="setStatusTab(5)">Completed <span class="tab-count" id="tabCount-5">—</span></div>
+        <div class="status-tab" id="tab-6" onclick="setStatusTab(6)">Cancelled <span class="tab-count" id="tabCount-6">—</span></div>
+        <div class="status-tab" id="tab-10" onclick="setStatusTab(10)">Trash <span class="tab-count" id="tabCount-10">—</span></div>
       </div>
 
       <!-- Filter Bar -->
@@ -1325,7 +1343,6 @@
 
   /* ── Stats ── */
   function renderStats(count, grandTotal) {
-    document.getElementById('totalOrders').textContent = count.toLocaleString();
     document.getElementById('totalAmount').textContent = '৳' + Number(grandTotal).toLocaleString('en-BD', { maximumFractionDigits: 0 });
   }
 
@@ -1351,6 +1368,54 @@
       document.getElementById('todayAmount').textContent = '—';
     });
   }
+
+  /* ── Status tab counts ── */
+  function loadStatusCounts() {
+    var tabs = [
+      { key: 'all',  filter: {} },
+      { key: '3',    filter: { orderStatus: 3 } },
+      { key: '2',    filter: { orderStatus: 2 } },
+      { key: '5',    filter: { orderStatus: 5 } },
+      { key: '6',    filter: { orderStatus: 6 } },
+      { key: '10',   filter: { orderStatus: 10 } },
+    ];
+    tabs.forEach(function(t) {
+      fetch(API + '/api/order/get-all', {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ filter: t.filter, pagination: { pageSize: 1, currentPage: 0 }, sort: { createdAt: -1 }, select: { orderId: 1 } }),
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(resp){
+        var el = document.getElementById('tabCount-' + t.key);
+        if (el) el.textContent = (resp.count || 0).toLocaleString();
+        if (t.key === '3') {
+          document.getElementById('totalOrders').textContent = (resp.count || 0).toLocaleString();
+        }
+      })
+      .catch(function(){});
+    });
+  }
+
+  /* ── Status tab click ── */
+  window.setStatusTab = function(status) {
+    state.orderStatus = status === '' ? '' : Number(status);
+    state.page = 0;
+    document.querySelectorAll('.status-tab').forEach(function(t){ t.classList.remove('active'); });
+    var tabId = (status === '' || status === null) ? 'tab-all' : 'tab-' + status;
+    var el = document.getElementById(tabId);
+    if (el) el.classList.add('active');
+    loadOrders();
+  };
+
+  /* ── Date filter change ── */
+  window.onDateChange = function() {
+    state.createdFrom  = document.getElementById('createdFrom').value;
+    state.createdTo    = document.getElementById('createdTo').value;
+    state.deliveryFrom = document.getElementById('deliveryFrom').value;
+    state.deliveryTo   = document.getElementById('deliveryTo').value;
+    state.page = 0;
+    loadOrders();
+  };
 
   window.filterToday = function () {
     var now = new Date();
@@ -1593,9 +1658,15 @@
 
   /* ── Status select ── */
   function statusSelect(orderId, mongoId, current) {
-    var opts=[{val:3,label:'⏳ Processing'},{val:5,label:'✅ Completed'},{val:6,label:'❌ Cancelled'},{val:10,label:'🗑️ Trash'}];
+    var opts=[
+      {val:3,label:'⏳ Processing'},
+      {val:2,label:'✔ Confirmed'},
+      {val:5,label:'✅ Completed'},
+      {val:6,label:'❌ Cancelled'},
+      {val:10,label:'🗑️ Trash'},
+    ];
     var displayVal=current;
-    if([0,1,2,4,8].includes(current)) displayVal=3;
+    if([0,1,4,8].includes(current)) displayVal=3;
     if(current===7||current===9) displayVal=6;
     return '<select class="status-select" onchange="changeStatus(\''+mongoId+'\',this.value)">'+
       opts.map(function(o){ return '<option value="'+o.val+'"'+(o.val===displayVal?' selected':'')+'>'+o.label+'</option>'; }).join('')+
@@ -1771,7 +1842,7 @@
   }
 
   /* ── Init ── */
-  if (getToken()) { hideLogin(); loadRepeatCustomers(); loadTodayStats(); }
+  if (getToken()) { hideLogin(); loadRepeatCustomers(); loadTodayStats(); loadStatusCounts(); }
   else { showLogin(); }
 })();
 </script>
