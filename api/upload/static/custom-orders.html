@@ -379,6 +379,7 @@
     .badge-cod       { background: #dbeafe; color: #1e40af; }
     .badge-pending   { background: #fef3c7; color: #92400e; }
     .badge-processing{ background: #ede9fe; color: #5b21b6; }
+    .badge-confirm   { background: #d1fae5; color: #065f46; }
     .badge-delivered  { background: #d1fae5; color: #065f46; }
     .badge-cancel    { background: #fee2e2; color: #991b1b; }
     .badge-hold      { background: var(--g100); color: #475569; }
@@ -1362,13 +1363,13 @@
 
   /* ── Status helpers ── */
   var STATUS_NAMES = {
-    0:'Processing',1:'Processing',2:'Processing',3:'Processing',
-    4:'Processing',5:'Completed',6:'Cancelled',7:'Cancelled',
-    8:'Processing',9:'Cancelled',10:'Trash',
+    0:'Pending',1:'Pending',2:'Confirmed',3:'Processing',
+    4:'Shipping',5:'Completed',6:'Cancelled',7:'Refunded',
+    8:'Courier',9:'Returned',10:'Trash',
   };
   var STATUS_CLASSES = {
-    0:'processing',1:'processing',2:'processing',3:'processing',
-    4:'processing',5:'delivered',6:'cancel',7:'cancel',
+    0:'pending',1:'pending',2:'confirm',3:'processing',
+    4:'shipping',5:'delivered',6:'cancel',7:'refund',
     8:'processing',9:'cancel',10:'hold',
   };
 
