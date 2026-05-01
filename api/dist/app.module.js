@@ -98,7 +98,7 @@ AppModule = __decorate([
                     index: false,
                     setHeaders: (res, filePath) => {
                         if (/\.(js|css|woff2?|ttf|eot|ico|svg|png|jpg|jpeg|gif|webp)$/.test(filePath)) {
-                            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+                            res.setHeader('Cache-Control', 'public, max-age=86400');
                         }
                         else {
                             res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

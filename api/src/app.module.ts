@@ -86,8 +86,8 @@ import { PreOrderModule } from './pages/pre-order/pre-order.module';
           index: false,
           setHeaders: (res: any, filePath: string) => {
             if (/\.(js|css|woff2?|ttf|eot|ico|svg|png|jpg|jpeg|gif|webp)$/.test(filePath)) {
-              // Hashed filenames — safe to cache for 1 year
-              res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+              // Cache JS/CSS for 1 day (not immutable — we patch dist files without rebuilding)
+              res.setHeader('Cache-Control', 'public, max-age=86400');
             } else {
               // index.html and other HTML — must revalidate so deploys take effect immediately
               res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
