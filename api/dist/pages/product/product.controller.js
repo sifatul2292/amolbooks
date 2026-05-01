@@ -62,7 +62,7 @@ let ProductController = ProductController_1 = class ProductController {
     }
     async getProductById(id, select) {
         if (id === 'get-bought-together') {
-            return await this.productService.getBoughtTogetherProducts(select && select.productSlug);
+            return await this.productService.getBoughtTogetherProducts(select === null || select === void 0 ? void 0 : select.productSlug);
         }
         return await this.productService.getProductById(id, select);
     }
@@ -193,7 +193,7 @@ __decorate([
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], ProductController.prototype, "getProductById", null);
 __decorate([

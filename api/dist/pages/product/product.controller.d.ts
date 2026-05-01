@@ -23,7 +23,7 @@ export declare class ProductController {
         productIds: string[];
     }): Promise<ResponsePayload>;
     getBoughtTogetherByProduct(id: string): Promise<ResponsePayload>;
-    getProductById(id: string, select: string): Promise<ResponsePayload>;
+    getProductById(id: string, select: any): Promise<ResponsePayload>;
     getProductBySlug(slug: string, select: string): Promise<ResponsePayload>;
     updateProductById(id: string, updateProductDto: UpdateProductDto): Promise<ResponsePayload>;
     updateMultipleProductById(updateProductDto: UpdateProductDto): Promise<ResponsePayload>;

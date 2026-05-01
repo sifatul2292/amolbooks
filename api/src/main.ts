@@ -4,9 +4,21 @@ import { Logger, VersioningType } from '@nestjs/common';
 import { json, urlencoded } from 'express';
 import { join } from 'path';
 import * as express from 'express';
+import * as helmet from 'helmet';
+import * as compression from 'compression';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule, { cors: true });
+
+  // Security headers
+  app.use(helmet.default({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    contentSecurityPolicy: false,
+  }));
+
+  // Gzip compression
+  app.use(compression());
+
   // Allow Cors
   app.enableCors({
     // origin: '*',

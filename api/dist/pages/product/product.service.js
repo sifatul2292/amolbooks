@@ -680,7 +680,7 @@ let ProductService = ProductService_1 = class ProductService {
         }
     }
     async getBoughtTogetherProducts(productSlug) {
-        var _a, _b;
+        var _a, _b, _c;
         try {
             const BT_SELECT = '_id name slug images salePrice discountAmount discountType discountPercent costPrice quantity weight ratingAverage ratingCount';
             const config = await this.boughtTogetherConfigModel.findOne({});
@@ -689,7 +689,7 @@ let ProductService = ProductService_1 = class ProductService {
             if (productSlug) {
                 const productDoc = await this.productModel.findOne({ slug: productSlug }).select('boughtTogetherIds _id');
                 const perProductIds = (_b = productDoc === null || productDoc === void 0 ? void 0 : productDoc.boughtTogetherIds) !== null && _b !== void 0 ? _b : [];
-                const currentId = productDoc === null || productDoc === void 0 ? void 0 : productDoc._id.toString();
+                const currentId = (_c = productDoc === null || productDoc === void 0 ? void 0 : productDoc._id) === null || _c === void 0 ? void 0 : _c.toString();
                 if (perProductIds.length > 0) {
                     const perPart = perProductIds.slice(0, 2);
                     const slotsLeft = 3 - 1 - perPart.length;

@@ -6,9 +6,16 @@ const common_1 = require("@nestjs/common");
 const express_1 = require("express");
 const path_1 = require("path");
 const express = require("express");
+const helmet = require("helmet");
+const compression = require("compression");
 async function bootstrap() {
     const logger = new common_1.Logger('Bootstrap');
     const app = await core_1.NestFactory.create(app_module_1.AppModule, { cors: true });
+    app.use(helmet.default({
+        crossOriginResourcePolicy: { policy: 'cross-origin' },
+        contentSecurityPolicy: false,
+    }));
+    app.use(compression());
     app.enableCors({
         origin: [
             'http://localhost:4200',

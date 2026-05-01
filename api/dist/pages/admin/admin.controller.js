@@ -15,6 +15,7 @@ var AdminController_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminController = void 0;
 const common_1 = require("@nestjs/common");
+const throttler_1 = require("@nestjs/throttler");
 const admin_service_1 = require("./admin.service");
 const admin_dto_1 = require("../../dto/admin.dto");
 const passport_1 = require("@nestjs/passport");
@@ -81,6 +82,7 @@ __decorate([
 ], AdminController.prototype, "adminSignup", null);
 __decorate([
     (0, common_1.Post)('/login'),
+    (0, throttler_1.Throttle)(5, 60),
     (0, common_1.UsePipes)(common_1.ValidationPipe),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),

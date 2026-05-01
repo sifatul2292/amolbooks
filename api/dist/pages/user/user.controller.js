@@ -15,6 +15,7 @@ var UserController_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserController = void 0;
 const common_1 = require("@nestjs/common");
+const throttler_1 = require("@nestjs/throttler");
 const user_service_1 = require("./user.service");
 const passport_1 = require("@nestjs/passport");
 const get_user_decorator_1 = require("../../decorator/get-user.decorator");
@@ -119,6 +120,7 @@ __decorate([
 ], UserController.prototype, "userSignup", null);
 __decorate([
     (0, common_1.Post)('/login'),
+    (0, throttler_1.Throttle)(10, 60),
     (0, common_1.UsePipes)(common_1.ValidationPipe),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -127,6 +129,7 @@ __decorate([
 ], UserController.prototype, "userLogin", null);
 __decorate([
     (0, common_1.Post)('/signup-and-login'),
+    (0, throttler_1.Throttle)(10, 60),
     (0, common_1.UsePipes)(common_1.ValidationPipe),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),

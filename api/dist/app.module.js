@@ -10,6 +10,8 @@ exports.AppModule = void 0;
 const product_module_1 = require("./pages/product/product.module");
 const banner_carosel_module_1 = require("./pages/customization/banner/banner-carosel.module");
 const common_1 = require("@nestjs/common");
+const throttler_1 = require("@nestjs/throttler");
+const core_1 = require("@nestjs/core");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const seo_bot_middleware_1 = require("./middleware/seo-bot.middleware");
@@ -94,6 +96,10 @@ AppModule = __decorate([
                 exclude: ['/api/(.*)'],
                 serveStaticOptions: { index: false },
             }),
+            throttler_1.ThrottlerModule.forRoot({
+                ttl: 60,
+                limit: 120,
+            }),
             config_1.ConfigModule.forRoot({
                 load: [configuration_1.default],
                 isGlobal: true,
@@ -164,7 +170,11 @@ AppModule = __decorate([
             pre_order_module_1.PreOrderModule,
         ],
         controllers: [app_controller_1.AppController],
-        providers: [app_service_1.AppService, seo_bot_middleware_1.SeoBotMiddleware],
+        providers: [
+            app_service_1.AppService,
+            seo_bot_middleware_1.SeoBotMiddleware,
+            { provide: core_1.APP_GUARD, useClass: throttler_1.ThrottlerGuard },
+        ],
     })
 ], AppModule);
 exports.AppModule = AppModule;

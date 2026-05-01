@@ -474,14 +474,18 @@ let OrderService = OrderService_1 = class OrderService {
         if (filter) {
             mFilter = Object.assign(Object.assign({}, mFilter), filter);
         }
-        // Coerce YYYY-MM-DD date strings to Date objects (timestamps:true stores Date)
-        const _mf = mFilter;
-        const _coerceDate = (s, endOfDay) => new Date(s + (endOfDay ? 'T23:59:59.999+06:00' : 'T00:00:00.000+06:00'));
-        if (_mf.createdAt && typeof _mf.createdAt === 'object') {
-            if (_mf.createdAt.$gte && typeof _mf.createdAt.$gte === 'string')
-                _mf.createdAt.$gte = _coerceDate(_mf.createdAt.$gte, false);
-            if (_mf.createdAt.$lte && typeof _mf.createdAt.$lte === 'string')
-                _mf.createdAt.$lte = _coerceDate(_mf.createdAt.$lte, true);
+        const mf = mFilter;
+        const coerceDate = (dateStr, endOfDay) => {
+            const iso = endOfDay
+                ? dateStr + 'T23:59:59.999+06:00'
+                : dateStr + 'T00:00:00.000+06:00';
+            return new Date(iso);
+        };
+        if (mf.createdAt && typeof mf.createdAt === 'object') {
+            if (mf.createdAt.$gte && typeof mf.createdAt.$gte === 'string')
+                mf.createdAt.$gte = coerceDate(mf.createdAt.$gte, false);
+            if (mf.createdAt.$lte && typeof mf.createdAt.$lte === 'string')
+                mf.createdAt.$lte = coerceDate(mf.createdAt.$lte, true);
         }
         if (searchQuery) {
             mFilter = {

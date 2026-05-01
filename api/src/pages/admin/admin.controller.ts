@@ -14,6 +14,7 @@ import {
   Version,
   VERSION_NEUTRAL,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AdminService } from './admin.service';
 import {
   AdminSelectFieldDto,
@@ -66,6 +67,7 @@ export class AdminController {
   }
 
   @Post('/login')
+  @Throttle(5, 60)
   @UsePipes(ValidationPipe)
   async adminLogin(
     @Body() authAdminDto: AuthAdminDto,

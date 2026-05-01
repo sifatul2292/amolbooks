@@ -14,6 +14,7 @@ import {
   Version,
   VERSION_NEUTRAL,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { UserService } from './user.service';
 import { User, UserAuthResponse } from '../../interfaces/user/user.interface';
 import { AuthGuard } from '@nestjs/passport';
@@ -67,12 +68,14 @@ export class UserController {
   }
 
   @Post('/login')
+  @Throttle(10, 60)
   @UsePipes(ValidationPipe)
   async userLogin(@Body() authUserDto: AuthUserDto): Promise<UserAuthResponse> {
     return await this.usersService.userLogin(authUserDto);
   }
 
   @Post('/signup-and-login')
+  @Throttle(10, 60)
   @UsePipes(ValidationPipe)
   async userSignupAndLogin(
     @Body() createUserDto: CreateUserDto,

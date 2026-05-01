@@ -52,7 +52,7 @@ let CourierService = CourierService_1 = class CourierService {
         };
     }
     async createOrderWithProvider(courierApiConfig, payload) {
-        var _a, _b, _c, _d, _e, _f;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
         const { providerName, apiKey, secretKey, username, password, storeId, specialInstruction, } = courierApiConfig;
         switch (providerName) {
             case 'Steadfast Courier':
@@ -111,12 +111,11 @@ let CourierService = CourierService_1 = class CourierService {
                     return response1.data;
                 }
                 catch (error) {
-                    var _pf = error;
-                    console.error('Paperfly Courier API Error:', ((_pf === null || _pf === void 0 ? void 0 : _pf.response) ? _pf.response.data : _pf.message));
+                    console.error('Paperfly Courier API Error:', ((_g = error.response) === null || _g === void 0 ? void 0 : _g.data) || error.message);
                     return {
                         success: false,
-                        message: 'Failed to create order with Paperfly Courier: ' + (((_pf === null || _pf === void 0 ? void 0 : _pf.response) && _pf.response.data && _pf.response.data.message) ? _pf.response.data.message : _pf.message),
-                        statusCode: ((_pf === null || _pf === void 0 ? void 0 : _pf.response) ? _pf.response.status : 500),
+                        message: `Failed to create order with Paperfly Courier: ${((_j = (_h = error.response) === null || _h === void 0 ? void 0 : _h.data) === null || _j === void 0 ? void 0 : _j.message) || error.message}`,
+                        statusCode: ((_k = error.response) === null || _k === void 0 ? void 0 : _k.status) || 500,
                     };
                 }
             default:

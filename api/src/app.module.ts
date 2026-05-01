@@ -1,6 +1,8 @@
 import { ProductModule } from './pages/product/product.module';
 import { BannerCaroselModule } from './pages/customization/banner/banner-carosel.module';
 import { CacheModule, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SeoBotMiddleware } from './middleware/seo-bot.middleware';
@@ -83,6 +85,10 @@ import { PreOrderModule } from './pages/pre-order/pre-order.module';
         serveStaticOptions: { index: false },
       },
     ),
+    ThrottlerModule.forRoot({
+      ttl: 60,    // 60-second window
+      limit: 120, // 120 requests per 60s globally (generous for normal use)
+    }),
     ConfigModule.forRoot({
       load: [configuration],
       isGlobal: true,
@@ -153,7 +159,11 @@ import { PreOrderModule } from './pages/pre-order/pre-order.module';
     PreOrderModule,
   ],
   controllers: [AppController],
-  providers: [AppService, SeoBotMiddleware],
+  providers: [
+    AppService,
+    SeoBotMiddleware,
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
