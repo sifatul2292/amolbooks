@@ -1,5 +1,7 @@
 import {
   Body,
+  CacheInterceptor,
+  CacheTTL,
   Controller,
   Delete,
   Get,
@@ -9,6 +11,7 @@ import {
   Put,
   Query,
   UseGuards,
+  UseInterceptors,
   UsePipes,
   ValidationPipe,
   Version,
@@ -92,6 +95,8 @@ export class BannerCaroselController {
 
   @Version(VERSION_NEUTRAL)
   @Get('/get-all-basic')
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(600)
   async getAllBannerCaroselsBasic(): Promise<ResponsePayload> {
     return await this.bannerCaroselService.getAllBannerCaroselsBasic();
   }

@@ -82,7 +82,18 @@ import { PreOrderModule } from './pages/pre-order/pre-order.module';
       {
         rootPath: join(__dirname, '..', '..', 'ui', 'dist', 'angular-ui', 'browser'),
         exclude: ['/api/(.*)'],
-        serveStaticOptions: { index: false },
+        serveStaticOptions: {
+          index: false,
+          setHeaders: (res: any, filePath: string) => {
+            if (/\.(js|css|woff2?|ttf|eot|ico|svg|png|jpg|jpeg|gif|webp)$/.test(filePath)) {
+              // Hashed filenames — safe to cache for 1 year
+              res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+            } else {
+              // index.html and other HTML — must revalidate so deploys take effect immediately
+              res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+            }
+          },
+        },
       },
     ),
     ThrottlerModule.forRoot({
@@ -94,7 +105,7 @@ import { PreOrderModule } from './pages/pre-order/pre-order.module';
       isGlobal: true,
     }),
     MongooseModule.forRoot(configuration().mongoCluster),
-    CacheModule.register({ ttl: 200, max: 10, isGlobal: true }),
+    CacheModule.register({ ttl: 300, max: 500, isGlobal: true }),
     AdminModule,
     UserModule,
     UtilsModule,

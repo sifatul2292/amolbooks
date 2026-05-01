@@ -96,6 +96,8 @@ __decorate([
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Get)('/get-all-basic'),
+    (0, common_1.UseInterceptors)(common_1.CacheInterceptor),
+    (0, common_1.CacheTTL)(600),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)

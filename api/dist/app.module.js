@@ -94,7 +94,17 @@ AppModule = __decorate([
             }, {
                 rootPath: (0, path_1.join)(__dirname, '..', '..', 'ui', 'dist', 'angular-ui', 'browser'),
                 exclude: ['/api/(.*)'],
-                serveStaticOptions: { index: false },
+                serveStaticOptions: {
+                    index: false,
+                    setHeaders: (res, filePath) => {
+                        if (/\.(js|css|woff2?|ttf|eot|ico|svg|png|jpg|jpeg|gif|webp)$/.test(filePath)) {
+                            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+                        }
+                        else {
+                            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+                        }
+                    },
+                },
             }),
             throttler_1.ThrottlerModule.forRoot({
                 ttl: 60,
@@ -105,7 +115,7 @@ AppModule = __decorate([
                 isGlobal: true,
             }),
             mongoose_1.MongooseModule.forRoot((0, configuration_1.default)().mongoCluster),
-            common_1.CacheModule.register({ ttl: 200, max: 10, isGlobal: true }),
+            common_1.CacheModule.register({ ttl: 300, max: 500, isGlobal: true }),
             admin_module_1.AdminModule,
             user_module_1.UserModule,
             utils_module_1.UtilsModule,
