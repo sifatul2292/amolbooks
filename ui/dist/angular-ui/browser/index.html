@@ -87,7 +87,12 @@
   })(window,document,'script','dataLayer','GTM-NNZV54QJ');</script>
   <!-- End Google Tag Manager -->
 <style>@import"https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&family=K2D:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&family=Manrope:wght@200;300;400;500;600;700;800&family=Montserrat:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap";@import"https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&family=K2D:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&family=Manrope:wght@200;300;400;500;600;700;800&family=Rubik:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap";@import"https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Manrope:wght@200;300;400;500;600;700;800&display=swap";@import"https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap";*{padding:0;margin:0;box-sizing:border-box}body{display:block;width:100%;height:auto;box-sizing:border-box;font-style:normal;font-weight:500;font-size:16px;font-family:hind-siliguri,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,sans-serif,"Apple Color Emoji","Segoe UI Emoji",Segoe UI Symbol,"Noto Color Emoji"!important;padding:0;margin:0;overflow-x:hidden;background-color:#fff}@font-face{font-family:hind-siliguri;src:url(HindSiliguri-Regular.abb045fe788f1297.ttf) format("truetype");font-weight:400}@font-face{font-family:hind-siliguri;src:url(HindSiliguri-Light.6a9ab6ccd906dece.ttf) format("truetype");font-weight:500}@font-face{font-family:hind-siliguri;src:url(HindSiliguri-Medium.88e9a1ef522fef82.ttf) format("truetype");font-weight:600}:root{--swiper-theme-color:#007aff}:root{--swiper-navigation-size:44px}</style><link rel="stylesheet" href="styles.1cea6f789614a274.css" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="styles.1cea6f789614a274.css"></noscript>
-<style>.sale-price,.regular-price,.price,.price-wrapper *,.price-aria .new-price p,.price-aria .discount-amount p,.price-aria *{font-weight:500!important}</style>
+<style>
+.sale-price,.regular-price,.price,.price-wrapper *,.price-aria .new-price p,.price-aria .discount-amount p,.price-aria *{font-weight:500!important}
+@keyframes amolCartBounce{0%,100%{transform:scale(1)}25%{transform:scale(1.45)}75%{transform:scale(0.88)}}
+.amol-cart-anim{animation:amolCartBounce 0.55s ease!important}
+@media(max-width:768px){mat-sidenav,mat-drawer,.cart-sidebar,app-cart-sidebar,[class*="cart-side"]{display:none!important}.mat-drawer-backdrop,.cdk-overlay-backdrop{display:none!important}}
+</style>
 </head>
 
 <body>
@@ -239,6 +244,63 @@
       return resp;
     });
   };
+})();
+</script>
+<script>
+(function(){
+  var isMobile=function(){return window.innerWidth<=768};
+
+  function showToast(){
+    var t=document.getElementById('_amol_toast');
+    if(t)t.remove();
+    t=document.createElement('div');
+    t.id='_amol_toast';
+    t.textContent='আপনার বই কার্টে যোগ হয়েছে';
+    t.style.cssText='position:fixed;bottom:74px;left:50%;transform:translateX(-50%);background:#276b2e;color:#fff;padding:10px 22px;border-radius:24px;font-size:14px;z-index:999999;opacity:1;transition:opacity 0.4s ease;box-shadow:0 4px 14px rgba(0,0,0,0.3);white-space:nowrap;pointer-events:none';
+    document.body.appendChild(t);
+    setTimeout(function(){t.style.opacity='0';setTimeout(function(){if(t&&t.parentNode)t.remove();},400);},2500);
+  }
+
+  function animateCartIcon(){
+    var nodes=document.querySelectorAll('a,button,div,span,li');
+    for(var i=0;i<nodes.length;i++){
+      var txt=(nodes[i].textContent||'').trim();
+      if(txt.indexOf('ক্রয়')===0||txt==='ক্রয় তালিকা'){
+        var el=nodes[i];
+        el.classList.remove('amol-cart-anim');
+        void el.offsetWidth;
+        el.classList.add('amol-cart-anim');
+        setTimeout(function(){el.classList.remove('amol-cart-anim');},600);
+        break;
+      }
+    }
+  }
+
+  function hookDataLayer(){
+    var dl=window.dataLayer=window.dataLayer||[];
+    if(dl._amolHooked)return;
+    dl._amolHooked=true;
+    var orig=dl.push.bind(dl);
+    dl.push=function(){
+      var r=orig.apply(dl,arguments);
+      try{
+        for(var i=0;i<arguments.length;i++){
+          if(arguments[i]&&arguments[i].event==='add_to_cart'){
+            if(isMobile()){showToast();animateCartIcon();}
+          }
+        }
+      }catch(e){}
+      return r;
+    };
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',hookDataLayer);
+  }else{
+    hookDataLayer();
+  }
+  setTimeout(hookDataLayer,2000);
+  setTimeout(hookDataLayer,5000);
 })();
 </script>
 <script src="runtime.deefcb56ab2829c1.js" type="module"></script><script src="polyfills.b72e2d7f79d77247.js" type="module"></script><script src="main.2db4411763e9d7e5.js" type="module"></script>
