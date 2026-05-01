@@ -91,8 +91,6 @@ let ProductController = ProductController_1 = class ProductController {
 __decorate([
     (0, common_1.Get)('/get-all-data'),
     (0, common_1.UsePipes)(common_1.ValidationPipe),
-    (0, common_1.UseInterceptors)(common_1.CacheInterceptor),
-    (0, common_1.CacheTTL)(300),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -201,8 +199,6 @@ __decorate([
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Get)('/get-by-slug/:slug'),
-    (0, common_1.UseInterceptors)(common_1.CacheInterceptor),
-    (0, common_1.CacheTTL)(300),
     __param(0, (0, common_1.Param)('slug')),
     __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),

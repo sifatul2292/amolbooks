@@ -1,7 +1,5 @@
 import {
   Body,
-  CacheInterceptor,
-  CacheTTL,
   Controller,
   Delete,
   Get,
@@ -11,7 +9,6 @@ import {
   Put,
   Query,
   UseGuards,
-  UseInterceptors,
   UsePipes,
   ValidationPipe,
   Version,
@@ -45,8 +42,6 @@ export class ProductController {
 
   @Get('/get-all-data')
   @UsePipes(ValidationPipe)
-  @UseInterceptors(CacheInterceptor)
-  @CacheTTL(300)
   async getAllTagForUi(
     @Query() query: Record<string, any>,
   ): Promise<ResponsePayload> {
@@ -184,8 +179,6 @@ export class ProductController {
 
   @Version(VERSION_NEUTRAL)
   @Get('/get-by-slug/:slug')
-  @UseInterceptors(CacheInterceptor)
-  @CacheTTL(300)
   async getProductBySlug(
     @Param('slug') slug: string,
     @Query() select: string,
