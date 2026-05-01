@@ -474,6 +474,15 @@ let OrderService = OrderService_1 = class OrderService {
         if (filter) {
             mFilter = Object.assign(Object.assign({}, mFilter), filter);
         }
+        // Coerce YYYY-MM-DD date strings to Date objects (timestamps:true stores Date)
+        const _mf = mFilter;
+        const _coerceDate = (s, endOfDay) => new Date(s + (endOfDay ? 'T23:59:59.999+06:00' : 'T00:00:00.000+06:00'));
+        if (_mf.createdAt && typeof _mf.createdAt === 'object') {
+            if (_mf.createdAt.$gte && typeof _mf.createdAt.$gte === 'string')
+                _mf.createdAt.$gte = _coerceDate(_mf.createdAt.$gte, false);
+            if (_mf.createdAt.$lte && typeof _mf.createdAt.$lte === 'string')
+                _mf.createdAt.$lte = _coerceDate(_mf.createdAt.$lte, true);
+        }
         if (searchQuery) {
             mFilter = {
                 $and: [
