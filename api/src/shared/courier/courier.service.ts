@@ -185,27 +185,31 @@ export class CourierService {
           };
         }
       case 'Paperfly Courier':
-        // console.log('Paperfly Courier');
-        console.log(payload);
-        console.log(username);
-        console.log(password);
-        const paperflyApiUrl =
-          'https://api.paperfly.com.bd/merchant/api/service/new_order.php';
-        const paperflyKey = 'Paperfly_~La?Rj73FcLm';
-        console.log('wer.data');
-        const response1 = await axios.post(paperflyApiUrl, payload, {
-          auth: {
-            username,
-            password,
-          },
-          headers: {
-            Paperflykey: paperflyKey,
-            'Content-Type': 'application/json',
-          },
-        });
-        console.log('response1.data', response1.data);
-        // const res1 = await firstValueFrom(response1);
-        return response1.data;
+        try {
+          const paperflyApiUrl =
+            'https://api.paperfly.com.bd/merchant/api/service/new_order.php';
+          const paperflyKey = 'Paperfly_~La?Rj73FcLm';
+          const response1 = await axios.post(paperflyApiUrl, payload, {
+            auth: { username, password },
+            headers: {
+              Paperflykey: paperflyKey,
+              'Content-Type': 'application/json',
+            },
+          });
+          return response1.data;
+        } catch (error) {
+          console.error(
+            'Paperfly Courier API Error:',
+            error.response?.data || error.message,
+          );
+          return {
+            success: false,
+            message: `Failed to create order with Paperfly Courier: ${
+              error.response?.data?.message || error.message
+            }`,
+            statusCode: error.response?.status || 500,
+          };
+        }
       default:
         return {
           success: false,

@@ -98,24 +98,27 @@ let CourierService = CourierService_1 = class CourierService {
                     };
                 }
             case 'Paperfly Courier':
-                console.log(payload);
-                console.log(username);
-                console.log(password);
-                const paperflyApiUrl = 'https://api.paperfly.com.bd/merchant/api/service/new_order.php';
-                const paperflyKey = 'Paperfly_~La?Rj73FcLm';
-                console.log('wer.data');
-                const response1 = await axios_2.default.post(paperflyApiUrl, payload, {
-                    auth: {
-                        username,
-                        password,
-                    },
-                    headers: {
-                        Paperflykey: paperflyKey,
-                        'Content-Type': 'application/json',
-                    },
-                });
-                console.log('response1.data', response1.data);
-                return response1.data;
+                try {
+                    const paperflyApiUrl = 'https://api.paperfly.com.bd/merchant/api/service/new_order.php';
+                    const paperflyKey = 'Paperfly_~La?Rj73FcLm';
+                    const response1 = await axios_2.default.post(paperflyApiUrl, payload, {
+                        auth: { username, password },
+                        headers: {
+                            Paperflykey: paperflyKey,
+                            'Content-Type': 'application/json',
+                        },
+                    });
+                    return response1.data;
+                }
+                catch (error) {
+                    var _pf = error;
+                    console.error('Paperfly Courier API Error:', ((_pf === null || _pf === void 0 ? void 0 : _pf.response) ? _pf.response.data : _pf.message));
+                    return {
+                        success: false,
+                        message: 'Failed to create order with Paperfly Courier: ' + (((_pf === null || _pf === void 0 ? void 0 : _pf.response) && _pf.response.data && _pf.response.data.message) ? _pf.response.data.message : _pf.message),
+                        statusCode: ((_pf === null || _pf === void 0 ? void 0 : _pf.response) ? _pf.response.status : 500),
+                    };
+                }
             default:
                 return {
                     success: false,

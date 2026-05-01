@@ -1698,13 +1698,19 @@
   /* ── Send to Courier ── */
   window.sendToCourier = function (id) {
     if (!confirm('Send this order to courier?')) return;
+    if (!getToken()) { showLogin('Please log in to send orders to courier.'); return; }
     fetch(API+'/api/order/send-to-courier/'+id,{method:'POST',headers:authHeaders()})
-    .then(function(r){return r.json();})
+    .then(function(r){
+      if (r.status === 401 || r.status === 403) {
+        clearToken(); showLogin('Session expired. Please log in again.'); throw new Error('auth');
+      }
+      return r.json();
+    })
     .then(function(resp){
       if (resp&&resp.success) { showToast('Sent to courier!','success'); loadOrders(); }
       else showToast((resp&&resp.message)||'Could not send to courier.','error');
     })
-    .catch(function(err){ showToast('Error: '+err.message,'error'); });
+    .catch(function(err){ if (err.message !== 'auth') showToast('Error: '+err.message,'error'); });
   };
 
   /* ── Export CSV ── */
