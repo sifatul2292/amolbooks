@@ -908,7 +908,7 @@ export class ProductService {
       if (!data) {
         return { success: false, message: 'Product not found', data: null } as ResponsePayload;
       }
-      const BT_SELECT = '_id name slug images salePrice discountAmount';
+      const BT_SELECT = '_id name slug images salePrice discountAmount discountType';
       let boughtTogetherProducts: any[] = [];
       const productIds = (data as any).boughtTogetherIds as string[];
       if (productIds && productIds.length > 0) {
@@ -946,6 +946,7 @@ export class ProductService {
           images: selfRaw.images,
           salePrice: selfRaw.salePrice,
           discountAmount: selfRaw.discountAmount,
+          discountType: selfRaw.discountType,
         };
         boughtTogetherProducts = [self, ...perItems.slice(0, 2)];
       } else {
@@ -965,6 +966,7 @@ export class ProductService {
             images: selfRaw2.images,
             salePrice: selfRaw2.salePrice,
             discountAmount: selfRaw2.discountAmount,
+            discountType: selfRaw2.discountType,
           };
           boughtTogetherProducts = [self2, ...others];
         }

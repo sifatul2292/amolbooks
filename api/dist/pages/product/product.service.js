@@ -613,7 +613,7 @@ let ProductService = ProductService_1 = class ProductService {
             if (!data) {
                 return { success: false, message: 'Product not found', data: null };
             }
-            const BT_SELECT = '_id name slug images salePrice discountAmount';
+            const BT_SELECT = '_id name slug images salePrice discountAmount discountType';
             let boughtTogetherProducts = [];
             const productIds = data.boughtTogetherIds;
             if (productIds && productIds.length > 0) {
@@ -648,6 +648,7 @@ let ProductService = ProductService_1 = class ProductService {
                     images: selfRaw.images,
                     salePrice: selfRaw.salePrice,
                     discountAmount: selfRaw.discountAmount,
+                    discountType: selfRaw.discountType,
                 };
                 boughtTogetherProducts = [self, ...perItems.slice(0, 2)];
             }
@@ -668,6 +669,7 @@ let ProductService = ProductService_1 = class ProductService {
                         images: selfRaw2.images,
                         salePrice: selfRaw2.salePrice,
                         discountAmount: selfRaw2.discountAmount,
+                        discountType: selfRaw2.discountType,
                     };
                     boughtTogetherProducts = [self2, ...others];
                 }
