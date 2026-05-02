@@ -234,7 +234,8 @@
     return _fetch.apply(this,arguments).then(function(resp){
       var u=typeof url==='string'?url:(url&&url.url)||'';
       var m=opts&&opts.method?opts.method.toUpperCase():'GET';
-      if(u.indexOf('apisub.amolbooks.com/api/')!==-1){
+      /* match both absolute (apisub.amolbooks.com/api/) and relative (/api/) URLs */
+      if(u.indexOf('/api/')!==-1){
         resp.clone().json().then(function(data){pushEvent(u,m,data,opts&&opts.body);}).catch(function(){});
       }
       return resp;
@@ -316,18 +317,37 @@
       }
     });
 
-    /* MutationObserver for guest/localStorage cart badge changes */
-    var lastCount=-1;
+    /* MutationObserver for guest/localStorage cart badge changes.
+       Grace period: Angular renders existing cart count on page load —
+       we track those changes silently for ~1.5 s, then arm the trigger. */
+    var lastCount=0;
+    var armed=false;
+    var existingSmall=nav.querySelector('small');
+    if(existingSmall)lastCount=parseInt((existingSmall.textContent||'').trim())||0;
+    setTimeout(function(){armed=true;},1500);
+
+    function findSmall(mut){
+      var t=mut.target;
+      /* characterData — text node inside <small> changed */
+      if(t.tagName==='SMALL')return t;
+      if(t.parentElement&&t.parentElement.tagName==='SMALL')return t.parentElement;
+      /* childList — <small> element was added (first item ever added to cart) */
+      if(mut.type==='childList'){
+        for(var j=0;j<mut.addedNodes.length;j++){
+          var node=mut.addedNodes[j];
+          if(node.tagName==='SMALL')return node;
+          if(node.nodeType===1&&node.querySelector){var s=node.querySelector('small');if(s)return s;}
+        }
+      }
+      return null;
+    }
+
     var obs=new MutationObserver(function(mutations){
       for(var i=0;i<mutations.length;i++){
-        var t=mutations[i].target;
-        var small=null;
-        if(t&&t.tagName==='SMALL')small=t;
-        else if(t&&t.parentElement&&t.parentElement.tagName==='SMALL')small=t.parentElement;
+        var small=findSmall(mutations[i]);
         if(small){
           var n=parseInt((small.textContent||'').trim())||0;
-          if(lastCount===-1){lastCount=n;break;}
-          if(n>lastCount){onCartAdded();}
+          if(armed&&n>lastCount){onCartAdded();}
           lastCount=n;
           break;
         }
