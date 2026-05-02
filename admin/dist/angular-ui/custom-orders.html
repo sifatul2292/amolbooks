@@ -843,7 +843,7 @@
 }
 </style>
 </head>
-<body>
+<body><script>if(window.innerWidth<=768){document.addEventListener("DOMContentLoaded",function(){var r=document.getElementById("dateFilterRow");if(r)r.style.display="none";});}</script>
 
 <!-- Login -->
 <div id="login-overlay">
@@ -933,7 +933,7 @@
     <div class="content">
 
       <!-- Date Filters -->
-      <div class="date-row">
+      <div class="date-row" id="dateFilterRow">
         <div class="date-box">
           <div class="date-box-icon v"><i class="fas fa-calendar-alt"></i></div>
           <div style="flex:1">
