@@ -908,13 +908,34 @@ export class ProductService {
       if (!data) {
         return { success: false, message: 'Product not found', data: null } as ResponsePayload;
       }
+      // Helper: compute the after-discount price server-side so the frontend
+      // never needs to touch enum comparisons or discountType logic.
+      const calcAfterDiscount = (p: any): number => {
+        const sp = Number(p?.salePrice || 0);
+        const da = Number(p?.discountAmount || 0);
+        const dt = Number(p?.discountType || 0);
+        if (!dt || da <= 0) return sp;
+        if (dt === 1) return Math.max(Math.floor(sp - sp * da / 100), 0); // PERCENTAGE
+        if (dt === 2) return Math.max(Math.floor(sp - da), 0);            // CASH
+        return sp;
+      };
+      const toBtItem = (p: any) => ({
+        _id: p._id,
+        name: p.name,
+        slug: p.slug,
+        images: p.images,
+        salePrice: p.salePrice,
+        discountAmount: p.discountAmount,
+        discountType: p.discountType,
+        afterDiscountPrice: calcAfterDiscount(p),
+      });
+
       const BT_SELECT = '_id name slug images salePrice discountAmount discountType';
       let boughtTogetherProducts: any[] = [];
       const productIds = (data as any).boughtTogetherIds as string[];
       if (productIds && productIds.length > 0) {
         const selfRaw = (data as any).toObject ? (data as any).toObject() : (data as any);
         const selfId = selfRaw._id.toString();
-        // Fetch up to 2 per-product selections (current product occupies slot 1)
         const mIds = productIds.slice(0, 2)
           .filter((id) => ObjectId.isValid(id))
           .map((id) => new ObjectId(id));
@@ -922,7 +943,6 @@ export class ProductService {
           .find({ _id: { $in: mIds } })
           .select(BT_SELECT)
           .limit(2);
-        // If fewer than 2 per-product items, fill remaining slots from global config
         if (perItems.length < 2) {
           const slotsLeft = 2 - perItems.length;
           const usedIds = new Set([selfId, ...perItems.map((p: any) => p._id.toString())]);
@@ -938,17 +958,7 @@ export class ProductService {
             }
           }
         }
-        // Build a plain object for the current product with only the BT fields
-        const self = {
-          _id: selfRaw._id,
-          name: selfRaw.name,
-          slug: selfRaw.slug,
-          images: selfRaw.images,
-          salePrice: selfRaw.salePrice,
-          discountAmount: selfRaw.discountAmount,
-          discountType: selfRaw.discountType,
-        };
-        boughtTogetherProducts = [self, ...perItems.slice(0, 2)];
+        boughtTogetherProducts = [toBtItem(selfRaw), ...perItems.slice(0, 2).map((p: any) => toBtItem(p.toObject ? p.toObject() : p))];
       } else {
         const globalConfig = await this.boughtTogetherConfigModel.findOne();
         if (globalConfig?.productIds?.length > 0) {
@@ -959,16 +969,7 @@ export class ProductService {
             .slice(0, 2)
             .map((id: string) => new ObjectId(id));
           const others = await this.productModel.find({ _id: { $in: mIds } }).select(BT_SELECT).limit(2);
-          const self2 = {
-            _id: selfRaw2._id,
-            name: selfRaw2.name,
-            slug: selfRaw2.slug,
-            images: selfRaw2.images,
-            salePrice: selfRaw2.salePrice,
-            discountAmount: selfRaw2.discountAmount,
-            discountType: selfRaw2.discountType,
-          };
-          boughtTogetherProducts = [self2, ...others];
+          boughtTogetherProducts = [toBtItem(selfRaw2), ...others.map((p: any) => toBtItem(p.toObject ? p.toObject() : p))];
         }
       }
       const responseData = { ...(data as any).toObject(), boughtTogetherProducts };

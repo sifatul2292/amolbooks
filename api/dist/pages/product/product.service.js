@@ -613,6 +613,28 @@ let ProductService = ProductService_1 = class ProductService {
             if (!data) {
                 return { success: false, message: 'Product not found', data: null };
             }
+            const calcAfterDiscount = (p) => {
+                const sp = Number((p === null || p === void 0 ? void 0 : p.salePrice) || 0);
+                const da = Number((p === null || p === void 0 ? void 0 : p.discountAmount) || 0);
+                const dt = Number((p === null || p === void 0 ? void 0 : p.discountType) || 0);
+                if (!dt || da <= 0)
+                    return sp;
+                if (dt === 1)
+                    return Math.max(Math.floor(sp - sp * da / 100), 0);
+                if (dt === 2)
+                    return Math.max(Math.floor(sp - da), 0);
+                return sp;
+            };
+            const toBtItem = (p) => ({
+                _id: p._id,
+                name: p.name,
+                slug: p.slug,
+                images: p.images,
+                salePrice: p.salePrice,
+                discountAmount: p.discountAmount,
+                discountType: p.discountType,
+                afterDiscountPrice: calcAfterDiscount(p),
+            });
             const BT_SELECT = '_id name slug images salePrice discountAmount discountType';
             let boughtTogetherProducts = [];
             const productIds = data.boughtTogetherIds;
@@ -641,16 +663,7 @@ let ProductService = ProductService_1 = class ProductService {
                         }
                     }
                 }
-                const self = {
-                    _id: selfRaw._id,
-                    name: selfRaw.name,
-                    slug: selfRaw.slug,
-                    images: selfRaw.images,
-                    salePrice: selfRaw.salePrice,
-                    discountAmount: selfRaw.discountAmount,
-                    discountType: selfRaw.discountType,
-                };
-                boughtTogetherProducts = [self, ...perItems.slice(0, 2)];
+                boughtTogetherProducts = [toBtItem(selfRaw), ...perItems.slice(0, 2).map((p) => toBtItem(p.toObject ? p.toObject() : p))];
             }
             else {
                 const globalConfig = await this.boughtTogetherConfigModel.findOne();
@@ -662,16 +675,7 @@ let ProductService = ProductService_1 = class ProductService {
                         .slice(0, 2)
                         .map((id) => new ObjectId(id));
                     const others = await this.productModel.find({ _id: { $in: mIds } }).select(BT_SELECT).limit(2);
-                    const self2 = {
-                        _id: selfRaw2._id,
-                        name: selfRaw2.name,
-                        slug: selfRaw2.slug,
-                        images: selfRaw2.images,
-                        salePrice: selfRaw2.salePrice,
-                        discountAmount: selfRaw2.discountAmount,
-                        discountType: selfRaw2.discountType,
-                    };
-                    boughtTogetherProducts = [self2, ...others];
+                    boughtTogetherProducts = [toBtItem(selfRaw2), ...others.map((p) => toBtItem(p.toObject ? p.toObject() : p))];
                 }
             }
             const responseData = Object.assign(Object.assign({}, data.toObject()), { boughtTogetherProducts });
