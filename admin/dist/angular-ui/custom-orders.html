@@ -683,24 +683,48 @@
 
     /* ── Mobile table ── */
     @media(max-width:768px) {
-      table { min-width: 0; width: 100%; font-size: 12px; }
+      /* Hide checkbox, Order No, Address, Date, Courier, Fraud, Pay Type, Pay Status, Order By, Invoice */
+      thead th:nth-child(1), thead th:nth-child(2),
       thead th:nth-child(5), thead th:nth-child(6),
       thead th:nth-child(8), thead th:nth-child(9),
       thead th:nth-child(11),thead th:nth-child(12),
-      thead th:nth-child(13),thead th:nth-child(14),
-      thead th:nth-child(15),
+      thead th:nth-child(14),thead th:nth-child(15),
+      tbody td:nth-child(1), tbody td:nth-child(2),
       tbody td:nth-child(5), tbody td:nth-child(6),
       tbody td:nth-child(8), tbody td:nth-child(9),
       tbody td:nth-child(11),tbody td:nth-child(12),
-      tbody td:nth-child(13),tbody td:nth-child(14),
-      tbody td:nth-child(15) { display: none; }
-      tbody td:nth-child(4) { max-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      tbody td:nth-child(10) .btn-view { width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0; border-radius: 8px; }
-      tbody td:nth-child(10) .btn-view i { font-size: 15px; }
-      thead th { padding: 11px 8px; }
+      tbody td:nth-child(14),tbody td:nth-child(15) { display: none; }
+
+      /* Visible columns: 3=Phone, 4=Name, 7=Amount, 10=View, 13=Status */
+      table { min-width: 0; width: 100%; font-size: 12px; table-layout: fixed; }
+      thead th { padding: 10px 8px; white-space: nowrap; }
       tbody td { padding: 10px 8px; }
-      thead th:first-child, tbody td:first-child { padding-left: 12px; width: 28px; }
+
+      /* Phone col */
+      thead th:nth-child(3), tbody td:nth-child(3) { width: 38%; }
+      tbody td:nth-child(3) { font-size: 11px; }
+
+      /* Name col */
+      thead th:nth-child(4), tbody td:nth-child(4) { width: 24%; }
+      tbody td:nth-child(4) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 0; }
+
+      /* Amount col */
+      thead th:nth-child(7), tbody td:nth-child(7) { width: 18%; text-align: right; padding-right: 6px; }
+
+      /* Status col */
+      thead th:nth-child(13), tbody td:nth-child(13) { width: 0; padding: 0; overflow: hidden; display: none; }
+
+      /* View col */
+      thead th:nth-child(10), tbody td:nth-child(10) { width: 12%; text-align: center; padding: 8px 4px; }
+      tbody td:nth-child(10) .btn-view { width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0; border-radius: 8px; }
+      tbody td:nth-child(10) .btn-view i { font-size: 14px; }
+
       .pagination-bar { padding: 10px 14px; flex-direction: column; align-items: flex-start; gap: 8px; }
+
+      /* Filter bar: 2-col grid on mobile */
+      .filter-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+      .filter-bar .btn-reset, .filter-bar .btn-export { grid-column: span 1; }
+      .filter-btn, .per-page-select, .btn-reset, .btn-export { font-size: 11px; padding: 7px 10px; width: 100%; justify-content: center; }
 
       /* Modal: bottom sheet */
       .modal-overlay { padding: 0; align-items: flex-end; }
