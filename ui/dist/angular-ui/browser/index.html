@@ -87,7 +87,7 @@
   })(window,document,'script','dataLayer','GTM-NNZV54QJ');</script>
   <!-- End Google Tag Manager -->
 <style>@import"https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&family=K2D:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&family=Manrope:wght@200;300;400;500;600;700;800&family=Montserrat:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap";@import"https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&family=K2D:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&family=Manrope:wght@200;300;400;500;600;700;800&family=Rubik:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap";@import"https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Manrope:wght@200;300;400;500;600;700;800&display=swap";@import"https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap";*{padding:0;margin:0;box-sizing:border-box}body{display:block;width:100%;height:auto;box-sizing:border-box;font-style:normal;font-weight:500;font-size:16px;font-family:hind-siliguri,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,sans-serif,"Apple Color Emoji","Segoe UI Emoji",Segoe UI Symbol,"Noto Color Emoji"!important;padding:0;margin:0;overflow-x:hidden;background-color:#fff}@font-face{font-family:hind-siliguri;src:url(HindSiliguri-Regular.abb045fe788f1297.ttf) format("truetype");font-weight:400}@font-face{font-family:hind-siliguri;src:url(HindSiliguri-Light.6a9ab6ccd906dece.ttf) format("truetype");font-weight:500}@font-face{font-family:hind-siliguri;src:url(HindSiliguri-Medium.88e9a1ef522fef82.ttf) format("truetype");font-weight:600}:root{--swiper-theme-color:#007aff}:root{--swiper-navigation-size:44px}</style><link rel="stylesheet" href="styles.1cea6f789614a274.css" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="styles.1cea6f789614a274.css"></noscript>
-<style>.sale-price,.regular-price,.price,.price-wrapper *,.price-aria .new-price p,.price-aria .discount-amount p,.price-aria *{font-weight:500!important}@media(max-width:767px){app-cart-slide{display:none!important}}@keyframes cartBounce{0%,100%{transform:scale(1) rotate(0deg)}20%{transform:scale(1.35) rotate(-12deg)}40%{transform:scale(1.35) rotate(12deg)}60%{transform:scale(1.2) rotate(-6deg)}80%{transform:scale(1.2) rotate(6deg)}}.cart-icon-bounce{animation:cartBounce 0.55s ease!important;display:inline-block!important}</style>
+<style>.sale-price,.regular-price,.price,.price-wrapper *,.price-aria .new-price p,.price-aria .discount-amount p,.price-aria *{font-weight:500!important}@keyframes cartBounce{0%,100%{transform:scale(1) rotate(0deg)}20%{transform:scale(1.4) rotate(-14deg)}40%{transform:scale(1.4) rotate(14deg)}60%{transform:scale(1.2) rotate(-7deg)}80%{transform:scale(1.2) rotate(7deg)}}.cart-icon-bounce{animation:cartBounce 0.6s ease!important;display:inline-block!important}#amol-cart-toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(30px);background:#129245;color:#fff;border-radius:14px;padding:16px 20px 14px;max-width:92vw;min-width:280px;box-shadow:0 6px 24px rgba(0,0,0,0.35);z-index:99999;opacity:0;transition:opacity 0.3s ease,transform 0.3s ease;pointer-events:none;text-align:center;font-family:hind-siliguri,sans-serif}#amol-cart-toast.amol-show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}#amol-cart-toast .amol-ct-msg{font-size:14px;line-height:1.5;margin-bottom:12px}#amol-cart-toast .amol-ct-btn{background:#fff;color:#129245;border:none;border-radius:8px;padding:9px 22px;font-family:hind-siliguri,sans-serif;font-size:14px;font-weight:700;cursor:pointer;width:100%}#amol-cart-toast .amol-ct-btn:active{opacity:0.85}</style>
 </head>
 
 <body>
@@ -175,6 +175,7 @@
         window.dataLayer.push({ecommerce:null});
         window.dataLayer.push({event:'add_to_cart',ecommerce:{currency:'BDT',value:atcVal,items:[atcItem]}});
         window.dataLayer.push({event:'add_to_cart_stape',ecommerce:{currency:'BDT',value:atcVal,items:[atcItem]}});
+        window.dispatchEvent(new CustomEvent('amol-cart-added'));
       }
       // view_cart + begin_checkout
       if(url.indexOf('/api/cart/get-carts-by-user')!==-1&&data.data){
@@ -243,39 +244,73 @@
 </script>
 <script>
 (function(){
-  function setupCartAnim(){
+  var _toastTimer=null;
+
+  /* ── toast element (created once, lazily) ── */
+  function getToast(){
+    var t=document.getElementById('amol-cart-toast');
+    if(!t){
+      t=document.createElement('div');
+      t.id='amol-cart-toast';
+      t.innerHTML='<div class="amol-ct-msg">আপনার বই কার্টে যোগ হয়েছে।<br>অর্ডার সম্পন্ন করতে এখানে ক্লিক করুন</div>'
+                 +'<button class="amol-ct-btn" onclick="window.location.href=\'/checkout\'">চেকআউট করুন &rarr;</button>';
+      document.body.appendChild(t);
+    }
+    return t;
+  }
+
+  function showToast(){
+    var t=getToast();
+    clearTimeout(_toastTimer);
+    t.classList.add('amol-show');
+    _toastTimer=setTimeout(function(){t.classList.remove('amol-show');},5000);
+  }
+
+  function bounceCartIcon(){
+    var icon=document.querySelector('.bottom-nav .fa-shopping-bag');
+    if(!icon)return;
+    icon.classList.remove('cart-icon-bounce');
+    void icon.offsetWidth;
+    icon.classList.add('cart-icon-bounce');
+    icon.addEventListener('animationend',function(){icon.classList.remove('cart-icon-bounce');},{once:true});
+  }
+
+  function onCartAdded(){
+    bounceCartIcon();
+    showToast();
+  }
+
+  /* ── listen for API-based add-to-cart (logged-in users) ── */
+  window.addEventListener('amol-cart-added',onCartAdded);
+
+  /* ── MutationObserver for guest/localStorage cart badge changes ── */
+  function setupBadgeObserver(){
     var nav=document.querySelector('.bottom-nav');
-    if(!nav){setTimeout(setupCartAnim,600);return;}
-    var lastCount='';
+    if(!nav){setTimeout(setupBadgeObserver,600);return;}
+    var lastCount=-1;
     var obs=new MutationObserver(function(mutations){
       for(var i=0;i<mutations.length;i++){
         var t=mutations[i].target;
-        // Only react to small (badge) node changes
         var small=null;
         if(t&&t.tagName==='SMALL')small=t;
         else if(t&&t.parentElement&&t.parentElement.tagName==='SMALL')small=t.parentElement;
         if(small){
-          var txt=(small.textContent||'').trim();
-          if(txt!==lastCount){
-            lastCount=txt;
-            var icon=nav.querySelector('.fa-shopping-bag');
-            if(icon){
-              icon.classList.remove('cart-icon-bounce');
-              void icon.offsetWidth;
-              icon.classList.add('cart-icon-bounce');
-              icon.addEventListener('animationend',function(){icon.classList.remove('cart-icon-bounce');},{once:true});
-            }
-          }
+          var n=parseInt((small.textContent||'').trim())||0;
+          if(lastCount===-1){lastCount=n;break;}   /* first paint — no animation */
+          if(n>lastCount){onCartAdded();}
+          lastCount=n;
           break;
         }
       }
     });
     obs.observe(nav,{subtree:true,childList:true,characterData:true});
   }
-  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',setupCartAnim);}else{setupCartAnim();}
+
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',setupBadgeObserver);}
+  else{setupBadgeObserver();}
 })();
 </script>
-<script src="runtime.deefcb56ab2829c2.js" type="module"></script><script src="polyfills.b72e2d7f79d77247.js" type="module"></script><script src="main.2db4411763e9d7e6.js" type="module"></script>
+<script src="runtime.deefcb56ab2829c2.js" type="module"></script><script src="polyfills.b72e2d7f79d77247.js" type="module"></script><script src="main.2db4411763e9d7e7.js" type="module"></script>
 
 
 </body></html>
