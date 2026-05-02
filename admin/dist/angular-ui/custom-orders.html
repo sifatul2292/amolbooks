@@ -683,48 +683,24 @@
 
     /* ── Mobile table ── */
     @media(max-width:768px) {
-      /* Hide checkbox, Order No, Address, Date, Courier, Fraud, Pay Type, Pay Status, Order By, Invoice */
-      thead th:nth-child(1), thead th:nth-child(2),
+      table { min-width: 0; width: 100%; font-size: 12px; }
       thead th:nth-child(5), thead th:nth-child(6),
       thead th:nth-child(8), thead th:nth-child(9),
       thead th:nth-child(11),thead th:nth-child(12),
-      thead th:nth-child(14),thead th:nth-child(15),
-      tbody td:nth-child(1), tbody td:nth-child(2),
+      thead th:nth-child(13),thead th:nth-child(14),
+      thead th:nth-child(15),
       tbody td:nth-child(5), tbody td:nth-child(6),
       tbody td:nth-child(8), tbody td:nth-child(9),
       tbody td:nth-child(11),tbody td:nth-child(12),
-      tbody td:nth-child(14),tbody td:nth-child(15) { display: none; }
-
-      /* Visible columns: 3=Phone, 4=Name, 7=Amount, 10=View, 13=Status */
-      table { min-width: 0; width: 100%; font-size: 12px; table-layout: fixed; }
-      thead th { padding: 10px 8px; white-space: nowrap; }
+      tbody td:nth-child(13),tbody td:nth-child(14),
+      tbody td:nth-child(15) { display: none; }
+      tbody td:nth-child(4) { max-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      tbody td:nth-child(10) .btn-view { width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0; border-radius: 8px; }
+      tbody td:nth-child(10) .btn-view i { font-size: 15px; }
+      thead th { padding: 11px 8px; }
       tbody td { padding: 10px 8px; }
-
-      /* Phone col */
-      thead th:nth-child(3), tbody td:nth-child(3) { width: 38%; }
-      tbody td:nth-child(3) { font-size: 11px; }
-
-      /* Name col */
-      thead th:nth-child(4), tbody td:nth-child(4) { width: 24%; }
-      tbody td:nth-child(4) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 0; }
-
-      /* Amount col */
-      thead th:nth-child(7), tbody td:nth-child(7) { width: 18%; text-align: right; padding-right: 6px; }
-
-      /* Status col */
-      thead th:nth-child(13), tbody td:nth-child(13) { width: 0; padding: 0; overflow: hidden; display: none; }
-
-      /* View col */
-      thead th:nth-child(10), tbody td:nth-child(10) { width: 12%; text-align: center; padding: 8px 4px; }
-      tbody td:nth-child(10) .btn-view { width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0; border-radius: 8px; }
-      tbody td:nth-child(10) .btn-view i { font-size: 14px; }
-
+      thead th:first-child, tbody td:first-child { padding-left: 12px; width: 28px; }
       .pagination-bar { padding: 10px 14px; flex-direction: column; align-items: flex-start; gap: 8px; }
-
-      /* Filter bar: 2-col grid on mobile */
-      .filter-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-      .filter-bar .btn-reset, .filter-bar .btn-export { grid-column: span 1; }
-      .filter-btn, .per-page-select, .btn-reset, .btn-export { font-size: 11px; padding: 7px 10px; width: 100%; justify-content: center; }
 
       /* Modal: bottom sheet */
       .modal-overlay { padding: 0; align-items: flex-end; }
@@ -745,105 +721,8 @@
       .footer-actions { flex-wrap: wrap; }
     }
   </style>
-<style id="amol-mobile-overrides">
-@media(max-width:768px){
-  /* ── Hide date filters ── */
-  .date-row { display:none!important; }
-
-  /* ── Content padding ── */
-  .content { padding:10px!important; }
-
-  /* ── Stats: 2 cols ── */
-  .stats-row { grid-template-columns:1fr 1fr!important; gap:8px!important; }
-  .stat-card { padding:12px 10px!important; border-radius:12px!important; }
-  .stat-icon { width:34px!important; height:34px!important; font-size:15px!important; }
-  .stat-info label { font-size:9px!important; }
-  .stat-info .val { font-size:18px!important; }
-
-  /* ── Status tabs: horizontal scroll ── */
-  .status-tabs {
-    display:flex!important; flex-wrap:nowrap!important;
-    overflow-x:auto!important; -webkit-overflow-scrolling:touch!important;
-    gap:6px!important; padding-bottom:6px!important;
-    scrollbar-width:none!important;
-  }
-  .status-tabs::-webkit-scrollbar { display:none!important; }
-  .status-tab {
-    flex-shrink:0!important; font-size:11px!important;
-    padding:7px 12px!important; white-space:nowrap!important;
-    border-radius:20px!important;
-  }
-
-  /* ── Filter bar: 2-col grid ── */
-  .filter-bar {
-    display:grid!important;
-    grid-template-columns:1fr 1fr!important;
-    gap:6px!important;
-  }
-  .filter-bar .dd-wrap { width:100%!important; }
-  .filter-bar .dd-wrap .filter-btn {
-    width:100%!important; font-size:11px!important;
-    padding:8px 10px!important; justify-content:space-between!important;
-  }
-  .filter-bar .per-page-select {
-    font-size:11px!important; padding:8px 10px!important;
-    width:100%!important;
-  }
-  .filter-bar .spacer { display:none!important; }
-  .filter-bar .btn-reset,
-  .filter-bar .btn-export {
-    font-size:11px!important; padding:8px 10px!important;
-    width:100%!important; justify-content:center!important;
-  }
-
-  /* ── Table: hide all except Phone(3) Name(4) Amount(7) View(10) ── */
-  .table-wrap { overflow-x:hidden!important; }
-  table {
-    width:100%!important; min-width:0!important;
-    font-size:12px!important; table-layout:fixed!important;
-  }
-  /* Hide: checkbox(1) OrderNo(2) Address(5) Date(6) Courier(8) Fraud(9)
-           PayType(11) PayStatus(12) OrderBy(14) Invoice(15) */
-  thead th:nth-child(1), tbody td:nth-child(1),
-  thead th:nth-child(2), tbody td:nth-child(2),
-  thead th:nth-child(5), tbody td:nth-child(5),
-  thead th:nth-child(6), tbody td:nth-child(6),
-  thead th:nth-child(8), tbody td:nth-child(8),
-  thead th:nth-child(9), tbody td:nth-child(9),
-  thead th:nth-child(11),tbody td:nth-child(11),
-  thead th:nth-child(12),tbody td:nth-child(12),
-  thead th:nth-child(13),tbody td:nth-child(13),
-  thead th:nth-child(14),tbody td:nth-child(14),
-  thead th:nth-child(15),tbody td:nth-child(15) { display:none!important; }
-
-  /* Visible: Phone(3) 36%, Name(4) 28%, Amount(7) 20%, View(10) 16% */
-  thead th:nth-child(3), tbody td:nth-child(3) { width:36%!important; padding:10px 8px!important; }
-  thead th:nth-child(4), tbody td:nth-child(4) { width:28%!important; padding:10px 6px!important; white-space:nowrap!important; overflow:hidden!important; text-overflow:ellipsis!important; }
-  thead th:nth-child(7), tbody td:nth-child(7) { width:20%!important; padding:10px 6px!important; text-align:right!important; }
-  thead th:nth-child(10),tbody td:nth-child(10) { width:16%!important; padding:10px 4px!important; text-align:center!important; }
-
-  tbody td:nth-child(10) .btn-view {
-    width:32px!important; height:32px!important;
-    padding:0!important; font-size:0!important;
-    display:inline-flex!important;
-    align-items:center!important; justify-content:center!important;
-    border-radius:8px!important;
-  }
-  tbody td:nth-child(10) .btn-view i { font-size:14px!important; }
-
-  /* Phone number badge */
-  .phone-cell { display:flex!important; flex-wrap:wrap!important; gap:3px!important; align-items:center!important; }
-  .repeat-badge { font-size:9px!important; padding:1px 5px!important; }
-
-  /* Pagination */
-  .pagination-bar {
-    padding:10px!important; flex-direction:column!important;
-    align-items:flex-start!important; gap:8px!important;
-  }
-}
-</style>
 </head>
-<body><script>if(window.innerWidth<=768){document.addEventListener("DOMContentLoaded",function(){var r=document.getElementById("dateFilterRow");if(r)r.style.display="none";});}</script>
+<body>
 
 <!-- Login -->
 <div id="login-overlay">
@@ -933,7 +812,7 @@
     <div class="content">
 
       <!-- Date Filters -->
-      <div class="date-row" id="dateFilterRow">
+      <div class="date-row">
         <div class="date-box">
           <div class="date-box-icon v"><i class="fas fa-calendar-alt"></i></div>
           <div style="flex:1">
