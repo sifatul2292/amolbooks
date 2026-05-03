@@ -722,6 +722,7 @@
     }
     @media(max-width:768px){.date-row{display:none!important;}}
   </style>
+<script>if(window.innerWidth>768){document.addEventListener("DOMContentLoaded",function(){var el=document.getElementById("dateRow");if(el)el.style.display="";});}</script>
 </head>
 <body>
 
@@ -813,7 +814,7 @@
     <div class="content">
 
       <!-- Date Filters -->
-      <div class="date-row">
+      <div class="date-row" id="dateRow" style="display:none">
         <div class="date-box">
           <div class="date-box-icon v"><i class="fas fa-calendar-alt"></i></div>
           <div style="flex:1">
