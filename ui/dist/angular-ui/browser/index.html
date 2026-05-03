@@ -164,20 +164,41 @@
     return String(cat);
   }
 
-  function dlPush(obj){try{window.dataLayer.push(obj);}catch(e){}}
+  function dlPush(obj){
+    try{
+      console.log('[AMOL-GTM] push →',obj&&obj.event?obj.event:'ecommerce:null');
+      window.dataLayer.push(obj);
+    }catch(e){console.error('[AMOL-GTM] push error',e);}
+  }
 
-  /* Push both the main event and its _stape mirror synchronously.
-     Each push is wrapped in its own try-catch so a GTM exception on
-     the first push cannot prevent the second from firing. */
+  /* ── postMessage bridge ──────────────────────────────────────────────
+     Stape mirror events are delivered via postMessage so they execute in
+     a fresh browser task — completely outside Zone.js and GTM's own
+     synchronous processing of the preceding event.  This prevents the
+     "re-entrancy" drop where a second synchronous push immediately after
+     add_to_cart / view_cart never reaches GTM preview.
+  ──────────────────────────────────────────────────────────────────── */
+  window.addEventListener('message',function(e){
+    if(!e.data||!e.data.__amolStape)return;
+    try{
+      console.log('[AMOL-GTM] postMessage stape →',e.data.__amolStape.event);
+      window.dataLayer.push({ecommerce:null});
+      window.dataLayer.push(e.data.__amolStape);
+    }catch(ex){console.error('[AMOL-GTM] stape bridge error',ex);}
+  });
+
+  function pushStape(stapeObj){
+    try{window.postMessage({__amolStape:stapeObj},window.location.origin);}catch(ex){}
+  }
+
+  /* Main event fires synchronously; stape mirror fires via postMessage (next task). */
   function pushPair(mainObj,stapeObj){
     dlPush({ecommerce:null});
     dlPush(mainObj);
-    dlPush({ecommerce:null});
-    dlPush(stapeObj);
+    pushStape(stapeObj);
   }
 
-  /* For view_item we keep the async mirror (setTimeout) because it works
-     and avoids any GTM re-entrancy on product-page loads. */
+  /* view_item keeps its own async pattern (setTimeout) – it already works. */
   function pushPairAsync(mainObj,stapeObj){
     dlPush({ecommerce:null});
     dlPush(mainObj);
