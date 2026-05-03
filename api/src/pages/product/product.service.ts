@@ -607,10 +607,10 @@ export class ProductService {
       }
     }
 
-    // Finalize
+    // Finalize — $match must be FIRST so sort/paginate operate on filtered set
     if (Object.keys(mFilter).length) {
       // Main
-      aggregateStages.push({ $match: mFilter });
+      aggregateStages.unshift({ $match: mFilter });
 
       // Category Groups
       if (groupCategory) {

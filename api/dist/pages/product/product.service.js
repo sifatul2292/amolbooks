@@ -431,7 +431,7 @@ let ProductService = ProductService_1 = class ProductService {
             }
         }
         if (Object.keys(mFilter).length) {
-            aggregateStages.push({ $match: mFilter });
+            aggregateStages.unshift({ $match: mFilter });
             if (groupCategory) {
                 aggregateCategoryGroupStages.push(groupCategory);
             }
