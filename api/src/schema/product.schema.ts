@@ -501,3 +501,13 @@ export const ProductSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+
+// Indexes for frequently-queried fields
+// Compound index covers category filter + default sort (priority, createdAt)
+ProductSchema.index({ 'category._id': 1, priority: -1, createdAt: -1 });
+ProductSchema.index({ slug: 1 }, { sparse: true });               // product-detail slug lookup
+ProductSchema.index({ status: 1, discountAmount: -1 });           // super-deal: publish + discount
+ProductSchema.index({ priority: -1, createdAt: -1 });             // default sort
+ProductSchema.index({ 'tags._id': 1 });                           // tag product listing
+ProductSchema.index({ 'author._id': 1 });                         // author product listing
+ProductSchema.index({ 'publisher._id': 1 });                      // publisher product listing

@@ -447,4 +447,11 @@ exports.ProductSchema = new mongoose.Schema({
     versionKey: false,
     timestamps: true,
 });
+exports.ProductSchema.index({ 'category._id': 1, priority: -1, createdAt: -1 });
+exports.ProductSchema.index({ slug: 1 }, { sparse: true });
+exports.ProductSchema.index({ status: 1, discountAmount: -1 });
+exports.ProductSchema.index({ priority: -1, createdAt: -1 });
+exports.ProductSchema.index({ 'tags._id': 1 });
+exports.ProductSchema.index({ 'author._id': 1 });
+exports.ProductSchema.index({ 'publisher._id': 1 });
 //# sourceMappingURL=product.schema.js.map
