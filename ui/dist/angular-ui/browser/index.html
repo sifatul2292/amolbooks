@@ -153,10 +153,10 @@
   var _xhrOpen=XMLHttpRequest.prototype.open;
   var _xhrSend=XMLHttpRequest.prototype.send;
   var _purchasedOrderIds={};
-  /* Cache product data keyed by _id — populated on get-by-slug, used by add-to-cart */
-  var _productCache={};
+  var _productCache={};   // keyed by product _id → enriched item object
+  var _localCart=[];      // local cart state for view_cart / begin_checkout
+  var _checkoutFired=false;
 
-  /* Safe category string from array or string */
   function getCat(cat){
     if(!cat)return'';
     if(Array.isArray(cat))return(cat[0]&&cat[0].name)||'';
@@ -164,19 +164,71 @@
     return String(cat);
   }
 
-  /* Push a single dataLayer event safely, isolated in its own try-catch */
-  function dlPush(obj){
-    try{window.dataLayer.push(obj);}catch(e){}
+  function dlPush(obj){try{window.dataLayer.push(obj);}catch(e){}}
+
+  /* Push both the main event and its _stape mirror synchronously.
+     Each push is wrapped in its own try-catch so a GTM exception on
+     the first push cannot prevent the second from firing. */
+  function pushPair(mainObj,stapeObj){
+    dlPush({ecommerce:null});
+    dlPush(mainObj);
+    dlPush({ecommerce:null});
+    dlPush(stapeObj);
   }
 
-  /* Push the main event now; push the _stape mirror after current call stack clears
-     (setTimeout 0) so GTM's synchronous processing of the main event cannot
-     block or throw before the stape variant is pushed. */
-  function pushPair(mainObj,stapeObj){
+  /* For view_item we keep the async mirror (setTimeout) because it works
+     and avoids any GTM re-entrancy on product-page loads. */
+  function pushPairAsync(mainObj,stapeObj){
     dlPush({ecommerce:null});
     dlPush(mainObj);
     setTimeout(function(){try{dlPush({ecommerce:null});dlPush(stapeObj);}catch(e){}},0);
   }
+
+  function cartVal(items){
+    return items.reduce(function(s,i){return s+(i.price||0)*(i.quantity||1);},0);
+  }
+
+  /* Fire view_cart + begin_checkout from our local cart state */
+  function fireViewCart(){
+    if(!_localCart.length)return;
+    var val=cartVal(_localCart);
+    var items=_localCart.slice();
+    pushPair(
+      {event:'view_cart',ecommerce:{currency:'BDT',value:val,items:items}},
+      {event:'view_cart_stape',ecommerce:{currency:'BDT',value:val,items:items}}
+    );
+  }
+
+  function fireBeginCheckout(){
+    if(!_localCart.length||_checkoutFired)return;
+    _checkoutFired=true;
+    var val=cartVal(_localCart);
+    var items=_localCart.slice();
+    pushPair(
+      {event:'begin_checkout',ecommerce:{currency:'BDT',value:val,items:items}},
+      {event:'begin_checkout_stape',ecommerce:{currency:'BDT',value:val,items:items}}
+    );
+  }
+
+  /* Intercept Angular router navigation — detect /checkout route */
+  (function(){
+    var _origPS=history.pushState;
+    history.pushState=function(st,ti,url){
+      try{_origPS.apply(this,arguments);}catch(e){}
+      try{
+        var u=String(url||'');
+        if(u.indexOf('checkout')!==-1){_checkoutFired=false;setTimeout(fireBeginCheckout,50);}
+      }catch(e){}
+    };
+    var _origRS=history.replaceState;
+    history.replaceState=function(st,ti,url){
+      try{_origRS.apply(this,arguments);}catch(e){}
+      try{
+        var u=String(url||'');
+        if(u.indexOf('checkout')!==-1){_checkoutFired=false;setTimeout(fireBeginCheckout,50);}
+      }catch(e){}
+    };
+  })();
 
   function pushEvent(url,method,data,body){
     if(!data||!data.success)return;
@@ -186,10 +238,10 @@
       try{
         var p=data.data;
         if(p&&p._id){
-          /* cache for add_to_cart enrichment */
-          _productCache[String(p._id)]={item_id:p._id,item_name:p.name||p.nameEn||'',item_category:getCat(p.category),price:p.salePrice||0};
-          var viItem={item_id:p._id,item_name:p.name||p.nameEn||'',item_category:getCat(p.category),price:p.salePrice||0,currency:'BDT',quantity:1};
-          pushPair(
+          var pid=String(p._id);
+          var viItem={item_id:pid,item_name:p.name||p.nameEn||'',item_category:getCat(p.category),price:p.salePrice||0,currency:'BDT',quantity:1};
+          _productCache[pid]=viItem; // cache for add_to_cart
+          pushPairAsync(
             {event:'view_item',ecommerce:{currency:'BDT',value:p.salePrice||0,items:[viItem]}},
             {event:'view_item_stape',ecommerce:{currency:'BDT',value:p.salePrice||0,items:[viItem]}}
           );
@@ -201,53 +253,59 @@
     if(url.indexOf('/api/cart/add-to-cart')!==-1&&method==='POST'){
       try{
         var req={};try{req=JSON.parse(body);}catch(e){}
-        var pid=req.product?String(req.product):'';
-        var cached=_productCache[pid]||{};
+        var apid=req.product?String(req.product):'';
+        var cached=_productCache[apid]||{};
         var atcItem={
-          item_id:pid||cached.item_id||'',
+          item_id:apid||'',
           item_name:cached.item_name||'',
           item_category:cached.item_category||'',
           price:cached.price||0,
-          quantity:req.selectedQty||1,
+          quantity:Number(req.selectedQty)||1,
           currency:'BDT'
         };
-        /* also try to enrich from response if API ever returns product data */
         if(data.data&&data.data.product&&typeof data.data.product==='object'){
           var pr=data.data.product;
-          atcItem.item_name=atcItem.item_name||(pr.name||pr.nameEn||'');
-          atcItem.item_category=atcItem.item_category||getCat(pr.category);
-          atcItem.price=atcItem.price||pr.salePrice||0;
+          if(!atcItem.item_name)atcItem.item_name=pr.name||pr.nameEn||'';
+          if(!atcItem.item_category)atcItem.item_category=getCat(pr.category);
+          if(!atcItem.price)atcItem.price=pr.salePrice||0;
         }
         var atcVal=(atcItem.price||0)*(atcItem.quantity||1);
+
+        /* Update local cart state */
+        var found=false;
+        for(var ci=0;ci<_localCart.length;ci++){
+          if(_localCart[ci].item_id===apid){_localCart[ci].quantity+=atcItem.quantity;found=true;break;}
+        }
+        if(!found)_localCart.push({item_id:atcItem.item_id,item_name:atcItem.item_name,item_category:atcItem.item_category,price:atcItem.price,quantity:atcItem.quantity,currency:'BDT'});
+
         pushPair(
           {event:'add_to_cart',ecommerce:{currency:'BDT',value:atcVal,items:[atcItem]}},
           {event:'add_to_cart_stape',ecommerce:{currency:'BDT',value:atcVal,items:[atcItem]}}
         );
+
+        /* view_cart fires right after add_to_cart (sidebar popup opens) */
+        setTimeout(function(){try{fireViewCart();}catch(e){}},50);
+
         window.dispatchEvent(new CustomEvent('amol-cart-added'));
       }catch(e){}
     }
 
-    /* ── view_cart + begin_checkout ── */
-    if(url.indexOf('/api/cart/get-carts-by-user')!==-1&&data.data){
+    /* ── view_cart from API (logged-in, explicit cart fetch) ── */
+    if(url.indexOf('/api/cart/get-carts-by-user')!==-1&&data.data&&Array.isArray(data.data)){
       try{
-        var cartItems=(data.data||[]).filter(function(i){return i.product;}).map(function(i){
+        var apiCart=data.data.filter(function(i){return i.product;}).map(function(i){
           var prod=i.product&&typeof i.product==='object'?i.product:{};
-          return{item_id:prod._id||i.product||'',item_name:prod.name||'',item_category:getCat(prod.category),price:prod.salePrice||0,quantity:i.selectedQty||1,currency:'BDT'};
+          return{item_id:String(prod._id||i.product||''),item_name:prod.name||'',item_category:getCat(prod.category),price:prod.salePrice||0,quantity:i.selectedQty||1,currency:'BDT'};
         });
-        if(cartItems.length>0){
-          var cartVal=cartItems.reduce(function(s,i){return s+(i.price||0)*(i.quantity||1);},0);
+        if(apiCart.length){
+          _localCart=apiCart; // sync local state with server
+          var acVal=cartVal(apiCart);
           pushPair(
-            {event:'view_cart',ecommerce:{currency:'BDT',value:cartVal,items:cartItems}},
-            {event:'view_cart_stape',ecommerce:{currency:'BDT',value:cartVal,items:cartItems}}
+            {event:'view_cart',ecommerce:{currency:'BDT',value:acVal,items:apiCart}},
+            {event:'view_cart_stape',ecommerce:{currency:'BDT',value:acVal,items:apiCart}}
           );
           if(window.location.href.indexOf('checkout')!==-1){
-            setTimeout(function(){
-              try{
-                dlPush({ecommerce:null});
-                dlPush({event:'begin_checkout',ecommerce:{currency:'BDT',value:cartVal,items:cartItems}});
-                setTimeout(function(){try{dlPush({ecommerce:null});dlPush({event:'begin_checkout_stape',ecommerce:{currency:'BDT',value:cartVal,items:cartItems}});}catch(e){}},0);
-              }catch(e){}
-            },50);
+            setTimeout(function(){try{fireBeginCheckout();}catch(e){}},50);
           }
         }
       }catch(e){}
@@ -259,10 +317,11 @@
         var order=data.data;
         if(order&&order._id&&!_purchasedOrderIds[order._id]){
           _purchasedOrderIds[order._id]=1;
-          var purchaseItems=(order.orderedItems||[]).map(function(i){return{item_id:i._id||'',item_name:i.name||'',price:i.salePrice||0,quantity:i.quantity||1,currency:'BDT'};});
+          _localCart=[];_checkoutFired=false; // reset cart after purchase
+          var pItems=(order.orderedItems||[]).map(function(i){return{item_id:String(i._id||''),item_name:i.name||'',price:i.salePrice||0,quantity:i.quantity||1,currency:'BDT'};});
           pushPair(
-            {event:'purchase',ecommerce:{transaction_id:String(order._id),value:order.grandTotal||0,currency:'BDT',items:purchaseItems}},
-            {event:'purchase_stape',ecommerce:{transaction_id:String(order._id),value:order.grandTotal||0,currency:'BDT',items:purchaseItems}}
+            {event:'purchase',ecommerce:{transaction_id:String(order._id),value:order.grandTotal||0,currency:'BDT',items:pItems}},
+            {event:'purchase_stape',ecommerce:{transaction_id:String(order._id),value:order.grandTotal||0,currency:'BDT',items:pItems}}
           );
         }
       }catch(e){}
@@ -274,10 +333,11 @@
         var ord=data.data;
         if(ord&&ord._id&&!_purchasedOrderIds[ord._id]){
           _purchasedOrderIds[ord._id]=1;
-          var ordItems=(ord.orderedItems||[]).map(function(i){return{item_id:i._id||'',item_name:i.name||'',price:i.salePrice||0,quantity:i.quantity||1,currency:'BDT'};});
+          _localCart=[];_checkoutFired=false;
+          var oItems=(ord.orderedItems||[]).map(function(i){return{item_id:String(i._id||''),item_name:i.name||'',price:i.salePrice||0,quantity:i.quantity||1,currency:'BDT'};});
           pushPair(
-            {event:'purchase',ecommerce:{transaction_id:String(ord._id),value:ord.grandTotal||0,currency:'BDT',items:ordItems}},
-            {event:'purchase_stape',ecommerce:{transaction_id:String(ord._id),value:ord.grandTotal||0,currency:'BDT',items:ordItems}}
+            {event:'purchase',ecommerce:{transaction_id:String(ord._id),value:ord.grandTotal||0,currency:'BDT',items:oItems}},
+            {event:'purchase_stape',ecommerce:{transaction_id:String(ord._id),value:ord.grandTotal||0,currency:'BDT',items:oItems}}
           );
         }
         dlPush({event:'page_view',page_path:window.location.pathname,page_title:'Order Success'});
