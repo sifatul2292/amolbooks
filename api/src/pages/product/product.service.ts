@@ -1000,10 +1000,19 @@ export class ProductService {
         : shopName;
       const keywords = data ? escapeHtml((data as any).seoKeywords || '') : '';
       const images = data ? (data as any).images : null;
-      const image =
-        images && images.length
-          ? images[0]
-          : 'https://amolbooks.com/assets/images/logo.png';
+      // Serve images through amolbooks.com (not apisub) so Facebook can access them
+      const normalizeImageUrl = (url: string): string => {
+        if (!url) return '';
+        // Rewrite apisub upload URLs → amolbooks.com/uploads/ proxy path
+        return url.replace(
+          /https?:\/\/apisub\.amolbooks\.com\/api\/upload\//,
+          'https://amolbooks.com/uploads/',
+        );
+      };
+      const rawImage = images && images.length ? images[0] : '';
+      const image = rawImage
+        ? normalizeImageUrl(rawImage)
+        : 'https://amolbooks.com/assets/images/logo.png';
       const productSlug = data ? (data as any).slug : slug;
       const url = `https://amolbooks.com/product-details/${productSlug}`;
       const price = data && (data as any).salePrice ? `${(data as any).salePrice}` : '';
