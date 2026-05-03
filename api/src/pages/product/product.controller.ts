@@ -8,12 +8,15 @@ import {
   Post,
   Put,
   Query,
+  Req,
+  Res,
   UseGuards,
   UsePipes,
   ValidationPipe,
   Version,
   VERSION_NEUTRAL,
 } from '@nestjs/common';
+import { Request, Response } from 'express';
 import { AdminMetaRoles } from '../../decorator/admin-roles.decorator';
 import { AdminRoles } from '../../enum/admin-roles.enum';
 import { AdminRolesGuard } from '../../guards/admin-roles.guard';
@@ -184,6 +187,19 @@ export class ProductController {
     @Query() select: string,
   ): Promise<ResponsePayload> {
     return await this.productService.getProductBySlug(slug, select);
+  }
+
+  /**
+   * getProductOgHtml
+   * Returns Open Graph HTML for bots (Facebook, Twitter, etc.)
+   */
+  @Version(VERSION_NEUTRAL)
+  @Get('/og/:slug')
+  async getProductOgHtml(
+    @Param('slug') slug: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    return await this.productService.getProductOgHtml(slug, res);
   }
 
   /**

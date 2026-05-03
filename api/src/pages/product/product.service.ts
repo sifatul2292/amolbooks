@@ -979,6 +979,75 @@ export class ProductService {
     }
   }
 
+  async getProductOgHtml(slug: string, res: any): Promise<void> {
+    try {
+      const data = await this.productModel
+        .findOne({ slug })
+        .select('name slug images salePrice seoTitle seoDescription seoKeywords');
+
+      const escapeHtml = (str: string) =>
+        (str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#x27;');
+
+      const shopName = 'Amolbooks';
+      const title = data ? escapeHtml((data as any).seoTitle || (data as any).name || shopName) : shopName;
+      const description = data
+        ? escapeHtml((data as any).seoDescription || `${(data as any).name || ''} — ${shopName}`)
+        : shopName;
+      const keywords = data ? escapeHtml((data as any).seoKeywords || '') : '';
+      const images = data ? (data as any).images : null;
+      const image =
+        images && images.length
+          ? images[0]
+          : 'https://amolbooks.com/assets/images/logo.png';
+      const productSlug = data ? (data as any).slug : slug;
+      const url = `https://amolbooks.com/product-details/${productSlug}`;
+      const price = data && (data as any).salePrice ? `${(data as any).salePrice}` : '';
+
+      const html = `<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <title>${title} | ${shopName}</title>
+  <meta name="description" content="${description}">
+  ${keywords ? `<meta name="keywords" content="${keywords}">` : ''}
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="product">
+  <meta property="og:site_name" content="${shopName}">
+  <meta property="og:title" content="${title}">
+  <meta property="og:description" content="${description}">
+  <meta property="og:image" content="${escapeHtml(image)}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="${escapeHtml(url)}">
+  ${price ? `<meta property="product:price:amount" content="${escapeHtml(price)}">` : ''}
+  ${price ? `<meta property="product:price:currency" content="BDT">` : ''}
+  <!-- Twitter / X Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${title}">
+  <meta name="twitter:description" content="${description}">
+  <meta name="twitter:image" content="${escapeHtml(image)}">
+  <link rel="canonical" href="${escapeHtml(url)}">
+</head>
+<body>
+  <h1>${title}</h1>
+  <p>${description}</p>
+  <a href="${escapeHtml(url)}">View Product</a>
+</body>
+</html>`;
+
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=300');
+      res.status(200).send(html);
+    } catch (err) {
+      res.status(500).send('<html><body><h1>Error</h1></body></html>');
+    }
+  }
+
   async getBoughtTogetherProducts(productSlug?: string): Promise<ResponsePayload> {
     try {
       const BT_SELECT = '_id name slug images salePrice discountAmount discountType discountPercent costPrice quantity weight ratingAverage ratingCount';
