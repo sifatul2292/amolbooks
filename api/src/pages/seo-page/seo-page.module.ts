@@ -14,5 +14,6 @@ import { ProductSchema } from '../../schema/product.schema';
   ],
   controllers: [SeoPageController],
   providers: [SeoPageService],
+  exports: [SeoPageService],
 })
 export class SeoPageModule {}

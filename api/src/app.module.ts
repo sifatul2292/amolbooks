@@ -178,10 +178,12 @@ import { PreOrderModule } from './pages/pre-order/pre-order.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // Apply bot-detection middleware to all product-detail routes.
-    // Bots get OG-tagged HTML; regular browsers fall through to the Angular SPA.
+    // Apply bot-detection middleware to all GET routes.
+    // Bots hitting product pages get product OG HTML; bots hitting other pages
+    // get OG HTML from the SeoPage database. Regular browsers fall through.
     consumer
       .apply(SeoBotMiddleware)
-      .forRoutes('product-details/*');
+      .exclude('api/(.*)')
+      .forRoutes({ path: '*', method: 0 }); // 0 = RequestMethod.GET
   }
 }
