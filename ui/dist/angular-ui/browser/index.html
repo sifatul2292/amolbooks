@@ -150,134 +150,59 @@
 <script>
 (function(){
   window.dataLayer=window.dataLayer||[];
-  var _xhrOpen=XMLHttpRequest.prototype.open;
-  var _xhrSend=XMLHttpRequest.prototype.send;
-  var _purchasedOrderIds={};
-  var _productCache={};
-  var _localCart=[];
-  var _checkoutFired=false;
 
-  function getCat(cat){
-    if(!cat)return'';
-    if(Array.isArray(cat))return(cat[0]&&cat[0].name)||'';
-    if(typeof cat==='object')return cat.name||'';
-    return String(cat);
-  }
+  /* Angular already pushes add_to_cart / view_item / view_cart /
+     begin_checkout / purchase to dataLayer directly.
+     We intercept dataLayer.push (after GTM installs its handler)
+     and mirror each event as event_stape — same pattern as Shobaz. */
 
-  function push(event){
-    try{window.dataLayer.push({ecommerce:null});window.dataLayer.push(event);}catch(e){}
+  var MIRROR={add_to_cart:1,view_item:1,view_cart:1,begin_checkout:1,purchase:1};
+
+  function toItems(ec){
+    // UA format: ecommerce.add.products / ecommerce.checkout.products
+    var prods=((ec.add||ec.detail||ec.checkout||{}).products)||[];
+    if(prods.length)return prods.map(function(p){
+      return{item_id:p.id||'',item_name:p.name||'',item_category:p.category||'',price:p.price||0,quantity:p.quantity||1};
+    });
+    // GA4 format: ecommerce.items (view_cart already uses this)
+    return(ec.items||[]).map(function(p){
+      return{item_id:p.item_id||p.id||'',item_name:p.item_name||p.name||'',item_category:p.item_category||p.category||'',price:p.price||0,quantity:p.quantity||1};
+    });
   }
 
   function cartVal(items){return items.reduce(function(s,i){return s+(i.price||0)*(i.quantity||1);},0);}
 
-  function fireViewCart(){
-    if(!_localCart.length)return;
-    push({event:'view_cart_stape',ecommerce:{currency:'BDT',value:cartVal(_localCart),items:_localCart.slice()}});
+  function stapeOf(obj){
+    var ec=obj.ecommerce||{},items=toItems(ec),val=cartVal(items);
+    var s={event:obj.event+'_stape',ecommerce:{currency:'BDT',value:val,items:items}};
+    if(obj.event==='purchase'){var af=(ec.purchase||{}).actionField||{};s.ecommerce.transaction_id=af.id||ec.transaction_id||'';s.ecommerce.value=af.revenue||val;}
+    return s;
   }
 
-  function fireBeginCheckout(){
-    if(!_localCart.length||_checkoutFired)return;
-    _checkoutFired=true;
-    push({event:'begin_checkout_stape',ecommerce:{currency:'BDT',value:cartVal(_localCart),items:_localCart.slice()}});
-  }
-
-  (function(){
-    var _origPS=history.pushState;
-    history.pushState=function(st,ti,url){
-      try{_origPS.apply(this,arguments);}catch(e){}
-      if(String(url||'').indexOf('checkout')!==-1){_checkoutFired=false;setTimeout(fireBeginCheckout,50);}
+  function wrap(dl){
+    var orig=dl.push;
+    if(orig.__stape)return;
+    dl.push=function(obj){
+      var r=orig.apply(dl,arguments);
+      try{
+        if(obj&&obj.event&&MIRROR[obj.event]){
+          orig.call(dl,{ecommerce:null});
+          orig.call(dl,stapeOf(obj));
+          if(obj.event==='add_to_cart')try{window.dispatchEvent(new CustomEvent('amol-cart-added'));}catch(e){}
+        }
+      }catch(e){}
+      return r;
     };
-    var _origRS=history.replaceState;
-    history.replaceState=function(st,ti,url){
-      try{_origRS.apply(this,arguments);}catch(e){}
-      if(String(url||'').indexOf('checkout')!==-1){_checkoutFired=false;setTimeout(fireBeginCheckout,50);}
-    };
-  })();
-
-  function pushEvent(url,method,data,body){
-    if(!data||!data.success)return;
-
-    if(url.indexOf('/api/product/get-by-slug/')!==-1){
-      try{
-        var p=data.data;
-        if(p&&p._id){
-          var item={item_id:String(p._id),item_name:p.name||p.nameEn||'',item_category:getCat(p.category),price:p.salePrice||0,currency:'BDT',quantity:1};
-          _productCache[String(p._id)]=item;
-          push({event:'view_item_stape',ecommerce:{currency:'BDT',value:p.salePrice||0,items:[item]}});
-        }
-      }catch(e){}
-    }
-
-    if(url.indexOf('/api/cart/add-to-cart')!==-1&&method==='POST'){
-      try{
-        var req={};try{req=JSON.parse(body);}catch(e){}
-        var pid=req.product?String(req.product):'';
-        var cached=_productCache[pid]||{};
-        var atcItem={item_id:pid,item_name:cached.item_name||'',item_category:cached.item_category||'',price:cached.price||0,quantity:Number(req.selectedQty)||1,currency:'BDT'};
-        var atcVal=(atcItem.price||0)*(atcItem.quantity||1);
-        var found=false;
-        for(var i=0;i<_localCart.length;i++){if(_localCart[i].item_id===pid){_localCart[i].quantity+=atcItem.quantity;found=true;break;}}
-        if(!found)_localCart.push({item_id:atcItem.item_id,item_name:atcItem.item_name,item_category:atcItem.item_category,price:atcItem.price,quantity:atcItem.quantity,currency:'BDT'});
-        push({event:'add_to_cart_stape',ecommerce:{currency:'BDT',value:atcVal,items:[atcItem]}});
-        setTimeout(fireViewCart,50);
-        window.dispatchEvent(new CustomEvent('amol-cart-added'));
-      }catch(e){}
-    }
-
-    if(url.indexOf('/api/cart/get-carts-by-user')!==-1&&data.data&&Array.isArray(data.data)){
-      try{
-        var apiCart=data.data.filter(function(i){return i.product;}).map(function(i){
-          var prod=i.product&&typeof i.product==='object'?i.product:{};
-          return{item_id:String(prod._id||''),item_name:prod.name||'',item_category:getCat(prod.category),price:prod.salePrice||0,quantity:i.selectedQty||1,currency:'BDT'};
-        });
-        if(apiCart.length){
-          _localCart=apiCart;
-          push({event:'view_cart_stape',ecommerce:{currency:'BDT',value:cartVal(apiCart),items:apiCart}});
-          if(window.location.href.indexOf('checkout')!==-1)setTimeout(fireBeginCheckout,50);
-        }
-      }catch(e){}
-    }
-
-    if((url.indexOf('/api/order/add-order-by-user')!==-1||url.indexOf('/api/order/add-order-by-ano')!==-1)&&method==='POST'){
-      try{
-        var order=data.data;
-        if(order&&order._id&&!_purchasedOrderIds[order._id]){
-          _purchasedOrderIds[order._id]=1;_localCart=[];_checkoutFired=false;
-          var pItems=(order.orderedItems||[]).map(function(i){return{item_id:String(i._id||''),item_name:i.name||'',price:i.salePrice||0,quantity:i.quantity||1,currency:'BDT'};});
-          push({event:'purchase_stape',ecommerce:{transaction_id:String(order._id),value:order.grandTotal||0,currency:'BDT',items:pItems}});
-        }
-      }catch(e){}
-    }
-
-    if(url.indexOf('/api/order/get-order-by-order-id/')!==-1&&method==='GET'){
-      try{
-        var ord=data.data;
-        if(ord&&ord._id&&!_purchasedOrderIds[ord._id]){
-          _purchasedOrderIds[ord._id]=1;_localCart=[];_checkoutFired=false;
-          var oItems=(ord.orderedItems||[]).map(function(i){return{item_id:String(i._id||''),item_name:i.name||'',price:i.salePrice||0,quantity:i.quantity||1,currency:'BDT'};});
-          push({event:'purchase_stape',ecommerce:{transaction_id:String(ord._id),value:ord.grandTotal||0,currency:'BDT',items:oItems}});
-        }
-      }catch(e){}
-    }
+    dl.push.__stape=true;
   }
 
-  XMLHttpRequest.prototype.open=function(m,u){this._gm=m;this._gu=u;return _xhrOpen.apply(this,arguments);};
-  XMLHttpRequest.prototype.send=function(body){
-    var self=this;
-    self.addEventListener('load',function(){
-      try{var d;try{d=JSON.parse(self.responseText);}catch(e){return;}pushEvent(self._gu||'',(self._gm||'').toUpperCase(),d,body);}catch(e){}
-    });
-    return _xhrSend.apply(this,arguments);
-  };
-  var _fetch=window.fetch;
-  window.fetch=function(url,opts){
-    return _fetch.apply(this,arguments).then(function(resp){
-      var u=typeof url==='string'?url:(url&&url.url)||'';
-      var m=opts&&opts.method?opts.method.toUpperCase():'GET';
-      if(u.indexOf('/api/')!==-1)resp.clone().json().then(function(d){pushEvent(u,m,d,opts&&opts.body);}).catch(function(){});
-      return resp;
-    });
-  };
+  // Poll until GTM replaces dataLayer.push with its own handler, then wrap it
+  var _t=setInterval(function(){
+    var dl=window.dataLayer;
+    if(dl&&dl.push&&!dl.push.__stape&&dl.push!==Array.prototype.push){wrap(dl);clearInterval(_t);}
+  },50);
+  setTimeout(function(){clearInterval(_t);},8000);
+
 })();
 </script>
 <script>
