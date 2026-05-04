@@ -384,14 +384,16 @@
   function pushPageView(forcedTitle){
     setTimeout(function(){
       try{
-        window.dataLayer.push({
-          event:'page_view',
-          page_location:window.location.href,
-          page_title:forcedTitle||document.title||'Amolbooks',
-          page_referrer:document.referrer
-        });
+        var title=forcedTitle||document.title||'Amolbooks';
+        var loc=window.location.href;
+        var ref=document.referrer;
+        if(typeof window.gtag==='function'){
+          window.gtag('event','page_view',{page_location:loc,page_title:title,page_referrer:ref});
+        } else {
+          window.dataLayer.push({event:'page_view',page_location:loc,page_title:title,page_referrer:ref});
+        }
       }catch(e){}
-    },1000);
+    },1500);
   }
 
   /* ── history.pushState: SPA nav ── */
