@@ -381,13 +381,13 @@
   },true);
 
   /* ── Push page_view after Angular sets the document title ── */
-  function pushPageView(fallbackTitle){
+  function pushPageView(forcedTitle){
     setTimeout(function(){
       try{
         window.dataLayer.push({
           event:'page_view',
           page_location:window.location.href,
-          page_title:document.title||fallbackTitle||'Amolbooks',
+          page_title:forcedTitle||document.title||'Amolbooks',
           page_referrer:document.referrer
         });
       }catch(e){}
