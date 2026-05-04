@@ -364,16 +364,32 @@
     }catch(e){}
   },true);
 
-  /* ── history.pushState: SPA nav to /checkout ── */
+  /* ── Push page_view after Angular sets the document title ── */
+  function pushPageView(fallbackTitle){
+    setTimeout(function(){
+      try{
+        window.dataLayer.push({
+          event:'page_view',
+          page_location:window.location.href,
+          page_title:document.title||fallbackTitle||'Amolbooks',
+          page_referrer:document.referrer
+        });
+      }catch(e){}
+    },1000);
+  }
+
+  /* ── history.pushState: SPA nav ── */
   (function(){
     var _origPS=history.pushState;
     history.pushState=function(st,ti,url){
       try{_origPS.apply(this,arguments);}catch(e){}
       try{
         var u=String(url||'');
-        if(u.indexOf('/checkout')!==-1&&u.indexOf('order-success')===-1){
+        if(u.indexOf('order-success')!==-1){
+          _purchaseFired=false;
+          pushPageView('Thank you Page - Amolbooks');
+        } else if(u.indexOf('/checkout')!==-1){
           _checkoutFired=false;
-          /* Fire now if cart is ready; XHR/timeout handler will fire otherwise */
           if(_localCart.length||readLocalStorageCart().length){pushBeginCheckout();}
           else{setTimeout(function(){pushBeginCheckout();},1500);}
         }
@@ -381,10 +397,12 @@
     };
   })();
 
-  /* ── DOMContentLoaded: hard-navigation directly to /checkout ── */
+  /* ── DOMContentLoaded: hard-navigation to /checkout or /order-success ── */
   document.addEventListener('DOMContentLoaded',function(){
     var pn=window.location.pathname;
-    if(pn.indexOf('/checkout')!==-1&&pn.indexOf('order-success')===-1){
+    if(pn.indexOf('order-success')!==-1){
+      pushPageView('Thank you Page - Amolbooks');
+    } else if(pn.indexOf('/checkout')!==-1){
       var tries=0;
       var poll=setInterval(function(){
         tries++;
