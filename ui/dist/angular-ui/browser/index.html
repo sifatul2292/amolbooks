@@ -203,6 +203,67 @@
   },50);
   setTimeout(function(){clearInterval(_t);},8000);
 
+  /* ── XHR intercept: get-carts-by-user ────────────────────────────────
+     Angular's cart sidebar uses cached data — no view_cart push.
+     Checkout page pushes view_cart but timing may miss our wrapper.
+     Intercepting the API directly is the most reliable approach. */
+  var _localCart=[];
+  var _checkoutFired=false;
+  var _xhrOpen=XMLHttpRequest.prototype.open;
+  var _xhrSend=XMLHttpRequest.prototype.send;
+  XMLHttpRequest.prototype.open=function(m,u){this._gm=m;this._gu=u;return _xhrOpen.apply(this,arguments);};
+  XMLHttpRequest.prototype.send=function(body){
+    var self=this;
+    self.addEventListener('load',function(){
+      try{
+        var u=self._gu||'';
+        if(u.indexOf('/api/cart/get-carts-by-user')===-1)return;
+        var d;try{d=JSON.parse(self.responseText);}catch(e){return;}
+        if(!d||!d.success||!Array.isArray(d.data))return;
+        var items=d.data.filter(function(i){return i.product;}).map(function(i){
+          var p=i.product&&typeof i.product==='object'?i.product:{};
+          return{item_id:String(p._id||''),item_name:p.name||'',price:p.salePrice||0,quantity:i.selectedQty||1};
+        });
+        if(!items.length)return;
+        _localCart=items;
+        var val=items.reduce(function(s,i){return s+(i.price||0)*(i.quantity||1);},0);
+        var dl=window.dataLayer;
+        dl.push({ecommerce:null});
+        dl.push({event:'view_cart_stape',ecommerce:{currency:'BDT',value:val,items:items}});
+        var href=window.location.href;
+        if(href.indexOf('/checkout')!==-1&&href.indexOf('order-success')===-1&&!_checkoutFired){
+          _checkoutFired=true;
+          dl.push({ecommerce:null});
+          dl.push({event:'begin_checkout_stape',ecommerce:{currency:'BDT',value:val,items:items}});
+        }
+      }catch(e){}
+    });
+    return _xhrSend.apply(this,arguments);
+  };
+
+  /* ── history.pushState: SPA navigation to /checkout ────────────────── */
+  (function(){
+    var _origPS=history.pushState;
+    history.pushState=function(st,ti,url){
+      try{_origPS.apply(this,arguments);}catch(e){}
+      try{
+        var u=String(url||'');
+        if(u.indexOf('/checkout')!==-1&&u.indexOf('order-success')===-1){
+          _checkoutFired=false;
+          // Delay 400ms so get-carts-by-user XHR can complete first
+          setTimeout(function(){
+            if(_checkoutFired)return;
+            _checkoutFired=true;
+            var val=_localCart.reduce(function(s,i){return s+(i.price||0)*(i.quantity||1);},0);
+            var dl=window.dataLayer;
+            dl.push({ecommerce:null});
+            dl.push({event:'begin_checkout_stape',ecommerce:{currency:'BDT',value:val,items:_localCart.slice()}});
+          },400);
+        }
+      }catch(e){}
+    };
+  })();
+
 })();
 </script>
 <script>
