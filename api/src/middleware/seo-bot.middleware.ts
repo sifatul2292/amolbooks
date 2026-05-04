@@ -71,10 +71,19 @@ function buildOgHtml(opts: {
 </html>`;
 }
 
-function pathToPageName(pathname: string): string {
-  // "/" → "home", "/about-us" → "about-us", "/some/nested" → "some/nested"
+// Build a regex that matches common variations of a pageName.
+// "/" → matches home, home_page, homepage, home-page
+// "/about-us" → matches about-us, about_us
+function buildPageNamePattern(pathname: string): RegExp {
+  if (pathname === '/' || pathname === '') {
+    return /^(home|home_page|homepage|home-page|\/)$/i;
+  }
   const clean = pathname.replace(/^\/+|\/+$/g, '');
-  return clean || 'home';
+  const dash = clean.replace(/_/g, '-');
+  const under = clean.replace(/-/g, '_');
+  const joined = clean.replace(/[-_]/g, '');
+  const variants = [...new Set([clean, dash, under, joined])];
+  return new RegExp(`^(${variants.join('|')})$`, 'i');
 }
 
 @Injectable()
@@ -118,9 +127,9 @@ export class SeoBotMiddleware implements NestMiddleware {
       }
 
       // Handle all other bot requests using SeoPage data
-      const pageName = pathToPageName(req.path);
-      const seoResult = await this.seoPageService.getSeoPageByPage(
-        pageName,
+      const pattern = buildPageNamePattern(req.path);
+      const seoResult = await this.seoPageService.getSeoPageByPattern(
+        pattern,
         'name image pageName seoDescription keyWord',
       );
 

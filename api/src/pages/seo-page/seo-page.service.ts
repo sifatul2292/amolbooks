@@ -249,6 +249,24 @@ export class SeoPageService {
     }
   }
 
+  async getSeoPageByPattern(
+    pattern: RegExp,
+    select: string,
+  ): Promise<ResponsePayload> {
+    try {
+      const data = await this.seoPageModel
+        .findOne({ pageName: { $regex: pattern } })
+        .select(select);
+      return {
+        success: true,
+        message: 'Success',
+        data,
+      } as ResponsePayload;
+    } catch (err) {
+      throw new InternalServerErrorException(err.message);
+    }
+  }
+
   /**
    * updateSeoPageById
    * updateMultipleSeoPageById
