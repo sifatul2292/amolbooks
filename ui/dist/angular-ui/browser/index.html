@@ -150,7 +150,6 @@
 <script>
 (function(){
   window.dataLayer=window.dataLayer||[];
-
   var MIRROR={add_to_cart:1,view_item:1,view_cart:1,begin_checkout:1,purchase:1};
 
   function toItems(ec){
@@ -162,9 +161,7 @@
       return{item_id:p.item_id||p.id||'',item_name:p.item_name||p.name||'',item_category:p.item_category||p.category||'',price:p.price||0,quantity:p.quantity||1};
     });
   }
-
   function cartVal(items){return items.reduce(function(s,i){return s+(i.price||0)*(i.quantity||1);},0);}
-
   function stapeOf(obj){
     var ec=obj.ecommerce||{},items=toItems(ec),val=cartVal(items);
     var s={event:obj.event+'_stape',ecommerce:{currency:'BDT',value:val,items:items}};
@@ -172,10 +169,7 @@
     return s;
   }
 
-  /* ── EARLY wrap (before GTM loads) ─────────────────────────────────────
-     view_cart is pushed by Angular's checkout component in ngOnInit(),
-     often BEFORE GTM has loaded. By wrapping the native array push first,
-     stape events land in the array and GTM replays them when it loads. */
+  /* ── EARLY wrap ── */
   var _rawPush=Array.prototype.push.bind(window.dataLayer);
   window.dataLayer.push=function(obj){
     var r=_rawPush.apply(window.dataLayer,arguments);
@@ -184,16 +178,14 @@
         _rawPush.call(window.dataLayer,{ecommerce:null});
         var s=stapeOf(obj);s.__stape=true;
         _rawPush.call(window.dataLayer,s);
-        if(obj.event==='add_to_cart')try{window.dispatchEvent(new CustomEvent('amol-cart-added'));}catch(e){}
+        if(obj.event==='add_to_cart')try{window.dispatchEvent(new CustomEvent('amol-cart-added'));}catch(e2){}
       }
     }catch(e){}
     return r;
   };
   window.dataLayer.push.__stape=true;
 
-  /* ── LATE wrap (after GTM installs its push handler) ───────────────────
-     GTM replaces dataLayer.push when it loads. We re-wrap so events fired
-     after GTM's init (add_to_cart clicks etc.) also get stape mirrors. */
+  /* ── LATE wrap (after GTM installs its own push) ── */
   var _t=setInterval(function(){
     var dl=window.dataLayer;
     if(!dl||!dl.push||dl.push.__stape)return;
@@ -205,7 +197,7 @@
           orig.call(dl,{ecommerce:null});
           var s=stapeOf(obj);s.__stape=true;
           orig.call(dl,s);
-          if(obj.event==='add_to_cart')try{window.dispatchEvent(new CustomEvent('amol-cart-added'));}catch(e){}
+          if(obj.event==='add_to_cart')try{window.dispatchEvent(new CustomEvent('amol-cart-added'));}catch(e2){}
         }
       }catch(e){}
       return r;
@@ -215,45 +207,89 @@
   },50);
   setTimeout(function(){clearInterval(_t);},8000);
 
-  /* ── XHR intercept: get-carts-by-user ──────────────────────────────── */
+  /* ── Shared cart state ── */
   var _localCart=[];
   var _checkoutFired=false;
+  var _vcLast=0;
+
+  function pushViewCart(){
+    var now=Date.now();
+    if(now-_vcLast<2000||!_localCart.length)return;
+    _vcLast=now;
+    var val=cartVal(_localCart);
+    var dl=window.dataLayer;
+    dl.push({ecommerce:null});
+    dl.push({event:'view_cart_stape',ecommerce:{currency:'BDT',value:val,items:_localCart.slice()},__stape:true});
+  }
+
+  function pushBeginCheckout(){
+    if(_checkoutFired||!_localCart.length)return;
+    _checkoutFired=true;
+    var val=cartVal(_localCart);
+    var dl=window.dataLayer;
+    dl.push({ecommerce:null});
+    dl.push({event:'begin_checkout_stape',ecommerce:{currency:'BDT',value:val,items:_localCart.slice()},__stape:true});
+  }
+
+  /* ── XHR intercept: populate _localCart from any cart API ── */
   var _xhrOpen=XMLHttpRequest.prototype.open;
   var _xhrSend=XMLHttpRequest.prototype.send;
-  XMLHttpRequest.prototype.open=function(m,u){this._gm=m;this._gu=u;return _xhrOpen.apply(this,arguments);};
+  XMLHttpRequest.prototype.open=function(m,u){this._gm=m;this._gu=String(u||'');return _xhrOpen.apply(this,arguments);};
   XMLHttpRequest.prototype.send=function(body){
     var self=this;
-    self.addEventListener('load',function(){
+    var _done=false;
+    function handle(){
+      if(_done)return;_done=true;
       try{
         var u=self._gu||'';
-        if(u.indexOf('/api/cart/get-carts-by-user')===-1)return;
+        if(u.indexOf('/cart')===-1)return;
         var d;try{d=JSON.parse(self.responseText);}catch(e){return;}
         if(!d||!d.success||!Array.isArray(d.data))return;
-        var items=d.data.filter(function(i){return i.product;}).map(function(i){
-          var p=i.product&&typeof i.product==='object'?i.product:{};
-          return{item_id:String(p._id||''),item_name:p.name||'',price:p.salePrice||0,quantity:i.selectedQty||1};
+        var items=[];
+        d.data.forEach(function(i){
+          if(!i||!i.product)return;
+          var p=typeof i.product==='object'?i.product:{};
+          items.push({item_id:String(p._id||''),item_name:p.name||'',price:p.salePrice||p.regularPrice||0,quantity:i.selectedQty||1});
         });
         if(!items.length)return;
         _localCart=items;
-        var val=cartVal(items);
-        var dl=window.dataLayer;
-        dl.push({ecommerce:null});
-        dl.push({event:'view_cart_stape',ecommerce:{currency:'BDT',value:val,items:items},__stape:true});
-        var href=window.location.href;
-        if(href.indexOf('/checkout')!==-1&&href.indexOf('order-success')===-1&&!_checkoutFired){
-          _checkoutFired=true;
-          dl.push({ecommerce:null});
-          dl.push({event:'begin_checkout_stape',ecommerce:{currency:'BDT',value:val,items:items},__stape:true});
+        /* Fire begin_checkout if already on /checkout */
+        var pn=window.location.pathname;
+        if(pn.indexOf('/checkout')!==-1&&pn.indexOf('order-success')===-1){
+          pushBeginCheckout();
         }
       }catch(e){}
-    });
+    }
+    self.addEventListener('load',handle);
+    self.addEventListener('readystatechange',function(){if(self.readyState===4)handle();});
     return _xhrSend.apply(this,arguments);
   };
 
-  /* ── history.pushState: SPA navigation to /checkout ──────────────────
-     Angular router fires pushState when navigating to /checkout.
-     Wait 600ms for get-carts-by-user XHR to complete; if it already
-     fired _checkoutFired we skip. */
+  /* ── Cart sidebar click: fires view_cart_stape ──
+     The cart icon (.fa-shopping-bag) opens the sidebar.
+     After clicking, wait up to 1 s for _localCart to be ready. */
+  document.addEventListener('click',function(e){
+    try{
+      var el=e.target;
+      for(var i=0;i<8;i++){
+        if(!el||el===document)break;
+        var cls=(el.className||'').toString();
+        if(cls.indexOf('fa-shopping-bag')!==-1||cls.indexOf('cart-icon')!==-1||
+           (el.getAttribute&&(el.getAttribute('aria-label')||'').toLowerCase().indexOf('cart')!==-1)){
+          /* try immediately, then retry if _localCart not yet populated */
+          var fired=false;
+          function tryVC(){if(fired)return;if(_localCart.length){fired=true;pushViewCart();}}
+          setTimeout(tryVC,300);
+          setTimeout(tryVC,700);
+          setTimeout(tryVC,1200);
+          break;
+        }
+        el=el.parentElement;
+      }
+    }catch(e){}
+  },true);
+
+  /* ── history.pushState: SPA nav to /checkout ── */
   (function(){
     var _origPS=history.pushState;
     history.pushState=function(st,ti,url){
@@ -262,18 +298,26 @@
         var u=String(url||'');
         if(u.indexOf('/checkout')!==-1&&u.indexOf('order-success')===-1){
           _checkoutFired=false;
-          setTimeout(function(){
-            if(_checkoutFired)return;
-            _checkoutFired=true;
-            var val=cartVal(_localCart);
-            var dl=window.dataLayer;
-            dl.push({ecommerce:null});
-            dl.push({event:'begin_checkout_stape',ecommerce:{currency:'BDT',value:val,items:_localCart.slice()},__stape:true});
-          },600);
+          /* If cart already loaded push now; else XHR handler will fire it */
+          if(_localCart.length){pushBeginCheckout();}
+          else{setTimeout(function(){pushBeginCheckout();},1500);}
         }
       }catch(e){}
     };
   })();
+
+  /* ── DOMContentLoaded: hard-navigation directly to /checkout ── */
+  document.addEventListener('DOMContentLoaded',function(){
+    var pn=window.location.pathname;
+    if(pn.indexOf('/checkout')!==-1&&pn.indexOf('order-success')===-1){
+      var tries=0;
+      var poll=setInterval(function(){
+        tries++;
+        if(pushBeginCheckout(),_checkoutFired){clearInterval(poll);return;}
+        if(tries>40)clearInterval(poll);
+      },150);
+    }
+  });
 
 })();
 </script>
