@@ -571,5 +571,108 @@
 </script>
 <script src="runtime.deefcb56ab2829c2.js" type="module"></script><script src="polyfills.b72e2d7f79d77247.js" type="module"></script><script src="main.2db4411763e9d7e8.js" type="module"></script>
 
+<script>
+(function(){
+  var TAG_ID='69a3b7f20d6f5e6e2633656c';
+  var API='https://apisub.amolbooks.com/api/product/get-all';
+  var SECTION_ID='__shudhui-section';
+  var _cache=null;
+  var _lastPath='';
+
+  function fetchProducts(cb){
+    if(_cache){return cb(_cache);}
+    fetch(API,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        filter:{'tags._id':TAG_ID},
+        pagination:{pageSize:20,currentPage:0},
+        select:{name:1,slug:1,images:1,salePrice:1,regularPrice:1,discount:1}
+      })
+    }).then(function(r){return r.json();}).then(function(d){
+      if(d.success&&d.data&&d.data.length){_cache=d.data;cb(d.data);}
+    }).catch(function(){});
+  }
+
+  function buildSection(products){
+    var cards=products.map(function(p){
+      var img=(p.images&&p.images.length)?p.images[0]:'/assets/images/logo/logo.png';
+      var name=p.name||'';
+      var price=p.salePrice?'৳'+p.salePrice:'';
+      var slug=p.slug||'';
+      var discount=p.discount?'<span style="background:#e00000;color:#fff;font-size:11px;padding:2px 6px;border-radius:3px;position:absolute;top:8px;left:8px;">'+p.discount+'% ছাড়</span>':'';
+      return '<a href="/product-details/'+slug+'" style="display:block;text-decoration:none;color:inherit;min-width:150px;max-width:150px;flex-shrink:0;">'
+        +'<div style="position:relative;border:1px solid #eee;border-radius:8px;overflow:hidden;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.07);">'
+        +discount
+        +'<img src="'+img+'" alt="'+name+'" loading="lazy" style="width:100%;height:200px;object-fit:cover;display:block;">'
+        +'<div style="padding:8px;">'
+        +'<div style="font-size:13px;font-family:hind-siliguri,sans-serif;color:#222;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:36px;">'+name+'</div>'
+        +(price?'<div style="font-size:14px;font-weight:700;color:#e00000;margin-top:4px;">'+price+'</div>':'')
+        +'</div>'
+        +'</div>'
+        +'</a>';
+    }).join('');
+
+    return '<div id="'+SECTION_ID+'" style="padding:20px 16px 24px;background:#f8f8f8;border-top:3px solid #e00000;margin-top:32px;">'
+      +'<h3 style="font-family:hind-siliguri,sans-serif;font-size:18px;font-weight:700;color:#222;margin:0 0 14px;">শুধুই আপনার জন্য</h3>'
+      +'<div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;scrollbar-width:thin;-webkit-overflow-scrolling:touch;">'
+      +cards
+      +'</div>'
+      +'</div>';
+  }
+
+  function inject(products){
+    if(document.getElementById(SECTION_ID))return;
+    // Try known product-detail container selectors
+    var selectors=['.product-details','app-product-details','.product-main','.product-wrapper','.single-product','.pd-main','main','app-root'];
+    var target=null;
+    for(var i=0;i<selectors.length;i++){
+      var el=document.querySelector(selectors[i]);
+      if(el&&el.children.length>0){target=el;break;}
+    }
+    if(!target)return;
+    var div=document.createElement('div');
+    div.innerHTML=buildSection(products);
+    target.appendChild(div.firstElementChild);
+  }
+
+  function tryInject(){
+    if(document.getElementById(SECTION_ID))return;
+    fetchProducts(function(products){inject(products);});
+  }
+
+  function onNavigate(){
+    var path=window.location.pathname;
+    if(path===_lastPath)return;
+    _lastPath=path;
+    var old=document.getElementById(SECTION_ID);
+    if(old)old.parentNode.removeChild(old);
+    if(path.indexOf('/product-details/')===0){
+      // Angular needs time to render the component
+      setTimeout(tryInject,1200);
+      setTimeout(tryInject,2500);
+    }
+  }
+
+  // Intercept pushState (Angular router)
+  var _origPS=history.pushState;
+  history.pushState=function(){
+    _origPS.apply(this,arguments);
+    setTimeout(onNavigate,0);
+  };
+  var _origRS=history.replaceState;
+  history.replaceState=function(){
+    _origRS.apply(this,arguments);
+    setTimeout(onNavigate,0);
+  };
+  window.addEventListener('popstate',onNavigate);
+
+  // Handle direct load
+  document.addEventListener('DOMContentLoaded',function(){
+    _lastPath='';
+    onNavigate();
+  });
+})();
+</script>
 
 </body></html>
