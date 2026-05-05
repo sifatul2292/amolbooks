@@ -1125,7 +1125,7 @@ export class ProductService {
       const perProductIds: string[] = (product as any)?.boughtTogetherIds ?? [];
       if (perProductIds.length > 0) {
         const mIds = perProductIds.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
-        const products = await this.productModel.find({ _id: { $in: mIds } }).select(BT_SELECT);
+        const products = await this.productModel.find({ _id: { $in: mIds, $ne: new ObjectId(productId) } }).select(BT_SELECT);
         return { success: true, message: 'Success', data: { source: 'product', productIds: perProductIds, products } } as ResponsePayload;
       }
       const config = await this.boughtTogetherConfigModel.findOne({});
@@ -1134,7 +1134,7 @@ export class ProductService {
         return { success: true, message: 'No bought-together configured', data: { source: 'global', productIds: [], products: [] } } as ResponsePayload;
       }
       const mGlobalIds = globalIds.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
-      const products = await this.productModel.find({ _id: { $in: mGlobalIds } }).select(BT_SELECT);
+      const products = await this.productModel.find({ _id: { $in: mGlobalIds, $ne: new ObjectId(productId) } }).select(BT_SELECT);
       return { success: true, message: 'Success', data: { source: 'global', productIds: globalIds, products } } as ResponsePayload;
     } catch (err) {
       throw new InternalServerErrorException(err.message);
