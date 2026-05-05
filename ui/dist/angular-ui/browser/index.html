@@ -637,7 +637,7 @@
       body:JSON.stringify({
         filter:{'tags._id':TAG_ID},
         pagination:{pageSize:20,currentPage:0},
-        select:{name:1,slug:1,images:1,salePrice:1,regularPrice:1,discount:1}
+        select:{name:1,slug:1,images:1,salePrice:1,regularPrice:1,discount:1,author:1}
       })
     }).then(function(r){return r.json();}).then(function(d){
       if(d.success&&d.data&&d.data.length){_cache=d.data;cb(d.data);}
@@ -648,27 +648,40 @@
     var cards=products.map(function(p){
       var img=(p.images&&p.images.length)?p.images[0]:'/assets/images/logo/logo.png';
       var name=p.name||'';
-      var price=p.salePrice?'৳'+p.salePrice:'';
       var slug=p.slug||'';
-      var discount=p.discount?'<span style="background:#e00000;color:#fff;font-size:11px;padding:2px 6px;border-radius:3px;position:absolute;top:8px;left:8px;">'+p.discount+'% ছাড়</span>':'';
-      return '<a href="/product-details/'+slug+'" style="display:block;text-decoration:none;color:inherit;min-width:150px;max-width:150px;flex-shrink:0;">'
-        +'<div style="position:relative;border:1px solid #eee;border-radius:8px;overflow:hidden;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.07);">'
-        +discount
-        +'<img src="'+img+'" alt="'+name+'" loading="lazy" style="width:100%;height:200px;object-fit:cover;display:block;">'
-        +'<div style="padding:8px;">'
-        +'<div style="font-size:13px;font-family:hind-siliguri,sans-serif;color:#222;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:36px;">'+name+'</div>'
-        +(price?'<div style="font-size:14px;font-weight:700;color:#e00000;margin-top:4px;">'+price+'</div>':'')
+      var author=p.author||'';
+      var sale=p.salePrice||0;
+      var reg=p.regularPrice||0;
+      var disc=p.discount||0;
+      var priceHtml=sale
+        ?'<span style="font-size:15px;font-weight:700;color:#e53935;font-family:hind-siliguri,sans-serif;">৳'+sale+'</span>'
+         +(reg&&reg>sale?'<span style="font-size:12px;color:#999;text-decoration:line-through;margin-left:6px;font-family:hind-siliguri,sans-serif;">৳'+reg+'</span>':'')
+        :'';
+      var discBadge=disc?'<span style="position:absolute;top:8px;right:8px;background:#e53935;color:#fff;font-size:11px;font-weight:700;padding:3px 7px;border-radius:20px;line-height:1;">'+disc+'%</span>':'';
+      return '<a href="/product-details/'+slug+'"'
+        +' style="display:flex;flex-direction:column;text-decoration:none;color:inherit;background:#fff;border-radius:10px;overflow:hidden;border:1px solid #eee;box-shadow:0 2px 6px rgba(0,0,0,.07);"'
+        +' onmouseenter="this.style.boxShadow=\'0 6px 20px rgba(0,0,0,.14)\';this.style.transform=\'translateY(-3px)\'"'
+        +' onmouseleave="this.style.boxShadow=\'0 2px 6px rgba(0,0,0,.07)\';this.style.transform=\'\'">'
+        +'<div style="position:relative;overflow:hidden;background:#f5f5f5;">'
+        +'<img src="'+img+'" alt="'+name+'" loading="lazy" style="width:100%;height:210px;object-fit:cover;display:block;">'
+        +discBadge
         +'</div>'
+        +'<div style="padding:10px 12px 14px;flex:1;display:flex;flex-direction:column;gap:4px;">'
+        +'<div style="font-size:13.5px;font-family:hind-siliguri,sans-serif;color:#1a1a1a;line-height:1.5;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;flex:1;">'+name+'</div>'
+        +(author?'<div style="font-size:12px;color:#777;font-family:hind-siliguri,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+author+'</div>':'')
+        +(priceHtml?'<div style="margin-top:4px;display:flex;align-items:baseline;gap:4px;">'+priceHtml+'</div>':'')
         +'</div>'
         +'</a>';
     }).join('');
 
-    return '<div id="'+SECTION_ID+'" style="padding:20px 16px 24px;background:#f8f8f8;border-top:3px solid #e00000;margin-top:32px;">'
-      +'<h3 style="font-family:hind-siliguri,sans-serif;font-size:18px;font-weight:700;color:#222;margin:0 0 14px;">শুধুই আপনার জন্য</h3>'
-      +'<div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;scrollbar-width:thin;-webkit-overflow-scrolling:touch;">'
+    return '<section id="'+SECTION_ID+'" style="background:#fff;padding:44px 0 52px;margin-top:0;">'
+      +'<div style="max-width:1320px;margin:0 auto;padding:0 20px;box-sizing:border-box;">'
+      +'<h2 style="font-family:hind-siliguri,sans-serif;font-size:24px;font-weight:700;color:#2e7d32;text-align:center;margin:0 0 28px 0;">শুধুই আপনার জন্য</h2>'
+      +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:16px;">'
       +cards
       +'</div>'
-      +'</div>';
+      +'</div>'
+      +'</section>';
   }
 
   function inject(products){
