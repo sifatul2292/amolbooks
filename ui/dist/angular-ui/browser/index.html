@@ -338,12 +338,29 @@
             var lc2=readLocalStorageCart();
             items3=lc2.map(function(i){return{item_id:String(i.product||''),item_name:'',price:0,quantity:i.selectedQty||1};}).filter(function(i){return i.item_id;});
           }
-          /* Get grandTotal from request body if available */
+          /* Get grandTotal and user data from request body */
           var grandTotal=0;
-          try{var req=JSON.parse(self._gbody||'{}');grandTotal=req.grandTotal||req.subTotal||cartVal(items3);}catch(e){grandTotal=cartVal(items3);}
+          var ud={country:'bd'};
+          try{
+            var req=JSON.parse(self._gbody||'{}');
+            grandTotal=req.grandTotal||req.subTotal||cartVal(items3);
+            if(req.phoneNo){
+              var ph=String(req.phoneNo).replace(/\D/g,'');
+              if(ph.length===11&&ph.charAt(0)==='0')ph='88'+ph;
+              else if(ph.length===10)ph='880'+ph;
+              ud.phone_number=ph;
+            }
+            if(req.name){
+              var parts=req.name.trim().split(/\s+/);
+              ud.first_name=parts[0].toLowerCase();
+              ud.last_name=(parts.length>1?parts.slice(1).join(' '):parts[0]).toLowerCase();
+            }
+            if(req.email)ud.email_address=req.email.trim().toLowerCase();
+            if(req.city)ud.city=req.city.trim().toLowerCase();
+          }catch(e){grandTotal=cartVal(items3);}
           var dl=window.dataLayer;
           dl.push({ecommerce:null});
-          dl.push({event:'purchase_stape',ecommerce:{currency:'BDT',value:grandTotal,transaction_id:String(orderId),items:items3},__stape:true});
+          dl.push({event:'purchase_stape',ecommerce:{currency:'BDT',value:grandTotal,transaction_id:String(orderId),items:items3},user_data:ud,__stape:true});
           _localCart=[];
           pushPageView('Thank you Page - Amolbooks');
         }
