@@ -292,6 +292,20 @@
         var d;try{d=JSON.parse(self.responseText);}catch(e){return;}
         if(!d||!d.success)return;
 
+        /* Add to cart: POST /api/cart/add-to-cart */
+        if(u.indexOf('add-to-cart')!==-1&&d.data){
+          var atcItem={item_id:'',item_name:'',price:0,quantity:1};
+          var atcP=typeof d.data.product==='object'?d.data.product:(d.data.product?{_id:d.data.product}:{});
+          atcItem.item_id=String(atcP._id||d.data.product||'');
+          atcItem.item_name=atcP.name||'';
+          atcItem.price=atcP.salePrice||atcP.regularPrice||0;
+          atcItem.quantity=d.data.selectedQty||1;
+          var atcVal=atcItem.price*atcItem.quantity;
+          window.dataLayer.push({ecommerce:null});
+          window.dataLayer.push({event:'add_to_cart',ecommerce:{currency:'BDT',value:atcVal,items:[atcItem]}});
+          return;
+        }
+
         /* Logged-in user cart: GET /api/cart/get-carts-by-user */
         if(u.indexOf('/cart')!==-1&&Array.isArray(d.data)){
           var items=[];
