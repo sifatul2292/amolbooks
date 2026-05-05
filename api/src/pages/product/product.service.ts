@@ -1070,17 +1070,16 @@ export class ProductService {
         const perProductIds: string[] = (productDoc as any)?.boughtTogetherIds ?? [];
         const currentId: string | undefined = (productDoc as any)?._id?.toString();
         if (perProductIds.length > 0) {
-          // Current product first, then per-product selections (total 3)
-          const perPart = perProductIds.slice(0, 2);
-          const slotsLeft = 3 - 1 - perPart.length;
+          // Per-product selections excluding the current product (up to 3)
+          const perPart = perProductIds.filter((id) => id !== currentId).slice(0, 3);
+          const slotsLeft = 3 - perPart.length;
           const globalFill = slotsLeft > 0
             ? globalIds.filter((id) => !perProductIds.includes(id) && id !== currentId).slice(0, slotsLeft)
             : [];
-          finalIds = [currentId, ...perPart, ...globalFill];
+          finalIds = [...perPart, ...globalFill];
         } else if (currentId) {
-          // No per-product config — still put current product first, fill rest from global
-          const globalFill = globalIds.filter((id) => id !== currentId).slice(0, 2);
-          finalIds = [currentId, ...globalFill];
+          // No per-product config — fill from global, excluding current product
+          finalIds = globalIds.filter((id) => id !== currentId).slice(0, 3);
         }
       }
 
