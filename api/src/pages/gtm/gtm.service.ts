@@ -114,7 +114,6 @@ export class GtmService {
         } else {
           payloadData = { data: [fbApiPayload] };
         }
-        console.log('payloadData', payloadData);
         const result = await this.analyticsService.trackFbConversionEventClient(
           fSetting.analytics.facebookPixelId,
           fSetting.analytics.facebookPixelAccessToken,
