@@ -372,16 +372,18 @@ export class ProductService {
 
       const skip = (Number(page) - 1) * Number(limit);
 
-      const data = await this.productModel
-        .find(mFilter)
-        .select(
-          'name nameEn seoKeyword seoTitle seoDescription author discountType slug discountAmount tags quantity regularPrice salePrice ratingTotal images ratingCount',
-        )
-        .skip(Number(skip))
-        .limit(Number(limit))
-        .sort(sortQuery);
-
-      const totalCount = await this.productModel.countDocuments(mFilter);
+      const [data, totalCount] = await Promise.all([
+        this.productModel
+          .find(mFilter)
+          .select(
+            'name nameEn seoKeyword seoTitle seoDescription author discountType slug discountAmount tags quantity regularPrice salePrice ratingTotal images ratingCount',
+          )
+          .skip(Number(skip))
+          .limit(Number(limit))
+          .sort(sortQuery)
+          .lean(),
+        this.productModel.countDocuments(mFilter),
+      ]);
 
       return {
         success: true,
