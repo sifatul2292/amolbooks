@@ -649,13 +649,20 @@
       var img=(p.images&&p.images.length)?p.images[0]:'/assets/images/logo/logo.png';
       var name=p.name||'';
       var slug=p.slug||'';
-      var author=p.author||'';
-      var sale=p.salePrice||0;
-      var reg=p.regularPrice||0;
+      /* author may be string, object {name}, or array of those */
+      var author='';
+      if(p.author){
+        if(typeof p.author==='string')author=p.author;
+        else if(Array.isArray(p.author))author=p.author.map(function(a){return typeof a==='string'?a:(a&&a.name?a.name:'');}).filter(Boolean).join(', ');
+        else if(p.author.name)author=p.author.name;
+      }
+      /* salePrice = base/regular price; discounted = salePrice*(1-discount/100) */
+      var base=p.salePrice||p.regularPrice||0;
       var disc=p.discount||0;
-      var priceHtml=sale
-        ?'<span style="font-size:15px;font-weight:700;color:#e53935;font-family:hind-siliguri,sans-serif;">৳'+sale+'</span>'
-         +(reg&&reg>sale?'<span style="font-size:12px;color:#999;text-decoration:line-through;margin-left:6px;font-family:hind-siliguri,sans-serif;">৳'+reg+'</span>':'')
+      var discounted=disc?Math.round(base*(1-disc/100)):base;
+      var priceHtml=discounted
+        ?'<span style="font-size:15px;font-weight:700;color:#e53935;font-family:hind-siliguri,sans-serif;">৳'+discounted+'</span>'
+         +(disc?'<span style="font-size:12px;color:#999;text-decoration:line-through;margin-left:6px;font-family:hind-siliguri,sans-serif;">৳'+base+'</span>':'')
         :'';
       var discBadge=disc?'<span style="position:absolute;top:8px;right:8px;background:#e53935;color:#fff;font-size:11px;font-weight:700;padding:3px 7px;border-radius:20px;line-height:1;">'+disc+'%</span>':'';
       return '<a href="/product-details/'+slug+'"'
