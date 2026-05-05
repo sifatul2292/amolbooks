@@ -1002,7 +1002,7 @@ export class OrderService {
     try {
       await this.orderModel.findByIdAndUpdate(id, {
         $set: updateOrderDto,
-      });
+      }, { strict: false });
 
       // Setting Data
       const fSetting: any = await this.settingModel
