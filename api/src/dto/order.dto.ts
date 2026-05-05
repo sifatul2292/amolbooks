@@ -93,6 +93,10 @@ export class UpdateOrderDto {
   fraudChecker: any;
 
   @IsOptional()
+  @IsString()
+  adminNote: string;
+
+  @IsOptional()
   orderStatus: any;
 
   @IsOptional()

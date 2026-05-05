@@ -416,6 +416,18 @@
 
     /* Fraud */
     .fraud-cell { display: flex; flex-direction: column; gap: 5px; min-width: 72px; align-items: flex-start; }
+    .note-cell { max-width: 160px; font-size: 12px; color: #334155; line-height: 1.5; word-break: break-word; }
+    .customer-note-text { display: block; }
+    .admin-note-cell { min-width: 140px; max-width: 180px; }
+    .admin-note-text { display: block; font-size: 12px; color: #1e40af; cursor: pointer; line-height: 1.5; word-break: break-word; padding: 3px 6px; border-radius: 5px; background: #eff6ff; }
+    .admin-note-text:hover { background: #dbeafe; }
+    .btn-add-note { font-size: 11px; color: #6366f1; background: none; border: 1px dashed #a5b4fc; border-radius: 5px; padding: 3px 8px; cursor: pointer; }
+    .btn-add-note:hover { background: #eef2ff; }
+    .admin-note-input { width: 100%; font-size: 12px; border: 1px solid #a5b4fc; border-radius: 5px; padding: 5px 7px; resize: vertical; font-family: inherit; outline: none; box-sizing: border-box; }
+    .admin-note-input:focus { border-color: #6366f1; box-shadow: 0 0 0 2px #eef2ff; }
+    .btn-note-save { margin-top: 4px; margin-right: 4px; font-size: 11px; background: #6366f1; color: #fff; border: none; border-radius: 5px; padding: 3px 10px; cursor: pointer; }
+    .btn-note-save:hover { background: #4f46e5; }
+    .btn-note-cancel { margin-top: 4px; font-size: 11px; background: none; color: #64748b; border: 1px solid #e2e8f0; border-radius: 5px; padding: 3px 8px; cursor: pointer; }
     .fraud-chip {
       display: inline-flex; align-items: center; padding: 3px 8px;
       border-radius: 20px; font-size: 11px; font-weight: 700;
@@ -959,11 +971,13 @@
                 <th>Status</th>
                 <th>Order By</th>
                 <th>Invoice</th>
+                <th>Customer Note</th>
+                <th>Admin Note</th>
               </tr>
             </thead>
             <tbody id="ordersBody">
               <tr class="loading-row">
-                <td colspan="15"><div class="spinner"></div><div>Loading orders…</div></td>
+                <td colspan="17"><div class="spinner"></div><div>Loading orders…</div></td>
               </tr>
             </tbody>
           </table>
@@ -1022,6 +1036,10 @@
         <div class="mfr-btn">
           <button id="modalFraudBtn" class="btn-fraud-modal" onclick="modalCheckFraud()">Check</button>
         </div>
+      </div>
+      <div id="modalNoteRow" style="display:none;margin:0 0 14px;padding:10px 14px;background:#fefce8;border:1px solid #fde68a;border-radius:8px;font-size:13px;color:#92400e">
+        <strong style="display:block;margin-bottom:4px">📝 Customer Note</strong>
+        <span id="modalCustomerNote"></span>
       </div>
       <div class="modal-section-title">📦 Ordered Items</div>
       <table class="product-table">
@@ -1301,6 +1319,7 @@
         discount:1, orderStatus:1, paymentStatus:1, paymentType:1,
         createdAt:1, checkoutDate:1, shippingAddress:1, courierData:1,
         courierLink:1, fraudChecker:1, admin:1, user:1, deliveryDate:1, orderedItems:1,
+        note:1, adminNote:1,
       },
     };
     if (Object.keys(filter).length) body.filter = filter;
@@ -1337,7 +1356,7 @@
     .catch(function(err){
       if (err.message === 'Unauthorized') return;
       document.getElementById('ordersBody').innerHTML =
-        '<tr class="empty-row"><td colspan="15"><i class="fas fa-exclamation-triangle" style="color:#ef4444;font-size:22px;display:block;margin-bottom:10px"></i>Failed to load orders<br><small style="color:#94a3b8">' + err.message + '</small></td></tr>';
+        '<tr class="empty-row"><td colspan="17"><i class="fas fa-exclamation-triangle" style="color:#ef4444;font-size:22px;display:block;margin-bottom:10px"></i>Failed to load orders<br><small style="color:#94a3b8">' + err.message + '</small></td></tr>';
       ['totalOrders','totalAmount'].forEach(function(id){ document.getElementById(id).textContent = '—'; });
       document.getElementById('paginationInfo').textContent = '';
     });
@@ -1347,7 +1366,7 @@
     var rows = '';
     for (var i = 0; i < 8; i++) {
       rows += '<tr class="skeleton-row">';
-      for (var j = 0; j < 15; j++) rows += '<td><div class="skel" style="width:' + (55 + Math.random()*35|0) + '%"></div></td>';
+      for (var j = 0; j < 17; j++) rows += '<td><div class="skel" style="width:' + (55 + Math.random()*35|0) + '%"></div></td>';
       rows += '</tr>';
     }
     document.getElementById('ordersBody').innerHTML = rows;
@@ -1622,6 +1641,11 @@
         fraudBtn.textContent='Check';
       }
 
+      var noteRow = document.getElementById('modalNoteRow');
+      var noteEl = document.getElementById('modalCustomerNote');
+      if (order.note) { noteEl.textContent = order.note; noteRow.style.display = ''; }
+      else { noteRow.style.display = 'none'; noteEl.textContent = ''; }
+
       currentModalOrderId = mongoId;
       var courierBtn = document.getElementById('modalCourierBtn');
       var hasCourier = order.courierData && order.courierData.providerName;
@@ -1712,7 +1736,7 @@
   function renderTable(orders, total) {
     var tbody=document.getElementById('ordersBody');
     if (!orders.length) {
-      tbody.innerHTML='<tr class="empty-row"><td colspan="15"><i class="fas fa-inbox" style="font-size:32px;color:#cbd5e1;display:block;margin-bottom:10px"></i>No orders found</td></tr>';
+      tbody.innerHTML='<tr class="empty-row"><td colspan="17"><i class="fas fa-inbox" style="font-size:32px;color:#cbd5e1;display:block;margin-bottom:10px"></i>No orders found</td></tr>';
       return;
     }
     var offset=state.page*state.pageSize;
@@ -1751,6 +1775,8 @@
         '<td>'+statusSelect(o.orderId,o._id,o.orderStatus)+'</td>',
         '<td><small style="color:#64748b">'+orderBy+'</small></td>',
         '<td><a href="'+API+'/invoice/'+o._id+'.pdf" target="_blank" class="btn-action btn-invoice" title="Invoice"><i class="fas fa-file-invoice"></i></a></td>',
+        '<td><div class="note-cell">'+(o.note?'<span class="customer-note-text">'+esc(o.note)+'</span>':'<span style="color:#94a3b8;font-size:11px">—</span>')+'</div></td>',
+        '<td><div class="admin-note-cell" data-id="'+o._id+'">'+(o.adminNote?'<span class="admin-note-text" onclick="editAdminNote(\''+o._id+'\',this)">'+esc(o.adminNote)+'</span>':'<button class="btn-add-note" onclick="editAdminNote(\''+o._id+'\',this)">+ Add</button>')+'</div></td>',
         '</tr>',
       ].join('');
     }).join('');
@@ -1829,6 +1855,54 @@
     a.download='orders-'+new Date().toISOString().split('T')[0]+'.csv';
     a.click(); URL.revokeObjectURL(a.href);
     showToast('Exported '+allOrders.length+' orders.','success');
+  };
+
+  /* ── Admin Note ── */
+  window.editAdminNote = function (mongoId, triggerEl) {
+    var cell = document.querySelector('.admin-note-cell[data-id="' + mongoId + '"]');
+    if (!cell) return;
+    var order = allOrdersById[String(mongoId)];
+    var current = (order && order.adminNote) || '';
+    var textarea = document.createElement('textarea');
+    textarea.className = 'admin-note-input';
+    textarea.value = current;
+    textarea.placeholder = 'Add admin note…';
+    textarea.rows = 3;
+    var saveBtn = document.createElement('button');
+    saveBtn.className = 'btn-note-save';
+    saveBtn.textContent = 'Save';
+    var cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn-note-cancel';
+    cancelBtn.textContent = 'Cancel';
+    cell.innerHTML = '';
+    cell.appendChild(textarea);
+    cell.appendChild(saveBtn);
+    cell.appendChild(cancelBtn);
+    textarea.focus();
+    saveBtn.onclick = function () {
+      var val = textarea.value.trim();
+      saveBtn.disabled = true; saveBtn.textContent = '…';
+      fetch(API + '/api/order/update/' + mongoId, {
+        method: 'PUT', headers: authHeaders(),
+        body: JSON.stringify({ adminNote: val }),
+      })
+      .then(function (r) { return r.json(); })
+      .then(function (resp) {
+        if (resp && resp.success === false) { showToast(resp.message || 'Failed to save note', 'error'); saveBtn.disabled = false; saveBtn.textContent = 'Save'; return; }
+        if (order) order.adminNote = val;
+        cell.innerHTML = val
+          ? '<span class="admin-note-text" onclick="editAdminNote(\'' + mongoId + '\',this)">' + esc(val) + '</span>'
+          : '<button class="btn-add-note" onclick="editAdminNote(\'' + mongoId + '\',this)">+ Add</button>';
+        showToast('Note saved', 'success');
+      })
+      .catch(function (err) { showToast('Error: ' + err.message, 'error'); saveBtn.disabled = false; saveBtn.textContent = 'Save'; });
+    };
+    cancelBtn.onclick = function () {
+      var cur = (order && order.adminNote) || '';
+      cell.innerHTML = cur
+        ? '<span class="admin-note-text" onclick="editAdminNote(\'' + mongoId + '\',this)">' + esc(cur) + '</span>'
+        : '<button class="btn-add-note" onclick="editAdminNote(\'' + mongoId + '\',this)">+ Add</button>';
+    };
   };
 
   /* ── Escape HTML ── */

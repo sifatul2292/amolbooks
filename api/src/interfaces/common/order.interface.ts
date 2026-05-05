@@ -39,6 +39,7 @@ export interface Order {
   user?: string;
   productDiscount?: number;
   note?: string;
+  adminNote?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }

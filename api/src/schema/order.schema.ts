@@ -208,6 +208,10 @@ export const OrderSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    adminNote: {
+      type: String,
+      required: false,
+    },
     user: {
       type: Schema.Types.ObjectId,
       ref: 'User',
