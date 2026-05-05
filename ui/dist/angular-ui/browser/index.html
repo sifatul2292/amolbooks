@@ -637,7 +637,7 @@
       body:JSON.stringify({
         filter:{'tags._id':TAG_ID},
         pagination:{pageSize:20,currentPage:0},
-        select:{name:1,slug:1,images:1,salePrice:1,regularPrice:1,discount:1,author:1}
+        select:{name:1,slug:1,images:1,salePrice:1,afterDiscountPrice:1,discount:1,author:1}
       })
     }).then(function(r){return r.json();}).then(function(d){
       if(d.success&&d.data&&d.data.length){_cache=d.data;cb(d.data);}
@@ -656,15 +656,16 @@
         else if(Array.isArray(p.author))author=p.author.map(function(a){return typeof a==='string'?a:(a&&a.name?a.name:'');}).filter(Boolean).join(', ');
         else if(p.author.name)author=p.author.name;
       }
-      /* salePrice = base/regular price; discounted = salePrice*(1-discount/100) */
-      var base=p.salePrice||p.regularPrice||0;
+      /* salePrice = marked/list price; afterDiscountPrice = final customer price */
+      var saleP=p.salePrice||0;
+      var finalP=p.afterDiscountPrice||saleP;
       var disc=p.discount||0;
-      var discounted=disc?Math.round(base*(1-disc/100)):base;
-      var priceHtml=discounted
-        ?'<span style="font-size:15px;font-weight:700;color:#e53935;font-family:hind-siliguri,sans-serif;">৳'+discounted+'</span>'
-         +(disc?'<span style="font-size:12px;color:#999;text-decoration:line-through;margin-left:6px;font-family:hind-siliguri,sans-serif;">৳'+base+'</span>':'')
+      var discBadgeVal=disc||(saleP&&finalP&&saleP>finalP?Math.round((saleP-finalP)/saleP*100):0);
+      var priceHtml=finalP
+        ?'<span style="font-size:15px;font-weight:700;color:#e53935;font-family:hind-siliguri,sans-serif;">৳'+finalP+'</span>'
+         +(saleP&&saleP>finalP?'<span style="font-size:12px;color:#999;text-decoration:line-through;margin-left:6px;font-family:hind-siliguri,sans-serif;">৳'+saleP+'</span>':'')
         :'';
-      var discBadge=disc?'<span style="position:absolute;top:8px;right:8px;background:#e53935;color:#fff;font-size:11px;font-weight:700;padding:3px 7px;border-radius:20px;line-height:1;">'+disc+'%</span>':'';
+      var discBadge=discBadgeVal?'<span style="position:absolute;top:8px;right:8px;background:#e53935;color:#fff;font-size:11px;font-weight:700;padding:3px 7px;border-radius:20px;line-height:1;">'+discBadgeVal+'%</span>':'';
       return '<a href="/product-details/'+slug+'"'
         +' style="display:flex;flex-direction:column;text-decoration:none;color:inherit;background:#fff;border-radius:10px;overflow:hidden;border:1px solid #eee;box-shadow:0 2px 6px rgba(0,0,0,.07);"'
         +' onmouseenter="this.style.boxShadow=\'0 6px 20px rgba(0,0,0,.14)\';this.style.transform=\'translateY(-3px)\'"'
