@@ -440,17 +440,37 @@ export class GtmService {
         // Ensure user_data exists
         fbApiPayload.user_data = fbApiPayload.user_data || {};
 
-        fbApiPayload.user_data.em =
-          fbApiPayload.user_data.em && fbApiPayload.user_data.em !== 'null'
-            ? fbApiPayload.user_data.em
-            : undefined;
-        fbApiPayload.user_data.ph =
-          fbApiPayload.user_data.ph && fbApiPayload.user_data.ph !== 'null'
-            ? fbApiPayload.user_data.ph
-            : undefined;
+        const ud = fbApiPayload.user_data;
 
-        fbApiPayload.user_data.client_ip_address = clientIpAddress || undefined;
-        fbApiPayload.user_data.client_user_agent = clientUserAgent || undefined;
+        // Map GTM dataLayer field names → Meta CAPI field names
+        // phone: accept both 'ph' and 'phone_number'
+        ud.ph = (ud.ph && ud.ph !== 'null' ? ud.ph : null)
+          || (ud.phone_number && ud.phone_number !== 'null' ? ud.phone_number : null)
+          || undefined;
+        delete ud.phone_number;
+
+        // email
+        ud.em = (ud.em && ud.em !== 'null' ? ud.em : null)
+          || (ud.email_address && ud.email_address !== 'null' ? ud.email_address : null)
+          || undefined;
+        delete ud.email_address;
+
+        // first/last name
+        ud.fn = ud.fn || (ud.first_name && ud.first_name !== 'null' ? ud.first_name : undefined);
+        ud.ln = ud.ln || (ud.last_name && ud.last_name !== 'null' ? ud.last_name : undefined);
+        delete ud.first_name;
+        delete ud.last_name;
+
+        // country (keep as-is — 'bd' is correct ISO alpha-2)
+        ud.country = ud.country || undefined;
+
+        // Click ID / Browser ID (not hashed — pass through)
+        ud.fbc = ud.fbc || undefined;
+        ud.fbp = ud.fbp || undefined;
+
+        // Server-side enrichment
+        ud.client_ip_address = clientIpAddress || undefined;
+        ud.client_user_agent = clientUserAgent || undefined;
 
         let payloadData = {};
         if (
@@ -470,7 +490,6 @@ export class GtmService {
           fSetting.analytics.facebookPixelAccessToken,
           payloadData,
         );
-        // console.log('result-purchase', result);
       }
 
       return {

@@ -276,6 +276,9 @@
   }
 
   var _purchaseFired=false;
+  var _lastOrderUserData=null; /* stores user_data from last add-order-by for NestJS CAPI injection */
+
+  function _getCookie(n){var m=document.cookie.match(new RegExp('(?:^|; )'+n.replace(/([.*+?^${}()|[\]\\])/g,'\\$1')+'=([^;]*)'));return m?decodeURIComponent(m[1]):'';}
 
   /* ── XHR intercept: populate _localCart from cart/product APIs; fire purchase ── */
   var _xhrOpen=XMLHttpRequest.prototype.open;
@@ -283,6 +286,13 @@
   XMLHttpRequest.prototype.open=function(m,u){this._gm=m;this._gu=String(u||'');return _xhrOpen.apply(this,arguments);};
   XMLHttpRequest.prototype.send=function(body){
     var self=this;
+    /* Inject stored user_data into NestJS purchase CAPI tracking call */
+    if(self._gu&&self._gu.indexOf('track-theme-purchase')!==-1&&_lastOrderUserData&&body){
+      try{
+        var _p=JSON.parse(body);
+        if(!_p.user_data){_p.user_data=_lastOrderUserData;body=JSON.stringify(_p);}
+      }catch(e){}
+    }
     self._gbody=body;
     var _done=false;
     function handle(){
@@ -372,6 +382,12 @@
             if(req.email)ud.email_address=req.email.trim().toLowerCase();
             if(req.city)ud.city=req.city.trim().toLowerCase();
           }catch(e){grandTotal=cartVal(items3);}
+          /* Add Facebook browser cookies for better match quality */
+          var _fbc=_getCookie('_fbc');var _fbp=_getCookie('_fbp');
+          if(_fbc)ud.fbc=_fbc;
+          if(_fbp)ud.fbp=_fbp;
+          /* Store for NestJS CAPI injection */
+          _lastOrderUserData=ud;
           var dl=window.dataLayer;
           dl.push({ecommerce:null});
           dl.push({event:'purchase_stape',ecommerce:{currency:'BDT',value:grandTotal,transaction_id:String(orderId),items:items3},user_data:ud,__stape:true});
