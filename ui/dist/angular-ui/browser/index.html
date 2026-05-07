@@ -388,11 +388,9 @@
           if(_fbp)ud.fbp=_fbp;
           /* Store for NestJS CAPI injection */
           _lastOrderUserData=ud;
-          var dl=window.dataLayer;
-          dl.push({ecommerce:null});
-          dl.push({event:'purchase_stape',ecommerce:{currency:'BDT',value:grandTotal,transaction_id:String(orderId),items:items3},user_data:ud,__stape:true});
           _localCart=[];
-          pushPageView('Thank you Page - Amolbooks');
+          /* Store purchase payload — fire only when customer lands on thank-you page */
+          try{sessionStorage.setItem('_pendingPurchase',JSON.stringify({event:'purchase_stape',ecommerce:{currency:'BDT',value:grandTotal,transaction_id:String(orderId),items:items3},user_data:ud,__stape:true}));}catch(e){}
         }
       }catch(e){}
     }
@@ -453,6 +451,9 @@
         var u=String(url||'');
         if(u.indexOf('order-success')!==-1){
           _purchaseFired=false;
+          document.title='Thank you Page - Amolbooks';
+          var _pp=sessionStorage.getItem('_pendingPurchase');
+          if(_pp){try{var _pd=JSON.parse(_pp);window.dataLayer.push({ecommerce:null});window.dataLayer.push(_pd);sessionStorage.removeItem('_pendingPurchase');}catch(e){}}
           pushPageView('Thank you Page - Amolbooks');
         } else if(u.indexOf('/checkout')!==-1){
           _checkoutFired=false;
@@ -467,6 +468,8 @@
   document.addEventListener('DOMContentLoaded',function(){
     var pn=window.location.pathname;
     if(pn.indexOf('order-success')!==-1){
+      var _pp2=sessionStorage.getItem('_pendingPurchase');
+      if(_pp2){try{var _pd2=JSON.parse(_pp2);window.dataLayer.push({ecommerce:null});window.dataLayer.push(_pd2);sessionStorage.removeItem('_pendingPurchase');}catch(e){}}
       pushPageView('Thank you Page - Amolbooks');
     } else if(pn.indexOf('/checkout')!==-1){
       var tries=0;
