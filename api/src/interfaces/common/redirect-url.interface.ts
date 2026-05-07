@@ -7,6 +7,8 @@ export interface RedirectUrl {
   mobileImage?: string;
   bannerType?: string;
   url?: string;
+  fromUrl?: string;
+  toUrl?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
