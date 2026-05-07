@@ -908,6 +908,24 @@ export class ProductService {
       // }
 
       if (!data) {
+        const allRedirects = await this.redirectUrlModel.find({}).lean();
+        let redirectTo: string | null = null;
+        for (const redirect of allRedirects) {
+          if (!redirect.fromUrl) continue;
+          const hasWildcard = redirect.fromUrl.endsWith('*');
+          const cleanFrom = redirect.fromUrl.replace(/\*$/, '');
+          const fromPath = cleanFrom.replace(/^https?:\/\/[^/]+/, '');
+          const segments = fromPath.split('/').filter(Boolean);
+          const fromSlug = segments[segments.length - 1];
+          if (!fromSlug) continue;
+          if (hasWildcard ? slug.startsWith(fromSlug) : slug === fromSlug) {
+            redirectTo = redirect.toUrl;
+            break;
+          }
+        }
+        if (redirectTo) {
+          return { success: false, message: 'Redirect', redirectTo } as ResponsePayload;
+        }
         return { success: false, message: 'Product not found', data: null } as ResponsePayload;
       }
       // Helper: compute the after-discount price server-side so the frontend
