@@ -62,6 +62,19 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
   const port = process.env.PORT || 3000;
+
+  // init() first so our fallback middleware is registered AFTER all NestJS routes
+  await app.init();
+
+  // SPA fallback: any route not handled by NestJS (redirect middleware fires first;
+  // this serves index.html for valid Angular routes like /about-us, /product/...)
+  const httpAdapter = app.getHttpAdapter().getInstance() as express.Express;
+  httpAdapter.use((_req: express.Request, res: express.Response) => {
+    if (!res.headersSent) {
+      res.sendFile(join(__dirname, '..', '..', 'ui', 'dist', 'angular-ui', 'browser', 'index.html'));
+    }
+  });
+
   await app.listen(port);
   logger.log(`Application is running on port ${port}`);
 }
