@@ -13,6 +13,7 @@ import {
   Version,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { SkipThrottle } from '@nestjs/throttler';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import {
@@ -34,6 +35,7 @@ import * as sharp from 'sharp';
 import * as fs from 'fs';
 import { Response } from 'express';
 
+@SkipThrottle()
 @Controller('upload')
 export class UploadController {
   private logger = new Logger(UploadController.name);
