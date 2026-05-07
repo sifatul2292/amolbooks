@@ -29,6 +29,12 @@ import {
   UpdateOrderDto,
   UpdateOrderStatusDto,
 } from '../../../dto/order.dto';
+import {
+  AddIncompleteOrderDto,
+  DeleteMultipleIncompleteOrderDto,
+  FilterAndPaginationIncompleteOrderDto,
+  UpdateIncompleteOrderDto,
+} from '../../../dto/incomplete-order.dto';
 import { ResponsePayload } from '../../../interfaces/core/response-payload.interface';
 import { MongoIdValidationPipe } from '../../../pipes/mongo-id-validation.pipe';
 import { OrderService } from './order.service';
@@ -320,5 +326,66 @@ export class OrderController {
       data.ids,
       Boolean(checkUsage),
     );
+  }
+
+  /**
+   * Incomplete Order Endpoints
+   */
+  @Version(VERSION_NEUTRAL)
+  @Post('/add-incomplete-order-by-user')
+  @UsePipes(ValidationPipe)
+  async addIncompleteOrderByUser(
+    @Body() addIncompleteOrderDto: AddIncompleteOrderDto,
+  ): Promise<ResponsePayload> {
+    return await this.orderService.addIncompleteOrder(addIncompleteOrderDto);
+  }
+
+  @Version(VERSION_NEUTRAL)
+  @Post('/add-incomplete-order-by-anonymous')
+  @UsePipes(ValidationPipe)
+  async addIncompleteOrderByAnonymous(
+    @Body() addIncompleteOrderDto: AddIncompleteOrderDto,
+  ): Promise<ResponsePayload> {
+    return await this.orderService.addIncompleteOrder(addIncompleteOrderDto);
+  }
+
+  @Version(VERSION_NEUTRAL)
+  @Post('/get-all-incomplete-orders')
+  @UsePipes(ValidationPipe)
+  @UseGuards(AdminJwtAuthGuard)
+  async getAllIncompleteOrders(
+    @Body() filterDto: FilterAndPaginationIncompleteOrderDto,
+    @Query('q') searchString: string,
+  ): Promise<ResponsePayload> {
+    return await this.orderService.getAllIncompleteOrders(filterDto, searchString);
+  }
+
+  @Version(VERSION_NEUTRAL)
+  @Get('/incomplete/:id')
+  @UseGuards(AdminJwtAuthGuard)
+  async getIncompleteOrderById(
+    @Param('id', MongoIdValidationPipe) id: string,
+  ): Promise<ResponsePayload> {
+    return await this.orderService.getIncompleteOrderById(id);
+  }
+
+  @Version(VERSION_NEUTRAL)
+  @Put('/update-incomplete-order-by-id/:id')
+  @UsePipes(ValidationPipe)
+  async updateIncompleteOrderById(
+    @Param('id', MongoIdValidationPipe) id: string,
+    @Body() updateIncompleteOrderDto: UpdateIncompleteOrderDto,
+  ): Promise<ResponsePayload> {
+    return await this.orderService.updateIncompleteOrderById(id, updateIncompleteOrderDto);
+  }
+
+  @Version(VERSION_NEUTRAL)
+  @Post('/delete-multiple-incomplete-orders')
+  @UsePipes(ValidationPipe)
+  @UseGuards(AdminJwtAuthGuard)
+  async deleteMultipleIncompleteOrderById(
+    @Body() deleteDto: DeleteMultipleIncompleteOrderDto,
+  ): Promise<ResponsePayload> {
+    return await this.orderService.deleteMultipleIncompleteOrderById(deleteDto.ids);
   }
 }

@@ -11,6 +11,12 @@ import { Model, Types } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { UtilsService } from '../../../shared/utils/utils.service';
 import { Order } from '../../../interfaces/common/order.interface';
+import { IncompleteOrder } from '../../../interfaces/common/incomplete-order.interface';
+import {
+  AddIncompleteOrderDto,
+  FilterAndPaginationIncompleteOrderDto,
+  UpdateIncompleteOrderDto,
+} from '../../../dto/incomplete-order.dto';
 import { ResponsePayload } from '../../../interfaces/core/response-payload.interface';
 import { ErrorCodes } from '../../../enum/error-code.enum';
 import {
@@ -49,6 +55,8 @@ export class OrderService {
   constructor(
     @InjectModel('Admin') private readonly adminModel: Model<Admin>,
     @InjectModel('Order') private readonly orderModel: Model<Order>,
+    @InjectModel('IncompleteOrder')
+    private readonly incompleteOrderModel: Model<IncompleteOrder>,
     @InjectModel('Product') private readonly productModel: Model<Product>,
     @InjectModel('SpecialPackage')
     private readonly specialPackageModel: Model<SpecialPackage>,
@@ -2413,6 +2421,165 @@ export class OrderService {
           }
           break;
       }
+    }
+  }
+
+  /**
+   * Incomplete Order Methods
+   */
+  async addIncompleteOrder(
+    addIncompleteOrderDto: AddIncompleteOrderDto,
+  ): Promise<ResponsePayload> {
+    try {
+      const newData = new this.incompleteOrderModel(addIncompleteOrderDto);
+      const saveData = await newData.save();
+      return {
+        success: true,
+        message: 'Incomplete order saved successfully',
+        data: { _id: saveData._id },
+      } as ResponsePayload;
+    } catch (err) {
+      this.logger.error(err);
+      throw new InternalServerErrorException(err.message);
+    }
+  }
+
+  async getAllIncompleteOrders(
+    filterDto: FilterAndPaginationIncompleteOrderDto,
+    searchQuery?: string,
+  ): Promise<ResponsePayload> {
+    const { filter, pagination, sort, select } = filterDto;
+
+    const aggregateStages: any[] = [];
+    let mFilter: any = {};
+    let mSort: any = { createdAt: -1 };
+    let mSelect: any = {};
+    let mPagination: any = {};
+
+    if (filter) {
+      mFilter = { ...mFilter, ...filter };
+    }
+
+    if (searchQuery) {
+      mFilter = {
+        $and: [
+          mFilter,
+          {
+            $or: [
+              { name: { $regex: searchQuery, $options: 'i' } },
+              { phoneNo: { $regex: searchQuery, $options: 'i' } },
+              { orderId: { $regex: searchQuery, $options: 'i' } },
+            ],
+          },
+        ],
+      };
+    }
+
+    if (sort) {
+      mSort = sort;
+    }
+
+    if (select) {
+      mSelect = { ...select };
+    }
+
+    if (Object.keys(mFilter).length) {
+      aggregateStages.push({ $match: mFilter });
+    }
+
+    if (Object.keys(mSort).length) {
+      aggregateStages.push({ $sort: mSort });
+    }
+
+    const countFilter = { ...mFilter };
+
+    if (pagination) {
+      const pageSize =
+        pagination.pageSize && Number(pagination.pageSize) > 0
+          ? Number(pagination.pageSize)
+          : 25;
+      const currentPage =
+        pagination.currentPage && Number(pagination.currentPage) > 0
+          ? Number(pagination.currentPage)
+          : 1;
+      mPagination = {
+        skip: pageSize * (currentPage - 1),
+        limit: pageSize,
+      };
+      aggregateStages.push({ $skip: mPagination.skip });
+      aggregateStages.push({ $limit: mPagination.limit });
+    }
+
+    if (Object.keys(mSelect).length) {
+      aggregateStages.push({ $project: mSelect });
+    }
+
+    try {
+      const data = await this.incompleteOrderModel.aggregate(aggregateStages);
+      const count = await this.incompleteOrderModel.countDocuments(countFilter);
+      return {
+        success: true,
+        message: 'Incomplete orders retrieved successfully',
+        data,
+        count,
+      } as ResponsePayload;
+    } catch (err) {
+      this.logger.error(err);
+      throw new InternalServerErrorException(err.message);
+    }
+  }
+
+  async getIncompleteOrderById(id: string): Promise<ResponsePayload> {
+    try {
+      const data = await this.incompleteOrderModel
+        .findById(id)
+        .populate('user', 'name email phoneNo');
+      if (!data) {
+        throw new NotFoundException('Incomplete order not found');
+      }
+      return {
+        success: true,
+        message: 'Incomplete order retrieved successfully',
+        data,
+      } as ResponsePayload;
+    } catch (err) {
+      this.logger.error(err);
+      throw new InternalServerErrorException(err.message);
+    }
+  }
+
+  async updateIncompleteOrderById(
+    id: string,
+    updateIncompleteOrderDto: UpdateIncompleteOrderDto,
+  ): Promise<ResponsePayload> {
+    try {
+      await this.incompleteOrderModel.findByIdAndUpdate(id, {
+        $set: updateIncompleteOrderDto,
+      });
+      return {
+        success: true,
+        message: 'Incomplete order updated successfully',
+      } as ResponsePayload;
+    } catch (err) {
+      this.logger.error(err);
+      throw new InternalServerErrorException(err.message);
+    }
+  }
+
+  async deleteMultipleIncompleteOrderById(
+    ids: string[],
+  ): Promise<ResponsePayload> {
+    try {
+      await this.incompleteOrderModel.deleteMany({
+        _id: { $in: ids },
+      });
+      return {
+        success: true,
+        message: 'Incomplete orders deleted successfully',
+      } as ResponsePayload;
+    } catch (err) {
+      this.logger.error(err);
+      throw new InternalServerErrorException(err.message);
     }
   }
 }

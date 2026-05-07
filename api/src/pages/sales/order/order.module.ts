@@ -4,6 +4,7 @@ import { OrderService } from './order.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ProductSchema } from '../../../schema/product.schema';
 import { OrderSchema } from '../../../schema/order.schema';
+import { IncompleteOrderSchema } from '../../../schema/incomplete-order.schema';
 import { UniqueIdSchema } from '../../../schema/unique-id.schema';
 import { CartSchema } from '../../../schema/cart.schema';
 import { UserSchema } from '../../../schema/user.schema';
@@ -18,6 +19,7 @@ import { AdminSchema } from '../../../schema/admin.schema';
   imports: [
     MongooseModule.forFeature([
       { name: 'Order', schema: OrderSchema },
+      { name: 'IncompleteOrder', schema: IncompleteOrderSchema },
       { name: 'Product', schema: ProductSchema },
       { name: 'UniqueId', schema: UniqueIdSchema },
       { name: 'Cart', schema: CartSchema },
