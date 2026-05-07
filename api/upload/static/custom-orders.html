@@ -346,10 +346,12 @@
 
     /* Row accents */
     tr.row-processing { border-left: 3px solid #7c3aed; }
-    tr.row-completed  { border-left: 3px solid #059669; background: #f0fdf4 !important; }
+    tr.row-confirmed  { border-left: 3px solid #16a34a; background: #f0fdf4 !important; }
+    tr.row-completed  { border-left: 3px solid #059669; background: #dcfce7 !important; }
     tr.row-cancelled  { border-left: 3px solid #dc2626; background: #fff5f5 !important; }
     tr.row-trash      { border-left: 3px solid #94a3b8; background: var(--g50) !important; opacity: .7; }
-    tr.row-completed:hover { background: #dcfce7 !important; }
+    tr.row-confirmed:hover { background: #dcfce7 !important; }
+    tr.row-completed:hover { background: #bbf7d0 !important; }
     tr.row-cancelled:hover { background: #fee2e2 !important; }
 
     .order-no {
@@ -1766,7 +1768,8 @@
       var orderBy=(o.admin&&o.admin.name)?esc(o.admin.name):(o.user?'User':'—');
       var itemCount=o.orderedItems?o.orderedItems.length:0;
       var rowCls='row-processing';
-      if(o.orderStatus===5) rowCls='row-completed';
+      if(o.orderStatus===2) rowCls='row-confirmed';
+      else if(o.orderStatus===5) rowCls='row-completed';
       else if([6,7,9].includes(o.orderStatus)) rowCls='row-cancelled';
       else if(o.orderStatus===10) rowCls='row-trash';
       return [
