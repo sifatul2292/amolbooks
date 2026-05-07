@@ -6,6 +6,8 @@ import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SeoBotMiddleware } from './middleware/seo-bot.middleware';
+import { RedirectUrlMiddleware } from './middleware/redirect-url.middleware';
+import { RedirectUrlSchema } from './schema/redirect-url.schema';
 import { ConfigModule } from '@nestjs/config';
 import configuration from './config/configuration';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -115,6 +117,7 @@ import { PreOrderModule } from './pages/pre-order/pre-order.module';
       retryReads: true,
     }),
     CacheModule.register({ ttl: 300, max: 500, isGlobal: true }),
+    MongooseModule.forFeature([{ name: 'RedirectUrl', schema: RedirectUrlSchema }]),
     AdminModule,
     UserModule,
     UtilsModule,
@@ -182,14 +185,19 @@ import { PreOrderModule } from './pages/pre-order/pre-order.module';
   providers: [
     AppService,
     SeoBotMiddleware,
+    RedirectUrlMiddleware,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // Apply bot-detection middleware to all GET routes.
-    // Bots hitting product pages get product OG HTML; bots hitting other pages
-    // get OG HTML from the SeoPage database. Regular browsers fall through.
+    // Redirect middleware runs first for all non-API GET routes.
+    // If a redirect rule matches the incoming path, it returns 301 immediately.
+    consumer
+      .apply(RedirectUrlMiddleware)
+      .exclude('api/(.*)')
+      .forRoutes({ path: '*', method: 0 });
+    // Bot-detection middleware runs after redirect check.
     consumer
       .apply(SeoBotMiddleware)
       .exclude('api/(.*)')
