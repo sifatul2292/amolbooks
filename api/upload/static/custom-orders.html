@@ -1500,8 +1500,15 @@
     var hr = d.getHours(), mn = String(d.getMinutes()).padStart(2,'0');
     var ampm = hr >= 12 ? 'PM' : 'AM';
     hr = hr % 12 || 12;
+    var diffMs = Date.now() - d.getTime();
+    var diffMin = Math.floor(diffMs / 60000);
+    var ago = diffMin < 1 ? 'just now'
+            : diffMin < 60 ? diffMin + ' min ago'
+            : Math.floor(diffMin / 60) === 1 ? '1 hour ago'
+            : Math.floor(diffMin / 60) + ' hours ago';
     return '<div class="date-cell">' + d.getDate() + ' ' + months[d.getMonth()] + ', ' + d.getFullYear() +
-      '<br><span class="time">' + hr + ':' + mn + ' ' + ampm + '</span></div>';
+      '<br><span class="time">' + hr + ':' + mn + ' ' + ampm + '</span>' +
+      '<br><span class="time" style="color:#a78bfa;font-size:10px;">' + ago + '</span></div>';
   }
 
   /* ── Fraud cell ── */
