@@ -23,3 +23,5 @@ export const WishListSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+
+WishListSchema.index({ user: 1, product: 1 });

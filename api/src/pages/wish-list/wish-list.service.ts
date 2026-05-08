@@ -58,16 +58,7 @@ export class WishListService {
         } as ResponsePayload;
       } else {
         const newData = new this.wishListModel(final);
-        const saveData = await newData.save();
-
-        await this.userModel.findOneAndUpdate(
-          { _id: userId },
-          {
-            $push: {
-              wishLists: saveData._id,
-            },
-          },
-        );
+        await newData.save();
 
         return {
           success: true,
@@ -100,16 +91,7 @@ export class WishListService {
         } else {
           const final = { ...data, ...{ user: userId } };
           const newData = new this.wishListModel(final);
-          const saveData = await newData.save();
-
-          await this.userModel.findOneAndUpdate(
-            { _id: userId },
-            {
-              $push: {
-                wishLists: saveData._id,
-              },
-            },
-          );
+          await newData.save();
         }
       }
       return {
