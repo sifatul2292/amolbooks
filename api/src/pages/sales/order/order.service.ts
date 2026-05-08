@@ -323,7 +323,14 @@ export class OrderService {
         }
       }
 
-      // 2) Cart cleanup and coupon update
+      // 2) Delete incomplete order records for this user (they completed the order)
+      if (addOrderDto.phoneNo) {
+        await this.incompleteOrderModel.deleteMany({
+          phoneNo: addOrderDto.phoneNo,
+        });
+      }
+
+      // 3) Cart cleanup and coupon update
       if (addOrderDto.user && saveData._id) {
         await this.cartModel.deleteMany({
           user: new ObjectId(addOrderDto.user),
@@ -348,11 +355,11 @@ export class OrderService {
         }
       }
 
-      // 3) Generate Invoice PDF
+      // 4) Generate Invoice PDF
       await this.utilsService.generateInvoicePdf(saveData);
       const pdfLink = `https://api.alambook.com/invoice/invoice-${saveData.orderId}.pdf`;
 
-      // 4) Send SMS and Email for Cash on Delivery
+      // 5) Send SMS and Email for Cash on Delivery
       // Check from database if SMS has already been sent to prevent duplicate SMS
       if (saveData['paymentType'] === 'cash_on_delivery') {
         // Check database to see if SMS was already sent (prevents race condition)
