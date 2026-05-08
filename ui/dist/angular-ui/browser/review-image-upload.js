@@ -128,7 +128,7 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         pagination: { pageSize: 200, currentPage: 0 },
-        select: { 'user.name': 1, images: 1, review: 1 }
+        select: { 'user.name': 1, name: 1, userName: 1, images: 1, review: 1 }
       })
     }).then(function (r) {
       if (!r.ok) return null;
@@ -138,6 +138,7 @@
       var list = res.data || res.reviews || (Array.isArray(res) ? res : null);
       if (!Array.isArray(list)) return;
       cacheReviewImages(list);
+      window._riuMap = reviewImagesMap;
       injectReviewImages();
     }).catch(function () {});
   }
@@ -507,6 +508,11 @@
   });
 
   observer.observe(document.body, { childList: true, subtree: true });
+
+  // Expose debug globals
+  window._riuMap = reviewImagesMap;
+  window._riuInject = injectReviewImages;
+  window._riuFetch = fetchAndCacheReviews;
 
   // Fetch reviews directly on load (and after short delay for SPA route settle)
   setTimeout(fetchAndCacheReviews, 1500);
