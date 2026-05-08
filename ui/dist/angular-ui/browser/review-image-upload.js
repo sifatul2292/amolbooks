@@ -126,7 +126,10 @@
     origFetch.call(window, 'https://apisub.amolbooks.com/api/review/get-all-review-by-query', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pagination: { page: 1, limit: 200 } })
+      body: JSON.stringify({
+        pagination: { pageSize: 200, currentPage: 0 },
+        select: { 'user.name': 1, images: 1, review: 1 }
+      })
     }).then(function (r) {
       if (!r.ok) return null;
       return r.json();
