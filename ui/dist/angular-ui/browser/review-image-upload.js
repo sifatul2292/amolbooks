@@ -309,11 +309,14 @@
       if (xhr.status === 200 || xhr.status === 201) {
         try {
           var res = JSON.parse(xhr.responseText);
-          if (res && res.url) {
-            // Fix URL if upload controller returned frontend domain instead of API domain
-            var url = res.url;
-            if (url.indexOf('apisub.') === -1 && url.indexOf('/api/upload/images/') !== -1) {
-              url = url.replace(/https?:\/\/[^/]+\/api\/upload\/images\//, 'https://apisub.amolbooks.com/api/upload/images/');
+          if (res && (res.filename || res.url)) {
+            // Always construct URL using the known API subdomain to avoid
+            // host mismatch when upload is called from the frontend domain
+            var url;
+            if (res.filename) {
+              url = 'https://apisub.amolbooks.com/api/upload/images/' + res.filename;
+            } else {
+              url = res.url.replace(/https?:\/\/[^/]+\/api\/upload\/images\//, 'https://apisub.amolbooks.com/api/upload/images/');
             }
             callback(null, url);
           } else { callback(new Error('No URL')); }
