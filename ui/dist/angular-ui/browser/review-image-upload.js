@@ -402,10 +402,11 @@
   }
 
   function findAndInjectUploadUI() {
+    // First try: textarea with matching placeholder
     var textareas = document.querySelectorAll('textarea');
     for (var i = 0; i < textareas.length; i++) {
       var ta = textareas[i];
-      var ph = ta.getAttribute('placeholder') || '';
+      var ph = (ta.getAttribute('placeholder') || '').toLowerCase();
       if (
         ph.indexOf('honest opinion') !== -1 ||
         ph.indexOf('review') !== -1 ||
@@ -416,13 +417,21 @@
         return;
       }
     }
-    var dialogs = document.querySelectorAll('mat-dialog-container, .cdk-overlay-pane');
+    // Second try: any textarea inside a dialog (MDC or classic)
+    var dialogs = document.querySelectorAll(
+      'mat-mdc-dialog-container, mat-dialog-container, .cdk-overlay-pane'
+    );
     for (var j = 0; j < dialogs.length; j++) {
       var ta2 = dialogs[j].querySelector('textarea');
       if (ta2 && !document.getElementById('riu-container')) {
         injectUploadUI(ta2);
         return;
       }
+    }
+    // Third try: any textarea that appeared if dialog selectors miss
+    if (textareas.length > 0 && !document.getElementById('riu-container')) {
+      // Pick the last textarea (most likely the newly opened form)
+      injectUploadUI(textareas[textareas.length - 1]);
     }
   }
 
@@ -438,7 +447,7 @@
     findAndInjectUploadUI();
     injectReviewImages();
 
-    if (!document.querySelector('mat-dialog-container, .cdk-overlay-pane textarea')) {
+    if (!document.querySelector('mat-mdc-dialog-container, mat-dialog-container, .cdk-overlay-pane textarea')) {
       pendingImages = [];
       injected = false;
     }
