@@ -309,8 +309,14 @@
       if (xhr.status === 200 || xhr.status === 201) {
         try {
           var res = JSON.parse(xhr.responseText);
-          if (res && res.url) { callback(null, res.url); }
-          else { callback(new Error('No URL')); }
+          if (res && res.url) {
+            // Fix URL if upload controller returned frontend domain instead of API domain
+            var url = res.url;
+            if (url.indexOf('apisub.') === -1 && url.indexOf('/api/upload/images/') !== -1) {
+              url = url.replace(/https?:\/\/[^/]+\/api\/upload\/images\//, 'https://apisub.amolbooks.com/api/upload/images/');
+            }
+            callback(null, url);
+          } else { callback(new Error('No URL')); }
         } catch (e) { callback(e); }
       } else {
         callback(new Error('Upload failed: ' + xhr.status));
