@@ -47,6 +47,11 @@ export class AddReviewDto {
   @IsOptional()
   @IsString()
   name: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  images: string[];
 }
 
 export class FilterReviewDto {
