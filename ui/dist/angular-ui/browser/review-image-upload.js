@@ -30,15 +30,7 @@
           var res = JSON.parse(self.responseText);
           var list = res.data || res.reviews || res;
           if (Array.isArray(list)) {
-            list.forEach(function (r) {
-              if (r.images && r.images.length) {
-                var name = ((r.user && r.user.name) || r.userName || r.name || '').toLowerCase().trim();
-                var text = (r.review || '').substring(0, 40).toLowerCase().trim();
-                if (name) reviewImagesMap[name] = r.images;
-                if (text) reviewImagesMap[text] = r.images;
-              }
-            });
-            // Retry injecting now that we have data
+            cacheReviewImages(list);
             setTimeout(injectReviewImages, 300);
           }
         } catch (e) {}
@@ -104,14 +96,7 @@
         clone.json().then(function (res) {
           var list = res.data || res.reviews || res;
           if (Array.isArray(list)) {
-            list.forEach(function (r) {
-              if (r.images && r.images.length) {
-                var name = ((r.user && r.user.name) || r.userName || r.name || '').toLowerCase().trim();
-                var text = (r.review || '').substring(0, 40).toLowerCase().trim();
-                if (name) reviewImagesMap[name] = r.images;
-                if (text) reviewImagesMap[text] = r.images;
-              }
-            });
+            cacheReviewImages(list);
             setTimeout(injectReviewImages, 300);
           }
         }).catch(function () {});
@@ -122,22 +107,85 @@
     return origFetch.apply(this, arguments);
   };
 
+  // ─── Cache helper ─────────────────────────────────────────────────────────────
+
+  function cacheReviewImages(list) {
+    list.forEach(function (r) {
+      if (r.images && r.images.length) {
+        var name = ((r.user && r.user.name) || r.userName || r.name || '').toLowerCase().trim();
+        var text = (r.review || '').substring(0, 40).toLowerCase().trim();
+        if (name) reviewImagesMap[name] = r.images;
+        if (text) reviewImagesMap[text] = r.images;
+      }
+    });
+  }
+
+  // ─── Direct fetch fallback (populate map without relying on intercept timing) ──
+
+  function fetchAndCacheReviews() {
+    origFetch.call(window, 'https://apisub.amolbooks.com/api/review/get-all-review-by-query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pagination: { page: 1, limit: 200 } })
+    }).then(function (r) {
+      if (!r.ok) return null;
+      return r.json();
+    }).then(function (res) {
+      if (!res) return;
+      var list = res.data || res.reviews || (Array.isArray(res) ? res : null);
+      if (!Array.isArray(list)) return;
+      cacheReviewImages(list);
+      injectReviewImages();
+    }).catch(function () {});
+  }
+
   // ─── Display: inject images into rendered review cards ───────────────────────
 
   function injectReviewImages() {
-    if (!Object.keys(reviewImagesMap).length) return;
+    // Find text nodes containing "(Verified Purchase)" — avoids children.length issues
+    var walker = document.createTreeWalker(
+      document.body,
+      NodeFilter.SHOW_TEXT,
+      null,
+      false
+    );
+    var node;
+    var processed = [];
+    while ((node = walker.nextNode())) {
+      if (node.nodeValue && node.nodeValue.trim() === '(Verified Purchase)') {
+        var el = node.parentElement;
+        if (el && processed.indexOf(el) === -1) {
+          processed.push(el);
+          processReviewCard(el);
+        }
+      }
+    }
 
-    // Strategy: find all elements with text "(Verified Purchase)"
-    // walk up to find card root, find reviewer name sibling, match to map
-    var allEls = document.querySelectorAll('*');
+    // Also try: if no VP badges found but reviewImagesMap has data, try any review card
+    if (processed.length === 0 && Object.keys(reviewImagesMap).length > 0) {
+      injectByNameMatch();
+    }
+  }
+
+  function injectByNameMatch() {
+    // Fallback: scan all elements for reviewer names matching our map
+    var allEls = document.querySelectorAll('h1,h2,h3,h4,h5,h6,strong,b,span,p');
     for (var i = 0; i < allEls.length; i++) {
       var el = allEls[i];
-      if (
-        el.children.length === 0 &&
-        el.textContent &&
-        el.textContent.trim() === '(Verified Purchase)'
-      ) {
-        processReviewCard(el);
+      var t = el.textContent.trim().toLowerCase();
+      if (t.length >= 2 && t.length <= 50 && reviewImagesMap[t]) {
+        // Walk up to find card
+        var card = el.parentElement;
+        var depth = 0;
+        while (card && card !== document.body && depth < 6) {
+          if (card.children.length >= 2) break;
+          card = card.parentElement;
+          depth++;
+        }
+        if (!card || card === document.body || card.dataset.riuDone) continue;
+        card.dataset.riuDone = '1';
+        var images = reviewImagesMap[t];
+        injectImageStrip(card, null, images);
       }
     }
   }
@@ -168,8 +216,10 @@
     if (!images || !images.length) return;
 
     card.dataset.riuDone = '1';
+    injectImageStrip(card, reviewTextEl, images);
+  }
 
-    // Inject image strip at bottom of card
+  function injectImageStrip(card, reviewTextEl, images) {
     var strip = document.createElement('div');
     strip.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid #e0e0e0;';
 
@@ -194,7 +244,7 @@
     var candidates = card.querySelectorAll('h1,h2,h3,h4,h5,h6,strong,b,span,p');
     for (var i = 0; i < candidates.length; i++) {
       var c = candidates[i];
-      if (c === badge) continue;
+      if (c === badge || c.contains(badge)) continue;
       var t = c.textContent.trim();
       // Name: short text (2-50 chars), not "(Verified Purchase)", not all digits/stars
       if (
@@ -211,7 +261,7 @@
     // Fallback: return first short text element that could be a name
     for (var j = 0; j < candidates.length; j++) {
       var cc = candidates[j];
-      if (cc === badge) continue;
+      if (cc === badge || cc.contains(badge)) continue;
       var tt = cc.textContent.trim();
       if (tt.length >= 2 && tt.length <= 50 && tt !== '(Verified Purchase)' && cc.children.length === 0) {
         return cc;
@@ -310,8 +360,6 @@
         try {
           var res = JSON.parse(xhr.responseText);
           if (res && (res.filename || res.url)) {
-            // Always construct URL using the known API subdomain to avoid
-            // host mismatch when upload is called from the frontend domain
             var url;
             if (res.filename) {
               url = 'https://apisub.amolbooks.com/api/upload/images/' + res.filename;
@@ -433,7 +481,6 @@
     }
     // Third try: any textarea that appeared if dialog selectors miss
     if (textareas.length > 0 && !document.getElementById('riu-container')) {
-      // Pick the last textarea (most likely the newly opened form)
       injectUploadUI(textareas[textareas.length - 1]);
     }
   }
@@ -457,4 +504,8 @@
   });
 
   observer.observe(document.body, { childList: true, subtree: true });
+
+  // Fetch reviews directly on load (and after short delay for SPA route settle)
+  setTimeout(fetchAndCacheReviews, 1500);
+  setTimeout(fetchAndCacheReviews, 4000);
 })();
