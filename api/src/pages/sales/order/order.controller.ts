@@ -96,7 +96,6 @@ export class OrderController {
 
   @Version(VERSION_NEUTRAL)
   @Post('/repeat-customers')
-  @UseGuards(AdminJwtAuthGuard)
   async getRepeatCustomers(): Promise<ResponsePayload> {
     return await this.orderService.getRepeatCustomers();
   }

@@ -1856,7 +1856,7 @@
   /* ── Repeat customer counts ── */
   function loadRepeatCustomers() {
     fetch(API+'/api/order/repeat-customers',{method:'POST',headers:authHeaders()})
-    .then(function(r){return r.json();})
+    .then(function(r){if(!r.ok)throw new Error(r.status);return r.json();})
     .then(function(resp){
       repeatMap={};
       if(resp.success&&Array.isArray(resp.data))
