@@ -718,7 +718,7 @@
   /* ── DOM injection ── */
   function injectDropdowns(districts) {
     if (document.getElementById('amol-addr-inject')) return;
-    var ta = document.querySelector('textarea.form-textarea');
+    var ta = document.querySelectorAll('textarea.mat-mdc-form-field-textarea-control')[0];
     if (!ta) return;
 
     /* Walk up to the mat-form-field wrapper */
@@ -803,7 +803,7 @@
 
   /* ── MutationObserver: watch for form open/close ── */
   var _obs = new MutationObserver(function () {
-    var hasTa = !!document.querySelector('textarea.form-textarea');
+    var hasTa = !!document.querySelector('textarea.mat-mdc-form-field-textarea-control');
     var hasInject = !!document.getElementById('amol-addr-inject');
 
     if (hasTa && !hasInject) {
