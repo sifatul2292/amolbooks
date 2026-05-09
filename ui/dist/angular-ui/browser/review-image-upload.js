@@ -457,35 +457,22 @@
   }
 
   function findAndInjectUploadUI() {
-    // First try: textarea with matching placeholder
-    var textareas = document.querySelectorAll('textarea');
-    for (var i = 0; i < textareas.length; i++) {
-      var ta = textareas[i];
-      var ph = (ta.getAttribute('placeholder') || '').toLowerCase();
-      if (
-        ph.indexOf('honest opinion') !== -1 ||
-        ph.indexOf('review') !== -1 ||
-        ph.indexOf('রিভিউ') !== -1 ||
-        ph.indexOf('মতামত') !== -1
-      ) {
-        injectUploadUI(ta);
-        return;
-      }
-    }
-    // Second try: any textarea inside a dialog (MDC or classic)
+    // Only inject inside Angular Material dialog overlays — never into page-level forms
     var dialogs = document.querySelectorAll(
       'mat-mdc-dialog-container, mat-dialog-container, .cdk-overlay-pane'
     );
     for (var j = 0; j < dialogs.length; j++) {
-      var ta2 = dialogs[j].querySelector('textarea');
-      if (ta2 && !document.getElementById('riu-container')) {
-        injectUploadUI(ta2);
-        return;
-      }
-    }
-    // Third try: any textarea that appeared if dialog selectors miss
-    if (textareas.length > 0 && !document.getElementById('riu-container')) {
-      injectUploadUI(textareas[textareas.length - 1]);
+      var dialogEl = dialogs[j];
+      // Must contain a textarea to be the review dialog
+      var ta = dialogEl.querySelector('textarea');
+      if (!ta) continue;
+      if (document.getElementById('riu-container')) return;
+      // Extra guard: dialog must NOT look like an address/order form
+      // (order forms have address/phone/name inputs alongside textarea)
+      var hasAddressInput = dialogEl.querySelector('input[type="tel"], input[placeholder*="মোবাইল"], input[placeholder*="phone"]');
+      if (hasAddressInput) continue;
+      injectUploadUI(ta);
+      return;
     }
   }
 
