@@ -619,6 +619,208 @@
   },true);
 })();
 </script>
+<script>
+(function () {
+  'use strict';
+
+  var _selectedDivision = null;
+  var _selectedArea = null;
+  var _districtsCache = null;
+  var API_BASE = 'https://apisub.amolbooks.com/api';
+
+  /* ── Save original fetch BEFORE patching ── */
+  var _origFetch = window.fetch.bind(window);
+
+  /* ── XHR interceptor ── */
+  var _origOpen = XMLHttpRequest.prototype.open;
+  var _origSend = XMLHttpRequest.prototype.send;
+
+  XMLHttpRequest.prototype.open = function (method, url) {
+    this._amol_method = method ? method.toUpperCase() : '';
+    this._amol_url = typeof url === 'string' ? url : String(url || '');
+    return _origOpen.apply(this, arguments);
+  };
+
+  XMLHttpRequest.prototype.send = function (body) {
+    if (
+      this._amol_method === 'POST' &&
+      this._amol_url.indexOf('/order/add-order-by') !== -1 &&
+      body &&
+      (_selectedDivision || _selectedArea)
+    ) {
+      try {
+        var p = JSON.parse(body);
+        if (_selectedDivision) p.division = _selectedDivision;
+        if (_selectedArea) p.area = _selectedArea;
+        body = JSON.stringify(p);
+      } catch (_) {}
+    }
+    return _origSend.call(this, body);
+  };
+
+  /* ── Fetch interceptor ── */
+  window.fetch = function (url, opts) {
+    var urlStr = typeof url === 'string' ? url : ((url && url.url) || '');
+    if (
+      opts && opts.method && opts.method.toUpperCase() === 'POST' &&
+      urlStr.indexOf('/order/add-order-by') !== -1 &&
+      opts.body &&
+      (_selectedDivision || _selectedArea)
+    ) {
+      try {
+        var p = JSON.parse(opts.body);
+        if (_selectedDivision) p.division = _selectedDivision;
+        if (_selectedArea) p.area = _selectedArea;
+        opts = Object.assign({}, opts, { body: JSON.stringify(p) });
+      } catch (_) {}
+    }
+    return _origFetch(url, opts);
+  };
+
+  /* ── API helpers (use saved _origFetch to avoid recursion) ── */
+  function fetchDistricts() {
+    return _origFetch(API_BASE + '/division/get-all', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filter: { status: 'publish' }, sort: { priority: 1 } })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (json) {
+      var data = (json && json.data) || [];
+      return data.sort(function (a, b) { return (a.name || '').localeCompare(b.name || ''); });
+    })
+    .catch(function () { return []; });
+  }
+
+  function fetchAreas(divisionId) {
+    return _origFetch(API_BASE + '/area/get-all-by-parent/' + divisionId)
+    .then(function (r) { return r.json(); })
+    .then(function (json) {
+      var data = (json && json.data) || [];
+      return data.sort(function (a, b) { return (a.name || '').localeCompare(b.name || ''); });
+    })
+    .catch(function () { return []; });
+  }
+
+  function ensureDistricts() {
+    if (_districtsCache) return Promise.resolve(_districtsCache);
+    return fetchDistricts().then(function (d) {
+      _districtsCache = d;
+      return d;
+    });
+  }
+
+  /* ── HTML helpers ── */
+  function esc(s) {
+    return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* ── DOM injection ── */
+  function injectDropdowns(districts) {
+    if (document.getElementById('amol-addr-inject')) return;
+    var ta = document.querySelector('textarea.form-textarea');
+    if (!ta) return;
+
+    /* Walk up to the mat-form-field wrapper */
+    var anchor = ta;
+    for (var i = 0; i < 8; i++) {
+      if (!anchor.parentElement) break;
+      anchor = anchor.parentElement;
+      var tag = anchor.tagName.toLowerCase();
+      var cls = anchor.className || '';
+      if (
+        tag === 'mat-form-field' ||
+        cls.indexOf('mat-mdc-form-field') !== -1 ||
+        cls.indexOf('form-group') !== -1
+      ) break;
+    }
+
+    var container = document.createElement('div');
+    container.id = 'amol-addr-inject';
+
+    var optDistricts = districts.map(function (d) {
+      return '<option value="' + esc(d._id) + '" data-name="' + esc(d.name) + '">' + esc(d.name) + '</option>';
+    }).join('');
+
+    container.innerHTML =
+      '<style>' +
+        '#amol-addr-inject select{width:100%;padding:11px 12px;border:1px solid #ccc;border-radius:6px;font-size:14px;font-family:inherit;background:#fff;color:#333;outline:none;box-sizing:border-box;appearance:auto}' +
+        '#amol-addr-inject select:focus{border-color:#ff6b00}' +
+        '#amol-addr-inject .amol-lbl{display:block;font-size:13px;color:#555;margin:10px 0 4px}' +
+        '#amol-addr-inject .amol-req{color:#e74c3c}' +
+        '#amol-area-row{display:none;margin-top:4px}' +
+      '</style>' +
+      '<div style="margin-top:8px">' +
+        '<label class="amol-lbl">জেলা <span class="amol-req">*</span></label>' +
+        '<select id="amol-district-sel"><option value="">-- জেলা নির্বাচন করুন --</option>' + optDistricts + '</select>' +
+      '</div>' +
+      '<div id="amol-area-row">' +
+        '<label class="amol-lbl">থানা / উপজেলা</label>' +
+        '<select id="amol-area-sel"><option value="">-- থানা নির্বাচন করুন --</option></select>' +
+      '</div>';
+
+    anchor.insertAdjacentElement('afterend', container);
+
+    /* Reset state on fresh inject */
+    _selectedDivision = null;
+    _selectedArea = null;
+
+    var districtSel = document.getElementById('amol-district-sel');
+    var areaRow = document.getElementById('amol-area-row');
+    var areaSel = document.getElementById('amol-area-sel');
+
+    districtSel.addEventListener('change', function () {
+      var id = this.value;
+      var name = this.options[this.selectedIndex].getAttribute('data-name') || '';
+      _selectedDivision = id ? { _id: id, name: name } : null;
+      _selectedArea = null;
+      areaSel.value = '';
+
+      if (!id) {
+        areaRow.style.display = 'none';
+        areaSel.innerHTML = '<option value="">-- থানা নির্বাচন করুন --</option>';
+        return;
+      }
+
+      areaSel.innerHTML = '<option value="">লোড হচ্ছে...</option>';
+      areaRow.style.display = 'block';
+
+      fetchAreas(id).then(function (areas) {
+        var opts = '<option value="">-- থানা নির্বাচন করুন --</option>' +
+          areas.map(function (a) {
+            return '<option value="' + esc(a._id) + '" data-name="' + esc(a.name) + '">' + esc(a.name) + '</option>';
+          }).join('');
+        areaSel.innerHTML = opts;
+      });
+    });
+
+    areaSel.addEventListener('change', function () {
+      var id = this.value;
+      var name = this.options[this.selectedIndex].getAttribute('data-name') || '';
+      _selectedArea = id ? { _id: id, name: name } : null;
+    });
+  }
+
+  /* ── MutationObserver: watch for form open/close ── */
+  var _obs = new MutationObserver(function () {
+    var hasTa = !!document.querySelector('textarea.form-textarea');
+    var hasInject = !!document.getElementById('amol-addr-inject');
+
+    if (hasTa && !hasInject) {
+      ensureDistricts().then(injectDropdowns);
+    }
+    if (!hasTa && hasInject) {
+      var el = document.getElementById('amol-addr-inject');
+      if (el) el.remove();
+    }
+  });
+
+  _obs.observe(document.body, { childList: true, subtree: true });
+
+  /* Immediate try in case form already rendered */
+  ensureDistricts().then(injectDropdowns);
+})();
+</script>
 <script src="runtime.deefcb56ab2829c2v2.js" type="module"></script><script src="polyfills.b72e2d7f79d77247.js" type="module"></script><script src="main.2db4411763e9d7e8.js" type="module"></script>
 <script>
 /* Orange "অগ্রিম টাকা ছাড়াই অর্ডার করুন" button — MutationObserver restyle */
