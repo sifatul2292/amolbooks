@@ -365,9 +365,7 @@ export class OrderService {
         // Check database to see if SMS was already sent (prevents race condition)
         const orderCheck: any = await this.orderModel.findById(saveData._id).select('orderSmsSent');
         if (!orderCheck?.orderSmsSent) {
-          const message = `
-         আপনার অর্ডারটি alambook.com-এ সফলভাবে সম্পন্ন হয়েছে! অর্ডার আইডি ${saveData.orderId},অর্ডারের বিল ${saveData.grandTotal} টাকা যেকোনো প্রয়োজনে আমাদের সাথে যোগাযোগ করুন 01754896763 ধন্যবাদ, alambook.com টিম
-        `;
+          const message = `অর্ডারটি কনফার্ম হয়েছে। ৩ দিনের মধ্যে বই পেয়ে যাবেন। amolbooks.com`;
           // const message = `আপনার অর্ডারটি alambook.com-এ সফলভাবে সম্পন্ন হয়েছে। আপনার অর্ডার আইডি (${saveData.orderId}) যেকোনো প্রয়োজনে আমাদের সাথে যোগাযোগ করুন 01754896763`;
           // const message = `Thank you for your purchase from alambook.com. Your order (${saveData.orderId}) has been placed successfully. Please wait for a confirmation Call.`;
           this.bulkSmsService.sentSingleSms(saveData.phoneNo, message);
