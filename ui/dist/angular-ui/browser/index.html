@@ -721,42 +721,48 @@
     var ta = document.querySelectorAll('textarea.mat-mdc-form-field-textarea-control')[0];
     if (!ta) return;
 
-    /* Walk up to the mat-form-field wrapper */
+    /* Walk up to the actual <mat-form-field> custom element */
     var anchor = ta;
-    for (var i = 0; i < 8; i++) {
-      if (!anchor.parentElement) break;
+    while (anchor && anchor.tagName.toLowerCase() !== 'mat-form-field' && anchor !== document.body) {
       anchor = anchor.parentElement;
-      var tag = anchor.tagName.toLowerCase();
-      var cls = anchor.className || '';
-      if (
-        tag === 'mat-form-field' ||
-        cls.indexOf('mat-mdc-form-field') !== -1 ||
-        cls.indexOf('form-group') !== -1
-      ) break;
     }
-
-    var container = document.createElement('div');
-    container.id = 'amol-addr-inject';
+    if (!anchor || anchor === document.body) return;
 
     var optDistricts = districts.map(function (d) {
       return '<option value="' + esc(d._id) + '" data-name="' + esc(d.name) + '">' + esc(d.name) + '</option>';
     }).join('');
 
+    var container = document.createElement('div');
+    container.id = 'amol-addr-inject';
     container.innerHTML =
       '<style>' +
-        '#amol-addr-inject select{width:100%;padding:11px 12px;border:1px solid #ccc;border-radius:6px;font-size:14px;font-family:inherit;background:#fff;color:#333;outline:none;box-sizing:border-box;appearance:auto}' +
-        '#amol-addr-inject select:focus{border-color:#ff6b00}' +
-        '#amol-addr-inject .amol-lbl{display:block;font-size:13px;color:#555;margin:10px 0 4px}' +
-        '#amol-addr-inject .amol-req{color:#e74c3c}' +
-        '#amol-area-row{display:none;margin-top:4px}' +
+        '#amol-addr-inject{margin-top:12px}' +
+        '#amol-addr-inject .amol-row{display:flex;gap:12px}' +
+        '#amol-addr-inject .amol-col{flex:1;min-width:0}' +
+        '#amol-addr-inject .amol-field{border:1px solid rgba(0,0,0,.23);border-radius:4px;background:#fff;position:relative;cursor:pointer}' +
+        '#amol-addr-inject .amol-field:focus-within{border-color:#ff6b00;border-width:2px}' +
+        '#amol-addr-inject .amol-field select{width:100%;padding:14px 36px 14px 14px;border:none;outline:none;font-size:15px;font-family:inherit;background:transparent;cursor:pointer;color:#212121;appearance:none;-webkit-appearance:none}' +
+        '#amol-addr-inject .amol-field .amol-arrow{position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:#666;font-size:18px}' +
+        '#amol-addr-inject .amol-field select option{color:#212121}' +
+        '#amol-addr-inject .amol-lbl{font-size:12px;color:rgba(0,0,0,.6);margin-bottom:4px;display:block}' +
+        '#amol-addr-inject .amol-req{color:#e53935}' +
+        '#amol-area-col{display:none}' +
       '</style>' +
-      '<div style="margin-top:8px">' +
-        '<label class="amol-lbl">জেলা <span class="amol-req">*</span></label>' +
-        '<select id="amol-district-sel"><option value="">-- জেলা নির্বাচন করুন --</option>' + optDistricts + '</select>' +
-      '</div>' +
-      '<div id="amol-area-row">' +
-        '<label class="amol-lbl">থানা / উপজেলা</label>' +
-        '<select id="amol-area-sel"><option value="">-- থানা নির্বাচন করুন --</option></select>' +
+      '<div class="amol-row">' +
+        '<div class="amol-col">' +
+          '<span class="amol-lbl">জেলা <span class="amol-req">*</span></span>' +
+          '<div class="amol-field">' +
+            '<select id="amol-district-sel"><option value="">-- জেলা নির্বাচন করুন --</option>' + optDistricts + '</select>' +
+            '<span class="amol-arrow">&#8693;</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="amol-col" id="amol-area-col">' +
+          '<span class="amol-lbl">থানা / উপজেলা</span>' +
+          '<div class="amol-field">' +
+            '<select id="amol-area-sel"><option value="">-- থানা নির্বাচন করুন --</option></select>' +
+            '<span class="amol-arrow">&#8693;</span>' +
+          '</div>' +
+        '</div>' +
       '</div>';
 
     anchor.insertAdjacentElement('afterend', container);
@@ -766,7 +772,7 @@
     _selectedArea = null;
 
     var districtSel = document.getElementById('amol-district-sel');
-    var areaRow = document.getElementById('amol-area-row');
+    var areaRow = document.getElementById('amol-area-col');
     var areaSel = document.getElementById('amol-area-sel');
 
     districtSel.addEventListener('change', function () {
@@ -783,7 +789,7 @@
       }
 
       areaSel.innerHTML = '<option value="">লোড হচ্ছে...</option>';
-      areaRow.style.display = 'block';
+      areaRow.style.display = 'flex';
 
       fetchAreas(id).then(function (areas) {
         var opts = '<option value="">-- থানা নির্বাচন করুন --</option>' +
