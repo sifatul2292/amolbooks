@@ -700,18 +700,20 @@
     @media(max-width:768px) {
       table { min-width: 0; width: 100%; font-size: 12px; }
       thead th:nth-child(5), thead th:nth-child(6),
-      thead th:nth-child(8), thead th:nth-child(9),
-      thead th:nth-child(11),thead th:nth-child(12),
+      thead th:nth-child(7), thead th:nth-child(8),
+      thead th:nth-child(10),thead th:nth-child(11),
       thead th:nth-child(13),thead th:nth-child(14),
-      thead th:nth-child(15),
+      thead th:nth-child(15),thead th:nth-child(16),
+      thead th:nth-child(17),
       tbody td:nth-child(5), tbody td:nth-child(6),
-      tbody td:nth-child(8), tbody td:nth-child(9),
-      tbody td:nth-child(11),tbody td:nth-child(12),
+      tbody td:nth-child(7), tbody td:nth-child(8),
+      tbody td:nth-child(10),tbody td:nth-child(11),
       tbody td:nth-child(13),tbody td:nth-child(14),
-      tbody td:nth-child(15) { display: none; }
+      tbody td:nth-child(15),tbody td:nth-child(16),
+      tbody td:nth-child(17) { display: none; }
       tbody td:nth-child(4) { max-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      tbody td:nth-child(10) .btn-view { width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0; border-radius: 8px; }
-      tbody td:nth-child(10) .btn-view i { font-size: 15px; }
+      tbody td:nth-child(12) .btn-view { width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0; border-radius: 8px; }
+      tbody td:nth-child(12) .btn-view i { font-size: 15px; }
       thead th { padding: 11px 8px; }
       tbody td { padding: 10px 8px; }
       thead th:first-child, tbody td:first-child { padding-left: 12px; width: 28px; }
@@ -964,6 +966,8 @@
                 <th>Phone</th>
                 <th>Name</th>
                 <th>Address</th>
+                <th>District</th>
+                <th>Area</th>
                 <th>Date &amp; Time</th>
                 <th>Amount</th>
                 <th>Courier</th>
@@ -980,7 +984,7 @@
             </thead>
             <tbody id="ordersBody">
               <tr class="loading-row">
-                <td colspan="17"><div class="spinner"></div><div>Loading orders…</div></td>
+                <td colspan="19"><div class="spinner"></div><div>Loading orders…</div></td>
               </tr>
             </tbody>
           </table>
@@ -1322,7 +1326,7 @@
         discount:1, orderStatus:1, paymentStatus:1, paymentType:1,
         createdAt:1, checkoutDate:1, shippingAddress:1, courierData:1,
         courierLink:1, fraudChecker:1, admin:1, user:1, deliveryDate:1, orderedItems:1,
-        note:1, adminNote:1,
+        note:1, adminNote:1, division:1, area:1,
       },
     };
     if (Object.keys(filter).length) body.filter = filter;
@@ -1359,7 +1363,7 @@
     .catch(function(err){
       if (err.message === 'Unauthorized') return;
       document.getElementById('ordersBody').innerHTML =
-        '<tr class="empty-row"><td colspan="17"><i class="fas fa-exclamation-triangle" style="color:#ef4444;font-size:22px;display:block;margin-bottom:10px"></i>Failed to load orders<br><small style="color:#94a3b8">' + err.message + '</small></td></tr>';
+        '<tr class="empty-row"><td colspan="19"><i class="fas fa-exclamation-triangle" style="color:#ef4444;font-size:22px;display:block;margin-bottom:10px"></i>Failed to load orders<br><small style="color:#94a3b8">' + err.message + '</small></td></tr>';
       ['totalOrders','totalAmount'].forEach(function(id){ document.getElementById(id).textContent = '—'; });
       document.getElementById('paginationInfo').textContent = '';
     });
@@ -1369,7 +1373,7 @@
     var rows = '';
     for (var i = 0; i < 8; i++) {
       rows += '<tr class="skeleton-row">';
-      for (var j = 0; j < 17; j++) rows += '<td><div class="skel" style="width:' + (55 + Math.random()*35|0) + '%"></div></td>';
+      for (var j = 0; j < 19; j++) rows += '<td><div class="skel" style="width:' + (55 + Math.random()*35|0) + '%"></div></td>';
       rows += '</tr>';
     }
     document.getElementById('ordersBody').innerHTML = rows;
@@ -1749,7 +1753,7 @@
   function renderTable(orders, total) {
     var tbody=document.getElementById('ordersBody');
     if (!orders.length) {
-      tbody.innerHTML='<tr class="empty-row"><td colspan="17"><i class="fas fa-inbox" style="font-size:32px;color:#cbd5e1;display:block;margin-bottom:10px"></i>No orders found</td></tr>';
+      tbody.innerHTML='<tr class="empty-row"><td colspan="19"><i class="fas fa-inbox" style="font-size:32px;color:#cbd5e1;display:block;margin-bottom:10px"></i>No orders found</td></tr>';
       return;
     }
     var offset=state.page*state.pageSize;
@@ -1779,6 +1783,8 @@
         '<td>'+phoneCell(o.phoneNo)+'</td>',
         '<td style="font-weight:600">'+esc(o.name||'—')+'</td>',
         '<td><div style="max-width:200px;word-break:break-word;line-height:1.5;font-size:12px">'+esc(o.shippingAddress||'—')+'</div></td>',
+        '<td><div style="font-size:12px;color:#334155">'+esc((o.division&&o.division.name)||'—')+'</div></td>',
+        '<td><div style="font-size:12px;color:#334155">'+esc((o.area&&o.area.name)||'—')+'</div></td>',
         '<td>'+fmtDate(o.createdAt||o.checkoutDate)+'</td>',
         '<td><strong style="color:var(--p);font-size:13.5px">৳'+Number(o.grandTotal||0).toLocaleString()+'</strong></td>',
         '<td>'+courierCell+'</td>',
