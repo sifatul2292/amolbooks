@@ -623,6 +623,8 @@
 (function () {
   'use strict';
 
+  var DISTRICT_AREA_ENABLED = false; /* set true to re-enable */
+
   var _selectedDivision = null;
   var _selectedArea = null;
   var _districtsCache = null;
@@ -878,6 +880,7 @@
   }
 
     /* ── MutationObserver: watch for form open/close ── */
+  if (DISTRICT_AREA_ENABLED) {
   var _obs = new MutationObserver(function () {
     var hasTa = !!document.querySelector('textarea.mat-mdc-form-field-textarea-control');
     var hasInject = !!document.getElementById('amol-addr-inject');
@@ -895,6 +898,7 @@
 
   /* Immediate try in case form already rendered */
   ensureDistricts().then(injectDropdowns);
+  }
 })();
 </script>
 <script src="runtime.deefcb56ab2829c2v2.js" type="module"></script><script src="polyfills.b72e2d7f79d77247.js" type="module"></script><script src="main.2db4411763e9d7e8.js" type="module"></script>
