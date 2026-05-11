@@ -758,6 +758,29 @@ export class DashboardService {
         { $sort: { _id: 1 } },
       ]);
 
+      // Cancelled orders by date range
+      const cancelledData = await this.orderModel.aggregate([
+        {
+          $match: {
+            orderStatus: { $in: [6, 'cancelled'] },
+            checkoutDate: { $gte: startDate, $lte: endDate },
+          },
+        },
+        {
+          $group: {
+            _id: '$checkoutDate',
+            cancelledRevenue: { $sum: '$grandTotal' },
+            cancelledCount: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]);
+
+      const cancelledMap: Record<string, { cancelledRevenue: number; cancelledCount: number }> = {};
+      for (const row of cancelledData) {
+        cancelledMap[row._id] = { cancelledRevenue: row.cancelledRevenue, cancelledCount: row.cancelledCount };
+      }
+
       // Ad spend by date range
       const adSpendDocs = await this.adSpendModel.find({
         date: { $gte: startDate, $lte: endDate },
@@ -800,6 +823,7 @@ export class DashboardService {
         const ord = orderMap[date] || { revenue: 0, cogs: 0, deliveryCost: 0, orderCount: 0 };
         const adSpend = adSpendMap[date] || 0;
         const otherExpenses = expenseMap[date] || 0;
+        const cancelled = cancelledMap[date] || { cancelledRevenue: 0, cancelledCount: 0 };
         const profit = ord.revenue - ord.cogs - adSpend - ord.deliveryCost - otherExpenses;
         const margin = ord.revenue > 0 ? (profit / ord.revenue) * 100 : 0;
         return {
@@ -812,6 +836,8 @@ export class DashboardService {
           profit,
           margin: Math.round(margin * 100) / 100,
           orderCount: ord.orderCount,
+          cancelledRevenue: cancelled.cancelledRevenue,
+          cancelledCount: cancelled.cancelledCount,
         };
       });
 
@@ -825,8 +851,10 @@ export class DashboardService {
           otherExpenses: acc.otherExpenses + d.otherExpenses,
           profit: acc.profit + d.profit,
           orderCount: acc.orderCount + d.orderCount,
+          cancelledRevenue: acc.cancelledRevenue + d.cancelledRevenue,
+          cancelledOrders: acc.cancelledOrders + d.cancelledCount,
         }),
-        { revenue: 0, cogs: 0, adSpend: 0, deliveryCost: 0, otherExpenses: 0, profit: 0, orderCount: 0 },
+        { revenue: 0, cogs: 0, adSpend: 0, deliveryCost: 0, otherExpenses: 0, profit: 0, orderCount: 0, cancelledRevenue: 0, cancelledOrders: 0 },
       );
       const totalMargin = totals.revenue > 0 ? (totals.profit / totals.revenue) * 100 : 0;
 
