@@ -712,7 +712,7 @@ export class DashboardService {
       const orderData = await this.orderModel.aggregate([
         {
           $match: {
-            orderStatus: 5, // delivered only
+            orderStatus: { $in: [2, 5, 'delivered'] }, // confirmed (2), delivered (5), courier-delivered string
             checkoutDate: { $gte: startDate, $lte: endDate },
           },
         },

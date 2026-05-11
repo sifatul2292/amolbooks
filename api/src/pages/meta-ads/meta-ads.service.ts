@@ -116,14 +116,14 @@ export class MetaAdsService {
       const res = await firstValueFrom(this.httpService.get(url, { params }));
       const rows: any[] = res.data?.data || [];
 
-      // Group by date
-      const byDate: Record<string, { spendUSD: number; campaigns: any[] }> = {};
+      // Group by date — Meta reports spend in BDT for BD accounts, no conversion needed
+      const byDate: Record<string, { spendBDT: number; campaigns: any[] }> = {};
       for (const row of rows) {
         const date = row.date_start;
         const spend = parseFloat(row.spend || '0');
-        if (!byDate[date]) byDate[date] = { spendUSD: 0, campaigns: [] };
-        byDate[date].spendUSD += spend;
-        byDate[date].campaigns.push({ name: row.campaign_name, spendUSD: spend });
+        if (!byDate[date]) byDate[date] = { spendBDT: 0, campaigns: [] };
+        byDate[date].spendBDT += spend;
+        byDate[date].campaigns.push({ name: row.campaign_name, spendBDT: spend });
       }
 
       // Upsert one doc per date
@@ -133,8 +133,8 @@ export class MetaAdsService {
           update: {
             $set: {
               date,
-              spendUSD: Math.round(val.spendUSD * 100) / 100,
-              spendBDT: Math.round(val.spendUSD * exchangeRate * 100) / 100,
+              spendUSD: Math.round((val.spendBDT / exchangeRate) * 100) / 100,
+              spendBDT: Math.round(val.spendBDT * 100) / 100,
               exchangeRate,
               source: 'meta_auto',
               campaigns: val.campaigns,
