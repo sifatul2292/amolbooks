@@ -31,6 +31,10 @@ export class DashboardService {
     private readonly productModel: Model<Product>,
     @InjectModel('Order')
     private readonly orderModel: Model<Order>,
+    @InjectModel('AdSpend')
+    private readonly adSpendModel: Model<any>,
+    @InjectModel('Expense')
+    private readonly expenseModel: Model<any>,
     private configService: ConfigService,
     private utilsService: UtilsService,
   ) {}
@@ -700,5 +704,143 @@ export class DashboardService {
     }
 
     return { labels, sales };
+  }
+
+  async getProfitAnalytics(startDate: string, endDate: string): Promise<ResponsePayload> {
+    try {
+      // Per-order COGS via $lookup on Product, then group by checkoutDate
+      const orderData = await this.orderModel.aggregate([
+        {
+          $match: {
+            orderStatus: 5, // delivered only
+            checkoutDate: { $gte: startDate, $lte: endDate },
+          },
+        },
+        { $unwind: '$orderedItems' },
+        {
+          $lookup: {
+            from: 'products',
+            localField: 'orderedItems._id',
+            foreignField: '_id',
+            as: 'productInfo',
+          },
+        },
+        {
+          $unwind: {
+            path: '$productInfo',
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $group: {
+            _id: { orderId: '$_id', date: '$checkoutDate' },
+            cogs: {
+              $sum: {
+                $multiply: [
+                  { $ifNull: ['$productInfo.costPrice', 0] },
+                  '$orderedItems.quantity',
+                ],
+              },
+            },
+            grandTotal: { $first: '$grandTotal' },
+            deliveryCharge: { $first: { $ifNull: ['$deliveryCharge', 0] } },
+          },
+        },
+        {
+          $group: {
+            _id: '$_id.date',
+            revenue: { $sum: '$grandTotal' },
+            cogs: { $sum: '$cogs' },
+            deliveryCost: { $sum: '$deliveryCharge' },
+            orderCount: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]);
+
+      // Ad spend by date range
+      const adSpendDocs = await this.adSpendModel.find({
+        date: { $gte: startDate, $lte: endDate },
+      }).lean();
+
+      // Expenses by date range
+      const expenseDocs = await this.expenseModel.find({
+        date: { $gte: startDate, $lte: endDate },
+      }).lean();
+
+      // Build ad spend map by date
+      const adSpendMap: Record<string, number> = {};
+      for (const doc of adSpendDocs) {
+        adSpendMap[doc.date] = (adSpendMap[doc.date] || 0) + doc.spendBDT;
+      }
+
+      // Build expense map by date
+      const expenseMap: Record<string, number> = {};
+      for (const doc of expenseDocs) {
+        expenseMap[doc.date] = (expenseMap[doc.date] || 0) + doc.amount;
+      }
+
+      // Generate all dates in range
+      const dates: string[] = [];
+      const cur = new Date(startDate);
+      const end = new Date(endDate);
+      while (cur <= end) {
+        dates.push(cur.toISOString().slice(0, 10));
+        cur.setDate(cur.getDate() + 1);
+      }
+
+      // Build order data map
+      const orderMap: Record<string, any> = {};
+      for (const row of orderData) {
+        orderMap[row._id] = row;
+      }
+
+      // Merge into daily records
+      const daily = dates.map((date) => {
+        const ord = orderMap[date] || { revenue: 0, cogs: 0, deliveryCost: 0, orderCount: 0 };
+        const adSpend = adSpendMap[date] || 0;
+        const otherExpenses = expenseMap[date] || 0;
+        const profit = ord.revenue - ord.cogs - adSpend - ord.deliveryCost - otherExpenses;
+        const margin = ord.revenue > 0 ? (profit / ord.revenue) * 100 : 0;
+        return {
+          date,
+          revenue: ord.revenue,
+          cogs: ord.cogs,
+          adSpend,
+          deliveryCost: ord.deliveryCost,
+          otherExpenses,
+          profit,
+          margin: Math.round(margin * 100) / 100,
+          orderCount: ord.orderCount,
+        };
+      });
+
+      // Totals
+      const totals = daily.reduce(
+        (acc, d) => ({
+          revenue: acc.revenue + d.revenue,
+          cogs: acc.cogs + d.cogs,
+          adSpend: acc.adSpend + d.adSpend,
+          deliveryCost: acc.deliveryCost + d.deliveryCost,
+          otherExpenses: acc.otherExpenses + d.otherExpenses,
+          profit: acc.profit + d.profit,
+          orderCount: acc.orderCount + d.orderCount,
+        }),
+        { revenue: 0, cogs: 0, adSpend: 0, deliveryCost: 0, otherExpenses: 0, profit: 0, orderCount: 0 },
+      );
+      const totalMargin = totals.revenue > 0 ? (totals.profit / totals.revenue) * 100 : 0;
+
+      return {
+        success: true,
+        message: 'Profit analytics retrieved',
+        data: {
+          daily,
+          totals: { ...totals, margin: Math.round(totalMargin * 100) / 100 },
+        },
+      } as ResponsePayload;
+    } catch (error) {
+      this.logger.error(error);
+      throw new InternalServerErrorException(error.message);
+    }
   }
 }

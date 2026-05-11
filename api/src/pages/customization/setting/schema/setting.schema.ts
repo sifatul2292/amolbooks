@@ -400,6 +400,30 @@ export const SettingSchema = new mongoose.Schema(
         default: '',
       },
     },
+    metaAds: {
+      accessToken: {
+        type: String,
+        required: false,
+      },
+      adAccountId: {
+        type: String,
+        required: false,
+      },
+      exchangeRate: {
+        type: Number,
+        required: false,
+        default: 130,
+      },
+      lastSyncAt: {
+        type: Date,
+        required: false,
+      },
+      isConnected: {
+        type: Boolean,
+        required: false,
+        default: false,
+      },
+    },
   },
   {
     versionKey: false,

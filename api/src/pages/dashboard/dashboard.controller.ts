@@ -74,6 +74,17 @@ export class DashboardController {
       throw new BadRequestException(error.message);
     }
   }
+
+  @Get('/profit-analytics')
+  async getProfitAnalytics(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ): Promise<ResponsePayload> {
+    if (!startDate || !endDate) {
+      throw new BadRequestException('startDate and endDate are required (YYYY-MM-DD)');
+    }
+    return this.dashboardService.getProfitAnalytics(startDate, endDate);
+  }
   // @Version(VERSION_NEUTRAL)
   // @Post('/user-dashboard')
   // async getUserDashboard(@Body() data: any): Promise<ResponsePayload> {

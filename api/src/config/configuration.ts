@@ -67,4 +67,9 @@ export default () => ({
 
   // FraudSpy API
   fraudspyApiKey: process.env.FRAUDSPY_API_KEY || 'fs_live_4b3b_7dc0067d-8ed2-4322-915e-37b419008ae9_110e494edd31cc0f',
+
+  // Meta (Facebook) Marketing API
+  META_APP_ID: process.env.META_APP_ID || '',
+  META_APP_SECRET: process.env.META_APP_SECRET || '',
+  META_REDIRECT_URI: process.env.META_REDIRECT_URI || 'https://apisub.amolbooks.com/api/meta-ads/callback',
 });
