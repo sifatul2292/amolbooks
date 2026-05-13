@@ -13,6 +13,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ResponsePayload } from '../../interfaces/core/response-payload.interface';
 import { AnalyticsService } from '../../shared/analytics/analytics.service';
+import { PosthogService } from '../../shared/posthog/posthog.service';
 import { Setting } from '../customization/setting/interface/setting.interface';
 
 @Injectable()
@@ -24,7 +25,18 @@ export class GtmService {
     private readonly settingModel: Model<Setting>,
     private readonly analyticsService: AnalyticsService,
     private readonly utilsService: UtilsService,
+    private readonly posthogService: PosthogService,
   ) {}
+
+  /**
+   * Derive a stable distinct ID for PostHog from available user data.
+   * Uses hashed email (em) > hashed phone (ph) > client IP as fallback.
+   */
+  private getDistinctId(userData: any, ip: string): string {
+    if (userData?.em && userData.em !== 'null') return `em:${userData.em}`;
+    if (userData?.ph && userData.ph !== 'null') return `ph:${userData.ph}`;
+    return `ip:${ip || 'unknown'}`;
+  }
   async getIP(req: Request): Promise<ResponsePayload> {
     try {
       const clientIpAddress = this.utilsService.getClientIp(req);
@@ -121,6 +133,17 @@ export class GtmService {
         );
       }
 
+      // PostHog — fires regardless of FB Pixel config
+      this.posthogService.capture(
+        this.getDistinctId(addGtmPageViewDto.user_data, this.utilsService.getClientIp(req)),
+        '$pageview',
+        {
+          $current_url: addGtmPageViewDto.pageUrl,
+          title: addGtmPageViewDto.pageTitle,
+          referrer: addGtmPageViewDto.referrer,
+        },
+      );
+
       return {
         success: true,
         message: 'Success',
@@ -212,6 +235,21 @@ export class GtmService {
         );
       }
 
+      // PostHog
+      this.posthogService.capture(
+        this.getDistinctId(addGtmViewContentDto.user_data, this.utilsService.getClientIp(req)),
+        'product_viewed',
+        {
+          product_id: addGtmViewContentDto.contentId,
+          product_name: addGtmViewContentDto.contentName,
+          category: addGtmViewContentDto.contentCategory,
+          sub_category: addGtmViewContentDto.contentSubCategory,
+          value: addGtmViewContentDto.value,
+          quantity: addGtmViewContentDto.quantity,
+          currency: addGtmViewContentDto.currency || 'BDT',
+        },
+      );
+
       return {
         success: true,
         message: 'Success',
@@ -300,6 +338,19 @@ export class GtmService {
         );
       }
 
+      // PostHog
+      this.posthogService.capture(
+        this.getDistinctId(bodyData.user_data, this.utilsService.getClientIp(req)),
+        'add_to_cart',
+        {
+          product_id: bodyData.contentId,
+          product_name: bodyData.contentName,
+          value: bodyData.value,
+          quantity: bodyData.quantity,
+          currency: bodyData.currency || 'BDT',
+        },
+      );
+
       return {
         success: true,
         message: 'Success',
@@ -385,6 +436,17 @@ export class GtmService {
           payloadData,
         );
       }
+
+      // PostHog
+      this.posthogService.capture(
+        this.getDistinctId(bodyData.user_data, this.utilsService.getClientIp(req)),
+        'checkout_initiated',
+        {
+          value: bodyData.value,
+          num_items: bodyData.num_items,
+          currency: bodyData.currency || 'BDT',
+        },
+      );
 
       return {
         success: true,
@@ -491,6 +553,18 @@ export class GtmService {
           payloadData,
         );
       }
+
+      // PostHog
+      this.posthogService.capture(
+        this.getDistinctId(bodyData.user_data, this.utilsService.getClientIp(req)),
+        'purchase',
+        {
+          order_id: bodyData.eventId,
+          value: bodyData.value,
+          num_items: bodyData.num_items,
+          currency: bodyData.currency || 'BDT',
+        },
+      );
 
       return {
         success: true,

@@ -51,6 +51,7 @@
     "passport-jwt": "^4.0.0",
     "pdfkit": "^0.15.0",
     "pdfmake": "^0.2.6",
+    "posthog-node": "^5.34.1",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0",

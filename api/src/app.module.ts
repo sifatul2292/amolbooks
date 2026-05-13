@@ -68,6 +68,7 @@ import { RedirectUrlModule } from './pages/redirect-url/redirect-url.module';
 import { SettingModule } from './pages/customization/setting/setting.module';
 import { FbCatalogModule } from './shared/fb-catalog/fb-catalog.module';
 import { AnalyticsModule } from './shared/analytics/analytics.module';
+import { PosthogModule } from './shared/posthog/posthog.module';
 import { GtmModule } from './pages/gtm/gtm.module';
 import { CourierModule } from './shared/courier/courier.module';
 import { PreOrderModule } from './pages/pre-order/pre-order.module';
@@ -176,6 +177,7 @@ import { PreOrderModule } from './pages/pre-order/pre-order.module';
     RedirectUrlModule,
     SettingModule,
     AnalyticsModule,
+    PosthogModule,
     GtmModule,
     FbCatalogModule,
     CourierModule,
