@@ -2,8 +2,11 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Logger,
+  Param,
+  Post,
   Query,
   UseGuards,
   UsePipes,
@@ -74,6 +77,49 @@ export class DashboardController {
       throw new BadRequestException(error.message);
     }
   }
+
+  @Get('/profit')
+  async getProfitDashboard(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ): Promise<ResponsePayload> {
+    try {
+      return await this.dashboardService.getProfitDashboard(startDate, endDate);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Post('/profit/expense')
+  async addOtherExpense(@Body() body: { date: string; amount: number; category: string; note?: string }): Promise<ResponsePayload> {
+    try {
+      return await this.dashboardService.addOtherExpense(body);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Get('/profit/expense')
+  async getOtherExpenses(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ): Promise<ResponsePayload> {
+    try {
+      return await this.dashboardService.getOtherExpenses(startDate, endDate);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Delete('/profit/expense/:id')
+  async deleteOtherExpense(@Param('id') id: string): Promise<ResponsePayload> {
+    try {
+      return await this.dashboardService.deleteOtherExpense(id);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
   // @Version(VERSION_NEUTRAL)
   // @Post('/user-dashboard')
   // async getUserDashboard(@Body() data: any): Promise<ResponsePayload> {

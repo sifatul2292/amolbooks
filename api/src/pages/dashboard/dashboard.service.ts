@@ -15,6 +15,7 @@ import { ResponsePayload } from '../../interfaces/core/response-payload.interfac
 import { Product } from '../../interfaces/common/product.interface';
 import { FilterAndPaginationOrderDto } from '../../dto/order.dto';
 import { ErrorCodes } from '../../enum/error-code.enum';
+import { Document } from 'mongoose';
 
 const ObjectId = Types.ObjectId;
 
@@ -31,6 +32,8 @@ export class DashboardService {
     private readonly productModel: Model<Product>,
     @InjectModel('Order')
     private readonly orderModel: Model<Order>,
+    @InjectModel('OtherExpense')
+    private readonly otherExpenseModel: Model<Document>,
     private configService: ConfigService,
     private utilsService: UtilsService,
   ) {}
@@ -700,5 +703,221 @@ export class DashboardService {
     }
 
     return { labels, sales };
+  }
+
+  async getProfitDashboard(startDate: string, endDate: string): Promise<ResponsePayload> {
+    try {
+      // Daily breakdown: aggregate orders grouped by checkoutDate
+      const dailyRaw = await this.orderModel.aggregate([
+        {
+          $match: {
+            checkoutDate: { $gte: startDate, $lte: endDate },
+          },
+        },
+        {
+          $group: {
+            _id: '$checkoutDate',
+            totalOrders: { $sum: 1 },
+            newOrders: { $sum: { $cond: [{ $eq: ['$orderStatus', 1] }, 1, 0] } },
+            holdOrders: { $sum: { $cond: [{ $eq: ['$orderStatus', 3] }, 1, 0] } },
+            sentOrders: { $sum: { $cond: [{ $eq: ['$orderStatus', 4] }, 1, 0] } },
+            deliveredOrders: { $sum: { $cond: [{ $eq: ['$orderStatus', 5] }, 1, 0] } },
+            cancelledOrders: { $sum: { $cond: [{ $eq: ['$orderStatus', 6] }, 1, 0] } },
+            returnedOrders: { $sum: { $cond: [{ $eq: ['$orderStatus', 7] }, 1, 0] } },
+            revenue: {
+              $sum: {
+                $cond: [{ $nin: ['$orderStatus', [6, 7]] }, '$grandTotal', 0],
+              },
+            },
+            deliveryCost: {
+              $sum: {
+                $cond: [{ $nin: ['$orderStatus', [6, 7]] }, { $ifNull: ['$deliveryCharge', 0] }, 0],
+              },
+            },
+            cancelledValue: {
+              $sum: { $cond: [{ $eq: ['$orderStatus', 6] }, '$grandTotal', 0] },
+            },
+            returnedValue: {
+              $sum: { $cond: [{ $eq: ['$orderStatus', 7] }, '$grandTotal', 0] },
+            },
+            orderedItems: { $push: '$orderedItems' },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]);
+
+      // COGS: lookup product costPrice for each ordered item per day
+      const productIds = new Set<string>();
+      for (const day of dailyRaw) {
+        for (const itemsArray of day.orderedItems) {
+          for (const item of itemsArray) {
+            if (item._id) productIds.add(item._id.toString());
+          }
+        }
+      }
+
+      const products = await this.productModel.find(
+        { _id: { $in: Array.from(productIds) } },
+        { _id: 1, costPrice: 1 },
+      );
+      const costMap: Record<string, number> = {};
+      for (const p of products) {
+        costMap[p._id.toString()] = (p as any).costPrice || 0;
+      }
+
+      // Load other expenses for this range
+      const expenses = await this.otherExpenseModel.find({
+        date: { $gte: startDate, $lte: endDate },
+      });
+      const expenseByDate: Record<string, number> = {};
+      for (const e of expenses) {
+        const d = (e as any).date as string;
+        expenseByDate[d] = (expenseByDate[d] || 0) + ((e as any).amount || 0);
+      }
+
+      // Product breakdown: all orders in range
+      const productBreakdownRaw = await this.orderModel.aggregate([
+        {
+          $match: {
+            checkoutDate: { $gte: startDate, $lte: endDate },
+            orderStatus: { $nin: [6, 7] },
+          },
+        },
+        { $unwind: '$orderedItems' },
+        {
+          $group: {
+            _id: {
+              productId: '$orderedItems._id',
+              name: '$orderedItems.name',
+            },
+            orders: { $sum: 1 },
+            qty: { $sum: '$orderedItems.quantity' },
+            revenue: { $sum: { $multiply: ['$orderedItems.salePrice', '$orderedItems.quantity'] } },
+          },
+        },
+        { $sort: { revenue: -1 } },
+      ]);
+
+      const dailyBreakdown = dailyRaw.map((day) => {
+        let cogs = 0;
+        for (const itemsArray of day.orderedItems) {
+          for (const item of itemsArray) {
+            const cost = costMap[item._id?.toString()] || 0;
+            cogs += cost * (item.quantity || 1);
+          }
+        }
+        const otherExpenses = expenseByDate[day._id] || 0;
+        const estProfit = day.revenue - cogs - day.deliveryCost - otherExpenses;
+        return {
+          date: day._id,
+          orders: {
+            total: day.totalOrders,
+            new: day.newOrders,
+            hold: day.holdOrders,
+            sent: day.sentOrders,
+            delivered: day.deliveredOrders,
+            cancelled: day.cancelledOrders,
+            returned: day.returnedOrders,
+          },
+          revenue: day.revenue,
+          cogs,
+          deliveryCost: day.deliveryCost,
+          otherExpenses,
+          cancelledValue: day.cancelledValue,
+          returnedValue: day.returnedValue,
+          estProfit,
+          margin: day.revenue > 0 ? (estProfit / day.revenue) * 100 : 0,
+        };
+      });
+
+      // Summary totals
+      const summary = dailyBreakdown.reduce(
+        (acc, d) => {
+          acc.totalOrders += d.orders.total;
+          acc.newOrders += d.orders.new;
+          acc.holdOrders += d.orders.hold;
+          acc.sentOrders += d.orders.sent;
+          acc.deliveredOrders += d.orders.delivered;
+          acc.cancelledOrders += d.orders.cancelled;
+          acc.returnedOrders += d.orders.returned;
+          acc.revenue += d.revenue;
+          acc.cogs += d.cogs;
+          acc.deliveryCost += d.deliveryCost;
+          acc.otherExpenses += d.otherExpenses;
+          acc.cancelledValue += d.cancelledValue;
+          acc.returnedValue += d.returnedValue;
+          return acc;
+        },
+        {
+          totalOrders: 0, newOrders: 0, holdOrders: 0, sentOrders: 0,
+          deliveredOrders: 0, cancelledOrders: 0, returnedOrders: 0,
+          revenue: 0, cogs: 0, deliveryCost: 0, otherExpenses: 0,
+          cancelledValue: 0, returnedValue: 0,
+        },
+      );
+
+      const adSpend = expenses
+        .filter((e: any) => e.category === 'Ad Spend')
+        .reduce((s: number, e: any) => s + (e.amount || 0), 0);
+
+      const estProfit = summary.revenue - summary.cogs - summary.deliveryCost - adSpend - summary.otherExpenses;
+      const margin = summary.revenue > 0 ? (estProfit / summary.revenue) * 100 : 0;
+
+      const productBreakdown = productBreakdownRaw.map((p) => {
+        const cogs = (costMap[p._id.productId?.toString()] || 0) * p.qty;
+        return {
+          name: p._id.name || 'Unknown',
+          productId: p._id.productId,
+          orders: p.orders,
+          qty: p.qty,
+          revenue: p.revenue,
+          cogs,
+          estProfit: p.revenue - cogs,
+        };
+      });
+
+      return {
+        success: true,
+        message: 'Profit dashboard data retrieved',
+        data: {
+          summary: { ...summary, adSpend, estProfit, margin },
+          dailyBreakdown,
+          productBreakdown,
+        },
+      } as ResponsePayload;
+    } catch (error) {
+      this.logger.error(error);
+      throw new InternalServerErrorException(error.message);
+    }
+  }
+
+  async addOtherExpense(body: { date: string; amount: number; category: string; note?: string }): Promise<ResponsePayload> {
+    try {
+      const expense = new this.otherExpenseModel(body);
+      await expense.save();
+      return { success: true, message: 'Expense added', data: expense } as ResponsePayload;
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
+  }
+
+  async getOtherExpenses(startDate: string, endDate: string): Promise<ResponsePayload> {
+    try {
+      const expenses = await this.otherExpenseModel.find({
+        date: { $gte: startDate, $lte: endDate },
+      }).sort({ date: -1 });
+      return { success: true, message: 'Success', data: expenses } as ResponsePayload;
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
+  }
+
+  async deleteOtherExpense(id: string): Promise<ResponsePayload> {
+    try {
+      await this.otherExpenseModel.findByIdAndDelete(id);
+      return { success: true, message: 'Expense deleted' } as ResponsePayload;
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
   }
 }
