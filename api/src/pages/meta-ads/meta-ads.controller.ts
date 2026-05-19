@@ -54,6 +54,12 @@ export class MetaAdsController {
   }
 
   @Version(VERSION_NEUTRAL)
+  @Post('set-account')
+  setAccount(@Body() body: { adAccountId: string }) {
+    return this.metaAdsService.setAdAccountId(body.adAccountId);
+  }
+
+  @Version(VERSION_NEUTRAL)
   @Post('manual-spend')
   manualSpend(@Body() body: { date: string; spend: number }) {
     return this.metaAdsService.saveManualSpend(body.date, body.spend);

@@ -153,6 +153,12 @@ export class MetaAdsService {
     return { success: true };
   }
 
+  async setAdAccountId(adAccountId: string): Promise<any> {
+    const id = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`;
+    await this.tokenModel.findOneAndUpdate({}, { adAccountId: id }, { upsert: true });
+    return { success: true, adAccountId: id };
+  }
+
   async disconnect(): Promise<any> {
     await this.tokenModel.deleteMany({});
     return { success: true };

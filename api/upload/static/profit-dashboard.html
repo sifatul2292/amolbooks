@@ -253,6 +253,17 @@
         </div>
       </div>
 
+      <!-- Meta ad account ID override -->
+      <div class="spend-section" id="accountSection" style="display:none">
+        <div class="spend-section-title"><i class="fab fa-facebook" style="color:#1877f2;margin-right:5px"></i>Ad Account ID</div>
+        <div class="spend-input-row">
+          <label>Account ID</label>
+          <input type="text" id="adAccountIdInput" placeholder="e.g. 1025891126119809" style="width:200px;padding:5px 9px;border:1px solid var(--g200);border-radius:7px;font-size:12px;font-family:inherit;outline:none;background:#fff">
+          <button class="btn-save-spend" onclick="saveAccountId()" style="background:var(--blue)">Save</button>
+          <span id="accountIdNote" style="font-size:11px;color:var(--g400)"></span>
+        </div>
+      </div>
+
       <!-- Manual ad spend entry -->
       <div class="spend-section" id="spendSection" style="display:none">
         <div class="spend-section-title"><i class="fab fa-facebook" style="color:#1877f2;margin-right:5px"></i>Log Ad Spend Manually</div>
@@ -574,6 +585,10 @@
           if (secEl) secEl.style.display = 'none';
           var sb = document.getElementById('syncBtn');
           if (sb) sb.style.display = 'flex';
+          var acSec = document.getElementById('accountSection');
+          if (acSec) acSec.style.display = 'block';
+          var acInput = document.getElementById('adAccountIdInput');
+          if (acInput && d.adAccountId) acInput.placeholder = d.adAccountId.replace('act_', '');
         } else {
           btn.className = 'meta-btn disconnected';
           txt.textContent = 'Connect Meta';
@@ -632,6 +647,25 @@
           else alert('META_APP_ID not configured in server .env');
         });
     }
+  };
+
+  window.saveAccountId = function () {
+    var val = document.getElementById('adAccountIdInput').value.trim();
+    if (!val) { alert('Enter ad account ID'); return; }
+    fetch(API + '/api/meta-ads/set-account', {
+      method: 'POST', headers: headers(),
+      body: JSON.stringify({ adAccountId: val }),
+    }).then(function (r) { return r.json(); })
+      .then(function (d) {
+        var note = document.getElementById('accountIdNote');
+        if (d.success) {
+          if (note) note.textContent = 'Saved: ' + d.adAccountId;
+          document.getElementById('adAccountIdInput').value = '';
+          document.getElementById('adAccountIdInput').placeholder = val;
+        } else {
+          if (note) note.textContent = 'Failed';
+        }
+      });
   };
 
   window.saveSpend = function () {
