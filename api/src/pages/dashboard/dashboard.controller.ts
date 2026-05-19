@@ -83,6 +83,15 @@ export class DashboardController {
   ) {
     return await this.dashboardService.getProfitAnalytics(startDate, endDate);
   }
+
+  @Version(VERSION_NEUTRAL)
+  @Get('products-sold')
+  async getProductsSold(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ) {
+    return await this.dashboardService.getProductsSold(startDate, endDate);
+  }
   // @Version(VERSION_NEUTRAL)
   // @Post('/user-dashboard')
   // async getUserDashboard(@Body() data: any): Promise<ResponsePayload> {

@@ -702,6 +702,57 @@ export class DashboardService {
     return { labels, sales };
   }
 
+  async getProductsSold(startDate: string, endDate: string): Promise<ResponsePayload> {
+    try {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
+      const rows = await this.orderModel.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: start, $lte: end },
+            orderStatus: { $nin: [6] },
+          },
+        },
+        {
+          $project: {
+            date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: '+06:00' } },
+            orderedItems: 1,
+          },
+        },
+        { $unwind: '$orderedItems' },
+        {
+          $group: {
+            _id: { date: '$date', productId: '$orderedItems._id' },
+            name: { $first: '$orderedItems.name' },
+            quantity: { $sum: '$orderedItems.quantity' },
+            revenue: { $sum: { $multiply: ['$orderedItems.salePrice', '$orderedItems.quantity'] } },
+          },
+        },
+        {
+          $group: {
+            _id: '$_id.date',
+            products: {
+              $push: {
+                name: '$name',
+                quantity: '$quantity',
+                revenue: '$revenue',
+              },
+            },
+          },
+        },
+        { $sort: { _id: 1 } },
+        { $project: { _id: 0, date: '$_id', products: 1 } },
+      ]);
+
+      return { success: true, data: rows };
+    } catch (err) {
+      this.logger.error(err);
+      throw new InternalServerErrorException();
+    }
+  }
+
   async getProfitAnalytics(startDate: string, endDate: string): Promise<ResponsePayload> {
     try {
       const start = new Date(startDate);

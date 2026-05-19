@@ -9,1248 +9,547 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --p:       #7c3aed;
-      --p-dark:  #5b21b6;
-      --p-light: #ede9fe;
-      --green:   #059669;
-      --green-l: #d1fae5;
-      --red:     #dc2626;
-      --red-l:   #fee2e2;
-      --blue:    #2563eb;
-      --blue-l:  #dbeafe;
-      --orange:  #d97706;
-      --orange-l:#fef3c7;
-      --cyan:    #0891b2;
-      --cyan-l:  #cffafe;
-      --g50:     #f8fafc;
-      --g100:    #f1f5f9;
-      --g200:    #e2e8f0;
-      --g300:    #cbd5e1;
-      --g400:    #94a3b8;
-      --g500:    #64748b;
-      --g700:    #334155;
-      --g900:    #0f172a;
-      --sidebar: 240px;
-      --radius:  12px;
+      --p: #7c3aed; --p-dark: #5b21b6; --p-light: #ede9fe;
+      --green: #059669; --green-l: #d1fae5;
+      --red: #dc2626; --red-l: #fee2e2;
+      --blue: #2563eb; --blue-l: #dbeafe;
+      --orange: #d97706; --orange-l: #fef3c7;
+      --g50: #f8fafc; --g100: #f1f5f9; --g200: #e2e8f0;
+      --g300: #cbd5e1; --g400: #94a3b8; --g500: #64748b;
+      --g700: #334155; --g900: #0f172a;
+      --sidebar: 220px; --radius: 10px;
     }
-    html, body { height: 100%; font-family: 'Inter', 'Segoe UI', sans-serif; background: #f0f2f8; color: #1e293b; -webkit-font-smoothing: antialiased; }
-
-    /* ── Layout ── */
+    html, body { height: 100%; font-family: 'Inter', sans-serif; background: #f0f2f8; color: #1e293b; -webkit-font-smoothing: antialiased; }
     .layout { display: flex; min-height: 100vh; }
 
-    /* ── Sidebar ── */
-    .sidebar {
-      width: var(--sidebar);
-      background: linear-gradient(180deg, #13111e 0%, #1a1730 100%);
-      display: flex; flex-direction: column;
-      position: fixed; top: 0; left: 0; bottom: 0; z-index: 200;
-      overflow-y: auto; border-right: 1px solid rgba(255,255,255,.06);
-      transition: transform .25s cubic-bezier(.4,0,.2,1);
-    }
-    .sidebar-logo { padding: 22px 20px 18px; border-bottom: 1px solid rgba(255,255,255,.07); display: flex; align-items: center; gap: 12px; }
-    .sidebar-logo-icon { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, var(--p), #4f46e5); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
-    .sidebar-logo span { font-size: 15px; font-weight: 800; color: #fff; letter-spacing: -.01em; }
-    .sidebar-logo small { display: block; font-size: 10px; color: #64748b; font-weight: 500; margin-top: 1px; }
-    .sidebar-nav { padding: 16px 0; flex: 1; }
-    .nav-label { font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #475569; padding: 10px 20px 5px; }
-    .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; font-size: 13px; font-weight: 600; color: #94a3b8; text-decoration: none; cursor: pointer; border-left: 3px solid transparent; transition: all .15s; }
+    /* Sidebar */
+    .sidebar { width: var(--sidebar); background: linear-gradient(180deg,#13111e,#1a1730); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 200; overflow-y: auto; border-right: 1px solid rgba(255,255,255,.06); }
+    .sidebar-logo { padding: 20px 18px 16px; border-bottom: 1px solid rgba(255,255,255,.07); display: flex; align-items: center; gap: 10px; }
+    .sidebar-logo-icon { width: 36px; height: 36px; border-radius: 9px; background: linear-gradient(135deg,var(--p),#4f46e5); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .sidebar-logo span { font-size: 14px; font-weight: 800; color: #fff; }
+    .sidebar-logo small { display: block; font-size: 10px; color: #64748b; font-weight: 500; }
+    .sidebar-nav { padding: 14px 0; flex: 1; }
+    .nav-label { font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #475569; padding: 10px 18px 4px; }
+    .nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 18px; font-size: 12.5px; font-weight: 600; color: #94a3b8; text-decoration: none; border-left: 3px solid transparent; transition: all .15s; }
     .nav-item:hover { background: rgba(255,255,255,.04); color: #cbd5e1; }
     .nav-item.active { background: rgba(124,58,237,.15); color: #a78bfa; border-left-color: #7c3aed; }
-    .nav-item i { width: 17px; text-align: center; font-size: 13px; opacity: .85; }
-    .sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,.06); font-size: 12px; color: #475569; }
-    .sidebar-footer a { color: #64748b; text-decoration: none; display: flex; align-items: center; gap: 8px; }
+    .nav-item i { width: 15px; text-align: center; font-size: 12px; opacity: .85; }
+    .sidebar-footer { padding: 14px 18px; border-top: 1px solid rgba(255,255,255,.06); }
+    .sidebar-footer a { color: #64748b; text-decoration: none; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; }
     .sidebar-footer a:hover { color: #94a3b8; }
 
-    /* ── Main ── */
+    /* Main */
     .main { flex: 1; margin-left: var(--sidebar); min-height: 100vh; display: flex; flex-direction: column; }
 
-    /* ── Topbar ── */
-    .topbar { background: #fff; border-bottom: 1px solid var(--g200); padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 100; }
-    .hamburger { display: none; background: none; border: none; cursor: pointer; font-size: 18px; color: var(--g500); padding: 4px; }
-    .topbar-title { font-size: 15px; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 8px; }
-    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
-    .meta-status-badge { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 20px; cursor: pointer; border: none; transition: all .15s; font-family: inherit; }
-    .meta-status-badge.connected { background: var(--green-l); color: var(--green); }
-    .meta-status-badge.disconnected { background: var(--g100); color: var(--g500); }
-    .meta-dot { width: 7px; height: 7px; border-radius: 50%; }
-    .meta-status-badge.connected .meta-dot { background: var(--green); }
-    .meta-status-badge.disconnected .meta-dot { background: var(--g400); }
+    /* Topbar */
+    .topbar { background: #fff; border-bottom: 1px solid var(--g200); padding: 0 20px; height: 52px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; }
+    .topbar-title { font-size: 14px; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 7px; }
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+    .meta-btn { display: flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; padding: 5px 12px; border-radius: 20px; cursor: pointer; border: none; font-family: inherit; transition: all .15s; }
+    .meta-btn.connected { background: var(--green-l); color: var(--green); }
+    .meta-btn.disconnected { background: var(--g100); color: var(--g500); }
+    .meta-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 
-    /* ── Content ── */
-    .content { padding: 20px 24px; flex: 1; }
+    /* Content */
+    .content { padding: 18px 20px; flex: 1; max-width: 1000px; }
 
-    /* ── Date Bar ── */
-    .date-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
-    .date-tabs { display: flex; gap: 4px; background: #fff; border: 1px solid var(--g200); border-radius: 10px; padding: 4px; }
-    .date-tab { padding: 6px 13px; font-size: 12px; font-weight: 700; border: none; border-radius: 7px; cursor: pointer; background: none; color: var(--g500); transition: all .15s; font-family: inherit; }
-    .date-tab:hover { background: var(--g100); color: var(--g700); }
-    .date-tab.active { background: var(--p); color: #fff; }
-    .custom-date-wrap { display: flex; gap: 8px; align-items: center; }
-    .custom-date-wrap input[type="date"] { padding: 6px 10px; border: 1px solid var(--g200); border-radius: 8px; font-size: 12px; font-family: inherit; color: #1e293b; outline: none; background: #fff; }
-    .custom-date-wrap input[type="date"]:focus { border-color: var(--p); }
-    .btn-apply { padding: 6px 14px; background: var(--p); color: #fff; border: none; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background .15s; }
+    /* Date bar */
+    .date-bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+    .date-tabs { display: flex; gap: 3px; background: #fff; border: 1px solid var(--g200); border-radius: 9px; padding: 3px; }
+    .dtab { padding: 5px 12px; font-size: 12px; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; background: none; color: var(--g500); transition: all .15s; font-family: inherit; }
+    .dtab:hover { background: var(--g100); }
+    .dtab.active { background: var(--p); color: #fff; }
+    .custom-wrap { display: flex; gap: 6px; align-items: center; }
+    .custom-wrap input[type="date"] { padding: 5px 8px; border: 1px solid var(--g200); border-radius: 7px; font-size: 12px; font-family: inherit; color: #1e293b; outline: none; background: #fff; }
+    .custom-wrap input[type="date"]:focus { border-color: var(--p); }
+    .btn-apply { padding: 5px 13px; background: var(--p); color: #fff; border: none; border-radius: 7px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
     .btn-apply:hover { background: var(--p-dark); }
 
-    /* ── Summary Cards (top 6) ── */
-    .summary-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 16px; }
-    @media (max-width: 1100px) { .summary-grid { grid-template-columns: repeat(3, 1fr); } }
-    @media (max-width: 600px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
-    .sum-card { background: #fff; border-radius: var(--radius); padding: 14px 16px; border: 1px solid var(--g200); border-top: 3px solid transparent; }
-    .sum-card.c-orders { border-top-color: #6366f1; }
-    .sum-card.c-revenue { border-top-color: var(--blue); }
-    .sum-card.c-adspend { border-top-color: #1877f2; }
-    .sum-card.c-return { border-top-color: var(--red); }
-    .sum-card.c-profit { border-top-color: var(--green); }
-    .sum-card.c-margin { border-top-color: var(--p); }
-    .sum-label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--g400); margin-bottom: 5px; }
-    .sum-value { font-size: 18px; font-weight: 900; color: #1e293b; line-height: 1.1; }
-    .sum-value.positive { color: var(--green); }
-    .sum-value.negative { color: var(--red); }
-    .sum-sub { font-size: 10.5px; color: var(--g400); margin-top: 3px; }
+    /* Summary cards */
+    .summary { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .scard { flex: 1; min-width: 160px; background: #fff; border-radius: var(--radius); padding: 14px 16px; border: 1px solid var(--g200); }
+    .scard-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--g400); margin-bottom: 6px; }
+    .scard-val { font-size: 22px; font-weight: 900; color: #1e293b; letter-spacing: -.02em; }
+    .scard-val.green { color: var(--green); }
+    .scard-val.red { color: var(--red); }
+    .scard-sub { font-size: 11px; color: var(--g400); margin-top: 3px; }
 
-    /* ── Section Grid ── */
-    .section-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
-    @media (max-width: 900px) { .section-row { grid-template-columns: 1fr; } }
+    /* Table */
+    .day-table { background: #fff; border-radius: var(--radius); border: 1px solid var(--g200); overflow: hidden; }
+    .day-table-header { display: grid; grid-template-columns: 120px 1fr 1fr 1fr 1fr 32px; gap: 0; padding: 10px 16px; background: var(--g50); border-bottom: 1px solid var(--g200); }
+    .th { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--g400); }
+    .day-row { border-bottom: 1px solid var(--g100); }
+    .day-row:last-child { border-bottom: none; }
+    .day-main { display: grid; grid-template-columns: 120px 1fr 1fr 1fr 1fr 32px; gap: 0; padding: 12px 16px; cursor: pointer; transition: background .12s; align-items: center; }
+    .day-main:hover { background: var(--g50); }
+    .day-date { font-size: 13px; font-weight: 700; color: #1e293b; }
+    .day-sub { font-size: 10.5px; color: var(--g400); margin-top: 1px; }
+    .day-cell { font-size: 13px; font-weight: 600; color: #1e293b; }
+    .day-cell.revenue { color: var(--blue); }
+    .day-cell.adspend { color: var(--orange); }
+    .day-cell.profit-pos { color: var(--green); font-weight: 800; }
+    .day-cell.profit-neg { color: var(--red); font-weight: 800; }
+    .day-cell.profit-na { color: var(--g400); }
+    .expand-btn { display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 6px; border: none; background: var(--g100); color: var(--g500); cursor: pointer; transition: all .15s; font-size: 10px; }
+    .expand-btn:hover { background: var(--p-light); color: var(--p); }
+    .expand-btn.open { background: var(--p-light); color: var(--p); transform: rotate(180deg); }
 
-    /* ── Panel Card ── */
-    .panel { background: #fff; border-radius: var(--radius); border: 1px solid var(--g200); overflow: hidden; }
-    .panel-header { padding: 12px 16px; border-bottom: 1px solid var(--g100); display: flex; align-items: center; justify-content: space-between; }
-    .panel-title { font-size: 13px; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 7px; }
-    .panel-title i { font-size: 12px; }
-    .panel-body { padding: 14px 16px; }
+    /* Product list */
+    .products-panel { background: var(--g50); border-top: 1px solid var(--g100); padding: 10px 16px 12px 136px; display: none; }
+    .products-panel.open { display: block; }
+    .products-panel-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--g400); margin-bottom: 8px; }
+    .product-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--g200); }
+    .product-row:last-child { border-bottom: none; }
+    .product-name { font-size: 12.5px; font-weight: 600; color: #1e293b; flex: 1; }
+    .product-qty { font-size: 11.5px; color: var(--g500); margin-left: 10px; white-space: nowrap; }
+    .product-rev { font-size: 12px; font-weight: 700; color: var(--blue); margin-left: 10px; white-space: nowrap; min-width: 80px; text-align: right; }
+    .products-loading { font-size: 12px; color: var(--g400); padding: 6px 0; }
+    .products-empty { font-size: 12px; color: var(--g400); font-style: italic; }
 
-    /* ── Stat Grid inside panels ── */
-    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .stat-grid.cols2 { grid-template-columns: repeat(2, 1fr); }
-    .stat-grid.cols4 { grid-template-columns: repeat(4, 1fr); }
-    .stat-block { text-align: center; padding: 10px 8px; border-radius: 8px; background: var(--g50); border: 1px solid var(--g100); }
-    .stat-block .sb-val { font-size: 20px; font-weight: 900; color: #1e293b; line-height: 1; }
-    .stat-block .sb-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--g400); margin-top: 4px; }
-    .stat-block .sb-sub { font-size: 10px; color: var(--g500); margin-top: 2px; }
-    .stat-block.highlight { background: var(--p-light); border-color: rgba(124,58,237,.2); }
-    .stat-block.highlight .sb-val { color: var(--p); }
-    .stat-block.green { background: var(--green-l); border-color: rgba(5,150,105,.2); }
-    .stat-block.green .sb-val { color: var(--green); }
-    .stat-block.red { background: var(--red-l); border-color: rgba(220,38,38,.2); }
-    .stat-block.red .sb-val { color: var(--red); }
-    .stat-block.blue { background: var(--blue-l); border-color: rgba(37,99,235,.2); }
-    .stat-block.blue .sb-val { color: var(--blue); }
-    .stat-block.orange { background: var(--orange-l); border-color: rgba(217,119,6,.2); }
-    .stat-block.orange .sb-val { color: var(--orange); }
-    .stat-block.fb { background: #e7f0fd; border-color: rgba(24,119,242,.2); }
-    .stat-block.fb .sb-val { color: #1877f2; }
+    /* Empty state */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--g400); }
+    .empty-state i { font-size: 32px; margin-bottom: 10px; display: block; }
+    .empty-state p { font-size: 13px; }
 
-    /* ── Chart ── */
-    .chart-panel { background: #fff; border-radius: var(--radius); border: 1px solid var(--g200); overflow: hidden; margin-bottom: 14px; }
-    .chart-wrap { position: relative; height: 220px; padding: 16px 16px 8px; }
+    /* Meta connect */
+    .meta-note { background: var(--orange-l); border: 1px solid #fed7aa; border-radius: var(--radius); padding: 10px 14px; font-size: 12px; color: #92400e; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .meta-note a { color: #92400e; font-weight: 700; }
 
-    /* ── Accordion (per-day) ── */
-    .accordion-section { background: #fff; border-radius: var(--radius); border: 1px solid var(--g200); overflow: hidden; margin-bottom: 14px; }
-    .accordion-header-bar { padding: 12px 16px; border-bottom: 1px solid var(--g100); display: flex; align-items: center; justify-content: space-between; }
-    .accordion-header-bar .panel-title { cursor: default; }
-    .acc-toggle-all { font-size: 11px; font-weight: 700; color: var(--p); background: none; border: none; cursor: pointer; font-family: inherit; padding: 4px 8px; border-radius: 6px; transition: background .15s; }
-    .acc-toggle-all:hover { background: var(--p-light); }
+    /* Manual spend */
+    .spend-input-row { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+    .spend-input-row label { font-size: 12px; font-weight: 700; color: var(--g700); }
+    .spend-input-row input[type="date"], .spend-input-row input[type="number"] { padding: 5px 9px; border: 1px solid var(--g200); border-radius: 7px; font-size: 12px; font-family: inherit; color: #1e293b; outline: none; background: #fff; }
+    .spend-input-row input[type="date"]:focus, .spend-input-row input[type="number"]:focus { border-color: var(--p); }
+    .btn-save-spend { padding: 5px 13px; background: var(--orange); color: #fff; border: none; border-radius: 7px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .btn-save-spend:hover { background: #b45309; }
+    .spend-section { background: #fff; border: 1px solid var(--g200); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px; }
+    .spend-section-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; color: var(--g500); margin-bottom: 10px; }
 
-    .acc-day { border-bottom: 1px solid var(--g100); }
-    .acc-day:last-child { border-bottom: none; }
-    .acc-day-head {
-      display: grid; grid-template-columns: 140px repeat(6,1fr) 24px;
-      align-items: center; padding: 10px 16px; cursor: pointer;
-      transition: background .12s; font-size: 12.5px;
-      gap: 6px;
-    }
-    .acc-day-head:hover { background: var(--g50); }
-    .acc-day-head.open { background: #faf9ff; }
-    .acc-day-date { font-weight: 700; color: #1e293b; font-size: 12px; }
-    .acc-day-val { text-align: right; font-weight: 600; color: var(--g700); font-size: 12px; }
-    .acc-day-val.pos { color: var(--green); }
-    .acc-day-val.neg { color: var(--red); }
-    .acc-day-val.muted { color: var(--g400); }
-    .acc-chevron { color: var(--g400); font-size: 10px; text-align: center; transition: transform .2s; }
-    .acc-day-head.open .acc-chevron { transform: rotate(180deg); }
-
-    .acc-day-body { display: none; background: #fafbff; border-top: 1px solid var(--g100); padding: 14px 16px; }
-    .acc-day-body.open { display: block; }
-    .acc-detail-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
-    @media (max-width: 700px) { .acc-detail-grid { grid-template-columns: repeat(2,1fr); } }
-    .acc-col-heads { display: grid; grid-template-columns: 140px repeat(6,1fr) 24px; padding: 4px 16px 4px; gap: 6px; }
-    .acc-col-head { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--g400); text-align: right; }
-    .acc-col-head:first-child { text-align: left; }
-
-    /* ── Product Table ── */
-    .product-section { background: #fff; border-radius: var(--radius); border: 1px solid var(--g200); overflow: hidden; margin-bottom: 14px; }
-    .table-scroll { overflow-x: auto; }
-    .prod-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-    .prod-table thead th { padding: 9px 12px; text-align: right; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--g400); background: var(--g50); border-bottom: 1px solid var(--g200); white-space: nowrap; }
-    .prod-table thead th:first-child { text-align: left; min-width: 180px; }
-    .prod-table tbody td { padding: 10px 12px; border-bottom: 1px solid var(--g100); text-align: right; vertical-align: middle; white-space: nowrap; }
-    .prod-table tbody td:first-child { text-align: left; font-weight: 600; color: #1e293b; max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
-    .prod-table tbody tr:last-child td { border-bottom: none; }
-    .prod-table tbody tr:hover td { background: #f8f7ff; }
-    .prod-table tfoot td { padding: 10px 12px; text-align: right; font-weight: 800; font-size: 12.5px; background: var(--g50); border-top: 2px solid var(--g200); }
-    .prod-table tfoot td:first-child { text-align: left; }
-    .profit-pos { color: var(--green); font-weight: 700; }
-    .profit-neg { color: var(--red); font-weight: 700; }
-    .badge { display: inline-block; padding: 2px 7px; border-radius: 20px; font-size: 10px; font-weight: 700; }
-    .badge-green { background: var(--green-l); color: var(--green); }
-    .badge-orange { background: var(--orange-l); color: var(--orange); }
-    .badge-red { background: var(--red-l); color: var(--red); }
-
-    /* ── Bottom panels ── */
-    .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
-    @media (max-width: 700px) { .bottom-row { grid-template-columns: 1fr; } }
-
-    /* ── Meta panel ── */
-    .meta-connect-box { padding: 20px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-    .meta-fb-icon { width: 44px; height: 44px; border-radius: 12px; background: #1877f2; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #fff; flex-shrink: 0; }
-    .meta-connect-text h3 { font-size: 14px; font-weight: 800; color: #1e293b; margin-bottom: 3px; }
-    .meta-connect-text p { font-size: 12px; color: var(--g500); }
-    .btn-connect-fb { background: #1877f2; color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-size: 12.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 7px; font-family: inherit; transition: background .15s; text-decoration: none; margin-left: auto; }
-    .btn-connect-fb:hover { background: #1565c0; }
-    .meta-connected-box { padding: 16px 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-    .meta-info { flex: 1; }
-    .meta-info h4 { font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 2px; }
-    .meta-info p { font-size: 11.5px; color: var(--g500); }
-    .meta-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .btn-sync { background: var(--p); color: #fff; border: none; border-radius: 8px; padding: 7px 14px; font-size: 12.5px; font-weight: 700; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 6px; transition: background .15s; }
-    .btn-sync:hover { background: var(--p-dark); }
-    .btn-sync:disabled { opacity: .5; cursor: not-allowed; }
-    .btn-disconnect { background: var(--g100); color: var(--g700); border: none; border-radius: 8px; padding: 7px 12px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background .15s; }
-    .btn-disconnect:hover { background: var(--red-l); color: var(--red); }
-
-    /* ── Manual Entry ── */
-    .entry-form { display: flex; flex-direction: column; gap: 10px; }
-    .form-row { display: flex; gap: 8px; flex-wrap: wrap; }
-    .field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 110px; }
-    .field label { font-size: 10px; font-weight: 700; color: var(--g500); text-transform: uppercase; letter-spacing: .06em; }
-    .field input, .field select { padding: 8px 10px; border: 1px solid var(--g200); border-radius: 8px; font-size: 12.5px; font-family: inherit; color: #1e293b; outline: none; background: #fff; transition: border-color .15s; }
-    .field input:focus, .field select:focus { border-color: var(--p); box-shadow: 0 0 0 3px rgba(124,58,237,.1); }
-    .btn-add { padding: 8px 16px; background: var(--p); color: #fff; border: none; border-radius: 8px; font-size: 12.5px; font-weight: 700; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 6px; transition: background .15s; align-self: flex-end; }
-    .btn-add:hover { background: var(--p-dark); }
-    .entry-list { display: flex; flex-direction: column; gap: 5px; max-height: 180px; overflow-y: auto; margin-top: 12px; }
-    .entry-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: var(--g50); border-radius: 7px; font-size: 12px; border: 1px solid var(--g100); }
-    .entry-date { font-weight: 700; color: #1e293b; min-width: 82px; font-size: 11.5px; }
-    .entry-amount { font-weight: 700; color: var(--p); margin-left: auto; font-size: 12px; }
-    .entry-tag { font-size: 9.5px; font-weight: 700; padding: 2px 6px; border-radius: 8px; background: var(--p-light); color: var(--p-dark); text-transform: uppercase; }
-    .entry-del { background: none; border: none; color: var(--g400); cursor: pointer; font-size: 11px; padding: 2px; transition: color .15s; }
-    .entry-del:hover { color: var(--red); }
-    .empty-state { text-align: center; padding: 20px; color: var(--g400); font-size: 12.5px; }
-
-    /* ── Login Overlay ── */
-    #login-overlay { position: fixed; inset: 0; z-index: 9999; background: radial-gradient(ellipse at 60% 40%, #1a1040 0%, #0f0c1e 100%); display: flex; align-items: center; justify-content: center; }
-    #login-overlay.hidden { display: none; }
-    .login-box { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); border-radius: 20px; padding: 42px 38px; width: 100%; max-width: 390px; box-shadow: 0 32px 80px rgba(0,0,0,.6); backdrop-filter: blur(20px); text-align: center; }
-    .login-logo { width: 58px; height: 58px; background: linear-gradient(135deg, var(--p), #4f46e5); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 22px; font-size: 26px; box-shadow: 0 8px 24px rgba(124,58,237,.5); }
-    .login-title { font-size: 24px; font-weight: 900; color: #f1f5f9; margin-bottom: 6px; letter-spacing: -.02em; }
-    .login-sub { font-size: 13px; color: #64748b; margin-bottom: 30px; }
-    .login-field { margin-bottom: 14px; text-align: left; }
-    .login-field label { display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; }
-    .login-field input { width: 100%; padding: 12px 14px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; color: #f1f5f9; font-size: 14px; outline: none; transition: border-color .15s; font-family: inherit; }
-    .login-field input:focus { border-color: var(--p); box-shadow: 0 0 0 3px rgba(124,58,237,.2); }
-    .login-btn { width: 100%; padding: 13px; border: none; border-radius: 10px; margin-top: 8px; background: linear-gradient(135deg, var(--p), #4f46e5); color: #fff; font-size: 15px; font-weight: 800; cursor: pointer; transition: opacity .15s; box-shadow: 0 4px 16px rgba(124,58,237,.4); font-family: inherit; letter-spacing: -.01em; }
-    .login-btn:hover { opacity: .9; }
-    .login-btn:disabled { opacity: .5; cursor: not-allowed; }
-    .login-error { margin-top: 14px; padding: 10px 14px; background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.3); border-radius: 9px; color: #fca5a5; font-size: 13px; display: none; }
-
-    /* ── Toast ── */
-    #toast { position: fixed; bottom: 24px; right: 24px; z-index: 9000; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 700; color: #fff; opacity: 0; transform: translateY(8px); transition: all .3s; pointer-events: none; }
-    #toast.show { opacity: 1; transform: translateY(0); }
-    #toast.success { background: var(--green); }
-    #toast.error { background: var(--red); }
-
-    /* ── Spinner ── */
-    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Mobile ── */
     @media (max-width: 768px) {
-      .sidebar { transform: translateX(-100%); }
-      .sidebar.open { transform: translateX(0); }
+      .sidebar { display: none; }
       .main { margin-left: 0; }
-      .hamburger { display: block; }
-      .content { padding: 14px 12px; }
-      .acc-day-head { grid-template-columns: 100px repeat(4,1fr) 24px; }
-      .acc-col-heads { grid-template-columns: 100px repeat(4,1fr) 24px; }
+      .content { padding: 12px; }
+      .day-table-header { display: none; }
+      .day-main { grid-template-columns: 1fr 1fr; gap: 4px; }
+      .products-panel { padding-left: 12px; }
+      .summary { flex-direction: column; }
     }
-    .sidebar-overlay { display: none; position: fixed; inset: 0; z-index: 190; background: rgba(0,0,0,.5); }
-    .sidebar-overlay.show { display: block; }
-
-    /* ── Section title row ── */
-    .section-label { font-size: 11px; font-weight: 700; color: var(--g500); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; padding-left: 2px; }
   </style>
 </head>
 <body>
-
-<!-- Login Overlay -->
-<div id="login-overlay">
-  <div class="login-box">
-    <div class="login-logo">📊</div>
-    <div class="login-title">Profit Dashboard</div>
-    <div class="login-sub">Amolbooks Admin Access</div>
-    <div class="login-field">
-      <label>Username / Phone</label>
-      <input type="text" id="login-username" placeholder="Enter username" autocomplete="username">
-    </div>
-    <div class="login-field">
-      <label>Password</label>
-      <input type="password" id="login-password" placeholder="Enter password" autocomplete="current-password">
-    </div>
-    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
-    <div class="login-error" id="login-error"></div>
-  </div>
-</div>
-
-<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
-
 <div class="layout">
-  <!-- Sidebar -->
-  <aside class="sidebar" id="sidebar">
+  <aside class="sidebar">
     <div class="sidebar-logo">
       <div class="sidebar-logo-icon">📚</div>
-      <div>
-        <span>Amolbooks</span>
-        <small>Admin Panel</small>
-      </div>
+      <div><span>Amolbooks</span><small>Admin Panel</small></div>
     </div>
     <nav class="sidebar-nav">
       <div class="nav-label">Sales</div>
-      <a href="https://adminsub.amolbooks.com/dashboard" class="nav-item">
-        <i class="fas fa-list-ul"></i> Orders (Angular)
-      </a>
-      <a href="custom-orders.html" class="nav-item">
-        <i class="fas fa-sliders-h"></i> Amolbooks Orders
-      </a>
-      <a href="import-woo-orders.html" class="nav-item">
-        <i class="fas fa-file-import"></i> Import WooCommerce
-      </a>
+      <a href="https://adminsub.amolbooks.com/dashboard" class="nav-item"><i class="fas fa-list-ul"></i> Orders (Angular)</a>
+      <a href="custom-orders.html" class="nav-item"><i class="fas fa-sliders-h"></i> Amolbooks Orders</a>
+      <a href="import-woo-orders.html" class="nav-item"><i class="fas fa-file-import"></i> Import WooCommerce</a>
       <div class="nav-label" style="margin-top:8px">Analytics</div>
-      <a href="profit-dashboard.html" class="nav-item active">
-        <i class="fas fa-chart-line"></i> Profit Dashboard
-      </a>
+      <a href="profit-dashboard.html" class="nav-item active"><i class="fas fa-chart-line"></i> Profit Dashboard</a>
       <div class="nav-label" style="margin-top:8px">Navigation</div>
-      <a href="https://adminsub.amolbooks.com/dashboard" class="nav-item">
-        <i class="fas fa-arrow-left"></i> Back to Admin
-      </a>
+      <a href="https://adminsub.amolbooks.com/dashboard" class="nav-item"><i class="fas fa-arrow-left"></i> Back to Admin</a>
     </nav>
     <div class="sidebar-footer">
-      <a href="https://adminsub.amolbooks.com/dashboard">
-        <i class="fas fa-home"></i> Return to Dashboard
-      </a>
+      <a href="https://adminsub.amolbooks.com/dashboard"><i class="fas fa-home"></i> Return to Dashboard</a>
     </div>
   </aside>
 
-  <!-- Main -->
   <div class="main">
-    <!-- Topbar -->
     <div class="topbar">
-      <button class="hamburger" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
       <div class="topbar-title"><i class="fas fa-chart-line" style="color:var(--p)"></i> Profit Dashboard</div>
       <div class="topbar-right">
-        <button class="meta-status-badge disconnected" id="meta-status-btn" onclick="handleMetaClick()">
+        <button class="meta-btn disconnected" id="metaBtn" onclick="handleMetaClick()">
           <span class="meta-dot"></span>
-          <span id="meta-status-text">Connect Meta</span>
+          <span id="metaBtnText">Connect Meta</span>
         </button>
       </div>
     </div>
 
-    <!-- Content -->
     <div class="content">
-
-      <!-- Date Range -->
+      <!-- Date range -->
       <div class="date-bar">
         <div class="date-tabs">
-          <button class="date-tab" onclick="setRange('today',event)">Today</button>
-          <button class="date-tab" onclick="setRange('yesterday',event)">Yesterday</button>
-          <button class="date-tab" onclick="setRange('last7',event)">Last 7 Days</button>
-          <button class="date-tab" onclick="setRange('thismonth',event)">This Month</button>
-          <button class="date-tab" onclick="setRange('lastmonth',event)">Last Month</button>
+          <button class="dtab active" onclick="setRange('today')">Today</button>
+          <button class="dtab" onclick="setRange('yesterday')">Yesterday</button>
+          <button class="dtab" onclick="setRange('7d')">Last 7 Days</button>
+          <button class="dtab" onclick="setRange('month')">This Month</button>
+          <button class="dtab" onclick="setRange('lastmonth')">Last Month</button>
         </div>
-        <div class="custom-date-wrap">
-          <input type="date" id="start-date">
-          <span style="color:var(--g400);font-size:13px">→</span>
-          <input type="date" id="end-date">
-          <button class="btn-apply" onclick="loadData()">Apply</button>
-        </div>
-      </div>
-
-      <!-- Summary Cards -->
-      <div class="summary-grid">
-        <div class="sum-card c-orders">
-          <div class="sum-label">Total Orders</div>
-          <div class="sum-value" id="s-orders">0</div>
-          <div class="sum-sub" id="s-orders-sub">all statuses</div>
-        </div>
-        <div class="sum-card c-revenue">
-          <div class="sum-label">Revenue</div>
-          <div class="sum-value" id="s-revenue">৳0</div>
-          <div class="sum-sub" id="s-revenue-sub">active orders</div>
-        </div>
-        <div class="sum-card c-adspend">
-          <div class="sum-label">Ad Spend</div>
-          <div class="sum-value" id="s-adspend">৳0</div>
-          <div class="sum-sub" id="s-adspend-sub">Meta Ads</div>
-        </div>
-        <div class="sum-card c-return">
-          <div class="sum-label">Return Loss</div>
-          <div class="sum-value negative" id="s-return">৳0</div>
-          <div class="sum-sub" id="s-return-sub">0 returned</div>
-        </div>
-        <div class="sum-card c-profit">
-          <div class="sum-label">Est. Profit</div>
-          <div class="sum-value" id="s-profit">৳0</div>
-          <div class="sum-sub">revenue − all costs</div>
-        </div>
-        <div class="sum-card c-margin">
-          <div class="sum-label">Margin</div>
-          <div class="sum-value" id="s-margin">0%</div>
-          <div class="sum-sub">profit / revenue</div>
+        <div class="custom-wrap">
+          <input type="date" id="customFrom">
+          <span style="font-size:12px;color:var(--g400)">→</span>
+          <input type="date" id="customTo">
+          <button class="btn-apply" onclick="applyCustom()">Apply</button>
         </div>
       </div>
 
-      <!-- Orders + Courier Row -->
-      <div class="section-row">
-
-        <!-- Orders Panel -->
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title"><i class="fas fa-box" style="color:#6366f1"></i> Orders</div>
-          </div>
-          <div class="panel-body">
-            <div class="stat-grid cols4" style="grid-template-columns:repeat(3,1fr)">
-              <div class="stat-block blue">
-                <div class="sb-val" id="oc-all">0</div>
-                <div class="sb-lbl">All</div>
-              </div>
-              <div class="stat-block">
-                <div class="sb-val" id="oc-new">0</div>
-                <div class="sb-lbl">New</div>
-              </div>
-              <div class="stat-block orange">
-                <div class="sb-val" id="oc-hold">0</div>
-                <div class="sb-lbl">Hold</div>
-              </div>
-            </div>
-            <div class="stat-grid" style="margin-top:10px;grid-template-columns:repeat(4,1fr)">
-              <div class="stat-block highlight">
-                <div class="sb-val" id="oc-sent">0</div>
-                <div class="sb-lbl">Sent</div>
-              </div>
-              <div class="stat-block green">
-                <div class="sb-val" id="oc-delivered">0</div>
-                <div class="sb-lbl">Delivered</div>
-              </div>
-              <div class="stat-block red">
-                <div class="sb-val" id="oc-cancelled">0</div>
-                <div class="sb-lbl">Cancelled</div>
-              </div>
-              <div class="stat-block red">
-                <div class="sb-val" id="oc-returned">0</div>
-                <div class="sb-lbl">Returned</div>
-              </div>
-            </div>
-          </div>
+      <!-- Summary -->
+      <div class="summary" id="summary">
+        <div class="scard">
+          <div class="scard-label">Total Revenue</div>
+          <div class="scard-val" id="s-revenue">—</div>
+          <div class="scard-sub" id="s-orders">— orders</div>
         </div>
-
-        <!-- Ad Metrics Panel -->
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title"><i class="fab fa-facebook" style="color:#1877f2"></i> Ad Metrics</div>
-          </div>
-          <div class="panel-body">
-            <div class="stat-grid cols4" style="grid-template-columns:repeat(2,1fr)">
-              <div class="stat-block fb">
-                <div class="sb-val" id="am-adspend">৳0</div>
-                <div class="sb-lbl">Ad Spend</div>
-                <div class="sb-sub">BDT</div>
-              </div>
-              <div class="stat-block highlight">
-                <div class="sb-val" id="am-cpo">৳0</div>
-                <div class="sb-lbl">CPO</div>
-                <div class="sb-sub">cost per order</div>
-              </div>
-            </div>
-            <div class="stat-grid" style="margin-top:10px;grid-template-columns:repeat(2,1fr)">
-              <div class="stat-block">
-                <div class="sb-val" id="am-cps">0%</div>
-                <div class="sb-lbl">CPS</div>
-                <div class="sb-sub">ad/revenue %</div>
-              </div>
-              <div class="stat-block">
-                <div class="sb-val" id="am-adlvr">৳0</div>
-                <div class="sb-lbl">AD/DLVR</div>
-                <div class="sb-sub">ad per delivery</div>
-              </div>
-            </div>
-          </div>
+        <div class="scard">
+          <div class="scard-label">Meta Ad Spend</div>
+          <div class="scard-val" id="s-adspend">—</div>
+          <div class="scard-sub" id="s-meta-note">Connect Meta to auto-sync</div>
         </div>
-
-      </div><!-- /section-row -->
-
-      <!-- Profit Detail + Loss Row -->
-      <div class="section-row" style="margin-bottom:14px">
-
-        <!-- Profit Breakdown -->
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title"><i class="fas fa-coins" style="color:var(--green)"></i> Profit Breakdown</div>
-          </div>
-          <div class="panel-body">
-            <div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">
-              <div class="stat-block blue">
-                <div class="sb-val" id="pb-revenue">৳0</div>
-                <div class="sb-lbl">Revenue</div>
-              </div>
-              <div class="stat-block orange">
-                <div class="sb-val" id="pb-cogs">৳0</div>
-                <div class="sb-lbl">COGS</div>
-              </div>
-              <div class="stat-block">
-                <div class="sb-val" id="pb-delivery">৳0</div>
-                <div class="sb-lbl">Delivery</div>
-              </div>
-            </div>
-            <div class="stat-grid" style="margin-top:10px;grid-template-columns:repeat(2,1fr)">
-              <div class="stat-block">
-                <div class="sb-val" id="pb-other">৳0</div>
-                <div class="sb-lbl">Other Exp.</div>
-              </div>
-              <div class="stat-block green">
-                <div class="sb-val" id="pb-profit">৳0</div>
-                <div class="sb-lbl">Est. Profit</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Losses Panel -->
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title"><i class="fas fa-exclamation-triangle" style="color:var(--red)"></i> Losses</div>
-          </div>
-          <div class="panel-body">
-            <div class="stat-grid" style="grid-template-columns:repeat(2,1fr)">
-              <div class="stat-block red">
-                <div class="sb-val" id="ls-cancelled-rev">৳0</div>
-                <div class="sb-lbl">Cancelled ৳</div>
-                <div class="sb-sub" id="ls-cancelled-cnt">0 orders</div>
-              </div>
-              <div class="stat-block red">
-                <div class="sb-val" id="ls-returned-rev">৳0</div>
-                <div class="sb-lbl">Returned ৳</div>
-                <div class="sb-sub" id="ls-returned-cnt">0 orders</div>
-              </div>
-            </div>
-            <div class="stat-grid" style="margin-top:10px;grid-template-columns:1fr">
-              <div class="stat-block" style="background:#fff7ed;border-color:rgba(217,119,6,.2)">
-                <div class="sb-val" style="color:var(--orange)" id="ls-total-loss">৳0</div>
-                <div class="sb-lbl">Total Loss Exposure</div>
-                <div class="sb-sub">cancelled + returned</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div><!-- /section-row -->
-
-      <!-- Chart -->
-      <div class="chart-panel">
-        <div class="panel-header">
-          <div class="panel-title"><i class="fas fa-chart-area" style="color:var(--p)"></i> Revenue vs Profit</div>
-        </div>
-        <div class="chart-wrap">
-          <canvas id="profit-chart"></canvas>
+        <div class="scard">
+          <div class="scard-label">Net Profit</div>
+          <div class="scard-val" id="s-profit">—</div>
+          <div class="scard-sub" id="s-margin">Revenue − Ad Spend</div>
         </div>
       </div>
 
-      <!-- Per-Day Accordion -->
-      <div class="accordion-section">
-        <div class="accordion-header-bar">
-          <div class="panel-title"><i class="fas fa-calendar-alt" style="color:var(--p)"></i> Daily Breakdown</div>
-          <button class="acc-toggle-all" onclick="toggleAllDays()">Expand All</button>
-        </div>
-        <!-- Column headers -->
-        <div class="acc-col-heads" id="acc-col-heads" style="display:none">
-          <div class="acc-col-head" style="text-align:left">Date</div>
-          <div class="acc-col-head">Orders</div>
-          <div class="acc-col-head">Revenue</div>
-          <div class="acc-col-head">Ad Spend</div>
-          <div class="acc-col-head">Delivery</div>
-          <div class="acc-col-head">Other</div>
-          <div class="acc-col-head">Profit</div>
-          <div class="acc-col-head"></div>
-        </div>
-        <div id="acc-days-container">
-          <div class="empty-state" style="padding:30px">Loading...</div>
+      <!-- Manual ad spend entry -->
+      <div class="spend-section" id="spendSection" style="display:none">
+        <div class="spend-section-title"><i class="fab fa-facebook" style="color:#1877f2;margin-right:5px"></i>Log Ad Spend Manually</div>
+        <div class="spend-input-row">
+          <label>Date</label>
+          <input type="date" id="spendDate">
+          <label>Amount (৳)</label>
+          <input type="number" id="spendAmount" placeholder="0" min="0" step="1" style="width:100px">
+          <button class="btn-save-spend" onclick="saveSpend()">Save</button>
         </div>
       </div>
 
-      <!-- Product Breakdown -->
-      <div class="product-section">
-        <div class="panel-header">
-          <div class="panel-title"><i class="fas fa-book" style="color:var(--p)"></i> Product Breakdown</div>
-          <span id="prod-count" style="font-size:11px;color:var(--g400);font-weight:600"></span>
+      <!-- Day-wise table -->
+      <div class="day-table" id="dayTable">
+        <div class="day-table-header">
+          <span class="th">Date</span>
+          <span class="th">Orders</span>
+          <span class="th">Revenue</span>
+          <span class="th">Ad Spend</span>
+          <span class="th">Profit</span>
+          <span class="th"></span>
         </div>
-        <div class="table-scroll">
-          <table class="prod-table">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Orders</th>
-                <th>Qty</th>
-                <th>Revenue</th>
-                <th>COGS</th>
-                <th>Ad Spend</th>
-                <th>CPO</th>
-                <th>Est. Profit</th>
-              </tr>
-            </thead>
-            <tbody id="prod-tbody">
-              <tr><td colspan="8" class="empty-state">Loading...</td></tr>
-            </tbody>
-            <tfoot>
-              <tr>
-                <td>Total</td>
-                <td id="pft-orders">—</td>
-                <td id="pft-qty">—</td>
-                <td id="pft-revenue">—</td>
-                <td id="pft-cogs">—</td>
-                <td id="pft-adspend">—</td>
-                <td>—</td>
-                <td id="pft-profit">—</td>
-              </tr>
-            </tfoot>
-          </table>
+        <div id="dayRows">
+          <div class="empty-state"><i class="fas fa-circle-notch fa-spin"></i><p>Loading…</p></div>
         </div>
       </div>
-
-      <!-- Meta Panel + Manual Entries -->
-      <div class="bottom-row">
-
-        <!-- Meta Ads -->
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title"><i class="fab fa-facebook" style="color:#1877f2"></i> Facebook Ads</div>
-          </div>
-          <div id="meta-connect-section">
-            <div class="meta-connect-box">
-              <div class="meta-fb-icon"><i class="fab fa-facebook-f"></i></div>
-              <div class="meta-connect-text">
-                <h3>Connect Facebook Ads</h3>
-                <p>Auto-fetch daily ad spend from Meta Ads.</p>
-              </div>
-              <a id="meta-connect-link" href="#" class="btn-connect-fb" onclick="connectMeta(event)">
-                <i class="fab fa-facebook-f"></i> Connect
-              </a>
-            </div>
-          </div>
-          <div id="meta-connected-section" style="display:none">
-            <div class="meta-connected-box">
-              <div style="background:var(--green-l);width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">✅</div>
-              <div class="meta-info">
-                <h4><span style="color:var(--green)">Connected</span></h4>
-                <p id="meta-last-sync">Last synced: never</p>
-              </div>
-              <div class="meta-actions">
-                <button class="btn-sync" id="sync-btn" onclick="syncMeta()">
-                  <i class="fas fa-sync-alt"></i> Sync Now
-                </button>
-                <button class="btn-disconnect" onclick="disconnectMeta()">Disconnect</button>
-              </div>
-            </div>
-          </div>
-          <!-- Manual Ad Spend form -->
-          <div style="padding:14px 16px;border-top:1px solid var(--g100)">
-            <div style="font-size:11px;font-weight:700;color:var(--g500);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Manual Ad Spend</div>
-            <div class="entry-form">
-              <div class="form-row">
-                <div class="field">
-                  <label>Date</label>
-                  <input type="date" id="spend-date">
-                </div>
-                <div class="field">
-                  <label>Spend (BDT)</label>
-                  <input type="number" id="spend-bdt" placeholder="e.g. 1500" min="0">
-                </div>
-                <button class="btn-add" onclick="addManualSpend()" style="margin-top:14px">
-                  <i class="fas fa-plus"></i>
-                </button>
-              </div>
-            </div>
-            <div id="spend-list" class="entry-list">
-              <div class="empty-state">No spend entries</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Other Expenses -->
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title"><i class="fas fa-wallet" style="color:var(--g500)"></i> Other Expenses</div>
-          </div>
-          <div style="padding:14px 16px">
-            <div class="entry-form">
-              <div class="form-row">
-                <div class="field">
-                  <label>Date</label>
-                  <input type="date" id="expense-date">
-                </div>
-                <div class="field">
-                  <label>Amount (BDT)</label>
-                  <input type="number" id="expense-amount" placeholder="e.g. 5000" min="0">
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="field">
-                  <label>Category</label>
-                  <select id="expense-cat">
-                    <option value="salary">Salary</option>
-                    <option value="courier">Courier</option>
-                    <option value="packaging">Packaging</option>
-                    <option value="other" selected>Other</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label>Note</label>
-                  <input type="text" id="expense-note" placeholder="optional">
-                </div>
-              </div>
-              <button class="btn-add" onclick="addExpense()">
-                <i class="fas fa-plus"></i> Add
-              </button>
-            </div>
-            <div id="expense-list" class="entry-list">
-              <div class="empty-state">No expenses for this period</div>
-            </div>
-          </div>
-        </div>
-
-      </div><!-- /bottom-row -->
-
-    </div><!-- /content -->
-  </div><!-- /main -->
-</div><!-- /layout -->
-
-<div id="toast"></div>
+    </div>
+  </div>
+</div>
 
 <script>
+(function () {
+  'use strict';
+
   var API = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://apisub.amolbooks.com';
-  var TOKEN_KEY = 'pd_admin_token';
-  var currentData = null;
-  var profitChart = null;
-  var allExpanded = false;
+  var ADMIN_URL = 'https://adminsub.amolbooks.com';
+  var token = null;
+  var rangeStart = '', rangeEnd = '';
+  var productsByDate = {};
+  var spendByDate = {};
+  var metaConnected = false;
 
-  // ── Auth ──────────────────────────────────────────────────────────────────────
-  function getToken() { return localStorage.getItem(TOKEN_KEY); }
-  function saveToken(t) { localStorage.setItem(TOKEN_KEY, t); }
-  function authHeaders() { return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() }; }
-
-  function checkAuth() {
+  /* ── Auth ── */
+  function getToken() { return localStorage.getItem('profit_admin_token'); }
+  function saveToken(t) { localStorage.setItem('profit_admin_token', t); }
+  function headers() {
+    var h = { 'Content-Type': 'application/json' };
     var t = getToken();
-    if (t) { document.getElementById('login-overlay').classList.add('hidden'); init(); }
+    if (t) h.administrator = t;
+    return h;
   }
 
-  function doLogin() {
-    var btn = document.getElementById('login-btn');
-    var err = document.getElementById('login-error');
-    var u = document.getElementById('login-username').value.trim();
-    var p = document.getElementById('login-password').value;
-    if (!u || !p) { showErr(err, 'Enter username and password'); return; }
-    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
-    err.style.display = 'none';
+  /* ── Login via custom-orders token (shared storage key) ── */
+  function init() {
+    var t = localStorage.getItem('co_admin_token') || localStorage.getItem('profit_admin_token');
+    if (t) { saveToken(t); loadAll(); }
+    else { autoLogin(); }
+  }
+
+  function autoLogin() {
+    var u = prompt('Admin email:');
+    var p = prompt('Password:');
+    if (!u || !p) return;
     fetch(API + '/api/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: u, password: p }),
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      if (d && d.token) {
-        saveToken(d.token);
-        document.getElementById('login-overlay').classList.add('hidden');
-        init();
-      } else {
-        showErr(err, d.message || 'Login failed');
-        btn.disabled = false; btn.textContent = 'Sign In';
-      }
-    })
-    .catch(function() {
-      showErr(err, 'Network error');
-      btn.disabled = false; btn.textContent = 'Sign In';
+      body: JSON.stringify({ email: u, password: p }),
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      if (d && d.token) { saveToken(d.token); loadAll(); }
+      else { alert('Login failed'); }
     });
   }
 
-  function showErr(el, msg) { el.textContent = msg; el.style.display = 'block'; }
-  document.getElementById('login-password').addEventListener('keydown', function(e) { if (e.key === 'Enter') doLogin(); });
+  /* ── Date ranges ── */
+  function toYMD(d) { return d.toISOString().slice(0, 10); }
 
-  // ── Sidebar ───────────────────────────────────────────────────────────────────
-  function openSidebar() { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebar-overlay').classList.add('show'); }
-  function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('show'); }
-
-  // ── Date helpers ──────────────────────────────────────────────────────────────
-  function fmtDate(d) { return d.toISOString().slice(0, 10); }
-  function todayStr() { return fmtDate(new Date()); }
-
-  function setRange(r, ev) {
-    var now = new Date(); var s, e = fmtDate(now);
-    if (r === 'today') { s = e; }
-    else if (r === 'yesterday') { var y = new Date(now); y.setDate(y.getDate()-1); s = e = fmtDate(y); }
-    else if (r === 'last7') { var a = new Date(now); a.setDate(a.getDate()-6); s = fmtDate(a); }
-    else if (r === 'thismonth') { s = fmtDate(new Date(now.getFullYear(), now.getMonth(), 1)); }
-    else if (r === 'lastmonth') {
-      var lm = new Date(now.getFullYear(), now.getMonth()-1, 1);
-      s = fmtDate(lm);
-      e = fmtDate(new Date(now.getFullYear(), now.getMonth(), 0));
+  window.setRange = function (key) {
+    document.querySelectorAll('.dtab').forEach(function (b) { b.classList.remove('active'); });
+    var today = new Date();
+    if (key === 'today') {
+      rangeStart = rangeEnd = toYMD(today);
+      event.target.classList.add('active');
+    } else if (key === 'yesterday') {
+      var y = new Date(today); y.setDate(y.getDate() - 1);
+      rangeStart = rangeEnd = toYMD(y);
+      event.target.classList.add('active');
+    } else if (key === '7d') {
+      var s = new Date(today); s.setDate(s.getDate() - 6);
+      rangeStart = toYMD(s); rangeEnd = toYMD(today);
+      event.target.classList.add('active');
+    } else if (key === 'month') {
+      var m = new Date(today.getFullYear(), today.getMonth(), 1);
+      rangeStart = toYMD(m); rangeEnd = toYMD(today);
+      event.target.classList.add('active');
+    } else if (key === 'lastmonth') {
+      var lm = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      var lme = new Date(today.getFullYear(), today.getMonth(), 0);
+      rangeStart = toYMD(lm); rangeEnd = toYMD(lme);
+      event.target.classList.add('active');
     }
-    document.getElementById('start-date').value = s;
-    document.getElementById('end-date').value = e;
-    document.querySelectorAll('.date-tab').forEach(function(b) { b.classList.remove('active'); });
-    if (ev && ev.target) ev.target.classList.add('active');
-    loadData();
+    loadAll();
+  };
+
+  window.applyCustom = function () {
+    rangeStart = document.getElementById('customFrom').value;
+    rangeEnd = document.getElementById('customTo').value;
+    if (!rangeStart || !rangeEnd) return;
+    document.querySelectorAll('.dtab').forEach(function (b) { b.classList.remove('active'); });
+    loadAll();
+  };
+
+  /* ── Load all data ── */
+  function loadAll() {
+    if (!rangeStart || !rangeEnd) return;
+    document.getElementById('dayRows').innerHTML = '<div class="empty-state"><i class="fas fa-circle-notch fa-spin"></i><p>Loading…</p></div>';
+    var s = rangeStart, e = rangeEnd;
+    var q = '?startDate=' + s + '&endDate=' + e;
+    var h = headers();
+    Promise.all([
+      fetch(API + '/api/dashboard/profit-analytics' + q, { headers: h }).then(function (r) { return r.json(); }).catch(function () { return null; }),
+      fetch(API + '/api/meta-ads/spend' + q, { headers: h }).then(function (r) { return r.json(); }).catch(function () { return null; }),
+    ]).then(function (res) {
+      var profit = res[0];
+      var spend = res[1];
+      renderDashboard(profit, spend);
+    });
+    checkMetaStatus();
   }
 
-  // ── Init ──────────────────────────────────────────────────────────────────────
-  function init() {
-    document.getElementById('start-date').value = todayStr();
-    document.getElementById('end-date').value = todayStr();
-    document.querySelector('.date-tab').classList.add('active');
-    document.getElementById('spend-date').value = todayStr();
-    document.getElementById('expense-date').value = todayStr();
-    loadMetaStatus();
-    loadData();
-    if (window.location.search.includes('connected=1')) {
-      showToast('Facebook Ads connected!', 'success');
-      loadMetaStatus();
+  function renderDashboard(profit, spend) {
+    spendByDate = {};
+    if (spend && spend.success && spend.data && spend.data.daily) {
+      spend.data.daily.forEach(function (d) { spendByDate[d.date] = d.spend || 0; });
     }
-  }
 
-  // ── Meta Status ───────────────────────────────────────────────────────────────
-  function loadMetaStatus() {
-    fetch(API + '/api/meta-ads/status', { headers: authHeaders() })
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      var btn = document.getElementById('meta-status-btn');
-      var text = document.getElementById('meta-status-text');
-      if (d.isConnected) {
-        btn.className = 'meta-status-badge connected';
-        text.textContent = 'Meta Connected';
-        document.getElementById('meta-connect-section').style.display = 'none';
-        document.getElementById('meta-connected-section').style.display = '';
-        var sync = d.lastSyncAt ? new Date(d.lastSyncAt).toLocaleString() : 'Never';
-        document.getElementById('meta-last-sync').textContent = 'Last synced: ' + sync;
-      } else {
-        btn.className = 'meta-status-badge disconnected';
-        text.textContent = 'Connect Meta';
-        document.getElementById('meta-connect-section').style.display = '';
-        document.getElementById('meta-connected-section').style.display = 'none';
-      }
-    })
-    .catch(function() {});
-  }
+    var daily = (profit && profit.success && profit.data && profit.data.daily) ? profit.data.daily : [];
+    var totRev = 0, totOrders = 0, totSpend = 0;
 
-  function handleMetaClick() {
-    var btn = document.getElementById('meta-status-btn');
-    if (btn.classList.contains('connected')) {
-      document.getElementById('meta-connected-section').scrollIntoView({ behavior: 'smooth' });
+    daily.forEach(function (d) {
+      totRev += d.revenue || 0;
+      totOrders += d.orderCount || 0;
+      totSpend += spendByDate[d.date] || 0;
+    });
+
+    // If spend data has dates not in profit daily (manual entries), add them
+    if (spend && spend.success && spend.data && spend.data.total) {
+      totSpend = spend.data.total;
+    }
+
+    setText('s-revenue', '৳' + fmt(totRev));
+    setText('s-orders', totOrders + ' orders');
+    setText('s-adspend', totSpend > 0 ? '৳' + fmt(totSpend) : '—');
+
+    var profitVal = totRev - totSpend;
+    var profEl = document.getElementById('s-profit');
+    if (totSpend > 0) {
+      profEl.textContent = (profitVal < 0 ? '-৳' : '৳') + fmt(Math.abs(profitVal));
+      profEl.className = 'scard-val ' + (profitVal >= 0 ? 'green' : 'red');
+      var margin = totRev > 0 ? Math.round(profitVal / totRev * 100) : 0;
+      setText('s-margin', margin + '% margin');
     } else {
-      connectMeta(null);
+      profEl.textContent = '—';
+      profEl.className = 'scard-val';
+      setText('s-margin', 'Revenue − Ad Spend');
     }
+
+    renderRows(daily);
   }
 
-  function connectMeta(e) {
-    if (e) e.preventDefault();
-    fetch(API + '/api/meta-ads/auth-url', { headers: authHeaders() })
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      if (d.url) window.location.href = d.url;
-      else showToast('Failed to get auth URL. Add META_APP_ID to .env', 'error');
-    })
-    .catch(function() { showToast('Error getting Meta auth URL', 'error'); });
-  }
-
-  function syncMeta() {
-    var btn = document.getElementById('sync-btn');
-    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Syncing...';
-    var s = document.getElementById('start-date').value;
-    var e = document.getElementById('end-date').value;
-    fetch(API + '/api/meta-ads/sync', {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify({ startDate: s, endDate: e }),
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      if (d.success) {
-        showToast('Synced ' + d.datesSync + ' day(s) of ad spend', 'success');
-        loadData();
-        loadMetaStatus();
-      } else { showToast(d.message || 'Sync failed', 'error'); }
-      btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Sync Now';
-    })
-    .catch(function() {
-      showToast('Sync error', 'error');
-      btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Sync Now';
-    });
-  }
-
-  function disconnectMeta() {
-    if (!confirm('Disconnect Facebook Ads? You can reconnect anytime.')) return;
-    fetch(API + '/api/meta-ads/disconnect', { method: 'POST', headers: authHeaders() })
-    .then(function() { loadMetaStatus(); showToast('Disconnected', 'success'); })
-    .catch(function() { showToast('Error disconnecting', 'error'); });
-  }
-
-  // ── Load Data ──────────────────────────────────────────────────────────────────
-  function loadData() {
-    var s = document.getElementById('start-date').value;
-    var e = document.getElementById('end-date').value;
-    if (!s || !e) return;
-
-    var profitP = fetch(API + '/api/dashboard/profit-analytics?startDate=' + s + '&endDate=' + e, { headers: authHeaders() }).then(function(r) { return r.json(); });
-    var spendP  = fetch(API + '/api/meta-ads/spend?startDate=' + s + '&endDate=' + e, { headers: authHeaders() }).then(function(r) { return r.json(); });
-    var expP    = fetch(API + '/api/meta-ads/expenses?startDate=' + s + '&endDate=' + e, { headers: authHeaders() }).then(function(r) { return r.json(); });
-
-    Promise.all([profitP, spendP, expP]).then(function(results) {
-      var profit = results[0];
-      var spends = results[1];
-      var exps   = results[2];
-      if (profit.success) renderDashboard(profit.data);
-      renderSpendList(spends.data || []);
-      renderExpenseList(exps.data || []);
-    }).catch(function(err) {
-      console.error(err);
-      showToast('Failed to load data', 'error');
-    });
-  }
-
-  function renderDashboard(data) {
-    currentData = data;
-    var t = data.totals;
-    var oc = data.orderCounts || {};
-
-    // ── Summary cards ──
-    setText('s-orders', oc.all || 0);
-    setText('s-orders-sub', (oc.delivered || 0) + ' delivered');
-    setText('s-revenue', '৳' + fmt2(t.revenue));
-    setText('s-revenue-sub', (t.orderCount || 0) + ' active orders');
-    setText('s-adspend', '৳' + fmt2(t.adSpend));
-    setText('s-adspend-sub', 'CPO: ৳' + fmt2(t.cpo || 0));
-
-    var retLoss = (t.returnedRevenue || 0) + (t.cancelledRevenue || 0);
-    setText('s-return', '৳' + fmt2(t.returnedRevenue || 0));
-    setText('s-return-sub', (t.returnedOrders || 0) + ' returned');
-    var profitEl = document.getElementById('s-profit');
-    profitEl.textContent = (t.profit < 0 ? '-৳' : '৳') + fmt2(Math.abs(t.profit));
-    profitEl.className = 'sum-value ' + (t.profit < 0 ? 'negative' : 'positive');
-    setText('s-margin', (t.margin || 0).toFixed(1) + '%');
-
-    // ── Order counts ──
-    setText('oc-all', oc.all || 0);
-    setText('oc-new', oc.newOrders || 0);
-    setText('oc-hold', oc.hold || 0);
-    setText('oc-sent', oc.sent || 0);
-    setText('oc-delivered', oc.delivered || 0);
-    setText('oc-cancelled', oc.cancelled || 0);
-    setText('oc-returned', oc.returned || 0);
-
-    // ── Ad metrics ──
-    setText('am-adspend', '৳' + fmt2(t.adSpend));
-    setText('am-cpo', '৳' + fmt2(t.cpo || 0));
-    setText('am-cps', (t.cps || 0).toFixed(1) + '%');
-    setText('am-adlvr', '৳' + fmt2(t.adPerDelivery || 0));
-
-    // ── Profit breakdown ──
-    setText('pb-revenue', '৳' + fmt2(t.revenue));
-    setText('pb-cogs', '৳' + fmt2(t.cogs));
-    setText('pb-delivery', '৳' + fmt2(t.deliveryCost));
-    setText('pb-other', '৳' + fmt2(t.otherExpenses));
-    var pbProfit = document.getElementById('pb-profit');
-    pbProfit.textContent = (t.profit < 0 ? '-৳' : '৳') + fmt2(Math.abs(t.profit));
-    pbProfit.parentElement.className = 'stat-block ' + (t.profit < 0 ? 'red' : 'green');
-
-    // ── Losses ──
-    setText('ls-cancelled-rev', '৳' + fmt2(t.cancelledRevenue || 0));
-    setText('ls-cancelled-cnt', (t.cancelledOrders || 0) + ' orders');
-    setText('ls-returned-rev', '৳' + fmt2(t.returnedRevenue || 0));
-    setText('ls-returned-cnt', (t.returnedOrders || 0) + ' orders');
-    setText('ls-total-loss', '৳' + fmt2((t.cancelledRevenue || 0) + (t.returnedRevenue || 0)));
-
-    // ── Chart ──
-    renderChart(data.daily);
-
-    // ── Accordion days ──
-    renderAccordion(data.daily);
-
-    // ── Product table ──
-    renderProductTable(data.productBreakdown || [], t);
-  }
-
-  // ── Chart ──────────────────────────────────────────────────────────────────────
-  function renderChart(daily) {
-    var labels = daily.map(function(d) { return d.date.slice(5); });
-    var revenues = daily.map(function(d) { return d.revenue; });
-    var profits = daily.map(function(d) { return d.profit; });
-
-    if (profitChart) profitChart.destroy();
-    var ctx = document.getElementById('profit-chart').getContext('2d');
-    profitChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [
-          {
-            label: 'Revenue',
-            data: revenues,
-            backgroundColor: 'rgba(37,99,235,.15)',
-            borderColor: '#2563eb',
-            borderWidth: 2,
-            borderRadius: 4,
-            type: 'bar',
-            order: 2,
-          },
-          {
-            label: 'Est. Profit',
-            data: profits,
-            borderColor: '#059669',
-            backgroundColor: 'rgba(5,150,105,.1)',
-            borderWidth: 2.5,
-            tension: 0.4,
-            fill: true,
-            type: 'line',
-            order: 1,
-            pointRadius: daily.length > 20 ? 0 : 4,
-            pointBackgroundColor: '#059669',
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        plugins: {
-          legend: { position: 'top', labels: { boxWidth: 10, font: { size: 11, weight: '700' } } },
-          tooltip: {
-            callbacks: {
-              label: function(ctx) { return ' ' + ctx.dataset.label + ': ৳' + fmt2(ctx.parsed.y); },
-            },
-          },
-        },
-        scales: {
-          x: { grid: { display: false }, ticks: { font: { size: 10 } } },
-          y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, callback: function(v) { return '৳' + fmt2(v); } } },
-        },
-      },
-    });
-  }
-
-  // ── Accordion ─────────────────────────────────────────────────────────────────
-  function renderAccordion(daily) {
-    allExpanded = false;
-    document.querySelector('.acc-toggle-all').textContent = 'Expand All';
-
-    var container = document.getElementById('acc-days-container');
-    var colHeads = document.getElementById('acc-col-heads');
-
-    if (!daily || !daily.length) {
-      container.innerHTML = '<div class="empty-state" style="padding:30px">No data for this period</div>';
-      colHeads.style.display = 'none';
+  function renderRows(daily) {
+    var container = document.getElementById('dayRows');
+    if (!daily.length) {
+      container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No orders in this range</p></div>';
       return;
     }
 
-    colHeads.style.display = '';
+    // Sort descending (newest first)
+    daily = daily.slice().sort(function (a, b) { return b.date.localeCompare(a.date); });
 
-    container.innerHTML = daily.map(function(d, i) {
-      var profitCls = d.profit < 0 ? 'neg' : (d.profit > 0 ? 'pos' : 'muted');
-      var profitStr = (d.profit < 0 ? '-৳' : '৳') + fmt2(Math.abs(d.profit));
-      var mc = d.margin >= 20 ? 'badge-green' : (d.margin >= 5 ? 'badge-orange' : 'badge-red');
+    container.innerHTML = daily.map(function (d, i) {
+      var sp = spendByDate[d.date] || 0;
+      var pv = d.revenue - sp;
+      var profCls = sp > 0 ? (pv >= 0 ? 'profit-pos' : 'profit-neg') : 'profit-na';
+      var profStr = sp > 0 ? ((pv < 0 ? '-৳' : '৳') + fmt(Math.abs(pv))) : '—';
+      var spStr = sp > 0 ? '৳' + fmt(sp) : '—';
+      var dateLabel = formatDate(d.date);
 
-      return '<div class="acc-day" id="acc-day-' + i + '">' +
-        '<div class="acc-day-head" onclick="toggleDay(' + i + ')">' +
-          '<span class="acc-day-date">' + d.date + '</span>' +
-          '<span class="acc-day-val">' + d.orderCount + '</span>' +
-          '<span class="acc-day-val blue">৳' + fmt2(d.revenue) + '</span>' +
-          '<span class="acc-day-val muted">৳' + fmt2(d.adSpend) + '</span>' +
-          '<span class="acc-day-val muted">৳' + fmt2(d.deliveryCost) + '</span>' +
-          '<span class="acc-day-val muted">৳' + fmt2(d.otherExpenses) + '</span>' +
-          '<span class="acc-day-val ' + profitCls + '">' + profitStr + '</span>' +
-          '<span class="acc-chevron"><i class="fas fa-chevron-down"></i></span>' +
+      return '<div class="day-row" id="row-' + i + '">' +
+        '<div class="day-main" onclick="toggleProducts(' + i + ',\'' + d.date + '\')">' +
+          '<div><div class="day-date">' + dateLabel + '</div><div class="day-sub">' + d.date + '</div></div>' +
+          '<div class="day-cell">' + d.orderCount + '</div>' +
+          '<div class="day-cell revenue">৳' + fmt(d.revenue) + '</div>' +
+          '<div class="day-cell adspend">' + spStr + '</div>' +
+          '<div class="day-cell ' + profCls + '">' + profStr + '</div>' +
+          '<button class="expand-btn" id="expbtn-' + i + '"><i class="fas fa-chevron-down"></i></button>' +
         '</div>' +
-        '<div class="acc-day-body" id="acc-body-' + i + '">' +
-          '<div class="acc-detail-grid">' +
-            statMini('COGS', '৳' + fmt2(d.cogs), '') +
-            statMini('Ad Spend', '৳' + fmt2(d.adSpend), '') +
-            statMini('Delivery', '৳' + fmt2(d.deliveryCost), '') +
-            statMini('Other Exp.', '৳' + fmt2(d.otherExpenses), '') +
-            statMini('Est. Profit', profitStr, d.profit < 0 ? 'color:var(--red);font-weight:800' : 'color:var(--green);font-weight:800') +
-            statMini('Margin', d.margin.toFixed(1) + '%', '') +
-            (d.cancelledCount > 0 ? statMini('Cancelled', '৳' + fmt2(d.cancelledRevenue) + ' (' + d.cancelledCount + ')', 'color:var(--red)') : '') +
-            (d.returnedCount > 0 ? statMini('Returned', '৳' + fmt2(d.returnedRevenue) + ' (' + d.returnedCount + ')', 'color:var(--red)') : '') +
-          '</div>' +
+        '<div class="products-panel" id="products-' + i + '">' +
+          '<div class="products-panel-title"><i class="fas fa-box" style="margin-right:4px"></i>Products Sold</div>' +
+          '<div class="products-loading" id="pload-' + i + '"><i class="fas fa-circle-notch fa-spin"></i> Loading products…</div>' +
+          '<div id="plist-' + i + '"></div>' +
         '</div>' +
       '</div>';
     }).join('');
   }
 
-  function statMini(lbl, val, valStyle) {
-    return '<div style="background:var(--g50);border:1px solid var(--g100);border-radius:8px;padding:10px;text-align:center">' +
-      '<div style="font-size:13px;font-weight:800;' + valStyle + '">' + val + '</div>' +
-      '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--g400);margin-top:3px">' + lbl + '</div>' +
-    '</div>';
+  var openPanels = {};
+
+  window.toggleProducts = function (idx, date) {
+    var panel = document.getElementById('products-' + idx);
+    var btn = document.getElementById('expbtn-' + idx);
+    if (!panel) return;
+
+    var isOpen = openPanels[idx];
+    openPanels[idx] = !isOpen;
+    panel.classList.toggle('open', !isOpen);
+    if (btn) btn.classList.toggle('open', !isOpen);
+
+    if (!isOpen && !productsByDate[date]) {
+      loadProducts(idx, date);
+    }
+  };
+
+  function loadProducts(idx, date) {
+    if (productsByDate[date]) { renderProducts(idx, productsByDate[date]); return; }
+    fetch(API + '/api/dashboard/products-sold?startDate=' + date + '&endDate=' + date, { headers: headers() })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        var products = [];
+        if (res && res.success && res.data && res.data.length) {
+          var row = res.data.find(function (r) { return r.date === date; });
+          products = row ? (row.products || []) : [];
+        }
+        productsByDate[date] = products;
+        renderProducts(idx, products);
+      })
+      .catch(function () {
+        productsByDate[date] = [];
+        renderProducts(idx, []);
+      });
   }
 
-  function toggleDay(i) {
-    var head = document.querySelector('#acc-day-' + i + ' .acc-day-head');
-    var body = document.getElementById('acc-body-' + i);
-    head.classList.toggle('open');
-    body.classList.toggle('open');
-  }
+  function renderProducts(idx, products) {
+    var loadEl = document.getElementById('pload-' + idx);
+    var listEl = document.getElementById('plist-' + idx);
+    if (loadEl) loadEl.style.display = 'none';
+    if (!listEl) return;
 
-  function toggleAllDays() {
-    allExpanded = !allExpanded;
-    document.querySelector('.acc-toggle-all').textContent = allExpanded ? 'Collapse All' : 'Expand All';
-    document.querySelectorAll('.acc-day-head').forEach(function(h) {
-      if (allExpanded) h.classList.add('open'); else h.classList.remove('open');
-    });
-    document.querySelectorAll('.acc-day-body').forEach(function(b) {
-      if (allExpanded) b.classList.add('open'); else b.classList.remove('open');
-    });
-  }
-
-  // ── Product Table ──────────────────────────────────────────────────────────────
-  function renderProductTable(products, totals) {
-    var tbody = document.getElementById('prod-tbody');
-    setText('prod-count', products.length + ' products');
-
-    if (!products.length) {
-      tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No product data for this period</td></tr>';
+    if (!products || !products.length) {
+      listEl.innerHTML = '<div class="products-empty">No product details available</div>';
       return;
     }
 
-    tbody.innerHTML = products.map(function(p) {
-      var profitCls = p.estProfit < 0 ? 'profit-neg' : 'profit-pos';
-      return '<tr>' +
-        '<td title="' + esc(p.productName) + '">' + esc(p.productName) + '</td>' +
-        '<td>' + p.orderCount + '</td>' +
-        '<td>' + p.quantity + '</td>' +
-        '<td>৳' + fmt2(p.revenue) + '</td>' +
-        '<td>৳' + fmt2(p.cogs) + '</td>' +
-        '<td>৳' + fmt2(p.adSpend) + '</td>' +
-        '<td>৳' + fmt2(p.cpo) + '</td>' +
-        '<td class="' + profitCls + '">' + (p.estProfit < 0 ? '-৳' : '৳') + fmt2(Math.abs(p.estProfit)) + '</td>' +
-      '</tr>';
+    // Sort by quantity desc
+    products = products.slice().sort(function (a, b) { return b.quantity - a.quantity; });
+    listEl.innerHTML = products.map(function (p) {
+      return '<div class="product-row">' +
+        '<span class="product-name">' + (p.name || 'Unknown') + '</span>' +
+        '<span class="product-qty">× ' + p.quantity + '</span>' +
+        '<span class="product-rev">৳' + fmt(p.revenue || 0) + '</span>' +
+      '</div>';
     }).join('');
-
-    var totalOrders = products.reduce(function(s, p) { return s + p.orderCount; }, 0);
-    var totalQty = products.reduce(function(s, p) { return s + p.quantity; }, 0);
-    var totalRev = products.reduce(function(s, p) { return s + p.revenue; }, 0);
-    var totalCogs = products.reduce(function(s, p) { return s + p.cogs; }, 0);
-    var totalAd = products.reduce(function(s, p) { return s + p.adSpend; }, 0);
-    var totalProfit = products.reduce(function(s, p) { return s + p.estProfit; }, 0);
-
-    setText('pft-orders', totalOrders);
-    setText('pft-qty', totalQty);
-    setText('pft-revenue', '৳' + fmt2(totalRev));
-    setText('pft-cogs', '৳' + fmt2(totalCogs));
-    setText('pft-adspend', '৳' + fmt2(totalAd));
-    var pftProfit = document.getElementById('pft-profit');
-    pftProfit.textContent = (totalProfit < 0 ? '-৳' : '৳') + fmt2(Math.abs(totalProfit));
-    pftProfit.style.color = totalProfit < 0 ? 'var(--red)' : 'var(--green)';
   }
 
-  // ── Manual Spend ──────────────────────────────────────────────────────────────
-  function addManualSpend() {
-    var date = document.getElementById('spend-date').value;
-    var bdt  = parseFloat(document.getElementById('spend-bdt').value);
-    if (!date || !bdt || bdt < 0) { showToast('Enter date and amount', 'error'); return; }
+  /* ── Meta ── */
+  function checkMetaStatus() {
+    fetch(API + '/api/meta-ads/status', { headers: headers() })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        metaConnected = d && d.connected;
+        var btn = document.getElementById('metaBtn');
+        var txt = document.getElementById('metaBtnText');
+        var secEl = document.getElementById('spendSection');
+        if (metaConnected) {
+          btn.className = 'meta-btn connected';
+          txt.textContent = 'Meta Connected';
+          if (secEl) secEl.style.display = 'none';
+        } else {
+          btn.className = 'meta-btn disconnected';
+          txt.textContent = 'Connect Meta';
+          if (secEl) secEl.style.display = 'block';
+          // Set today's date as default for manual spend input
+          document.getElementById('spendDate').value = toYMD(new Date());
+        }
+      }).catch(function () {
+        document.getElementById('spendSection').style.display = 'block';
+        document.getElementById('spendDate').value = toYMD(new Date());
+      });
+  }
+
+  window.handleMetaClick = function () {
+    if (metaConnected) {
+      if (!confirm('Disconnect Meta Ads?')) return;
+      fetch(API + '/api/meta-ads/disconnect', { method: 'POST', headers: headers() })
+        .then(function () { metaConnected = false; checkMetaStatus(); });
+    } else {
+      fetch(API + '/api/meta-ads/auth-url', { headers: headers() })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d && d.url) window.location.href = d.url;
+          else alert('META_APP_ID not configured in server .env');
+        });
+    }
+  };
+
+  window.saveSpend = function () {
+    var date = document.getElementById('spendDate').value;
+    var amount = parseFloat(document.getElementById('spendAmount').value);
+    if (!date || isNaN(amount)) { alert('Enter date and amount'); return; }
     fetch(API + '/api/meta-ads/manual-spend', {
-      method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({ date: date, spendBDT: bdt }),
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      if (d.success) { showToast('Ad spend added', 'success'); loadData(); }
-      else showToast(d.message || 'Failed', 'error');
-    })
-    .catch(function() { showToast('Error', 'error'); });
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ date: date, spend: amount }),
+    }).then(function (r) { return r.json(); })
+      .then(function () {
+        document.getElementById('spendAmount').value = '';
+        loadAll();
+      });
+  };
+
+  /* ── Helpers ── */
+  function fmt(n) { return Math.round(n).toLocaleString('en-BD'); }
+  function setText(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
+  function formatDate(ymd) {
+    var d = new Date(ymd + 'T00:00:00');
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
   }
 
-  function renderSpendList(docs) {
-    var el = document.getElementById('spend-list');
-    if (!docs.length) { el.innerHTML = '<div class="empty-state">No spend entries</div>'; return; }
-    el.innerHTML = docs.map(function(d) {
-      return '<div class="entry-row">' +
-        '<span class="entry-date">' + d.date + '</span>' +
-        '<span class="entry-tag">' + (d.source === 'meta_auto' ? 'Auto' : 'Manual') + '</span>' +
-        '<span class="entry-amount">৳' + fmt2(d.spendBDT) + '</span>' +
-        '<button class="entry-del" onclick="deleteSpend(\'' + d._id + '\')" title="Delete"><i class="fas fa-trash"></i></button>' +
-      '</div>';
-    }).join('');
+  /* ── Init ── */
+  var today = new Date();
+  rangeStart = rangeEnd = toYMD(today);
+  document.getElementById('customFrom').value = rangeStart;
+  document.getElementById('customTo').value = rangeEnd;
+
+  // Check if came back from Meta OAuth
+  var urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('meta') === 'connected') {
+    setTimeout(function () { loadAll(); }, 500);
   }
 
-  function deleteSpend(id) {
-    if (!confirm('Delete this spend entry?')) return;
-    fetch(API + '/api/meta-ads/spend/' + id, { method: 'DELETE', headers: authHeaders() })
-    .then(function() { showToast('Deleted', 'success'); loadData(); })
-    .catch(function() { showToast('Error', 'error'); });
-  }
-
-  // ── Expenses ──────────────────────────────────────────────────────────────────
-  function addExpense() {
-    var date   = document.getElementById('expense-date').value;
-    var amount = parseFloat(document.getElementById('expense-amount').value);
-    var cat    = document.getElementById('expense-cat').value;
-    var note   = document.getElementById('expense-note').value;
-    if (!date || !amount || amount < 0) { showToast('Enter date and amount', 'error'); return; }
-    fetch(API + '/api/meta-ads/expenses', {
-      method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({ date: date, amount: amount, category: cat, note: note }),
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      if (d.success) { showToast('Expense added', 'success'); loadData(); }
-      else showToast(d.message || 'Failed', 'error');
-    })
-    .catch(function() { showToast('Error', 'error'); });
-  }
-
-  function renderExpenseList(docs) {
-    var el = document.getElementById('expense-list');
-    if (!docs.length) { el.innerHTML = '<div class="empty-state">No expenses for this period</div>'; return; }
-    el.innerHTML = docs.map(function(d) {
-      return '<div class="entry-row">' +
-        '<span class="entry-date">' + d.date + '</span>' +
-        '<span class="entry-tag">' + esc(d.category || 'other') + '</span>' +
-        (d.note ? '<span style="font-size:10.5px;color:var(--g400);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(d.note) + '</span>' : '<span style="flex:1"></span>') +
-        '<span class="entry-amount">৳' + fmt2(d.amount) + '</span>' +
-        '<button class="entry-del" onclick="deleteExpense(\'' + d._id + '\')" title="Delete"><i class="fas fa-trash"></i></button>' +
-      '</div>';
-    }).join('');
-  }
-
-  function deleteExpense(id) {
-    if (!confirm('Delete this expense?')) return;
-    fetch(API + '/api/meta-ads/expenses/' + id, { method: 'DELETE', headers: authHeaders() })
-    .then(function() { showToast('Deleted', 'success'); loadData(); })
-    .catch(function() { showToast('Error', 'error'); });
-  }
-
-  // ── Helpers ───────────────────────────────────────────────────────────────────
-  function setText(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
-  function fmt2(n) { return Math.round(n || 0).toLocaleString('en-BD'); }
-  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-  function showToast(msg, type) {
-    var t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = 'show ' + (type || 'success');
-    setTimeout(function() { t.className = ''; }, 3000);
-  }
-
-  // ── Boot ──────────────────────────────────────────────────────────────────────
-  checkAuth();
+  init();
+})();
 </script>
 </body>
 </html>
