@@ -72,6 +72,7 @@ import { PosthogModule } from './shared/posthog/posthog.module';
 import { GtmModule } from './pages/gtm/gtm.module';
 import { CourierModule } from './shared/courier/courier.module';
 import { PreOrderModule } from './pages/pre-order/pre-order.module';
+import { MetaAdsModule } from './pages/meta-ads/meta-ads.module';
 @Module({
   imports: [
     ServeStaticModule.forRoot(
@@ -182,6 +183,7 @@ import { PreOrderModule } from './pages/pre-order/pre-order.module';
     FbCatalogModule,
     CourierModule,
     PreOrderModule,
+    MetaAdsModule,
   ],
   controllers: [AppController],
   providers: [

@@ -74,6 +74,15 @@ export class DashboardController {
       throw new BadRequestException(error.message);
     }
   }
+
+  @Version(VERSION_NEUTRAL)
+  @Get('profit-analytics')
+  async getProfitAnalytics(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ) {
+    return await this.dashboardService.getProfitAnalytics(startDate, endDate);
+  }
   // @Version(VERSION_NEUTRAL)
   // @Post('/user-dashboard')
   // async getUserDashboard(@Body() data: any): Promise<ResponsePayload> {

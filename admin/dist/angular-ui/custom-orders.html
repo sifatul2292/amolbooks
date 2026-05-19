@@ -337,6 +337,7 @@
       white-space: nowrap; text-align: left;
     }
     thead th:first-child { padding-left: 18px; width: 38px; }
+    thead th:nth-child(5), tbody td:nth-child(5) { min-width: 200px; }
     tbody tr { border-bottom: 1px solid var(--g100); transition: background .1s; }
     tbody tr:nth-child(even) { background: #fafbff; }
     tbody tr:hover { background: #f5f3ff !important; }
@@ -345,10 +346,12 @@
 
     /* Row accents */
     tr.row-processing { border-left: 3px solid #7c3aed; }
-    tr.row-completed  { border-left: 3px solid #059669; background: #f0fdf4 !important; }
+    tr.row-confirmed  { border-left: 3px solid #16a34a; background: #f0fdf4 !important; }
+    tr.row-completed  { border-left: 3px solid #059669; background: #dcfce7 !important; }
     tr.row-cancelled  { border-left: 3px solid #dc2626; background: #fff5f5 !important; }
     tr.row-trash      { border-left: 3px solid #94a3b8; background: var(--g50) !important; opacity: .7; }
-    tr.row-completed:hover { background: #dcfce7 !important; }
+    tr.row-confirmed:hover { background: #dcfce7 !important; }
+    tr.row-completed:hover { background: #bbf7d0 !important; }
     tr.row-cancelled:hover { background: #fee2e2 !important; }
 
     .order-no {
@@ -416,6 +419,18 @@
 
     /* Fraud */
     .fraud-cell { display: flex; flex-direction: column; gap: 5px; min-width: 72px; align-items: flex-start; }
+    .note-cell { max-width: 160px; font-size: 12px; color: #334155; line-height: 1.5; word-break: break-word; }
+    .customer-note-text { display: block; }
+    .admin-note-cell { min-width: 140px; max-width: 180px; }
+    .admin-note-text { display: block; font-size: 12px; color: #1e40af; cursor: pointer; line-height: 1.5; word-break: break-word; padding: 3px 6px; border-radius: 5px; background: #eff6ff; }
+    .admin-note-text:hover { background: #dbeafe; }
+    .btn-add-note { font-size: 11px; color: #6366f1; background: none; border: 1px dashed #a5b4fc; border-radius: 5px; padding: 3px 8px; cursor: pointer; }
+    .btn-add-note:hover { background: #eef2ff; }
+    .admin-note-input { width: 100%; font-size: 12px; border: 1px solid #a5b4fc; border-radius: 5px; padding: 5px 7px; resize: vertical; font-family: inherit; outline: none; box-sizing: border-box; }
+    .admin-note-input:focus { border-color: #6366f1; box-shadow: 0 0 0 2px #eef2ff; }
+    .btn-note-save { margin-top: 4px; margin-right: 4px; font-size: 11px; background: #6366f1; color: #fff; border: none; border-radius: 5px; padding: 3px 10px; cursor: pointer; }
+    .btn-note-save:hover { background: #4f46e5; }
+    .btn-note-cancel { margin-top: 4px; font-size: 11px; background: none; color: #64748b; border: 1px solid #e2e8f0; border-radius: 5px; padding: 3px 8px; cursor: pointer; }
     .fraud-chip {
       display: inline-flex; align-items: center; padding: 3px 8px;
       border-radius: 20px; font-size: 11px; font-weight: 700;
@@ -720,9 +735,47 @@
       .modal-footer { padding: 12px 16px; }
       .footer-actions { flex-wrap: wrap; }
     }
-    @media(max-width:768px){.date-row{display:none!important;}}
+
+    /* ── Sidebar Analytics Widget ── */
+    .snap-widget {
+      margin: 12px 14px 0;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .snap-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .snap-title {
+      font-size: 9.5px; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: #475569;
+    }
+    .snap-toggle { color: #475569; font-size: 10px; transition: transform .2s; }
+    .snap-toggle.open { transform: rotate(180deg); }
+    .snap-body { padding: 0 14px 12px; }
+    .snap-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.05);
+    }
+    .snap-row:last-child { border-bottom: none; }
+    .snap-label { font-size: 11px; color: #64748b; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+    .snap-label i { width: 12px; text-align: center; }
+    .snap-val { font-size: 12px; font-weight: 700; color: #e2e8f0; }
+    .snap-val.profit-pos { color: #34d399; }
+    .snap-val.profit-neg { color: #f87171; }
+    .snap-loading { text-align: center; padding: 10px 0; color: #475569; font-size: 11px; }
+    .snap-link {
+      display: block; text-align: center; margin-top: 10px;
+      font-size: 11px; font-weight: 700; color: #7c3aed;
+      text-decoration: none; opacity: .8; transition: opacity .15s;
+    }
+    .snap-link:hover { opacity: 1; }
+    .snap-divider { border: none; border-top: 1px solid rgba(255,255,255,.06); margin: 0; }
   </style>
-<script>if(window.innerWidth>768){document.addEventListener("DOMContentLoaded",function(){var el=document.getElementById("dateRow");if(el)el.style.display="";});}</script>
 </head>
 <body>
 
@@ -776,11 +829,47 @@
       <a href="import-woo-orders.html" class="nav-item">
         <i class="fas fa-file-import"></i> Import WooCommerce
       </a>
+      <div class="nav-label" style="margin-top:8px">Analytics</div>
+      <a href="profit-dashboard.html" class="nav-item">
+        <i class="fas fa-chart-line"></i> Profit Dashboard
+      </a>
       <div class="nav-label" style="margin-top:8px">Navigation</div>
       <a href="https://adminsub.amolbooks.com/dashboard" class="nav-item">
         <i class="fas fa-arrow-left"></i> Back to Admin
       </a>
     </nav>
+
+    <!-- Analytics Snapshot Widget -->
+    <hr class="snap-divider">
+    <div class="snap-widget">
+      <div class="snap-header" onclick="toggleSnap()">
+        <span class="snap-title"><i class="fas fa-chart-bar" style="margin-right:5px;color:#7c3aed"></i>Today's Snapshot</span>
+        <i class="fas fa-chevron-down snap-toggle" id="snapToggle"></i>
+      </div>
+      <div class="snap-body" id="snapBody">
+        <div class="snap-loading" id="snapLoading"><i class="fas fa-circle-notch fa-spin"></i> Loading…</div>
+        <div id="snapData" style="display:none">
+          <div class="snap-row">
+            <span class="snap-label"><i class="fas fa-coins" style="color:#f59e0b"></i> Revenue</span>
+            <span class="snap-val" id="snap-revenue">—</span>
+          </div>
+          <div class="snap-row">
+            <span class="snap-label"><i class="fab fa-facebook" style="color:#1877f2"></i> Ad Spend</span>
+            <span class="snap-val" id="snap-adspend">—</span>
+          </div>
+          <div class="snap-row">
+            <span class="snap-label"><i class="fas fa-chart-line" style="color:#34d399"></i> Profit</span>
+            <span class="snap-val" id="snap-profit">—</span>
+          </div>
+          <div class="snap-row">
+            <span class="snap-label"><i class="fas fa-shopping-bag" style="color:#a78bfa"></i> Orders</span>
+            <span class="snap-val" id="snap-orders">—</span>
+          </div>
+        </div>
+        <a href="profit-dashboard.html" class="snap-link">View Full Analytics →</a>
+      </div>
+    </div>
+
     <div class="sidebar-footer">
       <a href="https://adminsub.amolbooks.com/dashboard">
         <i class="fas fa-home"></i> Return to Dashboard
@@ -961,11 +1050,13 @@
                 <th>Status</th>
                 <th>Order By</th>
                 <th>Invoice</th>
+                <th>Customer Note</th>
+                <th>Admin Note</th>
               </tr>
             </thead>
             <tbody id="ordersBody">
               <tr class="loading-row">
-                <td colspan="15"><div class="spinner"></div><div>Loading orders…</div></td>
+                <td colspan="17"><div class="spinner"></div><div>Loading orders…</div></td>
               </tr>
             </tbody>
           </table>
@@ -1025,6 +1116,10 @@
           <button id="modalFraudBtn" class="btn-fraud-modal" onclick="modalCheckFraud()">Check</button>
         </div>
       </div>
+      <div id="modalNoteRow" style="display:none;margin:0 0 14px;padding:10px 14px;background:#fefce8;border:1px solid #fde68a;border-radius:8px;font-size:13px;color:#92400e">
+        <strong style="display:block;margin-bottom:4px">📝 Customer Note</strong>
+        <span id="modalCustomerNote"></span>
+      </div>
       <div class="modal-section-title">📦 Ordered Items</div>
       <table class="product-table">
         <colgroup><col><col style="width:90px"><col style="width:56px"><col style="width:96px"></colgroup>
@@ -1079,6 +1174,51 @@
     activeTab: 'all',
   };
 
+  /* ── Sidebar Analytics Snapshot ── */
+  var snapOpen = true;
+
+  window.toggleSnap = function () {
+    snapOpen = !snapOpen;
+    document.getElementById('snapBody').style.display = snapOpen ? '' : 'none';
+    var tog = document.getElementById('snapToggle');
+    if (tog) tog.className = 'fas fa-chevron-down snap-toggle' + (snapOpen ? ' open' : '');
+  };
+
+  function loadSnap() {
+    var today = new Date().toISOString().slice(0, 10);
+    var h = authHeaders ? authHeaders() : {};
+    var profitP = fetch(API + '/api/dashboard/profit-analytics?startDate=' + today + '&endDate=' + today, { headers: h })
+      .then(function (r) { return r.json(); }).catch(function () { return null; });
+    var spendP = fetch(API + '/api/meta-ads/spend?startDate=' + today + '&endDate=' + today, { headers: h })
+      .then(function (r) { return r.json(); }).catch(function () { return null; });
+
+    Promise.all([profitP, spendP]).then(function (res) {
+      var profit = res[0];
+      var spend = res[1];
+      var loading = document.getElementById('snapLoading');
+      var data = document.getElementById('snapData');
+      if (loading) loading.style.display = 'none';
+      if (data) data.style.display = '';
+
+      var revenue = (profit && profit.success && profit.data && profit.data.totals) ? (profit.data.totals.revenue || 0) : 0;
+      var orderCount = (profit && profit.success && profit.data && profit.data.totals) ? (profit.data.totals.orderCount || 0) : 0;
+      var adSpend = (spend && spend.success && spend.data) ? (spend.data.total || 0) : 0;
+      var profitVal = revenue - adSpend;
+
+      var el = document.getElementById('snap-revenue');
+      if (el) el.textContent = '৳' + revenue.toLocaleString('en-BD');
+      el = document.getElementById('snap-adspend');
+      if (el) el.textContent = adSpend > 0 ? ('৳' + adSpend.toLocaleString('en-BD')) : '—';
+      el = document.getElementById('snap-profit');
+      if (el) {
+        el.textContent = (adSpend > 0 ? ((profitVal < 0 ? '-৳' : '৳') + Math.abs(profitVal).toLocaleString('en-BD')) : '—');
+        el.className = 'snap-val' + (adSpend > 0 ? (profitVal >= 0 ? ' profit-pos' : ' profit-neg') : '');
+      }
+      el = document.getElementById('snap-orders');
+      if (el) el.textContent = orderCount;
+    });
+  }
+
   /* ── Sidebar mobile ── */
   window.openSidebar = function () {
     document.getElementById('sidebar').classList.add('open');
@@ -1126,7 +1266,7 @@
     })
     .then(function(r){ return r.json(); })
     .then(function(data){
-      if (data && data.token) { saveToken(data.token); hideLogin(); loadRepeatCustomers(); loadTodayStats(); }
+      if (data && data.token) { saveToken(data.token); hideLogin(); loadRepeatCustomers(); loadTodayStats(); loadSnap(); }
       else { errEl.textContent = 'Invalid username or password.'; errEl.style.display = 'block'; }
     })
     .catch(function(){ errEl.textContent = 'Connection error. Try again.'; errEl.style.display = 'block'; })
@@ -1303,6 +1443,7 @@
         discount:1, orderStatus:1, paymentStatus:1, paymentType:1,
         createdAt:1, checkoutDate:1, shippingAddress:1, courierData:1,
         courierLink:1, fraudChecker:1, admin:1, user:1, deliveryDate:1, orderedItems:1,
+        note:1, adminNote:1,
       },
     };
     if (Object.keys(filter).length) body.filter = filter;
@@ -1339,7 +1480,7 @@
     .catch(function(err){
       if (err.message === 'Unauthorized') return;
       document.getElementById('ordersBody').innerHTML =
-        '<tr class="empty-row"><td colspan="15"><i class="fas fa-exclamation-triangle" style="color:#ef4444;font-size:22px;display:block;margin-bottom:10px"></i>Failed to load orders<br><small style="color:#94a3b8">' + err.message + '</small></td></tr>';
+        '<tr class="empty-row"><td colspan="17"><i class="fas fa-exclamation-triangle" style="color:#ef4444;font-size:22px;display:block;margin-bottom:10px"></i>Failed to load orders<br><small style="color:#94a3b8">' + err.message + '</small></td></tr>';
       ['totalOrders','totalAmount'].forEach(function(id){ document.getElementById(id).textContent = '—'; });
       document.getElementById('paginationInfo').textContent = '';
     });
@@ -1349,7 +1490,7 @@
     var rows = '';
     for (var i = 0; i < 8; i++) {
       rows += '<tr class="skeleton-row">';
-      for (var j = 0; j < 15; j++) rows += '<td><div class="skel" style="width:' + (55 + Math.random()*35|0) + '%"></div></td>';
+      for (var j = 0; j < 17; j++) rows += '<td><div class="skel" style="width:' + (55 + Math.random()*35|0) + '%"></div></td>';
       rows += '</tr>';
     }
     document.getElementById('ordersBody').innerHTML = rows;
@@ -1483,8 +1624,18 @@
     var hr = d.getHours(), mn = String(d.getMinutes()).padStart(2,'0');
     var ampm = hr >= 12 ? 'PM' : 'AM';
     hr = hr % 12 || 12;
+    var diffMs = Date.now() - d.getTime();
+    var diffMin = Math.floor(diffMs / 60000);
+    var agoHtml = '';
+    if (diffMin < 1440) {
+      var ago = diffMin < 1 ? 'just now'
+              : diffMin < 60 ? diffMin + ' min ago'
+              : Math.floor(diffMin / 60) === 1 ? '1 hour ago'
+              : Math.floor(diffMin / 60) + ' hours ago';
+      agoHtml = '<br><span class="time" style="color:#a78bfa;font-size:10px;">' + ago + '</span>';
+    }
     return '<div class="date-cell">' + d.getDate() + ' ' + months[d.getMonth()] + ', ' + d.getFullYear() +
-      '<br><span class="time">' + hr + ':' + mn + ' ' + ampm + '</span></div>';
+      '<br><span class="time">' + hr + ':' + mn + ' ' + ampm + '</span>' + agoHtml + '</div>';
   }
 
   /* ── Fraud cell ── */
@@ -1624,6 +1775,11 @@
         fraudBtn.textContent='Check';
       }
 
+      var noteRow = document.getElementById('modalNoteRow');
+      var noteEl = document.getElementById('modalCustomerNote');
+      if (order.note) { noteEl.textContent = order.note; noteRow.style.display = ''; }
+      else { noteRow.style.display = 'none'; noteEl.textContent = ''; }
+
       currentModalOrderId = mongoId;
       var courierBtn = document.getElementById('modalCourierBtn');
       var hasCourier = order.courierData && order.courierData.providerName;
@@ -1714,7 +1870,7 @@
   function renderTable(orders, total) {
     var tbody=document.getElementById('ordersBody');
     if (!orders.length) {
-      tbody.innerHTML='<tr class="empty-row"><td colspan="15"><i class="fas fa-inbox" style="font-size:32px;color:#cbd5e1;display:block;margin-bottom:10px"></i>No orders found</td></tr>';
+      tbody.innerHTML='<tr class="empty-row"><td colspan="17"><i class="fas fa-inbox" style="font-size:32px;color:#cbd5e1;display:block;margin-bottom:10px"></i>No orders found</td></tr>';
       return;
     }
     var offset=state.page*state.pageSize;
@@ -1733,7 +1889,8 @@
       var orderBy=(o.admin&&o.admin.name)?esc(o.admin.name):(o.user?'User':'—');
       var itemCount=o.orderedItems?o.orderedItems.length:0;
       var rowCls='row-processing';
-      if(o.orderStatus===5) rowCls='row-completed';
+      if(o.orderStatus===2) rowCls='row-confirmed';
+      else if(o.orderStatus===5) rowCls='row-completed';
       else if([6,7,9].includes(o.orderStatus)) rowCls='row-cancelled';
       else if(o.orderStatus===10) rowCls='row-trash';
       return [
@@ -1753,6 +1910,8 @@
         '<td>'+statusSelect(o.orderId,o._id,o.orderStatus)+'</td>',
         '<td><small style="color:#64748b">'+orderBy+'</small></td>',
         '<td><a href="'+API+'/invoice/'+o._id+'.pdf" target="_blank" class="btn-action btn-invoice" title="Invoice"><i class="fas fa-file-invoice"></i></a></td>',
+        '<td><div class="note-cell">'+(o.note?'<span class="customer-note-text">'+esc(o.note)+'</span>':'<span style="color:#94a3b8;font-size:11px">—</span>')+'</div></td>',
+        '<td><div class="admin-note-cell" data-id="'+o._id+'">'+(o.adminNote?'<span class="admin-note-text" onclick="editAdminNote(\''+o._id+'\',this)">'+esc(o.adminNote)+'</span>':'<button class="btn-add-note" onclick="editAdminNote(\''+o._id+'\',this)">+ Add</button>')+'</div></td>',
         '</tr>',
       ].join('');
     }).join('');
@@ -1833,6 +1992,54 @@
     showToast('Exported '+allOrders.length+' orders.','success');
   };
 
+  /* ── Admin Note ── */
+  window.editAdminNote = function (mongoId, triggerEl) {
+    var cell = document.querySelector('.admin-note-cell[data-id="' + mongoId + '"]');
+    if (!cell) return;
+    var order = allOrdersById[String(mongoId)];
+    var current = (order && order.adminNote) || '';
+    var textarea = document.createElement('textarea');
+    textarea.className = 'admin-note-input';
+    textarea.value = current;
+    textarea.placeholder = 'Add admin note…';
+    textarea.rows = 3;
+    var saveBtn = document.createElement('button');
+    saveBtn.className = 'btn-note-save';
+    saveBtn.textContent = 'Save';
+    var cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn-note-cancel';
+    cancelBtn.textContent = 'Cancel';
+    cell.innerHTML = '';
+    cell.appendChild(textarea);
+    cell.appendChild(saveBtn);
+    cell.appendChild(cancelBtn);
+    textarea.focus();
+    saveBtn.onclick = function () {
+      var val = textarea.value.trim();
+      saveBtn.disabled = true; saveBtn.textContent = '…';
+      fetch(API + '/api/order/update/' + mongoId, {
+        method: 'PUT', headers: authHeaders(),
+        body: JSON.stringify({ adminNote: val }),
+      })
+      .then(function (r) { return r.json(); })
+      .then(function (resp) {
+        if (resp && resp.success === false) { showToast(resp.message || 'Failed to save note', 'error'); saveBtn.disabled = false; saveBtn.textContent = 'Save'; return; }
+        if (order) order.adminNote = val;
+        cell.innerHTML = val
+          ? '<span class="admin-note-text" onclick="editAdminNote(\'' + mongoId + '\',this)">' + esc(val) + '</span>'
+          : '<button class="btn-add-note" onclick="editAdminNote(\'' + mongoId + '\',this)">+ Add</button>';
+        showToast('Note saved', 'success');
+      })
+      .catch(function (err) { showToast('Error: ' + err.message, 'error'); saveBtn.disabled = false; saveBtn.textContent = 'Save'; });
+    };
+    cancelBtn.onclick = function () {
+      var cur = (order && order.adminNote) || '';
+      cell.innerHTML = cur
+        ? '<span class="admin-note-text" onclick="editAdminNote(\'' + mongoId + '\',this)">' + esc(cur) + '</span>'
+        : '<button class="btn-add-note" onclick="editAdminNote(\'' + mongoId + '\',this)">+ Add</button>';
+    };
+  };
+
   /* ── Escape HTML ── */
   function esc(s) {
     return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1867,9 +2074,9 @@
   }
 
   /* ── Init ── */
-  if (getToken()) { hideLogin(); loadRepeatCustomers(); loadTodayStats(); loadStatusCounts(); }
+  if (getToken()) { hideLogin(); loadRepeatCustomers(); loadTodayStats(); loadStatusCounts(); loadSnap(); }
   else { showLogin(); }
 })();
 </script>
-</body>
+<script>if(window.innerWidth>768){var el=document.getElementById("dateRow");if(el)el.style.display="flex";}</script></body>
 </html>

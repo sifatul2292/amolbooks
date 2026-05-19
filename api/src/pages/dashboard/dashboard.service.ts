@@ -701,4 +701,40 @@ export class DashboardService {
 
     return { labels, sales };
   }
+
+  async getProfitAnalytics(startDate: string, endDate: string): Promise<ResponsePayload> {
+    try {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
+      const daily = await this.orderModel.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: start, $lte: end },
+            orderStatus: { $nin: [6] },
+          },
+        },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: '+06:00' } },
+            revenue: { $sum: '$grandTotal' },
+            orderCount: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
+        { $project: { _id: 0, date: '$_id', revenue: 1, orderCount: 1 } },
+      ]);
+
+      const totals = daily.reduce(
+        (acc, d) => ({ revenue: acc.revenue + d.revenue, orderCount: acc.orderCount + d.orderCount }),
+        { revenue: 0, orderCount: 0 },
+      );
+
+      return { success: true, data: { daily, totals } };
+    } catch (err) {
+      this.logger.error(err);
+      throw new InternalServerErrorException();
+    }
+  }
 }

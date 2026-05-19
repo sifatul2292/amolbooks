@@ -735,6 +735,46 @@
       .modal-footer { padding: 12px 16px; }
       .footer-actions { flex-wrap: wrap; }
     }
+
+    /* ── Sidebar Analytics Widget ── */
+    .snap-widget {
+      margin: 12px 14px 0;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .snap-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .snap-title {
+      font-size: 9.5px; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: #475569;
+    }
+    .snap-toggle { color: #475569; font-size: 10px; transition: transform .2s; }
+    .snap-toggle.open { transform: rotate(180deg); }
+    .snap-body { padding: 0 14px 12px; }
+    .snap-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.05);
+    }
+    .snap-row:last-child { border-bottom: none; }
+    .snap-label { font-size: 11px; color: #64748b; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+    .snap-label i { width: 12px; text-align: center; }
+    .snap-val { font-size: 12px; font-weight: 700; color: #e2e8f0; }
+    .snap-val.profit-pos { color: #34d399; }
+    .snap-val.profit-neg { color: #f87171; }
+    .snap-loading { text-align: center; padding: 10px 0; color: #475569; font-size: 11px; }
+    .snap-link {
+      display: block; text-align: center; margin-top: 10px;
+      font-size: 11px; font-weight: 700; color: #7c3aed;
+      text-decoration: none; opacity: .8; transition: opacity .15s;
+    }
+    .snap-link:hover { opacity: 1; }
+    .snap-divider { border: none; border-top: 1px solid rgba(255,255,255,.06); margin: 0; }
   </style>
 </head>
 <body>
@@ -789,11 +829,47 @@
       <a href="import-woo-orders.html" class="nav-item">
         <i class="fas fa-file-import"></i> Import WooCommerce
       </a>
+      <div class="nav-label" style="margin-top:8px">Analytics</div>
+      <a href="profit-dashboard.html" class="nav-item">
+        <i class="fas fa-chart-line"></i> Profit Dashboard
+      </a>
       <div class="nav-label" style="margin-top:8px">Navigation</div>
       <a href="https://adminsub.amolbooks.com/dashboard" class="nav-item">
         <i class="fas fa-arrow-left"></i> Back to Admin
       </a>
     </nav>
+
+    <!-- Analytics Snapshot Widget -->
+    <hr class="snap-divider">
+    <div class="snap-widget">
+      <div class="snap-header" onclick="toggleSnap()">
+        <span class="snap-title"><i class="fas fa-chart-bar" style="margin-right:5px;color:#7c3aed"></i>Today's Snapshot</span>
+        <i class="fas fa-chevron-down snap-toggle" id="snapToggle"></i>
+      </div>
+      <div class="snap-body" id="snapBody">
+        <div class="snap-loading" id="snapLoading"><i class="fas fa-circle-notch fa-spin"></i> Loading…</div>
+        <div id="snapData" style="display:none">
+          <div class="snap-row">
+            <span class="snap-label"><i class="fas fa-coins" style="color:#f59e0b"></i> Revenue</span>
+            <span class="snap-val" id="snap-revenue">—</span>
+          </div>
+          <div class="snap-row">
+            <span class="snap-label"><i class="fab fa-facebook" style="color:#1877f2"></i> Ad Spend</span>
+            <span class="snap-val" id="snap-adspend">—</span>
+          </div>
+          <div class="snap-row">
+            <span class="snap-label"><i class="fas fa-chart-line" style="color:#34d399"></i> Profit</span>
+            <span class="snap-val" id="snap-profit">—</span>
+          </div>
+          <div class="snap-row">
+            <span class="snap-label"><i class="fas fa-shopping-bag" style="color:#a78bfa"></i> Orders</span>
+            <span class="snap-val" id="snap-orders">—</span>
+          </div>
+        </div>
+        <a href="profit-dashboard.html" class="snap-link">View Full Analytics →</a>
+      </div>
+    </div>
+
     <div class="sidebar-footer">
       <a href="https://adminsub.amolbooks.com/dashboard">
         <i class="fas fa-home"></i> Return to Dashboard
@@ -1098,6 +1174,51 @@
     activeTab: 'all',
   };
 
+  /* ── Sidebar Analytics Snapshot ── */
+  var snapOpen = true;
+
+  window.toggleSnap = function () {
+    snapOpen = !snapOpen;
+    document.getElementById('snapBody').style.display = snapOpen ? '' : 'none';
+    var tog = document.getElementById('snapToggle');
+    if (tog) tog.className = 'fas fa-chevron-down snap-toggle' + (snapOpen ? ' open' : '');
+  };
+
+  function loadSnap() {
+    var today = new Date().toISOString().slice(0, 10);
+    var h = authHeaders ? authHeaders() : {};
+    var profitP = fetch(API + '/api/dashboard/profit-analytics?startDate=' + today + '&endDate=' + today, { headers: h })
+      .then(function (r) { return r.json(); }).catch(function () { return null; });
+    var spendP = fetch(API + '/api/meta-ads/spend?startDate=' + today + '&endDate=' + today, { headers: h })
+      .then(function (r) { return r.json(); }).catch(function () { return null; });
+
+    Promise.all([profitP, spendP]).then(function (res) {
+      var profit = res[0];
+      var spend = res[1];
+      var loading = document.getElementById('snapLoading');
+      var data = document.getElementById('snapData');
+      if (loading) loading.style.display = 'none';
+      if (data) data.style.display = '';
+
+      var revenue = (profit && profit.success && profit.data && profit.data.totals) ? (profit.data.totals.revenue || 0) : 0;
+      var orderCount = (profit && profit.success && profit.data && profit.data.totals) ? (profit.data.totals.orderCount || 0) : 0;
+      var adSpend = (spend && spend.success && spend.data) ? (spend.data.total || 0) : 0;
+      var profitVal = revenue - adSpend;
+
+      var el = document.getElementById('snap-revenue');
+      if (el) el.textContent = '৳' + revenue.toLocaleString('en-BD');
+      el = document.getElementById('snap-adspend');
+      if (el) el.textContent = adSpend > 0 ? ('৳' + adSpend.toLocaleString('en-BD')) : '—';
+      el = document.getElementById('snap-profit');
+      if (el) {
+        el.textContent = (adSpend > 0 ? ((profitVal < 0 ? '-৳' : '৳') + Math.abs(profitVal).toLocaleString('en-BD')) : '—');
+        el.className = 'snap-val' + (adSpend > 0 ? (profitVal >= 0 ? ' profit-pos' : ' profit-neg') : '');
+      }
+      el = document.getElementById('snap-orders');
+      if (el) el.textContent = orderCount;
+    });
+  }
+
   /* ── Sidebar mobile ── */
   window.openSidebar = function () {
     document.getElementById('sidebar').classList.add('open');
@@ -1145,7 +1266,7 @@
     })
     .then(function(r){ return r.json(); })
     .then(function(data){
-      if (data && data.token) { saveToken(data.token); hideLogin(); loadRepeatCustomers(); loadTodayStats(); }
+      if (data && data.token) { saveToken(data.token); hideLogin(); loadRepeatCustomers(); loadTodayStats(); loadSnap(); }
       else { errEl.textContent = 'Invalid username or password.'; errEl.style.display = 'block'; }
     })
     .catch(function(){ errEl.textContent = 'Connection error. Try again.'; errEl.style.display = 'block'; })
@@ -1953,7 +2074,7 @@
   }
 
   /* ── Init ── */
-  if (getToken()) { hideLogin(); loadRepeatCustomers(); loadTodayStats(); loadStatusCounts(); }
+  if (getToken()) { hideLogin(); loadRepeatCustomers(); loadTodayStats(); loadStatusCounts(); loadSnap(); }
   else { showLogin(); }
 })();
 </script>
