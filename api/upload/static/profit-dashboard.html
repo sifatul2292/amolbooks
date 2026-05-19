@@ -591,22 +591,31 @@
   window.syncSpend = function () {
     var icon = document.getElementById('syncIcon');
     if (icon) icon.className = 'fas fa-sync-alt fa-spin';
+    // Always sync last 30 days — Meta has ~24h delay so passing today returns nothing
     fetch(API + '/api/meta-ads/sync', {
       method: 'POST',
       headers: headers(),
-      body: JSON.stringify({ startDate: rangeStart, endDate: rangeEnd }),
+      body: JSON.stringify({}),
     })
       .then(function (r) { return r.json(); })
       .then(function (d) {
         if (icon) icon.className = 'fas fa-sync-alt';
-        if (d && d.synced !== undefined) {
-          alert('Synced ' + d.synced + ' day(s) of ad spend from Meta.');
+        if (d && d.error) {
+          alert('Sync error: ' + d.error + '\nAd account: ' + (d.adAccountId || 'none'));
+        } else if (d && d.synced !== undefined) {
+          var msg = 'Synced ' + d.synced + ' day(s) of ad spend.\n';
+          msg += 'Range: ' + d.since + ' → ' + d.until + '\n';
+          msg += 'Meta returned ' + d.rawRows + ' row(s).';
+          if (d.synced === 0 && d.rawRows === 0) {
+            msg += '\n\nNo spend data found. Possible reasons:\n- No active campaigns in this period\n- Ad account: ' + d.adAccountId;
+          }
+          alert(msg);
         }
         loadAll();
       })
       .catch(function () {
         if (icon) icon.className = 'fas fa-sync-alt';
-        alert('Sync failed. Check Meta token or ad account ID.');
+        alert('Sync failed. Check server logs.');
       });
   };
 

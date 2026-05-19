@@ -87,36 +87,47 @@ export class MetaAdsService {
   async syncSpend(startDate?: string, endDate?: string): Promise<any> {
     const token = await this.tokenModel.findOne().lean();
     if (!token?.accessToken) throw new InternalServerErrorException('Meta not connected');
+    if (!token.adAccountId) {
+      return { synced: 0, error: 'No ad account found. Re-connect Meta to re-fetch ad accounts.', adAccountId: null };
+    }
 
     const since = startDate || this.daysAgo(30);
-    const until = endDate || this.today();
+    const until = endDate || this.daysAgo(1); // Meta has ~24h delay; yesterday is safest end point
 
-    const res = await firstValueFrom(
-      this.httpService.get(`https://graph.facebook.com/v20.0/${token.adAccountId}/insights`, {
-        params: {
-          access_token: token.accessToken,
-          fields: 'spend,date_start',
-          time_increment: 1,
-          time_range: JSON.stringify({ since, until }),
-          limit: 100,
-        },
-      }),
-    );
+    let res: any;
+    try {
+      res = await firstValueFrom(
+        this.httpService.get(`https://graph.facebook.com/v20.0/${token.adAccountId}/insights`, {
+          params: {
+            access_token: token.accessToken,
+            fields: 'spend,date_start',
+            time_increment: 1,
+            time_range: JSON.stringify({ since, until }),
+            limit: 100,
+          },
+        }),
+      );
+    } catch (err) {
+      const metaError = err?.response?.data?.error?.message || err.message;
+      return { synced: 0, error: metaError, adAccountId: token.adAccountId, since, until };
+    }
 
     const rows: any[] = res.data?.data || [];
     let synced = 0;
     for (const row of rows) {
       const spend = parseFloat(row.spend) || 0;
-      await this.spendModel.findOneAndUpdate(
-        { date: row.date_start },
-        { date: row.date_start, spend, source: 'api' },
-        { upsert: true, new: true },
-      );
-      synced++;
+      if (spend > 0) {
+        await this.spendModel.findOneAndUpdate(
+          { date: row.date_start },
+          { date: row.date_start, spend, source: 'api' },
+          { upsert: true, new: true },
+        );
+        synced++;
+      }
     }
 
     await this.tokenModel.findOneAndUpdate({}, { lastSync: new Date() });
-    return { synced, since, until };
+    return { synced, since, until, adAccountId: token.adAccountId, rawRows: rows.length };
   }
 
   async getSpend(startDate: string, endDate: string): Promise<any> {
