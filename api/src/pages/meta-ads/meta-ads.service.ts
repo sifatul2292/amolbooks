@@ -94,9 +94,10 @@ export class MetaAdsService {
     const since = startDate || this.daysAgo(30);
     const until = endDate || this.daysAgo(1); // Meta has ~24h delay; yesterday is safest end point
 
-    let res: any;
+    let rawText: string;
+    let httpStatus: number;
     try {
-      res = await firstValueFrom(
+      const res = await firstValueFrom(
         this.httpService.get(`https://graph.facebook.com/v20.0/${token.adAccountId}/insights`, {
           params: {
             access_token: token.accessToken,
@@ -105,29 +106,48 @@ export class MetaAdsService {
             time_range: JSON.stringify({ since, until }),
             limit: 100,
           },
-          responseType: 'json',
-          validateStatus: () => true, // don't throw on 4xx/5xx — handle below
+          responseType: 'text',      // never auto-parse — we parse manually below
+          validateStatus: () => true, // never throw on any HTTP status
         }),
       );
+      rawText = res.data as string;
+      httpStatus = res.status;
     } catch (err) {
       const msg = err?.message || 'Network error';
       return { synced: 0, error: 'Request failed: ' + msg, adAccountId: token.adAccountId, since, until };
     }
 
+    this.logger.debug(`Meta insights HTTP ${httpStatus}, body[0..200]: ${String(rawText).slice(0, 200)}`);
+
+    // Parse JSON safely — Meta sometimes returns empty body or HTML on auth errors
+    let parsed: any;
+    try {
+      parsed = JSON.parse(rawText);
+    } catch {
+      return {
+        synced: 0,
+        error: `Meta returned non-JSON (HTTP ${httpStatus}). Reconnect Meta and try again. Body: ${String(rawText).slice(0, 150)}`,
+        adAccountId: token.adAccountId,
+        since,
+        until,
+      };
+    }
+
     // Handle Meta API errors returned in body
-    if (res.data?.error) {
-      const e = res.data.error;
+    if (parsed?.error) {
+      const e = parsed.error;
       let hint = '';
-      if (e.code === 100 || e.code === 200 || e.code === 190) hint = ' — Reconnect Meta to refresh token.';
-      if (e.code === 10 || e.code === 200) hint = ' — Token missing ads_read permission. Reconnect Meta.';
+      if (e.code === 190) hint = ' — Token expired. Reconnect Meta.';
+      else if (e.code === 100 || e.code === 10) hint = ' — Token missing ads_read permission. Reconnect Meta.';
+      else if (e.code === 200 || e.code === 273) hint = ' — No permission for this ad account. Reconnect Meta.';
       return { synced: 0, error: e.message + hint, errorCode: e.code, adAccountId: token.adAccountId, since, until };
     }
 
-    if (!res.data || !Array.isArray(res.data.data)) {
-      return { synced: 0, error: 'Unexpected Meta response. Reconnect Meta and try again.', adAccountId: token.adAccountId, since, until };
+    if (!parsed || !Array.isArray(parsed.data)) {
+      return { synced: 0, error: 'Unexpected Meta response shape. Reconnect Meta and try again.', adAccountId: token.adAccountId, since, until };
     }
 
-    const rows: any[] = res.data?.data || [];
+    const rows: any[] = parsed.data || [];
     let synced = 0;
     for (const row of rows) {
       const spend = parseFloat(row.spend) || 0;
