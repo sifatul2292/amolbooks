@@ -94,39 +94,35 @@ export class MetaAdsService {
     const since = startDate || this.daysAgo(30);
     const until = endDate || this.daysAgo(1); // Meta has ~24h delay; yesterday is safest end point
 
-    let rawText: string;
+    let rawBody: string;
     let httpStatus: number;
+    const url = `https://graph.facebook.com/v20.0/${token.adAccountId}/insights`;
+    const qs = new URLSearchParams({
+      access_token: token.accessToken,
+      fields: 'spend,date_start',
+      time_increment: '1',
+      time_range: JSON.stringify({ since, until }),
+      limit: '100',
+    });
+
     try {
-      const res = await firstValueFrom(
-        this.httpService.get(`https://graph.facebook.com/v20.0/${token.adAccountId}/insights`, {
-          params: {
-            access_token: token.accessToken,
-            fields: 'spend,date_start',
-            time_increment: 1,
-            time_range: JSON.stringify({ since, until }),
-            limit: 100,
-          },
-          responseType: 'text',      // never auto-parse — we parse manually below
-          validateStatus: () => true, // never throw on any HTTP status
-        }),
-      );
-      rawText = res.data as string;
-      httpStatus = res.status;
+      const resp = await fetch(`${url}?${qs.toString()}`);
+      httpStatus = resp.status;
+      rawBody = await resp.text();
     } catch (err) {
       const msg = err?.message || 'Network error';
       return { synced: 0, error: 'Request failed: ' + msg, adAccountId: token.adAccountId, since, until };
     }
 
-    this.logger.debug(`Meta insights HTTP ${httpStatus}, body[0..200]: ${String(rawText).slice(0, 200)}`);
+    this.logger.log(`Meta insights HTTP ${httpStatus}, body[0..300]: ${rawBody.slice(0, 300)}`);
 
-    // Parse JSON safely — Meta sometimes returns empty body or HTML on auth errors
     let parsed: any;
     try {
-      parsed = JSON.parse(rawText);
+      parsed = JSON.parse(rawBody);
     } catch {
       return {
         synced: 0,
-        error: `Meta returned non-JSON (HTTP ${httpStatus}). Reconnect Meta and try again. Body: ${String(rawText).slice(0, 150)}`,
+        error: `Meta returned non-JSON (HTTP ${httpStatus}). Body: ${rawBody.slice(0, 150)}`,
         adAccountId: token.adAccountId,
         since,
         until,
