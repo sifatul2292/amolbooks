@@ -128,6 +128,44 @@
     .spend-section { background: #fff; border: 1px solid var(--g200); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px; }
     .spend-section-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; color: var(--g500); margin-bottom: 10px; }
 
+    /* ── Calendar ── */
+    .section-block { background: #fff; border: 1px solid var(--g200); border-radius: var(--radius); margin-bottom: 14px; overflow: hidden; }
+    .section-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--g100); }
+    .section-head-title { font-size: 12px; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 7px; }
+    .cal-nav { display: flex; align-items: center; gap: 8px; }
+    .cal-nav-btn { background: var(--g100); border: none; border-radius: 6px; width: 26px; height: 26px; cursor: pointer; font-size: 12px; color: var(--g700); display: flex; align-items: center; justify-content: center; transition: background .12s; }
+    .cal-nav-btn:hover { background: var(--p-light); color: var(--p); }
+    .cal-month-label { font-size: 13px; font-weight: 700; color: #1e293b; min-width: 120px; text-align: center; }
+    .cal-grid { padding: 10px 12px 14px; }
+    .cal-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 4px; }
+    .cal-wd { text-align: center; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--g400); padding: 4px 0; }
+    .cal-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+    .cal-cell { min-height: 64px; border-radius: 7px; padding: 5px 5px 4px; background: var(--g50); border: 1px solid var(--g100); transition: border-color .12s, box-shadow .12s; }
+    .cal-cell.empty { background: none; border-color: transparent; }
+    .cal-cell.has-data { background: #fff; border-color: var(--g200); cursor: default; }
+    .cal-cell.has-data:hover { border-color: var(--p); box-shadow: 0 0 0 2px var(--p-light); }
+    .cal-cell.today { border-color: var(--p) !important; background: var(--p-light); }
+    .cal-day-num { font-size: 12px; font-weight: 700; color: var(--g500); margin-bottom: 3px; }
+    .cal-cell.has-data .cal-day-num { color: #1e293b; }
+    .cal-cell.today .cal-day-num { color: var(--p); }
+    .cal-rev { font-size: 10.5px; font-weight: 700; color: var(--blue); line-height: 1.3; }
+    .cal-sold { font-size: 10px; color: var(--g500); line-height: 1.3; }
+
+    /* ── Top Products ── */
+    .top-products-list { padding: 0 16px 4px; }
+    .tp-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--g100); }
+    .tp-row:last-child { border-bottom: none; }
+    .tp-rank { font-size: 11px; font-weight: 800; color: var(--g300); width: 20px; flex-shrink: 0; text-align: center; }
+    .tp-rank.gold { color: #f59e0b; }
+    .tp-rank.silver { color: var(--g400); }
+    .tp-rank.bronze { color: #cd7c3c; }
+    .tp-name { font-size: 12.5px; font-weight: 600; color: #1e293b; flex: 1; }
+    .tp-bar-wrap { width: 80px; height: 6px; background: var(--g100); border-radius: 3px; flex-shrink: 0; }
+    .tp-bar { height: 6px; background: var(--p); border-radius: 3px; transition: width .4s; }
+    .tp-qty { font-size: 12px; font-weight: 700; color: var(--p); min-width: 30px; text-align: right; flex-shrink: 0; }
+    .tp-rev { font-size: 11.5px; color: var(--g400); min-width: 70px; text-align: right; flex-shrink: 0; }
+    .tp-loading { text-align: center; padding: 20px; color: var(--g400); font-size: 12px; }
+
     @media (max-width: 768px) {
       .sidebar { display: none; }
       .main { margin-left: 0; }
@@ -136,6 +174,8 @@
       .day-main { grid-template-columns: 1fr 1fr; gap: 4px; }
       .products-panel { padding-left: 12px; }
       .summary { flex-direction: column; }
+      .cal-cell { min-height: 52px; }
+      .tp-bar-wrap, .tp-rev { display: none; }
     }
   </style>
 </head>
@@ -235,6 +275,39 @@
           <div class="empty-state"><i class="fas fa-circle-notch fa-spin"></i><p>Loading…</p></div>
         </div>
       </div>
+
+      <!-- Calendar -->
+      <div class="section-block" style="margin-top:14px">
+        <div class="section-head">
+          <div class="section-head-title"><i class="fas fa-calendar-alt" style="color:var(--p)"></i> Revenue Calendar</div>
+          <div class="cal-nav">
+            <button class="cal-nav-btn" onclick="calPrev()"><i class="fas fa-chevron-left"></i></button>
+            <span class="cal-month-label" id="calMonthLabel">—</span>
+            <button class="cal-nav-btn" onclick="calNext()"><i class="fas fa-chevron-right"></i></button>
+          </div>
+        </div>
+        <div class="cal-grid">
+          <div class="cal-weekdays">
+            <div class="cal-wd">Sun</div><div class="cal-wd">Mon</div><div class="cal-wd">Tue</div>
+            <div class="cal-wd">Wed</div><div class="cal-wd">Thu</div><div class="cal-wd">Fri</div>
+            <div class="cal-wd">Sat</div>
+          </div>
+          <div class="cal-days" id="calDays">
+            <div class="tp-loading"><i class="fas fa-circle-notch fa-spin"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Products -->
+      <div class="section-block" style="margin-top:14px">
+        <div class="section-head">
+          <div class="section-head-title"><i class="fas fa-trophy" style="color:#f59e0b"></i> Top Products</div>
+          <span style="font-size:11px;color:var(--g400)" id="topProdRange">—</span>
+        </div>
+        <div class="top-products-list" id="topProdList">
+          <div class="tp-loading"><i class="fas fa-circle-notch fa-spin"></i> Loading…</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -250,6 +323,10 @@
   var productsByDate = {};
   var spendByDate = {};
   var metaConnected = false;
+  var revenueByDate = {};
+  var orderCountByDate = {};
+  var calYear = new Date().getFullYear();
+  var calMonth = new Date().getMonth();
 
   /* ── Auth ── */
   function getToken() { return localStorage.getItem('profit_admin_token'); }
@@ -324,22 +401,26 @@
   function loadAll() {
     if (!rangeStart || !rangeEnd) return;
     document.getElementById('dayRows').innerHTML = '<div class="empty-state"><i class="fas fa-circle-notch fa-spin"></i><p>Loading…</p></div>';
+    document.getElementById('topProdList').innerHTML = '<div class="tp-loading"><i class="fas fa-circle-notch fa-spin"></i> Loading…</div>';
     var s = rangeStart, e = rangeEnd;
     var q = '?startDate=' + s + '&endDate=' + e;
     var h = headers();
     Promise.all([
       fetch(API + '/api/dashboard/profit-analytics' + q, { headers: h }).then(function (r) { return r.json(); }).catch(function () { return null; }),
       fetch(API + '/api/meta-ads/spend' + q, { headers: h }).then(function (r) { return r.json(); }).catch(function () { return null; }),
+      fetch(API + '/api/dashboard/top-products' + q, { headers: h }).then(function (r) { return r.json(); }).catch(function () { return null; }),
     ]).then(function (res) {
-      var profit = res[0];
-      var spend = res[1];
-      renderDashboard(profit, spend);
+      renderDashboard(res[0], res[1]);
+      renderTopProducts(res[2], s, e);
     });
     checkMetaStatus();
+    loadCalendarMonth();
   }
 
   function renderDashboard(profit, spend) {
     spendByDate = {};
+    revenueByDate = {};
+    orderCountByDate = {};
     if (spend && spend.success && spend.data && spend.data.daily) {
       spend.data.daily.forEach(function (d) { spendByDate[d.date] = d.spend || 0; });
     }
@@ -348,6 +429,8 @@
     var totRev = 0, totOrders = 0, totSpend = 0;
 
     daily.forEach(function (d) {
+      revenueByDate[d.date] = d.revenue || 0;
+      orderCountByDate[d.date] = d.orderCount || 0;
       totRev += d.revenue || 0;
       totOrders += d.orderCount || 0;
       totSpend += spendByDate[d.date] || 0;
@@ -527,6 +610,93 @@
         loadAll();
       });
   };
+
+  /* ── Calendar ── */
+  function loadCalendarMonth() {
+    var firstDay = new Date(calYear, calMonth, 1);
+    var lastDay  = new Date(calYear, calMonth + 1, 0);
+    var s = toYMD(firstDay), e = toYMD(lastDay);
+    var label = firstDay.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+    setText('calMonthLabel', label);
+
+    fetch(API + '/api/dashboard/profit-analytics?startDate=' + s + '&endDate=' + e, { headers: headers() })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        var calData = {};
+        if (res && res.success && res.data && res.data.daily) {
+          res.data.daily.forEach(function (d) { calData[d.date] = d; });
+        }
+        renderCalendar(calYear, calMonth, calData);
+      })
+      .catch(function () { renderCalendar(calYear, calMonth, {}); });
+  }
+
+  function renderCalendar(year, month, calData) {
+    var container = document.getElementById('calDays');
+    var firstDow = new Date(year, month, 1).getDay();
+    var daysInMonth = new Date(year, month + 1, 0).getDate();
+    var todayStr = toYMD(new Date());
+    var cells = [];
+
+    for (var i = 0; i < firstDow; i++) cells.push('<div class="cal-cell empty"></div>');
+
+    for (var d = 1; d <= daysInMonth; d++) {
+      var ymd = year + '-' + pad(month + 1) + '-' + pad(d);
+      var data = calData[ymd];
+      var isToday = ymd === todayStr;
+      var cls = 'cal-cell' + (data ? ' has-data' : '') + (isToday ? ' today' : '');
+      var inner = '<div class="cal-day-num">' + d + '</div>';
+      if (data) {
+        inner += '<div class="cal-rev">৳' + fmt(data.revenue) + '</div>';
+        inner += '<div class="cal-sold">' + data.orderCount + ' order' + (data.orderCount !== 1 ? 's' : '') + '</div>';
+      }
+      cells.push('<div class="' + cls + '">' + inner + '</div>');
+    }
+
+    container.innerHTML = cells.join('');
+  }
+
+  window.calPrev = function () {
+    calMonth--;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    loadCalendarMonth();
+  };
+  window.calNext = function () {
+    calMonth++;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    loadCalendarMonth();
+  };
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+  /* ── Top Products ── */
+  function renderTopProducts(res, s, e) {
+    var el = document.getElementById('topProdList');
+    var rangeEl = document.getElementById('topProdRange');
+    if (rangeEl) rangeEl.textContent = formatDate(s) + ' – ' + formatDate(e);
+
+    if (!res || !res.success || !res.data || !res.data.length) {
+      el.innerHTML = '<div class="tp-loading" style="color:var(--g400)">No data for this range</div>';
+      return;
+    }
+
+    var products = res.data;
+    var maxQty = products[0] ? products[0].quantity : 1;
+    var rankLabels = ['gold', 'silver', 'bronze'];
+
+    el.innerHTML = products.map(function (p, i) {
+      var pct = Math.round((p.quantity / maxQty) * 100);
+      var rankCls = i < 3 ? rankLabels[i] : '';
+      var rankNum = i < 3 ? ['🥇', '🥈', '🥉'][i] : (i + 1);
+      return '<div class="tp-row">' +
+        '<div class="tp-rank ' + rankCls + '">' + rankNum + '</div>' +
+        '<div class="tp-name">' + (p.name || 'Unknown') + '</div>' +
+        '<div class="tp-bar-wrap"><div class="tp-bar" style="width:' + pct + '%"></div></div>' +
+        '<div class="tp-qty">' + p.quantity + '</div>' +
+        '<div class="tp-rev">৳' + fmt(p.revenue) + '</div>' +
+      '</div>';
+    }).join('');
+  }
 
   /* ── Helpers ── */
   function fmt(n) { return Math.round(n).toLocaleString('en-BD'); }

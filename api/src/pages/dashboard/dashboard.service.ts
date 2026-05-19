@@ -702,6 +702,40 @@ export class DashboardService {
     return { labels, sales };
   }
 
+  async getTopProducts(startDate: string, endDate: string): Promise<ResponsePayload> {
+    try {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
+      const rows = await this.orderModel.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: start, $lte: end },
+            orderStatus: { $nin: [6] },
+          },
+        },
+        { $unwind: '$orderedItems' },
+        {
+          $group: {
+            _id: '$orderedItems._id',
+            name: { $first: '$orderedItems.name' },
+            quantity: { $sum: '$orderedItems.quantity' },
+            revenue: { $sum: { $multiply: ['$orderedItems.salePrice', '$orderedItems.quantity'] } },
+          },
+        },
+        { $sort: { quantity: -1 } },
+        { $limit: 20 },
+        { $project: { _id: 0, name: 1, quantity: 1, revenue: 1 } },
+      ]);
+
+      return { success: true, data: rows };
+    } catch (err) {
+      this.logger.error(err);
+      throw new InternalServerErrorException();
+    }
+  }
+
   async getProductsSold(startDate: string, endDate: string): Promise<ResponsePayload> {
     try {
       const start = new Date(startDate);
