@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import * as https from 'https';
 
 @Injectable()
 export class MetaAdsService {
@@ -84,6 +85,21 @@ export class MetaAdsService {
     };
   }
 
+  private httpsGet(url: string): Promise<{ status: number; body: string }> {
+    return new Promise((resolve, reject) => {
+      const req = https.get(url, { headers: { 'Accept-Encoding': 'identity' } }, (res) => {
+        const chunks: Buffer[] = [];
+        res.on('data', (chunk) => chunks.push(chunk));
+        res.on('end', () => {
+          resolve({ status: res.statusCode, body: Buffer.concat(chunks).toString('utf-8') });
+        });
+        res.on('error', reject);
+      });
+      req.on('error', reject);
+      req.setTimeout(30000, () => { req.destroy(new Error('Request timeout (30s)')); });
+    });
+  }
+
   async syncSpend(startDate?: string, endDate?: string): Promise<any> {
     const token = await this.tokenModel.findOne().lean();
     if (!token?.accessToken) throw new InternalServerErrorException('Meta not connected');
@@ -92,11 +108,8 @@ export class MetaAdsService {
     }
 
     const since = startDate || this.daysAgo(30);
-    const until = endDate || this.daysAgo(1); // Meta has ~24h delay; yesterday is safest end point
+    const until = endDate || this.daysAgo(1);
 
-    let rawBody: string;
-    let httpStatus: number;
-    const url = `https://graph.facebook.com/v20.0/${token.adAccountId}/insights`;
     const qs = new URLSearchParams({
       access_token: token.accessToken,
       fields: 'spend,date_start',
@@ -104,11 +117,14 @@ export class MetaAdsService {
       time_range: JSON.stringify({ since, until }),
       limit: '100',
     });
+    const fullUrl = `https://graph.facebook.com/v20.0/${token.adAccountId}/insights?${qs.toString()}`;
 
+    let rawBody: string;
+    let httpStatus: number;
     try {
-      const resp = await fetch(`${url}?${qs.toString()}`);
-      httpStatus = resp.status;
-      rawBody = await resp.text();
+      const result = await this.httpsGet(fullUrl);
+      httpStatus = result.status;
+      rawBody = result.body;
     } catch (err) {
       const msg = err?.message || 'Network error';
       return { synced: 0, error: 'Request failed: ' + msg, adAccountId: token.adAccountId, since, until };
@@ -129,7 +145,6 @@ export class MetaAdsService {
       };
     }
 
-    // Handle Meta API errors returned in body
     if (parsed?.error) {
       const e = parsed.error;
       let hint = '';
@@ -188,6 +203,54 @@ export class MetaAdsService {
     const id = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`;
     await this.tokenModel.findOneAndUpdate({}, { adAccountId: id }, { upsert: true });
     return { success: true, adAccountId: id };
+  }
+
+  async diagnose(): Promise<any> {
+    const diag: any = { timestamp: new Date().toISOString() };
+
+    const token = await this.tokenModel.findOne().lean();
+    diag.tokenExists = !!token;
+    diag.hasAccessToken = !!token?.accessToken;
+    diag.tokenLength = token?.accessToken?.length || 0;
+    diag.adAccountId = token?.adAccountId || null;
+    diag.expiresAt = token?.expiresAt || null;
+    diag.tokenExpired = token?.expiresAt ? new Date(token.expiresAt) < new Date() : 'unknown';
+
+    if (!token?.accessToken || !token?.adAccountId) {
+      diag.metaApiTest = 'skipped — no token or adAccountId';
+      return diag;
+    }
+
+    const qs = new URLSearchParams({
+      access_token: token.accessToken,
+      fields: 'spend,date_start',
+      time_increment: '1',
+      time_range: JSON.stringify({ since: this.daysAgo(3), until: this.daysAgo(1) }),
+      limit: '5',
+    });
+    const url = `https://graph.facebook.com/v20.0/${token.adAccountId}/insights?${qs.toString()}`;
+
+    try {
+      const result = await this.httpsGet(url);
+      diag.metaHttpStatus = result.status;
+      diag.metaBodyPreview = result.body.slice(0, 500);
+      try {
+        const j = JSON.parse(result.body);
+        diag.metaParsedOk = true;
+        diag.metaHasError = !!j.error;
+        if (j.error) {
+          diag.metaErrorCode = j.error.code;
+          diag.metaErrorMessage = j.error.message;
+        }
+        diag.metaDataRows = j.data?.length ?? 'no data array';
+      } catch {
+        diag.metaParsedOk = false;
+      }
+    } catch (err) {
+      diag.metaApiTest = 'FAILED: ' + (err?.message || String(err));
+    }
+
+    return diag;
   }
 
   async disconnect(): Promise<any> {

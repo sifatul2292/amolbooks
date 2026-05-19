@@ -72,6 +72,12 @@ export class MetaAdsController {
   }
 
   @Version(VERSION_NEUTRAL)
+  @Get('diagnose')
+  diagnose() {
+    return this.metaAdsService.diagnose();
+  }
+
+  @Version(VERSION_NEUTRAL)
   @Post('disconnect')
   disconnect() {
     return this.metaAdsService.disconnect();
