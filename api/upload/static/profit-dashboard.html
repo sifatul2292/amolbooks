@@ -205,6 +205,10 @@
     <div class="topbar">
       <div class="topbar-title"><i class="fas fa-chart-line" style="color:var(--p)"></i> Profit Dashboard</div>
       <div class="topbar-right">
+        <button class="meta-btn disconnected" id="syncBtn" onclick="syncSpend()" style="display:none;background:var(--blue-l);color:var(--blue)">
+          <i class="fas fa-sync-alt" id="syncIcon"></i>
+          <span>Sync Spend</span>
+        </button>
         <button class="meta-btn disconnected" id="metaBtn" onclick="handleMetaClick()">
           <span class="meta-dot"></span>
           <span id="metaBtnText">Connect Meta</span>
@@ -568,18 +572,43 @@
           btn.className = 'meta-btn connected';
           txt.textContent = 'Meta Connected';
           if (secEl) secEl.style.display = 'none';
+          var sb = document.getElementById('syncBtn');
+          if (sb) sb.style.display = 'flex';
         } else {
           btn.className = 'meta-btn disconnected';
           txt.textContent = 'Connect Meta';
           if (secEl) secEl.style.display = 'block';
-          // Set today's date as default for manual spend input
           document.getElementById('spendDate').value = toYMD(new Date());
+          var sb = document.getElementById('syncBtn');
+          if (sb) sb.style.display = 'none';
         }
       }).catch(function () {
         document.getElementById('spendSection').style.display = 'block';
         document.getElementById('spendDate').value = toYMD(new Date());
       });
   }
+
+  window.syncSpend = function () {
+    var icon = document.getElementById('syncIcon');
+    if (icon) icon.className = 'fas fa-sync-alt fa-spin';
+    fetch(API + '/api/meta-ads/sync', {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ startDate: rangeStart, endDate: rangeEnd }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (icon) icon.className = 'fas fa-sync-alt';
+        if (d && d.synced !== undefined) {
+          alert('Synced ' + d.synced + ' day(s) of ad spend from Meta.');
+        }
+        loadAll();
+      })
+      .catch(function () {
+        if (icon) icon.className = 'fas fa-sync-alt';
+        alert('Sync failed. Check Meta token or ad account ID.');
+      });
+  };
 
   window.handleMetaClick = function () {
     if (metaConnected) {
