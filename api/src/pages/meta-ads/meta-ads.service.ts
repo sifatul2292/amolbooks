@@ -105,11 +105,26 @@ export class MetaAdsService {
             time_range: JSON.stringify({ since, until }),
             limit: 100,
           },
+          responseType: 'json',
+          validateStatus: () => true, // don't throw on 4xx/5xx — handle below
         }),
       );
     } catch (err) {
-      const metaError = err?.response?.data?.error?.message || err.message;
-      return { synced: 0, error: metaError, adAccountId: token.adAccountId, since, until };
+      const msg = err?.message || 'Network error';
+      return { synced: 0, error: 'Request failed: ' + msg, adAccountId: token.adAccountId, since, until };
+    }
+
+    // Handle Meta API errors returned in body
+    if (res.data?.error) {
+      const e = res.data.error;
+      let hint = '';
+      if (e.code === 100 || e.code === 200 || e.code === 190) hint = ' — Reconnect Meta to refresh token.';
+      if (e.code === 10 || e.code === 200) hint = ' — Token missing ads_read permission. Reconnect Meta.';
+      return { synced: 0, error: e.message + hint, errorCode: e.code, adAccountId: token.adAccountId, since, until };
+    }
+
+    if (!res.data || !Array.isArray(res.data.data)) {
+      return { synced: 0, error: 'Unexpected Meta response. Reconnect Meta and try again.', adAccountId: token.adAccountId, since, until };
     }
 
     const rows: any[] = res.data?.data || [];
