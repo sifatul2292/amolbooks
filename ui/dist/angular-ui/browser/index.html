@@ -1194,15 +1194,50 @@
     var s=document.createElement('style');
     s.id='__off50-styles';
     s.textContent=
-      '#__off50-promo-banner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;background:#EAF3DE;border-left:3px solid #3B6D11;padding:10px 16px;width:100%;box-sizing:border-box;font-family:hind-siliguri,sans-serif;}'
-      +'#__off50-promo-banner .off50-msg{display:flex;align-items:center;gap:8px;flex:1;min-width:180px;}'
+      '#__off50-promo-banner{background:#EAF3DE;border-left:3px solid #3B6D11;padding:8px 16px;width:100%;box-sizing:border-box;font-family:hind-siliguri,sans-serif;}'
+      +'#__off50-promo-banner .off50-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}'
+      +'#__off50-promo-banner .off50-left{display:flex;flex-direction:column;gap:3px;flex:1;min-width:180px;}'
+      +'#__off50-promo-banner .off50-msg{display:flex;align-items:center;gap:8px;}'
       +'#__off50-promo-banner .off50-msg span{color:#27500A;font-weight:500;font-size:13px;}'
+      +'#__off50-promo-banner .off50-timer{display:flex;align-items:center;gap:5px;font-size:11px;color:#4A7A1C;font-weight:500;}'
+      +'#__off50-promo-banner .off50-timer .off50-cd{font-weight:700;color:#27500A;font-variant-numeric:tabular-nums;letter-spacing:0.03em;}'
       +'#__off50-promo-banner .off50-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}'
       +'#__off50-promo-banner .off50-pill{background:#27500A;color:#C0DD97;font-size:12px;font-weight:600;padding:3px 10px;border-radius:6px;letter-spacing:0.05em;cursor:pointer;user-select:all;}'
       +'#__off50-promo-banner .off50-close{background:none;border:none;cursor:pointer;color:#27500A;font-size:18px;padding:0 4px;line-height:1;opacity:0.6;}'
       +'#__off50-promo-banner .off50-close:hover{opacity:1;}'
       +'@media(max-width:480px){#__off50-promo-banner{padding:8px 12px;}}';
     document.head.appendChild(s);
+  }
+
+  /* ── countdown timer ── */
+  var EXPIRY_MS=new Date('2026-05-31T23:59:59+06:00').getTime();
+  var _timerInterval=null;
+
+  function fmtCountdown(){
+    var rem=Math.max(0,EXPIRY_MS-Date.now());
+    var s=Math.floor(rem/1000);
+    var d=Math.floor(s/86400); s-=d*86400;
+    var h=Math.floor(s/3600); s-=h*3600;
+    var m=Math.floor(s/60); s-=m*60;
+    var parts=[];
+    if(d>0)parts.push(d+'d');
+    parts.push((h<10?'0':'')+h+':'+(m<10?'0':'')+m+':'+(s<10?'0':'')+s);
+    return parts.join(' ');
+  }
+
+  function startTimer(){
+    if(_timerInterval)return;
+    _timerInterval=setInterval(function(){
+      var el=document.querySelector('#__off50-promo-banner .off50-cd');
+      if(!el){clearInterval(_timerInterval);_timerInterval=null;return;}
+      var rem=EXPIRY_MS-Date.now();
+      if(rem<=0){
+        el.textContent='শেষ হয়ে গেছে';
+        clearInterval(_timerInterval);_timerInterval=null;
+        return;
+      }
+      el.textContent=fmtCountdown();
+    },1000);
   }
 
   /* ── header banner ── */
@@ -1216,14 +1251,21 @@
     injectStyles();
     var b=document.createElement('div');
     b.id=BANNER_ID;
-    b.innerHTML='<div class="off50-msg"><span style="font-size:15px;flex-shrink:0;">🏷️</span><span>৮৬০ টাকার উপর অর্ডার করলে পাবেন ৫০ টাকা ডিস্কাউন্ট!</span></div>'
+    b.innerHTML='<div class="off50-inner">'
+      +'<div class="off50-left">'
+      +'<div class="off50-msg"><span style="font-size:15px;flex-shrink:0;">🏷️</span><span>৮৬০ টাকার উপর অর্ডার করলে পাবেন ৫০ টাকা ডিস্কাউন্ট!</span></div>'
+      +'<div class="off50-timer">⏰ অফার শেষ হবে: <span class="off50-cd">'+fmtCountdown()+'</span></div>'
+      +'</div>'
       +'<div class="off50-right"><span class="off50-pill">OFF50</span>'
-      +'<button class="off50-close" aria-label="বন্ধ করুন">&times;</button></div>';
+      +'<button class="off50-close" aria-label="বন্ধ করুন">&times;</button></div>'
+      +'</div>';
     b.querySelector('.off50-close').addEventListener('click',function(){
       b.style.display='none';
       try{sessionStorage.setItem(DISMISSED_KEY,'1');}catch(e){}
+      if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
     });
     header.parentElement.insertBefore(b,header.nextSibling);
+    startTimer();
   }
 
   function tryBanner(n){
