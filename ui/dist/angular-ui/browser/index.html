@@ -1180,12 +1180,13 @@
 <script src="review-image-upload.js?v=9"></script>
 
 <script>
-/* OFF50 Promo Banner — header strip + checkout hint + auto-apply chip */
+/* OFF50 Promo Banner — header strip + checkout hint + auto-apply chip + congrats toast */
 (function(){
   'use strict';
   var BANNER_ID='__off50-promo-banner';
   var CHECKOUT_HINT_ID='__off50-checkout-hint';
   var AUTOAPPLY_ID='__off50-autoapply';
+  var TOAST_ID='__off50-congrats-toast';
   var DISMISSED_KEY='promo_off50_dismissed';
 
   function injectStyles(){
@@ -1265,7 +1266,7 @@
     var node;
     var target=null;
     while((node=walker.nextNode())){
-      if((node.nodeValue||'').indexOf('প্রোমো কোড বা ভাউচার কোড')!==-1){
+      if((node.nodeValue||'').indexOf('প্রোমো কোড বা ভাউচার কোড')!==-1||(node.nodeValue||'').indexOf('Add Promo code or voucher')!==-1){
         target=node.parentElement;
         break;
       }
@@ -1295,22 +1296,26 @@
       +'<span style="background:'+pb+';color:'+pt+';font-size:11px;font-weight:500;padding:3px 8px;border-radius:6px;letter-spacing:0.05em;flex-shrink:0;cursor:pointer;user-select:all;">OFF50</span>';
     target.parentElement.insertBefore(hint,target);
     injectAutoApply();
+    watchCouponApply();
   }
 
+  /* ── auto-apply chip (above input) ── */
   function injectAutoApply(){
     if(document.getElementById(AUTOAPPLY_ID))return;
     var inputs=document.querySelectorAll('input');
     var inp=null;
     for(var i=0;i<inputs.length;i++){
       var ph=(inputs[i].placeholder||'');
-      if(ph.indexOf('কুপন কোড')!==-1||ph.indexOf('আপনার কুপন')!==-1){inp=inputs[i];break;}
+      if(ph.indexOf('কুপন কোড')!==-1||ph.indexOf('আপনার কুপন')!==-1||ph.indexOf('oupon')!==-1){inp=inputs[i];break;}
     }
     if(!inp)return;
     var chip=document.createElement('div');
     chip.id=AUTOAPPLY_ID;
-    chip.style.cssText='display:flex;align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap;font-family:hind-siliguri,sans-serif;';
-    chip.innerHTML='<span style="font-size:12px;color:#555;">কুপন ব্যবহার করুন:</span>'
-      +'<button style="background:#27500A;color:#C0DD97;border:none;border-radius:6px;padding:4px 10px;font-size:12px;font-family:hind-siliguri,sans-serif;font-weight:600;cursor:pointer;letter-spacing:0.05em;">OFF50 ↗</button>';
+    chip.style.cssText='margin-bottom:8px;font-family:hind-siliguri,sans-serif;';
+    chip.innerHTML='<button style="display:inline-flex;align-items:center;gap:8px;background:#EAF3DE;color:#27500A;border:1px solid #97C459;border-radius:8px;padding:8px 14px;font-size:13px;font-family:hind-siliguri,sans-serif;font-weight:600;cursor:pointer;width:100%;box-sizing:border-box;justify-content:center;">'
+      +'<span style="background:#27500A;color:#C0DD97;border-radius:4px;padding:2px 8px;font-size:11px;letter-spacing:0.05em;font-weight:700;">OFF50</span>'
+      +'Use Coupon OFF50'
+      +'</button>';
     chip.querySelector('button').addEventListener('click',function(){
       inp.value='OFF50';
       inp.dispatchEvent(new Event('input',{bubbles:true}));
@@ -1322,7 +1327,77 @@
       }
     });
     var par=inp.closest('mat-form-field')||inp.parentElement;
-    if(par)par.insertAdjacentElement('afterend',chip);
+    if(par)par.insertAdjacentElement('beforebegin',chip);
+  }
+
+  /* ── congrats toast ── */
+  function showCongratsToast(){
+    var old=document.getElementById(TOAST_ID);
+    if(old)old.remove();
+    var t=document.createElement('div');
+    t.id=TOAST_ID;
+    t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(40px);background:#27500A;color:#EAF3DE;border-radius:16px;padding:18px 24px 16px;max-width:92vw;min-width:280px;box-shadow:0 8px 28px rgba(0,0,0,0.4);z-index:999999;opacity:0;transition:opacity 0.35s ease,transform 0.35s ease;text-align:center;font-family:hind-siliguri,sans-serif;';
+    t.innerHTML='<div style="font-size:26px;margin-bottom:8px;">🎉</div>'
+      +'<div style="font-size:15px;font-weight:700;margin-bottom:4px;">Congratulations!</div>'
+      +'<div style="font-size:14px;font-weight:400;line-height:1.5;">আপনি ৫০ টাকা ডিসকাউণ্ট পেয়েছেন</div>';
+    document.body.appendChild(t);
+    requestAnimationFrame(function(){
+      t.style.opacity='1';
+      t.style.transform='translateX(-50%) translateY(0)';
+    });
+    setTimeout(function(){
+      t.style.opacity='0';
+      t.style.transform='translateX(-50%) translateY(40px)';
+      setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},400);
+    },4500);
+  }
+
+  /* ── watch for coupon success ── */
+  function watchCouponApply(){
+    var _armed=false;
+    var _shown=false;
+
+    function arm(){_armed=true;}
+
+    /* Capture Apply button click when OFF50 is in the input */
+    document.addEventListener('click',function(e){
+      if(_shown)return;
+      var el=e.target;
+      for(var up=0;up<6;up++){
+        if(!el||el===document)break;
+        var t=(el.textContent||'').trim();
+        if(el.tagName==='BUTTON'&&(t==='অ্যাপ্লাই'||t.toLowerCase()==='apply')){
+          var inp=document.querySelector('input[placeholder*="কুপন"], input[placeholder*="oupon"]');
+          if(inp&&(inp.value||'').toUpperCase()==='OFF50'){arm();}
+          break;
+        }
+        el=el.parentElement;
+      }
+    },true);
+
+    /* DOM observer: fires when Angular updates summary or shows snackbar */
+    var obs=new MutationObserver(function(muts){
+      if(!_armed||_shown)return;
+      for(var i=0;i<muts.length;i++){
+        var target=muts[i].target;
+        /* snackbar appeared */
+        if(document.querySelector('.mat-mdc-snack-bar-container,.mat-snack-bar-container,app-snackbar-notification')){
+          _shown=true;obs.disconnect();
+          setTimeout(showCongratsToast,400);
+          return;
+        }
+        /* coupon/discount text appeared in DOM */
+        var txt=(target.textContent||'');
+        if(txt.indexOf('OFF50')!==-1||txt.indexOf('off50')!==-1||txt.indexOf('কুপন ছাড়')!==-1||txt.indexOf('Coupon Discount')!==-1){
+          _shown=true;obs.disconnect();
+          setTimeout(showCongratsToast,300);
+          return;
+        }
+      }
+    });
+    obs.observe(document.body,{subtree:true,childList:true,characterData:true});
+    /* Disconnect after 10 s to avoid leak */
+    setTimeout(function(){obs.disconnect();},10000);
   }
 
   function tryCheckout(n){
@@ -1339,6 +1414,7 @@
       var u=String(url||'');
       var o1=document.getElementById(CHECKOUT_HINT_ID);if(o1)o1.remove();
       var o2=document.getElementById(AUTOAPPLY_ID);if(o2)o2.remove();
+      var o3=document.getElementById(TOAST_ID);if(o3)o3.remove();
       setTimeout(function(){tryBanner(5);},300);
       if(u.indexOf('/checkout')!==-1)setTimeout(function(){tryCheckout(8);},500);
     },0);
@@ -1346,6 +1422,7 @@
   window.addEventListener('popstate',function(){
     var o1=document.getElementById(CHECKOUT_HINT_ID);if(o1)o1.remove();
     var o2=document.getElementById(AUTOAPPLY_ID);if(o2)o2.remove();
+    var o3=document.getElementById(TOAST_ID);if(o3)o3.remove();
     setTimeout(function(){tryBanner(5);},300);
     if(window.location.pathname.indexOf('/checkout')!==-1)setTimeout(function(){tryCheckout(8);},500);
   });
