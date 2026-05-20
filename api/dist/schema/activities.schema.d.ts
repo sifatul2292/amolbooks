@@ -10,9 +10,9 @@ export declare const ActivitiesSchema: mongoose.Schema<any, mongoose.Model<any, 
     slug: string;
     description?: string;
     nameEn?: string;
-    image?: string;
     priority?: number;
     mobileImage?: string;
+    image?: string;
     descriptionEn?: string;
     authorName?: string;
     shortDesc?: string;

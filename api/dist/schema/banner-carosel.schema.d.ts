@@ -9,9 +9,9 @@ export declare const BannerCaroselSchema: mongoose.Schema<any, mongoose.Model<an
     name: string;
     slug: string;
     url?: string;
-    image?: string;
     priority?: number;
     mobileImage?: string;
     bannerType?: string;
+    image?: string;
     imageUrl?: string;
 }>;

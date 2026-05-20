@@ -40,6 +40,7 @@ export declare class ProductService {
         updated: boolean;
     }>;
     getProductBySlug(slug: string, select: string): Promise<ResponsePayload>;
+    getProductOgHtml(slug: string, res: any): Promise<void>;
     getBoughtTogetherProducts(productSlug?: string): Promise<ResponsePayload>;
     setBoughtTogetherProducts(productIds: string[]): Promise<ResponsePayload>;
     getBoughtTogetherByProduct(productId: string): Promise<ResponsePayload>;

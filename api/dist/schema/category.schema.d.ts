@@ -11,8 +11,8 @@ export declare const CategorySchema: mongoose.Schema<any, mongoose.Model<any, an
     description?: string;
     nameEn?: string;
     status?: string;
+    mobileImage?: string;
     image?: string;
     readOnly?: boolean;
-    mobileImage?: string;
     serial?: number;
 }>;

@@ -23,6 +23,7 @@ export declare class UpdateOrderDto {
     name: string;
     phoneNo: string;
     fraudChecker: any;
+    adminNote: string;
     orderStatus: any;
     city: string;
     shippingAddress: string;

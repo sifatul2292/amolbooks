@@ -207,6 +207,21 @@ let SeoPageService = SeoPageService_1 = class SeoPageService {
             throw new common_1.InternalServerErrorException(err.message);
         }
     }
+    async getSeoPageByPattern(pattern, select) {
+        try {
+            const data = await this.seoPageModel
+                .findOne({ pageName: { $regex: pattern } })
+                .select(select);
+            return {
+                success: true,
+                message: 'Success',
+                data,
+            };
+        }
+        catch (err) {
+            throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
     async updateSeoPageById(id, updateSeoPageDto) {
         const { name } = updateSeoPageDto;
         let data;

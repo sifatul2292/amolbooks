@@ -16,6 +16,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UploadController = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
+const throttler_1 = require("@nestjs/throttler");
 const platform_express_1 = require("@nestjs/platform-express");
 const multer_1 = require("multer");
 const file_upload_utils_1 = require("./file-upload.utils");
@@ -336,6 +337,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UploadController.prototype, "getCsvFile", null);
 UploadController = UploadController_1 = __decorate([
+    (0, throttler_1.SkipThrottle)(),
     (0, common_1.Controller)('upload'),
     __metadata("design:paramtypes", [config_1.ConfigService,
         upload_service_1.UploadService])

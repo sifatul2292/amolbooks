@@ -15,6 +15,8 @@ const core_1 = require("@nestjs/core");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const seo_bot_middleware_1 = require("./middleware/seo-bot.middleware");
+const redirect_url_middleware_1 = require("./middleware/redirect-url.middleware");
+const redirect_url_schema_1 = require("./schema/redirect-url.schema");
 const config_1 = require("@nestjs/config");
 const configuration_1 = require("./config/configuration");
 const mongoose_1 = require("@nestjs/mongoose");
@@ -75,14 +77,21 @@ const redirect_url_module_1 = require("./pages/redirect-url/redirect-url.module"
 const setting_module_1 = require("./pages/customization/setting/setting.module");
 const fb_catalog_module_1 = require("./shared/fb-catalog/fb-catalog.module");
 const analytics_module_1 = require("./shared/analytics/analytics.module");
+const posthog_module_1 = require("./shared/posthog/posthog.module");
 const gtm_module_1 = require("./pages/gtm/gtm.module");
 const courier_module_1 = require("./shared/courier/courier.module");
 const pre_order_module_1 = require("./pages/pre-order/pre-order.module");
+const meta_ads_module_1 = require("./pages/meta-ads/meta-ads.module");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer
+            .apply(redirect_url_middleware_1.RedirectUrlMiddleware)
+            .exclude('api/(.*)')
+            .forRoutes({ path: '*', method: 0 });
+        consumer
             .apply(seo_bot_middleware_1.SeoBotMiddleware)
-            .forRoutes('product-details/*');
+            .exclude('api/(.*)')
+            .forRoutes({ path: '*', method: 0 });
     }
 };
 AppModule = __decorate([
@@ -114,8 +123,18 @@ AppModule = __decorate([
                 load: [configuration_1.default],
                 isGlobal: true,
             }),
-            mongoose_1.MongooseModule.forRoot((0, configuration_1.default)().mongoCluster),
+            mongoose_1.MongooseModule.forRoot((0, configuration_1.default)().mongoCluster, {
+                maxPoolSize: 20,
+                minPoolSize: 5,
+                connectTimeoutMS: 10000,
+                socketTimeoutMS: 45000,
+                serverSelectionTimeoutMS: 8000,
+                heartbeatFrequencyMS: 10000,
+                retryWrites: true,
+                retryReads: true,
+            }),
             common_1.CacheModule.register({ ttl: 300, max: 500, isGlobal: true }),
+            mongoose_1.MongooseModule.forFeature([{ name: 'RedirectUrl', schema: redirect_url_schema_1.RedirectUrlSchema }]),
             admin_module_1.AdminModule,
             user_module_1.UserModule,
             utils_module_1.UtilsModule,
@@ -174,15 +193,18 @@ AppModule = __decorate([
             redirect_url_module_1.RedirectUrlModule,
             setting_module_1.SettingModule,
             analytics_module_1.AnalyticsModule,
+            posthog_module_1.PosthogModule,
             gtm_module_1.GtmModule,
             fb_catalog_module_1.FbCatalogModule,
             courier_module_1.CourierModule,
             pre_order_module_1.PreOrderModule,
+            meta_ads_module_1.MetaAdsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [
             app_service_1.AppService,
             seo_bot_middleware_1.SeoBotMiddleware,
+            redirect_url_middleware_1.RedirectUrlMiddleware,
             { provide: core_1.APP_GUARD, useClass: throttler_1.ThrottlerGuard },
         ],
     })

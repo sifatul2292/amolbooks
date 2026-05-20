@@ -10,8 +10,8 @@ export declare const PopupSchema: mongoose.Schema<any, mongoose.Model<any, any, 
     slug: string;
     description?: string;
     status?: string;
-    image?: string;
     priority?: number;
+    image?: string;
     readOnly?: boolean;
     popUpUrl?: string;
 }>;

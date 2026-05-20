@@ -9,14 +9,14 @@ export declare const PraptisthanaSchema: mongoose.Schema<any, mongoose.Model<any
     name: string;
     url?: string;
     title?: string;
+    priority?: number;
+    mobileImage?: string;
     division?: {
         _id?: mongoose.Types.ObjectId;
         name?: string;
     };
     address?: string;
     image?: string;
-    priority?: number;
-    mobileImage?: string;
     phone?: string;
     area?: {
         _id?: mongoose.Types.ObjectId;

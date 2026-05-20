@@ -48,6 +48,24 @@ let DashboardController = DashboardController_1 = class DashboardController {
             throw new common_1.BadRequestException(error.message);
         }
     }
+    async getProfitAnalytics(startDate, endDate) {
+        return await this.dashboardService.getProfitAnalytics(startDate, endDate);
+    }
+    async getProductsSold(startDate, endDate) {
+        return await this.dashboardService.getProductsSold(startDate, endDate);
+    }
+    async getTopProducts(startDate, endDate) {
+        return await this.dashboardService.getTopProducts(startDate, endDate);
+    }
+    async getManualSales(startDate, endDate) {
+        return await this.dashboardService.getManualSales(startDate, endDate);
+    }
+    async addManualSale(body) {
+        return await this.dashboardService.addManualSale(body);
+    }
+    async deleteManualSale(id) {
+        return await this.dashboardService.deleteManualSale(id);
+    }
 };
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
@@ -82,6 +100,58 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], DashboardController.prototype, "getSales", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Get)('profit-analytics'),
+    __param(0, (0, common_1.Query)('startDate')),
+    __param(1, (0, common_1.Query)('endDate')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], DashboardController.prototype, "getProfitAnalytics", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Get)('products-sold'),
+    __param(0, (0, common_1.Query)('startDate')),
+    __param(1, (0, common_1.Query)('endDate')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], DashboardController.prototype, "getProductsSold", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Get)('top-products'),
+    __param(0, (0, common_1.Query)('startDate')),
+    __param(1, (0, common_1.Query)('endDate')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], DashboardController.prototype, "getTopProducts", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Get)('manual-sales'),
+    __param(0, (0, common_1.Query)('startDate')),
+    __param(1, (0, common_1.Query)('endDate')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], DashboardController.prototype, "getManualSales", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Post)('manual-sales'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], DashboardController.prototype, "addManualSale", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Delete)('manual-sales/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], DashboardController.prototype, "deleteManualSale", null);
 DashboardController = DashboardController_1 = __decorate([
     (0, common_1.Controller)('dashboard'),
     __metadata("design:paramtypes", [dashboard_service_1.DashboardService])

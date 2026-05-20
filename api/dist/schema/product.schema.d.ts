@@ -97,6 +97,7 @@ export declare const ProductSchema: mongoose.Schema<any, mongoose.Model<any, any
     discountEndDateTime?: Date;
     boughtTogetherIds?: string[];
     isFacebookCatalog?: boolean;
+    priority?: number;
     hasVariations?: boolean;
     unit?: string;
     variations?: mongoose.Types.DocumentArray<{
@@ -127,5 +128,4 @@ export declare const ProductSchema: mongoose.Schema<any, mongoose.Model<any, any
         fourStar: number;
         fiveStar: number;
     };
-    priority?: number;
 }>;

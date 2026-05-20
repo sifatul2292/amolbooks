@@ -22,11 +22,12 @@ const utils_service_1 = require("../../shared/utils/utils.service");
 const error_code_enum_1 = require("../../enum/error-code.enum");
 const ObjectId = mongoose_2.Types.ObjectId;
 let DashboardService = DashboardService_1 = class DashboardService {
-    constructor(adminModel, userModel, productModel, orderModel, configService, utilsService) {
+    constructor(adminModel, userModel, productModel, orderModel, manualSaleModel, configService, utilsService) {
         this.adminModel = adminModel;
         this.userModel = userModel;
         this.productModel = productModel;
         this.orderModel = orderModel;
+        this.manualSaleModel = manualSaleModel;
         this.configService = configService;
         this.utilsService = utilsService;
         this.logger = new common_1.Logger(DashboardService_1.name);
@@ -576,6 +577,210 @@ let DashboardService = DashboardService_1 = class DashboardService {
         }
         return { labels, sales };
     }
+    async getTopProducts(startDate, endDate) {
+        try {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            const rows = await this.orderModel.aggregate([
+                {
+                    $match: {
+                        createdAt: { $gte: start, $lte: end },
+                        orderStatus: { $nin: [6] },
+                    },
+                },
+                { $unwind: '$orderedItems' },
+                {
+                    $group: {
+                        _id: '$orderedItems._id',
+                        name: { $first: '$orderedItems.name' },
+                        quantity: { $sum: '$orderedItems.quantity' },
+                        revenue: { $sum: { $multiply: ['$orderedItems.salePrice', '$orderedItems.quantity'] } },
+                    },
+                },
+                { $sort: { quantity: -1 } },
+                { $limit: 20 },
+                { $project: { _id: 0, name: 1, quantity: 1, revenue: 1 } },
+            ]);
+            return { success: true, data: rows };
+        }
+        catch (err) {
+            this.logger.error(err);
+            throw new common_1.InternalServerErrorException();
+        }
+    }
+    async getProductsSold(startDate, endDate) {
+        try {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            const rows = await this.orderModel.aggregate([
+                {
+                    $match: {
+                        createdAt: { $gte: start, $lte: end },
+                        orderStatus: { $nin: [6] },
+                    },
+                },
+                {
+                    $project: {
+                        date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: '+06:00' } },
+                        orderedItems: 1,
+                    },
+                },
+                { $unwind: '$orderedItems' },
+                {
+                    $group: {
+                        _id: { date: '$date', productId: '$orderedItems._id' },
+                        name: { $first: '$orderedItems.name' },
+                        quantity: { $sum: '$orderedItems.quantity' },
+                        revenue: { $sum: { $multiply: ['$orderedItems.salePrice', '$orderedItems.quantity'] } },
+                    },
+                },
+                {
+                    $group: {
+                        _id: '$_id.date',
+                        products: {
+                            $push: {
+                                name: '$name',
+                                quantity: '$quantity',
+                                revenue: '$revenue',
+                            },
+                        },
+                    },
+                },
+                { $sort: { _id: 1 } },
+                { $project: { _id: 0, date: '$_id', products: 1 } },
+            ]);
+            return { success: true, data: rows };
+        }
+        catch (err) {
+            this.logger.error(err);
+            throw new common_1.InternalServerErrorException();
+        }
+    }
+    async getProfitAnalytics(startDate, endDate) {
+        try {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            const daily = await this.orderModel.aggregate([
+                {
+                    $match: {
+                        createdAt: { $gte: start, $lte: end },
+                        orderStatus: { $nin: [6] },
+                    },
+                },
+                { $unwind: '$orderedItems' },
+                {
+                    $lookup: {
+                        from: 'products',
+                        localField: 'orderedItems._id',
+                        foreignField: '_id',
+                        as: '_prod',
+                    },
+                },
+                {
+                    $addFields: {
+                        _itemCost: {
+                            $multiply: [
+                                { $ifNull: [{ $arrayElemAt: ['$_prod.costPrice', 0] }, 0] },
+                                { $ifNull: ['$orderedItems.quantity', 1] },
+                            ],
+                        },
+                    },
+                },
+                {
+                    $group: {
+                        _id: {
+                            orderId: '$_id',
+                            date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: '+06:00' } },
+                        },
+                        revenue: { $first: '$grandTotal' },
+                        deliveryCharge: { $first: { $ifNull: ['$deliveryCharge', 0] } },
+                        totalCost: { $sum: '$_itemCost' },
+                    },
+                },
+                {
+                    $group: {
+                        _id: '$_id.date',
+                        revenue: { $sum: '$revenue' },
+                        deliveryCharge: { $sum: '$deliveryCharge' },
+                        totalCost: { $sum: '$totalCost' },
+                        orderCount: { $sum: 1 },
+                    },
+                },
+                { $sort: { _id: 1 } },
+                { $project: { _id: 0, date: '$_id', revenue: 1, orderCount: 1, totalCost: 1, deliveryCharge: 1 } },
+            ]);
+            const manualSales = await this.manualSaleModel
+                .find({ date: { $gte: startDate, $lte: endDate } })
+                .lean();
+            const manualByDate = {};
+            manualSales.forEach((m) => {
+                if (!manualByDate[m.date]) {
+                    manualByDate[m.date] = { revenue: 0, cost: 0, deliveryCharge: 0, orders: 0 };
+                }
+                manualByDate[m.date].revenue += m.revenue || 0;
+                manualByDate[m.date].cost += m.cost || 0;
+                manualByDate[m.date].deliveryCharge += m.deliveryCharge || 0;
+                manualByDate[m.date].orders += m.orders || 0;
+            });
+            const dateSet = new Set(daily.map((d) => d.date));
+            for (const [date, ms] of Object.entries(manualByDate)) {
+                if (dateSet.has(date)) {
+                    const row = daily.find((d) => d.date === date);
+                    row.revenue += ms.revenue;
+                    row.totalCost += ms.cost;
+                    row.deliveryCharge += ms.deliveryCharge;
+                    row.orderCount += ms.orders;
+                }
+                else {
+                    daily.push({
+                        date,
+                        revenue: ms.revenue,
+                        orderCount: ms.orders,
+                        totalCost: ms.cost,
+                        deliveryCharge: ms.deliveryCharge,
+                    });
+                }
+            }
+            daily.sort((a, b) => a.date.localeCompare(b.date));
+            const totals = daily.reduce((acc, d) => ({
+                revenue: acc.revenue + d.revenue,
+                orderCount: acc.orderCount + d.orderCount,
+                totalCost: acc.totalCost + d.totalCost,
+                deliveryCharge: acc.deliveryCharge + d.deliveryCharge,
+            }), { revenue: 0, orderCount: 0, totalCost: 0, deliveryCharge: 0 });
+            return { success: true, data: { daily, totals } };
+        }
+        catch (err) {
+            this.logger.error(err);
+            throw new common_1.InternalServerErrorException();
+        }
+    }
+    async getManualSales(startDate, endDate) {
+        const records = await this.manualSaleModel
+            .find({ date: { $gte: startDate, $lte: endDate } })
+            .sort({ date: -1, createdAt: -1 })
+            .lean();
+        return { success: true, data: records };
+    }
+    async addManualSale(body) {
+        const record = await this.manualSaleModel.create({
+            date: body.date,
+            revenue: body.revenue || 0,
+            cost: body.cost || 0,
+            deliveryCharge: body.deliveryCharge || 0,
+            orders: body.orders || 1,
+            source: body.source || 'whatsapp',
+            note: body.note || '',
+        });
+        return { success: true, data: record };
+    }
+    async deleteManualSale(id) {
+        await this.manualSaleModel.findByIdAndDelete(id);
+        return { success: true };
+    }
 };
 DashboardService = DashboardService_1 = __decorate([
     (0, common_1.Injectable)(),
@@ -583,7 +788,9 @@ DashboardService = DashboardService_1 = __decorate([
     __param(1, (0, mongoose_1.InjectModel)('User')),
     __param(2, (0, mongoose_1.InjectModel)('Product')),
     __param(3, (0, mongoose_1.InjectModel)('Order')),
+    __param(4, (0, mongoose_1.InjectModel)('ManualSale')),
     __metadata("design:paramtypes", [mongoose_2.Model,
+        mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,

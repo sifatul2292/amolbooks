@@ -79,6 +79,7 @@ export declare const OrderSchema: mongoose.Schema<any, mongoose.Model<any, any, 
     paymentType?: string;
     coupon?: mongoose.Types.ObjectId;
     fraudChecker?: any;
+    adminNote?: string;
     courierLink?: string;
     discountTypes?: any[];
     courierData?: {

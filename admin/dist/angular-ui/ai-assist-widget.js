@@ -349,7 +349,8 @@
           orderStatus: 1,
           discount: 0,
           subTotal: 0,
-          paymentStatus: 'unpaid'
+          paymentStatus: 'unpaid',
+          orderedItems: []
         })
     })
       .then(function (r) {

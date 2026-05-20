@@ -69,6 +69,9 @@ let ProductController = ProductController_1 = class ProductController {
     async getProductBySlug(slug, select) {
         return await this.productService.getProductBySlug(slug, select);
     }
+    async getProductOgHtml(slug, res) {
+        return await this.productService.getProductOgHtml(slug, res);
+    }
     async updateProductById(id, updateProductDto) {
         return await this.productService.updateProductById(id, updateProductDto);
     }
@@ -205,6 +208,15 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], ProductController.prototype, "getProductBySlug", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Get)('/og/:slug'),
+    __param(0, (0, common_1.Param)('slug')),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], ProductController.prototype, "getProductOgHtml", null);
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Put)('/update/:id'),

@@ -23,6 +23,7 @@ const admin_permission_enum_1 = require("../../../enum/admin-permission.enum");
 const admin_permission_guard_1 = require("../../../guards/admin-permission.guard");
 const admin_jwt_auth_guard_1 = require("../../../guards/admin-jwt-auth.guard");
 const order_dto_1 = require("../../../dto/order.dto");
+const incomplete_order_dto_1 = require("../../../dto/incomplete-order.dto");
 const mongo_id_validation_pipe_1 = require("../../../pipes/mongo-id-validation.pipe");
 const order_service_1 = require("./order.service");
 const user_jwt_auth_guard_1 = require("../../../guards/user-jwt-auth.guard");
@@ -96,6 +97,24 @@ let OrderController = OrderController_1 = class OrderController {
     async deleteMultipleOrderById(data, checkUsage) {
         return await this.orderService.deleteMultipleOrderById(data.ids, Boolean(checkUsage));
     }
+    async addIncompleteOrderByUser(addIncompleteOrderDto) {
+        return await this.orderService.addIncompleteOrder(addIncompleteOrderDto);
+    }
+    async addIncompleteOrderByAnonymous(addIncompleteOrderDto) {
+        return await this.orderService.addIncompleteOrder(addIncompleteOrderDto);
+    }
+    async getAllIncompleteOrders(filterDto, searchString) {
+        return await this.orderService.getAllIncompleteOrders(filterDto, searchString);
+    }
+    async getIncompleteOrderById(id) {
+        return await this.orderService.getIncompleteOrderById(id);
+    }
+    async updateIncompleteOrderById(id, updateIncompleteOrderDto) {
+        return await this.orderService.updateIncompleteOrderById(id, updateIncompleteOrderDto);
+    }
+    async deleteMultipleIncompleteOrderById(deleteDto) {
+        return await this.orderService.deleteMultipleIncompleteOrderById(deleteDto.ids);
+    }
 };
 __decorate([
     (0, common_1.Post)('/add'),
@@ -128,7 +147,6 @@ __decorate([
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Post)('/repeat-customers'),
-    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
@@ -311,6 +329,64 @@ __decorate([
     __metadata("design:paramtypes", [Object, Boolean]),
     __metadata("design:returntype", Promise)
 ], OrderController.prototype, "deleteMultipleOrderById", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Post)('/add-incomplete-order-by-user'),
+    (0, common_1.UsePipes)(common_1.ValidationPipe),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [incomplete_order_dto_1.AddIncompleteOrderDto]),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "addIncompleteOrderByUser", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Post)('/add-incomplete-order-by-anonymous'),
+    (0, common_1.UsePipes)(common_1.ValidationPipe),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [incomplete_order_dto_1.AddIncompleteOrderDto]),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "addIncompleteOrderByAnonymous", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Post)('/get-all-incomplete-orders'),
+    (0, common_1.UsePipes)(common_1.ValidationPipe),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Query)('q')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [incomplete_order_dto_1.FilterAndPaginationIncompleteOrderDto, String]),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "getAllIncompleteOrders", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Get)('/incomplete/:id'),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __param(0, (0, common_1.Param)('id', mongo_id_validation_pipe_1.MongoIdValidationPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "getIncompleteOrderById", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Put)('/update-incomplete-order-by-id/:id'),
+    (0, common_1.UsePipes)(common_1.ValidationPipe),
+    __param(0, (0, common_1.Param)('id', mongo_id_validation_pipe_1.MongoIdValidationPipe)),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, incomplete_order_dto_1.UpdateIncompleteOrderDto]),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "updateIncompleteOrderById", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Post)('/delete-multiple-incomplete-orders'),
+    (0, common_1.UsePipes)(common_1.ValidationPipe),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [incomplete_order_dto_1.DeleteMultipleIncompleteOrderDto]),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "deleteMultipleIncompleteOrderById", null);
 OrderController = OrderController_1 = __decorate([
     (0, common_1.Controller)('order'),
     __metadata("design:paramtypes", [order_service_1.OrderService])

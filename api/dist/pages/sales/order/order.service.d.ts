@@ -2,6 +2,8 @@ import { Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { UtilsService } from '../../../shared/utils/utils.service';
 import { Order } from '../../../interfaces/common/order.interface';
+import { IncompleteOrder } from '../../../interfaces/common/incomplete-order.interface';
+import { AddIncompleteOrderDto, FilterAndPaginationIncompleteOrderDto, UpdateIncompleteOrderDto } from '../../../dto/incomplete-order.dto';
 import { ResponsePayload } from '../../../interfaces/core/response-payload.interface';
 import { AddOrderDto, FilterAndPaginationOrderDto, OptionOrderDto, UpdateOrderDto, UpdateOrderStatusDto } from '../../../dto/order.dto';
 import { Product } from '../../../interfaces/common/product.interface';
@@ -20,6 +22,7 @@ import { Admin } from '../../../interfaces/admin/admin.interface';
 export declare class OrderService {
     private readonly adminModel;
     private readonly orderModel;
+    private readonly incompleteOrderModel;
     private readonly productModel;
     private readonly specialPackageModel;
     private readonly uniqueIdModel;
@@ -35,7 +38,7 @@ export declare class OrderService {
     private bulkSmsService;
     private emailService;
     private logger;
-    constructor(adminModel: Model<Admin>, orderModel: Model<Order>, productModel: Model<Product>, specialPackageModel: Model<SpecialPackage>, uniqueIdModel: Model<UniqueId>, cartModel: Model<Cart>, userModel: Model<Cart>, settingModel: Model<Setting>, couponModel: Model<Coupon>, courierService: CourierService, shopInformationModel: Model<ShopInformation>, orderOfferModel: Model<OrderOffer>, configService: ConfigService, utilsService: UtilsService, bulkSmsService: BulkSmsService, emailService: EmailService);
+    constructor(adminModel: Model<Admin>, orderModel: Model<Order>, incompleteOrderModel: Model<IncompleteOrder>, productModel: Model<Product>, specialPackageModel: Model<SpecialPackage>, uniqueIdModel: Model<UniqueId>, cartModel: Model<Cart>, userModel: Model<Cart>, settingModel: Model<Setting>, couponModel: Model<Coupon>, courierService: CourierService, shopInformationModel: Model<ShopInformation>, orderOfferModel: Model<OrderOffer>, configService: ConfigService, utilsService: UtilsService, bulkSmsService: BulkSmsService, emailService: EmailService);
     addOrderAdmin(admin: any, addOrderDto: AddOrderDto): Promise<ResponsePayload>;
     addOrder(addOrderDto: AddOrderDto): Promise<ResponsePayload>;
     private processOrderBackgroundTasks;
@@ -70,4 +73,9 @@ export declare class OrderService {
     private checkAndUpdateCourierStatus;
     getAllCourierStatusAndUpdate(): Promise<void>;
     getAndUpdateOrderStatusFromCourier(order: any, courierMethod: any): Promise<void>;
+    addIncompleteOrder(addIncompleteOrderDto: AddIncompleteOrderDto): Promise<ResponsePayload>;
+    getAllIncompleteOrders(filterDto: FilterAndPaginationIncompleteOrderDto, searchQuery?: string): Promise<ResponsePayload>;
+    getIncompleteOrderById(id: string): Promise<ResponsePayload>;
+    updateIncompleteOrderById(id: string, updateIncompleteOrderDto: UpdateIncompleteOrderDto): Promise<ResponsePayload>;
+    deleteMultipleIncompleteOrderById(ids: string[]): Promise<ResponsePayload>;
 }

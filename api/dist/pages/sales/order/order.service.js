@@ -28,9 +28,10 @@ const courier_service_1 = require("../../../shared/courier/courier.service");
 const schedule = require("node-schedule");
 const ObjectId = mongoose_2.Types.ObjectId;
 let OrderService = OrderService_1 = class OrderService {
-    constructor(adminModel, orderModel, productModel, specialPackageModel, uniqueIdModel, cartModel, userModel, settingModel, couponModel, courierService, shopInformationModel, orderOfferModel, configService, utilsService, bulkSmsService, emailService) {
+    constructor(adminModel, orderModel, incompleteOrderModel, productModel, specialPackageModel, uniqueIdModel, cartModel, userModel, settingModel, couponModel, courierService, shopInformationModel, orderOfferModel, configService, utilsService, bulkSmsService, emailService) {
         this.adminModel = adminModel;
         this.orderModel = orderModel;
+        this.incompleteOrderModel = incompleteOrderModel;
         this.productModel = productModel;
         this.specialPackageModel = specialPackageModel;
         this.uniqueIdModel = uniqueIdModel;
@@ -99,7 +100,7 @@ let OrderService = OrderService_1 = class OrderService {
                     });
                 }
             }
-            for (const f of addOrderDto['orderedItems']) {
+            for (const f of (addOrderDto['orderedItems'] || [])) {
                 const product = await this.productModel.findById(f._id);
                 if ((product === null || product === void 0 ? void 0 : product.quantity) > 0) {
                     await this.productModel.findByIdAndUpdate(f._id, {
@@ -182,6 +183,11 @@ let OrderService = OrderService_1 = class OrderService {
                     this.logger.warn(`Failed to fetch fraud checker data for phone: ${addOrderDto === null || addOrderDto === void 0 ? void 0 : addOrderDto.phoneNo}`, (error === null || error === void 0 ? void 0 : error.message) || error);
                 }
             }
+            if (addOrderDto.phoneNo) {
+                await this.incompleteOrderModel.deleteMany({
+                    phoneNo: addOrderDto.phoneNo,
+                });
+            }
             if (addOrderDto.user && saveData._id) {
                 await this.cartModel.deleteMany({
                     user: new ObjectId(addOrderDto.user),
@@ -204,9 +210,7 @@ let OrderService = OrderService_1 = class OrderService {
             if (saveData['paymentType'] === 'cash_on_delivery') {
                 const orderCheck = await this.orderModel.findById(saveData._id).select('orderSmsSent');
                 if (!(orderCheck === null || orderCheck === void 0 ? void 0 : orderCheck.orderSmsSent)) {
-                    const message = `
-         আপনার অর্ডারটি alambook.com-এ সফলভাবে সম্পন্ন হয়েছে! অর্ডার আইডি ${saveData.orderId},অর্ডারের বিল ${saveData.grandTotal} টাকা যেকোনো প্রয়োজনে আমাদের সাথে যোগাযোগ করুন 01754896763 ধন্যবাদ, alambook.com টিম
-        `;
+                    const message = `অর্ডারটি কনফার্ম হয়েছে। ৩ দিনের মধ্যে বই পেয়ে যাবেন। amolbooks.com`;
                     this.bulkSmsService.sentSingleSms(saveData.phoneNo, message);
                     await this.orderModel.updateOne({ _id: saveData._id }, { $set: { orderSmsSent: true } });
                 }
@@ -272,9 +276,8 @@ let OrderService = OrderService_1 = class OrderService {
     async getRepeatCustomers() {
         try {
             const data = await this.orderModel.aggregate([
-                { $match: { phoneNo: { $exists: true, $not: { $in: [null, ''] } } } },
                 { $group: { _id: '$phoneNo', count: { $sum: 1 } } },
-                { $match: { count: { $gt: 1 } } },
+                { $match: { count: { $gt: 1 }, _id: { $nin: [null, ''] } } },
                 { $project: { _id: 0, phoneNo: '$_id', count: 1 } },
             ]);
             return { success: true, message: 'Success', data };
@@ -732,7 +735,7 @@ let OrderService = OrderService_1 = class OrderService {
         try {
             await this.orderModel.findByIdAndUpdate(id, {
                 $set: updateOrderDto,
-            });
+            }, { strict: false });
             const fSetting = await this.settingModel
                 .findOne()
                 .select('smsSendingOption currency smsMethods orderSetting courierMethods -_id');
@@ -1761,21 +1764,156 @@ let OrderService = OrderService_1 = class OrderService {
             }
         }
     }
+    async addIncompleteOrder(addIncompleteOrderDto) {
+        try {
+            const newData = new this.incompleteOrderModel(addIncompleteOrderDto);
+            const saveData = await newData.save();
+            return {
+                success: true,
+                message: 'Incomplete order saved successfully',
+                data: { _id: saveData._id },
+            };
+        }
+        catch (err) {
+            this.logger.error(err);
+            throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
+    async getAllIncompleteOrders(filterDto, searchQuery) {
+        const { filter, pagination, sort, select } = filterDto;
+        const aggregateStages = [];
+        let mFilter = {};
+        let mSort = { createdAt: -1 };
+        let mSelect = {};
+        let mPagination = {};
+        if (filter) {
+            mFilter = Object.assign(Object.assign({}, mFilter), filter);
+        }
+        if (searchQuery) {
+            mFilter = {
+                $and: [
+                    mFilter,
+                    {
+                        $or: [
+                            { name: { $regex: searchQuery, $options: 'i' } },
+                            { phoneNo: { $regex: searchQuery, $options: 'i' } },
+                            { orderId: { $regex: searchQuery, $options: 'i' } },
+                        ],
+                    },
+                ],
+            };
+        }
+        if (sort) {
+            mSort = sort;
+        }
+        if (select) {
+            mSelect = Object.assign({}, select);
+        }
+        if (Object.keys(mFilter).length) {
+            aggregateStages.push({ $match: mFilter });
+        }
+        if (Object.keys(mSort).length) {
+            aggregateStages.push({ $sort: mSort });
+        }
+        const countFilter = Object.assign({}, mFilter);
+        if (pagination) {
+            const pageSize = pagination.pageSize && Number(pagination.pageSize) > 0
+                ? Number(pagination.pageSize)
+                : 25;
+            const currentPage = pagination.currentPage && Number(pagination.currentPage) > 0
+                ? Number(pagination.currentPage)
+                : 1;
+            mPagination = {
+                skip: pageSize * (currentPage - 1),
+                limit: pageSize,
+            };
+            aggregateStages.push({ $skip: mPagination.skip });
+            aggregateStages.push({ $limit: mPagination.limit });
+        }
+        if (Object.keys(mSelect).length) {
+            aggregateStages.push({ $project: mSelect });
+        }
+        try {
+            const data = await this.incompleteOrderModel.aggregate(aggregateStages);
+            const count = await this.incompleteOrderModel.countDocuments(countFilter);
+            return {
+                success: true,
+                message: 'Incomplete orders retrieved successfully',
+                data,
+                count,
+            };
+        }
+        catch (err) {
+            this.logger.error(err);
+            throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
+    async getIncompleteOrderById(id) {
+        try {
+            const data = await this.incompleteOrderModel
+                .findById(id)
+                .populate('user', 'name email phoneNo');
+            if (!data) {
+                throw new common_1.NotFoundException('Incomplete order not found');
+            }
+            return {
+                success: true,
+                message: 'Incomplete order retrieved successfully',
+                data,
+            };
+        }
+        catch (err) {
+            this.logger.error(err);
+            throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
+    async updateIncompleteOrderById(id, updateIncompleteOrderDto) {
+        try {
+            await this.incompleteOrderModel.findByIdAndUpdate(id, {
+                $set: updateIncompleteOrderDto,
+            });
+            return {
+                success: true,
+                message: 'Incomplete order updated successfully',
+            };
+        }
+        catch (err) {
+            this.logger.error(err);
+            throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
+    async deleteMultipleIncompleteOrderById(ids) {
+        try {
+            await this.incompleteOrderModel.deleteMany({
+                _id: { $in: ids },
+            });
+            return {
+                success: true,
+                message: 'Incomplete orders deleted successfully',
+            };
+        }
+        catch (err) {
+            this.logger.error(err);
+            throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
 };
 OrderService = OrderService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)('Admin')),
     __param(1, (0, mongoose_1.InjectModel)('Order')),
-    __param(2, (0, mongoose_1.InjectModel)('Product')),
-    __param(3, (0, mongoose_1.InjectModel)('SpecialPackage')),
-    __param(4, (0, mongoose_1.InjectModel)('UniqueId')),
-    __param(5, (0, mongoose_1.InjectModel)('Cart')),
-    __param(6, (0, mongoose_1.InjectModel)('User')),
-    __param(7, (0, mongoose_1.InjectModel)('Setting')),
-    __param(8, (0, mongoose_1.InjectModel)('Coupon')),
-    __param(10, (0, mongoose_1.InjectModel)('ShopInformation')),
-    __param(11, (0, mongoose_1.InjectModel)('OrderOffer')),
+    __param(2, (0, mongoose_1.InjectModel)('IncompleteOrder')),
+    __param(3, (0, mongoose_1.InjectModel)('Product')),
+    __param(4, (0, mongoose_1.InjectModel)('SpecialPackage')),
+    __param(5, (0, mongoose_1.InjectModel)('UniqueId')),
+    __param(6, (0, mongoose_1.InjectModel)('Cart')),
+    __param(7, (0, mongoose_1.InjectModel)('User')),
+    __param(8, (0, mongoose_1.InjectModel)('Setting')),
+    __param(9, (0, mongoose_1.InjectModel)('Coupon')),
+    __param(11, (0, mongoose_1.InjectModel)('ShopInformation')),
+    __param(12, (0, mongoose_1.InjectModel)('OrderOffer')),
     __metadata("design:paramtypes", [mongoose_2.Model,
+        mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,

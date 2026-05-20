@@ -8,11 +8,11 @@ export declare const ZoneSchema: mongoose.Schema<any, mongoose.Model<any, any, a
 } & {
     name: string;
     status?: string;
+    priority?: number;
     division?: {
         _id?: mongoose.Types.ObjectId;
         name?: string;
     };
-    priority?: number;
     area?: {
         _id?: mongoose.Types.ObjectId;
         name?: string;

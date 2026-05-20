@@ -209,6 +209,10 @@ exports.OrderSchema = new mongoose.Schema({
         type: String,
         required: false,
     },
+    adminNote: {
+        type: String,
+        required: false,
+    },
     user: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'User',

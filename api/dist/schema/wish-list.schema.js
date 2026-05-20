@@ -22,4 +22,5 @@ exports.WishListSchema = new mongoose.Schema({
     versionKey: false,
     timestamps: true,
 });
+exports.WishListSchema.index({ user: 1, product: 1 });
 //# sourceMappingURL=wish-list.schema.js.map

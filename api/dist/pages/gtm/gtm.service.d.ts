@@ -4,13 +4,16 @@ import { UtilsService } from '../../shared/utils/utils.service';
 import { Model } from 'mongoose';
 import { ResponsePayload } from '../../interfaces/core/response-payload.interface';
 import { AnalyticsService } from '../../shared/analytics/analytics.service';
+import { PosthogService } from '../../shared/posthog/posthog.service';
 import { Setting } from '../customization/setting/interface/setting.interface';
 export declare class GtmService {
     private readonly settingModel;
     private readonly analyticsService;
     private readonly utilsService;
+    private readonly posthogService;
     private logger;
-    constructor(settingModel: Model<Setting>, analyticsService: AnalyticsService, utilsService: UtilsService);
+    constructor(settingModel: Model<Setting>, analyticsService: AnalyticsService, utilsService: UtilsService, posthogService: PosthogService);
+    private getDistinctId;
     getIP(req: Request): Promise<ResponsePayload>;
     trackThemePageView(req: Request, addGtmPageViewDto: AddGtmThemePageViewDto): Promise<ResponsePayload>;
     trackThemeViewContent(req: Request, addGtmViewContentDto: AddGtmThemeViewContentDto): Promise<ResponsePayload>;

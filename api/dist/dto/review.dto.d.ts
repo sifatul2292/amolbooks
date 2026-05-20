@@ -8,6 +8,7 @@ export declare class AddReviewDto {
     reply: string;
     replyDate: string;
     name: string;
+    images: string[];
 }
 export declare class FilterReviewDto {
     name: string;

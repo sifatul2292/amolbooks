@@ -17,6 +17,7 @@ export declare class SeoPageService {
     getAllSeoPages(filterSeoPageDto: FilterAndPaginationSeoPageDto, searchQuery?: string): Promise<ResponsePayload>;
     getSeoPageById(id: string, select: string): Promise<ResponsePayload>;
     getSeoPageByPage(pageName: string, select: string): Promise<ResponsePayload>;
+    getSeoPageByPattern(pattern: RegExp, select: string): Promise<ResponsePayload>;
     updateSeoPageById(id: string, updateSeoPageDto: UpdateSeoPageDto): Promise<ResponsePayload>;
     updateMultipleSeoPageById(ids: string[], updateSeoPageDto: UpdateSeoPageDto): Promise<ResponsePayload>;
     deleteSeoPageById(id: string, checkUsage: boolean): Promise<ResponsePayload>;

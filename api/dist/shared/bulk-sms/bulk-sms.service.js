@@ -22,23 +22,19 @@ let BulkSmsService = BulkSmsService_1 = class BulkSmsService {
     }
     sentSingleSms(phoneNo, message) {
         try {
-            console.log('test9999999999999', phoneNo);
-            const smsSenderSecret = this.configService.get('smsSenderSecret');
-            const password = this.configService.get('smsSenderPassword');
-            const smsSenderId = this.configService.get('smsSenderId');
-            const encodedApiKey = encodeURIComponent(smsSenderSecret || '');
-            const encodedPhoneNo = encodeURIComponent(phoneNo || '');
-            const encodedSenderId = encodeURIComponent(smsSenderId || '');
-            const encodedMessage = encodeURIComponent(message || '');
-            const url = `http://bulksmsbd.net/api/smsapi?api_key=${encodedApiKey}&type=text&number=${encodedPhoneNo}&senderid=${encodedSenderId}&message=${encodedMessage}`;
-            this.httpService.post(url, {}).subscribe((res) => {
-                this.logger.log('SMS sent successfully:', res.data);
-            }, (error) => {
-                this.logger.error(`Failed to send SMS to ${phoneNo}:`, (error === null || error === void 0 ? void 0 : error.message) || error);
-            });
+            const token = this.configService.get('greenwebsmsToken');
+            const params = new URLSearchParams();
+            params.append('token', token);
+            params.append('to', phoneNo);
+            params.append('message', message);
+            this.httpService
+                .post('https://api.bdbulksms.net/api.php', params.toString(), {
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            })
+                .subscribe((res) => this.logger.log(`SMS sent to ${phoneNo}:`, res.data), (error) => this.logger.error(`SMS failed to ${phoneNo}:`, (error === null || error === void 0 ? void 0 : error.message) || error));
         }
         catch (error) {
-            this.logger.error(`Error in sentSingleSms for ${phoneNo}:`, (error === null || error === void 0 ? void 0 : error.message) || error);
+            this.logger.error(`sentSingleSms error for ${phoneNo}:`, (error === null || error === void 0 ? void 0 : error.message) || error);
         }
     }
 };

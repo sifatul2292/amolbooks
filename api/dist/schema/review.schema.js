@@ -52,6 +52,11 @@ exports.ReviewSchema = new mongoose.Schema({
         type: Boolean,
         required: true,
     },
+    images: {
+        type: [String],
+        required: false,
+        default: [],
+    },
     reply: {
         type: String,
         required: false,

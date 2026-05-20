@@ -277,13 +277,16 @@ let ProductService = ProductService_1 = class ProductService {
             }
             const sortQuery = { createdAt: -1 };
             const skip = (Number(page) - 1) * Number(limit);
-            const data = await this.productModel
-                .find(mFilter)
-                .select('name nameEn seoKeyword seoTitle seoDescription author discountType slug discountAmount tags quantity regularPrice salePrice ratingTotal images ratingCount')
-                .skip(Number(skip))
-                .limit(Number(limit))
-                .sort(sortQuery);
-            const totalCount = await this.productModel.countDocuments(mFilter);
+            const [data, totalCount] = await Promise.all([
+                this.productModel
+                    .find(mFilter)
+                    .select('name nameEn seoKeyword seoTitle seoDescription author discountType slug discountAmount tags quantity regularPrice salePrice ratingTotal images ratingCount')
+                    .skip(Number(skip))
+                    .limit(Number(limit))
+                    .sort(sortQuery)
+                    .lean(),
+                this.productModel.countDocuments(mFilter),
+            ]);
             return {
                 success: true,
                 message: 'Success! Data fetch successfully.',
@@ -611,6 +614,26 @@ let ProductService = ProductService_1 = class ProductService {
                 .select(select)
                 .populate('tags');
             if (!data) {
+                const allRedirects = await this.redirectUrlModel.find({}).lean();
+                let redirectTo = null;
+                for (const redirect of allRedirects) {
+                    if (!redirect.fromUrl)
+                        continue;
+                    const hasWildcard = redirect.fromUrl.endsWith('*');
+                    const cleanFrom = redirect.fromUrl.replace(/\*$/, '');
+                    const fromPath = cleanFrom.replace(/^https?:\/\/[^/]+/, '');
+                    const segments = fromPath.split('/').filter(Boolean);
+                    const fromSlug = segments[segments.length - 1];
+                    if (!fromSlug)
+                        continue;
+                    if (hasWildcard ? slug.startsWith(fromSlug) : slug === fromSlug) {
+                        redirectTo = redirect.toUrl;
+                        break;
+                    }
+                }
+                if (redirectTo) {
+                    return { success: false, message: 'Redirect', redirectTo };
+                }
                 return { success: false, message: 'Product not found', data: null };
             }
             const calcAfterDiscount = (p) => {
@@ -685,6 +708,75 @@ let ProductService = ProductService_1 = class ProductService {
             throw new common_1.InternalServerErrorException(err.message);
         }
     }
+    async getProductOgHtml(slug, res) {
+        try {
+            const data = await this.productModel
+                .findOne({ slug })
+                .select('name slug images salePrice seoTitle seoDescription seoKeywords');
+            const escapeHtml = (str) => (str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#x27;');
+            const shopName = 'Amolbooks';
+            const title = data ? escapeHtml(data.seoTitle || data.name || shopName) : shopName;
+            const description = data
+                ? escapeHtml(data.seoDescription || `${data.name || ''} — ${shopName}`)
+                : shopName;
+            const keywords = data ? escapeHtml(data.seoKeywords || '') : '';
+            const images = data ? data.images : null;
+            const normalizeImageUrl = (url) => {
+                if (!url)
+                    return '';
+                return url.replace(/https?:\/\/apisub\.amolbooks\.com\/api\/upload\//, 'https://amolbooks.com/uploads/');
+            };
+            const rawImage = images && images.length ? images[0] : '';
+            const image = rawImage
+                ? normalizeImageUrl(rawImage)
+                : 'https://amolbooks.com/assets/images/logo.png';
+            const productSlug = data ? data.slug : slug;
+            const url = `https://amolbooks.com/product-details/${productSlug}`;
+            const price = data && data.salePrice ? `${data.salePrice}` : '';
+            const html = `<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <title>${title} | ${shopName}</title>
+  <meta name="description" content="${description}">
+  ${keywords ? `<meta name="keywords" content="${keywords}">` : ''}
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="product">
+  <meta property="og:site_name" content="${shopName}">
+  <meta property="og:title" content="${title}">
+  <meta property="og:description" content="${description}">
+  <meta property="og:image" content="${escapeHtml(image)}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="${escapeHtml(url)}">
+  ${price ? `<meta property="product:price:amount" content="${escapeHtml(price)}">` : ''}
+  ${price ? `<meta property="product:price:currency" content="BDT">` : ''}
+  <!-- Twitter / X Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${title}">
+  <meta name="twitter:description" content="${description}">
+  <meta name="twitter:image" content="${escapeHtml(image)}">
+  <link rel="canonical" href="${escapeHtml(url)}">
+</head>
+<body>
+  <h1>${title}</h1>
+  <p>${description}</p>
+  <a href="${escapeHtml(url)}">View Product</a>
+</body>
+</html>`;
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            res.setHeader('Cache-Control', 'public, max-age=300');
+            res.status(200).send(html);
+        }
+        catch (err) {
+            res.status(500).send('<html><body><h1>Error</h1></body></html>');
+        }
+    }
     async getBoughtTogetherProducts(productSlug) {
         var _a, _b, _c;
         try {
@@ -697,16 +789,15 @@ let ProductService = ProductService_1 = class ProductService {
                 const perProductIds = (_b = productDoc === null || productDoc === void 0 ? void 0 : productDoc.boughtTogetherIds) !== null && _b !== void 0 ? _b : [];
                 const currentId = (_c = productDoc === null || productDoc === void 0 ? void 0 : productDoc._id) === null || _c === void 0 ? void 0 : _c.toString();
                 if (perProductIds.length > 0) {
-                    const perPart = perProductIds.slice(0, 2);
-                    const slotsLeft = 3 - 1 - perPart.length;
+                    const perPart = perProductIds.filter((id) => id !== currentId).slice(0, 3);
+                    const slotsLeft = 3 - perPart.length;
                     const globalFill = slotsLeft > 0
                         ? globalIds.filter((id) => !perProductIds.includes(id) && id !== currentId).slice(0, slotsLeft)
                         : [];
-                    finalIds = [currentId, ...perPart, ...globalFill];
+                    finalIds = [...perPart, ...globalFill];
                 }
                 else if (currentId) {
-                    const globalFill = globalIds.filter((id) => id !== currentId).slice(0, 2);
-                    finalIds = [currentId, ...globalFill];
+                    finalIds = globalIds.filter((id) => id !== currentId).slice(0, 3);
                 }
             }
             if (!finalIds.length) {
@@ -749,7 +840,7 @@ let ProductService = ProductService_1 = class ProductService {
             const perProductIds = (_a = product === null || product === void 0 ? void 0 : product.boughtTogetherIds) !== null && _a !== void 0 ? _a : [];
             if (perProductIds.length > 0) {
                 const mIds = perProductIds.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
-                const products = await this.productModel.find({ _id: { $in: mIds } }).select(BT_SELECT);
+                const products = await this.productModel.find({ _id: { $in: mIds, $ne: new ObjectId(productId) } }).select(BT_SELECT);
                 return { success: true, message: 'Success', data: { source: 'product', productIds: perProductIds, products } };
             }
             const config = await this.boughtTogetherConfigModel.findOne({});
@@ -758,7 +849,7 @@ let ProductService = ProductService_1 = class ProductService {
                 return { success: true, message: 'No bought-together configured', data: { source: 'global', productIds: [], products: [] } };
             }
             const mGlobalIds = globalIds.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
-            const products = await this.productModel.find({ _id: { $in: mGlobalIds } }).select(BT_SELECT);
+            const products = await this.productModel.find({ _id: { $in: mGlobalIds, $ne: new ObjectId(productId) } }).select(BT_SELECT);
             return { success: true, message: 'Success', data: { source: 'global', productIds: globalIds, products } };
         }
         catch (err) {

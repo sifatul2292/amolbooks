@@ -163,7 +163,7 @@ export class OrderService {
         }
       }
 
-      for (const f of addOrderDto['orderedItems']) {
+      for (const f of (addOrderDto['orderedItems'] || [])) {
         const product = await this.productModel.findById(f._id);
         if (product?.quantity > 0) {
           await this.productModel.findByIdAndUpdate(f._id, {

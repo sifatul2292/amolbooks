@@ -13,6 +13,7 @@ const order_service_1 = require("./order.service");
 const mongoose_1 = require("@nestjs/mongoose");
 const product_schema_1 = require("../../../schema/product.schema");
 const order_schema_1 = require("../../../schema/order.schema");
+const incomplete_order_schema_1 = require("../../../schema/incomplete-order.schema");
 const unique_id_schema_1 = require("../../../schema/unique-id.schema");
 const cart_schema_1 = require("../../../schema/cart.schema");
 const user_schema_1 = require("../../../schema/user.schema");
@@ -29,6 +30,7 @@ OrderModule = __decorate([
         imports: [
             mongoose_1.MongooseModule.forFeature([
                 { name: 'Order', schema: order_schema_1.OrderSchema },
+                { name: 'IncompleteOrder', schema: incomplete_order_schema_1.IncompleteOrderSchema },
                 { name: 'Product', schema: product_schema_1.ProductSchema },
                 { name: 'UniqueId', schema: unique_id_schema_1.UniqueIdSchema },
                 { name: 'Cart', schema: cart_schema_1.CartSchema },

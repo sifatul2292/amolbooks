@@ -12,13 +12,20 @@ export declare class DashboardService {
     private readonly userModel;
     private readonly productModel;
     private readonly orderModel;
+    private readonly manualSaleModel;
     private configService;
     private utilsService;
     private logger;
-    constructor(adminModel: Model<Admin>, userModel: Model<User>, productModel: Model<Product>, orderModel: Model<Order>, configService: ConfigService, utilsService: UtilsService);
+    constructor(adminModel: Model<Admin>, userModel: Model<User>, productModel: Model<Product>, orderModel: Model<Order>, manualSaleModel: Model<any>, configService: ConfigService, utilsService: UtilsService);
     getAdminDashboard(filterOrderDto: FilterAndPaginationOrderDto, searchQuery?: string): Promise<ResponsePayload>;
     getOrderDashboard(): Promise<ResponsePayload>;
     getUserCountDashboard(): Promise<ResponsePayload>;
     getAllOrdersForDashbord(filterOrderDto: FilterAndPaginationOrderDto, searchQuery?: string): Promise<ResponsePayload>;
     getSalesData(period: string): Promise<any>;
+    getTopProducts(startDate: string, endDate: string): Promise<ResponsePayload>;
+    getProductsSold(startDate: string, endDate: string): Promise<ResponsePayload>;
+    getProfitAnalytics(startDate: string, endDate: string): Promise<ResponsePayload>;
+    getManualSales(startDate: string, endDate: string): Promise<any>;
+    addManualSale(body: any): Promise<any>;
+    deleteManualSale(id: string): Promise<any>;
 }

@@ -49,6 +49,13 @@ async function bootstrap() {
     app.use((0, express_1.urlencoded)({ extended: true, limit: '50mb' }));
     app.setGlobalPrefix('api');
     const port = process.env.PORT || 3000;
+    await app.init();
+    const httpAdapter = app.getHttpAdapter().getInstance();
+    httpAdapter.use((_req, res) => {
+        if (!res.headersSent) {
+            res.sendFile((0, path_1.join)(__dirname, '..', '..', 'ui', 'dist', 'angular-ui', 'browser', 'index.html'));
+        }
+    });
     await app.listen(port);
     logger.log(`Application is running on port ${port}`);
 }

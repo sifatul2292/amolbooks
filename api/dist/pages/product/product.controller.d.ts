@@ -1,3 +1,4 @@
+import { Response } from 'express';
 import { ResponsePayload } from '../../interfaces/core/response-payload.interface';
 import { ProductService } from './product.service';
 import { AddProductDto, FilterAndPaginationProductDto, GetProductByIdsDto, OptionProductDto, UpdateProductDto } from '../../dto/product.dto';
@@ -25,6 +26,7 @@ export declare class ProductController {
     getBoughtTogetherByProduct(id: string): Promise<ResponsePayload>;
     getProductById(id: string, select: any): Promise<ResponsePayload>;
     getProductBySlug(slug: string, select: string): Promise<ResponsePayload>;
+    getProductOgHtml(slug: string, res: Response): Promise<void>;
     updateProductById(id: string, updateProductDto: UpdateProductDto): Promise<ResponsePayload>;
     updateMultipleProductById(updateProductDto: UpdateProductDto): Promise<ResponsePayload>;
     deleteProductById(id: string): Promise<ResponsePayload>;

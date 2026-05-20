@@ -25,6 +25,7 @@ SeoPageModule = __decorate([
         ],
         controllers: [seo_page_controller_1.SeoPageController],
         providers: [seo_page_service_1.SeoPageService],
+        exports: [seo_page_service_1.SeoPageService],
     })
 ], SeoPageModule);
 exports.SeoPageModule = SeoPageModule;

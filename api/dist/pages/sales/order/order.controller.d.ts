@@ -1,4 +1,5 @@
 import { AddOrderDto, FilterAndPaginationOrderDto, GenerateInvoicesDto, OptionOrderDto, UpdateOrderDto, UpdateOrderStatusDto } from '../../../dto/order.dto';
+import { AddIncompleteOrderDto, DeleteMultipleIncompleteOrderDto, FilterAndPaginationIncompleteOrderDto, UpdateIncompleteOrderDto } from '../../../dto/incomplete-order.dto';
 import { ResponsePayload } from '../../../interfaces/core/response-payload.interface';
 import { OrderService } from './order.service';
 import { User } from '../../../interfaces/user/user.interface';
@@ -35,4 +36,10 @@ export declare class OrderController {
     deleteMultipleOrderById(data: {
         ids: string[];
     }, checkUsage: boolean): Promise<ResponsePayload>;
+    addIncompleteOrderByUser(addIncompleteOrderDto: AddIncompleteOrderDto): Promise<ResponsePayload>;
+    addIncompleteOrderByAnonymous(addIncompleteOrderDto: AddIncompleteOrderDto): Promise<ResponsePayload>;
+    getAllIncompleteOrders(filterDto: FilterAndPaginationIncompleteOrderDto, searchString: string): Promise<ResponsePayload>;
+    getIncompleteOrderById(id: string): Promise<ResponsePayload>;
+    updateIncompleteOrderById(id: string, updateIncompleteOrderDto: UpdateIncompleteOrderDto): Promise<ResponsePayload>;
+    deleteMultipleIncompleteOrderById(deleteDto: DeleteMultipleIncompleteOrderDto): Promise<ResponsePayload>;
 }

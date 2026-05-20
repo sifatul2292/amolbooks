@@ -11,9 +11,9 @@ export declare const AuthorSchema: mongoose.Schema<any, mongoose.Model<any, any,
     followers: mongoose.Types.ObjectId[];
     description?: string;
     nameEn?: string;
+    priority?: number;
     address?: string;
     image?: string;
-    priority?: number;
     birthDate?: Date;
     addressEn?: string;
     descriptionEn?: string;

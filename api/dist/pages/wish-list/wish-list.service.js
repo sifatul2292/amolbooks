@@ -49,12 +49,7 @@ let WishListService = WishListService_1 = class WishListService {
             }
             else {
                 const newData = new this.wishListModel(final);
-                const saveData = await newData.save();
-                await this.userModel.findOneAndUpdate({ _id: userId }, {
-                    $push: {
-                        wishLists: saveData._id,
-                    },
-                });
+                await newData.save();
                 return {
                     success: true,
                     message: 'Added to WishList Successfully!',
@@ -82,12 +77,7 @@ let WishListService = WishListService_1 = class WishListService {
                 else {
                     const final = Object.assign(Object.assign({}, data), { user: userId });
                     const newData = new this.wishListModel(final);
-                    const saveData = await newData.save();
-                    await this.userModel.findOneAndUpdate({ _id: userId }, {
-                        $push: {
-                            wishLists: saveData._id,
-                        },
-                    });
+                    await newData.save();
                 }
             }
             return {
