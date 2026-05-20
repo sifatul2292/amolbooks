@@ -2413,8 +2413,6 @@
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
 
     var headers = { 'Content-Type': 'application/json' };
-    var token = localStorage.getItem('co_admin_token') || '';
-    if (token) headers['administrator'] = token;
 
     function resetBtn() {
       btn.disabled = false;
@@ -2425,7 +2423,7 @@
       else alert(msg);
     }
 
-    fetch(API + '/api/order/add', {
+    fetch(API + '/api/order/add-order-by-anonymous', {
       method: 'POST',
       headers: headers,
       body: JSON.stringify({
