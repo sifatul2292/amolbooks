@@ -78,11 +78,6 @@
     return { phone: phone, name: name, address: address, city: city, paymentType: paymentType, note: note };
   }
 
-  /* ── Auth header ── */
-  function getAuthHeader() {
-    return localStorage.getItem('adminTokenKey') || localStorage.getItem('co_admin_token') || '';
-  }
-
   /* ── CSS ── */
   var CSS = [
     '#' + BTN_ID + ' {',
@@ -295,16 +290,14 @@
     btn.disabled = true;
     btn.textContent = '⏳ Creating...';
 
-    var token = getAuthHeader();
     var headers = { 'Content-Type': 'application/json' };
-    if (token) headers['administrator'] = token;
 
     function reset() {
       btn.disabled = false;
       btn.textContent = '+ Create Order';
     }
 
-    fetch(API + '/api/order/add', {
+    fetch(API + '/api/order/add-order-by-anonymous', {
       method: 'POST',
       headers: headers,
       body: JSON.stringify({ phoneNo: phone, name: name, shippingAddress: address, city: city, paymentType: paymentType, adminNote: note })
