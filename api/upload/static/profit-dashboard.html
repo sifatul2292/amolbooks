@@ -79,11 +79,11 @@
 
     /* Table */
     .day-table { background: #fff; border-radius: var(--radius); border: 1px solid var(--g200); overflow: hidden; }
-    .day-table-header { display: grid; grid-template-columns: 120px 1fr 1fr 1fr 1fr 32px; gap: 0; padding: 10px 16px; background: var(--g50); border-bottom: 1px solid var(--g200); }
+    .day-table-header { display: grid; grid-template-columns: 120px 1fr 1fr 1fr 1fr 1fr 1fr 32px; gap: 0; padding: 10px 16px; background: var(--g50); border-bottom: 1px solid var(--g200); }
     .th { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--g400); }
     .day-row { border-bottom: 1px solid var(--g100); }
     .day-row:last-child { border-bottom: none; }
-    .day-main { display: grid; grid-template-columns: 120px 1fr 1fr 1fr 1fr 32px; gap: 0; padding: 12px 16px; cursor: pointer; transition: background .12s; align-items: center; }
+    .day-main { display: grid; grid-template-columns: 120px 1fr 1fr 1fr 1fr 1fr 1fr 32px; gap: 0; padding: 12px 16px; cursor: pointer; transition: background .12s; align-items: center; }
     .day-main:hover { background: var(--g50); }
     .day-date { font-size: 13px; font-weight: 700; color: #1e293b; }
     .day-sub { font-size: 10.5px; color: var(--g400); margin-top: 1px; }
@@ -242,6 +242,16 @@
           <div class="scard-sub" id="s-orders">— orders</div>
         </div>
         <div class="scard">
+          <div class="scard-label">Product Cost</div>
+          <div class="scard-val" id="s-cost">—</div>
+          <div class="scard-sub" id="s-cost-note">From cost price</div>
+        </div>
+        <div class="scard">
+          <div class="scard-label">Delivery Charge</div>
+          <div class="scard-val" id="s-delivery">—</div>
+          <div class="scard-sub" id="s-delivery-note">Included in revenue</div>
+        </div>
+        <div class="scard">
           <div class="scard-label">Meta Ad Spend</div>
           <div class="scard-val" id="s-adspend">—</div>
           <div class="scard-sub" id="s-meta-note">Connect Meta to auto-sync</div>
@@ -249,7 +259,7 @@
         <div class="scard">
           <div class="scard-label">Net Profit</div>
           <div class="scard-val" id="s-profit">—</div>
-          <div class="scard-sub" id="s-margin">Revenue − Ad Spend</div>
+          <div class="scard-sub" id="s-margin">Revenue − Cost − Delivery − Ads</div>
         </div>
       </div>
 
@@ -282,6 +292,8 @@
           <span class="th">Date</span>
           <span class="th">Orders</span>
           <span class="th">Revenue</span>
+          <span class="th">Cost</span>
+          <span class="th">Delivery</span>
           <span class="th">Ad Spend</span>
           <span class="th">Profit</span>
           <span class="th"></span>
@@ -340,6 +352,8 @@
   var metaConnected = false;
   var revenueByDate = {};
   var orderCountByDate = {};
+  var costByDate = {};
+  var deliveryByDate = {};
   var calYear = new Date().getFullYear();
   var calMonth = new Date().getMonth();
 
@@ -436,33 +450,41 @@
     spendByDate = {};
     revenueByDate = {};
     orderCountByDate = {};
+    costByDate = {};
+    deliveryByDate = {};
     if (spend && spend.success && spend.data && spend.data.daily) {
       spend.data.daily.forEach(function (d) { spendByDate[d.date] = d.spend || 0; });
     }
 
     var daily = (profit && profit.success && profit.data && profit.data.daily) ? profit.data.daily : [];
-    var totRev = 0, totOrders = 0, totSpend = 0;
+    var totRev = 0, totOrders = 0, totSpend = 0, totCost = 0, totDelivery = 0;
 
     daily.forEach(function (d) {
       revenueByDate[d.date] = d.revenue || 0;
       orderCountByDate[d.date] = d.orderCount || 0;
+      costByDate[d.date] = d.totalCost || 0;
+      deliveryByDate[d.date] = d.deliveryCharge || 0;
       totRev += d.revenue || 0;
       totOrders += d.orderCount || 0;
+      totCost += d.totalCost || 0;
+      totDelivery += d.deliveryCharge || 0;
       totSpend += spendByDate[d.date] || 0;
     });
 
-    // If spend data has dates not in profit daily (manual entries), add them
     if (spend && spend.success && spend.data && spend.data.total) {
       totSpend = spend.data.total;
     }
 
     setText('s-revenue', '৳' + fmt(totRev));
     setText('s-orders', totOrders + ' orders');
+    setText('s-cost', totCost > 0 ? '৳' + fmt(totCost) : '—');
+    setText('s-delivery', totDelivery > 0 ? '৳' + fmt(totDelivery) : '—');
     setText('s-adspend', totSpend > 0 ? '৳' + fmt(totSpend) : '—');
 
-    var profitVal = totRev - totSpend;
+    var profitVal = totRev - totCost - totDelivery - totSpend;
     var profEl = document.getElementById('s-profit');
-    if (totSpend > 0) {
+    var hasDeductions = totCost > 0 || totDelivery > 0 || totSpend > 0;
+    if (hasDeductions) {
       profEl.textContent = (profitVal < 0 ? '-৳' : '৳') + fmt(Math.abs(profitVal));
       profEl.className = 'scard-val ' + (profitVal >= 0 ? 'green' : 'red');
       var margin = totRev > 0 ? Math.round(profitVal / totRev * 100) : 0;
@@ -470,7 +492,7 @@
     } else {
       profEl.textContent = '—';
       profEl.className = 'scard-val';
-      setText('s-margin', 'Revenue − Ad Spend');
+      setText('s-margin', 'Revenue − Cost − Delivery − Ads');
     }
 
     renderRows(daily);
@@ -488,10 +510,15 @@
 
     container.innerHTML = daily.map(function (d, i) {
       var sp = spendByDate[d.date] || 0;
-      var pv = d.revenue - sp;
-      var profCls = sp > 0 ? (pv >= 0 ? 'profit-pos' : 'profit-neg') : 'profit-na';
-      var profStr = sp > 0 ? ((pv < 0 ? '-৳' : '৳') + fmt(Math.abs(pv))) : '—';
+      var cost = d.totalCost || 0;
+      var del = d.deliveryCharge || 0;
+      var pv = d.revenue - cost - del - sp;
+      var hasDeductions = cost > 0 || del > 0 || sp > 0;
+      var profCls = hasDeductions ? (pv >= 0 ? 'profit-pos' : 'profit-neg') : 'profit-na';
+      var profStr = hasDeductions ? ((pv < 0 ? '-৳' : '৳') + fmt(Math.abs(pv))) : '—';
       var spStr = sp > 0 ? '৳' + fmt(sp) : '—';
+      var costStr = cost > 0 ? '৳' + fmt(cost) : '—';
+      var delStr = del > 0 ? '৳' + fmt(del) : '—';
       var dateLabel = formatDate(d.date);
 
       return '<div class="day-row" id="row-' + i + '">' +
@@ -499,6 +526,8 @@
           '<div><div class="day-date">' + dateLabel + '</div><div class="day-sub">' + d.date + '</div></div>' +
           '<div class="day-cell">' + d.orderCount + '</div>' +
           '<div class="day-cell revenue">৳' + fmt(d.revenue) + '</div>' +
+          '<div class="day-cell" style="color:var(--red)">' + costStr + '</div>' +
+          '<div class="day-cell" style="color:var(--g500)">' + delStr + '</div>' +
           '<div class="day-cell adspend">' + spStr + '</div>' +
           '<div class="day-cell ' + profCls + '">' + profStr + '</div>' +
           '<button class="expand-btn" id="expbtn-' + i + '"><i class="fas fa-chevron-down"></i></button>' +

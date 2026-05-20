@@ -800,20 +800,57 @@ export class DashboardService {
             orderStatus: { $nin: [6] },
           },
         },
+        { $unwind: '$orderedItems' },
+        {
+          $lookup: {
+            from: 'products',
+            localField: 'orderedItems._id',
+            foreignField: '_id',
+            as: '_prod',
+          },
+        },
+        {
+          $addFields: {
+            _itemCost: {
+              $multiply: [
+                { $ifNull: [{ $arrayElemAt: ['$_prod.costPrice', 0] }, 0] },
+                { $ifNull: ['$orderedItems.quantity', 1] },
+              ],
+            },
+          },
+        },
         {
           $group: {
-            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: '+06:00' } },
-            revenue: { $sum: '$grandTotal' },
+            _id: {
+              orderId: '$_id',
+              date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: '+06:00' } },
+            },
+            revenue: { $first: '$grandTotal' },
+            deliveryCharge: { $first: { $ifNull: ['$deliveryCharge', 0] } },
+            totalCost: { $sum: '$_itemCost' },
+          },
+        },
+        {
+          $group: {
+            _id: '$_id.date',
+            revenue: { $sum: '$revenue' },
+            deliveryCharge: { $sum: '$deliveryCharge' },
+            totalCost: { $sum: '$totalCost' },
             orderCount: { $sum: 1 },
           },
         },
         { $sort: { _id: 1 } },
-        { $project: { _id: 0, date: '$_id', revenue: 1, orderCount: 1 } },
+        { $project: { _id: 0, date: '$_id', revenue: 1, orderCount: 1, totalCost: 1, deliveryCharge: 1 } },
       ]);
 
       const totals = daily.reduce(
-        (acc, d) => ({ revenue: acc.revenue + d.revenue, orderCount: acc.orderCount + d.orderCount }),
-        { revenue: 0, orderCount: 0 },
+        (acc, d) => ({
+          revenue: acc.revenue + d.revenue,
+          orderCount: acc.orderCount + d.orderCount,
+          totalCost: acc.totalCost + d.totalCost,
+          deliveryCharge: acc.deliveryCharge + d.deliveryCharge,
+        }),
+        { revenue: 0, orderCount: 0, totalCost: 0, deliveryCharge: 0 },
       );
 
       return { success: true, data: { daily, totals } };
