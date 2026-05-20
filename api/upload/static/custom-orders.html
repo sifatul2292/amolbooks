@@ -515,6 +515,110 @@
     #toast-msg { flex: 1; }
     #toast-close { background: none; border: none; color: rgba(255,255,255,.7); cursor: pointer; font-size: 15px; padding: 2px; line-height: 1; }
 
+    /* ── AI Assist Modal ── */
+    .ai-modal-overlay {
+      position: fixed; inset: 0; background: rgba(15,23,42,.7);
+      z-index: 1100; display: none; align-items: center; justify-content: center;
+      padding: 16px; backdrop-filter: blur(6px);
+    }
+    .ai-modal-overlay.open { display: flex; }
+    .ai-modal-box {
+      background: #fff; border-radius: 20px; width: 100%; max-width: 520px;
+      box-shadow: 0 24px 64px rgba(0,0,0,.25);
+      overflow: hidden; animation: modalIn .22s cubic-bezier(.34,1.56,.64,1);
+    }
+    .ai-modal-header {
+      background: linear-gradient(135deg, #10b981, #059669);
+      padding: 20px 24px; display: flex; align-items: center; gap: 14px;
+    }
+    .ai-modal-header-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: rgba(255,255,255,.2); display: flex; align-items: center;
+      justify-content: center; font-size: 20px; color: #fff; flex-shrink: 0;
+    }
+    .ai-modal-header-text h2 { font-size: 18px; font-weight: 800; color: #fff; }
+    .ai-modal-header-text p { font-size: 12px; color: rgba(255,255,255,.8); margin-top: 2px; }
+    .ai-modal-close {
+      margin-left: auto; background: rgba(255,255,255,.2); border: none;
+      width: 32px; height: 32px; border-radius: 50%; color: #fff; font-size: 16px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background .15s;
+    }
+    .ai-modal-close:hover { background: rgba(255,255,255,.35); }
+    .ai-modal-body { padding: 24px; }
+    .ai-tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+    .ai-tab {
+      display: flex; align-items: center; gap: 7px; padding: 9px 16px;
+      border-radius: 100px; font-size: 13px; font-weight: 700; cursor: pointer;
+      border: 2px solid transparent; transition: all .15s;
+    }
+    .ai-tab.active { background: #10b981; color: #fff; }
+    .ai-tab:not(.active) { background: #f1f5f9; color: #64748b; }
+    .ai-step { display: none; }
+    .ai-step.active { display: block; }
+    .ai-label { font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 8px; display: block; }
+    .ai-textarea {
+      width: 100%; border: 1.5px solid #e2e8f0; border-radius: 12px;
+      padding: 14px; font-size: 14px; font-family: inherit; color: #1e293b;
+      resize: vertical; min-height: 160px; outline: none; transition: border-color .15s;
+      line-height: 1.6;
+    }
+    .ai-textarea:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,.1); }
+    .ai-textarea::placeholder { color: #94a3b8; }
+    .ai-hint { font-size: 11.5px; color: #64748b; margin-top: 8px; display: flex; align-items: center; gap: 6px; }
+    .ai-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .ai-field-row.full { grid-template-columns: 1fr; }
+    .ai-field { display: flex; flex-direction: column; gap: 5px; }
+    .ai-field label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #64748b; }
+    .ai-field input, .ai-field select, .ai-field textarea {
+      border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 9px 12px;
+      font-size: 13.5px; font-family: inherit; color: #1e293b; outline: none;
+      transition: border-color .15s; background: #fff;
+    }
+    .ai-field input:focus, .ai-field select:focus, .ai-field textarea:focus {
+      border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,.1);
+    }
+    .ai-field textarea { min-height: 60px; resize: vertical; }
+    .ai-modal-footer {
+      padding: 16px 24px; border-top: 1px solid #f1f5f9;
+      display: flex; gap: 10px; justify-content: flex-end;
+    }
+    .btn-ai-extract {
+      display: flex; align-items: center; gap: 8px;
+      background: #10b981; color: #fff; border: none; border-radius: 100px;
+      padding: 11px 22px; font-size: 14px; font-weight: 700; cursor: pointer;
+      transition: background .15s; font-family: inherit;
+    }
+    .btn-ai-extract:hover { background: #059669; }
+    .btn-ai-extract:disabled { background: #94a3b8; cursor: not-allowed; }
+    .btn-ai-cancel {
+      background: #f1f5f9; color: #64748b; border: none; border-radius: 100px;
+      padding: 11px 20px; font-size: 14px; font-weight: 700; cursor: pointer;
+      transition: background .15s; font-family: inherit;
+    }
+    .btn-ai-cancel:hover { background: #e2e8f0; }
+    .btn-ai-create {
+      display: flex; align-items: center; gap: 8px;
+      background: #7c3aed; color: #fff; border: none; border-radius: 100px;
+      padding: 11px 22px; font-size: 14px; font-weight: 700; cursor: pointer;
+      transition: background .15s; font-family: inherit;
+    }
+    .btn-ai-create:hover { background: #5b21b6; }
+    .btn-ai-create:disabled { background: #94a3b8; cursor: not-allowed; }
+    .btn-ai-back {
+      background: #f1f5f9; color: #64748b; border: none; border-radius: 100px;
+      padding: 11px 20px; font-size: 14px; font-weight: 700; cursor: pointer;
+      transition: background .15s; font-family: inherit;
+    }
+    .btn-ai-back:hover { background: #e2e8f0; }
+    .ai-topbar-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 14px; border-radius: 100px; font-size: 12px; font-weight: 700;
+      border: 1px solid rgba(255,255,255,.25); cursor: pointer; transition: all .15s;
+      color: #fff; background: rgba(16,185,129,.3); white-space: nowrap;
+    }
+    .ai-topbar-btn:hover { background: rgba(16,185,129,.5); }
+
     /* ── Modal ── */
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(15,23,42,.65);
@@ -888,6 +992,9 @@
         <i class="fas fa-search"></i>
         <input type="text" id="searchInput" placeholder="Search order / phone / name…">
       </div>
+      <button class="ai-topbar-btn" onclick="openAiAssist()">
+        <i class="fas fa-magic"></i><span class="btn-label"> AI Assist</span>
+      </button>
       <a href="#" onclick="this.href=ADMIN_URL+'/sales/add-order';return true" target="_blank" class="topbar-btn">
         <i class="fas fa-plus"></i><span class="btn-label"> Add Order</span>
       </a>
@@ -1076,6 +1183,85 @@
   <span id="toast-icon"></span>
   <span id="toast-msg"></span>
   <button id="toast-close" onclick="document.getElementById('toast').classList.remove('show')">✕</button>
+</div>
+
+<!-- AI Assist Modal -->
+<div class="ai-modal-overlay" id="aiAssistModal">
+  <div class="ai-modal-box">
+    <div class="ai-modal-header">
+      <div class="ai-modal-header-icon"><i class="fas fa-magic"></i></div>
+      <div class="ai-modal-header-text">
+        <h2>AI Assist</h2>
+        <p>Create order from WhatsApp / Facebook message</p>
+      </div>
+      <button class="ai-modal-close" onclick="closeAiAssist()">&times;</button>
+    </div>
+    <div class="ai-modal-body">
+      <!-- Step 1: Paste Text -->
+      <div class="ai-step active" id="aiStep1">
+        <span class="ai-label">Paste the order message</span>
+        <textarea class="ai-textarea" id="aiOrderText" placeholder="Paste customer order from WhatsApp, Facebook, SMS...&#10;&#10;+880 1721-329387&#10;Mostofa&#10;Keranipara, Rangpur&#10;৫০০ শব্দে কুরআনের ৭৫%&#10;ক্যাশ অন ডেলিভারি ৩৮৫/-"></textarea>
+        <div class="ai-hint">
+          <i class="fas fa-language"></i> Understands Bangla, English & Banglish
+        </div>
+      </div>
+      <!-- Step 2: Review & Confirm -->
+      <div class="ai-step" id="aiStep2">
+        <div class="ai-field-row">
+          <div class="ai-field">
+            <label>Phone</label>
+            <input type="text" id="aiPhone" placeholder="+880 1712-345678">
+          </div>
+          <div class="ai-field">
+            <label>Name</label>
+            <input type="text" id="aiName" placeholder="Customer name">
+          </div>
+        </div>
+        <div class="ai-field-row full">
+          <div class="ai-field">
+            <label>Address</label>
+            <input type="text" id="aiAddress" placeholder="Full shipping address">
+          </div>
+        </div>
+        <div class="ai-field-row">
+          <div class="ai-field">
+            <label>City</label>
+            <input type="text" id="aiCity" placeholder="City">
+          </div>
+          <div class="ai-field">
+            <label>Payment Type</label>
+            <select id="aiPaymentType">
+              <option value="COD">Cash on Delivery</option>
+              <option value="ONLINE">Online Payment</option>
+              <option value="BKASH">bKash</option>
+              <option value="NAGAD">Nagad</option>
+            </select>
+          </div>
+        </div>
+        <div class="ai-field-row full">
+          <div class="ai-field">
+            <label>Product / Note</label>
+            <textarea id="aiNote" placeholder="Product name, price, extra notes..."></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ai-modal-footer">
+      <div id="aiFooterStep1" style="display:flex;gap:10px;width:100%;justify-content:flex-end">
+        <button class="btn-ai-cancel" onclick="closeAiAssist()">Cancel</button>
+        <button class="btn-ai-extract" onclick="extractOrderData()">
+          <i class="fas fa-magic"></i> Extract Order
+        </button>
+      </div>
+      <div id="aiFooterStep2" style="display:none;gap:10px;width:100%;justify-content:flex-end">
+        <button class="btn-ai-back" onclick="aiGoBack()"><i class="fas fa-arrow-left"></i> Back</button>
+        <button class="btn-ai-cancel" onclick="closeAiAssist()">Cancel</button>
+        <button class="btn-ai-create" onclick="createAiOrder()">
+          <i class="fas fa-plus"></i> Create Order
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Order Modal -->
@@ -1293,6 +1479,7 @@
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 3500);
   }
+  window.showToast = showToast;
 
   /* ── Dropdown ── */
   window.toggleDropdown = function (id) {
@@ -2073,9 +2260,186 @@
     .catch(function(){loadOrders();});
   }
 
+  window.loadSnap = loadSnap;
+  window.loadTodayStats = loadTodayStats;
+
   /* ── Init ── */
   if (getToken()) { hideLogin(); loadRepeatCustomers(); loadTodayStats(); loadStatusCounts(); loadSnap(); }
   else { showLogin(); }
+})();
+</script>
+<script>
+/* ── AI Assist ── */
+(function() {
+  var bnDigits = {'০':'0','১':'1','২':'2','৩':'3','৪':'4','৫':'5','৬':'6','৭':'7','৮':'8','৯':'9'};
+
+  function bnToEn(str) {
+    return str.replace(/[০-৯]/g, function(d) { return bnDigits[d]; });
+  }
+
+  function normalizePhone(raw) {
+    var s = bnToEn(raw).replace(/[\s\-().]/g, '');
+    if (/^\+8801[3-9]\d{8}$/.test(s)) return s;
+    if (/^8801[3-9]\d{8}$/.test(s)) return '+' + s;
+    if (/^01[3-9]\d{8}$/.test(s)) return '+880' + s.slice(1);
+    return s;
+  }
+
+  function extractPrice(line) {
+    var s = bnToEn(line);
+    var m = s.match(/(\d+)/g);
+    return m ? m[m.length - 1] : '';
+  }
+
+  function detectPaymentType(line) {
+    var l = line.toLowerCase();
+    if (/ক্যাশ|cash on delivery|cod/.test(l)) return 'COD';
+    if (/bkash|বিকাশ/.test(l)) return 'BKASH';
+    if (/nagad|নগদ/.test(l)) return 'NAGAD';
+    if (/online|ট্রান্সফার/.test(l)) return 'ONLINE';
+    return 'COD';
+  }
+
+  function isPhoneLine(line) {
+    var s = bnToEn(line).replace(/[\s\-().+]/g, '');
+    return /^(880)?01[3-9]\d{8}$/.test(s) || /^\+?(880)?01[3-9]/.test(bnToEn(line));
+  }
+
+  function isPriceLine(line) {
+    var l = line.toLowerCase();
+    return /ক্যাশ|cash|cod|delivery|bkash|বিকাশ|nagad|নগদ|টাকা|তাকা|\/-/.test(l) || (/\d/.test(bnToEn(line)) && /\/-|tk|taka/.test(l));
+  }
+
+  window.openAiAssist = function() {
+    document.getElementById('aiOrderText').value = '';
+    document.getElementById('aiStep1').classList.add('active');
+    document.getElementById('aiStep2').classList.remove('active');
+    document.getElementById('aiFooterStep1').style.display = 'flex';
+    document.getElementById('aiFooterStep2').style.display = 'none';
+    document.getElementById('aiAssistModal').classList.add('open');
+    setTimeout(function() { document.getElementById('aiOrderText').focus(); }, 100);
+  };
+
+  window.closeAiAssist = function() {
+    document.getElementById('aiAssistModal').classList.remove('open');
+  };
+
+  window.aiGoBack = function() {
+    document.getElementById('aiStep2').classList.remove('active');
+    document.getElementById('aiStep1').classList.add('active');
+    document.getElementById('aiFooterStep2').style.display = 'none';
+    document.getElementById('aiFooterStep1').style.display = 'flex';
+  };
+
+  window.extractOrderData = function() {
+    var raw = document.getElementById('aiOrderText').value.trim();
+    if (!raw) { alert('Paste order text first'); return; }
+
+    var lines = raw.split('\n').map(function(l) { return l.trim(); }).filter(Boolean);
+    var phone = '', name = '', address = '', city = '', product = '', paymentType = 'COD', price = '';
+    var remaining = [];
+
+    /* Extract phone (first phone-like line) */
+    for (var i = 0; i < lines.length; i++) {
+      if (!phone && isPhoneLine(lines[i])) { phone = normalizePhone(lines[i]); }
+      else if (!isPriceLine(lines[i]) || i < lines.length - 2) { remaining.push(lines[i]); }
+    }
+
+    /* Last line = price/payment */
+    var lastLine = lines[lines.length - 1];
+    if (isPriceLine(lastLine)) {
+      paymentType = detectPaymentType(lastLine);
+      price = extractPrice(lastLine);
+      remaining = remaining.filter(function(l) { return l !== lastLine; });
+    }
+
+    /* remaining: name, address, product (in order) */
+    if (remaining.length >= 1) name = remaining[0];
+    if (remaining.length >= 2) address = remaining[1];
+    if (remaining.length >= 3) product = remaining.slice(2).join(' | ');
+
+    /* City from last comma-part of address */
+    if (address) {
+      var parts = address.split(',');
+      if (parts.length > 1) city = parts[parts.length - 1].trim();
+    }
+
+    /* Build note */
+    var note = product ? product + (price ? ' — ৳' + price : '') : (price ? '৳' + price : '');
+
+    document.getElementById('aiPhone').value = phone;
+    document.getElementById('aiName').value = name;
+    document.getElementById('aiAddress').value = address;
+    document.getElementById('aiCity').value = city;
+    document.getElementById('aiNote').value = note;
+    var sel = document.getElementById('aiPaymentType');
+    for (var j = 0; j < sel.options.length; j++) {
+      if (sel.options[j].value === paymentType) { sel.selectedIndex = j; break; }
+    }
+
+    document.getElementById('aiStep1').classList.remove('active');
+    document.getElementById('aiStep2').classList.add('active');
+    document.getElementById('aiFooterStep1').style.display = 'none';
+    document.getElementById('aiFooterStep2').style.display = 'flex';
+  };
+
+  window.createAiOrder = function() {
+    var btn = document.querySelector('.btn-ai-create');
+    var phone = document.getElementById('aiPhone').value.trim();
+    var name = document.getElementById('aiName').value.trim();
+    var address = document.getElementById('aiAddress').value.trim();
+    var city = document.getElementById('aiCity').value.trim();
+    var paymentType = document.getElementById('aiPaymentType').value;
+    var note = document.getElementById('aiNote').value.trim();
+
+    if (!phone) { alert('Phone number required'); return; }
+    if (!name) { alert('Customer name required'); return; }
+    if (!address) { alert('Shipping address required'); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+
+    var headers = { 'Content-Type': 'application/json' };
+    var token = localStorage.getItem('co_admin_token') || '';
+    if (token) headers['administrator'] = token;
+
+    fetch(API + '/api/order/add', {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({
+        phoneNo: phone,
+        name: name,
+        shippingAddress: address,
+        city: city,
+        paymentType: paymentType,
+        adminNote: note
+      })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-plus"></i> Create Order';
+      if (res && (res.success || res._id || (res.data && res.data._id))) {
+        var orderId = (res.data && res.data.orderId) || (res.orderId) || '';
+        showToast('Order' + (orderId ? ' #' + orderId : '') + ' created!', 'success');
+        closeAiAssist();
+        if (typeof loadSnap === 'function') loadSnap();
+        if (typeof loadTodayStats === 'function') loadTodayStats();
+      } else {
+        showToast((res && res.message) || 'Failed to create order', 'error');
+      }
+    })
+    .catch(function(err) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-plus"></i> Create Order';
+      showToast('Network error — ' + err.message, 'error');
+    });
+  };
+
+  /* Close on backdrop click */
+  document.getElementById('aiAssistModal').addEventListener('click', function(e) {
+    if (e.target === this) closeAiAssist();
+  });
 })();
 </script>
 <script>if(window.innerWidth>768){var el=document.getElementById("dateRow");if(el)el.style.display="flex";}</script></body>
