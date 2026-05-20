@@ -1178,4 +1178,183 @@
 </script>
 
 <script src="review-image-upload.js?v=9"></script>
+
+<script>
+/* OFF50 Promo Banner — header strip + checkout hint + auto-apply chip */
+(function(){
+  'use strict';
+  var BANNER_ID='__off50-promo-banner';
+  var CHECKOUT_HINT_ID='__off50-checkout-hint';
+  var AUTOAPPLY_ID='__off50-autoapply';
+  var DISMISSED_KEY='promo_off50_dismissed';
+
+  function injectStyles(){
+    if(document.getElementById('__off50-styles'))return;
+    var s=document.createElement('style');
+    s.id='__off50-styles';
+    s.textContent=
+      '#__off50-promo-banner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;background:#EAF3DE;border-left:3px solid #3B6D11;padding:10px 16px;width:100%;box-sizing:border-box;font-family:hind-siliguri,sans-serif;}'
+      +'#__off50-promo-banner .off50-msg{display:flex;align-items:center;gap:8px;flex:1;min-width:180px;}'
+      +'#__off50-promo-banner .off50-msg span{color:#27500A;font-weight:500;font-size:13px;}'
+      +'#__off50-promo-banner .off50-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}'
+      +'#__off50-promo-banner .off50-pill{background:#27500A;color:#C0DD97;font-size:12px;font-weight:600;padding:3px 10px;border-radius:6px;letter-spacing:0.05em;cursor:pointer;user-select:all;}'
+      +'#__off50-promo-banner .off50-close{background:none;border:none;cursor:pointer;color:#27500A;font-size:18px;padding:0 4px;line-height:1;opacity:0.6;}'
+      +'#__off50-promo-banner .off50-close:hover{opacity:1;}'
+      +'@media(max-width:480px){#__off50-promo-banner{padding:8px 12px;}}';
+    document.head.appendChild(s);
+  }
+
+  /* ── header banner ── */
+  function isDismissed(){try{return sessionStorage.getItem(DISMISSED_KEY)==='1';}catch(e){return false;}}
+
+  function injectHeaderBanner(){
+    if(document.getElementById(BANNER_ID))return;
+    if(isDismissed())return;
+    var header=document.querySelector('app-header');
+    if(!header||!header.parentElement)return;
+    injectStyles();
+    var b=document.createElement('div');
+    b.id=BANNER_ID;
+    b.innerHTML='<div class="off50-msg"><span style="font-size:15px;flex-shrink:0;">🏷️</span><span>৮৬০ টাকার উপর অর্ডার করলে পাবেন ৫০ টাকা ডিস্কাউন্ট!</span></div>'
+      +'<div class="off50-right"><span class="off50-pill">OFF50</span>'
+      +'<button class="off50-close" aria-label="বন্ধ করুন">&times;</button></div>';
+    b.querySelector('.off50-close').addEventListener('click',function(){
+      b.style.display='none';
+      try{sessionStorage.setItem(DISMISSED_KEY,'1');}catch(e){}
+    });
+    header.parentElement.insertBefore(b,header.nextSibling);
+  }
+
+  function tryBanner(n){
+    if(document.getElementById(BANNER_ID))return;
+    if(isDismissed())return;
+    injectHeaderBanner();
+    if(!document.getElementById(BANNER_ID)&&n>0)setTimeout(function(){tryBanner(n-1);},400);
+  }
+
+  /* ── checkout hint ── */
+  function bengaliToNum(s){
+    return s.replace(/[৳\s,]/g,'').replace(/[০-৯]/g,function(c){return ''+(c.charCodeAt(0)-0x09E6);});
+  }
+
+  function readSubtotal(){
+    try{
+      var walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null,false);
+      var node;
+      while((node=walker.nextNode())){
+        if((node.nodeValue||'').trim()==='মোট টাকা'){
+          var row=node.parentElement&&node.parentElement.parentElement;
+          if(!row)continue;
+          var children=row.querySelectorAll('*');
+          for(var i=0;i<children.length;i++){
+            var t=(children[i].textContent||'').trim();
+            if(t.indexOf('মোট টাকা')!==-1)continue;
+            var n2=parseInt(bengaliToNum(t));
+            if(!isNaN(n2)&&n2>100&&n2<100000)return n2;
+          }
+        }
+      }
+    }catch(e){}
+    return null;
+  }
+
+  function injectCheckoutHint(){
+    if(document.getElementById(CHECKOUT_HINT_ID))return;
+    if(window.location.pathname.indexOf('/checkout')===-1)return;
+    var walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null,false);
+    var node;
+    var target=null;
+    while((node=walker.nextNode())){
+      if((node.nodeValue||'').indexOf('প্রোমো কোড বা ভাউচার কোড')!==-1){
+        target=node.parentElement;
+        break;
+      }
+    }
+    if(!target||!target.parentElement)return;
+    var total=readSubtotal();
+    var qualifies=(total===null||total>=860);
+    var bg=qualifies?'#EAF3DE':'#FAEEDA';
+    var bd=qualifies?'#97C459':'#E8B77A';
+    var tc=qualifies?'#27500A':'#854F0B';
+    var pb=qualifies?'#27500A':'#854F0B';
+    var pt=qualifies?'#C0DD97':'#FFF3E0';
+    var line2=qualifies
+      ?'৫০ টাকা ছাড় পাবেন'
+      :(total!==null
+        ?'আর ৳'+(860-total)+' টাকার বই যোগ করুন এবং OFF50 ব্যবহার করুন'
+        :'৫০ টাকা ছাড় পাবেন');
+    var hint=document.createElement('div');
+    hint.id=CHECKOUT_HINT_ID;
+    hint.style.cssText='background:'+bg+';border:0.5px solid '+bd+';border-radius:8px;padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:hind-siliguri,sans-serif;box-sizing:border-box;';
+    hint.innerHTML='<div style="display:flex;align-items:center;gap:8px;flex:1;">'
+      +'<span style="font-size:15px;flex-shrink:0;">🏷️</span>'
+      +'<div style="display:flex;flex-direction:column;gap:1px;">'
+      +'<span style="color:'+tc+';font-size:12px;font-weight:400;">৮৬০ টাকার উপর অর্ডারে</span>'
+      +'<span style="color:'+tc+';font-size:13px;font-weight:600;">'+line2+'</span>'
+      +'</div></div>'
+      +'<span style="background:'+pb+';color:'+pt+';font-size:11px;font-weight:500;padding:3px 8px;border-radius:6px;letter-spacing:0.05em;flex-shrink:0;cursor:pointer;user-select:all;">OFF50</span>';
+    target.parentElement.insertBefore(hint,target);
+    injectAutoApply();
+  }
+
+  function injectAutoApply(){
+    if(document.getElementById(AUTOAPPLY_ID))return;
+    var inputs=document.querySelectorAll('input');
+    var inp=null;
+    for(var i=0;i<inputs.length;i++){
+      var ph=(inputs[i].placeholder||'');
+      if(ph.indexOf('কুপন কোড')!==-1||ph.indexOf('আপনার কুপন')!==-1){inp=inputs[i];break;}
+    }
+    if(!inp)return;
+    var chip=document.createElement('div');
+    chip.id=AUTOAPPLY_ID;
+    chip.style.cssText='display:flex;align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap;font-family:hind-siliguri,sans-serif;';
+    chip.innerHTML='<span style="font-size:12px;color:#555;">কুপন ব্যবহার করুন:</span>'
+      +'<button style="background:#27500A;color:#C0DD97;border:none;border-radius:6px;padding:4px 10px;font-size:12px;font-family:hind-siliguri,sans-serif;font-weight:600;cursor:pointer;letter-spacing:0.05em;">OFF50 ↗</button>';
+    chip.querySelector('button').addEventListener('click',function(){
+      inp.value='OFF50';
+      inp.dispatchEvent(new Event('input',{bubbles:true}));
+      inp.dispatchEvent(new Event('change',{bubbles:true}));
+      var btns=document.querySelectorAll('button');
+      for(var i=0;i<btns.length;i++){
+        var t=(btns[i].textContent||'').trim();
+        if(t==='অ্যাপ্লাই'||t.toLowerCase()==='apply'){btns[i].click();break;}
+      }
+    });
+    var par=inp.closest('mat-form-field')||inp.parentElement;
+    if(par)par.insertAdjacentElement('afterend',chip);
+  }
+
+  function tryCheckout(n){
+    if(window.location.pathname.indexOf('/checkout')===-1)return;
+    injectCheckoutHint();
+    if(!document.getElementById(CHECKOUT_HINT_ID)&&n>0)setTimeout(function(){tryCheckout(n-1);},500);
+  }
+
+  /* ── SPA navigation hooks ── */
+  var _origPS=history.pushState;
+  history.pushState=function(st,ti,url){
+    _origPS.apply(this,arguments);
+    setTimeout(function(){
+      var u=String(url||'');
+      var o1=document.getElementById(CHECKOUT_HINT_ID);if(o1)o1.remove();
+      var o2=document.getElementById(AUTOAPPLY_ID);if(o2)o2.remove();
+      setTimeout(function(){tryBanner(5);},300);
+      if(u.indexOf('/checkout')!==-1)setTimeout(function(){tryCheckout(8);},500);
+    },0);
+  };
+  window.addEventListener('popstate',function(){
+    var o1=document.getElementById(CHECKOUT_HINT_ID);if(o1)o1.remove();
+    var o2=document.getElementById(AUTOAPPLY_ID);if(o2)o2.remove();
+    setTimeout(function(){tryBanner(5);},300);
+    if(window.location.pathname.indexOf('/checkout')!==-1)setTimeout(function(){tryCheckout(8);},500);
+  });
+
+  /* ── initial load ── */
+  document.addEventListener('DOMContentLoaded',function(){
+    setTimeout(function(){tryBanner(10);},500);
+    if(window.location.pathname.indexOf('/checkout')!==-1)setTimeout(function(){tryCheckout(10);},600);
+  });
+})();
+</script>
 </body></html>
