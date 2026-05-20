@@ -1615,4 +1615,71 @@
 })();
 </script>
 
+<!-- Google Ads Purchase Conversion Tracking -->
+<script>
+(function(){
+  'use strict';
+  // Fire once per order. transaction_id deduplicates in Google Ads.
+  var _firedTx = null;
+
+  function fireConversion(value, txId) {
+    if(_firedTx && _firedTx === String(txId)) return; // already fired for this order
+    if(typeof gtag !== 'function') return;
+    _firedTx = String(txId);
+    gtag('event', 'conversion', {
+      'send_to': 'AW-18176858056/HpNqCMmNn7AcEMivs9tD',
+      'value': Number(value) || 0,
+      'currency': 'BDT',
+      'transaction_id': String(txId || '')
+    });
+  }
+
+  // XHR intercept: detect successful order POST, extract value + transaction_id
+  var _xo = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function(m, url) {
+    this._convUrl = typeof url === 'string' ? url : '';
+    this._convMethod = (m || '').toUpperCase();
+    return _xo.apply(this, arguments);
+  };
+  var _xs = XMLHttpRequest.prototype.send;
+  XMLHttpRequest.prototype.send = function(body) {
+    var xhr = this;
+    xhr.addEventListener('load', function() {
+      var u = xhr._convUrl || '';
+      var m = xhr._convMethod || '';
+      // POST to any /order or /checkout endpoint with 2xx response
+      if(m === 'POST' && xhr.status >= 200 && xhr.status < 300 &&
+         (u.indexOf('/order') !== -1 || u.indexOf('/checkout') !== -1)) {
+        try {
+          var d = JSON.parse(xhr.responseText);
+          // Extract order value and ID from common response shapes
+          var dd = d.data || d.order || d;
+          var value = dd.totalAmount || dd.grandTotal || dd.total || dd.amount || dd.payableAmount || 0;
+          var txId = dd._id || dd.id || dd.orderId || dd.order_id || d._id || d.id || '';
+          if(txId) fireConversion(value, txId);
+        } catch(e) {}
+      }
+    });
+    return _xs.apply(this, arguments);
+  };
+
+  // Also fire on SPA navigation to known success URL patterns (fallback)
+  function checkSuccessUrl() {
+    var p = window.location.pathname;
+    if(p.indexOf('success') !== -1 || p.indexOf('confirm') !== -1 || p.indexOf('thank') !== -1) {
+      // Only fire if not already fired for this session
+      if(!_firedTx) fireConversion(0, 'url-trigger-' + Date.now());
+    }
+  }
+
+  // Reset fired state on new navigation (new order flow)
+  var _ps = history.pushState;
+  history.pushState = function() {
+    _ps.apply(this, arguments);
+    setTimeout(checkSuccessUrl, 400);
+  };
+  window.addEventListener('popstate', function() { setTimeout(checkSuccessUrl, 400); });
+  document.addEventListener('DOMContentLoaded', checkSuccessUrl);
+})();
+</script>
 </body></html>
