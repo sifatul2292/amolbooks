@@ -1180,6 +1180,135 @@
 <script src="review-image-upload.js?v=9"></script>
 
 <script>
+/* Custom Nav Rewrite — replaces navbar with preferred menu */
+(function(){
+  'use strict';
+
+  var MENU=[
+    {text:'হোমপেজ', homeKey:'মূলপাতা'},
+    {text:'অফার',   srcKey:'অফার'},
+    {text:'সকল বই', srcKey:'সকল বই'},
+    {text:'কোরআন',  href:'/product-list?categories=%E0%A6%95%E0%A7%81%E0%A6%B0%E0%A6%86%E0%A6%A8-%E0%A6%B6%E0%A7%87%E0%A6%96%E0%A6%BE'},
+    {text:'সিরাত',  href:'/product-list?categories=%E0%A6%B8%E0%A7%80%E0%A6%B0%E0%A6%BE%E0%A6%A4%E0%A7%87-%E0%A6%B0%E0%A6%BE%E0%A6%B8%E0%A7%82%E0%A6%B2-(%E0%A6%B8%E0%A6%BE.)'},
+    {text:'হাদিস',  href:'/product-list?tags=besthadisbooks'},
+  ];
+
+  function normUrl(s){try{return decodeURIComponent(s);}catch(e){return s;}}
+
+  function isActive(href){
+    var p=normUrl(window.location.pathname+window.location.search);
+    var h=normUrl(href);
+    if(h==='/'||h==='')return p==='/'||p==='';
+    if(h.indexOf('?')!==-1)return p===h;
+    return p===h||p.indexOf(h+'/')=== 0||p.indexOf(h+'?')===0;
+  }
+
+  function cleanCls(c){return(c||'').replace(/\b(active|router-link-active|router-link-exact-active)\b/g,'').replace(/\s+/g,' ').trim();}
+
+  function ngAttrOf(el){
+    for(var i=0;i<el.attributes.length;i++)
+      if(el.attributes[i].name.indexOf('_ngcontent')===0)return el.attributes[i].name;
+    return null;
+  }
+
+  function rewriteNav(){
+    var header=document.querySelector('app-header');
+    if(!header)return false;
+    if(header.querySelector('[data-amol-nav="1"]'))return true;
+
+    /* find any existing nav anchor to locate container */
+    var anchors=header.querySelectorAll('a');
+    var sampleA=null;
+    for(var i=0;i<anchors.length;i++){
+      var t=(anchors[i].textContent||'').trim();
+      if(t==='মূলপাতা'||t==='সকল বই'||t==='ব্লগ'){sampleA=anchors[i];break;}
+    }
+    if(!sampleA)return false;
+
+    /* walk up to find the list container */
+    var navEl=null;
+    var p=sampleA.parentElement;
+    while(p&&p!==header){
+      if((p.tagName==='UL'||p.tagName==='NAV')&&p.children.length>=3){navEl=p;break;}
+      p=p.parentElement;
+    }
+    if(!navEl){
+      /* fallback: look for a div sibling container */
+      p=sampleA.parentElement;
+      while(p&&p!==header){
+        if(p.children.length>=4&&p.querySelectorAll('a').length>=4){navEl=p;break;}
+        p=p.parentElement;
+      }
+    }
+    if(!navEl)return false;
+
+    /* collect existing hrefs */
+    var hrefs={};
+    anchors.forEach(function(a){hrefs[(a.textContent||'').trim()]=a.getAttribute('href')||'/';});
+
+    var useLi=sampleA.parentElement&&sampleA.parentElement.tagName==='LI';
+    var sampleLi=useLi?sampleA.parentElement:null;
+    var aClass=cleanCls(sampleA.className);
+    var liClass=sampleLi?cleanCls(sampleLi.className):'';
+    var aNg=ngAttrOf(sampleA);
+    var liNg=sampleLi?ngAttrOf(sampleLi):null;
+
+    navEl.innerHTML='';
+    MENU.forEach(function(item){
+      var href=item.href||(item.homeKey?hrefs[item.homeKey]||'/':hrefs[item.srcKey]||'/');
+      var active=isActive(href);
+
+      var a=document.createElement('a');
+      a.className=active?(aClass+' active').trim():aClass;
+      a.setAttribute('href',href);
+      a.textContent=item.text;
+      if(aNg)a.setAttribute(aNg,'');
+
+      if(useLi){
+        var li=document.createElement('li');
+        li.className=active?(liClass+' active').trim():liClass;
+        if(liNg)li.setAttribute(liNg,'');
+        li.appendChild(a);
+        navEl.appendChild(li);
+      } else {
+        navEl.appendChild(a);
+      }
+    });
+    navEl.setAttribute('data-amol-nav','1');
+    return true;
+  }
+
+  function updateActive(){
+    var nav=document.querySelector('[data-amol-nav]');
+    if(!nav)return;
+    nav.querySelectorAll('a').forEach(function(a){
+      var active=isActive(a.getAttribute('href')||'');
+      a.classList.toggle('active',active);
+      if(a.parentElement&&a.parentElement.tagName==='LI')
+        a.parentElement.classList.toggle('active',active);
+    });
+  }
+
+  var _navObs=null;
+  function setup(n){
+    var header=document.querySelector('app-header');
+    if(!header){if(n>0)setTimeout(function(){setup(n-1);},300);return;}
+    rewriteNav();
+    if(_navObs)return;
+    _navObs=new MutationObserver(function(){
+      if(!header.querySelector('[data-amol-nav="1"]'))setTimeout(rewriteNav,30);
+    });
+    _navObs.observe(header,{childList:true,subtree:true});
+  }
+
+  var _oPS=history.pushState;
+  history.pushState=function(){_oPS.apply(this,arguments);setTimeout(updateActive,150);};
+  window.addEventListener('popstate',function(){setTimeout(updateActive,50);});
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){setup(20);},400);});
+})();
+</script>
+
+<script>
 /* OFF50 Promo Banner — header strip + checkout hint + auto-apply chip + congrats toast */
 (function(){
   'use strict';
