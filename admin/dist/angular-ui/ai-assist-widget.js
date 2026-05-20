@@ -19,18 +19,22 @@
     document.head.appendChild(s);
   }
 
-  /* ── Decrypt the Angular-stored admin JWT ── */
+  /* ── Decrypt the Angular-stored admin JWT ──
+     Angular saves an object {token, expiredDate, adminId, role, permissions}
+     AES-encrypted with the storage secret under SOFTLAB_EMPLOYEE_USER_0_1. */
   function getDecryptedAdminToken() {
     if (!window.CryptoJS) return null;
-    var key = 'SOFTLAB_EMPLOYEE_ADMIN_TOKEN_1';
-    var secret = 'SOFT_ADMIN_1995_&&_SOJOL_dEv';
+    var key = 'SOFTLAB_EMPLOYEE_USER_0_1';
+    var secret = 'SOFT_2021_IT_1998';
     var enc = localStorage.getItem(key);
     if (!enc) return null;
     try {
       var bytes = window.CryptoJS.AES.decrypt(enc, secret);
       var plain = bytes.toString(window.CryptoJS.enc.Utf8);
       if (!plain) return null;
-      return JSON.parse(plain);
+      var obj = JSON.parse(plain);
+      if (obj && obj.token) return obj.token;
+      return null;
     } catch (e) {
       return null;
     }
