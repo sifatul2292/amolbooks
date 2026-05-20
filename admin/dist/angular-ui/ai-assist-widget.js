@@ -339,7 +339,18 @@
     fetch(API + '/api/order/add', {
       method: 'POST',
       headers: headers,
-      body: JSON.stringify({ phoneNo: phone, name: name, shippingAddress: address, city: city, paymentType: paymentType, adminNote: note })
+      body: JSON.stringify({
+          phoneNo: phone,
+          name: name,
+          shippingAddress: address,
+          city: city,
+          paymentType: paymentType,
+          adminNote: note,
+          orderStatus: 1,
+          discount: 0,
+          subTotal: 0,
+          paymentStatus: 'unpaid'
+        })
     })
       .then(function (r) {
         return r.json().then(function (res) { return { ok: r.ok, status: r.status, res: res }; });
