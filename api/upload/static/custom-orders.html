@@ -2277,11 +2277,16 @@
     return str.replace(/[০-৯]/g, function(d) { return bnDigits[d]; });
   }
 
+  /* Normalize to local 01XXXXXXXXX format.
+     Handles: +880 1XXX-XXXXXX, 8801XXXXXXXXX, 01XXXXXXXXX, 1XXXXXXXXX */
   function normalizePhone(raw) {
-    var s = bnToEn(raw).replace(/[\s\-().]/g, '');
-    if (/^\+8801[3-9]\d{8}$/.test(s)) return s;
-    if (/^8801[3-9]\d{8}$/.test(s)) return '+' + s;
-    if (/^01[3-9]\d{8}$/.test(s)) return '+880' + s.slice(1);
+    var s = bnToEn(raw).replace(/[\s\-().+]/g, '');
+    if (s.startsWith('880') && s.length >= 12) {
+      var local = s.slice(3); // strip 880
+      if (/^0?1[3-9]\d{8}$/.test(local)) return local.startsWith('0') ? local : '0' + local;
+    }
+    if (/^01[3-9]\d{8}$/.test(s)) return s;
+    if (/^1[3-9]\d{8}$/.test(s)) return '0' + s;
     return s;
   }
 
@@ -2300,9 +2305,14 @@
     return 'COD';
   }
 
+  /* Detects: +880 1XXX-XXXXXX, 8801XXXXXXXXX, 01XXXXXXXXX, 1XXXXXXXXX */
   function isPhoneLine(line) {
     var s = bnToEn(line).replace(/[\s\-().+]/g, '');
-    return /^(880)?01[3-9]\d{8}$/.test(s) || /^\+?(880)?01[3-9]/.test(bnToEn(line));
+    if (s.startsWith('880') && s.length >= 12) {
+      var local = s.slice(3);
+      return /^0?1[3-9]\d{8}$/.test(local);
+    }
+    return /^01[3-9]\d{8}$/.test(s) || /^1[3-9]\d{8}$/.test(s);
   }
 
   function isPriceLine(line) {
@@ -2358,10 +2368,13 @@
     if (remaining.length >= 2) address = remaining[1];
     if (remaining.length >= 3) product = remaining.slice(2).join(' | ');
 
+    /* Strip trailing punctuation from address */
+    address = address.replace(/[.,؟?!]+$/, '').trim();
+
     /* City from last comma-part of address */
     if (address) {
       var parts = address.split(',');
-      if (parts.length > 1) city = parts[parts.length - 1].trim();
+      if (parts.length > 1) city = parts[parts.length - 1].trim().replace(/[.,؟?!]+$/, '');
     }
 
     /* Build note */
@@ -2403,6 +2416,15 @@
     var token = localStorage.getItem('co_admin_token') || '';
     if (token) headers['administrator'] = token;
 
+    function resetBtn() {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-plus"></i> Create Order';
+    }
+    function toast(msg, type) {
+      if (window.showToast) window.showToast(msg, type);
+      else alert(msg);
+    }
+
     fetch(API + '/api/order/add', {
       method: 'POST',
       headers: headers,
@@ -2415,24 +2437,25 @@
         adminNote: note
       })
     })
-    .then(function(r) { return r.json(); })
-    .then(function(res) {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-plus"></i> Create Order';
-      if (res && (res.success || res._id || (res.data && res.data._id))) {
-        var orderId = (res.data && res.data.orderId) || (res.orderId) || '';
-        showToast('Order' + (orderId ? ' #' + orderId : '') + ' created!', 'success');
-        closeAiAssist();
-        if (typeof loadSnap === 'function') loadSnap();
-        if (typeof loadTodayStats === 'function') loadTodayStats();
+    .then(function(r) {
+      return r.json().then(function(res) { return { ok: r.ok, status: r.status, res: res }; });
+    })
+    .then(function(d) {
+      resetBtn();
+      if (d.ok && d.res && (d.res.success !== false)) {
+        var orderId = (d.res.data && d.res.data.orderId) || d.res.orderId || '';
+        toast('Order' + (orderId ? ' #' + orderId : '') + ' created!', 'success');
+        window.closeAiAssist();
+        if (window.loadSnap) window.loadSnap();
+        if (window.loadTodayStats) window.loadTodayStats();
+        if (typeof loadOrders === 'function') loadOrders();
       } else {
-        showToast((res && res.message) || 'Failed to create order', 'error');
+        toast((d.res && d.res.message) || ('Error ' + d.status), 'error');
       }
     })
     .catch(function(err) {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-plus"></i> Create Order';
-      showToast('Network error — ' + err.message, 'error');
+      resetBtn();
+      toast('Request failed: ' + (err.message || err), 'error');
     });
   };
 
