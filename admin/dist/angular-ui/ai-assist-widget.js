@@ -9,6 +9,33 @@
   var BTN_ID = 'ai-assist-widget-btn';
   var injectTimer = null;
 
+  /* ── Load CryptoJS for decrypting admin JWT from localStorage ── */
+  function loadCryptoJS(cb) {
+    if (window.CryptoJS) { cb(); return; }
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js';
+    s.onload = cb;
+    s.onerror = function () { cb(); };
+    document.head.appendChild(s);
+  }
+
+  /* ── Decrypt the Angular-stored admin JWT ── */
+  function getDecryptedAdminToken() {
+    if (!window.CryptoJS) return null;
+    var key = 'SOFTLAB_EMPLOYEE_ADMIN_TOKEN_1';
+    var secret = 'SOFT_ADMIN_1995_&&_SOJOL_dEv';
+    var enc = localStorage.getItem(key);
+    if (!enc) return null;
+    try {
+      var bytes = window.CryptoJS.AES.decrypt(enc, secret);
+      var plain = bytes.toString(window.CryptoJS.enc.Utf8);
+      if (!plain) return null;
+      return JSON.parse(plain);
+    } catch (e) {
+      return null;
+    }
+  }
+
   /* ── Bangla digit → ASCII ── */
   var BN = { '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4', '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9' };
   function bnToEn(s) { return s.replace(/[০-৯]/g, function (d) { return BN[d]; }); }
@@ -291,13 +318,21 @@
     btn.textContent = '⏳ Creating...';
 
     var headers = { 'Content-Type': 'application/json' };
+    var token = getDecryptedAdminToken();
+    if (token) headers['administrator'] = token;
 
     function reset() {
       btn.disabled = false;
       btn.textContent = '+ Create Order';
     }
 
-    fetch(API + '/api/order/add-order-by-anonymous', {
+    if (!token) {
+      reset();
+      showToast('Could not read admin token. Try re-login.', 'error');
+      return;
+    }
+
+    fetch(API + '/api/order/add', {
       method: 'POST',
       headers: headers,
       body: JSON.stringify({ phoneNo: phone, name: name, shippingAddress: address, city: city, paymentType: paymentType, adminNote: note })
@@ -394,12 +429,13 @@
     observer.observe(document.body, { childList: true, subtree: true });
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startWatcher);
-  } else {
-    startWatcher();
-  }
-
-  [500, 1000, 2000, 3000, 5000].forEach(function (d) { setTimeout(tryInjectBtn, d); });
+  loadCryptoJS(function () {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', startWatcher);
+    } else {
+      startWatcher();
+    }
+    [500, 1000, 2000, 3000, 5000].forEach(function (d) { setTimeout(tryInjectBtn, d); });
+  });
 
 })();
