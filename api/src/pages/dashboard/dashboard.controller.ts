@@ -2,8 +2,11 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Logger,
+  Param,
+  Post,
   Query,
   UseGuards,
   UsePipes,
@@ -101,25 +104,26 @@ export class DashboardController {
   ) {
     return await this.dashboardService.getTopProducts(startDate, endDate);
   }
-  // @Version(VERSION_NEUTRAL)
-  // @Post('/user-dashboard')
-  // async getUserDashboard(@Body() data: any): Promise<ResponsePayload> {
-  //
-  //   return await this.dashboardService.getUserDashboard(data);
-  // }
+  /* ── Manual Sales (WhatsApp / Phone orders) ── */
 
-  // @Version(VERSION_NEUTRAL)
-  // @Post('/admin-dashboard-order')
-  // // @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
-  // // @UseGuards(AdminRolesGuard)
-  // // @UseGuards(AdminJwtAuthGuard)
-  // async getAllOrdersForDashbord(
-  //   @Body() filterOrderDto: FilterAndPaginationOrderDto,
-  //   @Query('q') searchString: string,
-  // ): Promise<ResponsePayload> {
-  //   return this.dashboardService.getAllOrdersForDashbord(
-  //     filterOrderDto,
-  //     searchString,
-  //   );
-  // }
+  @Version(VERSION_NEUTRAL)
+  @Get('manual-sales')
+  async getManualSales(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ) {
+    return await this.dashboardService.getManualSales(startDate, endDate);
+  }
+
+  @Version(VERSION_NEUTRAL)
+  @Post('manual-sales')
+  async addManualSale(@Body() body: any) {
+    return await this.dashboardService.addManualSale(body);
+  }
+
+  @Version(VERSION_NEUTRAL)
+  @Delete('manual-sales/:id')
+  async deleteManualSale(@Param('id') id: string) {
+    return await this.dashboardService.deleteManualSale(id);
+  }
 }

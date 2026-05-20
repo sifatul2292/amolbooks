@@ -31,6 +31,8 @@ export class DashboardService {
     private readonly productModel: Model<Product>,
     @InjectModel('Order')
     private readonly orderModel: Model<Order>,
+    @InjectModel('ManualSale')
+    private readonly manualSaleModel: Model<any>,
     private configService: ConfigService,
     private utilsService: UtilsService,
   ) {}
@@ -843,6 +845,43 @@ export class DashboardService {
         { $project: { _id: 0, date: '$_id', revenue: 1, orderCount: 1, totalCost: 1, deliveryCharge: 1 } },
       ]);
 
+      // Merge manual sales (WhatsApp etc) into daily
+      const manualSales = await this.manualSaleModel
+        .find({ date: { $gte: startDate, $lte: endDate } })
+        .lean();
+
+      const manualByDate: Record<string, any> = {};
+      manualSales.forEach((m: any) => {
+        if (!manualByDate[m.date]) {
+          manualByDate[m.date] = { revenue: 0, cost: 0, deliveryCharge: 0, orders: 0 };
+        }
+        manualByDate[m.date].revenue += m.revenue || 0;
+        manualByDate[m.date].cost += m.cost || 0;
+        manualByDate[m.date].deliveryCharge += m.deliveryCharge || 0;
+        manualByDate[m.date].orders += m.orders || 0;
+      });
+
+      // Merge into daily array
+      const dateSet = new Set(daily.map((d) => d.date));
+      for (const [date, ms] of Object.entries(manualByDate)) {
+        if (dateSet.has(date)) {
+          const row = daily.find((d) => d.date === date);
+          row.revenue += ms.revenue;
+          row.totalCost += ms.cost;
+          row.deliveryCharge += ms.deliveryCharge;
+          row.orderCount += ms.orders;
+        } else {
+          daily.push({
+            date,
+            revenue: ms.revenue,
+            orderCount: ms.orders,
+            totalCost: ms.cost,
+            deliveryCharge: ms.deliveryCharge,
+          });
+        }
+      }
+      daily.sort((a, b) => a.date.localeCompare(b.date));
+
       const totals = daily.reduce(
         (acc, d) => ({
           revenue: acc.revenue + d.revenue,
@@ -858,5 +897,33 @@ export class DashboardService {
       this.logger.error(err);
       throw new InternalServerErrorException();
     }
+  }
+
+  /* ── Manual Sales (WhatsApp / Phone orders) ── */
+
+  async getManualSales(startDate: string, endDate: string): Promise<any> {
+    const records = await this.manualSaleModel
+      .find({ date: { $gte: startDate, $lte: endDate } })
+      .sort({ date: -1, createdAt: -1 })
+      .lean();
+    return { success: true, data: records };
+  }
+
+  async addManualSale(body: any): Promise<any> {
+    const record = await this.manualSaleModel.create({
+      date: body.date,
+      revenue: body.revenue || 0,
+      cost: body.cost || 0,
+      deliveryCharge: body.deliveryCharge || 0,
+      orders: body.orders || 1,
+      source: body.source || 'whatsapp',
+      note: body.note || '',
+    });
+    return { success: true, data: record };
+  }
+
+  async deleteManualSale(id: string): Promise<any> {
+    await this.manualSaleModel.findByIdAndDelete(id);
+    return { success: true };
   }
 }

@@ -286,6 +286,31 @@
         </div>
       </div>
 
+      <!-- Manual WhatsApp / Phone order entry -->
+      <div class="spend-section" id="manualSaleSection">
+        <div class="spend-section-title"><i class="fab fa-whatsapp" style="color:#25d366;margin-right:5px"></i>Log WhatsApp / Phone Order</div>
+        <div class="spend-input-row" style="flex-wrap:wrap;gap:8px">
+          <label>Date</label>
+          <input type="date" id="msDate">
+          <label>Revenue (৳)</label>
+          <input type="number" id="msRevenue" placeholder="0" min="0" step="1" style="width:90px">
+          <label>Cost (৳)</label>
+          <input type="number" id="msCost" placeholder="0" min="0" step="1" style="width:80px">
+          <label>Delivery (৳)</label>
+          <input type="number" id="msDelivery" placeholder="0" min="0" step="1" style="width:80px">
+          <label>Orders</label>
+          <input type="number" id="msOrders" placeholder="1" min="1" step="1" style="width:50px" value="1">
+          <select id="msSource" style="padding:5px 8px;border:1px solid var(--g200);border-radius:7px;font-size:12px;font-family:inherit;background:#fff">
+            <option value="whatsapp">WhatsApp</option>
+            <option value="phone">Phone</option>
+            <option value="other">Other</option>
+          </select>
+          <input type="text" id="msNote" placeholder="Note (optional)" style="width:120px;padding:5px 8px;border:1px solid var(--g200);border-radius:7px;font-size:12px;font-family:inherit;background:#fff">
+          <button class="btn-save-spend" onclick="saveManualSale()" style="background:#25d366">Add</button>
+        </div>
+        <div id="manualSalesList" style="margin-top:8px;font-size:11px;color:var(--g500)"></div>
+      </div>
+
       <!-- Day-wise table -->
       <div class="day-table" id="dayTable">
         <div class="day-table-header">
@@ -444,6 +469,7 @@
     });
     checkMetaStatus();
     loadCalendarMonth();
+    loadManualSalesList();
   }
 
   function renderDashboard(profit, spend) {
@@ -623,12 +649,15 @@
           txt.textContent = 'Connect Meta';
           if (secEl) secEl.style.display = 'block';
           document.getElementById('spendDate').value = toYMD(new Date());
+          document.getElementById('msDate').value = toYMD(new Date());
           var sb = document.getElementById('syncBtn');
           if (sb) sb.style.display = 'none';
         }
+        document.getElementById('msDate').value = toYMD(new Date());
       }).catch(function () {
         document.getElementById('spendSection').style.display = 'block';
         document.getElementById('spendDate').value = toYMD(new Date());
+        document.getElementById('msDate').value = toYMD(new Date());
       });
   }
 
@@ -711,6 +740,61 @@
         loadAll();
       });
   };
+
+  /* ── Manual Sales (WhatsApp/Phone) ── */
+  window.saveManualSale = function () {
+    var date = document.getElementById('msDate').value;
+    var revenue = parseFloat(document.getElementById('msRevenue').value);
+    if (!date || isNaN(revenue) || revenue <= 0) { alert('Enter date and revenue'); return; }
+    var body = {
+      date: date,
+      revenue: revenue,
+      cost: parseFloat(document.getElementById('msCost').value) || 0,
+      deliveryCharge: parseFloat(document.getElementById('msDelivery').value) || 0,
+      orders: parseInt(document.getElementById('msOrders').value) || 1,
+      source: document.getElementById('msSource').value,
+      note: document.getElementById('msNote').value || '',
+    };
+    fetch(API + '/api/dashboard/manual-sales', {
+      method: 'POST', headers: headers(), body: JSON.stringify(body),
+    }).then(function (r) { return r.json(); }).then(function () {
+      document.getElementById('msRevenue').value = '';
+      document.getElementById('msCost').value = '';
+      document.getElementById('msDelivery').value = '';
+      document.getElementById('msNote').value = '';
+      loadManualSalesList();
+      loadAll();
+    });
+  };
+
+  window.deleteManualSale = function (id) {
+    if (!confirm('Delete this manual sale entry?')) return;
+    fetch(API + '/api/dashboard/manual-sales/' + id, {
+      method: 'DELETE', headers: headers(),
+    }).then(function () { loadManualSalesList(); loadAll(); });
+  };
+
+  function loadManualSalesList() {
+    var q = '?startDate=' + (rangeStart || toYMD(new Date())) + '&endDate=' + (rangeEnd || toYMD(new Date()));
+    fetch(API + '/api/dashboard/manual-sales' + q, { headers: headers() })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        var list = document.getElementById('manualSalesList');
+        if (!res || !res.success || !res.data || !res.data.length) { list.innerHTML = ''; return; }
+        var src = { whatsapp: '📱 WA', phone: '📞 Phone', other: '📋 Other' };
+        list.innerHTML = '<div style="margin-bottom:4px;font-weight:600;color:var(--g700)">Recent entries:</div>' +
+          res.data.slice(0, 10).map(function (m) {
+            return '<div style="display:flex;gap:8px;align-items:center;padding:3px 0;border-bottom:1px solid var(--g100)">' +
+              '<span>' + m.date + '</span>' +
+              '<span style="color:var(--blue);font-weight:600">৳' + fmt(m.revenue) + '</span>' +
+              '<span style="color:var(--g400)">' + (src[m.source] || m.source) + '</span>' +
+              (m.note ? '<span style="color:var(--g400)">' + m.note + '</span>' : '') +
+              '<button onclick="deleteManualSale(\'' + m._id + '\')" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:11px;padding:2px 4px" title="Delete">✕</button>' +
+            '</div>';
+          }).join('');
+      })
+      .catch(function () {});
+  }
 
   /* ── Calendar ── */
   function loadCalendarMonth() {
