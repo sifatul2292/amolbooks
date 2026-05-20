@@ -1605,4 +1605,299 @@
   });
 })();
 </script>
+
+<!-- ── Feature 11: Trust Bar ── -->
+<script>
+(function(){
+  'use strict';
+  var ID='amol-trust-bar';
+  var ITEMS=[
+    {i:'🚚',t:'ঢাকায় ৬০ টাকায় ডেলিভারি'},
+    {i:'↩',t:'৭ দিনে পণ্য ফেরত'},
+    {i:'💳',t:'বিকাশ · নগদ · ক্যাশ অন ডেলিভারি'},
+    {i:'✓',t:'১০,০০০+ সন্তুষ্ট পাঠক'}
+  ];
+  function inject(){
+    if(document.getElementById(ID))return;
+    var hdr=document.querySelector('app-header');
+    if(!hdr)return;
+    var bar=document.createElement('div');
+    bar.id=ID;
+    bar.style.cssText='background:#f8f8f8;border-bottom:1px solid #e8e8e8;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;';
+    var inn=document.createElement('div');
+    inn.style.cssText='display:flex;align-items:center;justify-content:center;min-width:100%;padding:7px 12px;gap:20px;box-sizing:border-box;';
+    ITEMS.forEach(function(x){
+      var s=document.createElement('span');
+      s.style.cssText='display:inline-flex;align-items:center;gap:5px;font-size:13px;color:#444;font-family:"Siyam Rupali",sans-serif;white-space:nowrap;flex-shrink:0;';
+      s.innerHTML='<span>'+x.i+'</span><span>'+x.t+'</span>';
+      inn.appendChild(s);
+    });
+    bar.appendChild(inn);
+    hdr.insertAdjacentElement('afterend',bar);
+  }
+  var obs=new MutationObserver(function(){if(!document.getElementById(ID))inject();});
+  obs.observe(document.body,{childList:true,subtree:true});
+  var _ps=history.pushState;
+  history.pushState=function(){_ps.apply(this,arguments);setTimeout(inject,400);};
+  window.addEventListener('popstate',function(){setTimeout(inject,400);});
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(inject,600);});
+})();
+</script>
+
+<!-- ── Feature 3: Hero Section (Homepage only) ── -->
+<script>
+(function(){
+  'use strict';
+  var ID='amol-hero-v1';
+  function isHome(){var p=window.location.pathname;return p==='/'||p==='';}
+  function clean(){var e=document.getElementById(ID);if(e)e.remove();}
+  function inject(){
+    if(!isHome()){clean();return;}
+    if(document.getElementById(ID))return;
+    var anchor=document.getElementById('amol-trust-bar')||document.getElementById('off50-promo-banner')||document.querySelector('app-header');
+    if(!anchor)return;
+    var h=document.createElement('div');
+    h.id=ID;
+    h.style.cssText='background:#1a3a1a;color:#fff;padding:36px 20px;text-align:center;font-family:"Siyam Rupali",sans-serif;';
+    h.innerHTML='<div style="max-width:680px;margin:0 auto;">'
+      +'<h1 style="font-size:26px;margin:0 0 10px;font-weight:700;color:#fff;line-height:1.4;">ইসলামিক জ্ঞানের আলোয় আলোকিত হোন</h1>'
+      +'<p style="font-size:15px;color:#a8d5a2;margin:0 0 20px;line-height:1.6;">সেরা ইসলামিক বইয়ের বিশাল কালেকশন — বিকাশ · নগদ · ক্যাশ অন ডেলিভারিতে অর্ডার করুন</p>'
+      +'<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">'
+      +'<a href="/product-list" style="background:#f0a500;color:#1a3a1a;padding:11px 22px;border-radius:6px;font-size:15px;font-weight:700;text-decoration:none;font-family:\'Siyam Rupali\',sans-serif;">সকল বই দেখুন →</a>'
+      +'<a href="/product-list?categories=%E0%A6%95%E0%A7%81%E0%A6%B0%E0%A6%86%E0%A6%A8-%E0%A6%B6%E0%A7%87%E0%A6%96%E0%A6%BE" style="background:transparent;color:#fff;padding:11px 22px;border-radius:6px;font-size:15px;font-weight:700;text-decoration:none;border:2px solid #a8d5a2;font-family:\'Siyam Rupali\',sans-serif;">কোরআন শিক্ষার বই</a>'
+      +'</div></div>';
+    anchor.insertAdjacentElement('afterend',h);
+  }
+  var obs=new MutationObserver(function(){
+    if(isHome()){if(!document.getElementById(ID))inject();}else clean();
+  });
+  obs.observe(document.body,{childList:true,subtree:true});
+  var _ps=history.pushState;
+  history.pushState=function(){_ps.apply(this,arguments);setTimeout(inject,400);};
+  window.addEventListener('popstate',function(){setTimeout(inject,400);});
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(inject,700);});
+})();
+</script>
+
+<!-- ── Feature 8: Sticky Mobile CTA Bar (PDP) ── -->
+<script>
+(function(){
+  'use strict';
+  var BID='amol-sticky-bar';
+  function isPDP(){return window.location.pathname.indexOf('/product-details/')!==-1;}
+  function readPrice(){
+    var els=document.querySelectorAll('[class*="price"],[class*="Price"],[class*="amount"],[class*="Amount"],[class*="cost"],[class*="Cost"]');
+    for(var i=0;i<els.length;i++){
+      var t=(els[i].innerText||'').trim();
+      if(t.length>0&&t.length<25&&/[০-৯\d]/.test(t))return t;
+    }
+    var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null,false),n;
+    while(n=w.nextNode()){
+      var v=(n.nodeValue||'').trim();
+      if((v.indexOf('৳')!==-1||/Tk\.?\s*\d/.test(v))&&v.length<20)return v;
+    }
+    return '';
+  }
+  function removeBar(){var e=document.getElementById(BID);if(e)e.remove();}
+  function ensureBar(){
+    if(!isPDP()){removeBar();return;}
+    if(!document.getElementById('amol-sticky-css')){
+      var st=document.createElement('style');st.id='amol-sticky-css';
+      st.textContent='@media(min-width:768px){#'+BID+'{display:none!important}}';
+      document.head.appendChild(st);
+    }
+    if(!document.getElementById(BID)){
+      var bar=document.createElement('div');
+      bar.id=BID;
+      bar.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:9990;background:#1a3a1a;color:#fff;align-items:center;justify-content:space-between;padding:12px 16px;box-shadow:0 -2px 8px rgba(0,0,0,0.25);font-family:"Siyam Rupali",sans-serif;box-sizing:border-box;display:none;';
+      bar.innerHTML='<span id="amol-sp" style="font-size:19px;font-weight:700;color:#f0a500;"></span>'
+        +'<button id="amol-sb" style="background:#f0a500;color:#1a3a1a;padding:10px 20px;border-radius:6px;font-size:16px;font-weight:700;border:none;cursor:pointer;font-family:\'Siyam Rupali\',sans-serif;">অর্ডার করুন</button>';
+      document.body.appendChild(bar);
+      document.getElementById('amol-sb').addEventListener('click',function(){
+        window.scrollTo({top:0,behavior:'smooth'});
+      });
+    }
+    var p=readPrice();
+    if(p){var pe=document.getElementById('amol-sp');if(pe)pe.textContent=p;}
+  }
+  function onScroll(){
+    var bar=document.getElementById(BID);if(!bar||!isPDP())return;
+    bar.style.display=window.scrollY>400?'flex':'none';
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});
+  var obs=new MutationObserver(function(){if(isPDP())ensureBar();});
+  obs.observe(document.body,{childList:true,subtree:true});
+  var _ps=history.pushState;
+  history.pushState=function(){_ps.apply(this,arguments);removeBar();if(isPDP())setTimeout(ensureBar,700);};
+  window.addEventListener('popstate',function(){removeBar();if(isPDP())setTimeout(ensureBar,700);});
+  document.addEventListener('DOMContentLoaded',function(){if(isPDP())setTimeout(ensureBar,800);});
+})();
+</script>
+
+<!-- ── Feature 5: Stock Status Enhancement (PDP) ── -->
+<script>
+(function(){
+  'use strict';
+  var SID='amol-stock-v1';
+  var lastQty=null;
+  var _xo=XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open=function(m,url){
+    this._a5u=typeof url==='string'?url:'';
+    return _xo.apply(this,arguments);
+  };
+  var _xs=XMLHttpRequest.prototype.send;
+  XMLHttpRequest.prototype.send=function(){
+    var xhr=this;
+    xhr.addEventListener('load',function(){
+      var u=xhr._a5u||'';
+      if(xhr.status!==200)return;
+      if(u.indexOf('/api/')!==-1&&(u.indexOf('/product')!==-1||u.indexOf('/item')!==-1)){
+        try{
+          var d=JSON.parse(xhr.responseText);
+          var q=d.quantity!==undefined?d.quantity:d.stock!==undefined?d.stock:d.qty!==undefined?d.qty:null;
+          if(q===null&&d.data){var dd=d.data;q=dd.quantity!==undefined?dd.quantity:dd.stock!==undefined?dd.stock:dd.qty!==undefined?dd.qty:null;}
+          if(q!==null&&q!==undefined){lastQty=Number(q);setTimeout(applyStock,400);}
+        }catch(e){}
+      }
+    });
+    return _xs.apply(this,arguments);
+  };
+  function applyStock(){
+    if(window.location.pathname.indexOf('/product-details/')===-1)return;
+    var ex=document.getElementById(SID);if(ex)ex.remove();
+    var TARGETS=['In Stock','in stock','Out of Stock','out of stock','স্টকে আছে','Available'];
+    var walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null,false),node;
+    while(node=walker.nextNode()){
+      var v=(node.nodeValue||'').trim();
+      if(!v||v.length>80)continue;
+      var hit=TARGETS.some(function(t){return v.toLowerCase().indexOf(t.toLowerCase())!==-1;});
+      if(hit){
+        var span=document.createElement('span');
+        span.id=SID;
+        span.style.cssText='font-family:"Siyam Rupali",sans-serif;display:inline-block;';
+        if(lastQty!==null&&lastQty>0&&lastQty<=5){
+          span.innerHTML='<span style="color:#e67e22;font-weight:600;font-size:14px;">⚠ মাত্র '+lastQty+'টি বাকি — দ্রুত অর্ডার করুন!</span>';
+        }else if(lastQty===0){
+          span.innerHTML='<span style="color:#e74c3c;font-weight:600;font-size:14px;">স্টক শেষ</span>';
+        }else{
+          span.innerHTML='<span style="color:#27ae60;font-weight:600;font-size:14px;">✓ স্টকে আছে</span><span style="color:#666;font-size:12px;"> — আজই অর্ডার করলে ২–৩ দিনে পাবেন</span>';
+        }
+        node.parentNode.replaceChild(span,node);
+        break;
+      }
+    }
+  }
+  var obs=new MutationObserver(function(){
+    if(window.location.pathname.indexOf('/product-details/')!==-1&&!document.getElementById(SID))setTimeout(applyStock,400);
+  });
+  obs.observe(document.body,{childList:true,subtree:true});
+  var _ps=history.pushState;
+  history.pushState=function(){_ps.apply(this,arguments);lastQty=null;setTimeout(applyStock,900);};
+  window.addEventListener('popstate',function(){lastQty=null;setTimeout(applyStock,900);});
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(applyStock,1000);});
+})();
+</script>
+
+<!-- ── Feature 1: CTA Restructure (PDP) ── -->
+<script>
+(function(){
+  'use strict';
+  var BDG='amol-cta-badge';
+  function isPDP(){return window.location.pathname.indexOf('/product-details/')!==-1;}
+  function applyStyleImportant(el,rules){
+    rules.split(';').forEach(function(r){
+      var idx=r.indexOf(':');if(idx<0)return;
+      var p=r.slice(0,idx).trim(),v=r.slice(idx+1).replace(/!important/g,'').trim();
+      if(p&&v)el.style.setProperty(p,v,'important');
+    });
+  }
+  function clean(){
+    var e=document.getElementById(BDG);if(e)e.remove();
+    document.querySelectorAll('[data-amol-cta]').forEach(function(el){el.removeAttribute('data-amol-cta');});
+  }
+  function restructure(){
+    if(!isPDP())return;
+    if(document.getElementById(BDG))return;
+    var orderBtn=null,waBtn=null,wishBtn=null;
+    var btns=document.querySelectorAll('button,a[mat-flat-button],a[mat-raised-button],[mat-flat-button],[mat-raised-button],[mat-stroked-button]');
+    Array.prototype.forEach.call(btns,function(btn){
+      if(btn.closest('#amol-trust-bar,#amol-hero-v1,#amol-sticky-bar,app-header'))return;
+      var txt=(btn.innerText||btn.textContent||'').trim();
+      var href=btn.href||'';
+      if(!orderBtn&&(txt.indexOf('অর্ডার')!==-1||txt.indexOf('Cart')!==-1||txt.indexOf('কার্ট')!==-1||txt.indexOf('Buy')!==-1||txt.indexOf('Order')!==-1)){
+        orderBtn=btn;
+      }
+      if(!waBtn&&(href.indexOf('wa.me')!==-1||txt.toLowerCase().indexOf('whatsapp')!==-1||btn.querySelector('.fa-whatsapp,[class*="whatsapp"]'))){
+        waBtn=btn;
+      }
+      if(!wishBtn&&(txt.toLowerCase().indexOf('wish')!==-1||txt.indexOf('উইশ')!==-1||btn.querySelector('.fa-heart,.material-icons[data-mat-icon-name*="heart"],[class*="heart"]'))){
+        wishBtn=btn;
+      }
+    });
+    if(orderBtn&&!orderBtn.dataset.amolCta){
+      orderBtn.dataset.amolCta='1';
+      applyStyleImportant(orderBtn,'background:#1a3a1a;color:#fff;width:100%;font-size:17px;font-weight:700;padding:14px 20px;border-radius:8px;font-family:"Siyam Rupali",sans-serif;border:none;cursor:pointer;');
+      var badge=document.createElement('div');
+      badge.id=BDG;
+      badge.style.cssText='text-align:center;margin-top:8px;font-size:13px;color:#27ae60;font-family:"Siyam Rupali",sans-serif;';
+      badge.textContent='✓ আগ্রিম টাকা ছাড়া অর্ডার করা যাবে';
+      orderBtn.insertAdjacentElement('afterend',badge);
+    }
+    if(waBtn&&!waBtn.dataset.amolCta){
+      waBtn.dataset.amolCta='1';
+      applyStyleImportant(waBtn,'border:2px solid #25D366;color:#25D366;background:transparent;border-radius:8px;');
+    }
+    if(wishBtn&&!wishBtn.dataset.amolCta){
+      wishBtn.dataset.amolCta='1';
+      applyStyleImportant(wishBtn,'background:transparent;box-shadow:none;color:#999;font-size:13px;');
+    }
+  }
+  var obs=new MutationObserver(function(){if(isPDP()&&!document.getElementById(BDG))restructure();});
+  obs.observe(document.body,{childList:true,subtree:true});
+  var _ps=history.pushState;
+  history.pushState=function(){_ps.apply(this,arguments);clean();setTimeout(restructure,900);};
+  window.addEventListener('popstate',function(){clean();setTimeout(restructure,900);});
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(restructure,1100);});
+})();
+</script>
+
+<!-- ── Feature 2: Rating Threshold Hide ── -->
+<script>
+(function(){
+  'use strict';
+  var HA='data-amol-rh';
+  function parseRating(txt){
+    var m=txt.match(/(\d+\.?\d*)\s*(?:\/\s*5|out of 5)?/);
+    if(!m)return null;
+    var v=parseFloat(m[1]);
+    return(v>=0&&v<=5)?v:null;
+  }
+  function parseCount(txt){
+    var m=txt.match(/\((\d+)\)/)||txt.match(/(\d+)\s*(?:ratings?|reviews?|রেটিং|রিভিউ)/i);
+    return m?parseInt(m[1]):null;
+  }
+  function processEl(el){
+    if(el.getAttribute(HA))return;
+    var txt=el.innerText||el.textContent||'';
+    var hasStar=el.querySelector('[class*="star"],[class*="Star"],[aria-label*="star"],[aria-label*="rating"],.material-icons')!=null||txt.indexOf('★')!==-1||txt.indexOf('☆')!==-1;
+    if(!hasStar&&!el.className.match(/rat|star|review/i))return;
+    var rating=parseRating(txt);
+    var count=parseCount(txt);
+    var hide=false;
+    if(rating!==null&&rating<3.5)hide=true;
+    if(count!==null&&count<3)hide=true;
+    if(hide){el.setAttribute(HA,'1');el.style.display='none';}
+  }
+  function hideRatings(){
+    var SELS='[class*="rating"],[class*="Rating"],[class*="star-rating"],[class*="starRating"],[class*="review-score"],[class*="reviewScore"],app-star-rating,star-rating';
+    document.querySelectorAll(SELS).forEach(processEl);
+  }
+  var obs=new MutationObserver(hideRatings);
+  obs.observe(document.body,{childList:true,subtree:true});
+  var _ps=history.pushState;
+  history.pushState=function(){_ps.apply(this,arguments);setTimeout(hideRatings,600);};
+  window.addEventListener('popstate',function(){setTimeout(hideRatings,600);});
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(hideRatings,800);});
+})();
+</script>
 </body></html>
