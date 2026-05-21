@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+api/node_modules/
+
+# Build output
+api/dist/
+api/build/
+
+# Environment files
+api/.env
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+**/.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+
+# Backups
+api/backup/db/
