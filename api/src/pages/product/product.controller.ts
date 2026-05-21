@@ -157,6 +157,15 @@ export class ProductController {
   }
 
   @Version(VERSION_NEUTRAL)
+  @Get('/meta-feed')
+  async getMetaFeed(@Res() res: Response): Promise<void> {
+    const csv = await this.productService.getMetaFeed();
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="meta-feed.csv"');
+    res.send(csv);
+  }
+
+  @Version(VERSION_NEUTRAL)
   @Get('/:id')
   async getProductById(
     @Param('id') id: string,
@@ -282,13 +291,5 @@ export class ProductController {
     return await this.productService.setProductImageHttpToHttps();
   }
 
-  @Version(VERSION_NEUTRAL)
-  @Get('/meta-feed')
-  async getMetaFeed(@Res() res: Response): Promise<void> {
-    const csv = await this.productService.getMetaFeed();
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', 'attachment; filename="meta-feed.csv"');
-    res.send(csv);
-  }
 
 }
