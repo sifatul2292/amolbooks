@@ -1,17 +1,69 @@
 /**
- * Amolbooks dataLayer normalizer
- * Transforms Universal Analytics (UA) ecommerce format → GA4 format
- * before GTM processes events. Must load in <head> BEFORE GTM snippet.
+ * Amolbooks dataLayer normalizer v2
  *
- * Also prevents duplicate GTM loading if Angular dynamically re-injects
- * the same container ID.
+ * Responsibilities:
+ * 1. Block Angular from double-loading GTM (same container ID already in index.html).
+ * 2. Transform UA ecommerce format → GA4 format before GTM processes events.
+ * 3. Prevent duplicate purchase events for the same order ID (localStorage guard).
+ *
+ * Must load in <head> BEFORE the GTM snippet.
+ *
+ * Long-term: remove this file once Angular source pushes native GA4 format.
+ * Transition: GA4-format events pass through untouched (no UA wrapper detected).
  */
 (function () {
   'use strict';
 
+  var STORAGE_KEY = 'amol_fired_purchases';
+  var DEDUP_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+  // ── Purchase dedup helpers ─────────────────────────────────────────────
+
+  function loadFiredPurchases() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveFiredPurchases(map) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
+    } catch (e) { /* storage full or unavailable — fail open */ }
+  }
+
+  function isPurchaseFired(transactionId) {
+    if (!transactionId) return false;
+    var map = loadFiredPurchases();
+    var entry = map[transactionId];
+    if (!entry) return false;
+    // Treat stale entries (> 7 days) as expired
+    if (Date.now() - entry.ts > DEDUP_TTL_MS) {
+      delete map[transactionId];
+      saveFiredPurchases(map);
+      return false;
+    }
+    return true;
+  }
+
+  function markPurchaseFired(transactionId) {
+    if (!transactionId) return;
+    var map = loadFiredPurchases();
+    map[transactionId] = { ts: Date.now() };
+    // Prune entries older than TTL to prevent unbounded growth
+    var now = Date.now();
+    Object.keys(map).forEach(function (k) {
+      if (now - map[k].ts > DEDUP_TTL_MS) delete map[k];
+    });
+    saveFiredPurchases(map);
+  }
+
   // ── GTM double-load guard ──────────────────────────────────────────────
-  // Angular may call scriptLoaderService.loadGtmScript() at runtime.
-  // If it tries to inject a second GTM script with the same ID, block it.
+  // Angular's scriptLoaderService.loadGtmScript() may inject a second GTM
+  // script at runtime if tagManagerId is set in admin analytics settings.
+  // Block that second load — GTM is already loaded via index.html (Stape).
   var _GTM_ID = 'GTM-NNZV54QJ';
   var _origCreateElement = document.createElement.bind(document);
   document.createElement = function (tag) {
@@ -23,9 +75,8 @@
           name === 'src' &&
           typeof value === 'string' &&
           value.indexOf(_GTM_ID) !== -1 &&
-          value.indexOf('server.amolbooks.com') === -1 // allow Stape loader
+          value.indexOf('server.amolbooks.com') === -1
         ) {
-          // Block the duplicate script insertion
           console.warn('[amol-dl] Blocked duplicate GTM load:', value);
           return;
         }
@@ -38,8 +89,6 @@
   // ── dataLayer normalizer ───────────────────────────────────────────────
   window.dataLayer = window.dataLayer || [];
 
-  var _origPush = Array.prototype.push;
-
   function normalizeEvent(obj) {
     if (!obj || typeof obj !== 'object' || !obj.event) return obj;
 
@@ -47,19 +96,16 @@
     var ec = obj.ecommerce;
 
     // ── purchase ──────────────────────────────────────────────────────
-    if (ev === 'purchase' && ec && ec.purchase) {
-      var af = ec.purchase.actionField || {};
-      var prods = ec.purchase.products || [];
-      var orderId = af.id || '';
+    if (ev === 'purchase') {
+      // Support both UA format (ec.purchase.actionField) and native GA4 format
+      var transactionId, value, products;
 
-      obj.ecommerce = {
-        transaction_id: orderId,
-        value: Number(af.revenue) || 0,
-        tax: Number(af.tax) || 0,
-        shipping: Number(af.shipping) || 0,
-        currency: af.currency || 'BDT',
-        coupon: af.coupon || undefined,
-        items: prods.map(function (p) {
+      if (ec && ec.purchase && ec.purchase.actionField) {
+        // UA format — transform to GA4
+        var af = ec.purchase.actionField;
+        transactionId = af.id || '';
+        value = Number(af.revenue) || 0;
+        products = (ec.purchase.products || []).map(function (p) {
           return {
             item_id: p.id || p._id || '',
             item_name: p.name || '',
@@ -67,12 +113,38 @@
             price: Number(p.price || p.salePrice) || 0,
             quantity: Number(p.quantity) || 1,
           };
-        }),
-      };
+        });
+        obj.ecommerce = {
+          transaction_id: transactionId,
+          value: value,
+          tax: Number(af.tax) || 0,
+          shipping: Number(af.shipping) || 0,
+          currency: af.currency || 'BDT',
+          coupon: af.coupon || undefined,
+          items: products,
+        };
+      } else if (ec && ec.transaction_id) {
+        // Already GA4 format
+        transactionId = ec.transaction_id;
+      }
 
-      // Normalize event_id to "purchase_ORDER_ID" for Meta dedup
-      if (obj.event_id && String(obj.event_id) === String(orderId)) {
-        obj.event_id = 'purchase_' + orderId;
+      // Normalize event_id
+      if (transactionId && obj.event_id && String(obj.event_id) === String(transactionId)) {
+        obj.event_id = 'purchase_' + transactionId;
+      }
+      if (transactionId && !obj.event_id) {
+        obj.event_id = 'purchase_' + transactionId;
+      }
+
+      // ── Duplicate purchase guard ───────────────────────────────────
+      // Blocks re-fire on hard reload, revisit, or navigation back.
+      // Uses localStorage with 7-day TTL per transaction_id.
+      if (transactionId) {
+        if (isPurchaseFired(transactionId)) {
+          console.warn('[amol-dl] Duplicate purchase blocked for order:', transactionId);
+          return null; // Signal to caller: drop this event
+        }
+        markPurchaseFired(transactionId);
       }
     }
 
@@ -82,7 +154,6 @@
       var total = prods.reduce(function (s, p) {
         return s + (Number(p.price || p.salePrice) || 0) * (Number(p.quantity) || 1);
       }, 0);
-
       obj.ecommerce = {
         currency: 'BDT',
         value: total,
@@ -104,7 +175,6 @@
       var total = prods.reduce(function (s, p) {
         return s + (Number(p.price || p.salePrice) || 0) * (Number(p.quantity) || 1);
       }, 0);
-
       obj.ecommerce = {
         currency: 'BDT',
         value: total,
@@ -121,14 +191,13 @@
     }
 
     // ── view_item ─────────────────────────────────────────────────────
-    // Angular pushes top-level items[] AND ecommerce.detail.products[].
+    // Angular pushes top-level items[] without ecommerce wrapper.
     // Wrap to standard GA4: ecommerce.items[].
     if (ev === 'view_item' && obj.items && Array.isArray(obj.items) && !ec) {
-      var items = obj.items;
       obj.ecommerce = {
         currency: obj.currency || 'BDT',
         value: Number(obj.value) || 0,
-        items: items.map(function (it) {
+        items: obj.items.map(function (it) {
           return {
             item_id: it.item_id || it.id || '',
             item_name: it.item_name || it.name || '',
@@ -138,7 +207,6 @@
           };
         }),
       };
-      // Clean up top-level duplicates that Stape doesn't need
       delete obj.items;
       delete obj.value;
       delete obj.currency;
@@ -147,18 +215,25 @@
     return obj;
   }
 
-  // Patch dataLayer.push BEFORE GTM initializes
-  // GTM will wrap our patched push, so events are normalized before GTM sees them
-  var _nativePush = _origPush;
+  // Patch dataLayer.push BEFORE GTM initializes.
+  // GTM wraps our patched push — events are normalized before GTM sees them.
+  var _nativePush = Array.prototype.push;
   window.dataLayer.push = function () {
     var args = Array.prototype.slice.call(arguments);
+    var filtered = [];
     for (var i = 0; i < args.length; i++) {
       try {
-        args[i] = normalizeEvent(args[i]);
+        var normalized = normalizeEvent(args[i]);
+        if (normalized !== null) {
+          filtered.push(normalized);
+        }
+        // null return = event dropped (duplicate purchase guard)
       } catch (e) {
         console.error('[amol-dl] normalizeEvent error:', e);
+        filtered.push(args[i]); // fail open — pass original on error
       }
     }
-    return _nativePush.apply(window.dataLayer, args);
+    if (filtered.length === 0) return window.dataLayer.length;
+    return _nativePush.apply(window.dataLayer, filtered);
   };
 })();
