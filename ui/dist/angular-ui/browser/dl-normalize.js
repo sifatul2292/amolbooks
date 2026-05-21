@@ -65,12 +65,14 @@
   // script at runtime if tagManagerId is set in admin analytics settings.
   // Block that second load — GTM is already loaded via index.html (Stape).
   var _GTM_ID = 'GTM-NNZV54QJ';
+  var _fbeventsRequested = false; // Track first fbevents.js load (GTM) — block subsequent (Angular)
   var _origCreateElement = document.createElement.bind(document);
   document.createElement = function (tag) {
     var el = _origCreateElement(tag);
     if (tag && tag.toLowerCase() === 'script') {
       var _origSetAttr = el.setAttribute.bind(el);
       el.setAttribute = function (name, value) {
+        // Block Angular from double-loading GTM (already loaded via Stape in index.html)
         if (
           name === 'src' &&
           typeof value === 'string' &&
@@ -79,6 +81,22 @@
         ) {
           console.warn('[amol-dl] Blocked duplicate GTM load:', value);
           return;
+        }
+        // Block duplicate fbevents.js loads — GTM loads it first (first request allowed),
+        // Angular loads it again when facebookPixelId is set in admin. The duplicate
+        // causes "Multiple pixels with conflicting versions" warning and double-fires
+        // browser-side pixel events. Only the first load (GTM's) goes through.
+        if (
+          name === 'src' &&
+          typeof value === 'string' &&
+          value.indexOf('connect.facebook.net') !== -1
+        ) {
+          if (_fbeventsRequested) {
+            console.warn('[amol-dl] Blocked duplicate fbevents.js load (GTM already loaded it):', value);
+            return;
+          }
+          _fbeventsRequested = true;
+          // First load — allow through (this is GTM's Meta Pixel base code)
         }
         return _origSetAttr(name, value);
       };
