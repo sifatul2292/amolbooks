@@ -26,3 +26,6 @@ npm-debug.log*
 
 # Backups
 api/backup/db/
+
+# Claude Code session data
+.claude/

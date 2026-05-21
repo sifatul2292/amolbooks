@@ -243,9 +243,7 @@ export class GtmService {
           product_id: addGtmViewContentDto.contentId,
           product_name: addGtmViewContentDto.contentName,
           category: addGtmViewContentDto.contentCategory,
-          sub_category: addGtmViewContentDto.contentSubCategory,
-          value: addGtmViewContentDto.value,
-          quantity: addGtmViewContentDto.quantity,
+          price: addGtmViewContentDto.value,
           currency: addGtmViewContentDto.currency || 'BDT',
         },
       );
@@ -345,7 +343,8 @@ export class GtmService {
         {
           product_id: bodyData.contentId,
           product_name: bodyData.contentName,
-          value: bodyData.value,
+          category: bodyData.contentCategory,
+          price: bodyData.value,
           quantity: bodyData.quantity,
           currency: bodyData.currency || 'BDT',
         },
@@ -438,12 +437,19 @@ export class GtmService {
       }
 
       // PostHog
+      const checkoutProducts = (bodyData.products || bodyData.contents || []).map((p: any) => ({
+        product_id: p.id || p.contentId || p.product_id,
+        product_name: p.name || p.contentName || p.product_name,
+        quantity: p.quantity,
+        price: p.item_price || p.price || p.value,
+      }));
       this.posthogService.capture(
         this.getDistinctId(bodyData.user_data, this.utilsService.getClientIp(req)),
         'checkout_initiated',
         {
-          value: bodyData.value,
-          num_items: bodyData.num_items,
+          products: checkoutProducts,
+          total_items: bodyData.num_items || bodyData.total_items,
+          cart_value: bodyData.value || bodyData.cart_value,
           currency: bodyData.currency || 'BDT',
         },
       );
@@ -463,106 +469,27 @@ export class GtmService {
     bodyData: any,
   ): Promise<ResponsePayload> {
     try {
-      const fSetting = await this.settingModel.findOne().select('analytics');
-      if (
-        fSetting &&
-        fSetting.analytics &&
-        fSetting.analytics.facebookPixelId &&
-        fSetting.analytics.facebookPixelAccessToken
-      ) {
-        if (
-          !this.utilsService.isValidFacebookPixelId(
-            fSetting.analytics.facebookPixelId,
-          )
-        ) {
-          return {
-            success: false,
-            message: 'Sorry! Invalid Facebook Pixel ID',
-          } as ResponsePayload;
-        }
+      // Meta CAPI for purchase is handled exclusively by Stape server GTM.
+      // Direct CAPI call removed to prevent duplicate Purchase events.
+      // Stape reads the purchase event from Web GTM and fires [Stape] Meta - Purchase.
 
-        if (
-          !this.utilsService.isValidFacebookAccessTokenFormat(
-            fSetting.analytics.facebookPixelAccessToken,
-          )
-        ) {
-          return {
-            success: false,
-            message: 'Sorry! Invalid Facebook Access Token',
-          } as ResponsePayload;
-        }
-
-        const clientIpAddress = this.utilsService.getClientIp(req);
-        const clientUserAgent = req.headers['user-agent'];
-
-        const hostname = req.hostname || '';
-        console.log('Hostname: [Purchase] ', hostname);
-
-        const fbApiPayload: any = { ...bodyData };
-        // Ensure user_data exists
-        fbApiPayload.user_data = fbApiPayload.user_data || {};
-
-        const ud = fbApiPayload.user_data;
-
-        // Map GTM dataLayer field names → Meta CAPI field names
-        // phone: accept both 'ph' and 'phone_number'
-        ud.ph = (ud.ph && ud.ph !== 'null' ? ud.ph : null)
-          || (ud.phone_number && ud.phone_number !== 'null' ? ud.phone_number : null)
-          || undefined;
-        delete ud.phone_number;
-
-        // email
-        ud.em = (ud.em && ud.em !== 'null' ? ud.em : null)
-          || (ud.email_address && ud.email_address !== 'null' ? ud.email_address : null)
-          || undefined;
-        delete ud.email_address;
-
-        // first/last name
-        ud.fn = ud.fn || (ud.first_name && ud.first_name !== 'null' ? ud.first_name : undefined);
-        ud.ln = ud.ln || (ud.last_name && ud.last_name !== 'null' ? ud.last_name : undefined);
-        delete ud.first_name;
-        delete ud.last_name;
-
-        // country (keep as-is — 'bd' is correct ISO alpha-2)
-        ud.country = ud.country || undefined;
-
-        // Click ID / Browser ID (not hashed — pass through)
-        ud.fbc = ud.fbc || undefined;
-        ud.fbp = ud.fbp || undefined;
-
-        // Server-side enrichment
-        ud.client_ip_address = clientIpAddress || undefined;
-        ud.client_user_agent = clientUserAgent || undefined;
-
-        let payloadData = {};
-        if (
-          fSetting.analytics.isEnablePixelTestEvent &&
-          fSetting.analytics.facebookPixelTestEventId
-        ) {
-          payloadData = {
-            data: [fbApiPayload],
-            test_event_code: fSetting.analytics.facebookPixelTestEventId,
-          };
-        } else {
-          payloadData = { data: [fbApiPayload] };
-        }
-
-        const result = await this.analyticsService.trackFbConversionEventClient(
-          fSetting.analytics.facebookPixelId,
-          fSetting.analytics.facebookPixelAccessToken,
-          payloadData,
-        );
-      }
-
-      // PostHog
+      // PostHog — capture purchase for internal analytics
+      const purchaseItems = (bodyData.products || bodyData.contents || []).map((p: any) => ({
+        product_id: p.id || p.contentId || p.product_id,
+        product_name: p.name || p.contentName || p.product_name,
+        quantity: p.quantity,
+        price: p.item_price || p.price || p.value,
+      }));
       this.posthogService.capture(
         this.getDistinctId(bodyData.user_data, this.utilsService.getClientIp(req)),
-        'purchase',
+        'purchase_completed',
         {
-          order_id: bodyData.eventId,
-          value: bodyData.value,
-          num_items: bodyData.num_items,
+          order_id: bodyData.event_id || bodyData.eventId || bodyData.order_id,
+          revenue: bodyData.value || bodyData.revenue,
           currency: bodyData.currency || 'BDT',
+          items: purchaseItems,
+          coupon_code: bodyData.coupon_code || bodyData.couponCode || null,
+          payment_method: bodyData.payment_method || bodyData.paymentMethod || null,
         },
       );
 

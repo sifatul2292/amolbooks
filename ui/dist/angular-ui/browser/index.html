@@ -101,6 +101,8 @@
 <!--    fbq('track', 'PageView');-->
 <!--  </script>-->
 
+  <!-- dataLayer normalizer: UA → GA4 format. Must load BEFORE GTM. -->
+  <script src="dl-normalize.js"></script>
   <!-- Stape sGTM Custom Loader -->
   <link rel="preload" href="https://server.amolbooks.com/stape-custom-loader.js?id=kpblypwe" as="script">
   <script async src="https://server.amolbooks.com/stape-custom-loader.js?id=kpblypwe"></script>
