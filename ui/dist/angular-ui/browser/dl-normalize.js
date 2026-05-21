@@ -215,25 +215,46 @@
     return obj;
   }
 
-  // Patch dataLayer.push BEFORE GTM initializes.
-  // GTM wraps our patched push — events are normalized before GTM sees them.
-  var _nativePush = Array.prototype.push;
-  window.dataLayer.push = function () {
-    var args = Array.prototype.slice.call(arguments);
-    var filtered = [];
-    for (var i = 0; i < args.length; i++) {
-      try {
-        var normalized = normalizeEvent(args[i]);
-        if (normalized !== null) {
-          filtered.push(normalized);
+  // ── dataLayer.push patch ──────────────────────────────────────────────────
+  // GTM overwrites dataLayer.push when it initializes. We must wrap AFTER GTM.
+  // Strategy: patch now (catches any pre-GTM pushes), then re-patch on window
+  // load (wraps GTM's push so all Angular events are normalized before GTM
+  // processes them).
+
+  function installPatch() {
+    var _prevPush = window.dataLayer.push;
+    // Avoid double-wrapping if already patched
+    if (_prevPush && _prevPush._amolNormalized) return;
+
+    var patchedPush = function () {
+      var args = Array.prototype.slice.call(arguments);
+      var filtered = [];
+      for (var i = 0; i < args.length; i++) {
+        try {
+          var normalized = normalizeEvent(args[i]);
+          if (normalized !== null) {
+            filtered.push(normalized);
+          }
+          // null return = event dropped (duplicate purchase guard)
+        } catch (e) {
+          console.error('[amol-dl] normalizeEvent error:', e);
+          filtered.push(args[i]); // fail open — pass original on error
         }
-        // null return = event dropped (duplicate purchase guard)
-      } catch (e) {
-        console.error('[amol-dl] normalizeEvent error:', e);
-        filtered.push(args[i]); // fail open — pass original on error
       }
-    }
-    if (filtered.length === 0) return window.dataLayer.length;
-    return _nativePush.apply(window.dataLayer, filtered);
-  };
+      if (filtered.length === 0) return window.dataLayer.length;
+      return _prevPush.apply(window.dataLayer, filtered);
+    };
+    patchedPush._amolNormalized = true;
+    window.dataLayer.push = patchedPush;
+    console.log('[amol-dl] dataLayer.push patched');
+  }
+
+  // Patch now (pre-GTM, covers early pushes)
+  installPatch();
+
+  // Re-patch after window load — GTM will have initialized by then,
+  // so we wrap GTM's push instead of the native array push.
+  window.addEventListener('load', function () {
+    installPatch();
+  });
 })();
