@@ -1428,4 +1428,50 @@ export class ProductService {
   async findAllPublished(): Promise<Product[]> {
     return this.productModel.find({}).select('slug title').exec();
   }
+
+  async getMetaFeed(): Promise<string> {
+    const products = await this.productModel
+      .find({ status: 'publish', isFacebookCatalog: true })
+      .select(
+        '_id nameEn name slug shortDescription description afterDiscountPrice salePrice images quantity publisher brand category',
+      )
+      .lean();
+
+    const headers = [
+      'id',
+      'title',
+      'description',
+      'availability',
+      'condition',
+      'price',
+      'link',
+      'image_link',
+      'brand',
+      'fb_product_category',
+    ];
+
+    const escape = (v: any): string => {
+      if (v == null) return '';
+      const s = String(v).replace(/"/g, '""');
+      return `"${s}"`;
+    };
+
+    const rows = products.map((p: any) => {
+      const id = String(p._id);
+      const title = p.nameEn || p.name || '';
+      const desc = (p.shortDescription || p.description || title).replace(/<[^>]*>/g, '');
+      const availability = p.quantity > 0 ? 'in stock' : 'out of stock';
+      const price = `${p.afterDiscountPrice || p.salePrice || 0} BDT`;
+      const link = `https://amolbooks.com/product/${p.slug}`;
+      const imageLink = (p.images && p.images[0]) ? p.images[0] : '';
+      const brand = p.publisher?.name || p.brand?.name || 'Amolbooks';
+      const category = p.category?.[0]?.nameEn || p.category?.[0]?.name || '';
+
+      return [id, title, desc, availability, 'new', price, link, imageLink, brand, category]
+        .map(escape)
+        .join(',');
+    });
+
+    return [headers.join(','), ...rows].join('\n');
+  }
 }
