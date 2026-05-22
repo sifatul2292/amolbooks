@@ -41,4 +41,8 @@ export class SitemapService {
     const xml = await streamToPromise(smStream);
     return xml.toString(); // Return as plain string
   }
+
+  async generateFbFeedXml(): Promise<string> {
+    return this.productService.getMetaFeedXml();
+  }
 }

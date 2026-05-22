@@ -9,8 +9,16 @@ export class SitemapController {
 
   @Get('sitemap.xml')
   async getSitemap(@Res() res: Response) {
-    const sitemap = await this.sitemapService.generateSitemapXml(); // changed method name
+    const sitemap = await this.sitemapService.generateSitemapXml();
     res.setHeader('Content-Type', 'application/xml');
-    res.status(200).send(sitemap); // send as plain XML
+    res.status(200).send(sitemap);
+  }
+
+  @Get('fb-feed.xml')
+  async getFbFeed(@Res() res: Response) {
+    const feed = await this.sitemapService.generateFbFeedXml();
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.status(200).send(feed);
   }
 }

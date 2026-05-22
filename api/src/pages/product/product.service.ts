@@ -1429,6 +1429,72 @@ export class ProductService {
     return this.productModel.find({}).select('slug title').exec();
   }
 
+  async getMetaFeedXml(): Promise<string> {
+    const products = await this.productModel
+      .find({ status: 'publish', isFacebookCatalog: true })
+      .select(
+        '_id nameEn name slug shortDescription description afterDiscountPrice salePrice images quantity publisher brand category',
+      )
+      .lean();
+
+    const escapeXml = (v: any): string => {
+      if (v == null) return '';
+      return String(v)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+    };
+
+    const normalizeImageUrl = (url: string): string => {
+      if (!url) return '';
+      return url.replace(
+        /https?:\/\/apisub\.amolbooks\.com\/api\/upload\//,
+        'https://amolbooks.com/uploads/',
+      );
+    };
+
+    const items = products.map((p: any) => {
+      const id = String(p._id);
+      const title = escapeXml(p.nameEn || p.name || '');
+      const desc = escapeXml(
+        (p.shortDescription || p.description || p.nameEn || p.name || '').replace(/<[^>]*>/g, ''),
+      );
+      const link = escapeXml(`https://amolbooks.com/product-details/${p.slug}`);
+      const price = `${p.afterDiscountPrice || p.salePrice || 0} BDT`;
+      const availability = p.quantity > 0 ? 'in stock' : 'out of stock';
+      const imageLink = escapeXml(normalizeImageUrl(p.images?.[0] || ''));
+      const additionalImageLink = p.images?.[1]
+        ? `<g:additional_image_link>${escapeXml(normalizeImageUrl(p.images[1]))}</g:additional_image_link>`
+        : '';
+      const brand = escapeXml(p.publisher?.name || p.brand?.name || 'Amolbooks');
+
+      return `    <item>
+      <g:id>${id}</g:id>
+      <g:title>${title}</g:title>
+      <g:description>${desc}</g:description>
+      <g:link>${link}</g:link>
+      <g:image_link>${imageLink}</g:image_link>
+      ${additionalImageLink}
+      <g:availability>${availability}</g:availability>
+      <g:price>${price}</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>${brand}</g:brand>
+    </item>`;
+    });
+
+    return `<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+  <channel>
+    <title>Amolbooks</title>
+    <link>https://amolbooks.com</link>
+    <description>Amolbooks product catalog</description>
+${items.join('\n')}
+  </channel>
+</rss>`;
+  }
+
   async getMetaFeed(): Promise<string> {
     const products = await this.productModel
       .find({ status: 'publish', isFacebookCatalog: true })
