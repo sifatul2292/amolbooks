@@ -292,8 +292,7 @@
     var val=cartVal(items);
     var dl=window.dataLayer;
     dl.push({ecommerce:null});
-    /* GTM trigger "ce - begin_checkout_stape" listens for 'checkout_input_started' */
-    dl.push({event:'checkout_input_started',ecommerce:{currency:'BDT',value:val,items:items},__stape:true});
+    dl.push({event:'begin_checkout_stape',ecommerce:{currency:'BDT',value:val,items:items},__stape:true});
   }
 
   var _purchaseFired=false;
