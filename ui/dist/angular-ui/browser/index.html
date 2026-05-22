@@ -206,17 +206,26 @@
     return s;
   }
 
+  /* ── Push stape event after current call stack clears ──────────────────
+     Using setTimeout(0) ensures the _stape event goes through the CURRENT
+     window.dataLayer.push chain (including GTM's trigger evaluation) as a
+     fresh event, rather than being nested inside an in-flight GTM push.    ──────────────────────────────────────────────────────────────────────── */
+  function _pushStape(obj){
+    try{
+      var s=stapeOf(obj);s.__stape=true;
+      if(obj.event==='add_to_cart')try{window.dispatchEvent(new CustomEvent('amol-cart-added'));}catch(e2){}
+      // ecommerce:null clears GTM state immediately; stape event fires after stack clears
+      window.dataLayer.push({ecommerce:null});
+      setTimeout(function(){try{window.dataLayer.push(s);}catch(e){}},0);
+    }catch(e){}
+  }
+
   /* ── EARLY wrap ── */
   var _rawPush=Array.prototype.push.bind(window.dataLayer);
   window.dataLayer.push=function(obj){
     var r=_rawPush.apply(window.dataLayer,arguments);
     try{
-      if(obj&&obj.event&&MIRROR[obj.event]&&!obj.__stape){
-        _rawPush.call(window.dataLayer,{ecommerce:null});
-        var s=stapeOf(obj);s.__stape=true;
-        _rawPush.call(window.dataLayer,s);
-        if(obj.event==='add_to_cart')try{window.dispatchEvent(new CustomEvent('amol-cart-added'));}catch(e2){}
-      }
+      if(obj&&obj.event&&MIRROR[obj.event]&&!obj.__stape) _pushStape(obj);
     }catch(e){}
     return r;
   };
@@ -230,12 +239,7 @@
     dl.push=function(obj){
       var r=orig.apply(dl,arguments);
       try{
-        if(obj&&obj.event&&MIRROR[obj.event]&&!obj.__stape){
-          orig.call(dl,{ecommerce:null});
-          var s=stapeOf(obj);s.__stape=true;
-          orig.call(dl,s);
-          if(obj.event==='add_to_cart')try{window.dispatchEvent(new CustomEvent('amol-cart-added'));}catch(e2){}
-        }
+        if(obj&&obj.event&&MIRROR[obj.event]&&!obj.__stape) _pushStape(obj);
       }catch(e){}
       return r;
     };
