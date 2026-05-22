@@ -207,18 +207,14 @@
   }
 
   /* ── Push stape event after current call stack clears ──────────────────
-     setTimeout(0) ensures _stape event reaches GTM as a fresh event.
-     Dedup guard (1 s per event type) prevents Angular double-pushes
-     (route-init + HTTP response) from firing tags twice.
-     ──────────────────────────────────────────────────────────────────────── */
-  var _stapeLastTs={};
+     Using setTimeout(0) ensures the _stape event goes through the CURRENT
+     window.dataLayer.push chain (including GTM's trigger evaluation) as a
+     fresh event, rather than being nested inside an in-flight GTM push.    ──────────────────────────────────────────────────────────────────────── */
   function _pushStape(obj){
     try{
-      var ev=obj.event,now=Date.now();
-      if(_stapeLastTs[ev]&&now-_stapeLastTs[ev]<1000)return; // dedup: same event within 1 s
-      _stapeLastTs[ev]=now;
       var s=stapeOf(obj);s.__stape=true;
-      if(ev==='add_to_cart')try{window.dispatchEvent(new CustomEvent('amol-cart-added'));}catch(e2){}
+      if(obj.event==='add_to_cart')try{window.dispatchEvent(new CustomEvent('amol-cart-added'));}catch(e2){}
+      // ecommerce:null clears GTM state immediately; stape event fires after stack clears
       window.dataLayer.push({ecommerce:null});
       setTimeout(function(){try{window.dataLayer.push(s);}catch(e){}},0);
     }catch(e){}
