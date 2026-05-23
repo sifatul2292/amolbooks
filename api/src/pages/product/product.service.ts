@@ -1457,7 +1457,7 @@ export class ProductService {
 
     const items = products.map((p: any) => {
       const id = String(p._id);
-      const title = escapeXml(p.nameEn || p.name || '');
+      const title = escapeXml(p.name || p.nameEn || '');
       const desc = escapeXml(
         (p.shortDescription || p.description || p.nameEn || p.name || '').replace(/<[^>]*>/g, ''),
       );
