@@ -1,5 +1,5 @@
 // src/sitemap/sitemap.controller.ts
-import { Controller, Get, Res } from '@nestjs/common';
+import { Controller, Get, Res, Version, VERSION_NEUTRAL } from '@nestjs/common';
 import { Response } from 'express';
 import { SitemapService } from './sitemap.service';
 
@@ -7,6 +7,7 @@ import { SitemapService } from './sitemap.service';
 export class SitemapController {
   constructor(private readonly sitemapService: SitemapService) {}
 
+  @Version(VERSION_NEUTRAL)
   @Get('sitemap.xml')
   async getSitemap(@Res() res: Response) {
     const sitemap = await this.sitemapService.generateSitemapXml();
@@ -14,6 +15,7 @@ export class SitemapController {
     res.status(200).send(sitemap);
   }
 
+  @Version(VERSION_NEUTRAL)
   @Get('fb-feed.xml')
   async getFbFeed(@Res() res: Response) {
     const feed = await this.sitemapService.generateFbFeedXml();
