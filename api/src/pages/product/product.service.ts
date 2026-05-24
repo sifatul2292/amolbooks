@@ -1450,12 +1450,10 @@ export class ProductService {
     const stripHtml = (str: string): string =>
       str.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
-    const normalizeImageUrl = (url: string): string => {
+    const resolveImageUrl = (url: string): string => {
       if (!url) return '';
-      return url.replace(
-        /https?:\/\/apisub\.amolbooks\.com\/api\/upload\//,
-        'https://amolbooks.com/uploads/',
-      );
+      if (url.startsWith('http')) return url;
+      return `https://amolbooks.com${url.startsWith('/') ? '' : '/'}${url}`;
     };
 
     const items = products.map((p: any) => {
@@ -1471,13 +1469,13 @@ export class ProductService {
         ? `${afterDiscountPrice.toFixed(2)} BDT`
         : null;
       const availability = p.quantity > 0 ? 'in stock' : 'out of stock';
-      const imageLink = normalizeImageUrl(p.images?.[0] || '')
+      const imageLink = resolveImageUrl(p.images?.[0] || '')
         || 'https://amolbooks.com/uploads/images/placeholder.png';
       const additionalImages =
         p.images && p.images.length > 1
           ? p.images
               .slice(1, 10)
-              .map((img: string) => `      <g:additional_image_link>${escapeXml(normalizeImageUrl(img))}</g:additional_image_link>`)
+              .map((img: string) => `      <g:additional_image_link>${escapeXml(resolveImageUrl(img))}</g:additional_image_link>`)
               .join('\n')
           : '';
       const brand = escapeXml(p.publisher?.name || p.brand?.name || 'Amolbooks');
