@@ -1447,6 +1447,9 @@ export class ProductService {
         .replace(/'/g, '&apos;');
     };
 
+    const stripHtml = (str: string): string =>
+      str.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+
     const normalizeImageUrl = (url: string): string => {
       if (!url) return '';
       return url.replace(
@@ -1458,30 +1461,46 @@ export class ProductService {
     const items = products.map((p: any) => {
       const id = String(p._id);
       const title = escapeXml(p.name || p.nameEn || '');
-      const desc = escapeXml(
-        (p.shortDescription || p.description || p.nameEn || p.name || '').replace(/<[^>]*>/g, ''),
-      );
-      const link = escapeXml(`https://amolbooks.com/product-details/${p.slug}`);
-      const price = `${p.afterDiscountPrice || p.salePrice || 0} BDT`;
+      const rawDesc = p.shortDescription || p.description || p.name || p.nameEn || '';
+      const desc = (escapeXml(stripHtml(rawDesc)).slice(0, 5000)) || title;
+      const link = `https://amolbooks.com/product-details/${encodeURIComponent(p.slug || '')}`;
+      const salePrice = Number(p.salePrice || 0);
+      const afterDiscountPrice = Number(p.afterDiscountPrice || 0);
+      const price = `${salePrice.toFixed(2)} BDT`;
+      const salePriceStr = afterDiscountPrice > 0 && afterDiscountPrice < salePrice
+        ? `${afterDiscountPrice.toFixed(2)} BDT`
+        : null;
       const availability = p.quantity > 0 ? 'in stock' : 'out of stock';
-      const imageLink = escapeXml(normalizeImageUrl(p.images?.[0] || ''));
-      const additionalImageLink = p.images?.[1]
-        ? `<g:additional_image_link>${escapeXml(normalizeImageUrl(p.images[1]))}</g:additional_image_link>`
-        : '';
+      const imageLink = normalizeImageUrl(p.images?.[0] || '')
+        || 'https://amolbooks.com/uploads/images/placeholder.png';
+      const additionalImages =
+        p.images && p.images.length > 1
+          ? p.images
+              .slice(1, 10)
+              .map((img: string) => `      <g:additional_image_link>${escapeXml(normalizeImageUrl(img))}</g:additional_image_link>`)
+              .join('\n')
+          : '';
       const brand = escapeXml(p.publisher?.name || p.brand?.name || 'Amolbooks');
+      const categoryName = p.category?.[0]?.name || p.category?.[0]?.nameEn || '';
 
-      return `    <item>
-      <g:id>${id}</g:id>
-      <g:title>${title}</g:title>
-      <g:description>${desc}</g:description>
-      <g:link>${link}</g:link>
-      <g:image_link>${imageLink}</g:image_link>
-      ${additionalImageLink}
-      <g:availability>${availability}</g:availability>
-      <g:price>${price}</g:price>
-      <g:condition>new</g:condition>
-      <g:brand>${brand}</g:brand>
-    </item>`;
+      const lines = [
+        `    <item>`,
+        `      <g:id>${id}</g:id>`,
+        `      <g:title>${title}</g:title>`,
+        `      <g:description>${desc}</g:description>`,
+        `      <g:link>${escapeXml(link)}</g:link>`,
+        `      <g:image_link>${escapeXml(imageLink)}</g:image_link>`,
+        ...(additionalImages ? [additionalImages] : []),
+        `      <g:availability>${availability}</g:availability>`,
+        `      <g:price>${price}</g:price>`,
+        ...(salePriceStr ? [`      <g:sale_price>${salePriceStr}</g:sale_price>`] : []),
+        `      <g:condition>new</g:condition>`,
+        `      <g:brand>${brand}</g:brand>`,
+        ...(categoryName ? [`      <g:product_type>${escapeXml(categoryName)}</g:product_type>`] : []),
+        `    </item>`,
+      ];
+
+      return lines.join('\n');
     });
 
     return `<?xml version="1.0" encoding="utf-8"?>
