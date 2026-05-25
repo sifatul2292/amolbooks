@@ -1680,4 +1680,51 @@
   document.addEventListener('DOMContentLoaded', checkSuccessUrl);
 })();
 </script>
+
+<!-- Temporary holiday notice override for checkout success page -->
+<script>
+(function(){
+  var TITLE = 'অর্ডার কনফার্ম হয়েছে!';
+  var MESSAGE = 'ঈদ মুবারাক, আপনার অর্ডারটি কনফার্ম করা হয়েছে, ঈদের ছুটিতে আমাদের ডেলিভারি সাময়িকভাবে বন্ধ রাখা হয়েছে, ইনশাআল্লাহ, জুন ২, তারিখের পর থেকে আমাদের ডেলিভারি নিয়মিতভাবে চালু থাকবে';
+  var NEXT_STEPS = '';
+
+  function isOrderSuccess(){
+    return window.location.pathname.indexOf('/checkout/order-success/') !== -1;
+  }
+
+  function applyHolidayNotice(){
+    if(!isOrderSuccess()) return;
+    var title = document.querySelector('.order-success-card .success-title');
+    var message = document.querySelector('.order-success-card .success-message');
+    var nextSteps = document.querySelector('.order-success-card .next-steps');
+    if(title) title.textContent = TITLE;
+    if(message) message.textContent = MESSAGE;
+    if(nextSteps) nextSteps.textContent = NEXT_STEPS;
+  }
+
+  function scheduleHolidayNotice(){
+    applyHolidayNotice();
+    setTimeout(applyHolidayNotice, 100);
+    setTimeout(applyHolidayNotice, 500);
+    setTimeout(applyHolidayNotice, 1500);
+  }
+
+  var originalPushState = history.pushState;
+  history.pushState = function(){
+    var result = originalPushState.apply(this, arguments);
+    scheduleHolidayNotice();
+    return result;
+  };
+  window.addEventListener('popstate', scheduleHolidayNotice);
+  document.addEventListener('DOMContentLoaded', function(){
+    scheduleHolidayNotice();
+    try {
+      new MutationObserver(applyHolidayNotice).observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+    } catch(e) {}
+  });
+})();
+</script>
 </body></html>
