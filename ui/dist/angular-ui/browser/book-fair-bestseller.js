@@ -15,7 +15,8 @@
     subtitle: '',
     bookfairTag: '',
     categoryCards: [],
-    maxProducts: 80,
+    fallbackToGeneralBestseller: true,
+    maxProducts: 40,
     maxCategories: 6,
     productsPerCategory: 4
   }, window.AMOL_BOOK_FAIR_BESTSELLER || {});
@@ -79,7 +80,15 @@
       filter,
       config.maxProducts,
       { 'bookFairBestseller.priority': 1, priority: -1, totalSold: -1, createdAt: -1 }
-    );
+    ).then(function (products) {
+      if (products.length || !config.fallbackToGeneralBestseller) return products;
+
+      return fetchProductList(
+        { status: 'publish' },
+        config.maxProducts,
+        { totalSold: -1, priority: -1, createdAt: -1 }
+      );
+    });
   }
 
   function fetchCategoryCard(card) {
@@ -99,6 +108,37 @@
       card.limit || config.productsPerCategory,
       card.sort || { 'bookFairBestseller.priority': 1, priority: -1, totalSold: -1, createdAt: -1 }
     ).then(function (products) {
+      if (!products.length && config.fallbackToGeneralBestseller) {
+        var fallbackFilter = { status: 'publish' };
+        if (card.productSlugs && card.productSlugs.length) {
+          fallbackFilter.slug = { $in: card.productSlugs };
+        } else if (card.slug || card.categorySlug) {
+          fallbackFilter['category.slug'] = card.slug || card.categorySlug;
+        }
+
+        return fetchProductList(
+          fallbackFilter,
+          card.limit || config.productsPerCategory,
+          card.sort || { totalSold: -1, priority: -1, createdAt: -1 }
+        ).then(function (fallbackProducts) {
+          if (card.productSlugs && card.productSlugs.length) {
+            fallbackProducts.sort(function (a, b) {
+              return card.productSlugs.indexOf(a.slug) - card.productSlugs.indexOf(b.slug);
+            });
+          }
+
+          return {
+            category: {
+              name: card.title,
+              nameEn: card.title,
+              slug: card.slug || card.categorySlug
+            },
+            minProducts: card.minProducts || 1,
+            products: fallbackProducts.slice(0, card.limit || config.productsPerCategory)
+          };
+        });
+      }
+
       if (card.productSlugs && card.productSlugs.length) {
         products.sort(function (a, b) {
           return card.productSlugs.indexOf(a.slug) - card.productSlugs.indexOf(b.slug);
@@ -332,7 +372,40 @@
     var direct = document.querySelector('footer,app-footer,.footer,.footer-area,.footer-section,.main-footer,.footer-bottom');
     if (direct) return direct;
 
-    var all = Array.prototype.slice.call(root.querySelectorAll('*')).reverse();
+    var children = Array.prototype.slice.call(root.children || []).reverse();
+    for (var i = 0; i < children.length; i++) {
+      var el = children[i];
+      if (el.id === WIDGET_ID) continue;
+      var text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+      if (!text || text.length > 1200) continue;
+      if (text.indexOf('©') !== -1 || text.indexOf('আমল বুকস') !== -1 || text.indexOf('amolbooks') !== -1) {
+        return el;
+      }
+    }
+
+    var bottomNodes = Array.prototype.slice.call(document.body.children || []).slice(-8).reverse();
+    for (var j = 0; j < bottomNodes.length; j++) {
+      var node = bottomNodes[j];
+      if (node.id === WIDGET_ID) continue;
+      var bodyText = (node.textContent || '').replace(/\s+/g, ' ').trim();
+      if (!bodyText || bodyText.length > 1200) continue;
+      if (bodyText.indexOf('©') !== -1 || bodyText.indexOf('আমল বুকস') !== -1 || bodyText.indexOf('amolbooks') !== -1) {
+        return node;
+      }
+    }
+
+    var footerHints = document.querySelectorAll('[class*="footer"],[id*="footer"]');
+    for (var k = footerHints.length - 1; k >= 0; k--) {
+      var hinted = footerHints[k];
+      if (hinted && hinted.id !== WIDGET_ID && hinted.offsetHeight > 0) return hinted;
+    }
+
+    return null;
+  }
+
+  function findLegacyFooter() {
+    var root = document.querySelector('app-root') || document.body;
+    var all = Array.prototype.slice.call(root.querySelectorAll('*')).reverse().slice(0, 80);
     for (var i = 0; i < all.length; i++) {
       var el = all[i];
       var text = (el.textContent || '').replace(/\s+/g, ' ').trim();
@@ -402,13 +475,16 @@
   }
 
   function watchFooterPosition() {
-    footerChecksLeft = 12;
+    footerChecksLeft = 5;
     function tick() {
       var existing = document.getElementById(WIDGET_ID);
       if (!existing) return;
-      ensureBeforeFooter(existing);
+      if (!ensureBeforeFooter(existing) && footerChecksLeft === 1) {
+        var legacy = findLegacyFooter();
+        if (legacy && legacy.parentNode) legacy.parentNode.insertBefore(existing, legacy);
+      }
       footerChecksLeft -= 1;
-      if (footerChecksLeft > 0) setTimeout(tick, 500);
+      if (footerChecksLeft > 0) setTimeout(tick, 700);
     }
     setTimeout(tick, 250);
   }

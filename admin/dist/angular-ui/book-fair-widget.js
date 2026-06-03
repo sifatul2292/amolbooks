@@ -23,7 +23,15 @@
   };
 
   var _origFetch = window.fetch;
+  var _origXhrOpen = XMLHttpRequest.prototype.open;
+  var _origXhrSend = XMLHttpRequest.prototype.send;
   var _origXhrSetHeader = XMLHttpRequest.prototype.setRequestHeader;
+
+  XMLHttpRequest.prototype.open = function (method, url) {
+    this.__bfMethod = method;
+    this.__bfUrl = url;
+    return _origXhrOpen.apply(this, arguments);
+  };
 
   XMLHttpRequest.prototype.setRequestHeader = function (name, value) {
     if (typeof name === 'string' && name.toLowerCase() === 'administrator' && value) {
@@ -32,11 +40,27 @@
     return _origXhrSetHeader.apply(this, arguments);
   };
 
+  XMLHttpRequest.prototype.send = function (body) {
+    var nextBody = body;
+    if (shouldInjectProductUpdate(this.__bfUrl, this.__bfMethod)) {
+      nextBody = mergeBookFairIntoBody(body);
+    }
+    return _origXhrSend.call(this, nextBody);
+  };
+
   window.fetch = function (input, init) {
     var url = typeof input === 'string' ? input : (input && input.url) || '';
+    var method = (init && init.method) || (input && input.method) || 'GET';
+    var nextInit = init;
     tryCaptureToken(init);
 
-    var promise = _origFetch.apply(this, arguments);
+    if (shouldInjectProductUpdate(url, method) && init && init.body) {
+      nextInit = Object.assign({}, init, { body: mergeBookFairIntoBody(init.body) });
+    }
+
+    var promise = nextInit !== init
+      ? _origFetch.call(this, input, nextInit)
+      : _origFetch.apply(this, arguments);
 
     if (url && url.indexOf('/api/product/add') !== -1 && hasMeaningfulConfig()) {
       return promise.then(function (response) {
@@ -95,6 +119,33 @@
       headers: authHeaders(),
       body: JSON.stringify(body),
     });
+  }
+
+  function shouldInjectProductUpdate(url, method) {
+    if (!url || !/put/i.test(String(method || ''))) return false;
+    if (String(url).indexOf('/api/product/update/') === -1) return false;
+    return !!document.getElementById(PANEL_ID);
+  }
+
+  function currentBookFairPayload() {
+    readForm();
+    return {
+      isEnabled: !!pendingConfig.isEnabled,
+      priority: pendingConfig.priority || null,
+      category: pendingConfig.category || null,
+    };
+  }
+
+  function mergeBookFairIntoBody(body) {
+    if (!body || typeof body !== 'string') return body;
+    try {
+      var data = JSON.parse(body);
+      data.bookFairBestseller = currentBookFairPayload();
+      showStatus('বইমেলা সেটিংস product save-এর সাথে যুক্ত হয়েছে।');
+      return JSON.stringify(data);
+    } catch (_) {
+      return body;
+    }
   }
 
   function getRouteInfo(path) {
@@ -362,11 +413,7 @@
 
   async function saveToProduct(productId) {
     var payload = {
-      bookFairBestseller: {
-        isEnabled: !!pendingConfig.isEnabled,
-        priority: pendingConfig.priority || null,
-        category: pendingConfig.category || null,
-      },
+      bookFairBestseller: currentBookFairPayload(),
     };
     var res = await apiPut('/api/product/update/' + productId, payload);
     if (!res.ok) {
