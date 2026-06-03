@@ -443,6 +443,36 @@ exports.ProductSchema = new mongoose.Schema({
         required: false,
         default: [],
     },
+    bookFairBestseller: {
+        isEnabled: {
+            type: Boolean,
+            required: false,
+            default: false,
+        },
+        priority: {
+            type: Number,
+            required: false,
+        },
+        category: {
+            _id: {
+                type: mongoose_1.Schema.Types.ObjectId,
+                ref: 'Category',
+                required: false,
+            },
+            name: {
+                type: String,
+                required: false,
+            },
+            nameEn: {
+                type: String,
+                required: false,
+            },
+            slug: {
+                type: String,
+                required: false,
+            },
+        },
+    },
 }, {
     versionKey: false,
     timestamps: true,
@@ -454,4 +484,5 @@ exports.ProductSchema.index({ priority: -1, createdAt: -1 });
 exports.ProductSchema.index({ 'tags._id': 1 });
 exports.ProductSchema.index({ 'author._id': 1 });
 exports.ProductSchema.index({ 'publisher._id': 1 });
+exports.ProductSchema.index({ 'bookFairBestseller.isEnabled': 1, 'bookFairBestseller.category.slug': 1, 'bookFairBestseller.priority': 1 });
 //# sourceMappingURL=product.schema.js.map

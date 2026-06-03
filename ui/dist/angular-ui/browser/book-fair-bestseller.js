@@ -11,7 +11,7 @@
     apiBase: DEFAULT_API_BASE,
     pages: ['/', '/home', '/product-list'],
     title: 'বইমেলা বেস্টসেলার ২০২৬',
-    badgeTitle: 'অমল বইমেলা ২০২৬',
+    badgeTitle: 'বইমেলা বেস্টসেলার ২০২৬',
     subtitle: 'অনলাইন বইমেলা',
     bookfairTag: '',
     categoryCards: [],
@@ -48,7 +48,8 @@
       discountAmount: 1,
       discountType: 1,
       totalSold: 1,
-      priority: 1
+      priority: 1,
+      bookFairBestseller: 1
     };
   }
 
@@ -69,24 +70,24 @@
   }
 
   function fetchDynamicProducts() {
-    var filter = { status: 'publish' };
+    var filter = { status: 'publish', 'bookFairBestseller.isEnabled': true };
     if (config.bookfairTag) filter['tags.name'] = config.bookfairTag;
 
     return fetchProductList(
       filter,
       config.maxProducts,
-      { totalSold: -1, priority: -1, createdAt: -1 }
+      { 'bookFairBestseller.priority': 1, priority: -1, totalSold: -1, createdAt: -1 }
     );
   }
 
   function fetchCategoryCard(card) {
-    var filter = { status: 'publish' };
+    var filter = { status: 'publish', 'bookFairBestseller.isEnabled': true };
     var tagName = card.tag || config.bookfairTag;
 
     if (card.productSlugs && card.productSlugs.length) {
       filter.slug = { $in: card.productSlugs };
     } else if (card.slug || card.categorySlug) {
-      filter['category.slug'] = card.slug || card.categorySlug;
+      filter['bookFairBestseller.category.slug'] = card.slug || card.categorySlug;
     }
 
     if (tagName) filter['tags.name'] = tagName;
@@ -94,7 +95,7 @@
     return fetchProductList(
       filter,
       card.limit || config.productsPerCategory,
-      card.sort || { priority: -1, totalSold: -1, createdAt: -1 }
+      card.sort || { 'bookFairBestseller.priority': 1, priority: -1, totalSold: -1, createdAt: -1 }
     ).then(function (products) {
       if (card.productSlugs && card.productSlugs.length) {
         products.sort(function (a, b) {
@@ -166,6 +167,9 @@
   }
 
   function categoryItems(product) {
+    if (product.bookFairBestseller && product.bookFairBestseller.category) {
+      return [product.bookFairBestseller.category];
+    }
     return asArray(product.category).filter(function (cat) {
       return cat && (cat.name || cat.nameEn || cat.slug || cat._id);
     });
@@ -309,6 +313,11 @@
     var root = document.querySelector('app-root');
     if (!root) return null;
 
+    var footer = findFooter(root);
+    if (footer && footer.parentNode) {
+      return { parent: footer.parentNode, before: footer };
+    }
+
     var candidates = root.querySelectorAll('section,.container,app-carousel,app-banner,.banner,.banner-area,.main-area');
     for (var i = 0; i < candidates.length; i++) {
       var el = candidates[i];
@@ -317,6 +326,31 @@
     }
 
     return { parent: root, after: root.lastElementChild };
+  }
+
+  function findFooter(root) {
+    var direct = root.querySelector('footer,app-footer,.footer,.footer-area,.footer-section,.main-footer,.footer-bottom');
+    if (direct) return direct;
+
+    var all = Array.prototype.slice.call(root.querySelectorAll('*')).reverse();
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i];
+      var text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+      if (!text || text.length > 260) continue;
+      if (text.indexOf('©') !== -1 || text.indexOf('আমল বুকস') !== -1) {
+        var node = el;
+        while (
+          node.parentElement &&
+          node.parentElement !== root &&
+          node.parentElement.textContent &&
+          node.parentElement.textContent.replace(/\s+/g, ' ').trim().length < 500
+        ) {
+          node = node.parentElement;
+        }
+        return node;
+      }
+    }
+    return null;
   }
 
   function mount(groups) {
@@ -336,7 +370,9 @@
 
       existing = document.createElement('div');
       existing.id = WIDGET_ID;
-      if (anchor.after && anchor.after.nextSibling) {
+      if (anchor.before) {
+        anchor.parent.insertBefore(existing, anchor.before);
+      } else if (anchor.after && anchor.after.nextSibling) {
         anchor.parent.insertBefore(existing, anchor.after.nextSibling);
       } else {
         anchor.parent.appendChild(existing);

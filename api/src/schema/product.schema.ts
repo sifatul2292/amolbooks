@@ -495,6 +495,36 @@ export const ProductSchema = new mongoose.Schema(
       required: false,
       default: [],
     },
+    bookFairBestseller: {
+      isEnabled: {
+        type: Boolean,
+        required: false,
+        default: false,
+      },
+      priority: {
+        type: Number,
+        required: false,
+      },
+      category: {
+        _id: {
+          type: Schema.Types.ObjectId,
+          ref: 'Category',
+          required: false,
+        },
+        name: {
+          type: String,
+          required: false,
+        },
+        nameEn: {
+          type: String,
+          required: false,
+        },
+        slug: {
+          type: String,
+          required: false,
+        },
+      },
+    },
   },
   {
     versionKey: false,
@@ -511,3 +541,4 @@ ProductSchema.index({ priority: -1, createdAt: -1 });             // default sor
 ProductSchema.index({ 'tags._id': 1 });                           // tag product listing
 ProductSchema.index({ 'author._id': 1 });                         // author product listing
 ProductSchema.index({ 'publisher._id': 1 });                      // publisher product listing
+ProductSchema.index({ 'bookFairBestseller.isEnabled': 1, 'bookFairBestseller.category.slug': 1, 'bookFairBestseller.priority': 1 });
