@@ -72,6 +72,7 @@
 
   function authHeaders() {
     var h = { 'Content-Type': 'application/json' };
+    tryRecoverToken();
     if (capturedToken) h.administrator = capturedToken;
     return h;
   }
@@ -152,7 +153,7 @@
         pendingConfig = {
           isEnabled: !!(saved && saved.isEnabled),
           category: (saved && saved.category) || firstProductCategory(currentProduct),
-          priority: saved && saved.priority ? saved.priority : null,
+          priority: saved && saved.priority ? saved.priority : '',
         };
       } else {
         pendingConfig.category = categories[0] || null;
@@ -237,14 +238,13 @@
     return [
       '<div class="bf-card-inner">',
       '  <div class="bf-card-title">',
-      '    <span class="bf-title-text">Book Fair Bestseller</span>',
-      '    <span class="bf-badge" id="bf-badge">2026</span>',
+      '    <span class="bf-title-text">বইমেলা বেস্টসেলার ২০২৬</span>',
       '  </div>',
-      '  <p class="bf-sub">Tick this product for the homepage bookfair section, choose its category card, then set priority. Priority 1 shows first.</p>',
-      '  <label class="bf-toggle-row">',
+      '  <p class="bf-sub">এই প্রোডাক্টটি বইমেলা বেস্টসেলার সেকশনে দেখাতে টিক দিন, ক্যাটাগরি কার্ড নির্বাচন করুন, তারপর priority দিন। Priority 1 সবার আগে দেখাবে।</p>',
+      '  <label class="bf-toggle-row" id="bf-toggle-row">',
       '    <input id="bf-enabled" type="checkbox" ' + (pendingConfig.isEnabled ? 'checked' : '') + ' />',
       '    <span class="bf-checkmark">✓</span>',
-      '    <span>Show in বইমেলা বেস্টসেলার ২০২৬</span>',
+      '    <span>বইমেলা বেস্টসেলার ২০২৬-এ দেখান</span>',
       '  </label>',
       '  <div class="bf-fields">',
       '    <label><span>Category Card</span><select id="bf-category">' + categoryOptionsHTML() + '</select></label>',
@@ -253,7 +253,7 @@
       '  <div class="bf-preview" id="bf-preview"></div>',
       '  <div class="bf-actions">',
       '    <button class="bf-btn-clear" id="bf-clear">Clear</button>',
-      '    <button class="bf-btn-save" id="bf-save">' + (isAddPage ? 'Will Save After Product is Created' : 'Save Book Fair') + '</button>',
+      '    <button class="bf-btn-save" id="bf-save">' + (isAddPage ? 'Product create হলে save হবে' : 'Save বইমেলা বেস্টসেলার') + '</button>',
       '  </div>',
       '  <div class="bf-status" id="bf-status"></div>',
       '</div>',
@@ -272,6 +272,7 @@
     var enabled = document.getElementById('bf-enabled');
     var category = document.getElementById('bf-category');
     var priority = document.getElementById('bf-priority');
+    var toggleRow = document.getElementById('bf-toggle-row');
     var clear = document.getElementById('bf-clear');
     var save = document.getElementById('bf-save');
 
@@ -280,9 +281,18 @@
       if (el && el.tagName === 'INPUT') el.addEventListener('input', readFormAndPreview);
     });
 
+    if (toggleRow && enabled) {
+      toggleRow.addEventListener('click', function (event) {
+        if (event.target === enabled) return;
+        event.preventDefault();
+        enabled.checked = !enabled.checked;
+        readFormAndPreview();
+      });
+    }
+
     if (clear) {
       clear.addEventListener('click', function () {
-        pendingConfig = { isEnabled: false, category: getSelectedCategory(), priority: null };
+        pendingConfig = { isEnabled: false, category: getSelectedCategory(), priority: '' };
         if (enabled) enabled.checked = false;
         if (priority) priority.value = '';
         updatePreview();
@@ -306,7 +316,7 @@
             showStatus('Save failed. Check console.', true);
           }
           save.disabled = false;
-          save.textContent = 'Save Book Fair';
+          save.textContent = 'Save বইমেলা বেস্টসেলার';
         });
       }
     }
@@ -323,7 +333,7 @@
     pendingConfig = {
       isEnabled: !!(enabled && enabled.checked),
       category: getSelectedCategory(),
-      priority: priority && priority.value ? Math.max(1, Number(priority.value)) : null,
+      priority: priority && priority.value ? Math.max(1, Number(priority.value)) : '',
     };
   }
 
@@ -359,11 +369,17 @@
       },
     };
     var res = await apiPut('/api/product/update/' + productId, payload);
+    if (!res.ok) {
+      var text = '';
+      try { text = await res.text(); } catch (_) {}
+      console.warn('[BookFair] save failed', res.status, text);
+      showStatus('Save failed (' + res.status + '). Please refresh admin and try again.', true);
+    }
     return res.ok;
   }
 
   function hasMeaningfulConfig() {
-    return !!(pendingConfig.isEnabled || pendingConfig.priority || pendingConfig.category);
+    return !!(pendingConfig.isEnabled || pendingConfig.priority);
   }
 
   function firstProductCategory(product) {
@@ -384,15 +400,43 @@
   function tryRecoverToken() {
     if (capturedToken) return;
     try {
-      var keys = ['admin_token', 'adminToken', 'token', 'administrator'];
-      for (var i = 0; i < keys.length; i++) {
-        var v = localStorage.getItem(keys[i]) || sessionStorage.getItem(keys[i]);
-        if (v && v.length > 20 && !v.startsWith('{')) {
-          capturedToken = v;
-          return;
+      var stores = [localStorage, sessionStorage];
+      var directKeys = ['admin_token', 'adminToken', 'token', 'administrator', 'accessToken', 'access_token'];
+      for (var s = 0; s < stores.length; s++) {
+        var store = stores[s];
+        for (var i = 0; i < directKeys.length; i++) {
+          var direct = store.getItem(directKeys[i]);
+          if (setTokenIfLooksValid(direct)) return;
+        }
+        for (var j = 0; j < store.length; j++) {
+          var key = store.key(j);
+          var value = store.getItem(key);
+          if (setTokenIfLooksValid(value)) return;
+          try {
+            var parsed = JSON.parse(value);
+            if (parsed) {
+              if (setTokenIfLooksValid(parsed.token)) return;
+              if (setTokenIfLooksValid(parsed.accessToken)) return;
+              if (setTokenIfLooksValid(parsed.adminToken)) return;
+              if (setTokenIfLooksValid(parsed.administrator)) return;
+            }
+          } catch (_) {}
         }
       }
     } catch (_) {}
+  }
+
+  function setTokenIfLooksValid(value) {
+    if (!value || typeof value !== 'string') return false;
+    if (value.indexOf('Bearer ') === 0 && value.length > 25) {
+      capturedToken = value;
+      return true;
+    }
+    if (/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(value)) {
+      capturedToken = value;
+      return true;
+    }
+    return false;
   }
 
   function esc(s) {
@@ -412,11 +456,11 @@
       '#bf-inline-panel .bf-card-inner{padding:20px 24px 16px}',
       '#bf-inline-panel .bf-card-title{display:flex;align-items:center;gap:10px;border-left:3px solid #8b2031;padding-left:10px;margin-bottom:8px}',
       '#bf-inline-panel .bf-title-text{font-size:15px;font-weight:700;color:#1a1a2e}',
-      '#bf-inline-panel .bf-badge{background:#8b2031;color:#fff;border-radius:999px;padding:1px 9px;font-size:11px;font-weight:700}',
       '#bf-inline-panel .bf-sub{font-size:12px;color:#757575;margin:0 0 16px;line-height:1.5}',
       '#bf-inline-panel .bf-toggle-row{display:flex;align-items:center;gap:9px;background:#f9f3f4;border:1px solid #ead4d8;border-radius:6px;padding:10px;margin-bottom:14px;font-size:13px;color:#212121;cursor:pointer}',
       '#bf-inline-panel .bf-toggle-row input{width:16px;height:16px;accent-color:#8b2031}',
-      '#bf-inline-panel .bf-checkmark{color:#8b2031;font-weight:800}',
+      '#bf-inline-panel .bf-checkmark{color:#8b2031;font-weight:800;opacity:0;transition:opacity .15s}',
+      '#bf-inline-panel .bf-toggle-row input:checked + .bf-checkmark{opacity:1}',
       '#bf-inline-panel .bf-fields{display:grid;grid-template-columns:1fr 110px;gap:10px;margin-bottom:12px}',
       '#bf-inline-panel label span{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9e9e9e;margin-bottom:6px}',
       '#bf-inline-panel select,#bf-inline-panel input[type=number]{width:100%;border:1px solid #bdbdbd;border-radius:4px;padding:9px 10px;font-size:13px;color:#212121;box-sizing:border-box;outline:none;font-family:inherit}',

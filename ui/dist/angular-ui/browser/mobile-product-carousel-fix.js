@@ -50,13 +50,7 @@
     run();
     setTimeout(run, 800);
     setTimeout(run, 1800);
+    setTimeout(run, 3200);
   });
   window.addEventListener('resize', run);
-
-  try {
-    new MutationObserver(function () {
-      clearTimeout(run._t);
-      run._t = setTimeout(run, 120);
-    }).observe(document.body, { childList: true, subtree: true });
-  } catch (e) {}
 })();

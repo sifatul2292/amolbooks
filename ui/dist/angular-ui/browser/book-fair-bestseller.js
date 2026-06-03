@@ -12,7 +12,7 @@
     pages: ['/', '/home', '/product-list'],
     title: 'বইমেলা বেস্টসেলার ২০২৬',
     badgeTitle: 'বইমেলা বেস্টসেলার ২০২৬',
-    subtitle: 'অনলাইন বইমেলা',
+    subtitle: '',
     bookfairTag: '',
     categoryCards: [],
     maxProducts: 80,
@@ -23,6 +23,8 @@
   var lastPath = '';
   var productsCache = null;
   var loading = false;
+  var renderedSignature = '';
+  var footerChecksLeft = 0;
 
   function isAllowedPage() {
     return config.pages.some(function (page) {
@@ -240,11 +242,8 @@
       'a{color:inherit;text-decoration:none}',
       '.wrap{background:#f3f4f6;margin:38px 0;padding:30px 0 42px;overflow:hidden}',
       '.inner{width:min(1200px,calc(100vw - 28px));margin:0 auto}',
-      '.mast{display:flex;align-items:center;justify-content:center;gap:22px;margin-bottom:24px}',
-      '.mark{background:#fff;padding:18px 28px;text-align:center;box-shadow:0 1px 0 rgba(0,0,0,.04)}',
-      '.mark strong{display:block;color:#8b2031;font-size:27px;line-height:1.05;font-weight:800}',
-      '.mark span{display:block;color:#e24a32;font-size:18px;font-weight:700;margin-top:3px}',
-      '.title{border-left:1px solid #d4515d;padding-left:22px;font-size:22px;font-weight:700;color:#333;white-space:nowrap}',
+      '.mast{display:flex;align-items:center;justify-content:center;margin-bottom:24px}',
+      '.title{background:#fff;color:#8b2031;font-size:28px;line-height:1.15;font-weight:800;padding:20px 30px;text-align:center;box-shadow:0 1px 0 rgba(0,0,0,.04)}',
       '.rail{display:flex;gap:18px;overflow-x:auto;padding:8px 4px 10px;scroll-snap-type:x proximity}',
       '.rail::-webkit-scrollbar{height:8px}.rail::-webkit-scrollbar-thumb{background:#c8cdd3;border-radius:999px}',
       '.panel{background:#fff;border:2px solid #8b2031;border-radius:8px;min-width:330px;max-width:330px;overflow:hidden;scroll-snap-align:start}',
@@ -260,7 +259,7 @@
       '.sale{color:#e73d32;font-weight:800}.regular{color:#777;text-decoration:line-through}.discount{color:#e73d32}',
       '.see{height:45px;border-top:1px solid #b66d78;background:#fff8f8;color:#e73d32;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:15px;font-weight:700}',
       '.empty{display:none}',
-      '@media(max-width:700px){.wrap{margin:24px 0;padding:22px 0 30px}.mast{justify-content:flex-start;gap:12px;margin-bottom:16px}.mark{padding:12px 16px}.mark strong{font-size:20px}.mark span{font-size:14px}.title{font-size:17px;padding-left:12px;white-space:normal}.panel{min-width:292px;max-width:292px}.panel-head{height:52px;font-size:16px}.book{grid-template-columns:56px 1fr;padding:10px 12px}.cover{width:52px;height:70px}.name{font-size:13px}}'
+      '@media(max-width:700px){.wrap{margin:24px 0;padding:22px 0 30px}.mast{justify-content:flex-start;margin-bottom:16px}.title{font-size:20px;padding:14px 16px}.panel{min-width:292px;max-width:292px}.panel-head{height:52px;font-size:16px}.book{grid-template-columns:56px 1fr;padding:10px 12px}.cover{width:52px;height:70px}.name{font-size:13px}}'
     ].join('');
   }
 
@@ -271,7 +270,7 @@
       '<style>' + styles() + '</style>',
       '<section class="wrap" aria-label="' + escapeHtml(config.title) + '">',
       '<div class="inner">',
-      '<div class="mast"><div class="mark"><strong>' + escapeHtml(config.badgeTitle) + '</strong><span>' + escapeHtml(config.subtitle) + '</span></div><div class="title">' + escapeHtml(config.title) + '</div></div>',
+      '<div class="mast"><div class="title">' + escapeHtml(config.title) + '</div></div>',
       '<div class="rail">',
       groups.map(renderGroup).join(''),
       '</div>',
@@ -310,10 +309,10 @@
   }
 
   function findAnchor() {
-    var root = document.querySelector('app-root');
+    var root = document.querySelector('app-root') || document.body;
     if (!root) return null;
 
-    var footer = findFooter(root);
+    var footer = findFooter();
     if (footer && footer.parentNode) {
       return { parent: footer.parentNode, before: footer };
     }
@@ -328,8 +327,9 @@
     return { parent: root, after: root.lastElementChild };
   }
 
-  function findFooter(root) {
-    var direct = root.querySelector('footer,app-footer,.footer,.footer-area,.footer-section,.main-footer,.footer-bottom');
+  function findFooter() {
+    var root = document.querySelector('app-root') || document.body;
+    var direct = document.querySelector('footer,app-footer,.footer,.footer-area,.footer-section,.main-footer,.footer-bottom');
     if (direct) return direct;
 
     var all = Array.prototype.slice.call(root.querySelectorAll('*')).reverse();
@@ -342,6 +342,7 @@
         while (
           node.parentElement &&
           node.parentElement !== root &&
+          node.parentElement !== document.body &&
           node.parentElement.textContent &&
           node.parentElement.textContent.replace(/\s+/g, ' ').trim().length < 500
         ) {
@@ -364,6 +365,10 @@
     }
 
     var existing = document.getElementById(WIDGET_ID);
+    var signature = groups.map(function (group) {
+      return (group.category && group.category.slug || group.category && group.category.name || '') + ':' +
+        group.products.map(function (product) { return product._id || product.slug || product.name; }).join(',');
+    }).join('|');
     if (!existing) {
       var anchor = findAnchor();
       if (!anchor || !anchor.parent) return;
@@ -380,12 +385,38 @@
       existing.attachShadow({ mode: 'open' });
     }
 
-    existing.shadowRoot.innerHTML = render(groups);
+    ensureBeforeFooter(existing);
+    if (renderedSignature !== signature) {
+      existing.shadowRoot.innerHTML = render(groups);
+      renderedSignature = signature;
+    }
+    watchFooterPosition();
+  }
+
+  function ensureBeforeFooter(existing) {
+    var footer = findFooter();
+    if (!footer || !footer.parentNode || !existing) return false;
+    if (existing.nextSibling === footer) return true;
+    footer.parentNode.insertBefore(existing, footer);
+    return true;
+  }
+
+  function watchFooterPosition() {
+    footerChecksLeft = 12;
+    function tick() {
+      var existing = document.getElementById(WIDGET_ID);
+      if (!existing) return;
+      ensureBeforeFooter(existing);
+      footerChecksLeft -= 1;
+      if (footerChecksLeft > 0) setTimeout(tick, 500);
+    }
+    setTimeout(tick, 250);
   }
 
   function remove() {
     var existing = document.getElementById(WIDGET_ID);
     if (existing) existing.remove();
+    renderedSignature = '';
   }
 
   function refresh() {
@@ -420,17 +451,11 @@
 
   function boot() {
     watchNavigation();
-    refresh();
-    setTimeout(refresh, 800);
-    setTimeout(refresh, 1800);
-
-    try {
-      new MutationObserver(function () {
-        if (isAllowedPage() && !document.getElementById(WIDGET_ID)) {
-          setTimeout(refresh, 120);
-        }
-      }).observe(document.body, { childList: true, subtree: true });
-    } catch (e) {}
+    setTimeout(refresh, 900);
+    setTimeout(function () {
+      var existing = document.getElementById(WIDGET_ID);
+      if (existing) ensureBeforeFooter(existing);
+    }, 3500);
   }
 
   if (document.readyState === 'loading') {
