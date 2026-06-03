@@ -24,33 +24,9 @@
     document.head.appendChild(style);
   }
 
-  function fixSwiperInstances() {
-    var swipers = document.querySelectorAll('.tag-products-swiper');
-    swipers.forEach(function (el) {
-      var swiper = el.swiper;
-      if (!swiper || !swiper.params) return;
-
-      swiper.params.slidesPerView = 2;
-      swiper.params.spaceBetween = 12;
-      swiper.params.breakpoints = Object.assign({}, swiper.params.breakpoints || {}, {
-        0: { slidesPerView: 2, spaceBetween: 12 },
-        500: { slidesPerView: 2, spaceBetween: 12 },
-      });
-
-      if (typeof swiper.update === 'function') swiper.update();
-    });
-  }
-
-  function run() {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', injectStyles, { once: true });
+  } else {
     injectStyles();
-    if (window.innerWidth <= 700) fixSwiperInstances();
   }
-
-  document.addEventListener('DOMContentLoaded', function () {
-    run();
-    setTimeout(run, 800);
-    setTimeout(run, 1800);
-    setTimeout(run, 3200);
-  });
-  window.addEventListener('resize', run);
 })();

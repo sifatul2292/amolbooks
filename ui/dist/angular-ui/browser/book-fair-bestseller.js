@@ -16,7 +16,8 @@
     bookfairTag: '',
     categoryCards: [],
     fallbackToGeneralBestseller: true,
-    maxProducts: 40,
+    maxProducts: 36,
+    mobileMaxProducts: 24,
     maxCategories: 6,
     productsPerCategory: 4
   }, window.AMOL_BOOK_FAIR_BESTSELLER || {});
@@ -36,6 +37,14 @@
 
   function apiUrl(path) {
     return String(config.apiBase).replace(/\/$/, '') + path;
+  }
+
+  function isMobile() {
+    return window.matchMedia && window.matchMedia('(max-width: 700px)').matches;
+  }
+
+  function productLimit() {
+    return isMobile() ? Math.min(config.maxProducts, config.mobileMaxProducts) : config.maxProducts;
   }
 
   function productSelect() {
@@ -78,14 +87,14 @@
 
     return fetchProductList(
       filter,
-      config.maxProducts,
+      productLimit(),
       { 'bookFairBestseller.priority': 1, priority: -1, totalSold: -1, createdAt: -1 }
     ).then(function (products) {
       if (products.length || !config.fallbackToGeneralBestseller) return products;
 
       return fetchProductList(
         { status: 'publish' },
-        config.maxProducts,
+        productLimit(),
         { totalSold: -1, priority: -1, createdAt: -1 }
       );
     });
@@ -527,11 +536,12 @@
 
   function boot() {
     watchNavigation();
-    setTimeout(refresh, 900);
+    var delay = isMobile() ? 2400 : 900;
+    setTimeout(refresh, delay);
     setTimeout(function () {
       var existing = document.getElementById(WIDGET_ID);
       if (existing) ensureBeforeFooter(existing);
-    }, 3500);
+    }, delay + 1800);
   }
 
   if (document.readyState === 'loading') {
