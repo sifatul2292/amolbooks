@@ -1,12 +1,18 @@
 <!DOCTYPE html><html lang="en"><head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=AW-18176858056"></script>
+<!-- Google Ads loads after first paint to keep the mobile render path light. -->
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'AW-18176858056');
+  window.addEventListener('load', function () {
+    setTimeout(function () {
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=AW-18176858056';
+      document.head.appendChild(s);
+      gtag('js', new Date());
+      gtag('config', 'AW-18176858056');
+    }, 10000);
+  });
 </script>
 
   <meta charset="utf-8">
@@ -33,88 +39,42 @@
   <link rel="canonical" href="https://amolbooks.com/">
 
   <meta name="theme-color" content="#00a0db">
-  <link rel="icon" type="image/x-icon" href="favicon.png">
-  <style type="text/css">@font-face{font-family:'Material Icons';font-style:normal;font-weight:400;src:url(https://fonts.gstatic.com/s/materialicons/v145/flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2) format('woff2');}.material-icons{font-family:'Material Icons';font-weight:normal;font-style:normal;font-size:24px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-feature-settings:'liga';-webkit-font-smoothing:antialiased;}</style><style>a.banner[href=""]{display:none!important}</style>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css">
-  <style type="text/css">@font-face{font-family:'Satisfy';font-style:normal;font-weight:400;font-display:swap;src:url(https://fonts.gstatic.com/s/satisfy/v22/rP2Hp2yn6lkG50LoCZOIHTWEBlw.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}</style>
-  <link href="https://fonts.cdnfonts.com/css/siyam-rupali" rel="stylesheet">
-  <style type="text/css">@font-face{font-family:'Material Symbols Outlined';font-style:normal;font-weight:100 700;src:url(https://fonts.gstatic.com/s/materialsymbolsoutlined/v323/kJEhBvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oFsLjBuVY.woff2) format('woff2');}.material-symbols-outlined{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;font-size:24px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-feature-settings:'liga';-webkit-font-smoothing:antialiased;}</style>
-  <!---google-fonts-->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-  <style type="text/css">@font-face{font-family:'Material Symbols Outlined';font-style:normal;font-weight:400;src:url(https://fonts.gstatic.com/l/font?kit=kJF1BvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oDMzByHX9rA6RzaxHMPdY43zj-jCxv3fzvRNU22ZXGJpEpjC_1n-q_4MrImHCIJIZrDCvHOelbd5zrDAt&skey=b8dc2088854b122f&v=v323) format('woff');}.material-symbols-outlined{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;font-size:24px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-feature-settings:'liga';-webkit-font-smoothing:antialiased;}</style>
-
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer">
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin=""></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin=""></script>
-  <meta name="google-site-verification" content="utDIzQuFoXfZzchI6oBm8_NCoQJwmVig-APeN3U3WLY">
-  <script src="https://accounts.google.com/gsi/client" async="" defer></script>
-
-
-  <!-- Google tag (gtag.js) -->
-<!--  <script async src="https://www.googletagmanager.com/gtag/js?id=G-6G400L7CB4"></script>-->
-<!--  <script>-->
-<!--    window.dataLayer = window.dataLayer || [];-->
-<!--    function gtag(){dataLayer.push(arguments);}-->
-<!--    gtag('js', new Date());-->
-
-<!--    gtag('config', 'G-6G400L7CB4');-->
-<!--  </script>-->
-
-  <!-- Google tag (gtag.js) -->
-<!--  <script async src="https://www.googletagmanager.com/gtag/js?id=G-J4DNX90QYQ"></script>-->
-<!--  <script>-->
-<!--    window.dataLayer = window.dataLayer || [];-->
-<!--    function gtag(){dataLayer.push(arguments);}-->
-<!--    gtag('js', new Date());-->
-
-<!--    gtag('config', 'G-J4DNX90QYQ');-->
-<!--  </script>-->
-
-<!-- Google Tag Manager -->
-<!--<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':-->
-<!--  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],-->
-<!--  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=-->
-<!--  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);-->
-<!--  })(window,document,'script','dataLayer','GTM-TNXCX4C3');</script>-->
-<!--  &lt;!&ndash; End Google Tag Manager &ndash;&gt;-->
-
-  <!-- Google Tag Manager -->
-<!--  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':-->
-<!--      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],-->
-<!--    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=-->
-<!--    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);-->
-<!--  })(window,document,'script','dataLayer','GTM-WRFTFZ4R');</script>-->
-  <!-- End Google Tag Manager -->
-
-  <!-- Meta Pixel Code -->
-<!--  <script>-->
-<!--    !function(f,b,e,v,n,t,s)-->
-<!--    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?-->
-<!--      n.callMethod.apply(n,arguments):n.queue.push(arguments)};-->
-<!--      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';-->
-<!--      n.queue=[];t=b.createElement(e);t.async=!0;-->
-<!--      t.src=v;s=b.getElementsByTagName(e)[0];-->
-<!--      s.parentNode.insertBefore(t,s)}(window, document,'script',-->
-<!--      'https://connect.facebook.net/en_US/fbevents.js');-->
-<!--    fbq('init', '1241342743955873');-->
-<!--    fbq('track', 'PageView');-->
-<!--  </script>-->
-
-  <!-- dataLayer normalizer: UA → GA4 format. Must load BEFORE GTM. -->
-  <script src="dl-normalize.js"></script>
-  <!-- Google Tag Manager -->
-  <script>!function(){"use strict";function l(e){for(var t=e,r=0,n=document.cookie.split(";");r<n.length;r++){var o=n[r].split("=");if(o[0].trim()===t)return o[1]}}function s(e){return localStorage.getItem(e)}function u(e){return window[e]}function A(e,t){e=document.querySelector(e);return t?null==e?void 0:e.getAttribute(t):null==e?void 0:e.textContent}var e=window,t=document,r="script",n="dataLayer",o="https://server.amolbooks.com",a="https://load.server.amolbooks.com",i="2kpblypwe",c="8=DBNNPjgvXSUrLSZMWDM6TRNKQlddRBQFWBYdFgAAHwQOBF4aAw8%3D",g="stapeUserId",v="",E="",d=!1;try{var d=!!g&&(m=navigator.userAgent,!!(m=new RegExp("Version/([0-9._]+)(.*Mobile)?.*Safari.*").exec(m)))&&16.4<=parseFloat(m[1]),f="stapeUserId"===g,I=d&&!f?function(e,t,r){void 0===t&&(t="");var n={cookie:l,localStorage:s,jsVariable:u,cssSelector:A},t=Array.isArray(t)?t:[t];if(e&&n[e])for(var o=n[e],a=0,i=t;a<i.length;a++){var c=i[a],c=r?o(c,r):o(c);if(c)return c}else console.warn("invalid uid source",e)}(g,v,E):void 0;d=d&&(!!I||f)}catch(e){console.error(e)}var m=e,g=(m[n]=m[n]||[],m[n].push({"gtm.start":(new Date).getTime(),event:"gtm.js"}),t.getElementsByTagName(r)[0]),v=I?"&bi="+encodeURIComponent(I):"",E=t.createElement(r),f=(d&&(i=8<i.length?i.replace(/([a-z]{8}$)/,"kp$1"):"kp"+i),!d&&a?a:o);E.async=!0,E.src=f+"/"+i+".js?"+c+v,null!=(e=g.parentNode)&&e.insertBefore(E,g)}();</script>
-  <!-- End Google Tag Manager -->
-<style>@import"https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&family=K2D:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&family=Manrope:wght@200;300;400;500;600;700;800&family=Montserrat:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap";@import"https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&family=K2D:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&family=Manrope:wght@200;300;400;500;600;700;800&family=Rubik:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap";@import"https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Manrope:wght@200;300;400;500;600;700;800&display=swap";@import"https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap";*{padding:0;margin:0;box-sizing:border-box}body{display:block;width:100%;height:auto;box-sizing:border-box;font-style:normal;font-weight:500;font-size:16px;font-family:hind-siliguri,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,sans-serif,"Apple Color Emoji","Segoe UI Emoji",Segoe UI Symbol,"Noto Color Emoji"!important;padding:0;margin:0;overflow-x:hidden;background-color:#fff}@font-face{font-family:hind-siliguri;src:url(HindSiliguri-Regular.abb045fe788f1297.ttf) format("truetype");font-weight:400}@font-face{font-family:hind-siliguri;src:url(HindSiliguri-Light.6a9ab6ccd906dece.ttf) format("truetype");font-weight:500}@font-face{font-family:hind-siliguri;src:url(HindSiliguri-Medium.88e9a1ef522fef82.ttf) format("truetype");font-weight:600}:root{--swiper-theme-color:#007aff}:root{--swiper-navigation-size:44px}</style><link rel="stylesheet" href="styles.1cea6f789614a274.css" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="styles.1cea6f789614a274.css"></noscript>
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preload" as="image" href="/assets/images/super-deal.webp" type="image/webp" fetchpriority="high">
+  <style type="text/css">@font-face{font-family:'Material Icons';font-style:normal;font-weight:400;src:url(https://fonts.gstatic.com/s/materialicons/v145/flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2) format('woff2');}.material-icons{font-family:'Material Icons';font-weight:normal;font-style:normal;font-size:24px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-feature-settings:'liga';-webkit-font-smoothing:antialiased;}</style><style>*{padding:0;margin:0;box-sizing:border-box}body{display:block;width:100%;height:auto;box-sizing:border-box;font-style:normal;font-weight:500;font-size:16px;font-family:hind-siliguri,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,sans-serif,"Apple Color Emoji","Segoe UI Emoji",Segoe UI Symbol,"Noto Color Emoji"!important;padding:0;margin:0;overflow-x:hidden;background-color:#fff}@font-face{font-family:hind-siliguri;src:url(HindSiliguri-Regular.abb045fe788f1297.ttf) format("truetype");font-weight:400;font-display:optional}@font-face{font-family:hind-siliguri;src:url(HindSiliguri-Light.6a9ab6ccd906dece.ttf) format("truetype");font-weight:500;font-display:optional}@font-face{font-family:hind-siliguri;src:url(HindSiliguri-Medium.88e9a1ef522fef82.ttf) format("truetype");font-weight:600;font-display:optional}:root{--swiper-theme-color:#007aff}:root{--swiper-navigation-size:44px}</style><link rel="stylesheet" href="styles.1cea6f789614a274.css" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="styles.1cea6f789614a274.css"></noscript>
+  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" as="style" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" crossorigin="anonymous"></noscript>
 <style>
 /* ── product image fallback: ensure card is never invisibly collapsed ── */
 .product-image{min-height:160px!important;background:#f5f5f5!important}
 .product-image img{object-fit:contain!important;min-height:160px!important}
+img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/69}
+.carousel-slide img,.banner-image-link img{aspect-ratio:3712/1152}
+.category-card img,.product-card img,.__shudhui-grid img{aspect-ratio:3/4}
 </style>
 <style>.sale-price,.regular-price,.price,.price-wrapper *,.price-aria .new-price p,.price-aria .discount-amount p,.price-aria *{font-weight:500!important}@keyframes cartBounce{0%,100%{transform:scale(1) rotate(0deg)}20%{transform:scale(1.4) rotate(-14deg)}40%{transform:scale(1.4) rotate(14deg)}60%{transform:scale(1.2) rotate(-7deg)}80%{transform:scale(1.2) rotate(7deg)}}@keyframes cartLoop{0%,100%{transform:translateY(0) scale(1)}25%{transform:translateY(-7px) scale(1.15)}55%{transform:translateY(-3px) scale(1.08)}}.cart-icon-bounce{animation:cartBounce 0.6s ease!important;display:inline-block!important}.cart-icon-loop{animation:cartLoop 0.85s ease infinite!important;display:inline-block!important}#amol-cart-toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(30px);background:#129245;color:#fff;border-radius:14px;padding:16px 20px 14px;max-width:92vw;min-width:280px;box-shadow:0 6px 24px rgba(0,0,0,0.35);z-index:99999;opacity:0;transition:opacity 0.3s ease,transform 0.3s ease;pointer-events:none;text-align:center;font-family:hind-siliguri,sans-serif}#amol-cart-toast.amol-show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}#amol-cart-toast .amol-ct-msg{font-size:14px;line-height:1.5;margin-bottom:12px}#amol-cart-toast .amol-ct-btn{background:#fff;color:#129245;border:none;border-radius:8px;padding:9px 22px;font-family:hind-siliguri,sans-serif;font-size:14px;font-weight:700;cursor:pointer;width:100%}#amol-cart-toast .amol-ct-btn:active{opacity:0.85}</style>
-  <!-- PostHog Analytics — https://posthog.com -->
+  <!-- GTM/Stape loads after first paint. -->
   <script>
+  window.addEventListener('load', function () { setTimeout(function () {
+    function loadGtm() {
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://load.server.amolbooks.com/2kpblypwe.js?8=DBNNPjgvXSUrLSZMWDM6TRNKQlddRBQFWBYdFgAAHwQOBF4aAw8%3D';
+      document.head.appendChild(s);
+    }
+    var normalizer = document.createElement('script');
+    normalizer.src = 'dl-normalize.js';
+    normalizer.defer = true;
+    normalizer.onload = loadGtm;
+    document.head.appendChild(normalizer);
+  }, 10000); });
+  </script>
+  <!-- PostHog Analytics loads after first paint. -->
+  <script>
+  window.addEventListener('load', function () { setTimeout(function () {
     !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+" (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
     posthog.init('phc_uFkwvXMn6vXGnziPjehWUH4PuEAQzmf4LAQ2rkbgZKVg', {
       api_host: 'https://us.i.posthog.com',
@@ -122,6 +82,32 @@
       capture_pageview: true,
       capture_pageleave: true,
     });
+  }, 12000); });
+  </script>
+  <script>
+  (function () {
+    if (window.__amolImageDefaults) return;
+    window.__amolImageDefaults = true;
+    function tune(img) {
+      if (!img || img.tagName !== 'IMG') return;
+      if (!img.hasAttribute('loading')) img.loading = 'lazy';
+      if (!img.hasAttribute('decoding')) img.decoding = 'async';
+      if (!img.hasAttribute('fetchpriority')) img.setAttribute('fetchpriority', 'low');
+    }
+    function scan(root) {
+      if (!root) return;
+      if (root.tagName === 'IMG') tune(root);
+      if (root.querySelectorAll) root.querySelectorAll('img').forEach(tune);
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+      scan(document);
+      new MutationObserver(function (records) {
+        records.forEach(function (record) {
+          record.addedNodes && record.addedNodes.forEach(scan);
+        });
+      }).observe(document.documentElement, {childList: true, subtree: true});
+    });
+  })();
   </script>
 </head>
 
@@ -130,8 +116,7 @@
   <noscript><iframe src="https://load.server.amolbooks.com/ns.html?id=GTM-NNZV54QJ" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
   <app-root></app-root>
-  <!-- Load the JS SDK asynchronously -->
-  <script async="" defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
+  <!-- Facebook SDK removed from startup; chat markup is disabled below. -->
   <!-- Messenger Chat plugin Code -->
   <div id="fb-root"></div>
 
@@ -1184,9 +1169,9 @@
 })();
 </script>
 
-<script src="review-image-upload.js?v=9"></script>
-<script src="book-fair-bestseller.js?v=4"></script>
-<script src="mobile-product-carousel-fix.js?v=4"></script>
+<script src="review-image-upload.js?v=9" defer></script>
+<script src="book-fair-bestseller.js?v=4" defer></script>
+<script src="mobile-product-carousel-fix.js?v=4" defer></script>
 
 <script>
 /* Custom Nav Rewrite — replaces navbar with preferred menu */
