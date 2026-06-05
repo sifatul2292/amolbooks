@@ -76,6 +76,7 @@ let OrderService = OrderService_1 = class OrderService {
         else {
             mData = Object.assign(Object.assign(Object.assign({}, addOrderDto), dataExtra), adminData);
         }
+        mData = this.normalizeAdminOrderData(mData);
         const newData = new this.orderModel(mData);
         try {
             const saveData = await newData.save();
@@ -241,6 +242,115 @@ let OrderService = OrderService_1 = class OrderService {
         catch (error) {
             this.logger.error(`Error processing background tasks for order ${saveData.orderId}:`, error);
         }
+    }
+    normalizeAdminOrderData(orderData) {
+        const orderedItems = this.normalizeOrderItems((orderData === null || orderData === void 0 ? void 0 : orderData.orderedItems) || []);
+        if (!orderedItems.length) {
+            throw new common_1.BadRequestException('Please select product on cart');
+        }
+        const deliveryCharge = this.toFiniteNumber(orderData === null || orderData === void 0 ? void 0 : orderData.deliveryCharge, 0);
+        const subTotalFromItems = orderedItems.reduce((sum, item) => sum + item.regularPrice * item.quantity, 0);
+        const saleTotalFromItems = orderedItems.reduce((sum, item) => sum + item.salePrice * item.quantity, 0);
+        const subTotal = this.toFiniteNumber(orderData === null || orderData === void 0 ? void 0 : orderData.subTotal, subTotalFromItems);
+        const discount = this.toFiniteNumber(orderData === null || orderData === void 0 ? void 0 : orderData.discount, Math.max(subTotal - saleTotalFromItems, 0));
+        const grandTotal = this.toFiniteNumber(orderData === null || orderData === void 0 ? void 0 : orderData.grandTotal, saleTotalFromItems + deliveryCharge);
+        return Object.assign(Object.assign({}, orderData), { orderedItems,
+            deliveryCharge,
+            subTotal,
+            discount,
+            grandTotal });
+    }
+    normalizeOrderItems(items) {
+        if (!Array.isArray(items)) {
+            return [];
+        }
+        return items
+            .map((item) => this.normalizeOrderItem(item))
+            .filter((item) => Boolean(item));
+    }
+    normalizeOrderItem(item) {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x;
+        const product = this.getOrderItemProduct(item);
+        const productId = this.getOrderItemProductId(item, product);
+        if (!productId) {
+            this.logger.warn(`Skipping incomplete order item without product id: ${JSON.stringify(item)}`);
+            return null;
+        }
+        const quantity = Math.max(1, this.toFiniteNumber((_b = (_a = item === null || item === void 0 ? void 0 : item.quantity) !== null && _a !== void 0 ? _a : item === null || item === void 0 ? void 0 : item.selectedQty) !== null && _b !== void 0 ? _b : item === null || item === void 0 ? void 0 : item.qty, 1));
+        const salePrice = this.toFiniteNumber((_f = (_e = (_d = (_c = item === null || item === void 0 ? void 0 : item.unitPrice) !== null && _c !== void 0 ? _c : item === null || item === void 0 ? void 0 : item.salePrice) !== null && _d !== void 0 ? _d : product === null || product === void 0 ? void 0 : product.salePrice) !== null && _e !== void 0 ? _e : product === null || product === void 0 ? void 0 : product.price) !== null && _f !== void 0 ? _f : product === null || product === void 0 ? void 0 : product.regularPrice, 0);
+        const regularPrice = this.toFiniteNumber((_k = (_j = (_h = (_g = item === null || item === void 0 ? void 0 : item.regularPrice) !== null && _g !== void 0 ? _g : item === null || item === void 0 ? void 0 : item.costPrice) !== null && _h !== void 0 ? _h : product === null || product === void 0 ? void 0 : product.regularPrice) !== null && _j !== void 0 ? _j : product === null || product === void 0 ? void 0 : product.price) !== null && _k !== void 0 ? _k : salePrice, salePrice);
+        const image = this.getOrderItemImage(item, product);
+        return {
+            _id: productId,
+            name: (_l = item === null || item === void 0 ? void 0 : item.name) !== null && _l !== void 0 ? _l : product === null || product === void 0 ? void 0 : product.name,
+            nameEn: (_m = item === null || item === void 0 ? void 0 : item.nameEn) !== null && _m !== void 0 ? _m : product === null || product === void 0 ? void 0 : product.nameEn,
+            slug: (_o = item === null || item === void 0 ? void 0 : item.slug) !== null && _o !== void 0 ? _o : product === null || product === void 0 ? void 0 : product.slug,
+            image,
+            author: this.normalizeOrderItemRef((_p = item === null || item === void 0 ? void 0 : item.author) !== null && _p !== void 0 ? _p : product === null || product === void 0 ? void 0 : product.author),
+            category: this.normalizeOrderItemRef((_q = item === null || item === void 0 ? void 0 : item.category) !== null && _q !== void 0 ? _q : product === null || product === void 0 ? void 0 : product.category),
+            subCategory: this.normalizeOrderItemRef((_r = item === null || item === void 0 ? void 0 : item.subCategory) !== null && _r !== void 0 ? _r : product === null || product === void 0 ? void 0 : product.subCategory),
+            publisher: this.normalizeOrderItemRef((_s = item === null || item === void 0 ? void 0 : item.publisher) !== null && _s !== void 0 ? _s : product === null || product === void 0 ? void 0 : product.publisher),
+            brand: this.normalizeOrderItemRef((_t = item === null || item === void 0 ? void 0 : item.brand) !== null && _t !== void 0 ? _t : product === null || product === void 0 ? void 0 : product.brand),
+            regularPrice,
+            unitPrice: salePrice,
+            salePrice,
+            quantity,
+            orderType: (_u = item === null || item === void 0 ? void 0 : item.orderType) !== null && _u !== void 0 ? _u : 'regular',
+            discountAmount: this.toFiniteNumber(item === null || item === void 0 ? void 0 : item.discountAmount, 0),
+            discountType: (_v = item === null || item === void 0 ? void 0 : item.discountType) !== null && _v !== void 0 ? _v : null,
+            unit: (_x = (_w = item === null || item === void 0 ? void 0 : item.unit) !== null && _w !== void 0 ? _w : product === null || product === void 0 ? void 0 : product.unit) !== null && _x !== void 0 ? _x : null,
+        };
+    }
+    getOrderItemProduct(item) {
+        if ((item === null || item === void 0 ? void 0 : item.product) && typeof item.product === 'object') {
+            return item.product;
+        }
+        if ((item === null || item === void 0 ? void 0 : item.productId) && typeof item.productId === 'object') {
+            return item.productId;
+        }
+        if ((item === null || item === void 0 ? void 0 : item.productData) && typeof item.productData === 'object') {
+            return item.productData;
+        }
+        return item || {};
+    }
+    getOrderItemProductId(item, product) {
+        const candidates = [
+            product === null || product === void 0 ? void 0 : product._id,
+            product === null || product === void 0 ? void 0 : product.id,
+            typeof (item === null || item === void 0 ? void 0 : item.product) === 'string' ? item.product : null,
+            typeof (item === null || item === void 0 ? void 0 : item.productId) === 'string' ? item.productId : null,
+            item === null || item === void 0 ? void 0 : item._id,
+            item === null || item === void 0 ? void 0 : item.id,
+        ];
+        const id = candidates.find((candidate) => ObjectId.isValid(candidate));
+        return id ? String(id) : null;
+    }
+    getOrderItemImage(item, product) {
+        var _a;
+        if (item === null || item === void 0 ? void 0 : item.image) {
+            return item.image;
+        }
+        if (Array.isArray(item === null || item === void 0 ? void 0 : item.images) && item.images.length) {
+            return item.images[0];
+        }
+        if (Array.isArray(product === null || product === void 0 ? void 0 : product.images) && product.images.length) {
+            return product.images[0];
+        }
+        return (_a = product === null || product === void 0 ? void 0 : product.image) !== null && _a !== void 0 ? _a : null;
+    }
+    normalizeOrderItemRef(value) {
+        if (!value || typeof value !== 'object') {
+            return undefined;
+        }
+        return {
+            _id: ObjectId.isValid(value === null || value === void 0 ? void 0 : value._id) ? value._id : undefined,
+            name: value === null || value === void 0 ? void 0 : value.name,
+            slug: value === null || value === void 0 ? void 0 : value.slug,
+        };
+    }
+    toFiniteNumber(value, fallback = 0) {
+        const numberValue = Number(value);
+        return Number.isFinite(numberValue) ? numberValue : fallback;
     }
     async markIncompleteOrderConverted(incompleteOrderId, orderId) {
         if (!ObjectId.isValid(incompleteOrderId)) {

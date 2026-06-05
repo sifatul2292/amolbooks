@@ -123,6 +123,8 @@ export class OrderService {
       mData = { ...addOrderDto, ...dataExtra, ...adminData };
     }
 
+    mData = this.normalizeAdminOrderData(mData);
+
     const newData = new this.orderModel(mData);
 
     try {
@@ -429,6 +431,167 @@ export class OrderService {
       );
       // Don't throw - background tasks should not fail the order
     }
+  }
+
+  private normalizeAdminOrderData(orderData: any): any {
+    const orderedItems = this.normalizeOrderItems(orderData?.orderedItems || []);
+
+    if (!orderedItems.length) {
+      throw new BadRequestException('Please select product on cart');
+    }
+
+    const deliveryCharge = this.toFiniteNumber(orderData?.deliveryCharge, 0);
+    const subTotalFromItems = orderedItems.reduce(
+      (sum, item) => sum + item.regularPrice * item.quantity,
+      0,
+    );
+    const saleTotalFromItems = orderedItems.reduce(
+      (sum, item) => sum + item.salePrice * item.quantity,
+      0,
+    );
+    const subTotal = this.toFiniteNumber(orderData?.subTotal, subTotalFromItems);
+    const discount = this.toFiniteNumber(
+      orderData?.discount,
+      Math.max(subTotal - saleTotalFromItems, 0),
+    );
+    const grandTotal = this.toFiniteNumber(
+      orderData?.grandTotal,
+      saleTotalFromItems + deliveryCharge,
+    );
+
+    return {
+      ...orderData,
+      orderedItems,
+      deliveryCharge,
+      subTotal,
+      discount,
+      grandTotal,
+    };
+  }
+
+  private normalizeOrderItems(items: any[]): any[] {
+    if (!Array.isArray(items)) {
+      return [];
+    }
+
+    return items
+      .map((item) => this.normalizeOrderItem(item))
+      .filter((item) => Boolean(item));
+  }
+
+  private normalizeOrderItem(item: any): any {
+    const product = this.getOrderItemProduct(item);
+    const productId = this.getOrderItemProductId(item, product);
+
+    if (!productId) {
+      this.logger.warn(
+        `Skipping incomplete order item without product id: ${JSON.stringify(item)}`,
+      );
+      return null;
+    }
+
+    const quantity = Math.max(
+      1,
+      this.toFiniteNumber(item?.quantity ?? item?.selectedQty ?? item?.qty, 1),
+    );
+    const salePrice = this.toFiniteNumber(
+      item?.unitPrice ??
+        item?.salePrice ??
+        product?.salePrice ??
+        product?.price ??
+        product?.regularPrice,
+      0,
+    );
+    const regularPrice = this.toFiniteNumber(
+      item?.regularPrice ??
+        item?.costPrice ??
+        product?.regularPrice ??
+        product?.price ??
+        salePrice,
+      salePrice,
+    );
+    const image = this.getOrderItemImage(item, product);
+
+    return {
+      _id: productId,
+      name: item?.name ?? product?.name,
+      nameEn: item?.nameEn ?? product?.nameEn,
+      slug: item?.slug ?? product?.slug,
+      image,
+      author: this.normalizeOrderItemRef(item?.author ?? product?.author),
+      category: this.normalizeOrderItemRef(item?.category ?? product?.category),
+      subCategory: this.normalizeOrderItemRef(
+        item?.subCategory ?? product?.subCategory,
+      ),
+      publisher: this.normalizeOrderItemRef(
+        item?.publisher ?? product?.publisher,
+      ),
+      brand: this.normalizeOrderItemRef(item?.brand ?? product?.brand),
+      regularPrice,
+      unitPrice: salePrice,
+      salePrice,
+      quantity,
+      orderType: item?.orderType ?? 'regular',
+      discountAmount: this.toFiniteNumber(item?.discountAmount, 0),
+      discountType: item?.discountType ?? null,
+      unit: item?.unit ?? product?.unit ?? null,
+    };
+  }
+
+  private getOrderItemProduct(item: any): any {
+    if (item?.product && typeof item.product === 'object') {
+      return item.product;
+    }
+    if (item?.productId && typeof item.productId === 'object') {
+      return item.productId;
+    }
+    if (item?.productData && typeof item.productData === 'object') {
+      return item.productData;
+    }
+    return item || {};
+  }
+
+  private getOrderItemProductId(item: any, product: any): string | null {
+    const candidates = [
+      product?._id,
+      product?.id,
+      typeof item?.product === 'string' ? item.product : null,
+      typeof item?.productId === 'string' ? item.productId : null,
+      item?._id,
+      item?.id,
+    ];
+    const id = candidates.find((candidate) => ObjectId.isValid(candidate));
+    return id ? String(id) : null;
+  }
+
+  private getOrderItemImage(item: any, product: any): string | null {
+    if (item?.image) {
+      return item.image;
+    }
+    if (Array.isArray(item?.images) && item.images.length) {
+      return item.images[0];
+    }
+    if (Array.isArray(product?.images) && product.images.length) {
+      return product.images[0];
+    }
+    return product?.image ?? null;
+  }
+
+  private normalizeOrderItemRef(value: any): any {
+    if (!value || typeof value !== 'object') {
+      return undefined;
+    }
+
+    return {
+      _id: ObjectId.isValid(value?._id) ? value._id : undefined,
+      name: value?.name,
+      slug: value?.slug,
+    };
+  }
+
+  private toFiniteNumber(value: any, fallback = 0): number {
+    const numberValue = Number(value);
+    return Number.isFinite(numberValue) ? numberValue : fallback;
   }
 
   private async markIncompleteOrderConverted(

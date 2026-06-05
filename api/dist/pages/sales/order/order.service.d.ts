@@ -42,6 +42,15 @@ export declare class OrderService {
     addOrderAdmin(admin: any, addOrderDto: AddOrderDto): Promise<ResponsePayload>;
     addOrder(addOrderDto: AddOrderDto): Promise<ResponsePayload>;
     private processOrderBackgroundTasks;
+    private normalizeAdminOrderData;
+    private normalizeOrderItems;
+    private normalizeOrderItem;
+    private getOrderItemProduct;
+    private getOrderItemProductId;
+    private getOrderItemImage;
+    private normalizeOrderItemRef;
+    private toFiniteNumber;
+    private markIncompleteOrderConverted;
     addOrderByUser(addOrderDto: AddOrderDto, user: User): Promise<ResponsePayload>;
     addOrderByAnonymous(addOrderDto: AddOrderDto): Promise<ResponsePayload>;
     updateDate(): Promise<ResponsePayload>;
