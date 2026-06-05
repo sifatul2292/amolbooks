@@ -57,6 +57,7 @@ let OrderService = OrderService_1 = class OrderService {
         let user;
         let mData;
         const adminData = await this.adminModel.findById(admin._id);
+        addOrderDto.shippingAddress = addOrderDto.shippingAddress || 'N/A';
         const incOrder = await this.uniqueIdModel.findOneAndUpdate({}, { $inc: { orderId: 1 } }, { new: true, upsert: true });
         const orderIdUnique = this.utilsService.padLeadingZeros(incOrder.orderId);
         const dataExtra = {

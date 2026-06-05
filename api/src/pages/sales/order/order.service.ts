@@ -95,6 +95,7 @@ export class OrderService {
     let user;
     let mData;
     const adminData = await this.adminModel.findById(admin._id);
+    addOrderDto.shippingAddress = addOrderDto.shippingAddress || 'N/A';
     // this.logger.error(addOrderDto);
     // Increment Order Id Unique
     const incOrder = await this.uniqueIdModel.findOneAndUpdate(

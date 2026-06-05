@@ -41,7 +41,7 @@ export class AddOrderDto {
   @IsString()
   paymentType: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   shippingAddress: string;
 
