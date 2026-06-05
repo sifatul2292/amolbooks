@@ -95,7 +95,6 @@ export class OrderService {
     let user;
     let mData;
     const adminData = await this.adminModel.findById(admin._id);
-    addOrderDto.shippingAddress = addOrderDto.shippingAddress || 'N/A';
     // this.logger.error(addOrderDto);
     // Increment Order Id Unique
     const incOrder = await this.uniqueIdModel.findOneAndUpdate(
@@ -180,20 +179,38 @@ export class OrderService {
       }
 
       for (const f of (addOrderDto['orderedItems'] || [])) {
-        const product = await this.productModel.findById(f._id);
-        if (product?.quantity > 0) {
+        try {
+          if (!f?._id || !ObjectId.isValid(f._id)) {
+            this.logger.warn(
+              `Skipping stock update for order ${saveData.orderId}: invalid product id ${f?._id}`,
+            );
+            continue;
+          }
+
+          const quantity = Number(f.quantity) || 0;
+          if (quantity <= 0) {
+            continue;
+          }
+
+          const product = await this.productModel.findById(f._id);
+          if (!product) {
+            this.logger.warn(
+              `Skipping stock update for order ${saveData.orderId}: product ${f._id} not found`,
+            );
+            continue;
+          }
+
           await this.productModel.findByIdAndUpdate(f._id, {
             $inc: {
-              quantity: -f.quantity,
-              totalSold: f.quantity,
+              ...(product.quantity > 0 ? { quantity: -quantity } : {}),
+              totalSold: quantity,
             },
           });
-        } else {
-          await this.productModel.findByIdAndUpdate(f._id, {
-            $inc: {
-              totalSold: f.quantity,
-            },
-          });
+        } catch (error) {
+          this.logger.warn(
+            `Order ${saveData.orderId} was created, but stock update failed for product ${f?._id}:`,
+            error?.message || error,
+          );
         }
       }
 
