@@ -210,7 +210,7 @@ let OrderService = OrderService_1 = class OrderService {
             if (saveData['paymentType'] === 'cash_on_delivery') {
                 const orderCheck = await this.orderModel.findById(saveData._id).select('orderSmsSent');
                 if (!(orderCheck === null || orderCheck === void 0 ? void 0 : orderCheck.orderSmsSent)) {
-                    const message = `অর্ডারটি কনফার্ম হয়েছে, ডেলিভারি জুন ২ তারিখে করা হবে, amolbooks.com`;
+                    const message = `অর্ডারটি কনফার্ম হয়েছে, ৩ দিনের মধ্যে ডেলিভারি করা হবে, amolbooks.com`;
                     this.bulkSmsService.sentSingleSms(saveData.phoneNo, message);
                     await this.orderModel.updateOne({ _id: saveData._id }, { $set: { orderSmsSent: true } });
                 }
