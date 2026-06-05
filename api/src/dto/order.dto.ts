@@ -52,6 +52,10 @@ export class AddOrderDto {
   @IsOptional()
   @IsString()
   coupon: string;
+
+  @IsOptional()
+  @IsString()
+  incompleteOrderId: string;
 }
 
 export class FilterOrderDto {

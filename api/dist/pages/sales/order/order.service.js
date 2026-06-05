@@ -83,6 +83,14 @@ let OrderService = OrderService_1 = class OrderService {
                 _id: saveData._id,
                 orderId: saveData.orderId,
             };
+            if (addOrderDto.incompleteOrderId) {
+                try {
+                    await this.markIncompleteOrderConverted(addOrderDto.incompleteOrderId, saveData.orderId);
+                }
+                catch (error) {
+                    this.logger.warn(`Order ${saveData.orderId} was created, but incomplete order conversion marking failed:`, (error === null || error === void 0 ? void 0 : error.message) || error);
+                }
+            }
             if (addOrderDto.user) {
                 await this.cartModel.deleteMany({
                     user: new ObjectId(addOrderDto.user),
@@ -183,7 +191,7 @@ let OrderService = OrderService_1 = class OrderService {
                     this.logger.warn(`Failed to fetch fraud checker data for phone: ${addOrderDto === null || addOrderDto === void 0 ? void 0 : addOrderDto.phoneNo}`, (error === null || error === void 0 ? void 0 : error.message) || error);
                 }
             }
-            if (addOrderDto.phoneNo) {
+            if (addOrderDto.phoneNo && !addOrderDto.incompleteOrderId) {
                 await this.incompleteOrderModel.deleteMany({
                     phoneNo: addOrderDto.phoneNo,
                 });
@@ -228,6 +236,18 @@ let OrderService = OrderService_1 = class OrderService {
         catch (error) {
             this.logger.error(`Error processing background tasks for order ${saveData.orderId}:`, error);
         }
+    }
+    async markIncompleteOrderConverted(incompleteOrderId, orderId) {
+        if (!ObjectId.isValid(incompleteOrderId)) {
+            this.logger.warn(`Invalid incomplete order id: ${incompleteOrderId}`);
+            return;
+        }
+        await this.incompleteOrderModel.findByIdAndUpdate(incompleteOrderId, {
+            $set: {
+                status: 'converted',
+                orderId,
+            },
+        });
     }
     async addOrderByUser(addOrderDto, user) {
         if (user) {

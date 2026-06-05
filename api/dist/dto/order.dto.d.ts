@@ -9,6 +9,7 @@ export declare class AddOrderDto {
     shippingAddress: string;
     user: string;
     coupon: string;
+    incompleteOrderId: string;
 }
 export declare class FilterOrderDto {
     name: string;

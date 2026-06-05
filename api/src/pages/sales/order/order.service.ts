@@ -139,6 +139,21 @@ export class OrderService {
         _id: saveData._id,
         orderId: saveData.orderId,
       };
+
+      if (addOrderDto.incompleteOrderId) {
+        try {
+          await this.markIncompleteOrderConverted(
+            addOrderDto.incompleteOrderId,
+            saveData.orderId,
+          );
+        } catch (error) {
+          this.logger.warn(
+            `Order ${saveData.orderId} was created, but incomplete order conversion marking failed:`,
+            error?.message || error,
+          );
+        }
+      }
+
       if (addOrderDto.user) {
         await this.cartModel.deleteMany({
           user: new ObjectId(addOrderDto.user),
@@ -323,8 +338,9 @@ export class OrderService {
         }
       }
 
-      // 2) Delete incomplete order records for this user (they completed the order)
-      if (addOrderDto.phoneNo) {
+      // 2) Delete checkout-created incomplete records after a normal customer order.
+      // Admin conversions keep the incomplete record and mark it as converted.
+      if (addOrderDto.phoneNo && !addOrderDto.incompleteOrderId) {
         await this.incompleteOrderModel.deleteMany({
           phoneNo: addOrderDto.phoneNo,
         });
@@ -395,6 +411,23 @@ export class OrderService {
       );
       // Don't throw - background tasks should not fail the order
     }
+  }
+
+  private async markIncompleteOrderConverted(
+    incompleteOrderId: string,
+    orderId: string,
+  ): Promise<void> {
+    if (!ObjectId.isValid(incompleteOrderId)) {
+      this.logger.warn(`Invalid incomplete order id: ${incompleteOrderId}`);
+      return;
+    }
+
+    await this.incompleteOrderModel.findByIdAndUpdate(incompleteOrderId, {
+      $set: {
+        status: 'converted',
+        orderId,
+      },
+    });
   }
 
   async addOrderByUser(
