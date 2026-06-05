@@ -1191,6 +1191,46 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
 <script src="mobile-product-carousel-fix.js?v=4" defer></script>
 
 <script>
+/* Remove the placeholder banner image that appears below product descriptions. */
+(function(){
+  'use strict';
+  function removeProductDescriptionDummyBanner(){
+    if(window.location.pathname.indexOf('/product-details/') !== 0) return;
+    document.querySelectorAll('.banner .banner-main img').forEach(function(img){
+      var src = img.currentSrc || img.src || img.getAttribute('src') || '';
+      if(src.indexOf('/assets/images/jpg/dummy-image.jpg') === -1) return;
+      var banner = img.closest('.banner');
+      if(banner) banner.remove();
+    });
+  }
+
+  function schedule(){
+    removeProductDescriptionDummyBanner();
+    setTimeout(removeProductDescriptionDummyBanner, 300);
+    setTimeout(removeProductDescriptionDummyBanner, 1000);
+    setTimeout(removeProductDescriptionDummyBanner, 2500);
+  }
+
+  var pushState = history.pushState;
+  history.pushState = function(){
+    var result = pushState.apply(this, arguments);
+    schedule();
+    return result;
+  };
+  window.addEventListener('popstate', schedule);
+  document.addEventListener('DOMContentLoaded', function(){
+    schedule();
+    try {
+      new MutationObserver(removeProductDescriptionDummyBanner).observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+    } catch(e) {}
+  });
+})();
+</script>
+
+<script>
 /* Custom Nav Rewrite — replaces navbar with preferred menu */
 (function(){
   'use strict';
