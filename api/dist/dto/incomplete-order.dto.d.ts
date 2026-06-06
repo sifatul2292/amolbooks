@@ -12,8 +12,12 @@ export declare class AddIncompleteOrderDto {
     grandTotal?: number;
     subTotal?: number;
     discount?: number;
+    deliveryCharge?: number;
     checkoutDate?: string;
     status?: string;
+    note?: string;
+    adminNote?: string;
+    fraudChecker?: any;
     orderedItems?: any[];
     user?: string;
 }
@@ -29,8 +33,12 @@ export declare class UpdateIncompleteOrderDto {
     grandTotal?: number;
     subTotal?: number;
     discount?: number;
+    deliveryCharge?: number;
     checkoutDate?: string;
     status?: string;
+    note?: string;
+    adminNote?: string;
+    fraudChecker?: any;
     orderedItems?: any[];
 }
 export declare class FilterIncompleteOrderDto {

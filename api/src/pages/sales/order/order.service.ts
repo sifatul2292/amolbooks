@@ -222,6 +222,20 @@ export class OrderService {
         data,
       } as ResponsePayload;
 
+      if (addOrderDto.incompleteOrderId) {
+        try {
+          await this.markIncompleteOrderConverted(
+            addOrderDto.incompleteOrderId,
+            saveData.orderId,
+          );
+        } catch (error) {
+          this.logger.warn(
+            `Order ${saveData.orderId} was created, but incomplete order conversion marking failed:`,
+            error?.message || error,
+          );
+        }
+      }
+
       // Run background tasks after response is prepared (fire and forget)
       // This will execute after the response is sent to UI
       this.processOrderBackgroundTasks(saveData, addOrderDto).catch((error) => {
@@ -2735,11 +2749,19 @@ export class OrderService {
     try {
       const data = await this.incompleteOrderModel.aggregate(aggregateStages);
       const count = await this.incompleteOrderModel.countDocuments(countFilter);
+      const calculationAgg = await this.incompleteOrderModel.aggregate([
+        ...(Object.keys(countFilter).length ? [{ $match: countFilter }] : []),
+        { $group: { _id: null, grandTotal: { $sum: '$grandTotal' } } },
+      ]);
+      const calculation = {
+        grandTotal: calculationAgg[0]?.grandTotal || 0,
+      };
       return {
         success: true,
         message: 'Incomplete orders retrieved successfully',
         data,
         count,
+        calculation,
       } as ResponsePayload;
     } catch (err) {
       this.logger.error(err);

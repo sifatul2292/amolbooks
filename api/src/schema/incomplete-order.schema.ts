@@ -52,12 +52,28 @@ export const IncompleteOrderSchema = new mongoose.Schema(
       type: Number,
       required: false,
     },
+    deliveryCharge: {
+      type: Number,
+      required: false,
+    },
     checkoutDate: {
       type: String,
       required: false,
     },
     status: {
       type: String,
+      required: false,
+    },
+    note: {
+      type: String,
+      required: false,
+    },
+    adminNote: {
+      type: String,
+      required: false,
+    },
+    fraudChecker: {
+      type: Schema.Types.Mixed,
       required: false,
     },
     orderedItems: {

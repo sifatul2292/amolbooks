@@ -137,6 +137,14 @@ let OrderService = OrderService_1 = class OrderService {
                 message: 'Order Added Success',
                 data,
             };
+            if (addOrderDto.incompleteOrderId) {
+                try {
+                    await this.markIncompleteOrderConverted(addOrderDto.incompleteOrderId, saveData.orderId);
+                }
+                catch (error) {
+                    this.logger.warn(`Order ${saveData.orderId} was created, but incomplete order conversion marking failed:`, (error === null || error === void 0 ? void 0 : error.message) || error);
+                }
+            }
             this.processOrderBackgroundTasks(saveData, addOrderDto).catch((error) => {
                 this.logger.error(`Error in background order processing for order ${saveData.orderId}:`, error);
             });
@@ -1915,6 +1923,7 @@ let OrderService = OrderService_1 = class OrderService {
         }
     }
     async getAllIncompleteOrders(filterDto, searchQuery) {
+        var _a;
         const { filter, pagination, sort, select } = filterDto;
         const aggregateStages = [];
         let mFilter = {};
@@ -1971,11 +1980,19 @@ let OrderService = OrderService_1 = class OrderService {
         try {
             const data = await this.incompleteOrderModel.aggregate(aggregateStages);
             const count = await this.incompleteOrderModel.countDocuments(countFilter);
+            const calculationAgg = await this.incompleteOrderModel.aggregate([
+                ...(Object.keys(countFilter).length ? [{ $match: countFilter }] : []),
+                { $group: { _id: null, grandTotal: { $sum: '$grandTotal' } } },
+            ]);
+            const calculation = {
+                grandTotal: ((_a = calculationAgg[0]) === null || _a === void 0 ? void 0 : _a.grandTotal) || 0,
+            };
             return {
                 success: true,
                 message: 'Incomplete orders retrieved successfully',
                 data,
                 count,
+                calculation,
             };
         }
         catch (err) {

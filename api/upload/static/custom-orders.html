@@ -77,6 +77,7 @@
       border-left-color: #7c3aed;
     }
     .nav-item i { width: 17px; text-align: center; font-size: 13px; opacity: .85; }
+    .nav-subitem { padding-left: 36px; font-size: 12.5px; }
     .sidebar-footer {
       padding: 16px 20px; border-top: 1px solid rgba(255,255,255,.06);
     }
@@ -927,8 +928,11 @@
       <a href="https://adminsub.amolbooks.com/dashboard" class="nav-item">
         <i class="fas fa-list-ul"></i> Orders (Angular)
       </a>
-      <a href="custom-orders.html" class="nav-item active">
+      <a href="custom-orders.html" class="nav-item" id="navOrders">
         <i class="fas fa-sliders-h"></i> Amolbooks Orders
+      </a>
+      <a href="custom-orders.html?view=incomplete" class="nav-item nav-subitem" id="navIncompleteOrders">
+        <i class="fas fa-clock"></i> Incomplete Order
       </a>
       <a href="import-woo-orders.html" class="nav-item">
         <i class="fas fa-file-import"></i> Import WooCommerce
@@ -986,7 +990,7 @@
     <!-- Topbar -->
     <div class="topbar">
       <button class="hamburger" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
-      <div class="topbar-title"><i class="fas fa-shopping-cart"></i>Order List</div>
+      <div class="topbar-title"><i class="fas fa-shopping-cart"></i><span id="pageTitle">Order List</span></div>
       <div class="topbar-spacer"></div>
       <div class="search-wrap">
         <i class="fas fa-search"></i>
@@ -1044,7 +1048,7 @@
       <div class="stats-row">
         <div class="stat-card c1">
           <div class="stat-icon"><i class="fas fa-shopping-bag"></i></div>
-          <div class="stat-info"><label>Processing Orders</label><div class="val" id="totalOrders">—</div></div>
+          <div class="stat-info"><label id="totalOrdersLabel">Processing Orders</label><div class="val" id="totalOrders">—</div></div>
         </div>
         <div class="stat-card c2">
           <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
@@ -1350,6 +1354,8 @@
   var allOrdersById = {};
   var repeatMap = {};
   var currentModalOrderId = null;
+  var params = new URLSearchParams(window.location.search);
+  var isIncompleteView = params.get('view') === 'incomplete';
 
   /* ── State ── */
   var state = {
@@ -1359,6 +1365,27 @@
     totalCount: 0, totalAmount: 0,
     activeTab: 'all',
   };
+
+  function configureView() {
+    var ordersNav = document.getElementById('navOrders');
+    var incompleteNav = document.getElementById('navIncompleteOrders');
+    if (ordersNav) ordersNav.classList.toggle('active', !isIncompleteView);
+    if (incompleteNav) incompleteNav.classList.toggle('active', isIncompleteView);
+    var title = document.getElementById('pageTitle');
+    if (title) title.textContent = isIncompleteView ? 'Incomplete Orders' : 'Order List';
+    var search = document.getElementById('searchInput');
+    if (search) search.placeholder = isIncompleteView ? 'Search abandoned order / phone / name...' : 'Search order / phone / name...';
+    var totalLabel = document.getElementById('totalOrdersLabel');
+    if (totalLabel) totalLabel.textContent = isIncompleteView ? 'Incomplete Orders' : 'Processing Orders';
+    var statusTabs = document.getElementById('statusTabs');
+    if (statusTabs) statusTabs.style.display = isIncompleteView ? 'none' : '';
+    var orderStatusBtn = document.getElementById('orderStatusBtn');
+    if (orderStatusBtn && orderStatusBtn.closest('.dd-wrap')) orderStatusBtn.closest('.dd-wrap').style.display = isIncompleteView ? 'none' : '';
+    var bulkStatus = document.getElementById('bulkStatus');
+    if (bulkStatus) bulkStatus.style.display = isIncompleteView ? 'none' : '';
+    var bulkApply = document.querySelector('.btn-bulk-apply');
+    if (bulkApply) bulkApply.textContent = isIncompleteView ? 'Delete Selected' : 'Apply';
+  }
 
   /* ── Sidebar Analytics Snapshot ── */
   var snapOpen = true;
@@ -1560,7 +1587,7 @@
     var bar = document.getElementById('bulkBar');
     if (ids.length > 0) {
       bar.classList.add('show');
-      document.getElementById('bulkCount').textContent = ids.length + ' order' + (ids.length > 1 ? 's' : '') + ' selected';
+      document.getElementById('bulkCount').textContent = ids.length + ' ' + (isIncompleteView ? 'incomplete order' : 'order') + (ids.length > 1 ? 's' : '') + ' selected';
     } else {
       bar.classList.remove('show');
     }
@@ -1580,6 +1607,22 @@
 
   window.applyBulkStatus = function () {
     var ids = getSelectedIds();
+    if (isIncompleteView) {
+      if (!ids.length) { showToast('No incomplete orders selected.', 'error'); return; }
+      if (!confirm('Delete ' + ids.length + ' incomplete order(s)?')) return;
+      fetch(API + '/api/order/delete-multiple-incomplete-orders', {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ ids: ids }),
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(resp){
+        if (resp.success === false) { showToast(resp.message || 'Failed', 'error'); return; }
+        showToast(ids.length + ' incomplete order(s) deleted', 'success');
+        clearSelection(); loadOrders(); loadTodayStats();
+      })
+      .catch(function(err){ showToast('Error: ' + err.message, 'error'); });
+      return;
+    }
     var status = document.getElementById('bulkStatus').value;
     if (!ids.length) { showToast('No orders selected.', 'error'); return; }
     if (!status) { showToast('Please select a status.', 'error'); return; }
@@ -1623,24 +1666,29 @@
       if (state.deliveryTo)   filter.deliveryDate.$lte = new Date(state.deliveryTo   + 'T23:59:59.999').toISOString();
     }
     var body = {
-      pagination: { pageSize: state.pageSize, currentPage: state.page },
+      pagination: { pageSize: state.pageSize, currentPage: isIncompleteView ? state.page + 1 : state.page },
       sort: { createdAt: -1 },
       select: {
         orderId:1, name:1, phoneNo:1, grandTotal:1, subTotal:1, deliveryCharge:1,
         discount:1, orderStatus:1, paymentStatus:1, paymentType:1,
         createdAt:1, checkoutDate:1, shippingAddress:1, courierData:1,
         courierLink:1, fraudChecker:1, admin:1, user:1, deliveryDate:1, orderedItems:1,
-        note:1, adminNote:1,
+        note:1, adminNote:1, city:1, status:1, email:1,
       },
     };
-    if (Object.keys(filter).length) body.filter = filter;
+    if (isIncompleteView) {
+      delete filter.orderStatus;
+      body.filter = Object.assign({ status: { $ne: 'converted' } }, filter);
+    } else if (Object.keys(filter).length) {
+      body.filter = filter;
+    }
     return body;
   }
 
   /* ── Load Orders ── */
   function loadOrders() {
     renderSkeletons();
-    var url = API + '/api/order/get-all';
+    var url = API + (isIncompleteView ? '/api/order/get-all-incomplete-orders' : '/api/order/get-all');
     if (state.search) url += '?q=' + encodeURIComponent(state.search);
     fetch(url, { method: 'POST', headers: authHeaders(), body: JSON.stringify(buildRequestBody()) })
     .then(function(r){
@@ -1652,7 +1700,7 @@
     .then(function(resp){
       var orders = Array.isArray(resp.data) ? resp.data : [];
       var count = resp.count || 0;
-      var grandTotal = (resp.calculation && resp.calculation.grandTotal) ? resp.calculation.grandTotal : 0;
+      var grandTotal = (resp.calculation && resp.calculation.grandTotal) ? resp.calculation.grandTotal : orders.reduce(function(sum, o){ return sum + Number(o.grandTotal || 0); }, 0);
       state.totalCount = count; state.totalAmount = grandTotal;
       allOrders = orders;
       allOrdersById = {};
@@ -1685,10 +1733,34 @@
 
   /* ── Stats ── */
   function renderStats(count, grandTotal) {
+    if (isIncompleteView) document.getElementById('totalOrders').textContent = Number(count || 0).toLocaleString();
     document.getElementById('totalAmount').textContent = '৳' + Number(grandTotal).toLocaleString('en-BD', { maximumFractionDigits: 0 });
   }
 
   function loadTodayStats() {
+    if (isIncompleteView) {
+      var today = new Date();
+      var todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+      fetch(API + '/api/order/get-all-incomplete-orders', {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({
+          filter: { status: { $ne: 'converted' }, createdAt: { $gte: todayStr, $lte: todayStr } },
+          pagination: { pageSize: 1, currentPage: 1 }, sort: { createdAt: -1 },
+          select: { grandTotal: 1 },
+        }),
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(resp){
+        var tot = (resp.calculation && resp.calculation.grandTotal) ? resp.calculation.grandTotal : 0;
+        document.getElementById('todayOrders').textContent = (resp.count || 0).toLocaleString();
+        document.getElementById('todayAmount').textContent = '৳' + Number(tot).toLocaleString('en-BD', { maximumFractionDigits: 0 });
+      })
+      .catch(function(){
+        document.getElementById('todayOrders').textContent = '—';
+        document.getElementById('todayAmount').textContent = '—';
+      });
+      return;
+    }
     var now = new Date();
     var todayStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
     fetch(API + '/api/order/get-all', {
@@ -1722,6 +1794,7 @@
     .catch(function(){ onCount(0); });
   }
   function loadStatusCounts() {
+    if (isIncompleteView) return;
     // 'all' — no filter key (empty filter fails @IsNotEmptyObject validation)
     fetchCount(null, function(n){
       var el = document.getElementById('tabCount-all');
@@ -1877,7 +1950,7 @@
       var info = renderFraudChip(container, btn2, overall);
       btn2.textContent='Recheck'; btn2.classList.remove('loading'); btn2.disabled=false;
       showToast('Orders: '+info.total+' | Success: '+info.ratio.toFixed(1)+'%', info.ratio>=80?'success':'error');
-      fetch(API+'/api/order/update/'+mongoId,{method:'PUT',headers:authHeaders(),body:JSON.stringify({fraudChecker:resp.data})}).catch(function(){});
+      fetch(API + (isIncompleteView ? '/api/order/update-incomplete-order-by-id/' : '/api/order/update/') + mongoId,{method:'PUT',headers:authHeaders(),body:JSON.stringify({fraudChecker:resp.data})}).catch(function(){});
     })
     .catch(function(err){
       showToast('FraudSpy error: '+err.message,'error');
@@ -1906,7 +1979,7 @@
         '<span class="mfr-ratio '+rCls+'">'+ratio.toFixed(1)+'% success</span>';
       btn.textContent='Recheck';
       showToast('Orders: '+(overall.total||0)+' | Success: '+ratio.toFixed(1)+'%', ratio>=80?'success':'error');
-      if (mongoId) fetch(API+'/api/order/update/'+mongoId,{method:'PUT',headers:authHeaders(),body:JSON.stringify({fraudChecker:resp.data})}).catch(function(){});
+      if (mongoId) fetch(API + (isIncompleteView ? '/api/order/update-incomplete-order-by-id/' : '/api/order/update/') + mongoId,{method:'PUT',headers:authHeaders(),body:JSON.stringify({fraudChecker:resp.data})}).catch(function(){});
       var order=allOrdersById[String(mongoId)]; if(order) order.fraudChecker=resp.data;
     })
     .catch(function(err){btn.textContent='Check';btn.disabled=false;showToast('Error: '+err.message,'error');});
@@ -1918,13 +1991,13 @@
       var order = allOrdersById[String(mongoId)];
       if (!order) { showToast('Order not found — refresh and try again.','error'); return; }
 
-      document.getElementById('modalTitle').textContent = 'Order #' + (order.orderId || mongoId.slice(-6));
+      document.getElementById('modalTitle').textContent = (isIncompleteView ? 'Incomplete #' : 'Order #') + (order.orderId || mongoId.slice(-6));
       document.getElementById('modalOrderDate').textContent = order.createdAt
         ? new Date(order.createdAt).toLocaleString('en-BD',{dateStyle:'medium',timeStyle:'short'}) : '';
 
-      var statusCls = STATUS_CLASSES[order.orderStatus]||'pending';
+      var statusCls = isIncompleteView ? 'pending' : (STATUS_CLASSES[order.orderStatus]||'pending');
       document.getElementById('modalStatusBadge').innerHTML =
-        '<span class="badge badge-'+statusCls+'" style="font-size:12px;padding:5px 14px">'+( STATUS_NAMES[order.orderStatus]||'Unknown')+'</span>';
+        '<span class="badge badge-'+statusCls+'" style="font-size:12px;padding:5px 14px">'+(isIncompleteView ? (order.status === 'converted' ? 'Converted' : 'Incomplete') : (STATUS_NAMES[order.orderStatus]||'Unknown'))+'</span>';
 
       document.getElementById('modalCustomerName').textContent = order.name||'—';
       var phone = order.phoneNo||'';
@@ -1942,7 +2015,9 @@
       var ps=order.paymentStatus||'unpaid';
       document.getElementById('modalPaymentStatus').innerHTML='<span class="badge badge-'+(ps==='paid'?'paid':'unpaid')+'">'+ps+'</span>';
 
-      document.getElementById('modalInvoiceLink').href = API+'/invoice/'+mongoId+'.pdf';
+      var invoiceLink = document.getElementById('modalInvoiceLink');
+      invoiceLink.href = isIncompleteView ? '#' : API+'/invoice/'+mongoId+'.pdf';
+      invoiceLink.style.display = isIncompleteView ? 'none' : '';
 
       var fraudBtn=document.getElementById('modalFraudBtn');
       var fraudStats=document.getElementById('modalFraudStats');
@@ -1970,7 +2045,7 @@
       currentModalOrderId = mongoId;
       var courierBtn = document.getElementById('modalCourierBtn');
       var hasCourier = order.courierData && order.courierData.providerName;
-      courierBtn.style.display = (!hasCourier && order.orderStatus !== 8) ? '' : 'none';
+      courierBtn.style.display = (!isIncompleteView && !hasCourier && order.orderStatus !== 8) ? '' : 'none';
 
       var items = order.orderedItems||[];
       var body = document.getElementById('modalProductsBody');
@@ -1996,7 +2071,15 @@
         }).join('');
       }
 
-      document.getElementById('modalSubtotal').textContent  = '৳'+Number(order.subTotal||0).toLocaleString();
+      var computedSubtotal = order.subTotal;
+      if (!computedSubtotal && items.length) {
+        computedSubtotal = items.reduce(function(sum, item){
+          var qty = item.quantity || item.selectedQty || 1;
+          var price = item.unitPrice || item.salePrice || item.regularPrice || 0;
+          return sum + Number(price || 0) * Number(qty || 1);
+        }, 0);
+      }
+      document.getElementById('modalSubtotal').textContent  = '৳'+Number(computedSubtotal||0).toLocaleString();
       document.getElementById('modalDelivery').textContent  = '৳'+dc.toLocaleString();
       document.getElementById('modalGrandTotal').textContent= '৳'+Number(order.grandTotal||0).toLocaleString();
 
@@ -2054,6 +2137,14 @@
   }
 
   /* ── Render Table ── */
+  function incompleteActions(o) {
+    return '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+      '<button class="btn-action btn-view" onclick="openProducts(\''+o._id+'\')" title="View abandoned order"><i class="fas fa-eye"></i> View</button>' +
+      '<button class="btn-action" onclick="convertIncompleteOrder(\''+o._id+'\')" title="Create order from this abandoned checkout" style="background:#dcfce7;color:#166534;border-color:#bbf7d0"><i class="fas fa-plus"></i> Add Order</button>' +
+      '<button class="btn-action" onclick="deleteIncompleteOrder(\''+o._id+'\')" title="Delete abandoned order" style="background:#fee2e2;color:#991b1b;border-color:#fecaca"><i class="fas fa-trash"></i></button>' +
+      '</div>';
+  }
+
   function renderTable(orders, total) {
     var tbody=document.getElementById('ordersBody');
     if (!orders.length) {
@@ -2080,6 +2171,30 @@
       else if(o.orderStatus===5) rowCls='row-completed';
       else if([6,7,9].includes(o.orderStatus)) rowCls='row-cancelled';
       else if(o.orderStatus===10) rowCls='row-trash';
+      if (isIncompleteView) {
+        var incompleteStatus = o.status === 'converted' ? 'Converted' : 'Incomplete';
+        return [
+          '<tr class="row-processing">',
+          '<td><input type="checkbox" class="row-check" value="'+o._id+'" onchange="updateBulkBar()"></td>',
+          '<td><span class="order-no">'+esc(o.orderId||o._id.slice(-6))+'</span></td>',
+          '<td>'+phoneCell(o.phoneNo)+'</td>',
+          '<td style="font-weight:600">'+esc(o.name||'—')+'</td>',
+          '<td style="max-width:220px;word-break:break-word;line-height:1.5;font-size:12px">'+esc(o.shippingAddress||o.city||'—')+'</td>',
+          '<td>'+fmtDate(o.createdAt||o.checkoutDate)+'</td>',
+          '<td><strong style="color:var(--p);font-size:13.5px">৳'+Number(o.grandTotal||0).toLocaleString()+'</strong></td>',
+          '<td><span style="color:#94a3b8;font-size:11px">—</span></td>',
+          '<td>'+fraudCell(o.fraudChecker,o._id,o.phoneNo||'')+'</td>',
+          '<td>'+incompleteActions(o)+'</td>',
+          '<td>'+payTypeBadge(o.paymentType)+'</td>',
+          '<td>'+payStatusBadge(o.paymentStatus||'unpaid')+'</td>',
+          '<td><span class="badge badge-pending">'+esc(incompleteStatus)+'</span></td>',
+          '<td><small style="color:#64748b">'+(o.user?'User':'Guest')+'</small></td>',
+          '<td><span style="color:#94a3b8;font-size:11px">—</span></td>',
+          '<td><div class="note-cell">'+(o.note?'<span class="customer-note-text">'+esc(o.note)+'</span>':'<span style="color:#94a3b8;font-size:11px">—</span>')+'</div></td>',
+          '<td><div class="admin-note-cell" data-id="'+o._id+'">'+(o.adminNote?'<span class="admin-note-text" onclick="editAdminNote(\''+o._id+'\',this)">'+esc(o.adminNote)+'</span>':'<button class="btn-add-note" onclick="editAdminNote(\''+o._id+'\',this)">+ Add</button>')+'</div></td>',
+          '</tr>',
+        ].join('');
+      }
       return [
         '<tr class="'+rowCls+'">',
         '<td><input type="checkbox" class="row-check" value="'+o._id+'" onchange="updateBulkBar()"></td>',
@@ -2156,6 +2271,72 @@
     .catch(function(err){ if (err.message !== 'auth') showToast('Error: '+err.message,'error'); });
   };
 
+  function buildOrderPayloadFromIncomplete(order) {
+    return {
+      incompleteOrderId: order._id,
+      name: order.name || '',
+      phoneNo: order.phoneNo || '',
+      email: order.email || '',
+      city: order.city || '',
+      shippingAddress: order.shippingAddress || order.city || '',
+      paymentType: order.paymentType || 'cash_on_delivery',
+      orderedItems: Array.isArray(order.orderedItems) ? order.orderedItems : [],
+      subTotal: Number(order.subTotal || 0),
+      discount: Number(order.discount || 0),
+      deliveryCharge: Number(order.deliveryCharge || 0),
+      grandTotal: Number(order.grandTotal || 0),
+      note: order.note || '',
+      adminNote: order.adminNote || '',
+      user: typeof order.user === 'string' ? order.user : (order.user && order.user._id) || '',
+    };
+  }
+
+  window.convertIncompleteOrder = function (id) {
+    var order = allOrdersById[String(id)];
+    if (!order) { showToast('Incomplete order not found. Refresh and try again.', 'error'); return; }
+    var payload = buildOrderPayloadFromIncomplete(order);
+    var missing = [];
+    if (!payload.phoneNo) missing.push('phone');
+    if (!payload.name) missing.push('name');
+    if (!payload.shippingAddress) missing.push('address');
+    if (!payload.orderedItems.length) missing.push('product items');
+    if (missing.length) {
+      showToast('Cannot add order. Missing ' + missing.join(', ') + '.', 'error');
+      return;
+    }
+    if (!confirm('Create a real order from this incomplete order?')) return;
+    fetch(API + '/api/order/add-order-by-anonymous', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    .then(function(r){ return r.json().then(function(res){ return { ok: r.ok, status: r.status, res: res }; }); })
+    .then(function(d){
+      if (!d.ok || (d.res && d.res.success === false)) {
+        showToast((d.res && d.res.message) || ('Failed to create order: ' + d.status), 'error');
+        return;
+      }
+      var orderId = (d.res.data && d.res.data.orderId) || '';
+      showToast('Order' + (orderId ? ' #' + orderId : '') + ' created from incomplete order', 'success');
+      loadOrders(); loadTodayStats(); loadSnap();
+    })
+    .catch(function(err){ showToast('Error: ' + err.message, 'error'); });
+  };
+
+  window.deleteIncompleteOrder = function (id) {
+    if (!confirm('Delete this incomplete order?')) return;
+    fetch(API + '/api/order/delete-multiple-incomplete-orders', {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({ ids: [id] }),
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(resp){
+      if (resp.success === false) { showToast(resp.message || 'Failed to delete', 'error'); return; }
+      showToast('Incomplete order deleted', 'success');
+      loadOrders(); loadTodayStats();
+    })
+    .catch(function(err){ showToast('Error: ' + err.message, 'error'); });
+  };
+
   /* ── Export CSV ── */
   window.exportToCSV = function () {
     if (!allOrders.length) { showToast('No orders to export.','error'); return; }
@@ -2165,7 +2346,7 @@
         i+1, o.orderId||'', o.phoneNo||'', o.name||'',
         o.createdAt?new Date(o.createdAt).toLocaleString():'',
         o.paymentType||'', o.paymentStatus||'',
-        STATUS_NAMES[o.orderStatus]||o.orderStatus,
+        isIncompleteView ? (o.status || 'incomplete') : (STATUS_NAMES[o.orderStatus]||o.orderStatus),
         o.grandTotal||0,
         '"'+(o.shippingAddress||'').replace(/"/g,'""')+'"',
       ].join(',');
@@ -2174,7 +2355,7 @@
     var blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});
     var a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
-    a.download='orders-'+new Date().toISOString().split('T')[0]+'.csv';
+    a.download=(isIncompleteView ? 'incomplete-orders-' : 'orders-')+new Date().toISOString().split('T')[0]+'.csv';
     a.click(); URL.revokeObjectURL(a.href);
     showToast('Exported '+allOrders.length+' orders.','success');
   };
@@ -2204,7 +2385,7 @@
     saveBtn.onclick = function () {
       var val = textarea.value.trim();
       saveBtn.disabled = true; saveBtn.textContent = '…';
-      fetch(API + '/api/order/update/' + mongoId, {
+      fetch(API + (isIncompleteView ? '/api/order/update-incomplete-order-by-id/' : '/api/order/update/') + mongoId, {
         method: 'PUT', headers: authHeaders(),
         body: JSON.stringify({ adminNote: val }),
       })
@@ -2264,6 +2445,7 @@
   window.loadTodayStats = loadTodayStats;
 
   /* ── Init ── */
+  configureView();
   if (getToken()) { hideLogin(); loadRepeatCustomers(); loadTodayStats(); loadStatusCounts(); loadSnap(); }
   else { showLogin(); }
 })();

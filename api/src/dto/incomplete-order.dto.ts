@@ -61,12 +61,27 @@ export class AddIncompleteOrderDto {
   discount?: number;
 
   @IsOptional()
+  @IsNumber()
+  deliveryCharge?: number;
+
+  @IsOptional()
   @IsString()
   checkoutDate?: string;
 
   @IsOptional()
   @IsString()
   status?: string;
+
+  @IsOptional()
+  @IsString()
+  note?: string;
+
+  @IsOptional()
+  @IsString()
+  adminNote?: string;
+
+  @IsOptional()
+  fraudChecker?: any;
 
   @IsOptional()
   @IsArray()
@@ -123,12 +138,27 @@ export class UpdateIncompleteOrderDto {
   discount?: number;
 
   @IsOptional()
+  @IsNumber()
+  deliveryCharge?: number;
+
+  @IsOptional()
   @IsString()
   checkoutDate?: string;
 
   @IsOptional()
   @IsString()
   status?: string;
+
+  @IsOptional()
+  @IsString()
+  note?: string;
+
+  @IsOptional()
+  @IsString()
+  adminNote?: string;
+
+  @IsOptional()
+  fraudChecker?: any;
 
   @IsOptional()
   @IsArray()

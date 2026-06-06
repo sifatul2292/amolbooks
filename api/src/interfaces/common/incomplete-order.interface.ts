@@ -14,8 +14,12 @@ export interface IncompleteOrder {
   grandTotal?: number;
   subTotal?: number;
   discount?: number;
+  deliveryCharge?: number;
   checkoutDate?: string;
   status?: string;
+  note?: string;
+  adminNote?: string;
+  fraudChecker?: any;
   orderedItems?: any[];
   user?: string | User;
   createdAt?: Date;
