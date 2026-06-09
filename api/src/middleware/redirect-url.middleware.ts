@@ -48,6 +48,9 @@ export class RedirectUrlMiddleware implements NestMiddleware {
             } catch {
               fromPath = cleanFrom.startsWith('/') ? cleanFrom : '/' + cleanFrom;
             }
+            // Decode percent-encoding and normalize trailing slash to match req.path
+            try { fromPath = decodeURIComponent(fromPath); } catch { /* keep raw */ }
+            if (fromPath !== '/') fromPath = fromPath.replace(/\/+$/, '');
             return { fromPath, toUrl: d.toUrl as string, wildcard: hasWildcard };
           });
         this.lastFetched = Date.now();
@@ -63,15 +66,24 @@ export class RedirectUrlMiddleware implements NestMiddleware {
 
   async use(req: Request, res: Response, next: NextFunction) {
     // Skip static assets — images, fonts, scripts, etc. must never hit the redirect DB
-    if (STATIC_EXT_RE.test(req.path) || req.path.startsWith('/upload/')) {
+    if (STATIC_EXT_RE.test(req.path) || req.path.startsWith('/upload/') || req.path.startsWith('/api/')) {
       return next();
     }
     try {
       const redirects = await this.getRedirects();
+      // Normalize: decode percent-encoding and strip trailing slash for comparison
+      let reqPath: string;
+      try {
+        reqPath = decodeURIComponent(req.path);
+      } catch {
+        reqPath = req.path;
+      }
+      const normalizedReqPath = reqPath === '/' ? '/' : reqPath.replace(/\/+$/, '');
+
       for (const r of redirects) {
         const matches = r.wildcard
-          ? req.path.startsWith(r.fromPath)
-          : req.path === r.fromPath;
+          ? normalizedReqPath.startsWith(r.fromPath)
+          : normalizedReqPath === r.fromPath;
         if (matches) {
           return res.redirect(301, r.toUrl);
         }

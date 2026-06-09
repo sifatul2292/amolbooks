@@ -6,6 +6,7 @@ import { join } from 'path';
 import * as express from 'express';
 import * as helmet from 'helmet';
 import * as compression from 'compression';
+import { RedirectUrlMiddleware } from './middleware/redirect-url.middleware';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule, { cors: true });
@@ -66,9 +67,18 @@ async function bootstrap() {
   // init() first so our fallback middleware is registered AFTER all NestJS routes
   await app.init();
 
-  // SPA fallback: any route not handled by NestJS (redirect middleware fires first;
-  // this serves index.html for valid Angular routes like /about-us, /product/...)
   const httpAdapter = app.getHttpAdapter().getInstance() as express.Express;
+
+  // Register redirect middleware directly on Express so it fires for ALL routes
+  // (including Angular frontend routes that have no NestJS route handler).
+  // NestJS configure()-based middleware may not run for unregistered routes.
+  const redirectMiddleware = app.get(RedirectUrlMiddleware);
+  httpAdapter.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (res.headersSent) return next();
+    return redirectMiddleware.use(req, res, next);
+  });
+
+  // SPA fallback: serves index.html for any unhandled route
   httpAdapter.use((_req: express.Request, res: express.Response) => {
     if (!res.headersSent) {
       res.sendFile(join(__dirname, '..', '..', 'ui', 'dist', 'angular-ui', 'browser', 'index.html'));
