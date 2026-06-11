@@ -47,6 +47,18 @@ async function bootstrap() {
     allowedHeaders: 'Content-Type,Authorization,administrator',
     credentials: true,
   });
+
+  // Lazy reference: populated after app.init(). Safe because server only
+  // starts listening after init completes, so the ref is always set on first request.
+  let redirectMiddlewareRef: RedirectUrlMiddleware | null = null;
+
+  // Register BEFORE init so this slot is early in the Express stack —
+  // before ServeStatic (registered during module init) and NestJS Router.
+  app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (!redirectMiddlewareRef) return next();
+    return redirectMiddlewareRef.use(req, res, next);
+  });
+
   app.use(
     '/upload/static',
     express.static(join(__dirname, '..', 'upload/static')),
@@ -64,21 +76,14 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   const port = process.env.PORT || 3000;
 
-  // init() first so our fallback middleware is registered AFTER all NestJS routes
+  // init() initializes all modules (ServeStatic registers here, NestJS Router built here)
   await app.init();
 
-  const httpAdapter = app.getHttpAdapter().getInstance() as express.Express;
-
-  // Register redirect middleware directly on Express so it fires for ALL routes
-  // (including Angular frontend routes that have no NestJS route handler).
-  // NestJS configure()-based middleware may not run for unregistered routes.
-  const redirectMiddleware = app.get(RedirectUrlMiddleware);
-  httpAdapter.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if (res.headersSent) return next();
-    return redirectMiddleware.use(req, res, next);
-  });
+  // Wire up the lazy reference now that DI is ready
+  redirectMiddlewareRef = app.get(RedirectUrlMiddleware);
 
   // SPA fallback: serves index.html for any unhandled route
+  const httpAdapter = app.getHttpAdapter().getInstance() as express.Express;
   httpAdapter.use((_req: express.Request, res: express.Response) => {
     if (!res.headersSent) {
       res.sendFile(join(__dirname, '..', '..', 'ui', 'dist', 'angular-ui', 'browser', 'index.html'));
