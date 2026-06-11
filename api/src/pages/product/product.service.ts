@@ -55,6 +55,49 @@ export class ProductService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
+  private normalizeProductImageUrl(image?: string): string | undefined {
+    if (!image || typeof image !== 'string') {
+      return image;
+    }
+
+    const trimmedImage = image.trim();
+    if (!trimmedImage) {
+      return trimmedImage;
+    }
+
+    return trimmedImage;
+  }
+
+  private normalizeProductImageFields<T>(data: T): T {
+    if (!data) {
+      return data;
+    }
+
+    if (Array.isArray(data)) {
+      return data.map((item) => this.normalizeProductImageFields(item)) as T;
+    }
+
+    if (typeof data !== 'object') {
+      return data;
+    }
+
+    const product = data as any;
+
+    if (Array.isArray(product.images)) {
+      product.images = product.images.map((image: string) =>
+        this.normalizeProductImageUrl(image),
+      );
+    }
+
+    if (!product.image && product.images && product.images.length) {
+      product.image = product.images[0];
+    } else if (product.image) {
+      product.image = this.normalizeProductImageUrl(product.image);
+    }
+
+    return product;
+  }
+
   /**
    * addProduct
    * insertManyProduct
@@ -388,7 +431,7 @@ export class ProductService {
       return {
         success: true,
         message: 'Success! Data fetch successfully.',
-        data,
+        data: this.normalizeProductImageFields(data),
         count: totalCount,
       } as ResponsePayload;
     } catch (err) {
@@ -555,6 +598,12 @@ export class ProductService {
       mSelect = { ...select };
     } else {
       mSelect = { name: 1 };
+    }
+
+    if (mSelect['image']) {
+      mSelect['image'] = {
+        $ifNull: ['$image', { $arrayElemAt: ['$images', 0] }],
+      };
     }
 
     // GROUPING FOR FILTER PRODUCTS
@@ -776,7 +825,10 @@ export class ProductService {
         }
 
         return {
-          ...{ ...dataAggregates[0] },
+          ...{
+            ...dataAggregates[0],
+            data: this.normalizeProductImageFields(dataAggregates[0].data),
+          },
           ...{
             success: true,
             message: 'Success',
@@ -785,7 +837,7 @@ export class ProductService {
         } as ResponsePayload;
       } else {
         return {
-          data: dataAggregates,
+          data: this.normalizeProductImageFields(dataAggregates),
           success: true,
           message: 'Success',
           count: dataAggregates.length,
@@ -816,7 +868,9 @@ export class ProductService {
       return {
         success: true,
         message: 'Success',
-        data,
+        data: this.normalizeProductImageFields(
+          data && (data as any).toObject ? (data as any).toObject() : data,
+        ),
       } as ResponsePayload;
     } catch (err) {
       throw new InternalServerErrorException(err.message);
