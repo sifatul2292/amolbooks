@@ -2045,7 +2045,7 @@
       currentModalOrderId = mongoId;
       var courierBtn = document.getElementById('modalCourierBtn');
       var hasCourier = order.courierData && order.courierData.providerName;
-      courierBtn.style.display = (!isIncompleteView && !hasCourier && order.orderStatus !== 8) ? '' : 'none';
+      courierBtn.style.display = (isIncompleteView || (!hasCourier && order.orderStatus !== 8)) ? '' : 'none';
 
       var items = order.orderedItems||[];
       var body = document.getElementById('modalProductsBody');
@@ -2095,7 +2095,10 @@
 
   window.modalSendToCourier = function () {
     document.getElementById('productsModal').classList.remove('open');
-    if (currentModalOrderId) sendToCourier(currentModalOrderId);
+    if (currentModalOrderId) {
+      if (isIncompleteView) sendIncompleteToCourier(currentModalOrderId);
+      else sendToCourier(currentModalOrderId);
+    }
   };
 
   window.closeModal = function (e) {
@@ -2145,6 +2148,13 @@
       '</div>';
   }
 
+  function incompleteCourierCell(o) {
+    if (o.courierData&&o.courierData.providerName) {
+      return '<div class="courier-cell"><span class="courier-name">'+esc(o.courierData.providerName)+'</span></div>';
+    }
+    return '<button class="btn-courier" onclick="sendIncompleteToCourier(\''+o._id+'\')"><i class="fas fa-truck"></i> Send</button>';
+  }
+
   function renderTable(orders, total) {
     var tbody=document.getElementById('ordersBody');
     if (!orders.length) {
@@ -2182,7 +2192,7 @@
           '<td style="max-width:220px;word-break:break-word;line-height:1.5;font-size:12px">'+esc(o.shippingAddress||o.city||'—')+'</td>',
           '<td>'+fmtDate(o.createdAt||o.checkoutDate)+'</td>',
           '<td><strong style="color:var(--p);font-size:13.5px">৳'+Number(o.grandTotal||0).toLocaleString()+'</strong></td>',
-          '<td><span style="color:#94a3b8;font-size:11px">—</span></td>',
+          '<td>'+incompleteCourierCell(o)+'</td>',
           '<td>'+fraudCell(o.fraudChecker,o._id,o.phoneNo||'')+'</td>',
           '<td>'+incompleteActions(o)+'</td>',
           '<td>'+payTypeBadge(o.paymentType)+'</td>',
@@ -2291,9 +2301,10 @@
     };
   }
 
-  window.convertIncompleteOrder = function (id) {
+  function createOrderFromIncomplete(id, options) {
+    options = options || {};
     var order = allOrdersById[String(id)];
-    if (!order) { showToast('Incomplete order not found. Refresh and try again.', 'error'); return; }
+    if (!order) { showToast('Incomplete order not found. Refresh and try again.', 'error'); return Promise.reject(new Error('not-found')); }
     var payload = buildOrderPayloadFromIncomplete(order);
     var missing = [];
     if (!payload.phoneNo) missing.push('phone');
@@ -2302,10 +2313,9 @@
     if (!payload.orderedItems.length) missing.push('product items');
     if (missing.length) {
       showToast('Cannot add order. Missing ' + missing.join(', ') + '.', 'error');
-      return;
+      return Promise.reject(new Error('missing-fields'));
     }
-    if (!confirm('Create a real order from this incomplete order?')) return;
-    fetch(API + '/api/order/add-order-by-anonymous', {
+    return fetch(API + '/api/order/add-order-by-anonymous', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     })
@@ -2313,13 +2323,42 @@
     .then(function(d){
       if (!d.ok || (d.res && d.res.success === false)) {
         showToast((d.res && d.res.message) || ('Failed to create order: ' + d.status), 'error');
-        return;
+        throw new Error('create-failed');
       }
       var orderId = (d.res.data && d.res.data.orderId) || '';
-      showToast('Order' + (orderId ? ' #' + orderId : '') + ' created from incomplete order', 'success');
-      loadOrders(); loadTodayStats(); loadSnap();
-    })
-    .catch(function(err){ showToast('Error: ' + err.message, 'error'); });
+      if (!options.silent) showToast('Order' + (orderId ? ' #' + orderId : '') + ' created from incomplete order', 'success');
+      return d.res.data || {};
+    });
+  }
+
+  window.convertIncompleteOrder = function (id) {
+    if (!confirm('Create a real order from this incomplete order?')) return;
+    createOrderFromIncomplete(id)
+      .then(function(){ loadOrders(); loadTodayStats(); loadSnap(); })
+      .catch(function(err){ if (!['missing-fields','create-failed','not-found'].includes(err.message)) showToast('Error: ' + err.message, 'error'); });
+  };
+
+  window.sendIncompleteToCourier = function (id) {
+    if (!confirm('Create this order and send it to courier?')) return;
+    if (!getToken()) { showLogin('Please log in to send orders to courier.'); return; }
+    createOrderFromIncomplete(id, { silent: true })
+      .then(function(created){
+        if (!created || !created._id) throw new Error('Order created but ID was missing');
+        return fetch(API+'/api/order/send-to-courier/'+created._id,{method:'POST',headers:authHeaders()})
+          .then(function(r){
+            if (r.status === 401 || r.status === 403) {
+              clearToken(); showLogin('Session expired. Please log in again.'); throw new Error('auth');
+            }
+            return r.json();
+          });
+      })
+      .then(function(resp){
+        if (resp&&resp.success) { showToast('Order created and sent to courier!', 'success'); loadOrders(); loadTodayStats(); loadSnap(); }
+        else showToast((resp&&resp.message)||'Order created, but could not send to courier.','error');
+      })
+      .catch(function(err){
+        if (!['missing-fields','create-failed','not-found','auth'].includes(err.message)) showToast('Error: ' + err.message, 'error');
+      });
   };
 
   window.deleteIncompleteOrder = function (id) {

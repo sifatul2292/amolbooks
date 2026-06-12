@@ -142,6 +142,8 @@ export class OrderService {
         orderId: saveData.orderId,
       };
 
+      await this.cleanupIncompleteOrdersForPlacedOrder(saveData);
+
       if (addOrderDto.incompleteOrderId) {
         try {
           await this.markIncompleteOrderConverted(
@@ -309,6 +311,8 @@ export class OrderService {
         _id: saveData._id,
         orderId: saveData.orderId,
       };
+
+      await this.cleanupIncompleteOrdersForPlacedOrder(saveData);
 
       // Return response immediately - UI will get response fast
       const response = {
@@ -623,6 +627,27 @@ export class OrderService {
         orderId,
       },
     });
+  }
+
+  private async cleanupIncompleteOrdersForPlacedOrder(saveData: any): Promise<void> {
+    if (!saveData?.phoneNo) {
+      return;
+    }
+
+    const createdAt = saveData.createdAt || new Date();
+    await this.incompleteOrderModel.updateMany(
+      {
+        phoneNo: saveData.phoneNo,
+        createdAt: { $lte: createdAt },
+        status: { $ne: 'converted' },
+      },
+      {
+        $set: {
+          status: 'converted',
+          orderId: saveData.orderId,
+        },
+      },
+    );
   }
 
   async addOrderByUser(
@@ -2719,11 +2744,42 @@ export class OrderService {
       aggregateStages.push({ $match: mFilter });
     }
 
+    aggregateStages.push(
+      {
+        $lookup: {
+          from: 'orders',
+          let: {
+            incompletePhoneNo: '$phoneNo',
+            incompleteCreatedAt: '$createdAt',
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$phoneNo', '$$incompletePhoneNo'] },
+                    { $gte: ['$createdAt', '$$incompleteCreatedAt'] },
+                  ],
+                },
+              },
+            },
+            { $limit: 1 },
+          ],
+          as: 'placedOrders',
+        },
+      },
+      {
+        $match: {
+          placedOrders: { $size: 0 },
+        },
+      },
+    );
+
     if (Object.keys(mSort).length) {
       aggregateStages.push({ $sort: mSort });
     }
 
-    const countFilter = { ...mFilter };
+    const countStages = [...aggregateStages];
 
     if (pagination) {
       const pageSize =
@@ -2748,9 +2804,13 @@ export class OrderService {
 
     try {
       const data = await this.incompleteOrderModel.aggregate(aggregateStages);
-      const count = await this.incompleteOrderModel.countDocuments(countFilter);
+      const countAgg = await this.incompleteOrderModel.aggregate([
+        ...countStages,
+        { $count: 'count' },
+      ]);
+      const count = countAgg[0]?.count || 0;
       const calculationAgg = await this.incompleteOrderModel.aggregate([
-        ...(Object.keys(countFilter).length ? [{ $match: countFilter }] : []),
+        ...countStages,
         { $group: { _id: null, grandTotal: { $sum: '$grandTotal' } } },
       ]);
       const calculation = {

@@ -84,6 +84,7 @@ let OrderService = OrderService_1 = class OrderService {
                 _id: saveData._id,
                 orderId: saveData.orderId,
             };
+            await this.cleanupIncompleteOrdersForPlacedOrder(saveData);
             if (addOrderDto.incompleteOrderId) {
                 try {
                     await this.markIncompleteOrderConverted(addOrderDto.incompleteOrderId, saveData.orderId);
@@ -174,6 +175,7 @@ let OrderService = OrderService_1 = class OrderService {
                 _id: saveData._id,
                 orderId: saveData.orderId,
             };
+            await this.cleanupIncompleteOrdersForPlacedOrder(saveData);
             const response = {
                 success: true,
                 message: 'Order Added Success',
@@ -369,6 +371,22 @@ let OrderService = OrderService_1 = class OrderService {
             $set: {
                 status: 'converted',
                 orderId,
+            },
+        });
+    }
+    async cleanupIncompleteOrdersForPlacedOrder(saveData) {
+        if (!(saveData === null || saveData === void 0 ? void 0 : saveData.phoneNo)) {
+            return;
+        }
+        const createdAt = saveData.createdAt || new Date();
+        await this.incompleteOrderModel.updateMany({
+            phoneNo: saveData.phoneNo,
+            createdAt: { $lte: createdAt },
+            status: { $ne: 'converted' },
+        }, {
+            $set: {
+                status: 'converted',
+                orderId: saveData.orderId,
             },
         });
     }
@@ -1923,7 +1941,7 @@ let OrderService = OrderService_1 = class OrderService {
         }
     }
     async getAllIncompleteOrders(filterDto, searchQuery) {
-        var _a;
+        var _a, _b;
         const { filter, pagination, sort, select } = filterDto;
         const aggregateStages = [];
         let mFilter = {};
@@ -1956,10 +1974,37 @@ let OrderService = OrderService_1 = class OrderService {
         if (Object.keys(mFilter).length) {
             aggregateStages.push({ $match: mFilter });
         }
+        aggregateStages.push({
+            $lookup: {
+                from: 'orders',
+                let: {
+                    incompletePhoneNo: '$phoneNo',
+                    incompleteCreatedAt: '$createdAt',
+                },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ['$phoneNo', '$$incompletePhoneNo'] },
+                                    { $gte: ['$createdAt', '$$incompleteCreatedAt'] },
+                                ],
+                            },
+                        },
+                    },
+                    { $limit: 1 },
+                ],
+                as: 'placedOrders',
+            },
+        }, {
+            $match: {
+                placedOrders: { $size: 0 },
+            },
+        });
         if (Object.keys(mSort).length) {
             aggregateStages.push({ $sort: mSort });
         }
-        const countFilter = Object.assign({}, mFilter);
+        const countStages = [...aggregateStages];
         if (pagination) {
             const pageSize = pagination.pageSize && Number(pagination.pageSize) > 0
                 ? Number(pagination.pageSize)
@@ -1979,13 +2024,17 @@ let OrderService = OrderService_1 = class OrderService {
         }
         try {
             const data = await this.incompleteOrderModel.aggregate(aggregateStages);
-            const count = await this.incompleteOrderModel.countDocuments(countFilter);
+            const countAgg = await this.incompleteOrderModel.aggregate([
+                ...countStages,
+                { $count: 'count' },
+            ]);
+            const count = ((_a = countAgg[0]) === null || _a === void 0 ? void 0 : _a.count) || 0;
             const calculationAgg = await this.incompleteOrderModel.aggregate([
-                ...(Object.keys(countFilter).length ? [{ $match: countFilter }] : []),
+                ...countStages,
                 { $group: { _id: null, grandTotal: { $sum: '$grandTotal' } } },
             ]);
             const calculation = {
-                grandTotal: ((_a = calculationAgg[0]) === null || _a === void 0 ? void 0 : _a.grandTotal) || 0,
+                grandTotal: ((_b = calculationAgg[0]) === null || _b === void 0 ? void 0 : _b.grandTotal) || 0,
             };
             return {
                 success: true,

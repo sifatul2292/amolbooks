@@ -51,6 +51,7 @@ export declare class OrderService {
     private normalizeOrderItemRef;
     private toFiniteNumber;
     private markIncompleteOrderConverted;
+    private cleanupIncompleteOrdersForPlacedOrder;
     addOrderByUser(addOrderDto: AddOrderDto, user: User): Promise<ResponsePayload>;
     addOrderByAnonymous(addOrderDto: AddOrderDto): Promise<ResponsePayload>;
     updateDate(): Promise<ResponsePayload>;
