@@ -1698,9 +1698,10 @@
     };
     if (isIncompleteView) {
       delete filter.orderStatus;
-      // Only abandoned carts in the list. Converted (a real order was placed)
-      // are tracked in the Converted stat cards, not shown as rows here.
-      body.filter = Object.assign({ status: { $ne: 'converted' } }, filter);
+      // Show abandoned + admin-converted rows. Customers who completed checkout
+      // themselves are deleted from this collection, so converted = Send/Add Order
+      // conversions; the status badge marks them Converted.
+      if (Object.keys(filter).length) body.filter = filter;
     } else if (Object.keys(filter).length) {
       body.filter = filter;
     }
