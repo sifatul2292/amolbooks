@@ -1962,9 +1962,6 @@ let OrderService = OrderService_1 = class OrderService {
         if (filter) {
             mFilter = Object.assign(Object.assign({}, mFilter), filter);
         }
-        if (!mFilter.status) {
-            mFilter = Object.assign(Object.assign({}, mFilter), { status: { $ne: 'converted' } });
-        }
         if (searchQuery) {
             mFilter = {
                 $and: [
@@ -2012,7 +2009,7 @@ let OrderService = OrderService_1 = class OrderService {
             },
         }, {
             $match: {
-                placedOrders: { $size: 0 },
+                $or: [{ status: 'converted' }, { placedOrders: { $size: 0 } }],
             },
         });
         if (Object.keys(mSort).length) {

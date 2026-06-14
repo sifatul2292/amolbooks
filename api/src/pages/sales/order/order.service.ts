@@ -2746,12 +2746,6 @@ export class OrderService {
       mFilter = { ...mFilter, ...filter };
     }
 
-    // Only abandoned checkouts. Records marked 'converted' (a real order was
-    // placed from them) belong on the Custom Orders page, not here.
-    if (!mFilter.status) {
-      mFilter = { ...mFilter, status: { $ne: 'converted' } };
-    }
-
     if (searchQuery) {
       mFilter = {
         $and: [
@@ -2804,8 +2798,12 @@ export class OrderService {
         },
       },
       {
+        // Hide records where the customer placed the order themselves on the
+        // website (a matching order exists) — those are not abandoned. But keep
+        // admin-converted records (status 'converted') so they stay on this page
+        // marked converted, even though a real order now exists for them.
         $match: {
-          placedOrders: { $size: 0 },
+          $or: [{ status: 'converted' }, { placedOrders: { $size: 0 } }],
         },
       },
     );

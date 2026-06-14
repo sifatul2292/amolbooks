@@ -1062,6 +1062,14 @@
           <div class="stat-icon"><i class="fas fa-coins"></i></div>
           <div class="stat-info"><label>Today Amount</label><div class="val" id="todayAmount">—</div></div>
         </div>
+        <div class="stat-card incomplete-only" id="convertedOrdersCard" style="display:none;background:linear-gradient(135deg,#0891b2,#0e7490)">
+          <div class="stat-icon"><i class="fas fa-circle-check"></i></div>
+          <div class="stat-info"><label>Converted Orders</label><div class="val" id="convertedOrders">—</div></div>
+        </div>
+        <div class="stat-card incomplete-only" id="convertedAmountCard" style="display:none;background:linear-gradient(135deg,#0d9488,#0f766e)">
+          <div class="stat-icon"><i class="fas fa-hand-holding-dollar"></i></div>
+          <div class="stat-info"><label>Converted Amount</label><div class="val" id="convertedAmount">—</div></div>
+        </div>
       </div>
 
       <!-- Status Tabs -->
@@ -1385,6 +1393,14 @@
     if (bulkStatus) bulkStatus.style.display = isIncompleteView ? 'none' : '';
     var bulkApply = document.querySelector('.btn-bulk-apply');
     if (bulkApply) bulkApply.textContent = isIncompleteView ? 'Delete Selected' : 'Apply';
+    // Converted cards only make sense on the Incomplete Orders page.
+    document.querySelectorAll('.incomplete-only').forEach(function(el){
+      el.style.display = isIncompleteView ? '' : 'none';
+    });
+    var statsRow = document.querySelector('.stats-row');
+    if (statsRow && isIncompleteView && window.innerWidth > 900) {
+      statsRow.style.gridTemplateColumns = 'repeat(6,1fr)';
+    }
   }
 
   /* ── Sidebar Analytics Snapshot ── */
@@ -1678,7 +1694,8 @@
     };
     if (isIncompleteView) {
       delete filter.orderStatus;
-      body.filter = Object.assign({ status: { $ne: 'converted' } }, filter);
+      // Show both abandoned and converted rows; status badge distinguishes them.
+      if (Object.keys(filter).length) body.filter = filter;
     } else if (Object.keys(filter).length) {
       body.filter = filter;
     }
@@ -1733,32 +1750,45 @@
 
   /* ── Stats ── */
   function renderStats(count, grandTotal) {
-    if (isIncompleteView) document.getElementById('totalOrders').textContent = Number(count || 0).toLocaleString();
+    // In incomplete view the list mixes abandoned + converted rows, so the
+    // Incomplete/Total cards are owned by loadTodayStats (abandoned-only) instead.
+    if (isIncompleteView) return;
     document.getElementById('totalAmount').textContent = '৳' + Number(grandTotal).toLocaleString('en-BD', { maximumFractionDigits: 0 });
+  }
+
+  // Fetch incomplete-order count + grandTotal sum for a given filter, then write
+  // them into the two cards identified by countId / amountId.
+  function fetchIncompleteCard(filter, countId, amountId) {
+    fetch(API + '/api/order/get-all-incomplete-orders', {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({
+        filter: filter,
+        pagination: { pageSize: 1, currentPage: 1 }, sort: { createdAt: -1 },
+        select: { grandTotal: 1 },
+      }),
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(resp){
+      var tot = (resp.calculation && resp.calculation.grandTotal) ? resp.calculation.grandTotal : 0;
+      document.getElementById(countId).textContent = (resp.count || 0).toLocaleString();
+      document.getElementById(amountId).textContent = '৳' + Number(tot).toLocaleString('en-BD', { maximumFractionDigits: 0 });
+    })
+    .catch(function(){
+      document.getElementById(countId).textContent = '—';
+      document.getElementById(amountId).textContent = '—';
+    });
   }
 
   function loadTodayStats() {
     if (isIncompleteView) {
       var today = new Date();
       var todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
-      fetch(API + '/api/order/get-all-incomplete-orders', {
-        method: 'POST', headers: authHeaders(),
-        body: JSON.stringify({
-          filter: { status: { $ne: 'converted' }, createdAt: { $gte: todayStr, $lte: todayStr } },
-          pagination: { pageSize: 1, currentPage: 1 }, sort: { createdAt: -1 },
-          select: { grandTotal: 1 },
-        }),
-      })
-      .then(function(r){ return r.json(); })
-      .then(function(resp){
-        var tot = (resp.calculation && resp.calculation.grandTotal) ? resp.calculation.grandTotal : 0;
-        document.getElementById('todayOrders').textContent = (resp.count || 0).toLocaleString();
-        document.getElementById('todayAmount').textContent = '৳' + Number(tot).toLocaleString('en-BD', { maximumFractionDigits: 0 });
-      })
-      .catch(function(){
-        document.getElementById('todayOrders').textContent = '—';
-        document.getElementById('todayAmount').textContent = '—';
-      });
+      // Card 1/2: all-time abandoned (not yet converted).
+      fetchIncompleteCard({ status: { $ne: 'converted' } }, 'totalOrders', 'totalAmount');
+      // Card 3/4: today's abandoned arrivals.
+      fetchIncompleteCard({ status: { $ne: 'converted' }, createdAt: { $gte: todayStr, $lte: todayStr } }, 'todayOrders', 'todayAmount');
+      // Card 5/6: all-time converted (order placed + sent to courier from here).
+      fetchIncompleteCard({ status: 'converted' }, 'convertedOrders', 'convertedAmount');
       return;
     }
     var now = new Date();
@@ -2045,7 +2075,8 @@
       currentModalOrderId = mongoId;
       var courierBtn = document.getElementById('modalCourierBtn');
       var hasCourier = order.courierData && order.courierData.providerName;
-      courierBtn.style.display = (isIncompleteView || (!hasCourier && order.orderStatus !== 8)) ? '' : 'none';
+      var isConverted = order.status === 'converted';
+      courierBtn.style.display = ((isIncompleteView && !isConverted) || (!isIncompleteView && !hasCourier && order.orderStatus !== 8)) ? '' : 'none';
 
       var items = order.orderedItems||[];
       var body = document.getElementById('modalProductsBody');
@@ -2141,8 +2172,14 @@
 
   /* ── Render Table ── */
   function incompleteActions(o) {
-    return '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
-      '<button class="btn-action btn-view" onclick="openProducts(\''+o._id+'\')" title="View abandoned order"><i class="fas fa-eye"></i> View</button>' +
+    var view = '<button class="btn-action btn-view" onclick="openProducts(\''+o._id+'\')" title="View abandoned order"><i class="fas fa-eye"></i> View</button>';
+    // Converted rows already produced a real order; no re-convert (would duplicate).
+    if (o.status === 'converted') {
+      return '<div style="display:flex;gap:6px;flex-wrap:wrap">' + view +
+        '<button class="btn-action" onclick="deleteIncompleteOrder(\''+o._id+'\')" title="Remove from list" style="background:#fee2e2;color:#991b1b;border-color:#fecaca"><i class="fas fa-trash"></i></button>' +
+        '</div>';
+    }
+    return '<div style="display:flex;gap:6px;flex-wrap:wrap">' + view +
       '<button class="btn-action" onclick="convertIncompleteOrder(\''+o._id+'\')" title="Create order from this abandoned checkout" style="background:#dcfce7;color:#166534;border-color:#bbf7d0"><i class="fas fa-plus"></i> Add Order</button>' +
       '<button class="btn-action" onclick="deleteIncompleteOrder(\''+o._id+'\')" title="Delete abandoned order" style="background:#fee2e2;color:#991b1b;border-color:#fecaca"><i class="fas fa-trash"></i></button>' +
       '</div>';
@@ -2151,6 +2188,10 @@
   function incompleteCourierCell(o) {
     if (o.courierData&&o.courierData.providerName) {
       return '<div class="courier-cell"><span class="courier-name">'+esc(o.courierData.providerName)+'</span></div>';
+    }
+    // Converted = order already created & sent to courier; block re-send (would duplicate).
+    if (o.status === 'converted') {
+      return '<span style="color:#0e7490;font-size:11px;font-weight:700"><i class="fas fa-check"></i> Sent</span>';
     }
     return '<button class="btn-courier" onclick="sendIncompleteToCourier(\''+o._id+'\')"><i class="fas fa-truck"></i> Send</button>';
   }
@@ -2197,7 +2238,9 @@
           '<td>'+incompleteActions(o)+'</td>',
           '<td>'+payTypeBadge(o.paymentType)+'</td>',
           '<td>'+payStatusBadge(o.paymentStatus||'unpaid')+'</td>',
-          '<td><span class="badge badge-pending">'+esc(incompleteStatus)+'</span></td>',
+          '<td>'+(o.status === 'converted'
+            ? '<span class="badge" style="background:#cffafe;color:#0e7490;border:1px solid #a5f3fc">Converted</span>'
+            : '<span class="badge badge-pending">'+esc(incompleteStatus)+'</span>')+'</td>',
           '<td><small style="color:#64748b">'+(o.user?'User':'Guest')+'</small></td>',
           '<td><span style="color:#94a3b8;font-size:11px">—</span></td>',
           '<td><div class="note-cell">'+(o.note?'<span class="customer-note-text">'+esc(o.note)+'</span>':'<span style="color:#94a3b8;font-size:11px">—</span>')+'</div></td>',
