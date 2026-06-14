@@ -13,13 +13,13 @@ export declare const UserSchema: mongoose.Schema<any, mongoose.Model<any, any, a
     authors: mongoose.Types.ObjectId[];
     name?: string;
     password?: string;
+    image?: string;
     username?: string;
     division?: {
         _id?: mongoose.Types.ObjectId;
         name?: string;
     };
     email?: string;
-    image?: string;
     gender?: string;
     profileImg?: string;
     phoneNo?: string;

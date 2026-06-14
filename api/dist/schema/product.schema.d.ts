@@ -84,6 +84,16 @@ export declare const ProductSchema: mongoose.Schema<any, mongoose.Model<any, any
         image?: string;
     };
     isPreOrder?: boolean;
+    bookFairBestseller?: {
+        category?: {
+            _id?: mongoose.Types.ObjectId;
+            name?: string;
+            slug?: string;
+            nameEn?: string;
+        };
+        priority?: number;
+        isEnabled?: boolean;
+    };
     seoTitle?: string;
     seoDescription?: string;
     seoKeywords?: string;

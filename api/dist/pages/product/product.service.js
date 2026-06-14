@@ -40,6 +40,38 @@ let ProductService = ProductService_1 = class ProductService {
         this.cacheProductPage = 'getAllProducts?page=1';
         this.cacheProductCount = 'getAllProducts?count';
     }
+    normalizeProductImageUrl(image) {
+        if (!image || typeof image !== 'string') {
+            return image;
+        }
+        const trimmedImage = image.trim();
+        if (!trimmedImage) {
+            return trimmedImage;
+        }
+        return trimmedImage;
+    }
+    normalizeProductImageFields(data) {
+        if (!data) {
+            return data;
+        }
+        if (Array.isArray(data)) {
+            return data.map((item) => this.normalizeProductImageFields(item));
+        }
+        if (typeof data !== 'object') {
+            return data;
+        }
+        const product = data;
+        if (Array.isArray(product.images)) {
+            product.images = product.images.map((image) => this.normalizeProductImageUrl(image));
+        }
+        if (!product.image && product.images && product.images.length) {
+            product.image = product.images[0];
+        }
+        else if (product.image) {
+            product.image = this.normalizeProductImageUrl(product.image);
+        }
+        return product;
+    }
     async addProduct(addProductDto) {
         var _a;
         const { nameEn, name, quantity } = addProductDto;
@@ -290,7 +322,7 @@ let ProductService = ProductService_1 = class ProductService {
             return {
                 success: true,
                 message: 'Success! Data fetch successfully.',
-                data,
+                data: this.normalizeProductImageFields(data),
                 count: totalCount,
             };
         }
@@ -386,6 +418,11 @@ let ProductService = ProductService_1 = class ProductService {
         }
         else {
             mSelect = { name: 1 };
+        }
+        if (mSelect['image']) {
+            mSelect['image'] = {
+                $ifNull: ['$image', { $arrayElemAt: ['$images', 0] }],
+            };
         }
         let groupCategory;
         let groupBrand;
@@ -548,7 +585,7 @@ let ProductService = ProductService_1 = class ProductService {
                     await this.cacheManager.set(this.cacheProductCount, dataAggregates[0].count);
                     this.logger.log('Cache Added');
                 }
-                return Object.assign(Object.assign({}, Object.assign({}, dataAggregates[0])), {
+                return Object.assign(Object.assign({}, Object.assign(Object.assign({}, dataAggregates[0]), { data: this.normalizeProductImageFields(dataAggregates[0].data) })), {
                     success: true,
                     message: 'Success',
                     filterGroup: allFilterGroups,
@@ -556,7 +593,7 @@ let ProductService = ProductService_1 = class ProductService {
             }
             else {
                 return {
-                    data: dataAggregates,
+                    data: this.normalizeProductImageFields(dataAggregates),
                     success: true,
                     message: 'Success',
                     count: dataAggregates.length,
@@ -586,7 +623,7 @@ let ProductService = ProductService_1 = class ProductService {
             return {
                 success: true,
                 message: 'Success',
-                data,
+                data: this.normalizeProductImageFields(data && data.toObject ? data.toObject() : data),
             };
         }
         catch (err) {
@@ -1064,6 +1101,121 @@ let ProductService = ProductService_1 = class ProductService {
     }
     async findAllPublished() {
         return this.productModel.find({}).select('slug title').exec();
+    }
+    async getMetaFeedXml() {
+        const products = await this.productModel
+            .find({ status: 'publish', isFacebookCatalog: true })
+            .select('_id nameEn name slug shortDescription description afterDiscountPrice salePrice images quantity publisher brand category')
+            .lean();
+        const escapeXml = (v) => {
+            if (v == null)
+                return '';
+            return String(v)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+        };
+        const stripHtml = (str) => str.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+        const resolveImageUrl = (url) => {
+            if (!url)
+                return '';
+            if (url.startsWith('http'))
+                return url;
+            return `https://amolbooks.com${url.startsWith('/') ? '' : '/'}${url}`;
+        };
+        const items = products.map((p) => {
+            var _a, _b, _c, _d, _e, _f, _g;
+            const id = String(p._id);
+            const title = escapeXml(p.name || p.nameEn || '');
+            const rawDesc = p.shortDescription || p.description || p.name || p.nameEn || '';
+            const desc = (escapeXml(stripHtml(rawDesc)).slice(0, 5000)) || title;
+            const link = `https://amolbooks.com/product-details/${encodeURIComponent(p.slug || '')}`;
+            const salePrice = Number(p.salePrice || 0);
+            const afterDiscountPrice = Number(p.afterDiscountPrice || 0);
+            const price = `${salePrice.toFixed(2)} BDT`;
+            const salePriceStr = afterDiscountPrice > 0 && afterDiscountPrice < salePrice
+                ? `${afterDiscountPrice.toFixed(2)} BDT`
+                : null;
+            const availability = p.quantity > 0 ? 'in stock' : 'out of stock';
+            const imageLink = resolveImageUrl(((_a = p.images) === null || _a === void 0 ? void 0 : _a[0]) || '')
+                || 'https://amolbooks.com/uploads/images/placeholder.png';
+            const additionalImages = p.images && p.images.length > 1
+                ? p.images
+                    .slice(1, 10)
+                    .map((img) => `      <g:additional_image_link>${escapeXml(resolveImageUrl(img))}</g:additional_image_link>`)
+                    .join('\n')
+                : '';
+            const brand = escapeXml(((_b = p.publisher) === null || _b === void 0 ? void 0 : _b.name) || ((_c = p.brand) === null || _c === void 0 ? void 0 : _c.name) || 'Amolbooks');
+            const categoryName = ((_e = (_d = p.category) === null || _d === void 0 ? void 0 : _d[0]) === null || _e === void 0 ? void 0 : _e.name) || ((_g = (_f = p.category) === null || _f === void 0 ? void 0 : _f[0]) === null || _g === void 0 ? void 0 : _g.nameEn) || '';
+            const lines = [
+                `    <item>`,
+                `      <g:id>${id}</g:id>`,
+                `      <g:title>${title}</g:title>`,
+                `      <g:description>${desc}</g:description>`,
+                `      <g:link>${escapeXml(link)}</g:link>`,
+                `      <g:image_link>${escapeXml(imageLink)}</g:image_link>`,
+                ...(additionalImages ? [additionalImages] : []),
+                `      <g:availability>${availability}</g:availability>`,
+                `      <g:price>${price}</g:price>`,
+                ...(salePriceStr ? [`      <g:sale_price>${salePriceStr}</g:sale_price>`] : []),
+                `      <g:condition>new</g:condition>`,
+                `      <g:brand>${brand}</g:brand>`,
+                ...(categoryName ? [`      <g:product_type>${escapeXml(categoryName)}</g:product_type>`] : []),
+                `    </item>`,
+            ];
+            return lines.join('\n');
+        });
+        return `<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+  <channel>
+    <title>Amolbooks</title>
+    <link>https://amolbooks.com</link>
+    <description>Amolbooks product catalog</description>
+${items.join('\n')}
+  </channel>
+</rss>`;
+    }
+    async getMetaFeed() {
+        const products = await this.productModel
+            .find({ status: 'publish', isFacebookCatalog: true })
+            .select('_id nameEn name slug shortDescription description afterDiscountPrice salePrice images quantity publisher brand category')
+            .lean();
+        const headers = [
+            'id',
+            'title',
+            'description',
+            'availability',
+            'condition',
+            'price',
+            'link',
+            'image_link',
+            'brand',
+            'fb_product_category',
+        ];
+        const escape = (v) => {
+            if (v == null)
+                return '';
+            const s = String(v).replace(/"/g, '""');
+            return `"${s}"`;
+        };
+        const rows = products.map((p) => {
+            var _a, _b, _c, _d, _e, _f;
+            const id = String(p._id);
+            const title = p.nameEn || p.name || '';
+            const desc = (p.shortDescription || p.description || title).replace(/<[^>]*>/g, '');
+            const availability = p.quantity > 0 ? 'in stock' : 'out of stock';
+            const price = `${p.afterDiscountPrice || p.salePrice || 0} BDT`;
+            const link = `https://amolbooks.com/product/${p.slug}`;
+            const imageLink = (p.images && p.images[0]) ? p.images[0] : '';
+            const brand = ((_a = p.publisher) === null || _a === void 0 ? void 0 : _a.name) || ((_b = p.brand) === null || _b === void 0 ? void 0 : _b.name) || 'Amolbooks';
+            const category = ((_d = (_c = p.category) === null || _c === void 0 ? void 0 : _c[0]) === null || _d === void 0 ? void 0 : _d.nameEn) || ((_f = (_e = p.category) === null || _e === void 0 ? void 0 : _e[0]) === null || _f === void 0 ? void 0 : _f.name) || '';
+            return [id, title, desc, availability, 'new', price, link, imageLink, brand, category]
+                .map(escape)
+                .join(',');
+        });
+        return [headers.join(','), ...rows].join('\n');
     }
 };
 ProductService = ProductService_1 = __decorate([

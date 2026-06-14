@@ -10,7 +10,7 @@ export declare const BrandSchema: mongoose.Schema<any, mongoose.Model<any, any, 
     slug: string;
     description?: string;
     nameEn?: string;
-    priority?: number;
     image?: string;
+    priority?: number;
     readOnly?: boolean;
 }>;

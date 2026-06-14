@@ -8,6 +8,7 @@ const path_1 = require("path");
 const express = require("express");
 const helmet = require("helmet");
 const compression = require("compression");
+const redirect_url_middleware_1 = require("./middleware/redirect-url.middleware");
 async function bootstrap() {
     const logger = new common_1.Logger('Bootstrap');
     const app = await core_1.NestFactory.create(app_module_1.AppModule, { cors: true });
@@ -41,6 +42,12 @@ async function bootstrap() {
         allowedHeaders: 'Content-Type,Authorization,administrator',
         credentials: true,
     });
+    let redirectMiddlewareRef = null;
+    app.use((req, res, next) => {
+        if (!redirectMiddlewareRef)
+            return next();
+        return redirectMiddlewareRef.use(req, res, next);
+    });
     app.use('/upload/static', express.static((0, path_1.join)(__dirname, '..', 'upload/static')));
     app.enableVersioning({
         type: common_1.VersioningType.URI,
@@ -50,6 +57,7 @@ async function bootstrap() {
     app.setGlobalPrefix('api');
     const port = process.env.PORT || 3000;
     await app.init();
+    redirectMiddlewareRef = app.get(redirect_url_middleware_1.RedirectUrlMiddleware);
     const httpAdapter = app.getHttpAdapter().getInstance();
     httpAdapter.use((_req, res) => {
         if (!res.headersSent) {

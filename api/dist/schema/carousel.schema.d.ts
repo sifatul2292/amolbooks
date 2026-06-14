@@ -9,8 +9,8 @@ export declare const CarouselSchema: mongoose.Schema<any, mongoose.Model<any, an
     name: string;
     url?: string;
     title?: string;
+    image?: string;
     priority?: number;
     mobileImage?: string;
-    image?: string;
     amount?: string;
 }>;

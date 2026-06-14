@@ -1929,6 +1929,11 @@ let OrderService = OrderService_1 = class OrderService {
         try {
             const newData = new this.incompleteOrderModel(addIncompleteOrderDto);
             const saveData = await newData.save();
+            if (saveData.phoneNo) {
+                this.runIncompleteOrderFraudCheck(String(saveData._id), saveData.phoneNo).catch((error) => {
+                    this.logger.warn(`Auto fraud check failed for incomplete order ${saveData._id}:`, (error === null || error === void 0 ? void 0 : error.message) || error);
+                });
+            }
             return {
                 success: true,
                 message: 'Incomplete order saved successfully',
@@ -1938,6 +1943,12 @@ let OrderService = OrderService_1 = class OrderService {
         catch (err) {
             this.logger.error(err);
             throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
+    async runIncompleteOrderFraudCheck(incompleteOrderId, phoneNo) {
+        const fraudCheckerData = await this.courierService.checkFraudOrder(phoneNo);
+        if (fraudCheckerData) {
+            await this.incompleteOrderModel.updateOne({ _id: incompleteOrderId }, { $set: { fraudChecker: fraudCheckerData } });
         }
     }
     async getAllIncompleteOrders(filterDto, searchQuery) {
@@ -1950,6 +1961,9 @@ let OrderService = OrderService_1 = class OrderService {
         let mPagination = {};
         if (filter) {
             mFilter = Object.assign(Object.assign({}, mFilter), filter);
+        }
+        if (!mFilter.status) {
+            mFilter = Object.assign(Object.assign({}, mFilter), { status: { $ne: 'converted' } });
         }
         if (searchQuery) {
             mFilter = {

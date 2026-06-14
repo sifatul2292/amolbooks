@@ -24,14 +24,29 @@ let SitemapController = class SitemapController {
         res.setHeader('Content-Type', 'application/xml');
         res.status(200).send(sitemap);
     }
+    async getFbFeed(res) {
+        const feed = await this.sitemapService.generateFbFeedXml();
+        res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        res.status(200).send(feed);
+    }
 };
 __decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Get)('sitemap.xml'),
     __param(0, (0, common_1.Res)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], SitemapController.prototype, "getSitemap", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Get)('fb-feed.xml'),
+    __param(0, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], SitemapController.prototype, "getFbFeed", null);
 SitemapController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [sitemap_service_1.SitemapService])

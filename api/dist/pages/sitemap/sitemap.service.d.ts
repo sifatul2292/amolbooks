@@ -5,4 +5,5 @@ export declare class SitemapService {
     private readonly blogService;
     constructor(productService: ProductService, blogService: BlogService);
     generateSitemapXml(): Promise<string>;
+    generateFbFeedXml(): Promise<string>;
 }

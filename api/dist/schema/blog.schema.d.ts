@@ -13,9 +13,9 @@ export declare const BlogSchema: mongoose.Schema<any, mongoose.Model<any, any, a
     seoTitle?: string;
     seoDescription?: string;
     seoKeywords?: string;
+    image?: string;
     priority?: number;
     mobileImage?: string;
-    image?: string;
     descriptionEn?: string;
     authorName?: string;
     shortDesc?: string;

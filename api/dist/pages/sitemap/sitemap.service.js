@@ -40,6 +40,9 @@ let SitemapService = class SitemapService {
         const xml = await (0, sitemap_1.streamToPromise)(smStream);
         return xml.toString();
     }
+    async generateFbFeedXml() {
+        return this.productService.getMetaFeedXml();
+    }
 };
 SitemapService = __decorate([
     (0, common_1.Injectable)(),

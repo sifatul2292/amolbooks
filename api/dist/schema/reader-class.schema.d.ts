@@ -10,7 +10,7 @@ export declare const ReaderClassSchema: mongoose.Schema<any, mongoose.Model<any,
     slug: string;
     description?: string;
     status?: string;
-    priority?: number;
     image?: string;
+    priority?: number;
     readOnly?: boolean;
 }>;

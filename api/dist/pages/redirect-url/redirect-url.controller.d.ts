@@ -6,6 +6,7 @@ export declare class RedirectUrlController {
     private redirectUrlService;
     private logger;
     constructor(redirectUrlService: RedirectUrlService);
+    debugRules(): Promise<any>;
     addRedirectUrl(addRedirectUrlDto: AddRedirectUrlDto): Promise<ResponsePayload>;
     insertManyRedirectUrl(body: {
         data: AddRedirectUrlDto[];

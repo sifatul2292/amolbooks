@@ -44,6 +44,11 @@ export interface Product {
     tags?: string[];
     status?: string;
     isPreOrder?: boolean;
+    bookFairBestseller?: {
+        isEnabled?: boolean;
+        priority?: number;
+        category?: CatalogInfo;
+    };
     seoTitle?: string;
     seoDescription?: string;
     seoKeywords?: string;

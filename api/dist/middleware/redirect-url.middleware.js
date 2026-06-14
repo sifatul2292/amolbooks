@@ -48,11 +48,19 @@ let RedirectUrlMiddleware = class RedirectUrlMiddleware {
                     catch (_a) {
                         fromPath = cleanFrom.startsWith('/') ? cleanFrom : '/' + cleanFrom;
                     }
+                    try {
+                        fromPath = decodeURIComponent(fromPath);
+                    }
+                    catch (_b) { }
+                    if (fromPath !== '/')
+                        fromPath = fromPath.replace(/\/+$/, '');
                     return { fromPath, toUrl: d.toUrl, wildcard: hasWildcard };
                 });
+                console.log(`[RedirectMiddleware] loaded ${this.cache.length} rules from DB`);
                 this.lastFetched = Date.now();
             }
-            catch (_a) {
+            catch (err) {
+                console.error('[RedirectMiddleware] DB fetch error:', err);
             }
             finally {
                 this.inflight = null;
@@ -62,21 +70,32 @@ let RedirectUrlMiddleware = class RedirectUrlMiddleware {
         return this.inflight;
     }
     async use(req, res, next) {
-        if (STATIC_EXT_RE.test(req.path) || req.path.startsWith('/upload/')) {
+        if (STATIC_EXT_RE.test(req.path) || req.path.startsWith('/upload/') || req.path.startsWith('/api/')) {
             return next();
         }
         try {
             const redirects = await this.getRedirects();
+            let reqPath;
+            try {
+                reqPath = decodeURIComponent(req.path);
+            }
+            catch (_a) {
+                reqPath = req.path;
+            }
+            const normalizedReqPath = reqPath === '/' ? '/' : reqPath.replace(/\/+$/, '');
+            console.log(`[RedirectMiddleware] checking "${normalizedReqPath}" against ${redirects.length} rules`);
             for (const r of redirects) {
                 const matches = r.wildcard
-                    ? req.path.startsWith(r.fromPath)
-                    : req.path === r.fromPath;
+                    ? normalizedReqPath.startsWith(r.fromPath)
+                    : normalizedReqPath === r.fromPath;
                 if (matches) {
+                    console.log(`[RedirectMiddleware] match: "${normalizedReqPath}" → ${r.toUrl}`);
                     return res.redirect(301, r.toUrl);
                 }
             }
         }
-        catch (_a) {
+        catch (err) {
+            console.error('[RedirectMiddleware] error:', err);
         }
         return next();
     }

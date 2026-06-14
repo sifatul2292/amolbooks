@@ -10,8 +10,8 @@ export declare const NotificationSchema: mongoose.Schema<any, mongoose.Model<any
     slug?: string;
     description?: string;
     nameEn?: string;
-    priority?: number;
     image?: string;
+    priority?: number;
     readOnly?: boolean;
     isReadNoti?: boolean;
 }>;

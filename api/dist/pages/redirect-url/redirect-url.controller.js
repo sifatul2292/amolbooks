@@ -32,6 +32,9 @@ let RedirectUrlController = RedirectUrlController_1 = class RedirectUrlControlle
         this.redirectUrlService = redirectUrlService;
         this.logger = new common_1.Logger(RedirectUrlController_1.name);
     }
+    async debugRules() {
+        return this.redirectUrlService.getAllRedirectUrlsBasic();
+    }
     async addRedirectUrl(addRedirectUrlDto) {
         return await this.redirectUrlService.addRedirectUrl(addRedirectUrlDto);
     }
@@ -63,6 +66,13 @@ let RedirectUrlController = RedirectUrlController_1 = class RedirectUrlControlle
         return await this.redirectUrlService.checkRedirectUrlAvailability(user, checkRedirectUrlDto);
     }
 };
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Get)('/debug-rules'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], RedirectUrlController.prototype, "debugRules", null);
 __decorate([
     (0, common_1.Post)('/add'),
     __param(0, (0, common_1.Body)()),

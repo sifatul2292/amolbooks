@@ -2690,6 +2690,22 @@ export class OrderService {
     try {
       const newData = new this.incompleteOrderModel(addIncompleteOrderDto);
       const saveData = await newData.save();
+
+      // Auto-run fraud check the moment an abandoned checkout arrives, so the
+      // result is already populated when admin opens the Incomplete Orders page.
+      // Fire-and-forget: never block / fail the save on a fraud-API hiccup.
+      if (saveData.phoneNo) {
+        this.runIncompleteOrderFraudCheck(
+          String(saveData._id),
+          saveData.phoneNo,
+        ).catch((error) => {
+          this.logger.warn(
+            `Auto fraud check failed for incomplete order ${saveData._id}:`,
+            error?.message || error,
+          );
+        });
+      }
+
       return {
         success: true,
         message: 'Incomplete order saved successfully',
@@ -2698,6 +2714,19 @@ export class OrderService {
     } catch (err) {
       this.logger.error(err);
       throw new InternalServerErrorException(err.message);
+    }
+  }
+
+  private async runIncompleteOrderFraudCheck(
+    incompleteOrderId: string,
+    phoneNo: string,
+  ): Promise<void> {
+    const fraudCheckerData = await this.courierService.checkFraudOrder(phoneNo);
+    if (fraudCheckerData) {
+      await this.incompleteOrderModel.updateOne(
+        { _id: incompleteOrderId },
+        { $set: { fraudChecker: fraudCheckerData } },
+      );
     }
   }
 
@@ -2715,6 +2744,12 @@ export class OrderService {
 
     if (filter) {
       mFilter = { ...mFilter, ...filter };
+    }
+
+    // Only abandoned checkouts. Records marked 'converted' (a real order was
+    // placed from them) belong on the Custom Orders page, not here.
+    if (!mFilter.status) {
+      mFilter = { ...mFilter, status: { $ne: 'converted' } };
     }
 
     if (searchQuery) {

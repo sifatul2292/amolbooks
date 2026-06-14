@@ -9,7 +9,7 @@ export declare const TagSchema: mongoose.Schema<any, mongoose.Model<any, any, an
     name: string;
     slug: string;
     url?: string;
-    priority?: number;
     image?: string;
+    priority?: number;
     readOnly?: boolean;
 }>;

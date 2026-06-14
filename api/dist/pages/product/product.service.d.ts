@@ -29,6 +29,8 @@ export declare class ProductService {
     private readonly cacheProductPage;
     private readonly cacheProductCount;
     constructor(productModel: Model<Product>, categoryModel: Model<Category>, brandModel: Model<Brand>, publisherModel: Model<Publisher>, settingModel: Model<Setting>, redirectUrlModel: Model<RedirectUrl>, shopInformationModel: Model<ShopInformation>, boughtTogetherConfigModel: Model<any>, configService: ConfigService, utilsService: UtilsService, fbCatalogService: FbCatalogService, cacheManager: Cache);
+    private normalizeProductImageUrl;
+    private normalizeProductImageFields;
     addProduct(addProductDto: AddProductDto): Promise<ResponsePayload>;
     private productUpdateOnFbCatalog;
     cloneSingleProduct(id: string): Promise<ResponsePayload>;
@@ -56,4 +58,6 @@ export declare class ProductService {
         limit: number;
     }): Promise<ResponsePayload>;
     findAllPublished(): Promise<Product[]>;
+    getMetaFeedXml(): Promise<string>;
+    getMetaFeed(): Promise<string>;
 }

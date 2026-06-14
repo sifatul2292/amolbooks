@@ -2315,11 +2315,20 @@
       showToast('Cannot add order. Missing ' + missing.join(', ') + '.', 'error');
       return Promise.reject(new Error('missing-fields'));
     }
-    return fetch(API + '/api/order/add-order-by-anonymous', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+    if (!getToken()) { showLogin('Please log in to create orders.'); return Promise.reject(new Error('auth')); }
+    // Use the admin /add endpoint: it builds the order from orderedItems directly
+    // (anonymous endpoint expects a cart payload and crashes on incomplete orders),
+    // marks the incomplete record converted, and updates stock.
+    return fetch(API + '/api/order/add', {
+      method: 'POST', headers: authHeaders(),
       body: JSON.stringify(payload),
     })
-    .then(function(r){ return r.json().then(function(res){ return { ok: r.ok, status: r.status, res: res }; }); })
+    .then(function(r){
+      if (r.status === 401 || r.status === 403) {
+        clearToken(); showLogin('Session expired. Please log in again.'); throw new Error('auth');
+      }
+      return r.json().then(function(res){ return { ok: r.ok, status: r.status, res: res }; });
+    })
     .then(function(d){
       if (!d.ok || (d.res && d.res.success === false)) {
         showToast((d.res && d.res.message) || ('Failed to create order: ' + d.status), 'error');

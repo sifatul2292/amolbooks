@@ -24,6 +24,7 @@ export declare class ProductController {
         productIds: string[];
     }): Promise<ResponsePayload>;
     getBoughtTogetherByProduct(id: string): Promise<ResponsePayload>;
+    getMetaFeed(res: Response): Promise<void>;
     getProductById(id: string, select: any): Promise<ResponsePayload>;
     getProductBySlug(slug: string, select: string): Promise<ResponsePayload>;
     getProductOgHtml(slug: string, res: Response): Promise<void>;

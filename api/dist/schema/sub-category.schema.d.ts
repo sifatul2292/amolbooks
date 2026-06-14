@@ -11,7 +11,7 @@ export declare const SubCategorySchema: mongoose.Schema<any, mongoose.Model<any,
     category: mongoose.Types.ObjectId;
     nameEn?: string;
     status?: string;
-    priority?: number;
     image?: string;
+    priority?: number;
     readOnly?: boolean;
 }>;

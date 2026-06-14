@@ -84,6 +84,7 @@ export declare class OrderService {
     getAllCourierStatusAndUpdate(): Promise<void>;
     getAndUpdateOrderStatusFromCourier(order: any, courierMethod: any): Promise<void>;
     addIncompleteOrder(addIncompleteOrderDto: AddIncompleteOrderDto): Promise<ResponsePayload>;
+    private runIncompleteOrderFraudCheck;
     getAllIncompleteOrders(filterDto: FilterAndPaginationIncompleteOrderDto, searchQuery?: string): Promise<ResponsePayload>;
     getIncompleteOrderById(id: string): Promise<ResponsePayload>;
     updateIncompleteOrderById(id: string, updateIncompleteOrderDto: UpdateIncompleteOrderDto): Promise<ResponsePayload>;

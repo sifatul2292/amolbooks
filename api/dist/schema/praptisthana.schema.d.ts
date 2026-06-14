@@ -9,6 +9,7 @@ export declare const PraptisthanaSchema: mongoose.Schema<any, mongoose.Model<any
     name: string;
     url?: string;
     title?: string;
+    image?: string;
     priority?: number;
     mobileImage?: string;
     division?: {
@@ -16,7 +17,6 @@ export declare const PraptisthanaSchema: mongoose.Schema<any, mongoose.Model<any
         name?: string;
     };
     address?: string;
-    image?: string;
     phone?: string;
     area?: {
         _id?: mongoose.Types.ObjectId;

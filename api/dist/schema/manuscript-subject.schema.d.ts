@@ -10,7 +10,7 @@ export declare const ManuscriptSubjectSchema: mongoose.Schema<any, mongoose.Mode
     slug: string;
     description?: string;
     status?: string;
-    priority?: number;
     image?: string;
+    priority?: number;
     readOnly?: boolean;
 }>;

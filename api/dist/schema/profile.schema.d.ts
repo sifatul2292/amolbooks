@@ -7,8 +7,8 @@ export declare const ProfileSchema: mongoose.Schema<any, mongoose.Model<any, any
     updatedAt: NativeDate;
 } & {
     name: string;
+    image?: string;
     username?: string;
     email?: string;
-    image?: string;
     phoneNo?: string;
 }>;
