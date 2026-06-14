@@ -1064,11 +1064,19 @@
         </div>
         <div class="stat-card incomplete-only" id="convertedOrdersCard" style="display:none;background:linear-gradient(135deg,#0891b2,#0e7490)">
           <div class="stat-icon"><i class="fas fa-circle-check"></i></div>
-          <div class="stat-info"><label>Converted Orders</label><div class="val" id="convertedOrders">—</div></div>
+          <div class="stat-info"><label>Today Converted</label><div class="val" id="convertedOrders">—</div></div>
         </div>
         <div class="stat-card incomplete-only" id="convertedAmountCard" style="display:none;background:linear-gradient(135deg,#0d9488,#0f766e)">
           <div class="stat-icon"><i class="fas fa-hand-holding-dollar"></i></div>
-          <div class="stat-info"><label>Converted Amount</label><div class="val" id="convertedAmount">—</div></div>
+          <div class="stat-info"><label>Today Conv. Amount</label><div class="val" id="convertedAmount">—</div></div>
+        </div>
+        <div class="stat-card incomplete-only" id="allConvertedOrdersCard" style="display:none;background:linear-gradient(135deg,#4f46e5,#3730a3)">
+          <div class="stat-icon"><i class="fas fa-clipboard-check"></i></div>
+          <div class="stat-info"><label>All Converted</label><div class="val" id="allConvertedOrders">—</div></div>
+        </div>
+        <div class="stat-card incomplete-only" id="allConvertedAmountCard" style="display:none;background:linear-gradient(135deg,#db2777,#9d174d)">
+          <div class="stat-icon"><i class="fas fa-sack-dollar"></i></div>
+          <div class="stat-info"><label>All Conv. Amount</label><div class="val" id="allConvertedAmount">—</div></div>
         </div>
       </div>
 
@@ -1397,10 +1405,6 @@
     document.querySelectorAll('.incomplete-only').forEach(function(el){
       el.style.display = isIncompleteView ? '' : 'none';
     });
-    var statsRow = document.querySelector('.stats-row');
-    if (statsRow && isIncompleteView && window.innerWidth > 900) {
-      statsRow.style.gridTemplateColumns = 'repeat(6,1fr)';
-    }
   }
 
   /* ── Sidebar Analytics Snapshot ── */
@@ -1785,10 +1789,12 @@
       var todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
       // Card 1/2: all-time abandoned (not yet converted).
       fetchIncompleteCard({ status: { $ne: 'converted' } }, 'totalOrders', 'totalAmount');
-      // Card 3/4: today's abandoned arrivals.
-      fetchIncompleteCard({ status: { $ne: 'converted' }, createdAt: { $gte: todayStr, $lte: todayStr } }, 'todayOrders', 'todayAmount');
-      // Card 5/6: all-time converted (order placed + sent to courier from here).
-      fetchIncompleteCard({ status: 'converted' }, 'convertedOrders', 'convertedAmount');
+      // Card 3/4: today's arrivals — all incomplete records created today (abandoned + converted).
+      fetchIncompleteCard({ createdAt: { $gte: todayStr, $lte: todayStr } }, 'todayOrders', 'todayAmount');
+      // Card 5/6: today's converted.
+      fetchIncompleteCard({ status: 'converted', createdAt: { $gte: todayStr, $lte: todayStr } }, 'convertedOrders', 'convertedAmount');
+      // Card 7/8: all-time converted (total orders converted so far).
+      fetchIncompleteCard({ status: 'converted' }, 'allConvertedOrders', 'allConvertedAmount');
       return;
     }
     var now = new Date();

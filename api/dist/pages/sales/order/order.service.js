@@ -1962,6 +1962,19 @@ let OrderService = OrderService_1 = class OrderService {
         if (filter) {
             mFilter = Object.assign(Object.assign({}, mFilter), filter);
         }
+        const mf = mFilter;
+        const coerceDate = (dateStr, endOfDay) => {
+            const iso = endOfDay
+                ? dateStr + 'T23:59:59.999+06:00'
+                : dateStr + 'T00:00:00.000+06:00';
+            return new Date(iso);
+        };
+        if (mf.createdAt && typeof mf.createdAt === 'object') {
+            if (mf.createdAt.$gte && typeof mf.createdAt.$gte === 'string')
+                mf.createdAt.$gte = coerceDate(mf.createdAt.$gte, false);
+            if (mf.createdAt.$lte && typeof mf.createdAt.$lte === 'string')
+                mf.createdAt.$lte = coerceDate(mf.createdAt.$lte, true);
+        }
         if (searchQuery) {
             mFilter = {
                 $and: [
