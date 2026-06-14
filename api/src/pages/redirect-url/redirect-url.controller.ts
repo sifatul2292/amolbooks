@@ -41,6 +41,13 @@ export class RedirectUrlController {
 
   constructor(private redirectUrlService: RedirectUrlService) {}
 
+  // Temporary debug endpoint — returns all redirect rules from DB
+  @Version(VERSION_NEUTRAL)
+  @Get('/debug-rules')
+  async debugRules(): Promise<any> {
+    return this.redirectUrlService.getAllRedirectUrlsBasic();
+  }
+
   /**
    * addRedirectUrl
    * insertManyRedirectUrl

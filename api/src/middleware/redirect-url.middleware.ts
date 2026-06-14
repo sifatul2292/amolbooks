@@ -53,9 +53,10 @@ export class RedirectUrlMiddleware implements NestMiddleware {
             if (fromPath !== '/') fromPath = fromPath.replace(/\/+$/, '');
             return { fromPath, toUrl: d.toUrl as string, wildcard: hasWildcard };
           });
+        console.log(`[RedirectMiddleware] loaded ${this.cache.length} rules from DB`);
         this.lastFetched = Date.now();
-      } catch {
-        // keep stale cache on DB error — never block requests
+      } catch (err) {
+        console.error('[RedirectMiddleware] DB fetch error:', err);
       } finally {
         this.inflight = null;
       }
@@ -80,16 +81,19 @@ export class RedirectUrlMiddleware implements NestMiddleware {
       }
       const normalizedReqPath = reqPath === '/' ? '/' : reqPath.replace(/\/+$/, '');
 
+      console.log(`[RedirectMiddleware] checking "${normalizedReqPath}" against ${redirects.length} rules`);
+
       for (const r of redirects) {
         const matches = r.wildcard
           ? normalizedReqPath.startsWith(r.fromPath)
           : normalizedReqPath === r.fromPath;
         if (matches) {
+          console.log(`[RedirectMiddleware] match: "${normalizedReqPath}" → ${r.toUrl}`);
           return res.redirect(301, r.toUrl);
         }
       }
-    } catch {
-      // never block on error
+    } catch (err) {
+      console.error('[RedirectMiddleware] error:', err);
     }
     return next();
   }
