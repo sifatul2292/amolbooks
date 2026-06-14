@@ -2282,7 +2282,8 @@
   };
 
   function buildOrderPayloadFromIncomplete(order) {
-    return {
+    var userId = typeof order.user === 'string' ? order.user : (order.user && order.user._id) || '';
+    var payload = {
       incompleteOrderId: order._id,
       name: order.name || '',
       phoneNo: order.phoneNo || '',
@@ -2290,6 +2291,10 @@
       city: order.city || '',
       shippingAddress: order.shippingAddress || order.city || '',
       paymentType: order.paymentType || 'cash_on_delivery',
+      // Required by the order schema; the manual admin form sends these, the
+      // incomplete record does not — default them or save() throws.
+      paymentStatus: order.paymentStatus || 'unpaid',
+      orderStatus: 1, // PENDING
       orderedItems: Array.isArray(order.orderedItems) ? order.orderedItems : [],
       subTotal: Number(order.subTotal || 0),
       discount: Number(order.discount || 0),
@@ -2297,8 +2302,10 @@
       grandTotal: Number(order.grandTotal || 0),
       note: order.note || '',
       adminNote: order.adminNote || '',
-      user: typeof order.user === 'string' ? order.user : (order.user && order.user._id) || '',
     };
+    // Only send user when it is a real id; empty string fails ObjectId cast.
+    if (userId) payload.user = userId;
+    return payload;
   }
 
   function createOrderFromIncomplete(id, options) {
