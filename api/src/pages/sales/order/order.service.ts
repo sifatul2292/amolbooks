@@ -142,7 +142,10 @@ export class OrderService {
         orderId: saveData.orderId,
       };
 
-      await this.cleanupIncompleteOrdersForPlacedOrder(saveData);
+      await this.cleanupIncompleteOrdersForPlacedOrder(
+        saveData,
+        addOrderDto.incompleteOrderId,
+      );
 
       if (addOrderDto.incompleteOrderId) {
         try {
@@ -312,7 +315,10 @@ export class OrderService {
         orderId: saveData.orderId,
       };
 
-      await this.cleanupIncompleteOrdersForPlacedOrder(saveData);
+      await this.cleanupIncompleteOrdersForPlacedOrder(
+        saveData,
+        addOrderDto.incompleteOrderId,
+      );
 
       // Return response immediately - UI will get response fast
       const response = {
@@ -377,10 +383,12 @@ export class OrderService {
       }
 
       // 2) Delete checkout-created incomplete records after a normal customer order.
-      // Admin conversions keep the incomplete record and mark it as converted.
+      // Admin conversions (status 'converted') are kept as the audit row; only
+      // un-converted abandoned records for this phone are removed.
       if (addOrderDto.phoneNo && !addOrderDto.incompleteOrderId) {
         await this.incompleteOrderModel.deleteMany({
           phoneNo: addOrderDto.phoneNo,
+          status: { $ne: 'converted' },
         });
       }
 
@@ -629,25 +637,30 @@ export class OrderService {
     });
   }
 
-  private async cleanupIncompleteOrdersForPlacedOrder(saveData: any): Promise<void> {
+  private async cleanupIncompleteOrdersForPlacedOrder(
+    saveData: any,
+    exceptIncompleteOrderId?: string,
+  ): Promise<void> {
     if (!saveData?.phoneNo) {
       return;
     }
 
+    // A real order now exists for this phone, so any abandoned checkout for it
+    // is no longer abandoned — DELETE it (it should not appear on the incomplete
+    // page at all). The single record that was converted from the incomplete
+    // page (exceptIncompleteOrderId) is kept and marked 'converted' separately.
     const createdAt = saveData.createdAt || new Date();
-    await this.incompleteOrderModel.updateMany(
-      {
-        phoneNo: saveData.phoneNo,
-        createdAt: { $lte: createdAt },
-        status: { $ne: 'converted' },
-      },
-      {
-        $set: {
-          status: 'converted',
-          orderId: saveData.orderId,
-        },
-      },
-    );
+    const match: any = {
+      phoneNo: saveData.phoneNo,
+      createdAt: { $lte: createdAt },
+    };
+    if (
+      exceptIncompleteOrderId &&
+      ObjectId.isValid(exceptIncompleteOrderId)
+    ) {
+      match._id = { $ne: new ObjectId(exceptIncompleteOrderId) };
+    }
+    await this.incompleteOrderModel.deleteMany(match);
   }
 
   async addOrderByUser(

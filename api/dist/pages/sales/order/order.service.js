@@ -84,7 +84,7 @@ let OrderService = OrderService_1 = class OrderService {
                 _id: saveData._id,
                 orderId: saveData.orderId,
             };
-            await this.cleanupIncompleteOrdersForPlacedOrder(saveData);
+            await this.cleanupIncompleteOrdersForPlacedOrder(saveData, addOrderDto.incompleteOrderId);
             if (addOrderDto.incompleteOrderId) {
                 try {
                     await this.markIncompleteOrderConverted(addOrderDto.incompleteOrderId, saveData.orderId);
@@ -175,7 +175,7 @@ let OrderService = OrderService_1 = class OrderService {
                 _id: saveData._id,
                 orderId: saveData.orderId,
             };
-            await this.cleanupIncompleteOrdersForPlacedOrder(saveData);
+            await this.cleanupIncompleteOrdersForPlacedOrder(saveData, addOrderDto.incompleteOrderId);
             const response = {
                 success: true,
                 message: 'Order Added Success',
@@ -210,6 +210,7 @@ let OrderService = OrderService_1 = class OrderService {
             if (addOrderDto.phoneNo && !addOrderDto.incompleteOrderId) {
                 await this.incompleteOrderModel.deleteMany({
                     phoneNo: addOrderDto.phoneNo,
+                    status: { $ne: 'converted' },
                 });
             }
             if (addOrderDto.user && saveData._id) {
@@ -374,21 +375,20 @@ let OrderService = OrderService_1 = class OrderService {
             },
         });
     }
-    async cleanupIncompleteOrdersForPlacedOrder(saveData) {
+    async cleanupIncompleteOrdersForPlacedOrder(saveData, exceptIncompleteOrderId) {
         if (!(saveData === null || saveData === void 0 ? void 0 : saveData.phoneNo)) {
             return;
         }
         const createdAt = saveData.createdAt || new Date();
-        await this.incompleteOrderModel.updateMany({
+        const match = {
             phoneNo: saveData.phoneNo,
             createdAt: { $lte: createdAt },
-            status: { $ne: 'converted' },
-        }, {
-            $set: {
-                status: 'converted',
-                orderId: saveData.orderId,
-            },
-        });
+        };
+        if (exceptIncompleteOrderId &&
+            ObjectId.isValid(exceptIncompleteOrderId)) {
+            match._id = { $ne: new ObjectId(exceptIncompleteOrderId) };
+        }
+        await this.incompleteOrderModel.deleteMany(match);
     }
     async addOrderByUser(addOrderDto, user) {
         if (user) {
