@@ -1,18 +1,12 @@
 <!--
-  GTM Custom-HTML tag — Lever 2: Urgency widgets on product detail page
-  Container: GTM-NNZV54QJ
-  Trigger:   All Pages + History Change (SPA route changes). Tag is idempotent.
-  Renders (only when the backing data is REAL):
-    - Countdown to product.discountEndDateTime
-    - Low-stock nudge when quantity is low (<= STOCK_THRESHOLD)
-    - Sold counter from product.totalSold
-  No fake numbers: each row hides itself when its value is missing/zero.
+  Lever 2: Urgency pills (countdown + low-stock) under the price.
+  Sold counter removed per request. Green/yellow theme. Grid-safe placement.
+  Each pill renders only when its backing value is real.
 -->
 <script>
 (function () {
   'use strict';
 
-  // ---- Shared cross-tag GET cache (dedupes calls across all AB tags) -------
   window.__abGet = window.__abGet || (function () {
     var store = {};
     return function (url, ttl, cb) {
@@ -28,165 +22,106 @@
         if (x.status >= 200 && x.status < 300) { try { data = JSON.parse(x.responseText); } catch (e2) { err = e2; } }
         else err = new Error('HTTP ' + x.status);
         var entry = store[url], ws = (entry && entry.waiters) || [];
-        store[url] = err ? { done: true, at: Date.now(), err: err, data: null, ttl: 0 } // don't cache errors long
-                         : { done: true, at: Date.now(), err: null, data: data };
-        if (err) store[url].at = 0; // force refetch next time on error
+        store[url] = { done: true, at: err ? 0 : Date.now(), err: err, data: data };
         ws.forEach(function (w) { try { w(err, data); } catch (e3) {} });
       };
       x.send();
     };
   })();
+  window.__abTheme = window.__abTheme || function () {
+    if (document.getElementById('ab-theme')) return;
+    var s = document.createElement('style'); s.id = 'ab-theme';
+    s.textContent = ':root{--ab-green:#173a2b;--ab-green2:#1f5038;--ab-yellow:#f4d44e;--ab-ink:#173a2b}' +
+      '@keyframes ab-pulse{0%{opacity:1}50%{opacity:.35}100%{opacity:1}}' +
+      '.ab-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#ff5a4d;animation:ab-pulse 1.1s infinite}';
+    document.head.appendChild(s);
+  };
 
-  // ---- Config -------------------------------------------------------------
-  var API_BASE = 'https://apisub.amolbooks.com/api'; // swap to prod API base if different
-  var STOCK_THRESHOLD = 10;   // show "only N left" at or below this
+  var API_BASE = 'https://apisub.amolbooks.com/api';
   var WIDGET_ID = 'ab-urgency-widget';
-  var POLL_MS = 400;          // wait for Angular to render the CTA
-  var POLL_MAX = 25;          // give up after ~10s
+  var POLL_MS = 400, POLL_MAX = 25;
 
-  // ---- Helpers ------------------------------------------------------------
-  function toBn(n) {
-    var map = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
-    return String(n).replace(/\d/g, function (d) { return map[d]; });
-  }
+  function toBn(n) { var m=['০','১','২','৩','৪','৫','৬','৭','৮','৯']; return String(n).replace(/\d/g,function(d){return m[d];}); }
   function pad(n) { return (n < 10 ? '0' : '') + n; }
-  function lastSegment() {
-    var parts = location.pathname.split('/').filter(Boolean);
-    return parts.length ? decodeURIComponent(parts[parts.length - 1]) : '';
-  }
-  function getJSON(url, cb) {
-    try {
-      var x = new XMLHttpRequest();
-      x.open('GET', url, true);
-      x.onreadystatechange = function () {
-        if (x.readyState === 4) {
-          if (x.status >= 200 && x.status < 300) {
-            try { cb(null, JSON.parse(x.responseText)); }
-            catch (e) { cb(e); }
-          } else { cb(new Error('HTTP ' + x.status)); }
-        }
-      };
-      x.send();
-    } catch (e) { cb(e); }
-  }
+  function lastSegment() { var p = location.pathname.split('/').filter(Boolean); return p.length ? decodeURIComponent(p[p.length-1]) : ''; }
 
-  // ---- Anchor: insert before the order-button group -----------------------
-  // Angular DOM has minified classes, so we locate by stable Bangla button text.
-  function findAnchor() {
-    var btns = document.querySelectorAll('button, a');
-    for (var i = 0; i < btns.length; i++) {
-      var t = (btns[i].textContent || '').trim();
-      if (t.indexOf('অর্ডার করুন') !== -1) {
-        // climb to the row that holds the CTA buttons
-        var el = btns[i];
-        for (var up = 0; up < 4 && el.parentElement; up++) el = el.parentElement;
-        return el;
-      }
+  function findPriceAnchor() {
+    var els = document.querySelectorAll('p,div,span,h1,h2,h3');
+    for (var i = 0; i < els.length; i++) {
+      var t = (els[i].textContent || '');
+      if ((t.indexOf('You Save') !== -1 || t.indexOf('Off)') !== -1) && t.length < 120 && els[i].offsetWidth > 150) return els[i];
     }
     return null;
   }
 
   function styleOnce() {
+    window.__abTheme();
     if (document.getElementById('ab-urgency-style')) return;
-    var s = document.createElement('style');
-    s.id = 'ab-urgency-style';
+    var s = document.createElement('style'); s.id = 'ab-urgency-style';
     s.textContent =
-      '#' + WIDGET_ID + '{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px;font-family:hind-siliguri,sans-serif}' +
-      '#' + WIDGET_ID + ' .ab-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:9px;font-size:14px;font-weight:600;line-height:1}' +
-      '#' + WIDGET_ID + ' .ab-count{background:#FFF4E5;color:#B45309;border:1px solid #FCD9A5}' +
-      '#' + WIDGET_ID + ' .ab-stock{background:#FEECEC;color:#C0392B;border:1px solid #F5B7B1}' +
-      '#' + WIDGET_ID + ' .ab-sold{background:#EAF7EE;color:#1E7E45;border:1px solid #BDE5C8}' +
-      '#' + WIDGET_ID + ' .ab-clock{font-variant-numeric:tabular-nums}';
+      '#' + WIDGET_ID + '{display:flex;flex-wrap:wrap;gap:8px;width:100%;margin:10px 0;font-family:hind-siliguri,sans-serif}' +
+      '#' + WIDGET_ID + ' .ab-pill{display:inline-flex;align-items:center;gap:7px;padding:8px 13px;border-radius:999px;font-size:13.5px;font-weight:700;line-height:1}' +
+      '#' + WIDGET_ID + ' .ab-count{background:var(--ab-green);color:#fff}' +
+      '#' + WIDGET_ID + ' .ab-count b{color:var(--ab-yellow);font-variant-numeric:tabular-nums}' +
+      '#' + WIDGET_ID + ' .ab-stock{background:#fdecec;color:#c0392b;border:1px solid #f3b9b3}';
     document.head.appendChild(s);
   }
 
   function render(product, anchor) {
     styleOnce();
-    var old = document.getElementById(WIDGET_ID);
-    if (old) old.parentNode.removeChild(old);
+    var old = document.getElementById(WIDGET_ID); if (old) old.parentNode.removeChild(old);
+    var wrap = document.createElement('div'); wrap.id = WIDGET_ID;
 
-    var wrap = document.createElement('div');
-    wrap.id = WIDGET_ID;
-
-    // Countdown
     var end = product.discountEndDateTime ? new Date(product.discountEndDateTime) : null;
     if (end && !isNaN(end.getTime()) && end.getTime() > Date.now()) {
-      var c = document.createElement('span');
-      c.className = 'ab-pill ab-count';
-      var label = document.createElement('span');
-      label.textContent = '⏳ অফার শেষ হতে বাকি ';
-      var clock = document.createElement('span');
-      clock.className = 'ab-clock';
-      c.appendChild(label); c.appendChild(clock);
+      var c = document.createElement('span'); c.className = 'ab-pill ab-count';
+      c.innerHTML = '⏳ অফার শেষ হতে <b class="ab-clock"></b>';
       wrap.appendChild(c);
-      tick(clock, end, c);
+      tick(c.querySelector('.ab-clock'), end, c);
     }
-
-    // Low stock
     var qty = Number(product.quantity);
-    if (!isNaN(qty) && qty > 0 && qty <= STOCK_THRESHOLD) {
-      var st = document.createElement('span');
-      st.className = 'ab-pill ab-stock';
-      st.textContent = '🔥 মাত্র ' + toBn(qty) + ' কপি বাকি';
+    if (!isNaN(qty) && qty > 0 && qty <= 10) {
+      var st = document.createElement('span'); st.className = 'ab-pill ab-stock';
+      st.innerHTML = '<span class="ab-dot"></span> স্টক প্রায় শেষ — মাত্র ' + toBn(qty) + ' কপি বাকি';
       wrap.appendChild(st);
     }
-
-    // Sold counter
-    var sold = Number(product.totalSold);
-    if (!isNaN(sold) && sold > 0) {
-      var rounded = sold >= 50 ? (Math.floor(sold / 50) * 50) + '+' : sold;
-      var sd = document.createElement('span');
-      sd.className = 'ab-pill ab-sold';
-      sd.textContent = '✅ ' + toBn(rounded) + ' কপি বিক্রি হয়েছে';
-      wrap.appendChild(sd);
-    }
-
-    if (wrap.childNodes.length) anchor.parentNode.insertBefore(wrap, anchor);
+    if (wrap.childNodes.length) anchor.parentNode.insertBefore(wrap, anchor.nextSibling);
   }
 
   function tick(clockEl, end, container) {
     function update() {
       var diff = end.getTime() - Date.now();
       if (diff <= 0) { if (container.parentNode) container.parentNode.removeChild(container); return; }
-      var s = Math.floor(diff / 1000);
-      var d = Math.floor(s / 86400); s -= d * 86400;
-      var h = Math.floor(s / 3600);  s -= h * 3600;
-      var m = Math.floor(s / 60);    s -= m * 60;
-      var str = (d > 0 ? toBn(d) + 'দিন ' : '') + toBn(pad(h)) + ':' + toBn(pad(m)) + ':' + toBn(pad(s));
-      clockEl.textContent = str;
+      var s = Math.floor(diff/1000), d = Math.floor(s/86400); s-=d*86400;
+      var h = Math.floor(s/3600); s-=h*3600; var m = Math.floor(s/60); s-=m*60;
+      clockEl.textContent = (d>0?toBn(d)+'দিন ':'') + toBn(pad(h)) + ':' + toBn(pad(m)) + ':' + toBn(pad(s));
       if (document.body.contains(clockEl)) setTimeout(update, 1000);
     }
     update();
   }
 
-  // ---- Boot: detect product page, then render -----------------------------
   function boot() {
-    var slug = lastSegment();
-    if (!slug) return;
+    var slug = lastSegment(); if (!slug) return;
     window.__abGet(API_BASE + '/product/get-by-slug/' + encodeURIComponent(slug), 60000, function (err, res) {
-      if (err || !res || !res.data || !(res.data._id || res.data.slug)) return; // not a product page
-      var product = res.data;
-      var tries = 0;
-      (function waitAnchor() {
-        var anchor = findAnchor();
-        if (anchor) { render(product, anchor); return; }
-        if (++tries < POLL_MAX) setTimeout(waitAnchor, POLL_MS);
+      if (err || !res || !res.data || !(res.data._id || res.data.slug)) return;
+      var product = res.data, tries = 0;
+      (function wait() {
+        var a = findPriceAnchor();
+        if (a) { render(product, a); return; }
+        if (++tries < POLL_MAX) setTimeout(wait, POLL_MS);
       })();
     });
   }
 
-  // initial + SPA route changes
   var lastPath = '';
   function maybeBoot() {
     if (location.pathname === lastPath) return;
     lastPath = location.pathname;
-    var w = document.getElementById(WIDGET_ID);
-    if (w && w.parentNode) w.parentNode.removeChild(w);
+    var w = document.getElementById(WIDGET_ID); if (w && w.parentNode) w.parentNode.removeChild(w);
     boot();
   }
   maybeBoot();
   window.addEventListener('popstate', maybeBoot);
-  // GTM History Change also re-fires this whole tag; guard via lastPath above.
-  setInterval(maybeBoot, 1000); // catch pushState navigations Angular does internally
+  setInterval(maybeBoot, 1000);
 })();
 </script>

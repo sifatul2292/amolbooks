@@ -1,10 +1,8 @@
 <!--
-  GTM Custom-HTML tag — Lever 1: "Buy 2 -> free notebook" banner (specific book only)
-  Container: GTM-NNZV54QJ
-  Trigger:   All Pages + History Change. Idempotent.
-  Renders a banner under the price ONLY on the product whose slug matches the
-  OrderOffer config (giftBuyXProductSlug). Reads real config from
-  GET /api/order-offer/get so copy + product stay in sync with backend fulfillment.
+  Lever 1: Free-gift OFFER CARD on the product detail page.
+  Green/yellow theme to match the site CTA mockup. Shows notebook photo +
+  "buy 2 -> free" (only on the configured book) + "৳750+ -> free" (all books).
+  Reads config from GET /api/order-offer/get (image, threshold, qty, slug).
 -->
 <script>
 (function () {
@@ -32,67 +30,102 @@
     };
   })();
 
-  var API_BASE = 'https://apisub.amolbooks.com/api'; // swap to prod API base if different
-  var BANNER_ID = 'ab-buy2-banner';
+  // Shared green/yellow theme — injected once, used by all AB widgets.
+  window.__abTheme = window.__abTheme || function () {
+    if (document.getElementById('ab-theme')) return;
+    var s = document.createElement('style');
+    s.id = 'ab-theme';
+    s.textContent =
+      ':root{--ab-green:#173a2b;--ab-green2:#1f5038;--ab-yellow:#f4d44e;--ab-ink:#173a2b;--ab-line:rgba(255,255,255,.16)}' +
+      '@keyframes ab-pulse{0%{opacity:1}50%{opacity:.35}100%{opacity:1}}' +
+      '.ab-card{font-family:hind-siliguri,sans-serif;box-sizing:border-box}' +
+      '.ab-yellowbtn{background:var(--ab-yellow);color:var(--ab-ink);font-weight:700;border:0;border-radius:999px;cursor:pointer;font-family:inherit}' +
+      '.ab-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#ff5a4d;animation:ab-pulse 1.1s infinite}';
+    document.head.appendChild(s);
+  };
+
+  var API_BASE = 'https://apisub.amolbooks.com/api';
+  var CARD_ID = 'ab-offer-card';
   var POLL_MS = 400, POLL_MAX = 25;
 
   function lastSegment() {
     var p = location.pathname.split('/').filter(Boolean);
     return p.length ? decodeURIComponent(p[p.length - 1]) : '';
   }
-  function toBn(n) {
-    var m = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
-    return String(n).replace(/\d/g, function (d) { return m[d]; });
-  }
-  function getJSON(url, cb) {
-    try {
-      var x = new XMLHttpRequest();
-      x.open('GET', url, true);
-      x.onreadystatechange = function () {
-        if (x.readyState === 4) {
-          if (x.status >= 200 && x.status < 300) {
-            try { cb(null, JSON.parse(x.responseText)); } catch (e) { cb(e); }
-          } else { cb(new Error('HTTP ' + x.status)); }
-        }
-      };
-      x.send();
-    } catch (e) { cb(e); }
-  }
-  function findAnchor() {
-    var btns = document.querySelectorAll('button, a');
-    for (var i = 0; i < btns.length; i++) {
-      if ((btns[i].textContent || '').indexOf('অর্ডার করুন') !== -1) {
-        var el = btns[i];
-        for (var up = 0; up < 4 && el.parentElement; up++) el = el.parentElement;
-        return el;
+  function toBn(n) { var m=['০','১','২','৩','৪','৫','৬','৭','৮','৯']; return String(n).replace(/\d/g,function(d){return m[d];}); }
+
+  // Grid-safe anchor: insert right AFTER the price line (inside the info column),
+  // never climbing into the 3-column product grid.
+  function findPriceAnchor() {
+    var els = document.querySelectorAll('p,div,span,h1,h2,h3');
+    for (var i = 0; i < els.length; i++) {
+      var t = (els[i].textContent || '');
+      if ((t.indexOf('You Save') !== -1 || t.indexOf('Off)') !== -1) && t.length < 120 && els[i].offsetWidth > 150) {
+        return els[i];
       }
     }
     return null;
   }
+  function findCtaAnchor() {
+    var b = document.querySelectorAll('button,a');
+    for (var i = 0; i < b.length; i++) {
+      if ((b[i].textContent || '').indexOf('অর্ডার করুন') !== -1) {
+        var el = b[i]; for (var u = 0; u < 3 && el.parentElement; u++) el = el.parentElement; return el;
+      }
+    }
+    return null;
+  }
+
   function styleOnce() {
-    if (document.getElementById('ab-buy2-style')) return;
+    window.__abTheme();
+    if (document.getElementById('ab-offer-style')) return;
     var s = document.createElement('style');
-    s.id = 'ab-buy2-style';
+    s.id = 'ab-offer-style';
     s.textContent =
-      '#' + BANNER_ID + '{display:flex;align-items:center;gap:10px;margin:10px 0 14px;padding:11px 14px;' +
-        'border-radius:11px;background:linear-gradient(90deg,#FFF7E8,#FDECCB);border:1px solid #F3D08A;' +
-        'font-family:hind-siliguri,sans-serif;color:#7A4E0B;font-weight:600;font-size:14.5px;line-height:1.5}' +
-      '#' + BANNER_ID + ' .ab-emoji{font-size:22px;flex:0 0 auto}';
+      '#' + CARD_ID + '{display:flex;gap:13px;align-items:center;width:100%;margin:14px 0;padding:14px 16px;' +
+        'border-radius:14px;background:linear-gradient(135deg,var(--ab-green),var(--ab-green2));' +
+        'box-shadow:0 6px 18px rgba(23,58,43,.22);color:#fff;position:relative;overflow:hidden}' +
+      '#' + CARD_ID + ' .ab-nb{flex:0 0 60px;width:60px;height:74px;border-radius:8px;object-fit:cover;' +
+        'background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.25)}' +
+      '#' + CARD_ID + ' .ab-body{flex:1;min-width:0}' +
+      '#' + CARD_ID + ' .ab-tag{display:inline-block;background:var(--ab-yellow);color:var(--ab-ink);' +
+        'font-size:11px;font-weight:800;padding:2px 9px;border-radius:999px;margin-bottom:5px}' +
+      '#' + CARD_ID + ' .ab-l1{font-size:15px;font-weight:800;line-height:1.45}' +
+      '#' + CARD_ID + ' .ab-l1 b{color:var(--ab-yellow)}' +
+      '#' + CARD_ID + ' .ab-l2{font-size:12.5px;opacity:.92;margin-top:3px}' +
+      '@media(max-width:560px){#' + CARD_ID + ' .ab-nb{width:52px;height:64px;flex-basis:52px}#' + CARD_ID + ' .ab-l1{font-size:14px}}';
     document.head.appendChild(s);
   }
-  function render(qty, anchor) {
+
+  function render(cfg, isThisBook) {
     styleOnce();
-    var old = document.getElementById(BANNER_ID);
-    if (old) old.parentNode.removeChild(old);
-    var b = document.createElement('div');
-    b.id = BANNER_ID;
-    var emoji = document.createElement('span'); emoji.className = 'ab-emoji'; emoji.textContent = '🎁';
-    var txt = document.createElement('span');
-    txt.innerHTML =
-      '<b>' + toBn(qty) + 'টি কিনুন — এই আকর্ষণীয় নোটবুক একদম ফ্রি!</b><br>' +
-      'একটি নিজে রাখুন, আরেকটি প্রিয়জনকে উপহার দিন।';
-    b.appendChild(emoji); b.appendChild(txt);
-    anchor.parentNode.insertBefore(b, anchor);
+    var old = document.getElementById(CARD_ID); if (old) old.parentNode.removeChild(old);
+
+    var anchor = findPriceAnchor();
+    var mode = 'afterPrice';
+    if (!anchor) { anchor = findCtaAnchor(); mode = 'beforeCta'; }
+    if (!anchor) return false;
+
+    var img = (cfg.giftProduct && cfg.giftProduct.image) || '';
+    var qty = toBn(Number(cfg.giftBuyXQty) || 2);
+    var minamt = toBn(Number(cfg.giftMinAmount) || 750);
+
+    var card = document.createElement('div');
+    card.id = CARD_ID; card.className = 'ab-card';
+    var imgHtml = img ? '<img class="ab-nb" src="' + img + '" alt="free notebook">' : '';
+    var l1 = isThisBook
+      ? 'এই বইটি <b>' + qty + 'টি</b> নিন — সাথে <b>ফ্রি নোটবুক</b> 🎁'
+      : '<b>৳' + minamt + '+</b> এর বই কিনলেই — <b>ফ্রি নোটবুক</b> 🎁';
+    var l2 = isThisBook
+      ? 'একটি নিজে রাখুন, একটি উপহার দিন · অথবা ৳' + minamt + '+ অর্ডারেও ফ্রি'
+      : 'কার্টে ৳' + minamt + ' পূর্ণ করুন, নোটবুক যোগ হবে নিজে থেকেই';
+    card.innerHTML = imgHtml +
+      '<div class="ab-body"><span class="ab-tag">🎁 ফ্রি গিফট অফার</span>' +
+      '<div class="ab-l1">' + l1 + '</div><div class="ab-l2">' + l2 + '</div></div>';
+
+    if (mode === 'afterPrice') anchor.parentNode.insertBefore(card, anchor.nextSibling);
+    else anchor.parentNode.insertBefore(card, anchor);
+    return true;
   }
 
   function boot() {
@@ -101,15 +134,14 @@
     window.__abGet(API_BASE + '/order-offer/get', 60000, function (err, res) {
       if (err || !res || !res.data) return;
       var cfg = res.data;
-      if (!cfg.giftEnabled || !cfg.giftBuyXProductSlug || !cfg.giftBuyXQty) return;
-      if (cfg.giftBuyXProductSlug !== slug) return; // only the configured book
-      var qty = Number(cfg.giftBuyXQty) || 2;
-      var tries = 0;
-      (function wait() {
-        var a = findAnchor();
-        if (a) { render(qty, a); return; }
-        if (++tries < POLL_MAX) setTimeout(wait, POLL_MS);
-      })();
+      if (!cfg.giftEnabled || !cfg.giftProduct) return;
+      // Confirm we're on a product page (avoids cart/list pages).
+      window.__abGet(API_BASE + '/product/get-by-slug/' + encodeURIComponent(slug), 60000, function (e2, r2) {
+        if (e2 || !r2 || !r2.data || !(r2.data._id || r2.data.slug)) return;
+        var isThisBook = cfg.giftBuyXProductSlug === slug && !!cfg.giftBuyXQty;
+        var tries = 0;
+        (function wait() { if (render(cfg, isThisBook)) return; if (++tries < POLL_MAX) setTimeout(wait, POLL_MS); })();
+      });
     });
   }
 
@@ -117,8 +149,7 @@
   function maybeBoot() {
     if (location.pathname === lastPath) return;
     lastPath = location.pathname;
-    var b = document.getElementById(BANNER_ID);
-    if (b && b.parentNode) b.parentNode.removeChild(b);
+    var c = document.getElementById(CARD_ID); if (c && c.parentNode) c.parentNode.removeChild(c);
     boot();
   }
   maybeBoot();
