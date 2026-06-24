@@ -22,7 +22,9 @@ ADMIN_TOKEN="${ADMIN_TOKEN:?Set ADMIN_TOKEN env var (admin JWT)}"
 # ---------------------------------------------------------------------------
 
 echo "Resolving notebook product: $NOTEBOOK_SLUG"
-NB_JSON="$(curl -fsS "$API_BASE/product/get-by-slug/$NOTEBOOK_SLUG")"
+# URL-encode the slug (slugs may contain spaces / % etc.)
+NB_ENC="$(python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.argv[1]))' "$NOTEBOOK_SLUG")"
+NB_JSON="$(curl -fsS "$API_BASE/product/get-by-slug/$NB_ENC")"
 
 NB_ID="$(printf '%s' "$NB_JSON"   | python3 -c 'import sys,json;d=json.load(sys.stdin).get("data") or {};print(d.get("_id",""))')"
 NB_NAME="$(printf '%s' "$NB_JSON" | python3 -c 'import sys,json;d=json.load(sys.stdin).get("data") or {};print(d.get("name",""))')"
