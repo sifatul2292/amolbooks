@@ -183,11 +183,20 @@
   }
 
   // Don't show the product CTA on cart / checkout pages (they have their own bar).
+  // The cart sidebar is always in the DOM (hidden) so we require a VISIBLE cart
+  // header — otherwise we'd hide the CTA on every page.
+  function visibleCartHeader() {
+    var all = document.querySelectorAll('h1,h2,h3,h4,div,span,p');
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i], t = (el.textContent || '').trim();
+      if (t.indexOf('কার্ট আইটেম') !== -1 && t.length < 40 && el.offsetParent !== null) return el;
+    }
+    return null;
+  }
   function isCartLike() {
     var p = location.pathname.toLowerCase();
-    if (p.indexOf('cart') !== -1 || p.indexOf('checkout') !== -1 || p.indexOf('order') !== -1) return true;
-    try { if ((document.body.innerText || '').indexOf('কার্ট আইটেম') !== -1) return true; } catch (e) {}
-    return false;
+    if (p.indexOf('cart') !== -1 || p.indexOf('checkout') !== -1) return true;
+    return !!visibleCartHeader();
   }
 
   function boot() {
