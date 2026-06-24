@@ -594,10 +594,7 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
     return 0;
   }
 
-  function showToast(){
-    var t=getToast();
-    clearTimeout(_toastTimer);
-    var total=_toastCartTotal();
+  function _buildToastInner(total){
     var threshold=750;
     var toBn=function(n){return String(Math.round(n)).replace(/\d/g,function(d){return'০১২৩৪৫৬৭৮৯'[d];});};
     var inner='<div class="amol-ct-top">🛒 আপনার বই কার্টে যোগ হয়েছে!</div>';
@@ -610,8 +607,21 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
              '<div class="amol-ct-bar"><div class="amol-ct-fill" style="width:'+pct+'%"></div></div>';
     }
     inner+='<button class="amol-ct-btn" onclick="window.location.href=\'/checkout\'">চেকআউট করুন &rarr;</button>';
-    t.innerHTML=inner;
+    return inner;
+  }
+
+  function showToast(){
+    var t=getToast();
+    clearTimeout(_toastTimer);
+    // Show immediately with base message; Angular updates localStorage asynchronously
+    // so we re-read after 800ms to get accurate cart total.
+    t.innerHTML='<div class="amol-ct-top">🛒 আপনার বই কার্টে যোগ হয়েছে!</div>'+
+                '<button class="amol-ct-btn" onclick="window.location.href=\'/checkout\'">চেকআউট করুন &rarr;</button>';
     t.classList.add('amol-show');
+    setTimeout(function(){
+      if(!t.classList.contains('amol-show'))return;
+      t.innerHTML=_buildToastInner(_toastCartTotal());
+    },800);
     _toastTimer=setTimeout(function(){t.classList.remove('amol-show');},12000);
   }
 
