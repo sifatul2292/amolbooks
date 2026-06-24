@@ -550,7 +550,8 @@
     window.__abGet(API_BASE + '/order-offer/get', 60000, function (err, res) {
       if (err || !res || !res.data) return;
       var cfg = res.data;
-      if (!cfg.giftEnabled || !cfg.giftProduct) return;
+      // show card even if giftProduct not set — card uses text-only fallback
+      if (!cfg.giftEnabled && !cfg.giftMinAmount) return;
       window.__abGet(API_BASE + '/product/get-by-slug/' + encodeURIComponent(slug), 60000, function (e2, r2) {
         if (e2 || !r2 || !r2.data || !(r2.data._id || r2.data.slug)) return;
         _cfg = cfg; _isThisBook = cfg.giftBuyXProductSlug === slug && !!cfg.giftBuyXQty;
@@ -717,7 +718,11 @@
   var ROW_ID = 'ab-checkout-gift';
   var cfgCache = null;
 
-  function onCheckout() { return !!document.querySelector('app-checkout'); }
+  function onCheckout() {
+    if (document.querySelector('app-checkout')) return true;
+    var p = location.pathname.toLowerCase();
+    return p.indexOf('checkout') !== -1 || p.indexOf('payment') !== -1;
+  }
 
   function cartTotal() {
     try {
@@ -798,13 +803,18 @@
     if (!onCheckout()) { clear(); return; }
     if (!cfgCache) {
       window.__abGet(API_BASE + '/order-offer/get', 60000, function (err, res) {
-        if (!err && res && res.data && res.data.giftEnabled && res.data.giftMinAmount) { cfgCache = res.data; tick(); }
+        if (!err && res && res.data) {
+          // accept config if giftEnabled is true OR if giftMinAmount exists (treat as enabled)
+          var d = res.data;
+          if (d.giftEnabled || d.giftMinAmount) { cfgCache = d; tick(); }
+        }
       });
       return;
     }
-    var threshold = Number(cfgCache.giftMinAmount);
+    var threshold = Number(cfgCache.giftMinAmount) || 750;
     if (cartTotal() >= threshold) render(cfgCache); else clear();
   }
 
   setInterval(tick, 800);
 })();
+

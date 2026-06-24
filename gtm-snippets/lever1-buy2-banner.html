@@ -184,7 +184,8 @@
     window.__abGet(API_BASE + '/order-offer/get', 60000, function (err, res) {
       if (err || !res || !res.data) return;
       var cfg = res.data;
-      if (!cfg.giftEnabled || !cfg.giftProduct) return;
+      // show card even if giftProduct not set — card uses text-only fallback
+      if (!cfg.giftEnabled && !cfg.giftMinAmount) return;
       window.__abGet(API_BASE + '/product/get-by-slug/' + encodeURIComponent(slug), 60000, function (e2, r2) {
         if (e2 || !r2 || !r2.data || !(r2.data._id || r2.data.slug)) return;
         _cfg = cfg; _isThisBook = cfg.giftBuyXProductSlug === slug && !!cfg.giftBuyXQty;
