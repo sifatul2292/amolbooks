@@ -606,6 +606,24 @@
     return null;
   }
 
+  // Price block anchor: the "You Save … Off)" line that sits just below the price.
+  function findPriceBlock() {
+    var els = document.querySelectorAll('p,div,span,h1,h2,h3');
+    for (var i = 0; i < els.length; i++) {
+      var t = (els[i].textContent || '');
+      if ((t.indexOf('You Save') !== -1 || t.indexOf('Off)') !== -1) && t.length < 120 && els[i].offsetWidth > 150) {
+        // walk up to the block that contains the full price group
+        var blk = els[i];
+        while (blk.parentElement && blk.parentElement.offsetWidth < window.innerWidth * 0.85 &&
+               blk.parentElement.offsetWidth > 150 && blk.parentElement.children.length <= 6) {
+          blk = blk.parentElement;
+        }
+        return blk;
+      }
+    }
+    return null;
+  }
+
   function styleOnce() {
     window.__abTheme();
     if (document.getElementById('ab-qty-style')) return;
@@ -650,9 +668,14 @@
     wrap.querySelector('.dec').addEventListener('click', function () { if (qty > 1) { qty--; nEl.textContent = toBn(qty); } });
     wrap.querySelector('.inc').addEventListener('click', function () { if (qty < 20) { qty++; nEl.textContent = toBn(qty); } });
 
-    // place just above the add-to-cart button's row
-    var blk = addBtn; for (var u = 0; u < 3 && blk.parentElement && blk.offsetWidth < 150; u++) blk = blk.parentElement;
-    blk.parentNode.insertBefore(wrap, blk);
+    // place before price block; fall back to above add-to-cart row
+    var anchor = findPriceBlock();
+    if (anchor && anchor.parentNode) {
+      anchor.parentNode.insertBefore(wrap, anchor);
+    } else {
+      var blk = addBtn; for (var u = 0; u < 3 && blk.parentElement && blk.offsetWidth < 150; u++) blk = blk.parentElement;
+      blk.parentNode.insertBefore(wrap, blk);
+    }
     attach(addBtn);
   }
 
