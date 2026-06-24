@@ -1,5 +1,6 @@
 /* Amolbooks sales-boost widgets — injected via index.html <script src=ab-widgets.js>
-   Source of truth: gtm-snippets/*.html. Rebuild from those if edited. */
+   Source of truth: gtm-snippets/*.html. lever0 (cart slider) temporarily
+   disabled pending real cart DOM; it was disturbing native checkout buttons. */
 
 /* ===================== lever2-urgency ===================== */
 (function () {
@@ -313,8 +314,9 @@
   }
   function isCartLike() {
     var p = location.pathname.toLowerCase();
-    if (p.indexOf('cart') !== -1 || p.indexOf('checkout') !== -1) return true;
-    return !!visibleCartHeader();
+    // URL-only: the hidden cart sidebar carries "কার্ট আইটেম" on every page, so
+    // text-based detection wrongly hid the CTA site-wide.
+    return p.indexOf('cart') !== -1 || p.indexOf('checkout') !== -1;
   }
 
   function boot() {
@@ -496,171 +498,4 @@
   maybeBoot();
   window.addEventListener('popstate', maybeBoot);
   setInterval(maybeBoot, 1000);
-})();
-
-/* ===================== lever0-cart-threshold ===================== */
-(function () {
-  'use strict';
-
-  window.__abGet = window.__abGet || (function () {
-    var store = {};
-    return function (url, ttl, cb) {
-      var now = Date.now(), e = store[url];
-      if (e && e.done && (now - e.at < ttl)) { cb(e.err, e.data); return; }
-      if (e && e.waiters) { e.waiters.push(cb); return; }
-      store[url] = { waiters: [cb], at: now, done: false };
-      var x = new XMLHttpRequest();
-      x.open('GET', url, true);
-      x.onreadystatechange = function () {
-        if (x.readyState !== 4) return;
-        var err = null, data = null;
-        if (x.status >= 200 && x.status < 300) { try { data = JSON.parse(x.responseText); } catch (e2) { err = e2; } }
-        else err = new Error('HTTP ' + x.status);
-        var entry = store[url], ws = (entry && entry.waiters) || [];
-        store[url] = { done: true, at: err ? 0 : Date.now(), err: err, data: data };
-        ws.forEach(function (w) { try { w(err, data); } catch (e3) {} });
-      };
-      x.send();
-    };
-  })();
-  window.__abTheme = window.__abTheme || function () {
-    if (document.getElementById('ab-theme')) return;
-    var s = document.createElement('style'); s.id = 'ab-theme';
-    s.textContent = ':root{--ab-green:#173a2b;--ab-green2:#1f5038;--ab-yellow:#f4d44e;--ab-ink:#173a2b}' +
-      '@keyframes ab-pulse{0%{opacity:1}50%{opacity:.35}100%{opacity:1}}' +
-      '.ab-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#ff5a4d;animation:ab-pulse 1.1s infinite}';
-    document.head.appendChild(s);
-  };
-
-  var API_BASE = 'https://apisub.amolbooks.com/api';
-  var BOX_ID = 'ab-cart-slider';
-  var GIFT_ID = 'ab-cart-gift';
-  var cfgCache = null;
-
-  function toBn(n) { var m=['০','১','২','৩','৪','৫','৬','৭','৮','৯']; return String(n).replace(/\d/g,function(d){return m[d];}); }
-  function bnToNum(s) { var m={'০':'0','১':'1','২':'2','৩':'3','৪':'4','৫':'5','৬':'6','৭':'7','৮':'8','৯':'9'}; return s.replace(/[০-৯]/g,function(d){return m[d];}); }
-  function lastNum(str) { var m = bnToNum(str || '').replace(/[,৳]/g, '').match(/\d[\d.]{0,7}/g); return m ? parseFloat(m[m.length-1]) : NaN; }
-
-  // Visible cart header — distinguishes the real cart page from the hidden sidebar.
-  function visibleCartHeader() {
-    var all = document.querySelectorAll('h1,h2,h3,h4,div,span,p');
-    for (var i = 0; i < all.length; i++) {
-      var el = all[i], t = (el.textContent || '').trim();
-      if (t.indexOf('কার্ট আইটেম') !== -1 && t.length < 40 && el.offsetParent !== null) return el;
-    }
-    return null;
-  }
-  function isCartPage() {
-    if (location.pathname.toLowerCase().indexOf('cart') !== -1) return true;
-    return !!visibleCartHeader();
-  }
-
-  // Total from the proceed bar's own text ("...এগিয়ে যান ৳৩৬০").
-  function readCartTotal() {
-    var b = document.querySelectorAll('button,a,div,span');
-    for (var i = 0; i < b.length; i++) {
-      var el = b[i]; if (el.offsetParent === null) continue;
-      var t = (el.textContent || '');
-      if ((t.indexOf('এগিয়ে যান') !== -1 || t.indexOf('চেকআউট') !== -1) && t.length < 60) {
-        var v = lastNum(t); if (!isNaN(v)) return v;
-      }
-    }
-    // fallback: labeled total
-    var all = document.querySelectorAll('*');
-    for (var j = 0; j < all.length; j++) {
-      var e = all[j]; if (e.children.length || e.offsetParent === null) continue;
-      var x = (e.textContent || '');
-      if (x.indexOf('সর্বমোট') !== -1 || x.indexOf('মোট টাকা') !== -1) {
-        var ctx = e.parentElement ? e.parentElement.textContent : x;
-        var v2 = lastNum(ctx); if (!isNaN(v2)) return v2;
-      }
-    }
-    return NaN;
-  }
-
-  function styleOnce() {
-    window.__abTheme();
-    if (document.getElementById('ab-cart-style')) return;
-    var s = document.createElement('style'); s.id = 'ab-cart-style';
-    s.textContent =
-      '#' + BOX_ID + '{display:block;width:auto;margin:12px;padding:13px 15px;border-radius:13px;box-sizing:border-box;' +
-        'font-family:hind-siliguri,sans-serif;background:linear-gradient(135deg,var(--ab-green),var(--ab-green2));' +
-        'color:#fff;box-shadow:0 5px 15px rgba(23,58,43,.2)}' +
-      '#' + BOX_ID + ' .h{font-size:13.5px;font-weight:700;line-height:1.5}' +
-      '#' + BOX_ID + ' .h b{color:var(--ab-yellow)}' +
-      '#' + BOX_ID + ' .bar{margin-top:9px;height:10px;border-radius:6px;background:rgba(255,255,255,.18);overflow:hidden}' +
-      '#' + BOX_ID + ' .fill{height:100%;background:var(--ab-yellow);width:0;transition:width .6s ease}' +
-      '#' + GIFT_ID + '{display:flex;align-items:center;gap:11px;margin:0 12px 12px;padding:10px;border-radius:12px;box-sizing:border-box;' +
-        'background:#f1faf4;border:1px dashed var(--ab-green2);font-family:hind-siliguri,sans-serif}' +
-      '#' + GIFT_ID + ' img{width:46px;height:56px;border-radius:7px;object-fit:cover;background:#fff;flex:0 0 auto}' +
-      '#' + GIFT_ID + ' .nm{flex:1;font-size:13px;font-weight:700;color:var(--ab-ink)}' +
-      '#' + GIFT_ID + ' .free{background:var(--ab-yellow);color:var(--ab-ink);font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px;flex:0 0 auto}';
-    document.head.appendChild(s);
-  }
-
-  // Insert ABOVE the whole cart block (top-level, normal block flow) so the
-  // cart's own flex/grid rows — and its bottom buttons — are never disturbed.
-  function place(box) {
-    var hdr = visibleCartHeader();
-    if (!hdr) return false;
-    var blk = hdr;
-    while (blk.parentElement && blk.parentElement !== document.body &&
-           blk.offsetWidth < window.innerWidth * 0.9) {
-      blk = blk.parentElement;
-    }
-    blk.parentNode.insertBefore(box, blk);
-    return true;
-  }
-
-  function render(cfg) {
-    styleOnce();
-    var threshold = Number(cfg.giftMinAmount);
-    var total = readCartTotal();
-    var img = (cfg.giftProduct && cfg.giftProduct.image) || '';
-    var giftName = (cfg.giftProduct && cfg.giftProduct.name) || 'ফ্রি নোটবুক';
-
-    var box = document.getElementById(BOX_ID);
-    if (!box) { box = document.createElement('div'); box.id = BOX_ID; if (!place(box)) return; }
-    var gift = document.getElementById(GIFT_ID);
-
-    if (!isNaN(total) && total >= threshold) {
-      box.innerHTML = '<div class="h">🎉 অভিনন্দন! আপনি একটি <b>ফ্রি নোটবুক</b> পেয়েছেন 🎁</div>';
-      if (!gift) {
-        gift = document.createElement('div'); gift.id = GIFT_ID;
-        gift.innerHTML = (img ? '<img src="' + img + '">' : '') +
-          '<span class="nm">' + giftName + ' <span style="opacity:.65;font-weight:600">(উপহার)</span></span>' +
-          '<span class="free">ফ্রি 🎁</span>';
-        box.parentNode.insertBefore(gift, box.nextSibling);
-      }
-    } else {
-      if (gift) gift.parentNode.removeChild(gift);
-      if (!isNaN(total)) {
-        var remaining = Math.max(0, Math.ceil(threshold - total));
-        var pct = Math.min(100, Math.round((total / threshold) * 100));
-        box.innerHTML = '<div class="h">🎁 আর মাত্র <b>৳' + toBn(remaining) + '</b> টাকার বই যোগ করুন — পেয়ে যান <b>ফ্রি নোটবুক</b>!</div>' +
-          '<div class="bar"><div class="fill"></div></div>';
-        var f = box.querySelector('.fill'); if (f) setTimeout(function () { f.style.width = pct + '%'; }, 50);
-      } else {
-        box.innerHTML = '<div class="h">🎁 <b>৳' + toBn(threshold) + '+</b> অর্ডারে একটি নোটবুক একদম ফ্রি!</div>';
-      }
-    }
-  }
-
-  function clear() {
-    var b = document.getElementById(BOX_ID); if (b) b.parentNode.removeChild(b);
-    var g = document.getElementById(GIFT_ID); if (g) g.parentNode.removeChild(g);
-  }
-
-  function tick() {
-    if (!isCartPage()) { clear(); return; }
-    if (!cfgCache) {
-      window.__abGet(API_BASE + '/order-offer/get', 60000, function (err, res) {
-        if (!err && res && res.data && res.data.giftEnabled && res.data.giftMinAmount) { cfgCache = res.data; render(cfgCache); }
-      });
-      return;
-    }
-    render(cfgCache);
-  }
-
-  setInterval(tick, 700);
 })();

@@ -195,8 +195,9 @@
   }
   function isCartLike() {
     var p = location.pathname.toLowerCase();
-    if (p.indexOf('cart') !== -1 || p.indexOf('checkout') !== -1) return true;
-    return !!visibleCartHeader();
+    // URL-only: the hidden cart sidebar carries "কার্ট আইটেম" on every page, so
+    // text-based detection wrongly hid the CTA site-wide.
+    return p.indexOf('cart') !== -1 || p.indexOf('checkout') !== -1;
   }
 
   function boot() {
