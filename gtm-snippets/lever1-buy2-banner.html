@@ -93,67 +93,121 @@
       '#' + CARD_ID + ' .ab-l1{font-size:15px;font-weight:800;line-height:1.45}' +
       '#' + CARD_ID + ' .ab-l1 b{color:var(--ab-yellow)}' +
       '#' + CARD_ID + ' .ab-l2{font-size:12.5px;opacity:.92;margin-top:3px}' +
+      '#' + CARD_ID + ' .ab-bar{margin-top:9px;height:9px;border-radius:6px;background:rgba(255,255,255,.18);overflow:hidden}' +
+      '#' + CARD_ID + ' .ab-fill{height:100%;background:var(--ab-yellow);width:0;transition:width .5s ease}' +
       '@media(max-width:560px){#' + CARD_ID + ' .ab-nb{width:52px;height:64px;flex-basis:52px}#' + CARD_ID + ' .ab-l1{font-size:14px}}';
     document.head.appendChild(s);
   }
 
-  function render(cfg, isThisBook) {
-    styleOnce();
-    var old = document.getElementById(CARD_ID); if (old) old.parentNode.removeChild(old);
+  // Real cart total from the SPA's own localStorage cart (guest + logged-in mirror).
+  // Reading it (not the DOM) means we never touch the cart/checkout markup.
+  function cartTotal() {
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var key = localStorage.key(i);
+        if (!key || key.toUpperCase().indexOf('USER_CART') === -1) continue;
+        var arr; try { arr = JSON.parse(localStorage.getItem(key)); } catch (e) { continue; }
+        if (!Array.isArray(arr)) continue;
+        var sum = 0;
+        arr.forEach(function (it) {
+          if (!it) return;
+          var p = Number(it.salePrice != null ? it.salePrice
+                    : (it.product && it.product.salePrice != null ? it.product.salePrice
+                    : (it.unitPrice != null ? it.unitPrice : (it.afterDiscountPrice != null ? it.afterDiscountPrice : NaN))));
+          var q = Number(it.selectedQty != null ? it.selectedQty : (it.quantity != null ? it.quantity : 1));
+          if (!isNaN(p) && !isNaN(q)) sum += p * q;
+        });
+        if (sum > 0) return sum;
+      }
+    } catch (e) {}
+    return 0;
+  }
 
-    var anchor = findPriceAnchor();
-    var mode = 'afterPrice';
+  function cardInner(cfg, isThisBook) {
+    var img = (cfg.giftProduct && cfg.giftProduct.image) || '';
+    var imgHtml = img ? '<img class="ab-nb" src="' + img + '" alt="free notebook">' : '';
+    var threshold = Number(cfg.giftMinAmount) || 750;
+    var qtyN = Number(cfg.giftBuyXQty) || 2;
+    var total = cartTotal();
+
+    var tag, l1, l2, bar = '';
+    if (total >= threshold) {
+      tag = '🎉 অভিনন্দন!';
+      l1 = 'আপনি একটি <b>ফ্রি নোটবুক</b> পেয়েছেন 🎁';
+      l2 = 'চেকআউটে নোটবুকটি উপহার হিসেবে যোগ হয়ে যাবে';
+    } else if (total > 0) {
+      var remaining = Math.max(1, Math.ceil(threshold - total));
+      var pct = Math.min(100, Math.round((total / threshold) * 100));
+      tag = '🎁 ফ্রি গিফট আনলক করুন';
+      l1 = 'আর মাত্র <b>৳' + toBn(remaining) + '</b> টাকার বই যোগ করুন — পেয়ে যান <b>ফ্রি নোটবুক</b>!';
+      l2 = 'কার্টে এখন ৳' + toBn(total) + ' / ৳' + toBn(threshold);
+      bar = '<div class="ab-bar"><div class="ab-fill" style="width:' + pct + '%"></div></div>';
+    } else {
+      tag = '🎁 ফ্রি গিফট অফার';
+      l1 = isThisBook
+        ? 'এই বইটি <b>' + toBn(qtyN) + 'টি</b> নিন — সাথে <b>ফ্রি নোটবুক</b> 🎁'
+        : '<b>৳' + toBn(threshold) + '+</b> এর বই কিনলেই — <b>ফ্রি নোটবুক</b> 🎁';
+      l2 = isThisBook
+        ? 'একটি নিজে রাখুন, একটি উপহার দিন · অথবা ৳' + toBn(threshold) + '+ অর্ডারেও ফ্রি'
+        : 'কার্টে ৳' + toBn(threshold) + ' পূর্ণ করুন, নোটবুক যোগ হবে নিজে থেকেই';
+    }
+    return imgHtml + '<div class="ab-body"><span class="ab-tag">' + tag + '</span>' +
+      '<div class="ab-l1">' + l1 + '</div><div class="ab-l2">' + l2 + '</div>' + bar + '</div>';
+  }
+
+  var _cfg = null, _isThisBook = false, _lastTotal = -1;
+
+  function ensureCard() {
+    if (document.getElementById(CARD_ID)) return true;
+    var anchor = findPriceAnchor(), mode = 'afterPrice';
     if (!anchor) { anchor = findCtaAnchor(); mode = 'beforeCta'; }
     if (!anchor) return false;
-
-    var img = (cfg.giftProduct && cfg.giftProduct.image) || '';
-    var qty = toBn(Number(cfg.giftBuyXQty) || 2);
-    var minamt = toBn(Number(cfg.giftMinAmount) || 750);
-
     var card = document.createElement('div');
     card.id = CARD_ID; card.className = 'ab-card';
-    var imgHtml = img ? '<img class="ab-nb" src="' + img + '" alt="free notebook">' : '';
-    var l1 = isThisBook
-      ? 'এই বইটি <b>' + qty + 'টি</b> নিন — সাথে <b>ফ্রি নোটবুক</b> 🎁'
-      : '<b>৳' + minamt + '+</b> এর বই কিনলেই — <b>ফ্রি নোটবুক</b> 🎁';
-    var l2 = isThisBook
-      ? 'একটি নিজে রাখুন, একটি উপহার দিন · অথবা ৳' + minamt + '+ অর্ডারেও ফ্রি'
-      : 'কার্টে ৳' + minamt + ' পূর্ণ করুন, নোটবুক যোগ হবে নিজে থেকেই';
-    card.innerHTML = imgHtml +
-      '<div class="ab-body"><span class="ab-tag">🎁 ফ্রি গিফট অফার</span>' +
-      '<div class="ab-l1">' + l1 + '</div><div class="ab-l2">' + l2 + '</div></div>';
-
+    card.innerHTML = cardInner(_cfg, _isThisBook);
     if (mode === 'afterPrice') anchor.parentNode.insertBefore(card, anchor.nextSibling);
     else anchor.parentNode.insertBefore(card, anchor);
+    _lastTotal = cartTotal();
     return true;
   }
 
+  function refresh() {
+    if (!_cfg) return;
+    var card = document.getElementById(CARD_ID);
+    if (!card) { styleOnce(); ensureCard(); return; }
+    var t = cartTotal();
+    if (t !== _lastTotal) { _lastTotal = t; card.innerHTML = cardInner(_cfg, _isThisBook); }
+  }
+
   function boot() {
-    var slug = lastSegment();
-    if (!slug) return;
+    var slug = lastSegment(); if (!slug) return;
     window.__abGet(API_BASE + '/order-offer/get', 60000, function (err, res) {
       if (err || !res || !res.data) return;
       var cfg = res.data;
       if (!cfg.giftEnabled || !cfg.giftProduct) return;
-      // Confirm we're on a product page (avoids cart/list pages).
       window.__abGet(API_BASE + '/product/get-by-slug/' + encodeURIComponent(slug), 60000, function (e2, r2) {
         if (e2 || !r2 || !r2.data || !(r2.data._id || r2.data.slug)) return;
-        var isThisBook = cfg.giftBuyXProductSlug === slug && !!cfg.giftBuyXQty;
+        _cfg = cfg; _isThisBook = cfg.giftBuyXProductSlug === slug && !!cfg.giftBuyXQty;
+        styleOnce();
         var tries = 0;
-        (function wait() { if (render(cfg, isThisBook)) return; if (++tries < POLL_MAX) setTimeout(wait, POLL_MS); })();
+        (function wait() { if (ensureCard()) return; if (++tries < POLL_MAX) setTimeout(wait, POLL_MS); })();
       });
     });
   }
 
   var lastPath = '';
   function maybeBoot() {
-    if (location.pathname === lastPath) return;
-    lastPath = location.pathname;
-    var c = document.getElementById(CARD_ID); if (c && c.parentNode) c.parentNode.removeChild(c);
-    boot();
+    if (location.pathname !== lastPath) {
+      lastPath = location.pathname; _cfg = null; _lastTotal = -1;
+      var c = document.getElementById(CARD_ID); if (c && c.parentNode) c.parentNode.removeChild(c);
+      boot();
+    } else {
+      refresh(); // live-update card as the cart total changes
+    }
   }
   maybeBoot();
   window.addEventListener('popstate', maybeBoot);
-  setInterval(maybeBoot, 1000);
+  window.addEventListener('storage', refresh);
+  setInterval(maybeBoot, 900);
 })();
 </script>
