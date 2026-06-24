@@ -1,5 +1,5 @@
 /* Amolbooks sales-boost widgets — injected via index.html <script src=ab-widgets.js>
-   Source of truth: gtm-snippets/*.html. Offer card (lever1) is cart-aware via localStorage. */
+   Source of truth: gtm-snippets/*.html. */
 
 /* ===================== lever2-urgency ===================== */
 (function () {
@@ -574,5 +574,109 @@
   maybeBoot();
   window.addEventListener('popstate', maybeBoot);
   window.addEventListener('storage', refresh);
+  setInterval(maybeBoot, 900);
+})();
+
+/* ===================== lever4-qty ===================== */
+(function () {
+  'use strict';
+
+  window.__abTheme = window.__abTheme || function () {
+    if (document.getElementById('ab-theme')) return;
+    var s = document.createElement('style'); s.id = 'ab-theme';
+    s.textContent = ':root{--ab-green:#173a2b;--ab-green2:#1f5038;--ab-yellow:#f4d44e;--ab-ink:#173a2b}';
+    document.head.appendChild(s);
+  };
+
+  var WRAP_ID = 'ab-qty';
+  var POLL_MS = 500, POLL_MAX = 30;
+  var CLICK_GAP = 280;
+  var qty = 1, suppress = false;
+
+  function lastSegment() { var p = location.pathname.split('/').filter(Boolean); return p.length ? decodeURIComponent(p[p.length-1]) : ''; }
+  function toBn(n) { var m=['০','১','২','৩','৪','৫','৬','৭','৮','৯']; return String(n).replace(/\d/g,function(d){return m[d];}); }
+
+  function findAddBtn() {
+    var b = document.querySelectorAll('button,a');
+    for (var i = 0; i < b.length; i++) {
+      var t = (b[i].textContent || '').trim();
+      if (t.indexOf('ক্রয় তালিকায় রাখুন') !== -1 || t.indexOf('ক্রয় তালিকায় যুক্ত') !== -1) return b[i];
+    }
+    return null;
+  }
+
+  function styleOnce() {
+    window.__abTheme();
+    if (document.getElementById('ab-qty-style')) return;
+    var s = document.createElement('style'); s.id = 'ab-qty-style';
+    s.textContent =
+      '#' + WRAP_ID + '{display:flex;align-items:center;gap:12px;width:100%;margin:10px 0;font-family:hind-siliguri,sans-serif}' +
+      '#' + WRAP_ID + ' .lbl{font-size:14px;font-weight:700;color:var(--ab-ink)}' +
+      '#' + WRAP_ID + ' .step{display:inline-flex;align-items:center;border:1.5px solid var(--ab-green2);border-radius:10px;overflow:hidden}' +
+      '#' + WRAP_ID + ' button{width:42px;height:40px;border:0;background:#f1faf4;color:var(--ab-green);font-size:22px;font-weight:800;cursor:pointer;font-family:inherit;line-height:1}' +
+      '#' + WRAP_ID + ' button:active{background:#e2f2e8}' +
+      '#' + WRAP_ID + ' .n{min-width:46px;text-align:center;font-size:16px;font-weight:800;color:var(--ab-ink)}';
+    document.head.appendChild(s);
+  }
+
+  function attach(addBtn) {
+    if (addBtn._abHooked) return;
+    addBtn._abHooked = true;
+    addBtn.addEventListener('click', function () {
+      if (suppress) return;
+      var n = qty;
+      if (n <= 1) return;
+      suppress = true;
+      var i = 1;
+      (function more() {
+        if (i >= n) { suppress = false; return; }
+        try { addBtn.click(); } catch (e) {}
+        i++; setTimeout(more, CLICK_GAP);
+      })();
+    }, false);
+  }
+
+  function render(addBtn) {
+    styleOnce();
+    var old = document.getElementById(WRAP_ID); if (old) old.parentNode.removeChild(old);
+    var wrap = document.createElement('div'); wrap.id = WRAP_ID;
+    wrap.innerHTML =
+      '<span class="lbl">পরিমাণ:</span>' +
+      '<span class="step"><button type="button" class="dec">−</button>' +
+      '<span class="n">' + toBn(qty) + '</span>' +
+      '<button type="button" class="inc">+</button></span>';
+    var nEl = wrap.querySelector('.n');
+    wrap.querySelector('.dec').addEventListener('click', function () { if (qty > 1) { qty--; nEl.textContent = toBn(qty); } });
+    wrap.querySelector('.inc').addEventListener('click', function () { if (qty < 20) { qty++; nEl.textContent = toBn(qty); } });
+
+    // place just above the add-to-cart button's row
+    var blk = addBtn; for (var u = 0; u < 3 && blk.parentElement && blk.offsetWidth < 150; u++) blk = blk.parentElement;
+    blk.parentNode.insertBefore(wrap, blk);
+    attach(addBtn);
+  }
+
+  function boot() {
+    var slug = lastSegment(); if (!slug) return;
+    var tries = 0;
+    (function wait() {
+      var addBtn = findAddBtn();
+      if (addBtn) { render(addBtn); return; }
+      if (++tries < POLL_MAX) setTimeout(wait, POLL_MS);
+    })();
+  }
+
+  var lastPath = '';
+  function maybeBoot() {
+    if (location.pathname === lastPath) {
+      // keep the hook attached if Angular re-rendered the button
+      var b = findAddBtn(); if (b) attach(b);
+      return;
+    }
+    lastPath = location.pathname; qty = 1;
+    var w = document.getElementById(WRAP_ID); if (w && w.parentNode) w.parentNode.removeChild(w);
+    boot();
+  }
+  maybeBoot();
+  window.addEventListener('popstate', maybeBoot);
   setInterval(maybeBoot, 900);
 })();
