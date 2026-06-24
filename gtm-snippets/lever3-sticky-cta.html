@@ -73,6 +73,27 @@
     return null;
   }
 
+  // Site's own fixed bottom nav (মূলপাতা / ক্যাটালগ / ক্রয় তালিকা / লগইন).
+  // Our sticky CTA must sit ABOVE it, not cover it.
+  function findBottomNav() {
+    var els = document.querySelectorAll('nav,footer,div,ul');
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i];
+      if (el.id === BAR_ID) continue;
+      var t = (el.textContent || '');
+      if (t.indexOf('মূলপাতা') === -1 && t.indexOf('ক্রয় তালিকা') === -1) continue;
+      var cs = getComputedStyle(el);
+      if (cs.position !== 'fixed') continue;
+      var r = el.getBoundingClientRect();
+      if (r.height > 28 && r.height < 150 && r.bottom >= window.innerHeight - 6) return el;
+    }
+    return null;
+  }
+  function navHeight() {
+    var n = findBottomNav();
+    return n ? Math.round(n.getBoundingClientRect().height) : 0;
+  }
+
   function styleOnce() {
     window.__abTheme();
     if (document.getElementById('ab-sticky-style')) return;
@@ -132,6 +153,19 @@
     document.body.appendChild(bar);
     document.body.classList.add('ab-has-sticky');
 
+    // Sit above the site's native bottom nav (if any), and keep clear of it.
+    function reposition() {
+      var nh = navHeight();
+      bar.style.bottom = nh + 'px';
+      document.body.style.setProperty('padding-bottom',
+        (nh + bar.getBoundingClientRect().height + 8) + 'px', 'important');
+    }
+    reposition();
+    var reTries = 0;
+    var reTimer = setInterval(function () { reposition(); if (++reTries > 12) clearInterval(reTimer); }, 600);
+    window.addEventListener('resize', reposition);
+    bar._reTimer = reTimer;
+
     var idx = 0;
     function show() {
       tick.style.opacity = '0';
@@ -142,8 +176,10 @@
   }
 
   function cleanup() {
-    var b = document.getElementById(BAR_ID); if (b) { if (b._t) clearInterval(b._t); b.parentNode.removeChild(b); }
+    var b = document.getElementById(BAR_ID);
+    if (b) { if (b._t) clearInterval(b._t); if (b._reTimer) clearInterval(b._reTimer); b.parentNode.removeChild(b); }
     document.body.classList.remove('ab-has-sticky');
+    document.body.style.removeProperty('padding-bottom');
   }
 
   function boot() {
