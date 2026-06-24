@@ -1,9 +1,8 @@
 <!--
-  Lever 0: Live free-notebook progress slider on the CART page only.
-  (Product-page teaser removed — Lever 1's offer card covers product pages.)
-  Reads the rendered cart total from the DOM, shows "আর ৳X যোগ করুন" + progress bar,
-  and at >= threshold shows "🎉 অভিনন্দন" + a free-notebook row. Threshold/image come
-  from GET /api/order-offer/get so the promise matches real backend fulfillment.
+  Lever 0: Free-notebook progress on the CART page.
+  Cart page header is "কার্ট আইটেম". Reads the cart total (labeled মোট/সর্বমোট, or the
+  amount on the "অর্ডার করতে এগিয়ে যান" proceed bar), shows progress "আর ৳X যোগ করুন",
+  and at >= threshold "🎉 অভিনন্দন" + a free-notebook gift row. Config from OrderOffer.
 -->
 <script>
 (function () {
@@ -40,36 +39,54 @@
   };
 
   var API_BASE = 'https://apisub.amolbooks.com/api';
-  var ID = 'ab-cart-slider';
-  var POLL_MS = 500, POLL_MAX = 30;
+  var BOX_ID = 'ab-cart-slider';
+  var GIFT_ID = 'ab-cart-gift';
+  var cfgCache = null;
 
-  function isCartPage() { return location.pathname.split('/').filter(Boolean).indexOf('cart') !== -1; }
   function toBn(n) { var m=['০','১','২','৩','৪','৫','৬','৭','৮','৯']; return String(n).replace(/\d/g,function(d){return m[d];}); }
+  function bnToNum(s) { var m={'০':'0','১':'1','২':'2','৩':'3','৪':'4','৫':'5','৬':'6','৭':'7','৮':'8','৯':'9'}; return s.replace(/[০-৯]/g,function(d){return m[d];}); }
 
-  // Read the cart grand total from the DOM (cart is server-side; total is on screen).
+  function isCartPage() {
+    var p = location.pathname.toLowerCase();
+    if (p.indexOf('cart') !== -1) return true;
+    try { if ((document.body.innerText || '').indexOf('কার্ট আইটেম') !== -1) return true; } catch (e) {}
+    return false;
+  }
+
+  // Total: prefer a labeled total; else the amount on the proceed/checkout bar.
   function readCartTotal() {
-    var labels = ['সর্বমোট','সাবটোটাল','মোট','Total','Subtotal','Grand'];
+    var labels = ['সর্বমোট', 'মোট টাকা', 'মোট মূল্য', 'সাবটোটাল', 'Subtotal', 'Total'];
     var all = document.querySelectorAll('*'), best = NaN, bestVal = -1;
     for (var i = 0; i < all.length; i++) {
       var el = all[i]; if (el.children.length) continue;
       var t = (el.textContent || '').trim();
-      if (!labels.some(function (l) { return t.indexOf(l) !== -1; })) continue;
+      var labeled = labels.some(function (l) { return t.indexOf(l) !== -1; });
+      var proceed = t.indexOf('এগিয়ে যান') !== -1 || t.indexOf('চেকআউট') !== -1 || t.indexOf('Proceed') !== -1;
+      if (!labeled && !proceed) continue;
       var ctx = el.parentElement ? (el.parentElement.textContent || '') : t;
-      var m = ctx.replace(/[,৳]/g, '').match(/(\d[\d.]{1,7})/g);
-      if (m) { var v = parseFloat(m[m.length-1]); if (!isNaN(v) && v > bestVal) { bestVal = v; best = v; } }
+      var m = bnToNum(ctx).replace(/[,৳]/g, '').match(/(\d[\d.]{1,7})/g);
+      if (m) { var v = parseFloat(m[m.length - 1]); if (!isNaN(v) && v > bestVal) { bestVal = v; best = v; } }
     }
     return best;
   }
 
-  function findAnchor() {
-    var b = document.querySelectorAll('button,a');
+  function findHeader() {
+    var all = document.querySelectorAll('h1,h2,h3,h4,div,span,p');
+    for (var i = 0; i < all.length; i++) {
+      var t = (all[i].textContent || '').trim();
+      if (t.indexOf('কার্ট আইটেম') !== -1 && t.length < 40) return all[i];
+    }
+    return null;
+  }
+  function findProceedBar() {
+    var b = document.querySelectorAll('button,a,div');
     for (var i = 0; i < b.length; i++) {
       var t = (b[i].textContent || '');
-      if (t.indexOf('চেকআউট') !== -1 || t.indexOf('Checkout') !== -1 || t.indexOf('অর্ডার') !== -1 || t.indexOf('সম্পন্ন') !== -1) {
-        var el = b[i]; for (var u = 0; u < 3 && el.parentElement; u++) el = el.parentElement; return el;
+      if (t.indexOf('এগিয়ে যান') !== -1 || t.indexOf('চেকআউট') !== -1) {
+        var el = b[i]; for (var u = 0; u < 2 && el.parentElement; u++) el = el.parentElement; return el;
       }
     }
-    return document.querySelector('main') || document.querySelector('.container') || document.body;
+    return null;
   }
 
   function styleOnce() {
@@ -77,79 +94,81 @@
     if (document.getElementById('ab-cart-style')) return;
     var s = document.createElement('style'); s.id = 'ab-cart-style';
     s.textContent =
-      '#' + ID + '{width:100%;margin:12px 0;padding:14px 16px;border-radius:14px;font-family:hind-siliguri,sans-serif;' +
-        'background:linear-gradient(135deg,var(--ab-green),var(--ab-green2));color:#fff;box-shadow:0 6px 18px rgba(23,58,43,.22)}' +
-      '#' + ID + ' .ab-h{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;line-height:1.45}' +
-      '#' + ID + ' .ab-h b{color:var(--ab-yellow)}' +
-      '#' + ID + ' .ab-bar{margin-top:10px;height:11px;border-radius:7px;background:rgba(255,255,255,.18);overflow:hidden}' +
-      '#' + ID + ' .ab-fill{height:100%;background:var(--ab-yellow);width:0;transition:width .6s ease}' +
-      '#' + ID + ' .ab-gift{display:flex;align-items:center;gap:11px;margin-top:12px;padding:9px;border-radius:11px;background:rgba(255,255,255,.1)}' +
-      '#' + ID + ' .ab-gift img{width:46px;height:56px;border-radius:7px;object-fit:cover;background:#fff}' +
-      '#' + ID + ' .ab-gift .nm{flex:1;font-size:13px;font-weight:700}' +
-      '#' + ID + ' .ab-gift .free{background:var(--ab-yellow);color:var(--ab-ink);font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px}';
+      '#' + BOX_ID + '{margin:12px;padding:13px 15px;border-radius:13px;font-family:hind-siliguri,sans-serif;' +
+        'background:linear-gradient(135deg,var(--ab-green),var(--ab-green2));color:#fff;box-shadow:0 5px 15px rgba(23,58,43,.2)}' +
+      '#' + BOX_ID + ' .h{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;line-height:1.45}' +
+      '#' + BOX_ID + ' .h b{color:var(--ab-yellow)}' +
+      '#' + BOX_ID + ' .bar{margin-top:9px;height:10px;border-radius:6px;background:rgba(255,255,255,.18);overflow:hidden}' +
+      '#' + BOX_ID + ' .fill{height:100%;background:var(--ab-yellow);width:0;transition:width .6s ease}' +
+      '#' + GIFT_ID + '{display:flex;align-items:center;gap:11px;margin:0 12px 12px;padding:10px;border-radius:12px;' +
+        'background:#f1faf4;border:1px dashed var(--ab-green2);font-family:hind-siliguri,sans-serif}' +
+      '#' + GIFT_ID + ' img{width:46px;height:56px;border-radius:7px;object-fit:cover;background:#fff}' +
+      '#' + GIFT_ID + ' .nm{flex:1;font-size:13px;font-weight:700;color:var(--ab-ink)}' +
+      '#' + GIFT_ID + ' .free{background:var(--ab-yellow);color:var(--ab-ink);font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px}';
     document.head.appendChild(s);
   }
 
-  function render(cfg, anchor) {
-    styleOnce();
-    var old = document.getElementById(ID); if (old) old.parentNode.removeChild(old);
+  function place(box) {
+    var hdr = findHeader();
+    if (hdr) {
+      // insert after the header block
+      var blk = hdr; for (var u = 0; u < 2 && blk.parentElement && blk.offsetWidth < 200; u++) blk = blk.parentElement;
+      blk.parentNode.insertBefore(box, blk.nextSibling); return true;
+    }
+    var bar = findProceedBar();
+    if (bar) { bar.parentNode.insertBefore(box, bar); return true; }
+    return false;
+  }
 
+  function render(cfg) {
+    styleOnce();
     var threshold = Number(cfg.giftMinAmount);
     var total = readCartTotal();
-    var box = document.createElement('div'); box.id = ID;
     var img = (cfg.giftProduct && cfg.giftProduct.image) || '';
     var giftName = (cfg.giftProduct && cfg.giftProduct.name) || 'ফ্রি নোটবুক';
 
+    var box = document.getElementById(BOX_ID);
+    if (!box) { box = document.createElement('div'); box.id = BOX_ID; if (!place(box)) return; }
+
+    var gift = document.getElementById(GIFT_ID);
     if (!isNaN(total) && total >= threshold) {
-      box.innerHTML =
-        '<div class="ab-h">🎉 অভিনন্দন! আপনি একটি <b>ফ্রি নোটবুক</b> আনলক করেছেন</div>' +
-        '<div class="ab-gift">' + (img ? '<img src="' + img + '">' : '') +
-        '<span class="nm">' + giftName + '</span><span class="free">ফ্রি 🎁</span></div>';
-    } else if (!isNaN(total)) {
-      var remaining = Math.max(0, Math.ceil(threshold - total));
-      var pct = Math.min(100, Math.round((total / threshold) * 100));
-      box.innerHTML =
-        '<div class="ab-h">🎁 আর মাত্র <b>৳' + toBn(remaining) + '</b> টাকার বই যোগ করুন — পেয়ে যান <b>ফ্রি নোটবুক</b>!</div>' +
-        '<div class="ab-bar"><div class="ab-fill"></div></div>';
-      setTimeout(function () { var f = box.querySelector('.ab-fill'); if (f) f.style.width = pct + '%'; }, 60);
+      box.innerHTML = '<div class="h">🎉 অভিনন্দন! আপনি একটি <b>ফ্রি নোটবুক</b> পেয়েছেন 🎁</div>';
+      if (!gift) {
+        gift = document.createElement('div'); gift.id = GIFT_ID;
+        gift.innerHTML = (img ? '<img src="' + img + '">' : '') +
+          '<span class="nm">' + giftName + ' <span style="opacity:.65;font-weight:600">(উপহার)</span></span>' +
+          '<span class="free">ফ্রি 🎁</span>';
+        box.parentNode.insertBefore(gift, box.nextSibling);
+      }
     } else {
-      box.innerHTML = '<div class="ab-h">🎁 <b>৳' + toBn(threshold) + '+</b> অর্ডারে একটি নোটবুক একদম ফ্রি!</div>';
-    }
-    anchor.parentNode.insertBefore(box, anchor);
-  }
-
-  function boot() {
-    if (!isCartPage()) return;
-    window.__abGet(API_BASE + '/order-offer/get', 60000, function (err, res) {
-      if (err || !res || !res.data || !res.data.giftEnabled || !res.data.giftMinAmount) return;
-      var cfg = res.data, tries = 0;
-      (function wait() {
-        var a = findAnchor();
-        if (a && !isNaN(readCartTotal())) { render(cfg, a); return; }
-        if (++tries < POLL_MAX) setTimeout(wait, POLL_MS);
-        else if (a) render(cfg, a); // render teaser even if total unreadable
-      })();
-    });
-  }
-
-  // Re-render on cart changes (qty edits) — cart page mutates without route change.
-  var lastPath = '', lastTotal = null, watch = null;
-  function maybeBoot() {
-    if (location.pathname !== lastPath) {
-      lastPath = location.pathname;
-      var b = document.getElementById(ID); if (b && b.parentNode) b.parentNode.removeChild(b);
-      if (watch) { clearInterval(watch); watch = null; }
-      boot();
-      if (isCartPage()) {
-        watch = setInterval(function () {
-          var t = readCartTotal();
-          if (t !== lastTotal) { lastTotal = t; var a = findAnchor(); if (a) { var c = document.getElementById(ID); /* re-render */ window.__abGet(API_BASE + '/order-offer/get', 60000, function (e, r) { if (!e && r && r.data && r.data.giftEnabled) render(r.data, findAnchor()); }); } }
-        }, 1500);
+      if (gift) gift.parentNode.removeChild(gift);
+      if (!isNaN(total)) {
+        var remaining = Math.max(0, Math.ceil(threshold - total));
+        var pct = Math.min(100, Math.round((total / threshold) * 100));
+        box.innerHTML = '<div class="h">🎁 আর মাত্র <b>৳' + toBn(remaining) + '</b> টাকার বই যোগ করুন — পেয়ে যান <b>ফ্রি নোটবুক</b>!</div>' +
+          '<div class="bar"><div class="fill"></div></div>';
+        var f = box.querySelector('.fill'); if (f) setTimeout(function () { f.style.width = pct + '%'; }, 50);
+      } else {
+        box.innerHTML = '<div class="h">🎁 <b>৳' + toBn(threshold) + '+</b> অর্ডারে একটি নোটবুক একদম ফ্রি!</div>';
       }
     }
   }
-  maybeBoot();
-  window.addEventListener('popstate', maybeBoot);
-  setInterval(maybeBoot, 1000);
+
+  function tick() {
+    if (!isCartPage()) {
+      var b = document.getElementById(BOX_ID); if (b) b.parentNode.removeChild(b);
+      var g = document.getElementById(GIFT_ID); if (g) g.parentNode.removeChild(g);
+      return;
+    }
+    if (!cfgCache) {
+      window.__abGet(API_BASE + '/order-offer/get', 60000, function (err, res) {
+        if (!err && res && res.data && res.data.giftEnabled && res.data.giftMinAmount) { cfgCache = res.data; render(cfgCache); }
+      });
+      return;
+    }
+    render(cfgCache);
+  }
+
+  setInterval(tick, 700);
 })();
 </script>

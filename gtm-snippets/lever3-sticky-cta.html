@@ -182,8 +182,17 @@
     document.body.style.removeProperty('padding-bottom');
   }
 
+  // Don't show the product CTA on cart / checkout pages (they have their own bar).
+  function isCartLike() {
+    var p = location.pathname.toLowerCase();
+    if (p.indexOf('cart') !== -1 || p.indexOf('checkout') !== -1 || p.indexOf('order') !== -1) return true;
+    try { if ((document.body.innerText || '').indexOf('কার্ট আইটেম') !== -1) return true; } catch (e) {}
+    return false;
+  }
+
   function boot() {
     if (window.innerWidth > MAX_W) return;
+    if (isCartLike()) return;
     var slug = lastSegment(); if (!slug) return;
     window.__abGet(API_BASE + '/product/get-by-slug/' + encodeURIComponent(slug), 60000, function (err, res) {
       if (err || !res || !res.data || !(res.data._id || res.data.slug)) return;
@@ -200,11 +209,12 @@
 
   var lastPath = '';
   function maybeBoot() {
+    if (document.getElementById(BAR_ID) && isCartLike()) { cleanup(); return; } // leaked onto cart
     if (location.pathname === lastPath) return;
     lastPath = location.pathname; cleanup(); boot();
   }
   maybeBoot();
   window.addEventListener('popstate', maybeBoot);
-  setInterval(maybeBoot, 1000);
+  setInterval(maybeBoot, 800);
 })();
 </script>
