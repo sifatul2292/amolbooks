@@ -212,23 +212,44 @@
     return n ? Math.round(n.getBoundingClientRect().height) : 0;
   }
 
+  // True when a site overlay is open (cart sidebar, PDF popup, any modal) — we
+  // hide the sticky CTA so it never sits on top of those.
+  function overlayOpen() {
+    if (document.querySelector('.cart-slide-active')) return true;
+    var ov = document.querySelector('.cart-overlay');
+    if (ov && ov.offsetParent !== null && getComputedStyle(ov).display !== 'none') return true;
+    var bodyOv = getComputedStyle(document.body).overflow;
+    if (bodyOv === 'hidden') return true;
+    // generic full-viewport modal/backdrop with high z-index
+    var fixed = document.querySelectorAll('div,section,aside');
+    for (var i = 0; i < fixed.length; i++) {
+      var el = fixed[i]; if (el.id === BAR_ID) continue;
+      var cs = getComputedStyle(el);
+      if (cs.position !== 'fixed' || cs.display === 'none' || cs.visibility === 'hidden') continue;
+      var z = parseInt(cs.zIndex, 10);
+      var r = el.getBoundingClientRect();
+      if (z >= 1000 && r.width >= window.innerWidth * 0.8 && r.height >= window.innerHeight * 0.5) return true;
+    }
+    return false;
+  }
+
   function styleOnce() {
     window.__abTheme();
     if (document.getElementById('ab-sticky-style')) return;
     var s = document.createElement('style'); s.id = 'ab-sticky-style';
     s.textContent =
-      '#' + BAR_ID + '{position:fixed;left:0;right:0;bottom:0;z-index:99999;font-family:hind-siliguri,sans-serif;' +
-        'background:linear-gradient(180deg,var(--ab-green2),var(--ab-green));box-shadow:0 -6px 20px rgba(0,0,0,.28);' +
-        'padding:9px 12px calc(9px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:10px}' +
+      '#' + BAR_ID + '{position:fixed;left:0;right:0;bottom:0;z-index:900;font-family:hind-siliguri,sans-serif;' +
+        'background:linear-gradient(180deg,var(--ab-green2),var(--ab-green));box-shadow:0 -4px 14px rgba(0,0,0,.25);' +
+        'padding:5px 10px calc(5px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:9px}' +
+      '#' + BAR_ID + '.ab-hide{display:none!important}' +
       '@media(min-width:' + (MAX_W+1) + 'px){#' + BAR_ID + '{display:none!important}}' +
-      '#' + BAR_ID + ' .ab-tick{flex:1;min-width:0;color:#fff;font-size:12.5px;font-weight:600;line-height:1.35;' +
-        'display:flex;align-items:center;gap:7px;transition:opacity .35s}' +
+      '#' + BAR_ID + ' .ab-tick{flex:1;min-width:0;color:#fff;font-size:11.5px;font-weight:600;line-height:1.3;' +
+        'display:flex;align-items:center;gap:6px;transition:opacity .35s}' +
       '#' + BAR_ID + ' .ab-tick .txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
       '#' + BAR_ID + ' .ab-tick b{color:var(--ab-yellow)}' +
       '#' + BAR_ID + ' .ab-go{flex:0 0 auto;background:var(--ab-yellow);color:var(--ab-ink);font-weight:800;border:0;' +
-        'border-radius:999px;padding:11px 16px;font-size:14px;font-family:inherit;white-space:nowrap}' +
-      '#' + BAR_ID + ' .ab-go:active{filter:brightness(.94)}' +
-      'body.ab-has-sticky{padding-bottom:84px!important}';
+        'border-radius:999px;padding:8px 14px;font-size:13px;font-family:inherit;white-space:nowrap}' +
+      '#' + BAR_ID + ' .ab-go:active{filter:brightness(.94)}';
     document.head.appendChild(s);
   }
 
@@ -284,6 +305,11 @@
     window.addEventListener('resize', reposition);
     bar._reTimer = reTimer;
 
+    // Hide the CTA whenever a site overlay (cart sidebar / modal) is open.
+    bar._ovTimer = setInterval(function () {
+      bar.classList.toggle('ab-hide', overlayOpen());
+    }, 250);
+
     var idx = 0;
     function show() {
       tick.style.opacity = '0';
@@ -295,7 +321,7 @@
 
   function cleanup() {
     var b = document.getElementById(BAR_ID);
-    if (b) { if (b._t) clearInterval(b._t); if (b._reTimer) clearInterval(b._reTimer); b.parentNode.removeChild(b); }
+    if (b) { if (b._t) clearInterval(b._t); if (b._reTimer) clearInterval(b._reTimer); if (b._ovTimer) clearInterval(b._ovTimer); b.parentNode.removeChild(b); }
     document.body.classList.remove('ab-has-sticky');
     document.body.style.removeProperty('padding-bottom');
   }
@@ -514,16 +540,28 @@
   };
 
   var API_BASE = 'https://apisub.amolbooks.com/api';
-  var ID = 'ab-cart-slider';
-  var POLL_MS = 500, POLL_MAX = 30;
+  var BOX_ID = 'ab-cart-slider';
+  var GIFT_ROW_ID = 'ab-gift-row';
+  var cfgCache = null;
 
-  function isCartPage() { return location.pathname.split('/').filter(Boolean).indexOf('cart') !== -1; }
   function toBn(n) { var m=['০','১','২','৩','৪','৫','৬','৭','৮','৯']; return String(n).replace(/\d/g,function(d){return m[d];}); }
 
-  // Read the cart grand total from the DOM (cart is server-side; total is on screen).
-  function readCartTotal() {
-    var labels = ['সর্বমোট','সাবটোটাল','মোট','Total','Subtotal','Grand'];
-    var all = document.querySelectorAll('*'), best = NaN, bestVal = -1;
+  function openSidebar() {
+    return document.querySelector('.cart-slide-active') ||
+      (function () {
+        var s = document.querySelector('.cart-slide, .cart-slide-area, .cart-slide-main');
+        if (s && s.offsetParent !== null) {
+          var r = s.getBoundingClientRect();
+          if (r.width > 50 && r.right > 0 && r.left < window.innerWidth) return s;
+        }
+        return null;
+      })();
+  }
+
+  // Read total from within the sidebar (label সর্বমোট / মোট টাকা + adjacent number).
+  function readTotal(scope) {
+    var labels = ['সর্বমোট', 'মোট টাকা', 'সাবটোটাল', 'Subtotal', 'Total'];
+    var all = scope.querySelectorAll('*'), best = NaN, bestVal = -1;
     for (var i = 0; i < all.length; i++) {
       var el = all[i]; if (el.children.length) continue;
       var t = (el.textContent || '').trim();
@@ -535,94 +573,86 @@
     return best;
   }
 
-  function findAnchor() {
-    var b = document.querySelectorAll('button,a');
-    for (var i = 0; i < b.length; i++) {
-      var t = (b[i].textContent || '');
-      if (t.indexOf('চেকআউট') !== -1 || t.indexOf('Checkout') !== -1 || t.indexOf('অর্ডার') !== -1 || t.indexOf('সম্পন্ন') !== -1) {
-        var el = b[i]; for (var u = 0; u < 3 && el.parentElement; u++) el = el.parentElement; return el;
-      }
-    }
-    return document.querySelector('main') || document.querySelector('.container') || document.body;
-  }
-
   function styleOnce() {
     window.__abTheme();
     if (document.getElementById('ab-cart-style')) return;
     var s = document.createElement('style'); s.id = 'ab-cart-style';
     s.textContent =
-      '#' + ID + '{width:100%;margin:12px 0;padding:14px 16px;border-radius:14px;font-family:hind-siliguri,sans-serif;' +
-        'background:linear-gradient(135deg,var(--ab-green),var(--ab-green2));color:#fff;box-shadow:0 6px 18px rgba(23,58,43,.22)}' +
-      '#' + ID + ' .ab-h{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;line-height:1.45}' +
-      '#' + ID + ' .ab-h b{color:var(--ab-yellow)}' +
-      '#' + ID + ' .ab-bar{margin-top:10px;height:11px;border-radius:7px;background:rgba(255,255,255,.18);overflow:hidden}' +
-      '#' + ID + ' .ab-fill{height:100%;background:var(--ab-yellow);width:0;transition:width .6s ease}' +
-      '#' + ID + ' .ab-gift{display:flex;align-items:center;gap:11px;margin-top:12px;padding:9px;border-radius:11px;background:rgba(255,255,255,.1)}' +
-      '#' + ID + ' .ab-gift img{width:46px;height:56px;border-radius:7px;object-fit:cover;background:#fff}' +
-      '#' + ID + ' .ab-gift .nm{flex:1;font-size:13px;font-weight:700}' +
-      '#' + ID + ' .ab-gift .free{background:var(--ab-yellow);color:var(--ab-ink);font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px}';
+      '#' + BOX_ID + '{margin:10px;padding:12px 14px;border-radius:12px;font-family:hind-siliguri,sans-serif;' +
+        'background:linear-gradient(135deg,var(--ab-green),var(--ab-green2));color:#fff;box-shadow:0 4px 12px rgba(23,58,43,.2)}' +
+      '#' + BOX_ID + ' .h{font-size:13px;font-weight:700;line-height:1.45}' +
+      '#' + BOX_ID + ' .h b{color:var(--ab-yellow)}' +
+      '#' + BOX_ID + ' .bar{margin-top:9px;height:10px;border-radius:6px;background:rgba(255,255,255,.18);overflow:hidden}' +
+      '#' + BOX_ID + ' .fill{height:100%;background:var(--ab-yellow);width:0;transition:width .6s ease}' +
+      '#' + GIFT_ROW_ID + '{display:flex;align-items:center;gap:10px;margin:8px 10px;padding:8px;border-radius:11px;' +
+        'background:#f1faf4;border:1px dashed var(--ab-green2);font-family:hind-siliguri,sans-serif}' +
+      '#' + GIFT_ROW_ID + ' img{width:42px;height:52px;border-radius:6px;object-fit:cover;background:#fff}' +
+      '#' + GIFT_ROW_ID + ' .nm{flex:1;font-size:12.5px;font-weight:700;color:var(--ab-ink)}' +
+      '#' + GIFT_ROW_ID + ' .free{background:var(--ab-yellow);color:var(--ab-ink);font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px}';
     document.head.appendChild(s);
   }
 
-  function render(cfg, anchor) {
-    styleOnce();
-    var old = document.getElementById(ID); if (old) old.parentNode.removeChild(old);
-
+  function injectBox(sidebar, cfg) {
     var threshold = Number(cfg.giftMinAmount);
-    var total = readCartTotal();
-    var box = document.createElement('div'); box.id = ID;
-    var img = (cfg.giftProduct && cfg.giftProduct.image) || '';
-    var giftName = (cfg.giftProduct && cfg.giftProduct.name) || 'ফ্রি নোটবুক';
+    var total = readTotal(sidebar);
+
+    var box = sidebar.querySelector('#' + BOX_ID);
+    if (!box) {
+      box = document.createElement('div'); box.id = BOX_ID;
+      // insert at top: before product list, else prepend to sidebar
+      var list = sidebar.querySelector('.cart-products-area, .cart-products-list');
+      if (list && list.parentNode) list.parentNode.insertBefore(box, list);
+      else sidebar.insertBefore(box, sidebar.firstChild);
+    }
 
     if (!isNaN(total) && total >= threshold) {
-      box.innerHTML =
-        '<div class="ab-h">🎉 অভিনন্দন! আপনি একটি <b>ফ্রি নোটবুক</b> আনলক করেছেন</div>' +
-        '<div class="ab-gift">' + (img ? '<img src="' + img + '">' : '') +
-        '<span class="nm">' + giftName + '</span><span class="free">ফ্রি 🎁</span></div>';
-    } else if (!isNaN(total)) {
-      var remaining = Math.max(0, Math.ceil(threshold - total));
-      var pct = Math.min(100, Math.round((total / threshold) * 100));
-      box.innerHTML =
-        '<div class="ab-h">🎁 আর মাত্র <b>৳' + toBn(remaining) + '</b> টাকার বই যোগ করুন — পেয়ে যান <b>ফ্রি নোটবুক</b>!</div>' +
-        '<div class="ab-bar"><div class="ab-fill"></div></div>';
-      setTimeout(function () { var f = box.querySelector('.ab-fill'); if (f) f.style.width = pct + '%'; }, 60);
+      box.innerHTML = '<div class="h">🎉 অভিনন্দন! আপনি একটি <b>ফ্রি নোটবুক</b> পেয়েছেন 🎁</div>';
+      ensureGiftRow(sidebar, cfg);
     } else {
-      box.innerHTML = '<div class="ab-h">🎁 <b>৳' + toBn(threshold) + '+</b> অর্ডারে একটি নোটবুক একদম ফ্রি!</div>';
-    }
-    anchor.parentNode.insertBefore(box, anchor);
-  }
-
-  function boot() {
-    if (!isCartPage()) return;
-    window.__abGet(API_BASE + '/order-offer/get', 60000, function (err, res) {
-      if (err || !res || !res.data || !res.data.giftEnabled || !res.data.giftMinAmount) return;
-      var cfg = res.data, tries = 0;
-      (function wait() {
-        var a = findAnchor();
-        if (a && !isNaN(readCartTotal())) { render(cfg, a); return; }
-        if (++tries < POLL_MAX) setTimeout(wait, POLL_MS);
-        else if (a) render(cfg, a); // render teaser even if total unreadable
-      })();
-    });
-  }
-
-  // Re-render on cart changes (qty edits) — cart page mutates without route change.
-  var lastPath = '', lastTotal = null, watch = null;
-  function maybeBoot() {
-    if (location.pathname !== lastPath) {
-      lastPath = location.pathname;
-      var b = document.getElementById(ID); if (b && b.parentNode) b.parentNode.removeChild(b);
-      if (watch) { clearInterval(watch); watch = null; }
-      boot();
-      if (isCartPage()) {
-        watch = setInterval(function () {
-          var t = readCartTotal();
-          if (t !== lastTotal) { lastTotal = t; var a = findAnchor(); if (a) { var c = document.getElementById(ID); /* re-render */ window.__abGet(API_BASE + '/order-offer/get', 60000, function (e, r) { if (!e && r && r.data && r.data.giftEnabled) render(r.data, findAnchor()); }); } }
-        }, 1500);
+      removeGiftRow(sidebar);
+      if (!isNaN(total)) {
+        var remaining = Math.max(0, Math.ceil(threshold - total));
+        var pct = Math.min(100, Math.round((total / threshold) * 100));
+        box.innerHTML = '<div class="h">🎁 আর মাত্র <b>৳' + toBn(remaining) + '</b> টাকার বই যোগ করুন — পেয়ে যান <b>ফ্রি নোটবুক</b>!</div>' +
+          '<div class="bar"><div class="fill"></div></div>';
+        var f = box.querySelector('.fill'); if (f) setTimeout(function () { f.style.width = pct + '%'; }, 50);
+      } else {
+        box.innerHTML = '<div class="h">🎁 <b>৳' + toBn(threshold) + '+</b> অর্ডারে একটি নোটবুক একদম ফ্রি!</div>';
       }
     }
   }
-  maybeBoot();
-  window.addEventListener('popstate', maybeBoot);
-  setInterval(maybeBoot, 1000);
+
+  function ensureGiftRow(sidebar, cfg) {
+    if (sidebar.querySelector('#' + GIFT_ROW_ID)) return;
+    var list = sidebar.querySelector('.cart-products-list, .cart-products-area');
+    if (!list) return;
+    var img = (cfg.giftProduct && cfg.giftProduct.image) || '';
+    var nm = (cfg.giftProduct && cfg.giftProduct.name) || 'ফ্রি নোটবুক';
+    var row = document.createElement('div'); row.id = GIFT_ROW_ID;
+    row.innerHTML = (img ? '<img src="' + img + '">' : '') +
+      '<span class="nm">' + nm + ' <span style="opacity:.7;font-weight:600">(উপহার)</span></span>' +
+      '<span class="free">ফ্রি 🎁</span>';
+    list.appendChild(row);
+  }
+  function removeGiftRow(sidebar) {
+    var r = sidebar.querySelector('#' + GIFT_ROW_ID); if (r) r.parentNode.removeChild(r);
+  }
+
+  function tick() {
+    var sidebar = openSidebar();
+    if (!sidebar) return;
+    if (!cfgCache) {
+      window.__abGet(API_BASE + '/order-offer/get', 60000, function (err, res) {
+        if (!err && res && res.data && res.data.giftEnabled && res.data.giftMinAmount) {
+          cfgCache = res.data; styleOnce(); injectBox(sidebar, cfgCache);
+        }
+      });
+      return;
+    }
+    styleOnce();
+    injectBox(sidebar, cfgCache);
+  }
+
+  // Poll for sidebar open + total changes (qty edits) — no route change involved.
+  setInterval(tick, 700);
 })();
