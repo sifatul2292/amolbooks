@@ -1,8 +1,8 @@
 <!--
   Lever 4: Quantity selector on the product page.
-  The page has no native qty input. We add a [− n +] stepper and make the real
-  "ক্রয় তালিকায় রাখুন" add-to-cart button add n copies (it increments by 1 per
-  click, so we click it n times). No DOM is removed — only synthetic clicks.
+  Uses MutationObserver so it catches Angular rendering without a hard poll
+  limit. Inserts [− n +] before the price block (fallback: above the
+  add-to-cart button row). Synthetic click chain handles multi-qty add.
 -->
 <script>
 (function () {
@@ -16,32 +16,34 @@
   };
 
   var WRAP_ID = 'ab-qty';
-  var POLL_MS = 500, POLL_MAX = 30;
   var CLICK_GAP = 280;
   var qty = 1, suppress = false;
+  var _obs = null;
 
-  function lastSegment() { var p = location.pathname.split('/').filter(Boolean); return p.length ? decodeURIComponent(p[p.length-1]) : ''; }
+  function isProductPage() {
+    return location.pathname.indexOf('/product-details/') !== -1 ||
+           location.pathname.indexOf('/product-detail/') !== -1;
+  }
   function toBn(n) { var m=['০','১','২','৩','৪','৫','৬','৭','৮','৯']; return String(n).replace(/\d/g,function(d){return m[d];}); }
 
   function findAddBtn() {
     var b = document.querySelectorAll('button,a');
     for (var i = 0; i < b.length; i++) {
       var t = (b[i].textContent || '').trim();
-      if (t.indexOf('ক্রয় তালিকায় রাখুন') !== -1 || t.indexOf('ক্রয় তালিকায় যুক্ত') !== -1) return b[i];
+      if (t.indexOf('ক্রয় তালিকায়') !== -1 || t.indexOf('ক্রয় তালিকা') !== -1) return b[i];
     }
     return null;
   }
 
-  // Price block anchor: the "You Save … Off)" line that sits just below the price.
+  // Price block: find "You Save…Off)" line → walk up to enclosing price group.
   function findPriceBlock() {
     var els = document.querySelectorAll('p,div,span,h1,h2,h3');
     for (var i = 0; i < els.length; i++) {
       var t = (els[i].textContent || '');
-      if ((t.indexOf('You Save') !== -1 || t.indexOf('Off)') !== -1) && t.length < 120 && els[i].offsetWidth > 150) {
-        // walk up to the block that contains the full price group
+      if ((t.indexOf('You Save') !== -1 || t.indexOf('Off)') !== -1) && t.length < 120 && els[i].offsetWidth > 100) {
         var blk = els[i];
-        while (blk.parentElement && blk.parentElement.offsetWidth < window.innerWidth * 0.85 &&
-               blk.parentElement.offsetWidth > 150 && blk.parentElement.children.length <= 6) {
+        while (blk.parentElement && blk.parentElement.offsetWidth < window.innerWidth * 0.9 &&
+               blk.parentElement.offsetWidth > 100 && blk.parentElement.children.length <= 8) {
           blk = blk.parentElement;
         }
         return blk;
@@ -55,7 +57,7 @@
     if (document.getElementById('ab-qty-style')) return;
     var s = document.createElement('style'); s.id = 'ab-qty-style';
     s.textContent =
-      '#' + WRAP_ID + '{display:flex;align-items:center;gap:12px;width:100%;margin:10px 0;font-family:hind-siliguri,sans-serif}' +
+      '#' + WRAP_ID + '{display:flex;align-items:center;gap:12px;width:100%;margin:12px 0;font-family:hind-siliguri,sans-serif}' +
       '#' + WRAP_ID + ' .lbl{font-size:14px;font-weight:700;color:var(--ab-ink)}' +
       '#' + WRAP_ID + ' .step{display:inline-flex;align-items:center;border:1.5px solid var(--ab-green2);border-radius:10px;overflow:hidden}' +
       '#' + WRAP_ID + ' button{width:42px;height:40px;border:0;background:#f1faf4;color:var(--ab-green);font-size:22px;font-weight:800;cursor:pointer;font-family:inherit;line-height:1}' +
@@ -82,8 +84,8 @@
   }
 
   function render(addBtn) {
+    if (document.getElementById(WRAP_ID)) { attach(addBtn); return; }
     styleOnce();
-    var old = document.getElementById(WRAP_ID); if (old) old.parentNode.removeChild(old);
     var wrap = document.createElement('div'); wrap.id = WRAP_ID;
     wrap.innerHTML =
       '<span class="lbl">পরিমাণ:</span>' +
@@ -94,38 +96,53 @@
     wrap.querySelector('.dec').addEventListener('click', function () { if (qty > 1) { qty--; nEl.textContent = toBn(qty); } });
     wrap.querySelector('.inc').addEventListener('click', function () { if (qty < 20) { qty++; nEl.textContent = toBn(qty); } });
 
-    // place before price block; fall back to above add-to-cart row
-    var anchor = findPriceBlock();
-    if (anchor && anchor.parentNode) {
-      anchor.parentNode.insertBefore(wrap, anchor);
-    } else {
-      var blk = addBtn; for (var u = 0; u < 3 && blk.parentElement && blk.offsetWidth < 150; u++) blk = blk.parentElement;
-      blk.parentNode.insertBefore(wrap, blk);
+    // Try to insert before price block; fall back above add-to-cart row
+    var placed = false;
+    var priceBlk = findPriceBlock();
+    if (priceBlk && priceBlk.parentNode) {
+      priceBlk.parentNode.insertBefore(wrap, priceBlk);
+      placed = true;
     }
-    attach(addBtn);
+    if (!placed) {
+      var blk = addBtn;
+      for (var u = 0; u < 4 && blk.parentElement && blk.offsetWidth < 200; u++) blk = blk.parentElement;
+      if (blk.parentNode) { blk.parentNode.insertBefore(wrap, blk); placed = true; }
+    }
+    if (placed) attach(addBtn);
   }
 
-  function boot() {
-    var slug = lastSegment(); if (!slug) return;
-    var tries = 0;
-    (function wait() {
-      var addBtn = findAddBtn();
-      if (addBtn) { render(addBtn); return; }
-      if (++tries < POLL_MAX) setTimeout(wait, POLL_MS);
-    })();
+  function tryRender() {
+    if (!isProductPage()) return;
+    var addBtn = findAddBtn();
+    if (addBtn) render(addBtn);
+  }
+
+  function stopObs() { if (_obs) { _obs.disconnect(); _obs = null; } }
+
+  function startObs() {
+    stopObs();
+    if (!isProductPage()) return;
+    // immediate attempt
+    tryRender();
+    if (document.getElementById(WRAP_ID)) return;
+    // MutationObserver: re-try whenever DOM changes
+    _obs = new MutationObserver(function () { tryRender(); });
+    _obs.observe(document.body, { childList: true, subtree: true });
+    // safety: stop observing after 30s to avoid memory leak
+    setTimeout(stopObs, 30000);
   }
 
   var lastPath = '';
   function maybeBoot() {
-    if (location.pathname === lastPath) {
-      // keep the hook attached if Angular re-rendered the button
-      var b = findAddBtn(); if (b) attach(b);
-      return;
-    }
-    lastPath = location.pathname; qty = 1;
+    var p = location.pathname;
+    if (p === lastPath) return;
+    lastPath = p;
+    qty = 1;
     var w = document.getElementById(WRAP_ID); if (w && w.parentNode) w.parentNode.removeChild(w);
-    boot();
+    stopObs();
+    startObs();
   }
+
   maybeBoot();
   window.addEventListener('popstate', maybeBoot);
   setInterval(maybeBoot, 900);
