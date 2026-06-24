@@ -100,17 +100,17 @@
     var s = document.createElement('style'); s.id = 'ab-sticky-style';
     s.textContent =
       '#' + BAR_ID + '{position:fixed;left:0;right:0;bottom:0;z-index:99999;font-family:hind-siliguri,sans-serif;' +
-        'background:linear-gradient(180deg,var(--ab-green2),var(--ab-green));box-shadow:0 -6px 20px rgba(0,0,0,.28);' +
-        'padding:9px 12px calc(9px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:10px}' +
+        'background:linear-gradient(180deg,var(--ab-green2),var(--ab-green));box-shadow:0 -4px 14px rgba(0,0,0,.25);' +
+        'padding:5px 10px calc(5px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:9px}' +
       '@media(min-width:' + (MAX_W+1) + 'px){#' + BAR_ID + '{display:none!important}}' +
-      '#' + BAR_ID + ' .ab-tick{flex:1;min-width:0;color:#fff;font-size:12.5px;font-weight:600;line-height:1.35;' +
-        'display:flex;align-items:center;gap:7px;transition:opacity .35s}' +
+      '#' + BAR_ID + ' .ab-tick{flex:1;min-width:0;color:#fff;font-size:11.5px;font-weight:600;line-height:1.3;' +
+        'display:flex;align-items:center;gap:6px;transition:opacity .35s}' +
       '#' + BAR_ID + ' .ab-tick .txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
       '#' + BAR_ID + ' .ab-tick b{color:var(--ab-yellow)}' +
       '#' + BAR_ID + ' .ab-go{flex:0 0 auto;background:var(--ab-yellow);color:var(--ab-ink);font-weight:800;border:0;' +
-        'border-radius:999px;padding:11px 16px;font-size:14px;font-family:inherit;white-space:nowrap}' +
+        'border-radius:999px;padding:8px 14px;font-size:13px;font-family:inherit;white-space:nowrap}' +
       '#' + BAR_ID + ' .ab-go:active{filter:brightness(.94)}' +
-      'body.ab-has-sticky{padding-bottom:84px!important}';
+      'body.ab-has-sticky{padding-bottom:60px!important}';
     document.head.appendChild(s);
   }
 
