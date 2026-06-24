@@ -30,7 +30,10 @@
     var b = document.querySelectorAll('button,a');
     for (var i = 0; i < b.length; i++) {
       var t = (b[i].textContent || '').trim();
-      if (t.indexOf('ক্রয় তালিকায়') !== -1 || t.indexOf('ক্রয় তালিকা') !== -1) return b[i];
+      // Match ONLY add-to-cart variants, NOT "ক্রয় তালিকা দেখুন" (view-cart)
+      if (t.indexOf('ক্রয় তালিকায় রাখুন') !== -1 ||
+          t.indexOf('ক্রয় তালিকায় যুক্ত') !== -1 ||
+          t.indexOf('তালিকায় রাখুন') !== -1) return b[i];
     }
     return null;
   }
@@ -96,7 +99,10 @@
     wrap.querySelector('.dec').addEventListener('click', function () { if (qty > 1) { qty--; nEl.textContent = toBn(qty); } });
     wrap.querySelector('.inc').addEventListener('click', function () { if (qty < 20) { qty++; nEl.textContent = toBn(qty); } });
 
-    // Try to insert before price block; fall back above add-to-cart row
+    // Placement priority:
+    // 1. Before price block ("You Save…Off)" anchor)
+    // 2. Before the add-to-cart button's row
+    // 3. Before the "অর্ডার করুন" button row (ultimate fallback)
     var placed = false;
     var priceBlk = findPriceBlock();
     if (priceBlk && priceBlk.parentNode) {
@@ -105,8 +111,19 @@
     }
     if (!placed) {
       var blk = addBtn;
-      for (var u = 0; u < 4 && blk.parentElement && blk.offsetWidth < 200; u++) blk = blk.parentElement;
+      for (var u = 0; u < 6 && blk.parentElement && blk.offsetWidth < window.innerWidth * 0.6; u++) blk = blk.parentElement;
       if (blk.parentNode) { blk.parentNode.insertBefore(wrap, blk); placed = true; }
+    }
+    if (!placed) {
+      // Fallback: find "অর্ডার করুন" button and insert before its row
+      var ob = document.querySelectorAll('button');
+      for (var oi = 0; oi < ob.length; oi++) {
+        if ((ob[oi].textContent || '').trim() === 'অর্ডার করুন') {
+          var oblk = ob[oi];
+          for (var ou = 0; ou < 4 && oblk.parentElement && oblk.offsetWidth < window.innerWidth * 0.6; ou++) oblk = oblk.parentElement;
+          if (oblk.parentNode) { oblk.parentNode.insertBefore(wrap, oblk); placed = true; break; }
+        }
+      }
     }
     if (placed) attach(addBtn);
   }
