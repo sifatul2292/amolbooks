@@ -1,0 +1,136 @@
+<!--
+  Lever 5: Free-notebook gift row on the checkout page (app-checkout).
+  Shows ONLY when the cart total has earned the gift (>= threshold). Placed as a
+  standalone block (before the order-summary total if found, else appended to the
+  .section-left column) so it can never collapse the checkout form/flex layout.
+  The real ৳0 notebook is attached server-side at order creation; this is the
+  matching visual confirmation.
+-->
+<script>
+(function () {
+  'use strict';
+
+  window.__abGet = window.__abGet || (function () {
+    var store = {};
+    return function (url, ttl, cb) {
+      var now = Date.now(), e = store[url];
+      if (e && e.done && (now - e.at < ttl)) { cb(e.err, e.data); return; }
+      if (e && e.waiters) { e.waiters.push(cb); return; }
+      store[url] = { waiters: [cb], at: now, done: false };
+      var x = new XMLHttpRequest();
+      x.open('GET', url, true);
+      x.onreadystatechange = function () {
+        if (x.readyState !== 4) return;
+        var err = null, data = null;
+        if (x.status >= 200 && x.status < 300) { try { data = JSON.parse(x.responseText); } catch (e2) { err = e2; } }
+        else err = new Error('HTTP ' + x.status);
+        var entry = store[url], ws = (entry && entry.waiters) || [];
+        store[url] = { done: true, at: err ? 0 : Date.now(), err: err, data: data };
+        ws.forEach(function (w) { try { w(err, data); } catch (e3) {} });
+      };
+      x.send();
+    };
+  })();
+  window.__abTheme = window.__abTheme || function () {
+    if (document.getElementById('ab-theme')) return;
+    var s = document.createElement('style'); s.id = 'ab-theme';
+    s.textContent = ':root{--ab-green:#173a2b;--ab-green2:#1f5038;--ab-yellow:#f4d44e;--ab-ink:#173a2b}';
+    document.head.appendChild(s);
+  };
+
+  var API_BASE = 'https://apisub.amolbooks.com/api';
+  var ROW_ID = 'ab-checkout-gift';
+  var cfgCache = null;
+
+  function onCheckout() { return !!document.querySelector('app-checkout'); }
+
+  function cartTotal() {
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var key = localStorage.key(i);
+        if (!key || key.toUpperCase().indexOf('USER_CART') === -1) continue;
+        var arr; try { arr = JSON.parse(localStorage.getItem(key)); } catch (e) { continue; }
+        if (!Array.isArray(arr)) continue;
+        var sum = 0;
+        arr.forEach(function (it) {
+          if (!it) return;
+          var p = Number(it.salePrice != null ? it.salePrice
+                    : (it.product && it.product.salePrice != null ? it.product.salePrice
+                    : (it.unitPrice != null ? it.unitPrice : (it.afterDiscountPrice != null ? it.afterDiscountPrice : NaN))));
+          var q = Number(it.selectedQty != null ? it.selectedQty : (it.quantity != null ? it.quantity : 1));
+          if (!isNaN(p) && !isNaN(q)) sum += p * q;
+        });
+        if (sum > 0) return sum;
+      }
+    } catch (e) {}
+    return 0;
+  }
+
+  function styleOnce() {
+    window.__abTheme();
+    if (document.getElementById('ab-checkout-gift-style')) return;
+    var s = document.createElement('style'); s.id = 'ab-checkout-gift-style';
+    s.textContent =
+      '#' + ROW_ID + '{display:flex;align-items:center;gap:12px;width:100%;box-sizing:border-box;margin:14px 0;padding:12px 14px;' +
+        'border-radius:13px;background:#f1faf4;border:1.5px dashed var(--ab-green2);font-family:hind-siliguri,sans-serif}' +
+      '#' + ROW_ID + ' img{width:48px;height:58px;border-radius:7px;object-fit:cover;background:#fff;flex:0 0 auto}' +
+      '#' + ROW_ID + ' .t{flex:1;min-width:0}' +
+      '#' + ROW_ID + ' .t .h{font-size:13.5px;font-weight:800;color:var(--ab-green)}' +
+      '#' + ROW_ID + ' .t .s{font-size:12px;color:#444;margin-top:2px}' +
+      '#' + ROW_ID + ' .free{background:var(--ab-yellow);color:var(--ab-ink);font-size:12px;font-weight:800;padding:4px 11px;border-radius:999px;flex:0 0 auto}';
+    document.head.appendChild(s);
+  }
+
+  // Safe placement: before the order-summary total block if found (within a
+  // vertical container), else appended to .section-left (always vertical).
+  function place(row) {
+    var host = document.querySelector('app-checkout');
+    if (!host) return false;
+    // try summary total
+    var all = host.querySelectorAll('*');
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i]; if (el.children.length || el.offsetParent === null) continue;
+      var t = (el.textContent || '');
+      if (t.indexOf('সর্বমোট') !== -1 || t.indexOf('মোট মূল্য') !== -1 || t.indexOf('গ্র্যান্ড') !== -1) {
+        var blk = el;
+        while (blk.parentElement && blk.parentElement !== host && blk.offsetWidth < 220) blk = blk.parentElement;
+        blk.parentNode.insertBefore(row, blk);
+        return true;
+      }
+    }
+    var left = host.querySelector('.section-left') || host.querySelector('.section-main') || host;
+    left.appendChild(row);
+    return true;
+  }
+
+  function render(cfg) {
+    styleOnce();
+    var img = (cfg.giftProduct && cfg.giftProduct.image) || '';
+    var nm = (cfg.giftProduct && cfg.giftProduct.name) || 'ফ্রি নোটবুক';
+    var row = document.getElementById(ROW_ID);
+    if (row) return;
+    row = document.createElement('div'); row.id = ROW_ID;
+    row.innerHTML = (img ? '<img src="' + img + '">' : '') +
+      '<div class="t"><div class="h">🎁 ফ্রি উপহার যোগ হয়েছে</div>' +
+      '<div class="s">' + nm + ' — আপনার অর্ডারের সাথে ফ্রি পাচ্ছেন</div></div>' +
+      '<span class="free">৳০ ফ্রি</span>';
+    if (!place(row)) return;
+  }
+
+  function clear() { var r = document.getElementById(ROW_ID); if (r) r.parentNode.removeChild(r); }
+
+  function tick() {
+    if (!onCheckout()) { clear(); return; }
+    if (!cfgCache) {
+      window.__abGet(API_BASE + '/order-offer/get', 60000, function (err, res) {
+        if (!err && res && res.data && res.data.giftEnabled && res.data.giftMinAmount) { cfgCache = res.data; tick(); }
+      });
+      return;
+    }
+    var threshold = Number(cfgCache.giftMinAmount);
+    if (cartTotal() >= threshold) render(cfgCache); else clear();
+  }
+
+  setInterval(tick, 800);
+})();
+</script>
