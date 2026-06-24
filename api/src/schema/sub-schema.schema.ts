@@ -461,6 +461,11 @@ export const ORDER_ITEM_SCHEMA = new mongoose.Schema(
       type: String,
       required: false,
     },
+    isGift: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
   },
   {
     _id: true,

@@ -95,6 +95,14 @@ export class OrderController {
   }
 
   @Version(VERSION_NEUTRAL)
+  @Get('/recent-buyers/:slug')
+  async getRecentBuyersByProduct(
+    @Param('slug') slug: string,
+  ): Promise<ResponsePayload> {
+    return await this.orderService.getRecentBuyersByProduct(slug);
+  }
+
+  @Version(VERSION_NEUTRAL)
   @Post('/repeat-customers')
   async getRepeatCustomers(): Promise<ResponsePayload> {
     return await this.orderService.getRepeatCustomers();

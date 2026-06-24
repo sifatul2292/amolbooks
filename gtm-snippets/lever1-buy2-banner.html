@@ -1,0 +1,128 @@
+<!--
+  GTM Custom-HTML tag — Lever 1: "Buy 2 -> free notebook" banner (specific book only)
+  Container: GTM-NNZV54QJ
+  Trigger:   All Pages + History Change. Idempotent.
+  Renders a banner under the price ONLY on the product whose slug matches the
+  OrderOffer config (giftBuyXProductSlug). Reads real config from
+  GET /api/order-offer/get so copy + product stay in sync with backend fulfillment.
+-->
+<script>
+(function () {
+  'use strict';
+
+  window.__abGet = window.__abGet || (function () {
+    var store = {};
+    return function (url, ttl, cb) {
+      var now = Date.now(), e = store[url];
+      if (e && e.done && (now - e.at < ttl)) { cb(e.err, e.data); return; }
+      if (e && e.waiters) { e.waiters.push(cb); return; }
+      store[url] = { waiters: [cb], at: now, done: false };
+      var x = new XMLHttpRequest();
+      x.open('GET', url, true);
+      x.onreadystatechange = function () {
+        if (x.readyState !== 4) return;
+        var err = null, data = null;
+        if (x.status >= 200 && x.status < 300) { try { data = JSON.parse(x.responseText); } catch (e2) { err = e2; } }
+        else err = new Error('HTTP ' + x.status);
+        var entry = store[url], ws = (entry && entry.waiters) || [];
+        store[url] = { done: true, at: err ? 0 : Date.now(), err: err, data: data };
+        ws.forEach(function (w) { try { w(err, data); } catch (e3) {} });
+      };
+      x.send();
+    };
+  })();
+
+  var API_BASE = 'https://apisub.amolbooks.com/api'; // swap to prod API base if different
+  var BANNER_ID = 'ab-buy2-banner';
+  var POLL_MS = 400, POLL_MAX = 25;
+
+  function lastSegment() {
+    var p = location.pathname.split('/').filter(Boolean);
+    return p.length ? decodeURIComponent(p[p.length - 1]) : '';
+  }
+  function toBn(n) {
+    var m = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
+    return String(n).replace(/\d/g, function (d) { return m[d]; });
+  }
+  function getJSON(url, cb) {
+    try {
+      var x = new XMLHttpRequest();
+      x.open('GET', url, true);
+      x.onreadystatechange = function () {
+        if (x.readyState === 4) {
+          if (x.status >= 200 && x.status < 300) {
+            try { cb(null, JSON.parse(x.responseText)); } catch (e) { cb(e); }
+          } else { cb(new Error('HTTP ' + x.status)); }
+        }
+      };
+      x.send();
+    } catch (e) { cb(e); }
+  }
+  function findAnchor() {
+    var btns = document.querySelectorAll('button, a');
+    for (var i = 0; i < btns.length; i++) {
+      if ((btns[i].textContent || '').indexOf('অর্ডার করুন') !== -1) {
+        var el = btns[i];
+        for (var up = 0; up < 4 && el.parentElement; up++) el = el.parentElement;
+        return el;
+      }
+    }
+    return null;
+  }
+  function styleOnce() {
+    if (document.getElementById('ab-buy2-style')) return;
+    var s = document.createElement('style');
+    s.id = 'ab-buy2-style';
+    s.textContent =
+      '#' + BANNER_ID + '{display:flex;align-items:center;gap:10px;margin:10px 0 14px;padding:11px 14px;' +
+        'border-radius:11px;background:linear-gradient(90deg,#FFF7E8,#FDECCB);border:1px solid #F3D08A;' +
+        'font-family:hind-siliguri,sans-serif;color:#7A4E0B;font-weight:600;font-size:14.5px;line-height:1.5}' +
+      '#' + BANNER_ID + ' .ab-emoji{font-size:22px;flex:0 0 auto}';
+    document.head.appendChild(s);
+  }
+  function render(qty, anchor) {
+    styleOnce();
+    var old = document.getElementById(BANNER_ID);
+    if (old) old.parentNode.removeChild(old);
+    var b = document.createElement('div');
+    b.id = BANNER_ID;
+    var emoji = document.createElement('span'); emoji.className = 'ab-emoji'; emoji.textContent = '🎁';
+    var txt = document.createElement('span');
+    txt.innerHTML =
+      '<b>' + toBn(qty) + 'টি কিনুন — এই আকর্ষণীয় নোটবুক একদম ফ্রি!</b><br>' +
+      'একটি নিজে রাখুন, আরেকটি প্রিয়জনকে উপহার দিন।';
+    b.appendChild(emoji); b.appendChild(txt);
+    anchor.parentNode.insertBefore(b, anchor);
+  }
+
+  function boot() {
+    var slug = lastSegment();
+    if (!slug) return;
+    window.__abGet(API_BASE + '/order-offer/get', 60000, function (err, res) {
+      if (err || !res || !res.data) return;
+      var cfg = res.data;
+      if (!cfg.giftEnabled || !cfg.giftBuyXProductSlug || !cfg.giftBuyXQty) return;
+      if (cfg.giftBuyXProductSlug !== slug) return; // only the configured book
+      var qty = Number(cfg.giftBuyXQty) || 2;
+      var tries = 0;
+      (function wait() {
+        var a = findAnchor();
+        if (a) { render(qty, a); return; }
+        if (++tries < POLL_MAX) setTimeout(wait, POLL_MS);
+      })();
+    });
+  }
+
+  var lastPath = '';
+  function maybeBoot() {
+    if (location.pathname === lastPath) return;
+    lastPath = location.pathname;
+    var b = document.getElementById(BANNER_ID);
+    if (b && b.parentNode) b.parentNode.removeChild(b);
+    boot();
+  }
+  maybeBoot();
+  window.addEventListener('popstate', maybeBoot);
+  setInterval(maybeBoot, 1000);
+})();
+</script>

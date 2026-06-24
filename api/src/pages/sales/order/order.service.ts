@@ -48,6 +48,12 @@ import * as schedule from 'node-schedule';
 import { Admin } from '../../../interfaces/admin/admin.interface';
 const ObjectId = Types.ObjectId;
 
+// Process-level TTL cache for the public recent-buyers feed. Caps DB load on a
+// high-traffic live site to ~1 query per product slug per RECENT_BUYERS_TTL_MS,
+// regardless of pageview volume.
+const RECENT_BUYERS_TTL_MS = 120000; // 2 min
+const recentBuyersCache = new Map<string, { at: number; data: any[] }>();
+
 @Injectable()
 export class OrderService {
   private logger = new Logger(OrderService.name);
@@ -733,6 +739,57 @@ export class OrderService {
       return { success: true, message: 'Success', data } as ResponsePayload;
     } catch (err) {
       throw new InternalServerErrorException(err.message);
+    }
+  }
+
+  /**
+   * getRecentBuyersByProduct
+   * Public, privacy-capped feed for the product-page social-proof ticker.
+   * Returns ONLY first name + purchase time of recent buyers of a product.
+   * No full name, phone, email, or address is ever exposed.
+   */
+  async getRecentBuyersByProduct(slug: string): Promise<ResponsePayload> {
+    try {
+      if (!slug) {
+        return { success: true, message: 'No slug', data: [] } as ResponsePayload;
+      }
+
+      // Serve from cache when fresh — protects DB under high pageview volume.
+      const cached = recentBuyersCache.get(slug);
+      if (cached && Date.now() - cached.at < RECENT_BUYERS_TTL_MS) {
+        return {
+          success: true,
+          message: 'Success',
+          data: cached.data,
+        } as ResponsePayload;
+      }
+
+      const limit = 12;
+      const orders = await this.orderModel
+        .find({ 'orderedItems.slug': slug }, { name: 1, createdAt: 1 })
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .maxTimeMS(2000) // abort a runaway query instead of piling up connections
+        .lean();
+
+      const data = (orders || [])
+        .map((o: any) => {
+          const firstName = (o?.name || '')
+            .toString()
+            .trim()
+            .split(/\s+/)[0];
+          if (!firstName) return null;
+          return { firstName, purchasedAt: o?.createdAt ?? null };
+        })
+        .filter(Boolean);
+
+      recentBuyersCache.set(slug, { at: Date.now(), data });
+      return { success: true, message: 'Success', data } as ResponsePayload;
+    } catch (err) {
+      // Public, non-critical feed. Never 500 a product page over it — degrade
+      // to an empty list (the ticker then shows the urgency line only).
+      this.logger.warn('getRecentBuyersByProduct failed: ' + err.message);
+      return { success: true, message: 'Success', data: [] } as ResponsePayload;
     }
   }
 
@@ -2114,6 +2171,11 @@ export class OrderService {
       0,
     );
 
+    // Free-gift (notebook) — append a zero-price gift line if eligible.
+    // Added to orderedItems only; does NOT affect subtotal/discount/grandTotal.
+    const giftLine = await this.evaluateGiftLine(products, cartSubTotal);
+    if (giftLine) products.push(giftLine);
+
     // Cart Discount Amount
     const cartDiscountAmount = finalData.reduce(
       (acc, t) =>
@@ -2190,6 +2252,71 @@ export class OrderService {
     };
 
     return newOrderData;
+  }
+
+  /**
+   * evaluateGiftLine
+   * Decides whether a free gift (notebook) should be attached to the order.
+   * Config lives on the single OrderOffer doc. Two independent triggers:
+   *   A) global   : cartSubTotal >= giftMinAmount  (any products)
+   *   B) this book: a line with slug === giftBuyXProductSlug and qty >= giftBuyXQty
+   * Returns a zero-price ordered-item, or null. One gift per order; never
+   * added if the gift product is already in the cart.
+   */
+  private async evaluateGiftLine(
+    products: any[],
+    cartSubTotal: number,
+  ): Promise<any | null> {
+    try {
+      const cfg = JSON.parse(
+        JSON.stringify(await this.orderOfferModel.findOne({})),
+      );
+      if (!cfg || !cfg.giftEnabled || !cfg.giftProduct || !cfg.giftProduct._id) {
+        return null;
+      }
+
+      const giftId = String(cfg.giftProduct._id);
+      // Hard guard: a malformed gift id would throw on order .save() and fail
+      // the customer's checkout. Never let gift config break an order.
+      if (!Types.ObjectId.isValid(giftId)) {
+        this.logger.error('evaluateGiftLine: invalid giftProduct._id ' + giftId);
+        return null;
+      }
+      // Skip if the gift product is already a purchased line.
+      if (products.some((p) => String(p._id) === giftId)) return null;
+
+      let eligible = false;
+      if (cfg.giftMinAmount && cartSubTotal >= Number(cfg.giftMinAmount)) {
+        eligible = true;
+      }
+      if (!eligible && cfg.giftBuyXProductSlug && cfg.giftBuyXQty) {
+        const match = products.find(
+          (p) => p.slug === cfg.giftBuyXProductSlug,
+        );
+        if (match && Number(match.quantity) >= Number(cfg.giftBuyXQty)) {
+          eligible = true;
+        }
+      }
+      if (!eligible) return null;
+
+      return {
+        _id: cfg.giftProduct._id,
+        name: cfg.giftProduct.name || cfg.giftLabel || 'উপহার',
+        nameEn: cfg.giftProduct.nameEn || 'Free Gift',
+        slug: cfg.giftProduct.slug || null,
+        image: cfg.giftProduct.image || null,
+        regularPrice: 0,
+        unitPrice: 0,
+        salePrice: 0,
+        quantity: 1,
+        orderType: 'gift',
+        isGift: true,
+      };
+    } catch (err) {
+      // Never block order creation because of the gift step.
+      this.logger.error('evaluateGiftLine failed: ' + err.message);
+      return null;
+    }
   }
 
   // Calculate Coupon Discount

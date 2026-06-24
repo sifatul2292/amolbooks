@@ -85,6 +85,37 @@ export const OrderOfferSchema = new mongoose.Schema(
       type: Number,
       required: false,
     },
+
+    // Free-gift (notebook) offer
+    // Trigger A (global, all products): cart subtotal >= giftMinAmount
+    // Trigger B (specific book): a cart line whose slug === giftBuyXProductSlug
+    //                            with quantity >= giftBuyXQty
+    giftEnabled: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    giftMinAmount: {
+      type: Number,
+      required: false,
+    },
+    giftProduct: {
+      // { _id, name, slug, image } of the notebook (a real Product)
+      type: Object,
+      required: false,
+    },
+    giftBuyXProductSlug: {
+      type: String,
+      required: false,
+    },
+    giftBuyXQty: {
+      type: Number,
+      required: false,
+    },
+    giftLabel: {
+      type: String,
+      required: false,
+    },
   },
   {
     versionKey: false,

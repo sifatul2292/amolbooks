@@ -1,0 +1,216 @@
+<!--
+  GTM Custom-HTML tag — Lever 3: Sticky mobile Order CTA + rotating social-proof/urgency ticker
+  Container: GTM-NNZV54QJ
+  Trigger:   All Pages + History Change. Idempotent.
+  Mobile only (<= 768px). Proxies a click to the REAL Angular order button so the
+  existing order flow is untouched. Ticker uses REAL recent buyers
+  (GET /api/order/recent-buyers/:slug -> [{firstName, purchasedAt}]); falls back to
+  the urgency-only line when no buyers exist, so no name is ever fabricated.
+-->
+<script>
+(function () {
+  'use strict';
+
+  window.__abGet = window.__abGet || (function () {
+    var store = {};
+    return function (url, ttl, cb) {
+      var now = Date.now(), e = store[url];
+      if (e && e.done && (now - e.at < ttl)) { cb(e.err, e.data); return; }
+      if (e && e.waiters) { e.waiters.push(cb); return; }
+      store[url] = { waiters: [cb], at: now, done: false };
+      var x = new XMLHttpRequest();
+      x.open('GET', url, true);
+      x.onreadystatechange = function () {
+        if (x.readyState !== 4) return;
+        var err = null, data = null;
+        if (x.status >= 200 && x.status < 300) { try { data = JSON.parse(x.responseText); } catch (e2) { err = e2; } }
+        else err = new Error('HTTP ' + x.status);
+        var entry = store[url], ws = (entry && entry.waiters) || [];
+        store[url] = { done: true, at: err ? 0 : Date.now(), err: err, data: data };
+        ws.forEach(function (w) { try { w(err, data); } catch (e3) {} });
+      };
+      x.send();
+    };
+  })();
+
+  var API_BASE = 'https://apisub.amolbooks.com/api'; // swap to prod API base if different
+  var BAR_ID = 'ab-sticky-cta';
+  var MAX_W = 768;
+  var POLL_MS = 400, POLL_MAX = 25;
+  var ROTATE_MS = 4500;
+
+  function lastSegment() {
+    var p = location.pathname.split('/').filter(Boolean);
+    return p.length ? decodeURIComponent(p[p.length - 1]) : '';
+  }
+  function getJSON(url, cb) {
+    try {
+      var x = new XMLHttpRequest();
+      x.open('GET', url, true);
+      x.onreadystatechange = function () {
+        if (x.readyState === 4) {
+          if (x.status >= 200 && x.status < 300) {
+            try { cb(null, JSON.parse(x.responseText)); } catch (e) { cb(e); }
+          } else { cb(new Error('HTTP ' + x.status)); }
+        }
+      };
+      x.send();
+    } catch (e) { cb(e); }
+  }
+  function relTimeBn(iso) {
+    var t = new Date(iso).getTime();
+    if (isNaN(t)) return '';
+    var min = Math.floor((Date.now() - t) / 60000);
+    if (min < 60) return 'এই মাত্র';        // within the hour -> "just now"
+    var hr = Math.floor(min / 60);
+    if (hr < 24) return 'কিছুক্ষণ আগে';
+    return 'সম্প্রতি';
+  }
+
+  // The real Angular order button (located by stable Bangla text)
+  function findRealOrderButton() {
+    var btns = document.querySelectorAll('button, a');
+    for (var i = 0; i < btns.length; i++) {
+      var t = (btns[i].textContent || '').trim();
+      // prefer the plain "অর্ডার করুন" (not the advance-free / whatsapp variants)
+      if (t === 'অর্ডার করুন') return btns[i];
+    }
+    for (var j = 0; j < btns.length; j++) {
+      if ((btns[j].textContent || '').indexOf('অর্ডার করুন') !== -1) return btns[j];
+    }
+    return null;
+  }
+
+  function styleOnce() {
+    if (document.getElementById('ab-sticky-style')) return;
+    var s = document.createElement('style');
+    s.id = 'ab-sticky-style';
+    s.textContent =
+      '#' + BAR_ID + '{position:fixed;left:0;right:0;bottom:0;z-index:9999;font-family:hind-siliguri,sans-serif;' +
+        'box-shadow:0 -4px 16px rgba(0,0,0,.12);background:#fff;padding-bottom:env(safe-area-inset-bottom)}' +
+      '@media(min-width:' + (MAX_W + 1) + 'px){#' + BAR_ID + '{display:none!important}}' +
+      '#' + BAR_ID + ' .ab-ticker{font-size:12.5px;font-weight:600;text-align:center;padding:5px 12px;' +
+        'background:#FFF7E8;color:#92400E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;' +
+        'transition:opacity .4s}' +
+      '#' + BAR_ID + ' .ab-row{display:flex;gap:8px;padding:9px 12px}' +
+      '#' + BAR_ID + ' .ab-primary{flex:1;border:0;border-radius:10px;padding:13px;font-size:16px;font-weight:700;' +
+        'color:#fff;background:#2563EB;font-family:inherit}' +
+      '#' + BAR_ID + ' .ab-primary:active{background:#1D4ED8}' +
+      '#' + BAR_ID + ' .ab-wa{flex:0 0 52px;border:0;border-radius:10px;background:#25D366;color:#fff;font-size:22px}' +
+      'body.ab-has-sticky{padding-bottom:120px!important}';
+    document.head.appendChild(s);
+  }
+
+  function buildTickerMessages(buyers) {
+    var urgency = 'অফার শেষ হলে বোনাসগুলো আর পাবেন না — এখনই সুযোগ!';
+    var msgs = [];
+    (buyers || []).forEach(function (b) {
+      if (b && b.firstName) {
+        var when = b.purchasedAt ? relTimeBn(b.purchasedAt) : 'সম্প্রতি';
+        var verb = when === 'এই মাত্র' ? 'এই মাত্র বইটি কিনেছেন' : when + ' বইটি কিনেছেন';
+        msgs.push(b.firstName + ' ' + verb + ', আপনিও দেরি করবেন না');
+      }
+    });
+    // interleave urgency line between buyer lines (or use it alone if no buyers)
+    if (!msgs.length) return [urgency];
+    var out = [];
+    msgs.forEach(function (m, i) { out.push(m); if (i % 2 === 1) out.push(urgency); });
+    out.push(urgency);
+    return out;
+  }
+
+  function render(realBtn, messages) {
+    styleOnce();
+    var old = document.getElementById(BAR_ID);
+    if (old) old.parentNode.removeChild(old);
+
+    var bar = document.createElement('div');
+    bar.id = BAR_ID;
+
+    var ticker = document.createElement('div');
+    ticker.className = 'ab-ticker';
+    bar.appendChild(ticker);
+
+    var row = document.createElement('div');
+    row.className = 'ab-row';
+
+    var primary = document.createElement('button');
+    primary.className = 'ab-primary';
+    primary.type = 'button';
+    primary.textContent = 'অর্ডার করুন';
+    primary.addEventListener('click', function () {
+      var live = findRealOrderButton() || realBtn; // re-find in case Angular re-rendered
+      if (live) {
+        try { window.dataLayer && window.dataLayer.push({ event: 'ab_sticky_cta_click' }); } catch (e) {}
+        live.click();
+        live.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+    row.appendChild(primary);
+
+    // optional WhatsApp shortcut if a WA button exists on page
+    var wa = null;
+    var all = document.querySelectorAll('button, a');
+    for (var i = 0; i < all.length; i++) {
+      if ((all[i].textContent || '').indexOf('হোয়াটসঅ্যাপে') !== -1) { wa = all[i]; break; }
+    }
+    if (wa) {
+      var waBtn = document.createElement('button');
+      waBtn.className = 'ab-wa'; waBtn.type = 'button'; waBtn.innerHTML = '🟢';
+      waBtn.setAttribute('aria-label', 'WhatsApp এ অর্ডার');
+      waBtn.addEventListener('click', function () { wa.click(); });
+      row.appendChild(waBtn);
+    }
+
+    bar.appendChild(row);
+    document.body.appendChild(bar);
+    document.body.classList.add('ab-has-sticky');
+
+    // rotate ticker
+    var idx = 0;
+    function show() {
+      ticker.style.opacity = '0';
+      setTimeout(function () { ticker.textContent = messages[idx % messages.length]; ticker.style.opacity = '1'; idx++; }, 250);
+    }
+    show();
+    if (messages.length > 1) bar._timer = setInterval(show, ROTATE_MS);
+  }
+
+  function cleanup() {
+    var b = document.getElementById(BAR_ID);
+    if (b) { if (b._timer) clearInterval(b._timer); b.parentNode.removeChild(b); }
+    document.body.classList.remove('ab-has-sticky');
+  }
+
+  function boot() {
+    if (window.innerWidth > MAX_W) return; // mobile only
+    var slug = lastSegment();
+    if (!slug) return;
+    window.__abGet(API_BASE + '/product/get-by-slug/' + encodeURIComponent(slug), 60000, function (err, res) {
+      if (err || !res || !res.data || !(res.data._id || res.data.slug)) return; // not product page
+      // fetch buyers (non-blocking; render bar regardless)
+      window.__abGet(API_BASE + '/order/recent-buyers/' + encodeURIComponent(slug), 60000, function (e2, r2) {
+        var buyers = (!e2 && r2 && r2.data) ? r2.data : [];
+        var messages = buildTickerMessages(buyers);
+        var tries = 0;
+        (function waitBtn() {
+          var realBtn = findRealOrderButton();
+          if (realBtn) { render(realBtn, messages); return; }
+          if (++tries < POLL_MAX) setTimeout(waitBtn, POLL_MS);
+        })();
+      });
+    });
+  }
+
+  var lastPath = '';
+  function maybeBoot() {
+    if (location.pathname === lastPath) return;
+    lastPath = location.pathname;
+    cleanup();
+    boot();
+  }
+  maybeBoot();
+  window.addEventListener('popstate', maybeBoot);
+  setInterval(maybeBoot, 1000);
+})();
+</script>

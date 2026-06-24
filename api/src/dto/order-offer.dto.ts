@@ -25,6 +25,31 @@ export class AddOrderOfferDto {
   @IsOptional()
   @IsNumber()
   firstOrderMinAmount: number;
+
+  // Free-gift (notebook) offer config
+  @IsOptional()
+  @IsBoolean()
+  giftEnabled: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  giftMinAmount: number;
+
+  @IsOptional()
+  @IsObject()
+  giftProduct: object;
+
+  @IsOptional()
+  @IsString()
+  giftBuyXProductSlug: string;
+
+  @IsOptional()
+  @IsNumber()
+  giftBuyXQty: number;
+
+  @IsOptional()
+  @IsString()
+  giftLabel: string;
 }
 
 export class FilterOrderOfferDto {
