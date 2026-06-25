@@ -1,0 +1,129 @@
+<!--
+  Lever 6: Optional email field on the checkout page (app-checkout).
+
+  WHY: Meta Purchase Event Match Quality is dragged down by Email coverage at
+  ~0.71%. The injected dl-normalize script (in index.html) already maps
+  `req.email` -> user_data.email_address -> purchase_stape -> Stape -> Meta `em`,
+  and AddOrderDto already persists `email`. The ONLY missing link is that the
+  Angular checkout form has no email input, so the order POST body never carries
+  `email`. This lever adds that input and splices its value into the order POST.
+
+  HOW:
+    1. Inject a styled, OPTIONAL email field right below the name field
+       (input[formcontrolname="name"]) inside app-checkout.
+    2. Wrap XMLHttpRequest open/send ONCE. On POST to /add-order-by-*, parse the
+       JSON body and add `email` (only if a valid address is typed and the body
+       doesn't already have one), then forward the modified body. This wrapper is
+       installed AFTER index.html's wrapper, so it runs OUTERMOST: it mutates the
+       body first, then index.html's send-wrap captures the email-carrying body.
+
+  SAFETY:
+    - Field is optional. Invalid/blank email = no injection, order never blocked.
+    - Idempotent by element id; re-injects if Angular re-renders the form, and
+      restores the user's typed value.
+-->
+<script>
+(function () {
+  'use strict';
+
+  var FIELD_ID = 'ab-email-field';
+  var INPUT_ID = 'ab-email-input';
+  var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  var lastEmail = '';
+
+  function validEmail(v) {
+    v = (v || '').trim();
+    return v && EMAIL_RE.test(v) ? v.toLowerCase() : '';
+  }
+
+  /* ── 1. Inject the email field below the name field ──────────────────── */
+  function styleOnce() {
+    if (document.getElementById('ab-email-style')) return;
+    var s = document.createElement('style'); s.id = 'ab-email-style';
+    s.textContent =
+      '#' + FIELD_ID + '{width:100%;box-sizing:border-box;margin:6px 0 14px;font-family:hind-siliguri,sans-serif}' +
+      '#' + FIELD_ID + ' label{display:block;font-size:13px;color:#444;margin:0 0 6px 2px}' +
+      '#' + INPUT_ID + '{width:100%;box-sizing:border-box;padding:14px 16px;font-size:15px;' +
+        'border:1px solid #c9ccd1;border-radius:8px;background:#fff;color:#173a2b;outline:none;' +
+        'font-family:hind-siliguri,sans-serif;transition:border-color .15s}' +
+      '#' + INPUT_ID + ':focus{border-color:#1f5038}' +
+      '#' + INPUT_ID + '.ab-bad{border-color:#d9534f}';
+    document.head.appendChild(s);
+  }
+
+  function nameField() {
+    var input = document.querySelector('app-checkout input[formcontrolname="name"]');
+    if (!input) return null;
+    // climb to the Material form-field wrapper so we insert AFTER the whole field
+    var wrap = input.closest ? input.closest('mat-form-field, .mat-mdc-form-field') : null;
+    return wrap || input.parentElement || input;
+  }
+
+  function inject() {
+    if (document.getElementById(FIELD_ID)) return;       // already there
+    var anchor = nameField();
+    if (!anchor || !anchor.parentNode) return;
+    styleOnce();
+
+    var field = document.createElement('div');
+    field.id = FIELD_ID;
+    field.innerHTML =
+      '<label for="' + INPUT_ID + '">ইমেইল (Email) — যদি থাকে / optional</label>' +
+      '<input id="' + INPUT_ID + '" type="email" inputmode="email" autocomplete="email" ' +
+        'placeholder="example@gmail.com">';
+
+    // place directly below the name field
+    if (anchor.nextSibling) anchor.parentNode.insertBefore(field, anchor.nextSibling);
+    else anchor.parentNode.appendChild(field);
+
+    var inp = field.querySelector('#' + INPUT_ID);
+    if (lastEmail) inp.value = lastEmail;                 // restore after re-render
+    inp.addEventListener('input', function () {
+      lastEmail = inp.value;
+      inp.classList.toggle('ab-bad', inp.value.trim() !== '' && !validEmail(inp.value));
+    });
+  }
+
+  function tick() {
+    if (!document.querySelector('app-checkout')) return;
+    inject();
+  }
+  setInterval(tick, 800);
+
+  /* ── 2. Splice email into the order POST body (runs OUTERMOST) ────────── */
+  if (!XMLHttpRequest.prototype.__abEmailWrap) {
+    var _open = XMLHttpRequest.prototype.open;
+    var _send = XMLHttpRequest.prototype.send;
+
+    XMLHttpRequest.prototype.open = function (m, u) {
+      this._abU = String(u || '');
+      return _open.apply(this, arguments);
+    };
+
+    XMLHttpRequest.prototype.send = function (body) {
+      try {
+        if (this._abU && this._abU.indexOf('add-order-by') !== -1 &&
+            typeof body === 'string' && body.charAt(0) === '{') {
+          var em = validEmail(lastEmail);
+          // fall back to reading the live input in case lastEmail missed an event
+          if (!em) {
+            var live = document.getElementById(INPUT_ID);
+            if (live) em = validEmail(live.value);
+          }
+          if (em) {
+            var data = JSON.parse(body);
+            if (!data.email) {           // never clobber an existing value
+              data.email = em;
+              body = JSON.stringify(data);
+              arguments[0] = body;
+            }
+          }
+        }
+      } catch (e) { /* never block the order */ }
+      return _send.apply(this, arguments);
+    };
+
+    XMLHttpRequest.prototype.__abEmailWrap = true;
+  }
+})();
+</script>

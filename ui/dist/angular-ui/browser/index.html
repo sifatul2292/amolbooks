@@ -1774,5 +1774,92 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
 })();
 </script>
 
+<!-- ── Optional email field on checkout (Meta Purchase EMQ: email coverage) ──
+     Adds an OPTIONAL email input below the name field in app-checkout and
+     splices its value into the /add-order-by-* POST body. The body-capture
+     wrap above (`self._gbody`) then maps req.email -> user_data.email_address
+     -> purchase_stape -> Stape -> Meta `em`, and AddOrderDto persists email.
+     Installed LAST = outermost XHR wrap: mutates body before _gbody capture. -->
+<script>
+(function () {
+  'use strict';
+  var FIELD_ID = 'ab-email-field', INPUT_ID = 'ab-email-input';
+  var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/, lastEmail = '';
+
+  function validEmail(v) {
+    v = (v || '').trim();
+    return v && EMAIL_RE.test(v) ? v.toLowerCase() : '';
+  }
+
+  function styleOnce() {
+    if (document.getElementById('ab-email-style')) return;
+    var s = document.createElement('style'); s.id = 'ab-email-style';
+    s.textContent =
+      '#' + FIELD_ID + '{width:100%;box-sizing:border-box;margin:6px 0 14px;font-family:hind-siliguri,sans-serif}' +
+      '#' + FIELD_ID + ' label{display:block;font-size:13px;color:#444;margin:0 0 6px 2px}' +
+      '#' + INPUT_ID + '{width:100%;box-sizing:border-box;padding:14px 16px;font-size:15px;' +
+        'border:1px solid #c9ccd1;border-radius:8px;background:#fff;color:#173a2b;outline:none;' +
+        'font-family:hind-siliguri,sans-serif;transition:border-color .15s}' +
+      '#' + INPUT_ID + ':focus{border-color:#1f5038}' +
+      '#' + INPUT_ID + '.ab-bad{border-color:#d9534f}';
+    document.head.appendChild(s);
+  }
+
+  function nameField() {
+    var input = document.querySelector('app-checkout input[formcontrolname="name"]');
+    if (!input) return null;
+    var wrap = input.closest ? input.closest('mat-form-field, .mat-mdc-form-field') : null;
+    return wrap || input.parentElement || input;
+  }
+
+  function inject() {
+    if (document.getElementById(FIELD_ID)) return;
+    var anchor = nameField();
+    if (!anchor || !anchor.parentNode) return;
+    styleOnce();
+    var field = document.createElement('div');
+    field.id = FIELD_ID;
+    field.innerHTML =
+      '<label for="' + INPUT_ID + '">ইমেইল (Email) — যদি থাকে / optional</label>' +
+      '<input id="' + INPUT_ID + '" type="email" inputmode="email" autocomplete="email" ' +
+        'placeholder="example@gmail.com">';
+    if (anchor.nextSibling) anchor.parentNode.insertBefore(field, anchor.nextSibling);
+    else anchor.parentNode.appendChild(field);
+    var inp = field.querySelector('#' + INPUT_ID);
+    if (lastEmail) inp.value = lastEmail;
+    inp.addEventListener('input', function () {
+      lastEmail = inp.value;
+      inp.classList.toggle('ab-bad', inp.value.trim() !== '' && !validEmail(inp.value));
+    });
+  }
+
+  setInterval(function () {
+    if (document.querySelector('app-checkout')) inject();
+  }, 800);
+
+  if (!XMLHttpRequest.prototype.__abEmailWrap) {
+    var _open = XMLHttpRequest.prototype.open, _send = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.open = function (m, u) {
+      this._abU = String(u || ''); return _open.apply(this, arguments);
+    };
+    XMLHttpRequest.prototype.send = function (body) {
+      try {
+        if (this._abU && this._abU.indexOf('add-order-by') !== -1 &&
+            typeof body === 'string' && body.charAt(0) === '{') {
+          var em = validEmail(lastEmail);
+          if (!em) { var live = document.getElementById(INPUT_ID); if (live) em = validEmail(live.value); }
+          if (em) {
+            var data = JSON.parse(body);
+            if (!data.email) { data.email = em; body = JSON.stringify(data); arguments[0] = body; }
+          }
+        }
+      } catch (e) { /* never block the order */ }
+      return _send.apply(this, arguments);
+    };
+    XMLHttpRequest.prototype.__abEmailWrap = true;
+  }
+})();
+</script>
+
 <script src="/ab-widgets.js?v=17" defer></script>
 </body></html>
