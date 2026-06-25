@@ -565,64 +565,18 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
     if(!t){
       t=document.createElement('div');
       t.id='amol-cart-toast';
-      if(!document.getElementById('amol-toast-gift-style')){
-        var st=document.createElement('style');st.id='amol-toast-gift-style';
-        st.textContent=
-          '#amol-cart-toast .amol-ct-top{font-size:14px;line-height:1.5;margin-bottom:8px;font-weight:600}'+
-          '#amol-cart-toast .amol-ct-congrats{font-size:15px;font-weight:800;margin-bottom:10px;color:#f4d44e}'+
-          '#amol-cart-toast .amol-ct-prog-msg{font-size:13px;margin-bottom:6px;opacity:.95}'+
-          '#amol-cart-toast .amol-ct-prog-msg b{color:#f4d44e}'+
-          '#amol-cart-toast .amol-ct-bar{height:9px;border-radius:6px;background:rgba(255,255,255,.22);overflow:hidden;margin-bottom:12px}'+
-          '#amol-cart-toast .amol-ct-fill{height:100%;background:#f4d44e;border-radius:6px;transition:width .6s ease}';
-        document.head.appendChild(st);
-      }
+      t.innerHTML='<div class="amol-ct-msg">আপনার বই কার্টে যোগ হয়েছে।<br>অর্ডার সম্পন্ন করতে এখানে ক্লিক করুন</div>'
+                 +'<button class="amol-ct-btn" onclick="window.location.href=\'/checkout\'">চেকআউট করুন &rarr;</button>';
       document.body.appendChild(t);
     }
     return t;
   }
 
-  function _toastCartTotal(){
-    try{
-      var keys=Object.keys(localStorage);
-      for(var k=0;k<keys.length;k++){
-        if(keys[k].toUpperCase().indexOf('USER_CART')>-1){
-          var arr=JSON.parse(localStorage.getItem(keys[k]));
-          if(Array.isArray(arr)){var s=0;arr.forEach(function(it){var p=it.salePrice!=null?it.salePrice:(it.unitPrice!=null?it.unitPrice:0),q=it.selectedQty||it.quantity||1;s+=p*q;});if(s>0)return s;}
-        }
-      }
-    }catch(e){}
-    return 0;
-  }
-
-  function _buildToastInner(total){
-    var threshold=750;
-    var toBn=function(n){return String(Math.round(n)).replace(/\d/g,function(d){return'০১২৩৪৫৬৭৮৯'[d];});};
-    var inner='<div class="amol-ct-top">🛒 আপনার বই কার্টে যোগ হয়েছে!</div>';
-    if(total>=threshold){
-      inner+='<div class="amol-ct-congrats">🎉 অভিনন্দন! ফ্রি নোটবুক আনলক হয়েছে!</div>';
-    } else {
-      var rem=Math.ceil(threshold-total);
-      var pct=total>0?Math.min(98,Math.round(total/threshold*100)):4;
-      inner+='<div class="amol-ct-prog-msg">আর মাত্র <b>৳'+toBn(rem)+'</b> যোগ করুন — পেয়ে যান <b>ফ্রি নোটবুক</b> 🎁</div>'+
-             '<div class="amol-ct-bar"><div class="amol-ct-fill" style="width:'+pct+'%"></div></div>';
-    }
-    inner+='<button class="amol-ct-btn" onclick="window.location.href=\'/checkout\'">চেকআউট করুন &rarr;</button>';
-    return inner;
-  }
-
   function showToast(){
     var t=getToast();
     clearTimeout(_toastTimer);
-    // Show immediately with base message; Angular updates localStorage asynchronously
-    // so we re-read after 800ms to get accurate cart total.
-    t.innerHTML='<div class="amol-ct-top">🛒 আপনার বই কার্টে যোগ হয়েছে!</div>'+
-                '<button class="amol-ct-btn" onclick="window.location.href=\'/checkout\'">চেকআউট করুন &rarr;</button>';
     t.classList.add('amol-show');
-    setTimeout(function(){
-      if(!t.classList.contains('amol-show'))return;
-      t.innerHTML=_buildToastInner(_toastCartTotal());
-    },800);
-    _toastTimer=setTimeout(function(){t.classList.remove('amol-show');},12000);
+    _toastTimer=setTimeout(function(){t.classList.remove('amol-show');},6000);
   }
 
   /* ── loop animation helpers ── */
@@ -1820,5 +1774,5 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
 })();
 </script>
 
-<script src="/ab-widgets.js?v=16" defer></script>
+<script src="/ab-widgets.js?v=17" defer></script>
 </body></html>
