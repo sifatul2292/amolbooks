@@ -14,7 +14,7 @@ Each `.html` file = one GTM Custom-HTML tag. Paste the file contents (including 
 | `lever2-urgency.html` | Countdown to discount end, low-stock "মাত্র N কপি বাকি", "N+ কপি বিক্রি হয়েছে" | Product page |
 | `lever3-sticky-cta.html` | Sticky bottom Order bar (mobile) + rotating ticker: real recent buyers + bonus-urgency line | Product page, mobile ≤768px |
 | `lever1-buy2-banner.html` | "২টি কিনুন — নোটবুক ফ্রি" banner | Only the configured book |
-| `lever0-cart-threshold.html` | "৳750+ অর্ডারে নোটবুক ফ্রি" teaser (product) + live progress bar (cart) | All product pages + `/cart` |
+| `lever0-cart-threshold.html` | Live cart progress + free-notebook row after either gift rule is earned | Cart page / cart drawer |
 
 ## GTM setup (per tag)
 
@@ -41,6 +41,7 @@ API host, change this line in every snippet before pasting.
   (`order.controller.ts`, `order.service.ts`)
 - Free-gift engine in `order.service.ts` `newOrderMake` → `evaluateGiftLine()`.
   Attaches a zero-price gift line (`orderType:'gift'`, `isGift:true`) when eligible.
+  The ৳750 rule uses the payable/sale-price subtotal, matching the cart popup.
   Does **not** change subtotal/discount/grandTotal.
 - Gift config fields added to the single `OrderOffer` doc
   (`order-offer.schema.ts`, `order-offer.dto.ts`) and the gift flag on
@@ -103,6 +104,9 @@ matches real fulfillment — no customer hits ৳750 and gets nothing.
 - Lever 0 progress bar on the **cart page** reads the rendered total from the DOM
   (cart is server-side, not in localStorage). It falls back to the static teaser if
   the total can't be parsed. Re-verify the scrape after any Angular rebuild.
+- The cart and checkout widgets also read the SPA cart mirror from `localStorage`
+  for the "buy 2 of this book" rule. They show the notebook row immediately; the
+  real ৳0 order item is still attached server-side at checkout.
 - Sticky-CTA proxy-clicks the real Angular "অর্ডার করুন" button (located by text);
   re-verify the selector after an Angular rebuild.
 - Analytics: sticky CTA pushes `ab_sticky_cta_click` to `dataLayer` for lift tracking.

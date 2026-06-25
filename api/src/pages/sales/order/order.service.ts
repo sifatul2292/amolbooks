@@ -2170,10 +2170,15 @@ export class OrderService {
         this.utilsService.transform(t.product, 'regularPrice', t.selectedQty),
       0,
     );
+    const giftEligibleSubTotal = finalData.reduce(
+      (acc, t) =>
+        acc + this.utilsService.transform(t.product, 'salePrice', t.selectedQty),
+      0,
+    );
 
     // Free-gift (notebook) — append a zero-price gift line if eligible.
     // Added to orderedItems only; does NOT affect subtotal/discount/grandTotal.
-    const giftLine = await this.evaluateGiftLine(products, cartSubTotal);
+    const giftLine = await this.evaluateGiftLine(products, giftEligibleSubTotal);
     if (giftLine) products.push(giftLine);
 
     // Cart Discount Amount
@@ -2258,14 +2263,14 @@ export class OrderService {
    * evaluateGiftLine
    * Decides whether a free gift (notebook) should be attached to the order.
    * Config lives on the single OrderOffer doc. Two independent triggers:
-   *   A) global   : cartSubTotal >= giftMinAmount  (any products)
+   *   A) global   : sale-price subtotal >= giftMinAmount  (any products)
    *   B) this book: a line with slug === giftBuyXProductSlug and qty >= giftBuyXQty
    * Returns a zero-price ordered-item, or null. One gift per order; never
    * added if the gift product is already in the cart.
    */
   private async evaluateGiftLine(
     products: any[],
-    cartSubTotal: number,
+    cartSaleSubTotal: number,
   ): Promise<any | null> {
     try {
       const cfg = JSON.parse(
@@ -2286,7 +2291,7 @@ export class OrderService {
       if (products.some((p) => String(p._id) === giftId)) return null;
 
       let eligible = false;
-      if (cfg.giftMinAmount && cartSubTotal >= Number(cfg.giftMinAmount)) {
+      if (cfg.giftMinAmount && cartSaleSubTotal >= Number(cfg.giftMinAmount)) {
         eligible = true;
       }
       if (!eligible && cfg.giftBuyXProductSlug && cfg.giftBuyXQty) {

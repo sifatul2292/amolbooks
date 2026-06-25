@@ -51,6 +51,7 @@ export declare const OrderSchema: mongoose.Schema<any, mongoose.Model<any, any, 
         regularPrice?: number;
         image?: string;
         unit?: string;
+        isGift?: boolean;
     }>;
     discount: number;
     paymentStatus: string;

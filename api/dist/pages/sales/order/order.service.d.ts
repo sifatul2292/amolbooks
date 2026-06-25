@@ -57,6 +57,7 @@ export declare class OrderService {
     updateDate(): Promise<ResponsePayload>;
     checkFraudSpy(phoneNo: string): Promise<ResponsePayload>;
     getRepeatCustomers(): Promise<ResponsePayload>;
+    getRecentBuyersByProduct(slug: string): Promise<ResponsePayload>;
     private buildInvoicePayload;
     generateInvoicesByIds(ids: string[]): Promise<ResponsePayload>;
     generateInvoiceById(shop: string, id: string): Promise<ResponsePayload>;
@@ -77,6 +78,7 @@ export declare class OrderService {
     deleteOrderById(id: string, checkUsage: boolean): Promise<ResponsePayload>;
     deleteMultipleOrderById(ids: string[], checkUsage: boolean): Promise<ResponsePayload>;
     private newOrderMake;
+    private evaluateGiftLine;
     calculateCouponDiscount(cartSubTotal: number, couponId: any): Promise<ResponsePayload | any>;
     calculateOrderDiscount(cartSubTotal: number, userId: any, orderFrom: any): Promise<ResponsePayload | any>;
     private calculateWeightBasedDeliveryCharge;

@@ -27,6 +27,8 @@ const product_enum_1 = require("../../../enum/product.enum");
 const courier_service_1 = require("../../../shared/courier/courier.service");
 const schedule = require("node-schedule");
 const ObjectId = mongoose_2.Types.ObjectId;
+const RECENT_BUYERS_TTL_MS = 120000;
+const recentBuyersCache = new Map();
 let OrderService = OrderService_1 = class OrderService {
     constructor(adminModel, orderModel, incompleteOrderModel, productModel, specialPackageModel, uniqueIdModel, cartModel, userModel, settingModel, couponModel, courierService, shopInformationModel, orderOfferModel, configService, utilsService, bulkSmsService, emailService) {
         this.adminModel = adminModel;
@@ -445,6 +447,46 @@ let OrderService = OrderService_1 = class OrderService {
         }
         catch (err) {
             throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
+    async getRecentBuyersByProduct(slug) {
+        try {
+            if (!slug) {
+                return { success: true, message: 'No slug', data: [] };
+            }
+            const cached = recentBuyersCache.get(slug);
+            if (cached && Date.now() - cached.at < RECENT_BUYERS_TTL_MS) {
+                return {
+                    success: true,
+                    message: 'Success',
+                    data: cached.data,
+                };
+            }
+            const limit = 12;
+            const orders = await this.orderModel
+                .find({ 'orderedItems.slug': slug }, { name: 1, createdAt: 1 })
+                .sort({ createdAt: -1 })
+                .limit(limit)
+                .maxTimeMS(2000)
+                .lean();
+            const data = (orders || [])
+                .map((o) => {
+                var _a;
+                const firstName = ((o === null || o === void 0 ? void 0 : o.name) || '')
+                    .toString()
+                    .trim()
+                    .split(/\s+/)[0];
+                if (!firstName)
+                    return null;
+                return { firstName, purchasedAt: (_a = o === null || o === void 0 ? void 0 : o.createdAt) !== null && _a !== void 0 ? _a : null };
+            })
+                .filter(Boolean);
+            recentBuyersCache.set(slug, { at: Date.now(), data });
+            return { success: true, message: 'Success', data };
+        }
+        catch (err) {
+            this.logger.warn('getRecentBuyersByProduct failed: ' + err.message);
+            return { success: true, message: 'Success', data: [] };
         }
     }
     async buildInvoicePayload(fOrderData) {
@@ -1541,6 +1583,10 @@ let OrderService = OrderService_1 = class OrderService {
         });
         const cartSubTotal = finalData.reduce((acc, t) => acc +
             this.utilsService.transform(t.product, 'regularPrice', t.selectedQty), 0);
+        const giftEligibleSubTotal = finalData.reduce((acc, t) => acc + this.utilsService.transform(t.product, 'salePrice', t.selectedQty), 0);
+        const giftLine = await this.evaluateGiftLine(products, giftEligibleSubTotal);
+        if (giftLine)
+            products.push(giftLine);
         const cartDiscountAmount = finalData.reduce((acc, t) => acc +
             this.utilsService.transform(t.product, 'discountAmount', t.selectedQty), 0);
         const couponDiscount = await this.calculateCouponDiscount(cartSubTotal, orderData === null || orderData === void 0 ? void 0 : orderData.coupon);
@@ -1584,6 +1630,50 @@ let OrderService = OrderService_1 = class OrderService {
             orderTimeline: orderData === null || orderData === void 0 ? void 0 : orderData.orderTimeline,
         };
         return newOrderData;
+    }
+    async evaluateGiftLine(products, cartSaleSubTotal) {
+        try {
+            const cfg = JSON.parse(JSON.stringify(await this.orderOfferModel.findOne({})));
+            if (!cfg || !cfg.giftEnabled || !cfg.giftProduct || !cfg.giftProduct._id) {
+                return null;
+            }
+            const giftId = String(cfg.giftProduct._id);
+            if (!mongoose_2.Types.ObjectId.isValid(giftId)) {
+                this.logger.error('evaluateGiftLine: invalid giftProduct._id ' + giftId);
+                return null;
+            }
+            if (products.some((p) => String(p._id) === giftId))
+                return null;
+            let eligible = false;
+            if (cfg.giftMinAmount && cartSaleSubTotal >= Number(cfg.giftMinAmount)) {
+                eligible = true;
+            }
+            if (!eligible && cfg.giftBuyXProductSlug && cfg.giftBuyXQty) {
+                const match = products.find((p) => p.slug === cfg.giftBuyXProductSlug);
+                if (match && Number(match.quantity) >= Number(cfg.giftBuyXQty)) {
+                    eligible = true;
+                }
+            }
+            if (!eligible)
+                return null;
+            return {
+                _id: cfg.giftProduct._id,
+                name: cfg.giftProduct.name || cfg.giftLabel || 'উপহার',
+                nameEn: cfg.giftProduct.nameEn || 'Free Gift',
+                slug: cfg.giftProduct.slug || null,
+                image: cfg.giftProduct.image || null,
+                regularPrice: 0,
+                unitPrice: 0,
+                salePrice: 0,
+                quantity: 1,
+                orderType: 'gift',
+                isGift: true,
+            };
+        }
+        catch (err) {
+            this.logger.error('evaluateGiftLine failed: ' + err.message);
+            return null;
+        }
     }
     async calculateCouponDiscount(cartSubTotal, couponId) {
         const coupon = JSON.parse(JSON.stringify(await this.couponModel.findOne({ _id: couponId })));

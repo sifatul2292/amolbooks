@@ -79,6 +79,31 @@ exports.OrderOfferSchema = new mongoose.Schema({
         type: Number,
         required: false,
     },
+    giftEnabled: {
+        type: Boolean,
+        required: false,
+        default: false,
+    },
+    giftMinAmount: {
+        type: Number,
+        required: false,
+    },
+    giftProduct: {
+        type: Object,
+        required: false,
+    },
+    giftBuyXProductSlug: {
+        type: String,
+        required: false,
+    },
+    giftBuyXQty: {
+        type: Number,
+        required: false,
+    },
+    giftLabel: {
+        type: String,
+        required: false,
+    },
 }, {
     versionKey: false,
     timestamps: true,

@@ -3,6 +3,12 @@ export declare class AddOrderOfferDto {
     firstOrderDiscountAmount: number;
     firstOrderDiscountType: number;
     firstOrderMinAmount: number;
+    giftEnabled: boolean;
+    giftMinAmount: number;
+    giftProduct: object;
+    giftBuyXProductSlug: string;
+    giftBuyXQty: number;
+    giftLabel: string;
 }
 export declare class FilterOrderOfferDto {
     name: string;

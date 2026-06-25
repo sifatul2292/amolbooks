@@ -70,6 +70,39 @@
     return 0;
   }
 
+  function getCartItems() {
+    var best = [];
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var key = localStorage.key(i);
+        if (!key || key.toUpperCase().indexOf('USER_CART') === -1) continue;
+        var arr; try { arr = JSON.parse(localStorage.getItem(key)); } catch (e) { continue; }
+        if (Array.isArray(arr) && arr.length >= best.length) best = arr;
+      }
+    } catch (e2) {}
+    return best;
+  }
+
+  function itemSlug(item) {
+    return item && (item.slug || (item.product && item.product.slug));
+  }
+
+  function itemQty(item) {
+    var q = Number(item && (item.selectedQty != null ? item.selectedQty : (item.quantity != null ? item.quantity : item.qty)));
+    return !isNaN(q) && q > 0 ? q : 1;
+  }
+
+  function hasBuyXGift(cfg) {
+    if (!cfg || !cfg.giftBuyXProductSlug || !cfg.giftBuyXQty) return false;
+    var need = Number(cfg.giftBuyXQty);
+    if (!need) return false;
+    var items = getCartItems();
+    for (var i = 0; i < items.length; i++) {
+      if (itemSlug(items[i]) === cfg.giftBuyXProductSlug && itemQty(items[i]) >= need) return true;
+    }
+    return false;
+  }
+
   function styleOnce() {
     window.__abTheme();
     if (document.getElementById('ab-checkout-gift-style')) return;
@@ -136,7 +169,7 @@
       return;
     }
     var threshold = Number(cfgCache.giftMinAmount) || 750;
-    if (cartTotal() >= threshold) render(cfgCache); else clear();
+    if (cartTotal() >= threshold || hasBuyXGift(cfgCache)) render(cfgCache); else clear();
   }
 
   setInterval(tick, 800);

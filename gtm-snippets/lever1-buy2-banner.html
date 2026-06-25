@@ -123,15 +123,49 @@
     return 0;
   }
 
+  function getCartItems() {
+    var best = [];
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var key = localStorage.key(i);
+        if (!key || key.toUpperCase().indexOf('USER_CART') === -1) continue;
+        var arr; try { arr = JSON.parse(localStorage.getItem(key)); } catch (e) { continue; }
+        if (Array.isArray(arr) && arr.length >= best.length) best = arr;
+      }
+    } catch (e2) {}
+    return best;
+  }
+
+  function itemSlug(item) {
+    return item && (item.slug || (item.product && item.product.slug));
+  }
+
+  function itemQty(item) {
+    var q = Number(item && (item.selectedQty != null ? item.selectedQty : (item.quantity != null ? item.quantity : item.qty)));
+    return !isNaN(q) && q > 0 ? q : 1;
+  }
+
+  function hasBuyXGift(cfg) {
+    if (!cfg || !cfg.giftBuyXProductSlug || !cfg.giftBuyXQty) return false;
+    var need = Number(cfg.giftBuyXQty);
+    if (!need) return false;
+    var items = getCartItems();
+    for (var i = 0; i < items.length; i++) {
+      if (itemSlug(items[i]) === cfg.giftBuyXProductSlug && itemQty(items[i]) >= need) return true;
+    }
+    return false;
+  }
+
   function cardInner(cfg, isThisBook) {
     var img = (cfg.giftProduct && cfg.giftProduct.image) || '';
     var imgHtml = img ? '<img class="ab-nb" src="' + img + '" alt="free notebook">' : '';
     var threshold = Number(cfg.giftMinAmount) || 750;
     var qtyN = Number(cfg.giftBuyXQty) || 2;
     var total = cartTotal();
+    var earnedGift = total >= threshold || hasBuyXGift(cfg);
 
     var tag, l1, l2, bar = '';
-    if (total >= threshold) {
+    if (earnedGift) {
       tag = '🎉 অভিনন্দন!';
       l1 = 'আপনি একটি <b>ফ্রি নোটবুক</b> পেয়েছেন 🎁';
       l2 = 'চেকআউটে নোটবুকটি উপহার হিসেবে যোগ হয়ে যাবে';

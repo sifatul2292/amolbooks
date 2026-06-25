@@ -13,6 +13,7 @@ export declare class OrderController {
     checkFraudSpy(body: {
         phone: string;
     }): Promise<ResponsePayload>;
+    getRecentBuyersByProduct(slug: string): Promise<ResponsePayload>;
     getRepeatCustomers(): Promise<ResponsePayload>;
     addOrderByUser(addOrderDto: AddOrderDto, user: User): Promise<ResponsePayload>;
     addOrderByAnonymous(addOrderDto: AddOrderDto): Promise<ResponsePayload>;

@@ -142,6 +142,7 @@ export declare const ORDER_ITEM_SCHEMA: mongoose.Schema<any, mongoose.Model<any,
     regularPrice?: number;
     image?: string;
     unit?: string;
+    isGift?: boolean;
 }>;
 export declare const VARIATION_SUB_SCHEMA: mongoose.Schema<any, mongoose.Model<any, any, any, any, any>, {}, {}, {}, {}, mongoose.ResolveSchemaOptions<{
     _id: false;

@@ -25,4 +25,10 @@ export declare const OrderOfferSchema: mongoose.Schema<any, mongoose.Model<any, 
     appsOrderDiscountAmount?: number;
     appsOrderDiscountType?: number;
     appsOrderMinAmount?: number;
+    giftEnabled?: boolean;
+    giftMinAmount?: number;
+    giftProduct?: any;
+    giftBuyXProductSlug?: string;
+    giftBuyXQty?: number;
+    giftLabel?: string;
 }>;

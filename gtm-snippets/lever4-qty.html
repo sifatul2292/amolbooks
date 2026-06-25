@@ -43,7 +43,8 @@
     var els = document.querySelectorAll('p,div,span,h1,h2,h3');
     for (var i = 0; i < els.length; i++) {
       var t = (els[i].textContent || '');
-      if ((t.indexOf('You Save') !== -1 || t.indexOf('Off)') !== -1) && t.length < 120 && els[i].offsetWidth > 100) {
+      if ((t.indexOf('You Save') !== -1 || t.indexOf('Off)') !== -1 || t.indexOf('Tk') !== -1 || t.indexOf('৳') !== -1) &&
+          t.length < 160 && els[i].offsetWidth > 100 && els[i].offsetParent !== null) {
         var blk = els[i];
         while (blk.parentElement && blk.parentElement.offsetWidth < window.innerWidth * 0.9 &&
                blk.parentElement.offsetWidth > 100 && blk.parentElement.children.length <= 8) {
@@ -87,7 +88,7 @@
   }
 
   function render(addBtn) {
-    if (document.getElementById(WRAP_ID)) { attach(addBtn); return; }
+    if (document.getElementById(WRAP_ID)) { if (addBtn) attach(addBtn); return; }
     styleOnce();
     var wrap = document.createElement('div'); wrap.id = WRAP_ID;
     wrap.innerHTML =
@@ -109,7 +110,7 @@
       priceBlk.parentNode.insertBefore(wrap, priceBlk);
       placed = true;
     }
-    if (!placed) {
+    if (!placed && addBtn) {
       var blk = addBtn;
       for (var u = 0; u < 6 && blk.parentElement && blk.offsetWidth < window.innerWidth * 0.6; u++) blk = blk.parentElement;
       if (blk.parentNode) { blk.parentNode.insertBefore(wrap, blk); placed = true; }
@@ -125,13 +126,13 @@
         }
       }
     }
-    if (placed) attach(addBtn);
+    if (placed && addBtn) attach(addBtn);
   }
 
   function tryRender() {
     if (!isProductPage()) return;
     var addBtn = findAddBtn();
-    if (addBtn) render(addBtn);
+    if (addBtn || findPriceBlock()) render(addBtn);
   }
 
   function stopObs() { if (_obs) { _obs.disconnect(); _obs = null; } }

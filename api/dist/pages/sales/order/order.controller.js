@@ -43,6 +43,9 @@ let OrderController = OrderController_1 = class OrderController {
     async checkFraudSpy(body) {
         return await this.orderService.checkFraudSpy(body.phone);
     }
+    async getRecentBuyersByProduct(slug) {
+        return await this.orderService.getRecentBuyersByProduct(slug);
+    }
     async getRepeatCustomers() {
         return await this.orderService.getRepeatCustomers();
     }
@@ -144,6 +147,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], OrderController.prototype, "checkFraudSpy", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Get)('/recent-buyers/:slug'),
+    __param(0, (0, common_1.Param)('slug')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "getRecentBuyersByProduct", null);
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Post)('/repeat-customers'),

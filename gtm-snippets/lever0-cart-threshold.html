@@ -48,6 +48,39 @@
   function bnToNum(s) { var m={'০':'0','১':'1','২':'2','৩':'3','৪':'4','৫':'5','৬':'6','৭':'7','৮':'8','৯':'9'}; return s.replace(/[০-৯]/g,function(d){return m[d];}); }
   function lastNum(str) { var m = bnToNum(str || '').replace(/[,৳]/g, '').match(/\d[\d.]{0,7}/g); return m ? parseFloat(m[m.length-1]) : NaN; }
 
+  function getCartItems() {
+    var best = [];
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var key = localStorage.key(i);
+        if (!key || key.toUpperCase().indexOf('USER_CART') === -1) continue;
+        var arr; try { arr = JSON.parse(localStorage.getItem(key)); } catch (e) { continue; }
+        if (Array.isArray(arr) && arr.length >= best.length) best = arr;
+      }
+    } catch (e2) {}
+    return best;
+  }
+
+  function itemSlug(item) {
+    return item && (item.slug || (item.product && item.product.slug));
+  }
+
+  function itemQty(item) {
+    var q = Number(item && (item.selectedQty != null ? item.selectedQty : (item.quantity != null ? item.quantity : item.qty)));
+    return !isNaN(q) && q > 0 ? q : 1;
+  }
+
+  function cartHasBuyXGift(cfg) {
+    if (!cfg || !cfg.giftBuyXProductSlug || !cfg.giftBuyXQty) return false;
+    var need = Number(cfg.giftBuyXQty);
+    if (!need) return false;
+    var items = getCartItems();
+    for (var i = 0; i < items.length; i++) {
+      if (itemSlug(items[i]) === cfg.giftBuyXProductSlug && itemQty(items[i]) >= need) return true;
+    }
+    return false;
+  }
+
   // Visible cart header — distinguishes the real cart page from the hidden sidebar.
   function visibleCartHeader() {
     var all = document.querySelectorAll('h1,h2,h3,h4,div,span,p');
@@ -125,12 +158,14 @@
     var total = readCartTotal();
     var img = (cfg.giftProduct && cfg.giftProduct.image) || '';
     var giftName = (cfg.giftProduct && cfg.giftProduct.name) || 'ফ্রি নোটবুক';
+    var hasThresholdGift = !isNaN(total) && threshold && total >= threshold;
+    var hasBuyXGift = cartHasBuyXGift(cfg);
 
     var box = document.getElementById(BOX_ID);
     if (!box) { box = document.createElement('div'); box.id = BOX_ID; if (!place(box)) return; }
     var gift = document.getElementById(GIFT_ID);
 
-    if (!isNaN(total) && total >= threshold) {
+    if (hasThresholdGift || hasBuyXGift) {
       box.innerHTML = '<div class="h">🎉 অভিনন্দন! আপনি একটি <b>ফ্রি নোটবুক</b> পেয়েছেন 🎁</div>';
       if (!gift) {
         gift = document.createElement('div'); gift.id = GIFT_ID;
@@ -141,7 +176,7 @@
       }
     } else {
       if (gift) gift.parentNode.removeChild(gift);
-      if (!isNaN(total)) {
+      if (!isNaN(total) && threshold) {
         var remaining = Math.max(0, Math.ceil(threshold - total));
         var pct = Math.min(100, Math.round((total / threshold) * 100));
         box.innerHTML = '<div class="h">🎁 আর মাত্র <b>৳' + toBn(remaining) + '</b> টাকার বই যোগ করুন — পেয়ে যান <b>ফ্রি নোটবুক</b>!</div>' +
