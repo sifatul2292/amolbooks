@@ -342,6 +342,15 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
 
   function _getCookie(n){var m=document.cookie.match(new RegExp('(?:^|; )'+n.replace(/([.*+?^${}()|[\]\\])/g,'\\$1')+'=([^;]*)'));return m?decodeURIComponent(m[1]):'';}
 
+  /* Persistent first-party id -> Meta external_id (stable per browser, 100% coverage). */
+  function _xid(){
+    try{
+      var k='_ab_xid',v=localStorage.getItem(k);
+      if(!v){v=(Date.now().toString(36)+Math.random().toString(36).slice(2,10));localStorage.setItem(k,v);}
+      return v;
+    }catch(e){return '';}
+  }
+
   /* ── XHR intercept: populate _localCart from cart/product APIs; fire purchase ── */
   var _xhrOpen=XMLHttpRequest.prototype.open;
   var _xhrSend=XMLHttpRequest.prototype.send;
@@ -449,6 +458,7 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
           var _fbc=_getCookie('_fbc');var _fbp=_getCookie('_fbp');
           if(_fbc)ud.fbc=_fbc;
           if(_fbp)ud.fbp=_fbp;
+          var _x=_xid();if(_x)ud.external_id=_x;
           /* Store for NestJS CAPI injection */
           _lastOrderUserData=ud;
           _localCart=[];
