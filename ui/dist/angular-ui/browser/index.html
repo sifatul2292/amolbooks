@@ -1847,6 +1847,19 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
     if (document.querySelector('app-checkout')) inject();
   }, 800);
 
+  /* Persistent first-party id -> Meta external_id (stable per browser). */
+  function _abXid() {
+    try {
+      var k = '_ab_xid', v = localStorage.getItem(k);
+      if (!v) { v = Date.now().toString(36) + Math.random().toString(36).slice(2, 10); localStorage.setItem(k, v); }
+      return v;
+    } catch (e) { return ''; }
+  }
+  function _abCk(n) {
+    var m = document.cookie.match(new RegExp('(?:^|; )' + n.replace(/([.*+?^${}()|[\]\\])/g, '\\$1') + '=([^;]*)'));
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+
   if (!XMLHttpRequest.prototype.__abEmailWrap) {
     var _open = XMLHttpRequest.prototype.open, _send = XMLHttpRequest.prototype.send;
     XMLHttpRequest.prototype.open = function (m, u) {
@@ -1854,16 +1867,26 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
     };
     XMLHttpRequest.prototype.send = function (body) {
       try {
-        if (this._abU && this._abU.indexOf('add-order-by') !== -1 &&
-            typeof body === 'string' && body.charAt(0) === '{') {
-          var em = validEmail(lastEmail);
-          if (!em) { var live = document.getElementById(INPUT_ID); if (live) em = validEmail(live.value); }
-          if (em) {
-            var data = JSON.parse(body);
-            if (!data.email) { data.email = em; body = JSON.stringify(data); arguments[0] = body; }
+        if (this._abU && typeof body === 'string' && body.charAt(0) === '{') {
+          var u = this._abU, mutated = false, data;
+          /* Order POST: splice optional email */
+          if (u.indexOf('add-order-by') !== -1) {
+            var em = validEmail(lastEmail);
+            if (!em) { var live = document.getElementById(INPUT_ID); if (live) em = validEmail(live.value); }
+            if (em) { data = data || JSON.parse(body); if (!data.email) { data.email = em; mutated = true; } }
           }
+          /* All ViewContent/PageView/AddToCart/Checkout events: external_id + fbc/fbp */
+          if (u.indexOf('track-theme-') !== -1) {
+            data = data || JSON.parse(body);
+            data.user_data = data.user_data || {};
+            var ud = data.user_data;
+            if (!ud.external_id) { var x = _abXid(); if (x) { ud.external_id = x; mutated = true; } }
+            if (!ud.fbc) { var fbc = _abCk('_fbc'); if (fbc) { ud.fbc = fbc; mutated = true; } }
+            if (!ud.fbp) { var fbp = _abCk('_fbp'); if (fbp) { ud.fbp = fbp; mutated = true; } }
+          }
+          if (mutated) { body = JSON.stringify(data); arguments[0] = body; }
         }
-      } catch (e) { /* never block the order */ }
+      } catch (e) { /* never block the request */ }
       return _send.apply(this, arguments);
     };
     XMLHttpRequest.prototype.__abEmailWrap = true;
