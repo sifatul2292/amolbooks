@@ -27,5 +27,15 @@ npm-debug.log*
 # Backups
 api/backup/db/
 
+# Server-uploaded / runtime-generated files (never track — git deploy ops wipe these)
+api/upload/images/*
+api/upload/files/*
+api/upload/invoice/*
+api/upload/csv/*
+!api/upload/images/.gitkeep
+!api/upload/files/.gitkeep
+!api/upload/invoice/.gitkeep
+!api/upload/csv/.gitkeep
+
 # Claude Code session data
 .claude/
