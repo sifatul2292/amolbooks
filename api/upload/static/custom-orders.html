@@ -907,8 +907,7 @@
     .stock-prod { display: flex; align-items: center; gap: 10px; min-width: 0; }
     .stock-prod > div { min-width: 0; flex: 1; }
     .stock-prod-name { font-weight: 700; color: #1e293b; font-size: 13px; line-height: 1.4; word-break: normal; overflow-wrap: anywhere; }
-    #stockView table thead th:first-child,
-    #stockView table tbody td:first-child { min-width: 280px; width: 45%; }
+    #stockView table tbody td { vertical-align: middle; }
     .stock-prod-sku { font-size: 11px; color: var(--g400); margin-top: 2px; }
     .stock-input {
       width: 80px; border: 1.5px solid var(--g200); border-radius: 8px;
@@ -1096,14 +1095,14 @@
         </div>
         <div class="table-card">
           <div class="table-wrap">
-            <table style="min-width:760px">
+            <table style="min-width:760px;table-layout:fixed;width:100%">
               <thead>
                 <tr>
-                  <th style="padding-left:18px">Product</th>
-                  <th>Price</th>
-                  <th style="width:120px">Stock</th>
-                  <th style="width:130px">Low Alert ≤</th>
-                  <th style="width:120px">Status</th>
+                  <th style="padding-left:18px;width:auto">Product</th>
+                  <th style="width:90px">Price</th>
+                  <th style="width:110px">Stock</th>
+                  <th style="width:120px">Low Alert ≤</th>
+                  <th style="width:130px">Status</th>
                   <th style="width:90px"></th>
                 </tr>
               </thead>
