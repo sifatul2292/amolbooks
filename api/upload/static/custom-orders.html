@@ -880,6 +880,51 @@
     }
     .snap-link:hover { opacity: 1; }
     .snap-divider { border: none; border-top: 1px solid rgba(255,255,255,.06); margin: 0; }
+
+    /* ── Stock Management ── */
+    body.stock-mode .content > :not(#stockView) { display: none !important; }
+    #stockView { display: none; }
+    body.stock-mode #stockView { display: block; }
+    .stock-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .stock-head h2 { font-size: 19px; font-weight: 900; color: var(--g900); letter-spacing: -.02em; }
+    .stock-head h2 i { color: var(--p); margin-right: 8px; }
+    .stock-tools { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
+    .stock-search {
+      display: flex; align-items: center; gap: 8px; background: #fff;
+      border: 1.5px solid var(--g200); border-radius: 10px; padding: 8px 13px;
+      flex: 1; min-width: 220px; box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    }
+    .stock-search i { color: var(--g400); font-size: 12px; }
+    .stock-search input { border: none; outline: none; font-size: 13px; font-weight: 500; width: 100%; font-family: inherit; color: #1e293b; background: none; }
+    .stock-low-toggle {
+      display: flex; align-items: center; gap: 7px; background: #fff;
+      border: 1.5px solid var(--g200); border-radius: 10px; padding: 8px 13px;
+      font-size: 12.5px; font-weight: 600; color: var(--g700); cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,.05); user-select: none; white-space: nowrap;
+    }
+    .stock-low-toggle.active { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+    .stock-tbl-img { width: 40px; height: 50px; object-fit: cover; border-radius: 6px; background: var(--g100); flex-shrink: 0; }
+    .stock-prod { display: flex; align-items: center; gap: 10px; }
+    .stock-prod-name { font-weight: 700; color: #1e293b; font-size: 13px; line-height: 1.4; word-break: break-word; }
+    .stock-prod-sku { font-size: 11px; color: var(--g400); margin-top: 2px; }
+    .stock-input {
+      width: 80px; border: 1.5px solid var(--g200); border-radius: 8px;
+      padding: 6px 9px; font-size: 13px; font-weight: 600; color: #1e293b;
+      outline: none; font-family: inherit; text-align: center;
+    }
+    .stock-input:focus { border-color: var(--p); box-shadow: 0 0 0 3px rgba(124,58,237,.1); }
+    .stock-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+    .stock-pill.untracked { background: var(--g100); color: var(--g500); }
+    .stock-pill.ok { background: #d1fae5; color: #065f46; }
+    .stock-pill.low { background: #fef3c7; color: #92400e; }
+    .stock-pill.out { background: #fee2e2; color: #991b1b; }
+    .btn-stock-save {
+      background: var(--p); color: #fff; border: none; border-radius: 8px;
+      padding: 6px 14px; font-size: 12px; font-weight: 700; cursor: pointer;
+      font-family: inherit; transition: background .15s;
+    }
+    .btn-stock-save:hover { background: var(--p-dark); }
+    .btn-stock-save:disabled { opacity: .5; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -936,6 +981,10 @@
       </a>
       <a href="import-woo-orders.html" class="nav-item">
         <i class="fas fa-file-import"></i> Import WooCommerce
+      </a>
+      <div class="nav-label" style="margin-top:8px">Inventory</div>
+      <a href="custom-orders.html?view=stock" class="nav-item" id="navStock">
+        <i class="fas fa-boxes-stacked"></i> Stock Management
       </a>
       <div class="nav-label" style="margin-top:8px">Analytics</div>
       <a href="profit-dashboard.html" class="nav-item">
@@ -1012,6 +1061,63 @@
 
     <!-- Content -->
     <div class="content">
+
+      <!-- Stock Management View -->
+      <div id="stockView">
+        <div class="stock-head">
+          <h2><i class="fas fa-boxes-stacked"></i>Stock Management</h2>
+        </div>
+        <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+          <div class="stat-card c3">
+            <div class="stat-icon"><i class="fas fa-cubes"></i></div>
+            <div class="stat-info"><label>Tracked Products</label><div class="val" id="stockTrackedCount">—</div></div>
+          </div>
+          <div class="stat-card c2">
+            <div class="stat-icon"><i class="fas fa-triangle-exclamation"></i></div>
+            <div class="stat-info"><label>Low Stock</label><div class="val" id="stockLowCount">—</div></div>
+          </div>
+          <div class="stat-card" style="background:linear-gradient(135deg,#dc2626,#991b1b)">
+            <div class="stat-icon"><i class="fas fa-ban"></i></div>
+            <div class="stat-info"><label>Out of Stock</label><div class="val" id="stockOutCount">—</div></div>
+          </div>
+        </div>
+        <div class="stock-tools">
+          <div class="stock-search">
+            <i class="fas fa-search"></i>
+            <input type="text" id="stockSearch" placeholder="Search product / SKU…">
+          </div>
+          <div class="stock-low-toggle" id="stockLowToggle" onclick="toggleStockLowOnly()">
+            <i class="fas fa-triangle-exclamation"></i> Low stock only
+          </div>
+          <button class="btn-reset" onclick="loadStockList()"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
+        <div class="table-card">
+          <div class="table-wrap">
+            <table style="min-width:760px">
+              <thead>
+                <tr>
+                  <th style="padding-left:18px">Product</th>
+                  <th>Price</th>
+                  <th style="width:120px">Stock</th>
+                  <th style="width:130px">Low Alert ≤</th>
+                  <th style="width:120px">Status</th>
+                  <th style="width:90px"></th>
+                </tr>
+              </thead>
+              <tbody id="stockBody">
+                <tr class="loading-row"><td colspan="6"><div class="spinner"></div><div>Loading products…</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination-bar">
+            <div class="pagination-info" id="stockPageInfo">—</div>
+            <div class="pagination-controls">
+              <button class="page-btn" id="stockPrev" onclick="stockGoPage(-1)">‹ Prev</button>
+              <button class="page-btn" id="stockNext" onclick="stockGoPage(1)">Next ›</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- Date Filters -->
       <div class="date-row" id="dateRow" style="display:none">
@@ -1392,6 +1498,7 @@
   var currentModalOrderId = null;
   var params = new URLSearchParams(window.location.search);
   var isIncompleteView = params.get('view') === 'incomplete';
+  var isStockView = params.get('view') === 'stock';
 
   /* ── State ── */
   var state = {
@@ -1403,6 +1510,14 @@
   };
 
   function configureView() {
+    if (isStockView) {
+      document.body.classList.add('stock-mode');
+      var stockNav = document.getElementById('navStock');
+      if (stockNav) stockNav.classList.add('active');
+      var t = document.getElementById('pageTitle');
+      if (t) t.textContent = 'Stock Management';
+      return;
+    }
     var ordersNav = document.getElementById('navOrders');
     var incompleteNav = document.getElementById('navIncompleteOrders');
     if (ordersNav) ordersNav.classList.toggle('active', !isIncompleteView);
@@ -1519,7 +1634,7 @@
     })
     .then(function(r){ return r.json(); })
     .then(function(data){
-      if (data && data.token) { saveToken(data.token); hideLogin(); loadRepeatCustomers(); loadTodayStats(); loadSnap(); }
+      if (data && data.token) { saveToken(data.token); hideLogin(); if (isStockView) { loadStockList(); } else { loadRepeatCustomers(); loadTodayStats(); loadSnap(); } }
       else { errEl.textContent = 'Invalid username or password.'; errEl.style.display = 'block'; }
     })
     .catch(function(){ errEl.textContent = 'Connection error. Try again.'; errEl.style.display = 'block'; })
@@ -2570,9 +2685,141 @@
   window.loadSnap = loadSnap;
   window.loadTodayStats = loadTodayStats;
 
+  /* ── Stock Management ── */
+  var stockState = { page: 1, limit: 50, q: '', lowOnly: false, totalCount: 0 };
+
+  function stockStatusPill(stock, thr) {
+    if (stock === null || stock === undefined) return '<span class="stock-pill untracked">Not tracked</span>';
+    var t = (thr === null || thr === undefined) ? 0 : thr;
+    if (stock <= 0) return '<span class="stock-pill out"><i class="fas fa-ban"></i> Out of stock</span>';
+    if (stock <= t) return '<span class="stock-pill low"><i class="fas fa-triangle-exclamation"></i> Low ('+stock+')</span>';
+    return '<span class="stock-pill ok"><i class="fas fa-check"></i> '+stock+' in stock</span>';
+  }
+
+  window.loadStockList = function () {
+    if (!getToken()) { showLogin('Please log in to manage stock.'); return; }
+    var body = document.getElementById('stockBody');
+    body.innerHTML = '<tr class="loading-row"><td colspan="6"><div class="spinner"></div><div>Loading products…</div></td></tr>';
+    var url = API + '/api/product/stock-list?page=' + stockState.page + '&limit=' + stockState.limit
+      + '&q=' + encodeURIComponent(stockState.q) + (stockState.lowOnly ? '&lowOnly=true' : '');
+    fetch(url, { headers: authHeaders() })
+      .then(function(r){ if (r.status===401){ clearToken(); showLogin('Session expired. Please log in again.'); throw new Error('auth'); } return r.json(); })
+      .then(function(resp){
+        var rows = (resp && resp.data) || [];
+        stockState.totalCount = (resp && resp.count) || 0;
+        renderStockRows(rows);
+        updateStockPager();
+        loadStockSummary();
+      })
+      .catch(function(err){
+        if (err.message==='auth') return;
+        body.innerHTML = '<tr class="empty-row"><td colspan="6">Failed to load. '+esc(err.message)+'</td></tr>';
+      });
+  };
+
+  function renderStockRows(rows) {
+    var body = document.getElementById('stockBody');
+    if (!rows.length) { body.innerHTML = '<tr class="empty-row"><td colspan="6">No products found.</td></tr>'; return; }
+    body.innerHTML = rows.map(function(p){
+      var img = (p.images && p.images[0]) ? p.images[0] : '';
+      var stockVal = (p.stock === null || p.stock === undefined) ? '' : p.stock;
+      var thrVal = (p.lowStockThreshold === null || p.lowStockThreshold === undefined) ? '' : p.lowStockThreshold;
+      return '<tr data-id="'+p._id+'">'
+        + '<td style="padding-left:18px"><div class="stock-prod">'
+        + (img ? '<img class="stock-tbl-img" src="'+esc(img)+'" onerror="this.style.visibility=\'hidden\'">' : '<div class="stock-tbl-img"></div>')
+        + '<div><div class="stock-prod-name">'+esc(p.name||'—')+'</div>'
+        + (p.sku ? '<div class="stock-prod-sku">SKU: '+esc(p.sku)+'</div>' : '')
+        + '</div></div></td>'
+        + '<td>৳'+esc(String(p.salePrice||0))+'</td>'
+        + '<td><input type="number" min="0" class="stock-input" value="'+stockVal+'" placeholder="—"></td>'
+        + '<td><input type="number" min="0" class="stock-input" value="'+thrVal+'" placeholder="5"></td>'
+        + '<td class="stock-status">'+stockStatusPill(p.stock, p.lowStockThreshold)+'</td>'
+        + '<td><button class="btn-stock-save" onclick="saveStock(this)">Save</button></td>'
+        + '</tr>';
+    }).join('');
+  }
+
+  window.saveStock = function (btn) {
+    var tr = btn.closest('tr');
+    var id = tr.getAttribute('data-id');
+    var inputs = tr.querySelectorAll('.stock-input');
+    var stock = inputs[0].value.trim();
+    var thr = inputs[1].value.trim();
+    var payload = {};
+    if (stock !== '') payload.stock = Number(stock);
+    if (thr !== '') payload.lowStockThreshold = Number(thr);
+    if (payload.stock === undefined && payload.lowStockThreshold === undefined) { showToast('Enter a stock value first', 'info'); return; }
+    btn.disabled = true; btn.textContent = 'Saving…';
+    fetch(API + '/api/product/stock/' + id, { method:'PUT', headers: authHeaders(), body: JSON.stringify(payload) })
+      .then(function(r){ if (r.status===401){ clearToken(); showLogin('Session expired. Please log in again.'); throw new Error('auth'); } return r.json(); })
+      .then(function(resp){
+        if (resp && resp.success) {
+          showToast('Stock updated', 'success');
+          var newStock = stock !== '' ? Number(stock) : (payload.stock !== undefined ? payload.stock : null);
+          var newThr = thr !== '' ? Number(thr) : null;
+          tr.querySelector('.stock-status').innerHTML = stockStatusPill(stock!==''?Number(stock):null, thr!==''?Number(thr):null);
+          loadStockSummary();
+        } else { showToast((resp && resp.message) || 'Update failed', 'error'); }
+      })
+      .catch(function(err){ if (err.message!=='auth') showToast('Failed: '+err.message, 'error'); })
+      .finally(function(){ btn.disabled = false; btn.textContent = 'Save'; });
+  };
+
+  function updateStockPager() {
+    var totalPages = Math.max(1, Math.ceil(stockState.totalCount / stockState.limit));
+    document.getElementById('stockPageInfo').textContent =
+      'Page ' + stockState.page + ' of ' + totalPages + ' · ' + stockState.totalCount + ' products';
+    document.getElementById('stockPrev').disabled = stockState.page <= 1;
+    document.getElementById('stockNext').disabled = stockState.page >= totalPages;
+  }
+
+  window.stockGoPage = function (dir) {
+    var totalPages = Math.max(1, Math.ceil(stockState.totalCount / stockState.limit));
+    var np = stockState.page + dir;
+    if (np < 1 || np > totalPages) return;
+    stockState.page = np; loadStockList();
+  };
+
+  window.toggleStockLowOnly = function () {
+    stockState.lowOnly = !stockState.lowOnly;
+    stockState.page = 1;
+    document.getElementById('stockLowToggle').classList.toggle('active', stockState.lowOnly);
+    loadStockList();
+  };
+
+  function loadStockSummary() {
+    fetch(API + '/api/product/stock-list?page=1&limit=1', { headers: authHeaders() })
+      .then(function(r){ return r.json(); })
+      .then(function(resp){ document.getElementById('stockTrackedCount').textContent = (resp && resp.count) || 0; })
+      .catch(function(){});
+    fetch(API + '/api/product/stock-list?page=1&limit=1&lowOnly=true', { headers: authHeaders() })
+      .then(function(r){ return r.json(); })
+      .then(function(resp){ document.getElementById('stockLowCount').textContent = (resp && resp.count) || 0; })
+      .catch(function(){});
+    fetch(API + '/api/product/stock-list?page=1&limit=1&outOnly=true', { headers: authHeaders() })
+      .then(function(r){ return r.json(); })
+      .then(function(resp){ document.getElementById('stockOutCount').textContent = (resp && resp.count) || 0; })
+      .catch(function(){});
+  }
+
+  (function(){
+    var si = document.getElementById('stockSearch');
+    if (si) {
+      var st;
+      si.addEventListener('input', function(){
+        var v = this.value;
+        clearTimeout(st);
+        st = setTimeout(function(){ stockState.q = v; stockState.page = 1; loadStockList(); }, 400);
+      });
+    }
+  })();
+
   /* ── Init ── */
   configureView();
-  if (getToken()) { hideLogin(); loadRepeatCustomers(); loadTodayStats(); loadStatusCounts(); loadSnap(); }
+  if (isStockView) {
+    if (getToken()) { hideLogin(); loadStockList(); }
+    else { showLogin(); }
+  } else if (getToken()) { hideLogin(); loadRepeatCustomers(); loadTodayStats(); loadStatusCounts(); loadSnap(); }
   else { showLogin(); }
 })();
 </script>

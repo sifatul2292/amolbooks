@@ -1611,4 +1611,110 @@ ${items.join('\n')}
 
     return [headers.join(','), ...rows].join('\n');
   }
+
+  /**
+   * STOCK MANAGEMENT (custom-orders.html)
+   * getStockList / updateStock / decreaseStockForItems
+   */
+  async getStockList(query: any): Promise<ResponsePayload> {
+    try {
+      const page = Math.max(1, parseInt(query?.page, 10) || 1);
+      const limit = Math.min(200, Math.max(1, parseInt(query?.limit, 10) || 50));
+      const q = (query?.q || '').trim();
+      const lowOnly = String(query?.lowOnly) === 'true';
+      const outOnly = String(query?.outOnly) === 'true';
+
+      const filter: any = {};
+      if (q) {
+        const rx = this.utilsService.createRegexFromString(q);
+        filter.$or = [{ name: rx }, { nameEn: rx }, { sku: rx }];
+      }
+      if (outOnly) {
+        filter.stock = { $ne: null, $lte: 0 };
+      } else if (lowOnly) {
+        filter.stock = { $ne: null };
+        filter.$expr = {
+          $lte: ['$stock', { $ifNull: ['$lowStockThreshold', 0] }],
+        };
+      }
+
+      const total = await this.productModel.countDocuments(filter);
+      const data = await this.productModel
+        .find(filter)
+        .select('name nameEn sku images salePrice stock lowStockThreshold')
+        .sort({ name: 1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean();
+
+      return {
+        success: true,
+        message: 'Success',
+        data,
+        count: total,
+      } as ResponsePayload;
+    } catch (err) {
+      throw new InternalServerErrorException(err.message);
+    }
+  }
+
+  async updateStock(
+    id: string,
+    body: { stock?: number; lowStockThreshold?: number },
+  ): Promise<ResponsePayload> {
+    try {
+      const set: any = {};
+      if (
+        body?.stock !== undefined &&
+        body.stock !== null &&
+        (body.stock as any) !== ''
+      ) {
+        set.stock = Math.max(0, Math.floor(Number(body.stock)) || 0);
+      }
+      if (
+        body?.lowStockThreshold !== undefined &&
+        body.lowStockThreshold !== null &&
+        (body.lowStockThreshold as any) !== ''
+      ) {
+        set.lowStockThreshold = Math.max(
+          0,
+          Math.floor(Number(body.lowStockThreshold)) || 0,
+        );
+      }
+      if (!Object.keys(set).length) {
+        return { success: false, message: 'Nothing to update' } as ResponsePayload;
+      }
+      await this.productModel.updateOne({ _id: id }, { $set: set });
+      return { success: true, message: 'Stock updated' } as ResponsePayload;
+    } catch (err) {
+      throw new InternalServerErrorException(err.message);
+    }
+  }
+
+  /**
+   * Decrement stock for ordered items. Only products with a non-null stock are
+   * affected. Safe to call fire-and-forget after an order is saved.
+   */
+  async decreaseStockForItems(items: any[]): Promise<void> {
+    if (!Array.isArray(items) || !items.length) return;
+    const ops = items
+      .map((it) => {
+        const id = it?._id || it?.product || it?.productId;
+        const qty = Math.max(1, Math.floor(Number(it?.quantity)) || 1);
+        if (!id) return null;
+        return {
+          updateOne: {
+            filter: { _id: id, stock: { $ne: null } },
+            update: { $inc: { stock: -qty } },
+          },
+        };
+      })
+      .filter(Boolean);
+    if (!ops.length) return;
+    try {
+      await this.productModel.bulkWrite(ops as any);
+    } catch (err) {
+      this.logger.warn(`decreaseStockForItems failed: ${err?.message || err}`);
+    }
+  }
 }

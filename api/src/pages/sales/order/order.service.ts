@@ -361,6 +361,10 @@ export class OrderService {
     addOrderDto: AddOrderDto,
   ): Promise<void> {
     try {
+      // 0) Manual stock decrement (custom-orders.html). Only products with a
+      // non-null `stock` are affected; others are ignored.
+      await this.decreaseProductStock(saveData?.orderedItems);
+
       // 1) Fraud Checker Call + Order Update
       if (addOrderDto.phoneNo) {
         try {
@@ -565,6 +569,35 @@ export class OrderService {
       discount,
       grandTotal,
     };
+  }
+
+  /**
+   * Decrement manual stock for ordered items. Only products with a non-null
+   * `stock` field are touched. Fire-and-forget; never blocks order flow.
+   */
+  private async decreaseProductStock(items: any[]): Promise<void> {
+    try {
+      if (!Array.isArray(items) || !items.length) return;
+      const ops = items
+        .map((it) => {
+          const id = it?._id || it?.product || it?.productId;
+          const qty = Math.max(1, Math.floor(Number(it?.quantity)) || 1);
+          if (!id) return null;
+          return {
+            updateOne: {
+              filter: { _id: id, stock: { $ne: null } },
+              update: { $inc: { stock: -qty } },
+            },
+          };
+        })
+        .filter(Boolean);
+      if (!ops.length) return;
+      await this.productModel.bulkWrite(ops as any);
+    } catch (err) {
+      this.logger.warn(
+        `decreaseProductStock failed: ${err?.message || err}`,
+      );
+    }
   }
 
   private normalizeOrderItems(items: any[]): any[] {

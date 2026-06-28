@@ -113,6 +113,18 @@ export const ProductSchema = new mongoose.Schema(
       required: false,
       default: 0,
     },
+    // Manual stock management (custom-orders.html). Independent of `quantity`.
+    // null = not tracked; only products with a non-null stock decrement on order.
+    stock: {
+      type: Number,
+      required: false,
+      default: null,
+    },
+    lowStockThreshold: {
+      type: Number,
+      required: false,
+      default: null,
+    },
     threeMonth: {
       type: Number,
       required: false,

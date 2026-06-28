@@ -116,6 +116,26 @@ export class ProductController {
     return this.productService.getAllProducts(filterProductDto, searchString);
   }
 
+  /**
+   * STOCK MANAGEMENT (custom-orders.html)
+   */
+  @Get('/stock-list')
+  @UseGuards(AdminJwtAuthGuard)
+  async getStockList(
+    @Query() query: Record<string, any>,
+  ): Promise<ResponsePayload> {
+    return await this.productService.getStockList(query);
+  }
+
+  @Put('/stock/:id')
+  @UseGuards(AdminJwtAuthGuard)
+  async updateStock(
+    @Param('id', MongoIdValidationPipe) id: string,
+    @Body() body: { stock?: number; lowStockThreshold?: number },
+  ): Promise<ResponsePayload> {
+    return await this.productService.updateStock(id, body);
+  }
+
   @Version(VERSION_NEUTRAL)
   @Post('/get-products-by-ids')
   async getProductByIds(
