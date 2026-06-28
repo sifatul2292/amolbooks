@@ -904,8 +904,11 @@
     }
     .stock-low-toggle.active { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
     .stock-tbl-img { width: 40px; height: 50px; object-fit: cover; border-radius: 6px; background: var(--g100); flex-shrink: 0; }
-    .stock-prod { display: flex; align-items: center; gap: 10px; }
-    .stock-prod-name { font-weight: 700; color: #1e293b; font-size: 13px; line-height: 1.4; word-break: break-word; }
+    .stock-prod { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .stock-prod > div { min-width: 0; flex: 1; }
+    .stock-prod-name { font-weight: 700; color: #1e293b; font-size: 13px; line-height: 1.4; word-break: normal; overflow-wrap: anywhere; }
+    #stockView table thead th:first-child,
+    #stockView table tbody td:first-child { min-width: 280px; width: 45%; }
     .stock-prod-sku { font-size: 11px; color: var(--g400); margin-top: 2px; }
     .stock-input {
       width: 80px; border: 1.5px solid var(--g200); border-radius: 8px;
