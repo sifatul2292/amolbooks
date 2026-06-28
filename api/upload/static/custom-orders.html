@@ -2714,21 +2714,25 @@
     document.getElementById('aiAddress').value = address;
     document.getElementById('aiCity').value = city;
     document.getElementById('aiNote').value = price ? ('Customer quoted: ৳' + price) : '';
-    /* Product picker: prefill search with extracted product, reset selection, auto-search */
-    aiSelectedProducts = [];
-    renderAiSelected();
-    var psearch = document.getElementById('aiProductSearch');
-    psearch.value = product || '';
-    if (product) aiSearchProducts();
     var sel = document.getElementById('aiPaymentType');
     for (var j = 0; j < sel.options.length; j++) {
       if (sel.options[j].value === paymentType) { sel.selectedIndex = j; break; }
     }
 
+    /* Switch to step 2 FIRST so the UI always advances, then run the product
+       picker (guarded — a search hiccup must not block the review screen). */
     document.getElementById('aiStep1').classList.remove('active');
     document.getElementById('aiStep2').classList.add('active');
     document.getElementById('aiFooterStep1').style.display = 'none';
     document.getElementById('aiFooterStep2').style.display = 'flex';
+
+    try {
+      aiSelectedProducts = [];
+      renderAiSelected();
+      var psearch = document.getElementById('aiProductSearch');
+      psearch.value = product || '';
+      if (product) aiSearchProducts();
+    } catch (e) { /* picker is optional at extract time */ }
   };
 
   /* ── AI Assist: product search + selection ── */
