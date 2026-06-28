@@ -2671,10 +2671,31 @@
       remaining = remaining.filter(function(l) { return l !== lastLine; });
     }
 
-    /* remaining: name, address, product (in order) */
-    if (remaining.length >= 1) name = remaining[0];
-    if (remaining.length >= 2) address = remaining[1];
-    if (remaining.length >= 3) product = remaining.slice(2).join(' | ');
+    /* Pull product line(s): lines beginning with বই / book / 📚, strip the label. */
+    var productLines = [];
+    remaining = remaining.filter(function (l) {
+      if (/^\s*(বই|book|📚)\s*[:：ঃ\-]?/i.test(l)) {
+        productLines.push(l.replace(/^\s*(বই|book|📚)\s*[:：ঃ\-]?\s*/i, '').trim());
+        return false;
+      }
+      return true;
+    });
+    product = productLines.join(' | ');
+
+    /* What's left = name + address. Name = text before the first comma of the
+       first line; the rest of that line plus any other lines = address. */
+    if (remaining.length) {
+      var firstParts = remaining[0].split(',');
+      name = (firstParts[0] || '').trim();
+      var addrChunks = firstParts.slice(1).map(function (s) { return s.trim(); }).filter(Boolean);
+      addrChunks = addrChunks.concat(remaining.slice(1));
+      address = addrChunks.join(', ');
+    }
+    /* Fallback: if no product line found, last leftover line is likely the product. */
+    if (!product && remaining.length >= 3) {
+      product = remaining[remaining.length - 1];
+      address = remaining.slice(1, -1).join(', ');
+    }
 
     /* Strip trailing punctuation from address */
     address = address.replace(/[.,؟?!]+$/, '').trim();
@@ -2725,8 +2746,8 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        filter: {},
-        pagination: { pageSize: 15, currentPage: 1 },
+        filter: { salePrice: { $gte: 0 } },
+        pagination: { pageSize: 15, currentPage: 0 },
         sort: { createdAt: -1 },
         select: { name: 1, nameEn: 1, slug: 1, salePrice: 1, images: 1 }
       })
