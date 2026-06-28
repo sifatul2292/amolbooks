@@ -1974,6 +1974,31 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
     return best;
   }
 
+  /* Order-number pill: smallest element whose text looks like the order no.
+     Used as a stable, visible anchor for the WhatsApp button. */
+  function findPill() {
+    var all = document.querySelectorAll('p,div,span');
+    var best = null, bestLen = 1e9;
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i], t = norm(el.textContent);
+      if (!t || t.length > 60 || !isOrderNo(t)) continue;
+      if (el.querySelector && el.querySelector('button,a')) continue;
+      if (t.length < bestLen) { best = el; bestLen = t.length; }
+    }
+    return best;
+  }
+
+  var theBtn = null;
+  function makeBtn() {
+    var a = document.createElement('a');
+    a.id = BTN_ID; a.href = WA_LINK; a.target = '_blank'; a.rel = 'noopener';
+    a.innerHTML = WA_SVG + '<span>আকর্ষণীয় অফার পেতে আমাদের WhatsApp গ্রুপে যুক্ত হন</span>';
+    a.addEventListener('click', function () {
+      try { window.dataLayer && window.dataLayer.push({ event: 'ab_ty_whatsapp_click' }); } catch (e) {}
+    });
+    return a;
+  }
+
   var busy = false;
   function apply() {
     if (!isThankYou()) return;
@@ -1986,16 +2011,14 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
     if (body) {
       body.classList.add('ab-ty-pre');
       if (norm(body.textContent) !== norm(BODY)) { busy = true; body.textContent = BODY; busy = false; }
-      /* button right after the body block; re-add if missing */
-      if (!document.getElementById(BTN_ID) && body.parentNode) {
-        var a = document.createElement('a');
-        a.id = BTN_ID; a.href = WA_LINK; a.target = '_blank'; a.rel = 'noopener';
-        a.innerHTML = WA_SVG + '<span>WhatsApp গ্রুপে যুক্ত হন</span>';
-        a.addEventListener('click', function () {
-          try { window.dataLayer && window.dataLayer.push({ event: 'ab_ty_whatsapp_click' }); } catch (e) {}
-        });
-        busy = true; body.parentNode.insertBefore(a, body.nextSibling); busy = false;
-      }
+    }
+
+    /* Button: anchor right after the order-number pill (stable + visible).
+       Re-insert whenever the framework/override reconciled it away or moved it. */
+    if (!theBtn) theBtn = makeBtn();
+    var anchor = findPill() || body;
+    if (anchor && anchor.parentNode && theBtn.previousSibling !== anchor) {
+      busy = true; anchor.parentNode.insertBefore(theBtn, anchor.nextSibling); busy = false;
     }
   }
 
