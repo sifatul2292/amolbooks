@@ -1894,5 +1894,82 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
 })();
 </script>
 
+<script>
+/* Thank-you (order-success) page: line-break the confirmation copy + add a
+   WhatsApp-group join button. Heading/body text come from i18n (bn/en.json);
+   this only handles formatting + the button (i18n escapes HTML, can't add it). */
+(function () {
+  'use strict';
+  var WA_LINK = 'https://chat.whatsapp.com/KzxUAsjruro8uvpdQG72Ob';
+  var BTN_ID = 'ab-ty-wa';
+  var POLL_MS = 300, POLL_MAX = 40;
+
+  function isThankYou() { return location.pathname.indexOf('order-success') !== -1; }
+
+  function styleOnce() {
+    if (document.getElementById('ab-ty-style')) return;
+    var s = document.createElement('style'); s.id = 'ab-ty-style';
+    s.textContent =
+      '.ab-ty-pre{white-space:pre-line!important;text-align:center;line-height:1.85}' +
+      '#' + BTN_ID + '{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;box-sizing:border-box;' +
+        'margin:16px auto 6px;padding:13px 16px;border-radius:12px;background:#25D366;color:#fff;' +
+        'font-family:hind-siliguri,sans-serif;font-size:16px;font-weight:700;text-decoration:none;border:0;' +
+        'box-shadow:0 4px 12px rgba(37,211,102,.35)}' +
+      '#' + BTN_ID + ':active{filter:brightness(.95);transform:translateY(1px)}' +
+      '#' + BTN_ID + ' svg{flex:0 0 auto;width:24px;height:24px}';
+    document.head.appendChild(s);
+  }
+
+  var WA_SVG =
+    '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+    '<path fill="#fff" d="M16.04 4C9.93 4 4.98 8.95 4.98 15.06c0 2.13.6 4.12 1.64 5.81L4.5 28l7.3-1.92a11 11 0 0 0 4.24.84h.01c6.1 0 11.05-4.95 11.05-11.06C27.1 8.95 22.15 4 16.04 4zm0 20.2h-.01a9.1 9.1 0 0 1-4.64-1.27l-.33-.2-3.45.9.92-3.36-.22-.35a9.06 9.06 0 0 1-1.39-4.86c0-5.02 4.09-9.1 9.12-9.1 2.44 0 4.72.95 6.44 2.67a9.04 9.04 0 0 1 2.67 6.44c0 5.03-4.09 9.13-9.11 9.13zm5-6.83c-.27-.14-1.62-.8-1.87-.89-.25-.09-.43-.14-.62.14-.18.27-.71.89-.87 1.07-.16.18-.32.2-.59.07-.27-.14-1.16-.43-2.2-1.36-.81-.72-1.36-1.62-1.52-1.89-.16-.27-.02-.42.12-.55.12-.12.27-.32.41-.48.14-.16.18-.27.27-.46.09-.18.05-.34-.02-.48-.07-.14-.62-1.49-.85-2.04-.22-.53-.45-.46-.62-.47l-.53-.01c-.18 0-.48.07-.73.34-.25.27-.96.94-.96 2.29 0 1.35.98 2.66 1.12 2.84.14.18 1.93 2.95 4.68 4.14.65.28 1.16.45 1.56.58.65.21 1.25.18 1.72.11.52-.08 1.62-.66 1.85-1.3.23-.64.23-1.18.16-1.3-.07-.11-.25-.18-.52-.32z"/></svg>';
+
+  function findConfirmPara() {
+    var all = document.querySelectorAll('p,div,span');
+    for (var i = 0; i < all.length; i++) {
+      var t = (all[i].textContent || '');
+      if (t.indexOf('জাযাকাল্লাহু') !== -1 && t.length < 600 &&
+          !(all[i].querySelector && all[i].querySelector('button,a'))) return all[i];
+    }
+    return null;
+  }
+
+  function apply() {
+    var para = findConfirmPara();
+    if (!para) return false;
+    styleOnce();
+    para.classList.add('ab-ty-pre');
+    if (!document.getElementById(BTN_ID)) {
+      var a = document.createElement('a');
+      a.id = BTN_ID; a.href = WA_LINK; a.target = '_blank'; a.rel = 'noopener';
+      a.innerHTML = WA_SVG + '<span>WhatsApp গ্রুপে যুক্ত হন</span>';
+      a.addEventListener('click', function () {
+        try { window.dataLayer && window.dataLayer.push({ event: 'ab_ty_whatsapp_click' }); } catch (e) {}
+      });
+      para.parentNode.insertBefore(a, para.nextSibling);
+    }
+    return true;
+  }
+
+  function boot() {
+    if (!isThankYou()) return;
+    var tries = 0;
+    (function wait() { if (apply()) return; if (++tries < POLL_MAX) setTimeout(wait, POLL_MS); })();
+  }
+
+  var lastPath = '';
+  function tick() {
+    if (location.pathname === lastPath) {
+      if (isThankYou() && !document.getElementById(BTN_ID)) boot();
+      return;
+    }
+    lastPath = location.pathname; boot();
+  }
+  tick();
+  window.addEventListener('popstate', tick);
+  setInterval(tick, 800);
+})();
+</script>
+
 <script src="/ab-widgets.js?v=17" defer></script>
 </body></html>
