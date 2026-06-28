@@ -45,7 +45,9 @@ import {
 } from 'src/shared/courier/interfaces/courier.interface';
 import { CourierService } from '../../../shared/courier/courier.service';
 import * as schedule from 'node-schedule';
+import * as crypto from 'crypto';
 import { Admin } from '../../../interfaces/admin/admin.interface';
+import { AnalyticsService } from '../../../shared/analytics/analytics.service';
 const ObjectId = Types.ObjectId;
 
 // Process-level TTL cache for the public recent-buyers feed. Caps DB load on a
@@ -80,6 +82,7 @@ export class OrderService {
     private utilsService: UtilsService,
     private bulkSmsService: BulkSmsService,
     private emailService: EmailService, // private pdfMakerService: TCreatedPdf,
+    private analyticsService: AnalyticsService,
   ) {
     this.checkAndUpdateCourierStatus();
   }
@@ -456,12 +459,75 @@ export class OrderService {
           this.emailService.sendEmail(saveData.email, 'Alambook', html);
         }
       }
+
+      // 6) Meta CAPI Purchase — ONLY for manual/admin-entered orders
+      //    (source === 'admin_manual'). Web orders fire Purchase via Stape, so
+      //    they are intentionally excluded here to avoid duplicate events.
+      if (addOrderDto && (addOrderDto as any).source === 'admin_manual') {
+        await this.sendManualOrderToMeta(saveData);
+      }
     } catch (error) {
       this.logger.error(
         `Error processing background tasks for order ${saveData.orderId}:`,
         error,
       );
       // Don't throw - background tasks should not fail the order
+    }
+  }
+
+  /**
+   * sendManualOrderToMeta
+   * Sends a server-side Meta CAPI Purchase for manually-entered (offline) orders.
+   * No fbc/fbp available (no browser), so match relies on hashed phone/email.
+   * action_source 'phone_call' marks it offline. Failures are swallowed.
+   */
+  private async sendManualOrderToMeta(saveData: any): Promise<void> {
+    try {
+      const fSetting = await this.settingModel.findOne().select('analytics');
+      const a: any = fSetting?.analytics;
+      if (!a?.facebookPixelId || !a?.facebookPixelAccessToken) return;
+
+      const sha = (v: string) =>
+        crypto.createHash('sha256').update(String(v).trim().toLowerCase()).digest('hex');
+
+      const phoneDigits = String(saveData.phoneNo || '').replace(/\D/g, '');
+      const user_data: any = {};
+      if (phoneDigits) {
+        user_data.ph = sha(phoneDigits.startsWith('88') ? phoneDigits : '88' + phoneDigits);
+      }
+      if (saveData.email) user_data.em = sha(saveData.email);
+      if (!user_data.ph && !user_data.em) return; // nothing to match on
+
+      const payload: any = {
+        event_name: 'Purchase',
+        event_time: Math.floor(Date.now() / 1000),
+        action_source: 'phone_call',
+        event_id: 'order_' + saveData.orderId, // dedup key
+        custom_data: {
+          currency: 'BDT',
+          value: Number(saveData.grandTotal || 0),
+          content_type: 'product',
+          contents: (saveData.orderedItems || []).map((i: any) => ({
+            id: i.slug || String(i._id),
+            quantity: i.quantity || 1,
+          })),
+        },
+        user_data,
+      };
+
+      const data =
+        a.isEnablePixelTestEvent && a.facebookPixelTestEventId
+          ? { data: [payload], test_event_code: a.facebookPixelTestEventId }
+          : { data: [payload] };
+
+      await this.analyticsService.trackFbConversionEventClient(
+        a.facebookPixelId,
+        a.facebookPixelAccessToken,
+        data,
+      );
+      this.logger.log(`Manual-order CAPI Purchase sent for order ${saveData.orderId}`);
+    } catch (e) {
+      this.logger.warn('Manual-order CAPI Purchase failed: ' + (e?.message || e));
     }
   }
 
