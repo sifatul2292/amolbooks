@@ -2013,13 +2013,37 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
       if (norm(body.textContent) !== norm(BODY)) { busy = true; body.textContent = BODY; busy = false; }
     }
 
-    /* Button: anchor right after the order-number pill (stable + visible).
-       Re-insert whenever the framework/override reconciled it away or moved it. */
-    if (!theBtn) theBtn = makeBtn();
-    var anchor = findPill() || body;
-    if (anchor && anchor.parentNode && theBtn.previousSibling !== anchor) {
-      busy = true; anchor.parentNode.insertBefore(theBtn, anchor.nextSibling); busy = false;
+    /* Move the order-number pill to the top — right under the tick icon,
+       above the heading. Re-move if the override puts it back. */
+    var pill = findPill();
+    if (pill && h && h.parentNode && (pill.parentNode !== h.parentNode || pill.nextSibling !== h)) {
+      busy = true; h.parentNode.insertBefore(pill, h); busy = false;
     }
+
+    /* WhatsApp button: anchor just above the action-button row (অর্ডারটি দেখুন /
+       কেনাকাটা চালিয়ে যান). Re-insert if the override reconciled it away. */
+    if (!theBtn) theBtn = makeBtn();
+    var a = findCtaAnchor();
+    if (a && a.parent && theBtn.nextSibling !== a.before) {
+      busy = true; a.parent.insertBefore(theBtn, a.before); busy = false;
+    }
+  }
+
+  /* Locate the action-button row to anchor the WhatsApp button above it. */
+  function findCtaAnchor() {
+    var bs = document.querySelectorAll('button,a'), cta = null;
+    for (var i = 0; i < bs.length; i++) {
+      if (bs[i].id === BTN_ID) continue;
+      var t = bs[i].textContent || '';
+      if (t.indexOf('দেখুন') !== -1 || t.indexOf('কেনাকাটা') !== -1) { cta = bs[i]; break; }
+    }
+    if (!cta) return null;
+    var row = cta.parentElement;
+    if (row && row.parentNode) {
+      var rt = row.textContent || '';
+      if (rt.indexOf('দেখুন') !== -1 && rt.indexOf('কেনাকাটা') !== -1) return { parent: row.parentNode, before: row };
+    }
+    return { parent: cta.parentNode, before: cta };
   }
 
   /* React fast to any re-render from the other source, plus interval fallback. */
