@@ -1258,10 +1258,30 @@
             </select>
           </div>
         </div>
+        <div class="ai-field-row">
+          <div class="ai-field" style="flex:2">
+            <label>Product (search &amp; pick)</label>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="aiProductSearch" placeholder="Type book name..." onkeydown="if(event.key==='Enter'){event.preventDefault();aiSearchProducts();}" style="flex:1">
+              <button type="button" class="btn-ai-extract" style="white-space:nowrap" onclick="aiSearchProducts()"><i class="fas fa-search"></i> Search</button>
+            </div>
+            <div id="aiProductResults" style="display:none;max-height:190px;overflow:auto;border:1px solid #e2e8f0;border-radius:10px;margin-top:8px"></div>
+          </div>
+          <div class="ai-field" style="flex:1">
+            <label>Delivery Charge (৳)</label>
+            <input type="number" id="aiDelivery" value="60" min="0">
+          </div>
+        </div>
         <div class="ai-field-row full">
           <div class="ai-field">
-            <label>Product / Note</label>
-            <textarea id="aiNote" placeholder="Product name, price, extra notes..."></textarea>
+            <label>Selected Products</label>
+            <div id="aiSelectedProducts" style="border:1px dashed #e2e8f0;border-radius:10px;padding:10px;font-size:13px;color:#94a3b8">No product selected yet</div>
+          </div>
+        </div>
+        <div class="ai-field-row full">
+          <div class="ai-field">
+            <label>Note (optional)</label>
+            <textarea id="aiNote" placeholder="Extra notes..."></textarea>
           </div>
         </div>
       </div>
@@ -2672,7 +2692,13 @@
     document.getElementById('aiName').value = name;
     document.getElementById('aiAddress').value = address;
     document.getElementById('aiCity').value = city;
-    document.getElementById('aiNote').value = note;
+    document.getElementById('aiNote').value = price ? ('Customer quoted: ৳' + price) : '';
+    /* Product picker: prefill search with extracted product, reset selection, auto-search */
+    aiSelectedProducts = [];
+    renderAiSelected();
+    var psearch = document.getElementById('aiProductSearch');
+    psearch.value = product || '';
+    if (product) aiSearchProducts();
     var sel = document.getElementById('aiPaymentType');
     for (var j = 0; j < sel.options.length; j++) {
       if (sel.options[j].value === paymentType) { sel.selectedIndex = j; break; }
@@ -2684,23 +2710,99 @@
     document.getElementById('aiFooterStep2').style.display = 'flex';
   };
 
+  /* ── AI Assist: product search + selection ── */
+  var aiSelectedProducts = [];   // [{ _id, name, price, qty }]
+
+  function aiEsc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  window.aiSearchProducts = function () {
+    var q = document.getElementById('aiProductSearch').value.trim();
+    var box = document.getElementById('aiProductResults');
+    if (!q) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    box.style.display = 'block';
+    box.innerHTML = '<div style="padding:12px;color:#94a3b8;font-size:13px"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
+    fetch(API + '/api/product/get-all?q=' + encodeURIComponent(q), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filter: {},
+        pagination: { pageSize: 15, currentPage: 1 },
+        sort: { createdAt: -1 },
+        select: { name: 1, nameEn: 1, slug: 1, salePrice: 1, images: 1 }
+      })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (res) {
+      var list = (res && res.data) || [];
+      if (!list.length) { box.innerHTML = '<div style="padding:12px;color:#94a3b8;font-size:13px">No product found</div>'; return; }
+      box.innerHTML = list.map(function (p) {
+        var nm = aiEsc(p.name || p.nameEn || 'Unknown');
+        var pr = Number(p.salePrice || 0);
+        return '<div onclick="aiPickProduct(\'' + p._id + '\',\'' + nm.replace(/'/g, '&#39;') + '\',' + pr + ')" ' +
+          'style="padding:10px 12px;border-bottom:1px solid #f1f5f9;cursor:pointer;display:flex;justify-content:space-between;gap:8px" ' +
+          'onmouseover="this.style.background=\'#f8f7ff\'" onmouseout="this.style.background=\'\'">' +
+          '<span style="font-weight:600;color:#1e293b">' + nm + '</span>' +
+          '<span style="color:var(--p,#6d28d9);font-weight:700;white-space:nowrap">৳' + pr + '</span></div>';
+      }).join('');
+    })
+    .catch(function () { box.innerHTML = '<div style="padding:12px;color:#ef4444;font-size:13px">Search failed</div>'; });
+  };
+
+  window.aiPickProduct = function (id, name, price) {
+    var existing = aiSelectedProducts.find(function (p) { return p._id === id; });
+    if (existing) { existing.qty += 1; }
+    else { aiSelectedProducts.push({ _id: id, name: name, price: Number(price) || 0, qty: 1 }); }
+    document.getElementById('aiProductResults').style.display = 'none';
+    document.getElementById('aiProductSearch').value = '';
+    renderAiSelected();
+  };
+
+  window.aiRemoveProduct = function (id) {
+    aiSelectedProducts = aiSelectedProducts.filter(function (p) { return p._id !== id; });
+    renderAiSelected();
+  };
+
+  window.aiSetQty = function (id, val) {
+    var p = aiSelectedProducts.find(function (x) { return x._id === id; });
+    if (p) { p.qty = Math.max(1, parseInt(val, 10) || 1); }
+    renderAiSelected();
+  };
+
+  function renderAiSelected() {
+    var box = document.getElementById('aiSelectedProducts');
+    if (!aiSelectedProducts.length) {
+      box.innerHTML = '<span style="color:#94a3b8">No product selected yet</span>';
+      return;
+    }
+    box.innerHTML = aiSelectedProducts.map(function (p) {
+      return '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f1f5f9">' +
+        '<span style="flex:1;font-weight:600;color:#1e293b">' + aiEsc(p.name) + '</span>' +
+        '<span style="color:#64748b">৳' + p.price + '</span>' +
+        '<input type="number" min="1" value="' + p.qty + '" onchange="aiSetQty(\'' + p._id + '\',this.value)" style="width:56px;padding:4px;border:1px solid #e2e8f0;border-radius:6px;text-align:center">' +
+        '<button type="button" onclick="aiRemoveProduct(\'' + p._id + '\')" style="border:0;background:#fee2e2;color:#ef4444;border-radius:6px;padding:4px 9px;cursor:pointer">&times;</button>' +
+        '</div>';
+    }).join('');
+  }
+
+  var AI_PAY_MAP = { COD: 'cash_on_delivery', ONLINE: 'online_payment', BKASH: 'online_payment', NAGAD: 'online_payment' };
+
   window.createAiOrder = function() {
     var btn = document.querySelector('.btn-ai-create');
     var phone = document.getElementById('aiPhone').value.trim();
     var name = document.getElementById('aiName').value.trim();
     var address = document.getElementById('aiAddress').value.trim();
     var city = document.getElementById('aiCity').value.trim();
-    var paymentType = document.getElementById('aiPaymentType').value;
+    var paymentType = AI_PAY_MAP[document.getElementById('aiPaymentType').value] || 'cash_on_delivery';
     var note = document.getElementById('aiNote').value.trim();
+    var deliveryCharge = Number(document.getElementById('aiDelivery').value) || 0;
 
     if (!phone) { alert('Phone number required'); return; }
     if (!name) { alert('Customer name required'); return; }
     if (!address) { alert('Shipping address required'); return; }
+    if (!aiSelectedProducts.length) { alert('Select at least one product'); return; }
 
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
-
-    var headers = { 'Content-Type': 'application/json' };
 
     function resetBtn() {
       btn.disabled = false;
@@ -2711,16 +2813,27 @@
       else alert(msg);
     }
 
+    /* Build cart payload the backend's newOrderMake() expects (anonymous path):
+       carts = product ids, cartData = [{ product, selectedQty, cartType:0 }].
+       Totals/discounts are computed server-side from the real product. */
+    var carts = aiSelectedProducts.map(function (p) { return p._id; });
+    var cartData = aiSelectedProducts.map(function (p) {
+      return { product: p._id, selectedQty: p.qty, cartType: 0 };
+    });
+
     fetch(API + '/api/order/add-order-by-anonymous', {
       method: 'POST',
-      headers: headers,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         phoneNo: phone,
         name: name,
         shippingAddress: address,
         city: city,
         paymentType: paymentType,
-        adminNote: note
+        deliveryCharge: deliveryCharge,
+        carts: carts,
+        cartData: cartData,
+        note: note
       })
     })
     .then(function(r) {
