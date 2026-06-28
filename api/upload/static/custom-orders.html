@@ -2746,9 +2746,12 @@
     if (!q) { box.style.display = 'none'; box.innerHTML = ''; return; }
     box.style.display = 'block';
     box.innerHTML = '<div style="padding:12px;color:#94a3b8;font-size:13px"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
+    var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var to = setTimeout(function () { if (ctrl) ctrl.abort(); }, 15000);
     fetch(API + '/api/product/get-all?q=' + encodeURIComponent(q), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal: ctrl ? ctrl.signal : undefined,
       body: JSON.stringify({
         filter: { salePrice: { $gte: 0 } },
         pagination: { pageSize: 15, currentPage: 0 },
@@ -2756,7 +2759,14 @@
         select: { name: 1, nameEn: 1, slug: 1, salePrice: 1, images: 1 }
       })
     })
-    .then(function (r) { return r.json(); })
+    .then(function (r) {
+      clearTimeout(to);
+      return r.text().then(function (t) {
+        var j; try { j = JSON.parse(t); } catch (e) { throw new Error('HTTP ' + r.status + ' (bad response)'); }
+        if (!r.ok) throw new Error(j.message || ('HTTP ' + r.status));
+        return j;
+      });
+    })
     .then(function (res) {
       var list = (res && res.data) || [];
       if (!list.length) { box.innerHTML = '<div style="padding:12px;color:#94a3b8;font-size:13px">No product found</div>'; return; }
@@ -2770,7 +2780,11 @@
           '<span style="color:var(--p,#6d28d9);font-weight:700;white-space:nowrap">৳' + pr + '</span></div>';
       }).join('');
     })
-    .catch(function () { box.innerHTML = '<div style="padding:12px;color:#ef4444;font-size:13px">Search failed</div>'; });
+    .catch(function (err) {
+      clearTimeout(to);
+      var msg = (err && err.name === 'AbortError') ? 'Timed out — check connection' : ('Search failed: ' + (err && err.message ? err.message : err));
+      box.innerHTML = '<div style="padding:12px;color:#ef4444;font-size:13px">' + aiEsc(msg) + '</div>';
+    });
   };
 
   window.aiPickProduct = function (id, name, price) {
