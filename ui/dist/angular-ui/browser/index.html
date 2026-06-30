@@ -1069,7 +1069,7 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
     _waiters.push(cb);
     if(_fetching)return; _fetching=true;
     fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({filter:{},pagination:{pageSize:300,currentPage:0},
+      body:JSON.stringify({pagination:{pageSize:300,currentPage:0},
         select:{category:1,totalSold:1},sort:{totalSold:-1}})})
       .then(function(r){return r.json();})
       .then(function(d){
