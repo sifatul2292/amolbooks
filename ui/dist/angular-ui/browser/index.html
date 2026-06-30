@@ -1,4 +1,10 @@
 <!DOCTYPE html><html lang="en"><head>
+<!-- Product-page declutter flags. Set a value to 0 to TURN THE WIDGET BACK ON.
+     giftOffer = free-notebook offer card (ab-widgets.js lever1)
+     userIcon  = standalone grey author/avatar placeholder near "In Stock"
+     orangeOrderBtn = orange "অগ্রিম টাকা ছাড়াই অর্ডার করুন" button
+     stickyCta = bottom sticky order bar + recent-buyers ticker (ab-widgets.js lever3) -->
+<script>window.AB_HIDE={giftOffer:1,userIcon:1,orangeOrderBtn:1,stickyCta:1};</script>
 <!-- Google Ads loads after first paint to keep the mobile render path light. -->
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -983,13 +989,15 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
 </script>
 <script src="runtime.deefcb56ab2829c2v2.js" type="module"></script><script src="polyfills.b72e2d7f79d77247.js" type="module"></script><script src="main.2db4411763e9d7e8.js" type="module"></script>
 <script>
-/* Orange "অগ্রিম টাকা ছাড়াই অর্ডার করুন" button — MutationObserver restyle */
+/* Orange "অগ্রিম টাকা ছাড়াই অর্ডার করুন" button — restyle, OR hide when AB_HIDE.orangeOrderBtn */
 (function(){
+  var HIDE=window.AB_HIDE&&window.AB_HIDE.orangeOrderBtn;
   function styleBtn(){
     var btns=document.querySelectorAll('button');
     for(var i=0;i<btns.length;i++){
       var t=(btns[i].textContent||'').replace(/\s+/g,' ').trim();
       if(t.indexOf('অগ্রিম')!==-1&&t.indexOf('অর্ডার')!==-1){
+        if(HIDE){btns[i].style.setProperty('display','none','important');continue;}
         btns[i].style.setProperty('background','#F97316','important');
         btns[i].style.setProperty('background-color','#F97316','important');
         btns[i].style.setProperty('border-color','#F97316','important');
@@ -999,6 +1007,29 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
   var mo=new MutationObserver(styleBtn);
   mo.observe(document.body,{childList:true,subtree:true});
   document.addEventListener('DOMContentLoaded',styleBtn);
+})();
+</script>
+
+<script>
+/* Hide standalone grey author/avatar placeholder near "In Stock" on product pages.
+   Reversible: set AB_HIDE.userIcon=0. Targets only small dummy/placeholder imgs in the
+   product-info column — NOT the main product image, product-card links, or the gift card. */
+(function(){
+  if(!(window.AB_HIDE&&window.AB_HIDE.userIcon))return;
+  function isPlaceholder(src){src=src||'';return src.indexOf('dummy-image.jpg')!==-1||src.indexOf('/placeholder/')!==-1;}
+  function hideAvatars(){
+    if(location.pathname.indexOf('/product-details/')===-1)return;
+    var imgs=document.querySelectorAll('img');
+    for(var i=0;i<imgs.length;i++){
+      var im=imgs[i];
+      if(!isPlaceholder(im.currentSrc||im.src))continue;
+      if(im.closest&&(im.closest('a')||im.closest('#ab-offer-card')||im.closest('.__shudhui-grid')))continue;
+      var w=im.getBoundingClientRect().width;
+      if(w>0&&w<=130)im.style.setProperty('display','none','important');
+    }
+  }
+  new MutationObserver(hideAvatars).observe(document.body,{childList:true,subtree:true});
+  document.addEventListener('DOMContentLoaded',hideAvatars);
 })();
 </script>
 
@@ -2057,5 +2088,5 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
 })();
 </script>
 
-<script src="/ab-widgets.js?v=17" defer></script>
+<script src="/ab-widgets.js?v=18" defer></script>
 </body></html>

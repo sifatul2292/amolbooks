@@ -5,6 +5,8 @@
 (function () {
   'use strict';
 
+  if (window.AB_HIDE && window.AB_HIDE.stickyCta) return; // declutter: bottom sticky bar off
+
   window.__abGet = window.__abGet || (function () {
     var store = {};
     return function (url, ttl, cb) {
@@ -251,6 +253,8 @@
 /* ===================== lever1-buy2-banner ===================== */
 (function () {
   'use strict';
+
+  if (window.AB_HIDE && window.AB_HIDE.giftOffer) return; // declutter: free-gift offer card off
 
   window.__abGet = window.__abGet || (function () {
     var store = {};
