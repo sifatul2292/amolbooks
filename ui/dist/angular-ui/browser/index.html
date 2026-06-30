@@ -4,8 +4,9 @@
      userIcon  = grey publisher-logo placeholder (a.pub-img) near "In Stock"
      orangeOrderBtn = orange "অগ্রিম টাকা ছাড়াই অর্ডার করুন" button
      stickyCta = bottom sticky order bar + recent-buyers ticker (ab-widgets.js lever3)
-     relatedSwiper2col = force related-book carousels to 2-per-row on mobile (<=768px) -->
-<script>window.AB_HIDE={giftOffer:1,userIcon:1,orangeOrderBtn:1,stickyCta:1,relatedSwiper2col:1};</script>
+     relatedSwiper2col = force related-book carousels to 2-per-row on mobile (<=768px)
+     categorySortBySold = homepage Shop-By-Category ordered by each category's top-selling book -->
+<script>window.AB_HIDE={giftOffer:1,userIcon:1,orangeOrderBtn:1,stickyCta:1,relatedSwiper2col:1,categorySortBySold:1};</script>
 <!-- Google Ads loads after first paint to keep the mobile render path light. -->
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -1051,6 +1052,58 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
   new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});
   window.addEventListener('resize',schedule);
   document.addEventListener('DOMContentLoaded',fix);
+  schedule();
+})();
+</script>
+
+<script>
+/* Homepage "Shop By Category": reorder categories so the one with the highest-selling
+   book comes first, then next, etc. Order derived from /product/get-all sorted by
+   totalSold desc (first appearance of each category name). Reversible: AB_HIDE.categorySortBySold=0. */
+(function(){
+  if(!(window.AB_HIDE&&window.AB_HIDE.categorySortBySold))return;
+  var API='https://apisub.amolbooks.com/api/product/get-all';
+  var _order=null,_fetching=false,_waiters=[];
+  function fetchOrder(cb){
+    if(_order)return cb(_order);
+    _waiters.push(cb);
+    if(_fetching)return; _fetching=true;
+    fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({filter:{},pagination:{pageSize:300,currentPage:0},
+        select:{category:1,totalSold:1},sort:{totalSold:-1}})})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var list=(d&&d.data)||[],seen={},order=[];
+        list.forEach(function(p){(p.category||[]).forEach(function(c){
+          var n=c&&c.name; if(n&&!seen[n]){seen[n]=1;order.push(n);} });});
+        _order=order; _waiters.forEach(function(w){try{w(order);}catch(e){}}); _waiters=[];
+      }).catch(function(){_fetching=false;});
+  }
+  function norm(s){return (s||'').replace(/\s+/g,' ').trim();}
+  function reorder(){
+    var sw=document.querySelector('.category-swiper');
+    if(!sw||!sw.swiper||sw.__abSorted)return;
+    fetchOrder(function(order){
+      if(!order||!order.length){return;}
+      var rank={}; order.forEach(function(n,i){rank[norm(n)]=i;});
+      var wrap=sw.querySelector('.swiper-wrapper'); if(!wrap)return;
+      var slides=[].slice.call(wrap.children).filter(function(s){
+        return (''+s.className).indexOf('swiper-slide')!==-1 && (''+s.className).indexOf('duplicate')===-1;});
+      if(slides.length<2)return;
+      slides.forEach(function(s,i){
+        var h=s.querySelector('h1,h2,h3,h4');
+        var k=h?rank[norm(h.textContent)]:undefined;
+        s.__k=(k===undefined?1e6+i:k);            // unranked categories keep original order, after ranked
+      });
+      slides.sort(function(a,b){return a.__k-b.__k;});
+      slides.forEach(function(s){wrap.appendChild(s);});
+      try{sw.swiper.update();sw.swiper.slideTo(0,0);}catch(e){}
+      sw.__abSorted=true;
+    });
+  }
+  var t; function schedule(){clearTimeout(t);t=setTimeout(reorder,300);}
+  new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});
+  document.addEventListener('DOMContentLoaded',schedule);
   schedule();
 })();
 </script>
