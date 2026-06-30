@@ -1064,6 +1064,15 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
   if(!(window.AB_HIDE&&window.AB_HIDE.categorySortBySold))return;
   var API='https://apisub.amolbooks.com/api/product/get-all';
   var _order=null,_fetching=false,_waiters=[];
+
+  /* Hide the category slider until reordered, so the old order never flashes (FOUC). */
+  var hideStyle=document.createElement('style');
+  hideStyle.textContent='body:not(.ab-cat-ready) .shop-by-category .category-slider{visibility:hidden!important}';
+  (document.head||document.documentElement).appendChild(hideStyle);
+  var _revealed=false;
+  function reveal(){ if(_revealed)return; _revealed=true; document.body.classList.add('ab-cat-ready'); }
+  /* Safety: never leave the section hidden, even if API fails or swiper never appears. */
+  setTimeout(reveal,3500);
   function fetchOrder(cb){
     if(_order)return cb(_order);
     _waiters.push(cb);
@@ -1084,12 +1093,12 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
     var sw=document.querySelector('.category-swiper');
     if(!sw||!sw.swiper||sw.__abSorted)return;
     fetchOrder(function(order){
-      if(!order||!order.length){return;}
+      if(!order||!order.length){reveal();return;}
       var rank={}; order.forEach(function(n,i){rank[norm(n)]=i;});
-      var wrap=sw.querySelector('.swiper-wrapper'); if(!wrap)return;
+      var wrap=sw.querySelector('.swiper-wrapper'); if(!wrap){reveal();return;}
       var slides=[].slice.call(wrap.children).filter(function(s){
         return (''+s.className).indexOf('swiper-slide')!==-1 && (''+s.className).indexOf('duplicate')===-1;});
-      if(slides.length<2)return;
+      if(slides.length<2){reveal();return;}
       slides.forEach(function(s,i){
         var h=s.querySelector('h1,h2,h3,h4');
         var k=h?rank[norm(h.textContent)]:undefined;
@@ -1099,9 +1108,11 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
       slides.forEach(function(s){wrap.appendChild(s);});
       try{sw.swiper.update();sw.swiper.slideTo(0,0);}catch(e){}
       sw.__abSorted=true;
+      reveal();                                    // sorted -> show
     });
   }
-  var t; function schedule(){clearTimeout(t);t=setTimeout(reorder,300);}
+  fetchOrder(function(){});                        // prefetch order ASAP, before swiper renders
+  var t; function schedule(){clearTimeout(t);t=setTimeout(reorder,80);}
   new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});
   document.addEventListener('DOMContentLoaded',schedule);
   schedule();
