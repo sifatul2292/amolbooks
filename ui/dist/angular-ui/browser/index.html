@@ -1032,7 +1032,8 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
   if(!(window.AB_HIDE&&window.AB_HIDE.relatedSwiper2col))return;
   function fix(){
     if(window.innerWidth>768)return;
-    var els=document.querySelectorAll('.swiper');
+    if(location.pathname.indexOf('/product-details/')===-1)return; // product page only — never homepage hero/category
+    var els=document.querySelectorAll('.kids-book-main .swiper'); // related-book carousels only
     for(var i=0;i<els.length;i++){
       var sw=els[i].swiper;
       if(!sw||!sw.params)continue;
