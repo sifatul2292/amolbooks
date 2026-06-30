@@ -5,8 +5,16 @@
      orangeOrderBtn = orange "অগ্রিম টাকা ছাড়াই অর্ডার করুন" button
      stickyCta = bottom sticky order bar + recent-buyers ticker (ab-widgets.js lever3)
      relatedSwiper2col = force related-book carousels to 2-per-row on mobile (<=768px)
-     categorySortBySold = homepage Shop-By-Category ordered by each category's top-selling book -->
-<script>window.AB_HIDE={giftOffer:1,userIcon:1,orangeOrderBtn:1,stickyCta:1,relatedSwiper2col:1,categorySortBySold:1};</script>
+     categorySortBySold = homepage Shop-By-Category ordered by each category's top-selling book
+     topHeaderBar = grey top strip (En/Bangla toggle, প্রতিষ্ঠান, notification bell) — .header-top
+     homeHeroBanner = homepage hero promo carousel — app-carousel-slider -->
+<script>window.AB_HIDE={giftOffer:1,userIcon:1,orangeOrderBtn:1,stickyCta:1,relatedSwiper2col:1,categorySortBySold:1,topHeaderBar:1,homeHeroBanner:1};</script>
+<script>
+/* Hide top strip + homepage hero banner when flag set. Reversible: set flag=0. */
+(function(){var c=[];if(window.AB_HIDE&&window.AB_HIDE.topHeaderBar)c.push('.header-top{display:none!important}');
+if(window.AB_HIDE&&window.AB_HIDE.homeHeroBanner)c.push('app-carousel-slider{display:none!important}');
+if(c.length){var s=document.createElement('style');s.id='ab-removed-sections';s.textContent=c.join('');document.head.appendChild(s);}})();
+</script>
 <!-- Google Ads loads after first paint to keep the mobile render path light. -->
 <script>
   window.dataLayer = window.dataLayer || [];
