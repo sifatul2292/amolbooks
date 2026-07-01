@@ -30,6 +30,9 @@ import { ShopInformation } from '../../interfaces/common/shop-information.interf
 import { RedirectUrl } from '../../interfaces/common/redirect-url.interface';
 import { FbCatalogService } from '../../shared/fb-catalog/fb-catalog.service';
 import { Setting } from '../customization/setting/interface/setting.interface';
+import { StockMovement } from '../../interfaces/common/stock-movement.interface';
+import { StockPurchase } from '../../interfaces/common/stock-purchase.interface';
+import { CreateStockPurchaseDto, GetStockMovementsDto } from '../../dto/stock.dto';
 const ObjectId = Types.ObjectId;
 
 @Injectable()
@@ -49,6 +52,10 @@ export class ProductService {
     @InjectModel('ShopInformation')
     private readonly shopInformationModel: Model<ShopInformation>,
     @InjectModel('BoughtTogetherConfig') private readonly boughtTogetherConfigModel: Model<any>,
+    @InjectModel('StockMovement')
+    private readonly stockMovementModel: Model<StockMovement>,
+    @InjectModel('StockPurchase')
+    private readonly stockPurchaseModel: Model<StockPurchase>,
     private configService: ConfigService,
     private utilsService: UtilsService,
     private fbCatalogService: FbCatalogService,
@@ -1660,7 +1667,8 @@ ${items.join('\n')}
 
   async updateStock(
     id: string,
-    body: { stock?: number; lowStockThreshold?: number },
+    body: { stock?: number; lowStockThreshold?: number; note?: string },
+    admin?: { _id?: string; name?: string },
   ): Promise<ResponsePayload> {
     try {
       const set: any = {};
@@ -1684,8 +1692,140 @@ ${items.join('\n')}
       if (!Object.keys(set).length) {
         return { success: false, message: 'Nothing to update' } as ResponsePayload;
       }
+
+      // Fetch the prior value first so the movement log records an accurate
+      // delta — updateOne alone doesn't tell us what the stock used to be.
+      const before = await this.productModel
+        .findById(id)
+        .select('stock sku')
+        .lean();
       await this.productModel.updateOne({ _id: id }, { $set: set });
+
+      if (before && set.stock !== undefined) {
+        const priorStock = typeof before.stock === 'number' ? before.stock : 0;
+        const qtyChange = set.stock - priorStock;
+        if (qtyChange !== 0) {
+          try {
+            await this.stockMovementModel.create({
+              product: id,
+              sku: before.sku,
+              qtyChange,
+              stockAfter: set.stock,
+              reason: 'manual_adjustment',
+              note: body?.note,
+              adminId: admin?._id,
+              adminName: admin?.name,
+            });
+          } catch (err) {
+            this.logger.warn(
+              `Failed to log stock movement for product ${id}: ${err?.message || err}`,
+            );
+          }
+        }
+      }
+
       return { success: true, message: 'Stock updated' } as ResponsePayload;
+    } catch (err) {
+      throw new InternalServerErrorException(err.message);
+    }
+  }
+
+  /**
+   * Record an incoming purchase/restock batch: increments product stock,
+   * updates the product's last-known cost, and logs a stock movement.
+   */
+  async addStockPurchase(
+    dto: CreateStockPurchaseDto,
+    admin?: { _id?: string; name?: string },
+  ): Promise<ResponsePayload> {
+    try {
+      const product = await this.productModel
+        .findById(dto.productId)
+        .select('sku stock')
+        .lean();
+      if (!product) {
+        throw new NotFoundException('Product not found');
+      }
+
+      const qty = Math.max(1, Math.floor(Number(dto.qty)) || 1);
+      const unitCost = Math.max(0, Number(dto.unitCost) || 0);
+      const totalCost = qty * unitCost;
+
+      const updated = await this.productModel.findByIdAndUpdate(
+        dto.productId,
+        {
+          $inc: { stock: qty },
+          $set: { costPrice: unitCost },
+        },
+        { new: true },
+      );
+
+      const purchase = await this.stockPurchaseModel.create({
+        product: dto.productId,
+        sku: product.sku,
+        qty,
+        unitCost,
+        totalCost,
+        supplierName: dto.supplierName,
+        note: dto.note,
+        adminId: admin?._id,
+        adminName: admin?.name,
+      });
+
+      try {
+        await this.stockMovementModel.create({
+          product: dto.productId,
+          sku: product.sku,
+          qtyChange: qty,
+          stockAfter: updated?.stock,
+          reason: 'purchase',
+          referenceType: 'purchase',
+          referenceId: purchase._id,
+          note: dto.note,
+          adminId: admin?._id,
+          adminName: admin?.name,
+        });
+      } catch (err) {
+        this.logger.warn(
+          `Failed to log stock movement for purchase ${purchase._id}: ${err?.message || err}`,
+        );
+      }
+
+      return {
+        success: true,
+        message: 'Stock purchase recorded',
+        data: purchase,
+      } as ResponsePayload;
+    } catch (err) {
+      if (err instanceof NotFoundException) throw err;
+      throw new InternalServerErrorException(err.message);
+    }
+  }
+
+  async getStockMovements(query: GetStockMovementsDto): Promise<ResponsePayload> {
+    try {
+      const page = Math.max(1, Number(query?.page) || 1);
+      const limit = Math.min(200, Math.max(1, Number(query?.limit) || 50));
+      const filter: any = {};
+      if (query?.productId) {
+        filter.product = query.productId;
+      }
+
+      const total = await this.stockMovementModel.countDocuments(filter);
+      const data = await this.stockMovementModel
+        .find(filter)
+        .populate('product', 'name sku')
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean();
+
+      return {
+        success: true,
+        message: 'Success',
+        data,
+        count: total,
+      } as ResponsePayload;
     } catch (err) {
       throw new InternalServerErrorException(err.message);
     }

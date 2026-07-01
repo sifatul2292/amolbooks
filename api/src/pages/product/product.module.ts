@@ -10,6 +10,8 @@ import { ShopInformationSchema } from '../../schema/shop-information.schema';
 import { RedirectUrlSchema } from '../../schema/redirect-url.schema';
 import { SettingSchema } from '../customization/setting/schema/setting.schema';
 import { BoughtTogetherConfigSchema } from '../../schema/bought-together-config.schema';
+import { StockMovementSchema } from '../../schema/stock-movement.schema';
+import { StockPurchaseSchema } from '../../schema/stock-purchase.schema';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { BoughtTogetherConfigSchema } from '../../schema/bought-together-config.
       { name: 'ShopInformation', schema: ShopInformationSchema },
       { name: 'Setting', schema: SettingSchema },
       { name: 'BoughtTogetherConfig', schema: BoughtTogetherConfigSchema },
+      { name: 'StockMovement', schema: StockMovementSchema },
+      { name: 'StockPurchase', schema: StockPurchaseSchema },
     ]),
   ],
   providers: [ProductService],

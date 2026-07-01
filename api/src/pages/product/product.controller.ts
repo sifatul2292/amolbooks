@@ -35,6 +35,11 @@ import {
 } from '../../dto/product.dto';
 
 import { MongoIdValidationPipe } from '../../pipes/mongo-id-validation.pipe';
+import {
+  CreateStockPurchaseDto,
+  GetStockMovementsDto,
+  UpdateStockDto,
+} from '../../dto/stock.dto';
 
 @Controller('product')
 export class ProductController {
@@ -131,9 +136,36 @@ export class ProductController {
   @UseGuards(AdminJwtAuthGuard)
   async updateStock(
     @Param('id', MongoIdValidationPipe) id: string,
-    @Body() body: { stock?: number; lowStockThreshold?: number },
+    @Body() body: UpdateStockDto,
+    @Req() req: Request,
   ): Promise<ResponsePayload> {
-    return await this.productService.updateStock(id, body);
+    const user: any = req.user;
+    return await this.productService.updateStock(id, body, {
+      _id: user?._id,
+      name: user?.username,
+    });
+  }
+
+  @Post('/stock/purchase')
+  @UseGuards(AdminJwtAuthGuard)
+  @UsePipes(ValidationPipe)
+  async addStockPurchase(
+    @Body() body: CreateStockPurchaseDto,
+    @Req() req: Request,
+  ): Promise<ResponsePayload> {
+    const user: any = req.user;
+    return await this.productService.addStockPurchase(body, {
+      _id: user?._id,
+      name: user?.username,
+    });
+  }
+
+  @Get('/stock/movements')
+  @UseGuards(AdminJwtAuthGuard)
+  async getStockMovements(
+    @Query() query: GetStockMovementsDto,
+  ): Promise<ResponsePayload> {
+    return await this.productService.getStockMovements(query);
   }
 
   @Version(VERSION_NEUTRAL)

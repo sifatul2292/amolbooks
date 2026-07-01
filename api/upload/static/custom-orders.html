@@ -1104,10 +1104,11 @@
                   <th style="width:120px">Low Alert ≤</th>
                   <th style="width:130px">Status</th>
                   <th style="width:90px"></th>
+                  <th style="width:170px"></th>
                 </tr>
               </thead>
               <tbody id="stockBody">
-                <tr class="loading-row"><td colspan="6"><div class="spinner"></div><div>Loading products…</div></td></tr>
+                <tr class="loading-row"><td colspan="7"><div class="spinner"></div><div>Loading products…</div></td></tr>
               </tbody>
             </table>
           </div>
@@ -1483,6 +1484,74 @@
         </a>
         <button class="btn-m-close" onclick="document.getElementById('productsModal').classList.remove('open')">Close</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Stock Restock Modal -->
+<div class="modal-overlay" id="restockModal" onclick="if(event.target===this) this.classList.remove('open')">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-order-id" id="restockProductName">Restock</div>
+      </div>
+      <div class="modal-header-right">
+        <button class="modal-close" onclick="document.getElementById('restockModal').classList.remove('open')">&times;</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px">Quantity received</label>
+          <input type="number" min="1" id="restockQty" class="stock-input" style="width:100%" placeholder="e.g. 50">
+        </div>
+        <div>
+          <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px">Unit cost (৳)</label>
+          <input type="number" min="0" id="restockUnitCost" class="stock-input" style="width:100%" placeholder="e.g. 120">
+        </div>
+        <div>
+          <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px">Supplier (optional)</label>
+          <input type="text" id="restockSupplier" class="stock-input" style="width:100%" placeholder="Supplier name">
+        </div>
+        <div>
+          <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px">Note (optional)</label>
+          <input type="text" id="restockNote" class="stock-input" style="width:100%" placeholder="Optional note">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-m-close" onclick="document.getElementById('restockModal').classList.remove('open')">Cancel</button>
+      <button class="btn-stock-save" id="restockSubmitBtn" onclick="submitRestock()">Save Restock</button>
+    </div>
+  </div>
+</div>
+
+<!-- Stock Movement History Modal -->
+<div class="modal-overlay" id="historyModal" onclick="if(event.target===this) this.classList.remove('open')">
+  <div class="modal-box" style="max-width:640px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-order-id" id="historyProductName">Stock History</div>
+      </div>
+      <div class="modal-header-right">
+        <button class="modal-close" onclick="document.getElementById('historyModal').classList.remove('open')">&times;</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <table class="product-table" style="width:100%">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Reason</th>
+            <th>Qty</th>
+            <th>Stock After</th>
+            <th>Admin</th>
+          </tr>
+        </thead>
+        <tbody id="historyBody">
+          <tr><td colspan="5"><div class="spinner"></div></td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -2701,7 +2770,7 @@
   window.loadStockList = function () {
     if (!getToken()) { showLogin('Please log in to manage stock.'); return; }
     var body = document.getElementById('stockBody');
-    body.innerHTML = '<tr class="loading-row"><td colspan="6"><div class="spinner"></div><div>Loading products…</div></td></tr>';
+    body.innerHTML = '<tr class="loading-row"><td colspan="7"><div class="spinner"></div><div>Loading products…</div></td></tr>';
     var url = API + '/api/product/stock-list?page=' + stockState.page + '&limit=' + stockState.limit
       + '&q=' + encodeURIComponent(stockState.q) + (stockState.lowOnly ? '&lowOnly=true' : '');
     fetch(url, { headers: authHeaders() })
@@ -2715,18 +2784,18 @@
       })
       .catch(function(err){
         if (err.message==='auth') return;
-        body.innerHTML = '<tr class="empty-row"><td colspan="6">Failed to load. '+esc(err.message)+'</td></tr>';
+        body.innerHTML = '<tr class="empty-row"><td colspan="7">Failed to load. '+esc(err.message)+'</td></tr>';
       });
   };
 
   function renderStockRows(rows) {
     var body = document.getElementById('stockBody');
-    if (!rows.length) { body.innerHTML = '<tr class="empty-row"><td colspan="6">No products found.</td></tr>'; return; }
+    if (!rows.length) { body.innerHTML = '<tr class="empty-row"><td colspan="7">No products found.</td></tr>'; return; }
     body.innerHTML = rows.map(function(p){
       var img = (p.images && p.images[0]) ? p.images[0] : '';
       var stockVal = (p.stock === null || p.stock === undefined) ? '' : p.stock;
       var thrVal = (p.lowStockThreshold === null || p.lowStockThreshold === undefined) ? '' : p.lowStockThreshold;
-      return '<tr data-id="'+p._id+'">'
+      return '<tr data-id="'+p._id+'" data-name="'+esc(p.name||'')+'">'
         + '<td style="padding-left:18px"><div class="stock-prod">'
         + (img ? '<img class="stock-tbl-img" src="'+esc(img)+'" onerror="this.style.visibility=\'hidden\'">' : '<div class="stock-tbl-img"></div>')
         + '<div><div class="stock-prod-name">'+esc(p.name||'—')+'</div>'
@@ -2737,9 +2806,77 @@
         + '<td><input type="number" min="0" class="stock-input" value="'+thrVal+'" placeholder="5"></td>'
         + '<td class="stock-status">'+stockStatusPill(p.stock, p.lowStockThreshold)+'</td>'
         + '<td><button class="btn-stock-save" onclick="saveStock(this)">Save</button></td>'
+        + '<td><button class="btn-reset" style="padding:6px 10px;font-size:12px" onclick="openRestockModal(this)"><i class="fas fa-truck-loading"></i> Restock</button> '
+        + '<button class="btn-reset" style="padding:6px 10px;font-size:12px" onclick="openHistoryModal(this)"><i class="fas fa-clock-rotate-left"></i></button></td>'
         + '</tr>';
     }).join('');
   }
+
+  var restockTargetId = null;
+  window.openRestockModal = function (btn) {
+    var tr = btn.closest('tr');
+    restockTargetId = tr.getAttribute('data-id');
+    document.getElementById('restockProductName').textContent = 'Restock — ' + tr.getAttribute('data-name');
+    document.getElementById('restockQty').value = '';
+    document.getElementById('restockUnitCost').value = '';
+    document.getElementById('restockSupplier').value = '';
+    document.getElementById('restockNote').value = '';
+    document.getElementById('restockModal').classList.add('open');
+  };
+
+  window.submitRestock = function () {
+    var qty = Number(document.getElementById('restockQty').value);
+    var unitCost = Number(document.getElementById('restockUnitCost').value);
+    if (!restockTargetId || !qty || qty <= 0) { showToast('Enter a valid quantity', 'info'); return; }
+    var payload = {
+      productId: restockTargetId,
+      qty: qty,
+      unitCost: isNaN(unitCost) ? 0 : unitCost,
+      supplierName: document.getElementById('restockSupplier').value.trim() || undefined,
+      note: document.getElementById('restockNote').value.trim() || undefined,
+    };
+    var btn = document.getElementById('restockSubmitBtn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    fetch(API + '/api/product/stock/purchase', { method:'POST', headers: authHeaders(), body: JSON.stringify(payload) })
+      .then(function(r){ if (r.status===401){ clearToken(); showLogin('Session expired. Please log in again.'); throw new Error('auth'); } return r.json(); })
+      .then(function(resp){
+        if (resp && resp.success) {
+          showToast('Restock recorded', 'success');
+          document.getElementById('restockModal').classList.remove('open');
+          loadStockList();
+        } else { showToast((resp && resp.message) || 'Restock failed', 'error'); }
+      })
+      .catch(function(err){ if (err.message!=='auth') showToast('Failed: '+err.message, 'error'); })
+      .finally(function(){ btn.disabled = false; btn.textContent = 'Save Restock'; });
+  };
+
+  function movementReasonLabel(reason) {
+    return { order: 'Order sale', cancel_restock: 'Cancel restock', return_restock: 'Return restock',
+      manual_adjustment: 'Manual edit', purchase: 'Purchase' }[reason] || reason;
+  }
+
+  window.openHistoryModal = function (btn) {
+    var tr = btn.closest('tr');
+    var id = tr.getAttribute('data-id');
+    document.getElementById('historyProductName').textContent = 'Stock History — ' + tr.getAttribute('data-name');
+    document.getElementById('historyModal').classList.add('open');
+    var body = document.getElementById('historyBody');
+    body.innerHTML = '<tr><td colspan="5"><div class="spinner"></div></td></tr>';
+    fetch(API + '/api/product/stock/movements?productId=' + id, { headers: authHeaders() })
+      .then(function(r){ if (r.status===401){ clearToken(); showLogin('Session expired. Please log in again.'); throw new Error('auth'); } return r.json(); })
+      .then(function(resp){
+        var rows = (resp && resp.data) || [];
+        if (!rows.length) { body.innerHTML = '<tr><td colspan="5">No movements recorded yet.</td></tr>'; return; }
+        body.innerHTML = rows.map(function(m){
+          var date = m.createdAt ? new Date(m.createdAt).toLocaleString() : '—';
+          var qtyStr = (m.qtyChange > 0 ? '+' : '') + m.qtyChange;
+          return '<tr><td>'+esc(date)+'</td><td>'+esc(movementReasonLabel(m.reason))+'</td>'
+            + '<td>'+esc(String(qtyStr))+'</td><td>'+esc(String(m.stockAfter==null?'—':m.stockAfter))+'</td>'
+            + '<td>'+esc(m.adminName||'—')+'</td></tr>';
+        }).join('');
+      })
+      .catch(function(err){ if (err.message!=='auth') body.innerHTML = '<tr><td colspan="5">Failed to load: '+esc(err.message)+'</td></tr>'; });
+  };
 
   window.saveStock = function (btn) {
     var tr = btn.closest('tr');

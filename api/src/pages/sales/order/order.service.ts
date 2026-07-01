@@ -48,6 +48,7 @@ import * as schedule from 'node-schedule';
 import * as crypto from 'crypto';
 import { Admin } from '../../../interfaces/admin/admin.interface';
 import { AnalyticsService } from '../../../shared/analytics/analytics.service';
+import { StockMovement } from '../../../interfaces/common/stock-movement.interface';
 const ObjectId = Types.ObjectId;
 
 // Process-level TTL cache for the public recent-buyers feed. Caps DB load on a
@@ -78,6 +79,8 @@ export class OrderService {
     private readonly shopInformationModel: Model<ShopInformation>,
     @InjectModel('OrderOffer')
     private readonly orderOfferModel: Model<OrderOffer>,
+    @InjectModel('StockMovement')
+    private readonly stockMovementModel: Model<StockMovement>,
     private configService: ConfigService,
     private utilsService: UtilsService,
     private bulkSmsService: BulkSmsService,
@@ -194,11 +197,15 @@ export class OrderService {
         }
       }
 
+      // Sales-counter increment only. Actual stock deduction is unified into
+      // `decreaseProductStock` (single source of truth via the `stock` field
+      // + StockMovement log) — the legacy `quantity` field is no longer
+      // decremented here to stop the two counters from drifting apart.
       for (const f of (addOrderDto['orderedItems'] || [])) {
         try {
           if (!f?._id || !ObjectId.isValid(f._id)) {
             this.logger.warn(
-              `Skipping stock update for order ${saveData.orderId}: invalid product id ${f?._id}`,
+              `Skipping totalSold update for order ${saveData.orderId}: invalid product id ${f?._id}`,
             );
             continue;
           }
@@ -208,23 +215,12 @@ export class OrderService {
             continue;
           }
 
-          const product = await this.productModel.findById(f._id);
-          if (!product) {
-            this.logger.warn(
-              `Skipping stock update for order ${saveData.orderId}: product ${f._id} not found`,
-            );
-            continue;
-          }
-
           await this.productModel.findByIdAndUpdate(f._id, {
-            $inc: {
-              ...(product.quantity > 0 ? { quantity: -quantity } : {}),
-              totalSold: quantity,
-            },
+            $inc: { totalSold: quantity },
           });
         } catch (error) {
           this.logger.warn(
-            `Order ${saveData.orderId} was created, but stock update failed for product ${f?._id}:`,
+            `Order ${saveData.orderId} was created, but totalSold update failed for product ${f?._id}:`,
             error?.message || error,
           );
         }
@@ -363,7 +359,16 @@ export class OrderService {
     try {
       // 0) Manual stock decrement (custom-orders.html). Only products with a
       // non-null `stock` are affected; others are ignored.
-      await this.decreaseProductStock(saveData?.orderedItems);
+      const stockDecremented = await this.decreaseProductStock(
+        saveData._id,
+        saveData?.orderedItems,
+      );
+      if (stockDecremented) {
+        await this.orderModel.updateOne(
+          { _id: saveData._id },
+          { $set: { stockDecremented: true } },
+        );
+      }
 
       // 1) Fraud Checker Call + Order Update
       if (addOrderDto.phoneNo) {
@@ -575,27 +580,139 @@ export class OrderService {
    * Decrement manual stock for ordered items. Only products with a non-null
    * `stock` field are touched. Fire-and-forget; never blocks order flow.
    */
-  private async decreaseProductStock(items: any[]): Promise<void> {
+  /**
+   * Decrement `stock` for tracked products (stock !== null) on order creation.
+   * Returns true if the bulk write ran (used by the caller to mark the order
+   * as `stockDecremented`, which gates restock-on-cancel below). Fire-and-
+   * forget style preserved: never throws, only logs.
+   */
+  private async decreaseProductStock(
+    orderId: string,
+    items: any[],
+  ): Promise<boolean> {
     try {
-      if (!Array.isArray(items) || !items.length) return;
-      const ops = items
+      if (!Array.isArray(items) || !items.length) return false;
+      const parsed = items
         .map((it) => {
           const id = it?._id || it?.product || it?.productId;
           const qty = Math.max(1, Math.floor(Number(it?.quantity)) || 1);
           if (!id) return null;
-          return {
-            updateOne: {
-              filter: { _id: id, stock: { $ne: null } },
-              update: { $inc: { stock: -qty } },
-            },
-          };
+          return { id, qty };
         })
-        .filter(Boolean);
-      if (!ops.length) return;
+        .filter(Boolean) as { id: string; qty: number }[];
+      if (!parsed.length) return false;
+
+      const ops = parsed.map(({ id, qty }) => ({
+        updateOne: {
+          filter: { _id: id, stock: { $ne: null } },
+          update: { $inc: { stock: -qty } },
+        },
+      }));
       await this.productModel.bulkWrite(ops as any);
+
+      // Only tracked products (stock !== null) actually matched the update
+      // above; re-fetch to log a movement solely for those, with the
+      // post-decrement stock value.
+      const trackedIds = parsed.map((p) => p.id);
+      const trackedProducts = await this.productModel
+        .find({ _id: { $in: trackedIds } })
+        .select('sku stock')
+        .lean();
+      const trackedById = new Map(
+        trackedProducts.map((p: any) => [String(p._id), p]),
+      );
+
+      const movements = parsed
+        .filter(({ id }) => trackedById.has(String(id)))
+        .map(({ id, qty }) => {
+          const product = trackedById.get(String(id));
+          return {
+            product: id,
+            sku: product?.sku,
+            qtyChange: -qty,
+            stockAfter: product?.stock,
+            reason: 'order',
+            referenceType: 'order',
+            referenceId: orderId,
+          };
+        });
+      if (movements.length) {
+        try {
+          await this.stockMovementModel.insertMany(movements);
+        } catch (err) {
+          this.logger.warn(
+            `Failed to log stock movements for order ${orderId}: ${err?.message || err}`,
+          );
+        }
+      }
+      return true;
     } catch (err) {
       this.logger.warn(
         `decreaseProductStock failed: ${err?.message || err}`,
+      );
+      return false;
+    }
+  }
+
+  /**
+   * Reverse `decreaseProductStock` when an order is cancelled/refunded/
+   * returned. Mirrors the tracked-only filter so untracked products are
+   * silently skipped, same as on the way down.
+   */
+  private async restockProducts(
+    orderId: string,
+    items: any[],
+    reason: 'cancel_restock' | 'return_restock',
+  ): Promise<void> {
+    try {
+      if (!Array.isArray(items) || !items.length) return;
+      const parsed = items
+        .map((it) => {
+          const id = it?._id || it?.product || it?.productId;
+          const qty = Math.max(1, Math.floor(Number(it?.quantity)) || 1);
+          if (!id) return null;
+          return { id, qty };
+        })
+        .filter(Boolean) as { id: string; qty: number }[];
+      if (!parsed.length) return;
+
+      const ops = parsed.map(({ id, qty }) => ({
+        updateOne: {
+          filter: { _id: id, stock: { $ne: null } },
+          update: { $inc: { stock: qty } },
+        },
+      }));
+      await this.productModel.bulkWrite(ops as any);
+
+      const trackedIds = parsed.map((p) => p.id);
+      const trackedProducts = await this.productModel
+        .find({ _id: { $in: trackedIds } })
+        .select('sku stock')
+        .lean();
+      const trackedById = new Map(
+        trackedProducts.map((p: any) => [String(p._id), p]),
+      );
+
+      const movements = parsed
+        .filter(({ id }) => trackedById.has(String(id)))
+        .map(({ id, qty }) => {
+          const product = trackedById.get(String(id));
+          return {
+            product: id,
+            sku: product?.sku,
+            qtyChange: qty,
+            stockAfter: product?.stock,
+            reason,
+            referenceType: 'order',
+            referenceId: orderId,
+          };
+        });
+      if (movements.length) {
+        await this.stockMovementModel.insertMany(movements);
+      }
+    } catch (err) {
+      this.logger.warn(
+        `restockProducts failed for order ${orderId}: ${err?.message || err}`,
       );
     }
   }
@@ -2030,7 +2147,18 @@ export class OrderService {
         orderTimeline = null;
       }
 
-      const mData = {
+      // Restock: only if stock was actually decremented for this order and
+      // it hasn't already been restocked (idempotent — toggling the status
+      // back and forth won't double-restock).
+      const isRestockStatus = [
+        OrderStatus.CANCEL,
+        OrderStatus.REFUND,
+        OrderStatus.RETURN,
+      ].includes(orderStatus);
+      const shouldRestock =
+        isRestockStatus && data.stockDecremented === true && !data.stockRestocked;
+
+      const mData: any = {
         courierLink: updateOrderStatusDto.courierLink,
         orderStatus: orderStatus,
         orderTimeline: orderTimeline,
@@ -2039,19 +2167,20 @@ export class OrderService {
         deliveryDate: deliveryDate,
         deliveryDateString: deliveryDateString,
       };
+      if (shouldRestock) {
+        mData.stockRestocked = true;
+      }
       await this.orderModel.findByIdAndUpdate(id, {
         $set: mData,
       });
 
-      // if (orderStatus === 6) {
-      //   for (const f of data['orderedItems']) {
-      //     await this.productModel.findByIdAndUpdate(f._id, {
-      //       $inc: {
-      //         quantity: f.quantity,
-      //       },
-      //     });
-      //   }
-      // }
+      if (shouldRestock) {
+        const restockReason =
+          orderStatus === OrderStatus.RETURN
+            ? 'return_restock'
+            : 'cancel_restock';
+        await this.restockProducts(id, data['orderedItems'], restockReason);
+      }
 
       if (orderStatus === 2) {
         const message = `আপনার অর্ডার আইডি ${data?.orderId} নিশ্চিত করা হয়েছে। ডেলিভারি সময়: ঢাকার ভিতরে ১–২ কার্যদিবস, ঢাকার বাইরে ৩–৬ কার্যদিবস। ধন্যবাদ আলম বুক এর সঙ্গে থাকার জন্য।`;
@@ -2077,21 +2206,12 @@ export class OrderService {
       //   // console.log('orderStatus', data.phoneNo);
       // }
 
-      if (orderStatus === 5) {
-        for (const f of data['orderedItems']) {
-          await this.productModel.findByIdAndUpdate(f._id, {
-            $inc: {
-              totalSold: f.quantity,
-            },
-          });
-
-          await this.productModel.findByIdAndUpdate(f._id, {
-            $inc: {
-              quantity: -f.quantity,
-            },
-          });
-        }
-      }
+      // NOTE: previously this block re-decremented the legacy `quantity`
+      // field and re-incremented `totalSold` again on DELIVERED — both
+      // already happen once at order creation (see `addOrderAdmin`'s
+      // orderedItems loop). Removed as part of unifying stock accounting
+      // onto the single `stock` field + StockMovement log; keeping it would
+      // have double-counted totalSold and kept legacy `quantity` drifting.
 
       return {
         success: true,

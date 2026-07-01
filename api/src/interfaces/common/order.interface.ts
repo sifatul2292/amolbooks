@@ -40,6 +40,8 @@ export interface Order {
   productDiscount?: number;
   note?: string;
   adminNote?: string;
+  stockDecremented?: boolean;
+  stockRestocked?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
