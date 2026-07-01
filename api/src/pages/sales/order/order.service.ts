@@ -3071,14 +3071,14 @@ export class OrderService {
       aggregateStages.push({ $sort: mSort });
     }
 
-    const countStages = [...aggregateStages];
-
+    let pageSize = 25;
+    let currentPage = 1;
     if (pagination) {
-      const pageSize =
+      pageSize =
         pagination.pageSize && Number(pagination.pageSize) > 0
           ? Number(pagination.pageSize)
           : 25;
-      const currentPage =
+      currentPage =
         pagination.currentPage && Number(pagination.currentPage) > 0
           ? Number(pagination.currentPage)
           : 1;
@@ -3086,27 +3086,37 @@ export class OrderService {
         skip: pageSize * (currentPage - 1),
         limit: pageSize,
       };
-      aggregateStages.push({ $skip: mPagination.skip });
-      aggregateStages.push({ $limit: mPagination.limit });
     }
 
+    // Run data/count/grandTotal in ONE pass via $facet — the $lookup above is
+    // the expensive stage (scans `orders` per incomplete-order doc); running
+    // the pipeline 3x (data, count, calculation) tripled that cost for nothing.
+    const dataPipeline: any[] = [
+      { $skip: mPagination.skip || 0 },
+      { $limit: mPagination.limit || pageSize },
+    ];
     if (Object.keys(mSelect).length) {
-      aggregateStages.push({ $project: mSelect });
+      dataPipeline.push({ $project: mSelect });
     }
+
+    aggregateStages.push({
+      $facet: {
+        data: dataPipeline,
+        count: [{ $count: 'count' }],
+        calculation: [
+          { $group: { _id: null, grandTotal: { $sum: '$grandTotal' } } },
+        ],
+      },
+    });
 
     try {
-      const data = await this.incompleteOrderModel.aggregate(aggregateStages);
-      const countAgg = await this.incompleteOrderModel.aggregate([
-        ...countStages,
-        { $count: 'count' },
-      ]);
-      const count = countAgg[0]?.count || 0;
-      const calculationAgg = await this.incompleteOrderModel.aggregate([
-        ...countStages,
-        { $group: { _id: null, grandTotal: { $sum: '$grandTotal' } } },
-      ]);
+      const [result] = await this.incompleteOrderModel.aggregate(
+        aggregateStages,
+      );
+      const data = result?.data || [];
+      const count = result?.count?.[0]?.count || 0;
       const calculation = {
-        grandTotal: calculationAgg[0]?.grandTotal || 0,
+        grandTotal: result?.calculation?.[0]?.grandTotal || 0,
       };
       return {
         success: true,

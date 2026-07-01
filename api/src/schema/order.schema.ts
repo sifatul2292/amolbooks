@@ -17,6 +17,7 @@ export const OrderSchema = new mongoose.Schema(
     phoneNo: {
       type: String,
       required: true,
+      index: true,
     },
     email: {
       type: String,
@@ -243,3 +244,5 @@ export const OrderSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+
+OrderSchema.index({ phoneNo: 1, createdAt: 1 });

@@ -584,6 +584,20 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
 (function(){
   var _toastTimer=null;
   var _loopTimer=null;
+  /* Buy-Now ("অর্ডার করুন") also POSTs add-to-cart then redirects to /checkout,
+     so it fires the same add_to_cart event. Record Buy-Now clicks to suppress the
+     toast for them — toast should show only for Add-to-Cart ("ক্রয় তালিকায় যুক্ত করুন"). */
+  var _buyNowAt=0;
+  document.addEventListener('click',function(e){
+    var n=e.target;
+    for(var i=0;i<6&&n&&n!==document.body;i++){
+      if(n.tagName==='BUTTON'||n.tagName==='A'){
+        if((n.textContent||'').replace(/\s+/g,' ').trim()==='অর্ডার করুন')_buyNowAt=Date.now();
+        break;
+      }
+      n=n.parentElement;
+    }
+  },true);
 
   /* ── toast element (created once, lazily) ── */
   function getToast(){
@@ -631,6 +645,7 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
 
   function onCartAdded(){
     startCartLoop();
+    if(Date.now()-_buyNowAt<2500)return;   // buy-now click: skip toast
     showToast();
   }
 
@@ -1097,33 +1112,54 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
       }).catch(function(){_fetching=false;});
   }
   function norm(s){return (s||'').replace(/\s+/g,' ').trim();}
-  function reorder(){
+  function realSlides(wrap){
+    return [].slice.call(wrap.children).filter(function(s){
+      return (''+s.className).indexOf('swiper-slide')!==-1 && (''+s.className).indexOf('duplicate')===-1;});
+  }
+  var _done=false,_quietT=null,_obs=null,_findT=null;
+  function doSort(){
+    if(_done)return;
     var sw=document.querySelector('.category-swiper');
-    if(!sw||!sw.swiper||sw.__abSorted)return;
+    if(!sw||!sw.swiper){schedulePoll();return;}
+    var wrap=sw.querySelector('.swiper-wrapper');
+    if(!wrap){schedulePoll();return;}
+    _done=true;
+    if(_obs){try{_obs.disconnect();}catch(e){}}
     fetchOrder(function(order){
-      if(!order||!order.length){reveal();return;}
-      var rank={}; order.forEach(function(n,i){rank[norm(n)]=i;});
-      var wrap=sw.querySelector('.swiper-wrapper'); if(!wrap){reveal();return;}
-      var slides=[].slice.call(wrap.children).filter(function(s){
-        return (''+s.className).indexOf('swiper-slide')!==-1 && (''+s.className).indexOf('duplicate')===-1;});
-      if(slides.length<2){reveal();return;}
-      slides.forEach(function(s,i){
-        var h=s.querySelector('h1,h2,h3,h4');
-        var k=h?rank[norm(h.textContent)]:undefined;
-        s.__k=(k===undefined?1e6+i:k);            // unranked categories keep original order, after ranked
-      });
-      slides.sort(function(a,b){return a.__k-b.__k;});
-      slides.forEach(function(s){wrap.appendChild(s);});
-      try{sw.swiper.update();sw.swiper.slideTo(0,0);}catch(e){}
-      sw.__abSorted=true;
-      reveal();                                    // sorted -> show
+      try{
+        if(order&&order.length){
+          var rank={}; order.forEach(function(n,i){rank[norm(n)]=i;});
+          var sl=realSlides(wrap);
+          if(sl.length>=2){
+            sl.forEach(function(s,i){
+              var h=s.querySelector('h1,h2,h3,h4');
+              var k=h?rank[norm(h.textContent)]:undefined;
+              s.__k=(k===undefined?1e6+i:k);        // unranked keep original order, after ranked
+            });
+            sl.sort(function(a,b){return a.__k-b.__k;});
+            sl.forEach(function(s){wrap.appendChild(s);});
+            try{sw.swiper.update();sw.swiper.slideTo(0,0);}catch(e){}
+          }
+        }
+      }catch(e){}
+      reveal();
     });
   }
-  fetchOrder(function(){});                        // prefetch order ASAP, before swiper renders
-  var t; function schedule(){clearTimeout(t);t=setTimeout(reorder,80);}
-  new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});
-  document.addEventListener('DOMContentLoaded',schedule);
-  schedule();
+  /* Sort only after the category slider has been DOM-quiet 900ms — i.e. Angular
+     finished injecting every category AND its products. Sorting mid-injection
+     detaches half-built slides and empties them. */
+  function quiet(){clearTimeout(_quietT);_quietT=setTimeout(doSort,900);}
+  function schedulePoll(){clearTimeout(_findT);_findT=setTimeout(attach,250);}
+  function attach(){
+    if(_done)return;
+    var sw=document.querySelector('.category-swiper');
+    if(!sw){schedulePoll();return;}
+    if(!_obs){_obs=new MutationObserver(quiet);_obs.observe(sw,{childList:true,subtree:true});}
+    quiet();
+  }
+  fetchOrder(function(){});                          // prefetch order ASAP
+  setTimeout(reveal,5000);                           // safety: never stay hidden
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',attach); else attach();
 })();
 </script>
 
@@ -2182,5 +2218,60 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
 })();
 </script>
 
+<script>
+/* Checkout item-list quantity stepper (guest cart). Renders [- n +] on each
+   .cart-product-item row on /checkout, edits the guest localStorage cart, then
+   reloads so Angular recomputes totals (no desync). Logged-in carts are
+   server-side (no localStorage) and are skipped. Rows mapped to cart entries by
+   index; if counts differ the stepper is not shown (never edits the wrong item). */
+(function(){
+  function onCheckout(){var p=location.pathname;return p.indexOf('/checkout')===0&&p.indexOf('order-success')===-1;}
+  function cartKey(){for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k.indexOf('Amolbooks_USER_CART')===0)return k;}return null;}
+  function readCart(k){try{return JSON.parse(localStorage.getItem(k))||[];}catch(e){return [];}}
+  function bn(n){var m=['০','১','২','৩','৪','৫','৬','৭','৮','৯'];return String(n).replace(/\d/g,function(d){return m[d];});}
+  function styleOnce(){
+    if(document.getElementById('ab-coqty-style'))return;
+    var s=document.createElement('style');s.id='ab-coqty-style';
+    s.textContent='.ab-coqty{display:inline-flex;align-items:center;margin-top:6px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;width:fit-content}'
+      +'.ab-coqty button{width:32px;height:32px;border:none;background:#f1f5f9;color:#129245;font-size:18px;font-weight:700;cursor:pointer;line-height:1}'
+      +'.ab-coqty button:active{background:#e2e8f0}'
+      +'.ab-coqty span{min-width:40px;text-align:center;font-weight:700;font-size:14px;color:#1e293b}';
+    document.head.appendChild(s);
+  }
+  function build(){
+    if(!onCheckout())return;
+    var k=cartKey(); if(!k)return;                       // logged-in / no guest cart -> skip
+    var cart=readCart(k); if(!cart.length)return;
+    var rows=document.querySelectorAll('.cart-product-item');
+    if(!rows.length||rows.length!==cart.length)return;   // can't map safely -> skip
+    styleOnce();
+    [].forEach.call(rows,function(row,idx){
+      if(row.getAttribute('data-ab-qty'))return;
+      var host=null,sp=row.querySelectorAll('span,div,p');
+      for(var i=0;i<sp.length;i++){if(/পরিমাণ\s*[:：]/.test(sp[i].textContent||'')&&sp[i].children.length<=1){host=sp[i];break;}}
+      var anchor=(host&&host.parentElement)||row.querySelector('.cart-product-info')||row;
+      row.setAttribute('data-ab-qty','1');
+      var box=document.createElement('div');box.className='ab-coqty';
+      var dec=document.createElement('button');dec.type='button';dec.textContent='−';
+      var num=document.createElement('span');num.textContent=bn(cart[idx].selectedQty||1);
+      var inc=document.createElement('button');inc.type='button';inc.textContent='+';
+      box.appendChild(dec);box.appendChild(num);box.appendChild(inc);
+      anchor.appendChild(box);
+      function change(delta){
+        var c=readCart(k); if(!c[idx])return;
+        var q=Number(c[idx].selectedQty||1)+delta; if(q<1)q=1;
+        c[idx].selectedQty=q; localStorage.setItem(k,JSON.stringify(c));
+        location.reload();
+      }
+      dec.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();change(-1);});
+      inc.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();change(1);});
+    });
+  }
+  var mo=new MutationObserver(function(){build();});
+  mo.observe(document.body,{childList:true,subtree:true});
+  document.addEventListener('DOMContentLoaded',build);
+  build();
+})();
+</script>
 <script src="/ab-widgets.js?v=18" defer></script>
 </body></html>

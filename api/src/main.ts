@@ -63,6 +63,10 @@ async function bootstrap() {
     '/upload/static',
     express.static(join(__dirname, '..', 'upload/static')),
   );
+  // Serve all upload assets (files/images/invoice) at /upload — front-end and
+  // admin reference this prefix without the global 'api' prefix. Registered
+  // before init() so it wins over ServeStatic (/api/upload) and the SPA fallback.
+  app.use('/upload', express.static(join(__dirname, '..', 'upload')));
   // app.enableCors();
   // Version Control
   app.enableVersioning({
