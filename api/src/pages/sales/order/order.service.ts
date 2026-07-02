@@ -2389,15 +2389,14 @@ export class OrderService {
         this.utilsService.transform(t.product, 'regularPrice', t.selectedQty),
       0,
     );
-    const giftEligibleSubTotal = finalData.reduce(
-      (acc, t) =>
-        acc + this.utilsService.transform(t.product, 'salePrice', t.selectedQty),
-      0,
-    );
-
-    // Free-gift (notebook) — append a zero-price gift line if eligible.
-    // Added to orderedItems only; does NOT affect subtotal/discount/grandTotal.
-    const giftLine = await this.evaluateGiftLine(products, giftEligibleSubTotal);
+    // Free-gift (notebook) — zero-prices the gift line if eligible. If the
+    // gift product is already a cart line (customer added the notebook
+    // themselves, e.g. from the checkout-page "claim" widget), that line is
+    // re-priced to 0 in place; otherwise a new zero-price line is appended.
+    // Added/adjusted in orderedItems only; does NOT affect subtotal/discount/
+    // grandTotal (those are computed above from finalData/cartSubTotal,
+    // unaffected by whatever evaluateGiftLine does to `products`).
+    const giftLine = await this.evaluateGiftLine(products, finalData);
     if (giftLine) products.push(giftLine);
 
     // Cart Discount Amount
@@ -2482,14 +2481,25 @@ export class OrderService {
    * evaluateGiftLine
    * Decides whether a free gift (notebook) should be attached to the order.
    * Config lives on the single OrderOffer doc. Two independent triggers:
-   *   A) global   : sale-price subtotal >= giftMinAmount  (any products)
+   *   A) global   : sale-price subtotal (EXCLUDING the gift product's own
+   *                 line) >= giftMinAmount  (any other products)
    *   B) this book: a line with slug === giftBuyXProductSlug and qty >= giftBuyXQty
-   * Returns a zero-price ordered-item, or null. One gift per order; never
-   * added if the gift product is already in the cart.
+   *
+   * Trigger A deliberately excludes the gift product's own price from the
+   * qualifying subtotal — otherwise a customer could add the ৳150 notebook
+   * itself to push their cart just over ৳750 and "earn" a discount on a
+   * purchase that was never really ৳750 of other books. Mutates `products`
+   * in place if the gift product is already a cart line (customer added it
+   * themselves, e.g. via the checkout-page auto-add widget), re-pricing it
+   * to 0 instead of charging it and instead of skipping the discount — the
+   * old behavior did both of those wrong things. Returns a new zero-price
+   * ordered-item to be appended by the caller when the gift product isn't
+   * already a line, or null (nothing to append — either not eligible, or
+   * already handled in place).
    */
   private async evaluateGiftLine(
     products: any[],
-    cartSaleSubTotal: number,
+    finalData: any[],
   ): Promise<any | null> {
     try {
       const cfg = JSON.parse(
@@ -2506,11 +2516,16 @@ export class OrderService {
         this.logger.error('evaluateGiftLine: invalid giftProduct._id ' + giftId);
         return null;
       }
-      // Skip if the gift product is already a purchased line.
-      if (products.some((p) => String(p._id) === giftId)) return null;
+
+      const giftEligibleSubTotal = finalData.reduce((acc, t) => {
+        if (String(t.product?._id) === giftId) return acc; // exclude gift's own price
+        return (
+          acc + this.utilsService.transform(t.product, 'salePrice', t.selectedQty)
+        );
+      }, 0);
 
       let eligible = false;
-      if (cfg.giftMinAmount && cartSaleSubTotal >= Number(cfg.giftMinAmount)) {
+      if (cfg.giftMinAmount && giftEligibleSubTotal >= Number(cfg.giftMinAmount)) {
         eligible = true;
       }
       if (!eligible && cfg.giftBuyXProductSlug && cfg.giftBuyXQty) {
@@ -2521,7 +2536,27 @@ export class OrderService {
           eligible = true;
         }
       }
-      if (!eligible) return null;
+
+      const existing = products.find((p) => String(p._id) === giftId);
+
+      if (!eligible) {
+        // Not eligible: if the customer manually added the notebook, it
+        // stays a normal purchased line at its real price. Nothing to do.
+        return null;
+      }
+
+      if (existing) {
+        // Already a cart line — re-price it to free in place rather than
+        // appending a duplicate.
+        existing.regularPrice = 0;
+        existing.unitPrice = 0;
+        existing.salePrice = 0;
+        existing.discountType = undefined;
+        existing.discountAmount = 0;
+        existing.orderType = 'gift';
+        existing.isGift = true;
+        return null;
+      }
 
       return {
         _id: cfg.giftProduct._id,

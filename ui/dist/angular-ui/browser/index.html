@@ -2284,6 +2284,7 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
       if(row.getAttribute('data-ab-qty'))return;
       var h4=row.querySelector('h4'); if(!h4)return;
       var name=h4.textContent.trim();
+      if(window.__abGiftProductName&&name===window.__abGiftProductName)return; // free gift row — fixed qty, not user-adjustable
       var db=drawerButtons(name); if(!db||!db.minus||!db.plus)return; // no safe match -> skip this row
       var host=null,sp=row.querySelectorAll('span,div,p');
       for(var i=0;i<sp.length;i++){if(/পরিমাণ\s*[:：]/.test(sp[i].textContent||'')&&sp[i].children.length<=1){host=sp[i];break;}}
@@ -2460,7 +2461,7 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
 
     var remaining = Math.max(0, Math.ceil(threshold - state.total));
     var pct = earned?100:Math.min(100, threshold>0?Math.round((state.total/threshold)*100):0);
-    var img = (cfg.giftProduct && cfg.giftProduct.image) || '';
+    var img = giftImageCache || (cfg.giftProduct && cfg.giftProduct.image) || '';
     var sig = earned+'|'+remaining+'|'+img;
 
     if (sig !== lastSig){
@@ -2479,13 +2480,16 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
     return earned;
   }
 
-  // The notebook's own sale price (for the strikethrough) isn't in the
-  // OrderOffer config — only fetchable from its product record. Fetched once
-  // and cached; if it isn't back yet the row still renders (just without the
-  // strikethrough line) rather than blocking on it.
-  var giftPriceCache = null, giftPricePending = false;
+  // The notebook's own sale price AND its real cover image aren't reliable on
+  // the OrderOffer config — price isn't there at all, and the config's
+  // giftProduct.image field is stale (points at a deleted upload, 404s).
+  // Both are fetched fresh from the product's own record (same one the
+  // product-details page reads) and cached; if it isn't back yet the row
+  // still renders (just without the strikethrough/image) rather than
+  // blocking on it.
+  var giftPriceCache = null, giftImageCache = null, giftPricePending = false;
   function warmGiftPrice(cfg){
-    if (giftPriceCache!=null || giftPricePending) return;
+    if ((giftPriceCache!=null && giftImageCache!=null) || giftPricePending) return;
     var slug = cfg.giftProduct && cfg.giftProduct.slug; if (!slug) return;
     giftPricePending = true;
     fetch(API_BASE+'/product/get-by-slug/'+encodeURIComponent(slug)).then(function(r){return r.json();}).then(function(res){
@@ -2493,6 +2497,8 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
       var d = res && res.data;
       var p = d ? (d.regularPrice!=null?d.regularPrice:d.salePrice) : null;
       if (p!=null) giftPriceCache = Number(p);
+      var img = d && Array.isArray(d.images) && d.images[0] ? d.images[0] : (d && d.image) || null;
+      if (img) giftImageCache = img;
     }).catch(function(){ giftPricePending = false; });
   }
 
@@ -2517,18 +2523,27 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
     return true;
   }
 
+  // Rebuilds only when its content actually changes (same signature-diff
+  // pattern as renderProgress) — needed because giftImageCache/giftPriceCache
+  // arrive asynchronously and may still be empty on the tick the row first
+  // gets created; without this the row would render once with no image and
+  // never pick the real one up.
+  var lastGiftSig = null;
   function renderGiftRow(cfg, earned){
     var row = document.getElementById(GIFT_ID);
-    if (!earned){ if (row) row.parentNode.removeChild(row); return; }
-    if (row) return;
-    var img = (cfg.giftProduct && cfg.giftProduct.image) || '';
+    if (!earned){ if (row) row.parentNode.removeChild(row); lastGiftSig = null; return; }
+    var img = giftImageCache || (cfg.giftProduct && cfg.giftProduct.image) || '';
     var nm = (cfg.giftProduct && cfg.giftProduct.name) || cfg.giftLabel || 'ফ্রি নোটবুক';
+    var sig = img+'|'+giftPriceCache;
+    if (row && sig === lastGiftSig) return;
+    lastGiftSig = sig;
     var oldPrice = giftPriceCache!=null ? '<span class="old">৳'+toBn(giftPriceCache)+'</span>' : '';
-    row = document.createElement('div'); row.id = GIFT_ID;
-    row.innerHTML = (img?'<img src="'+img+'" alt="'+nm+'">':'') +
+    var html = (img?'<img src="'+img+'" alt="'+nm+'">':'') +
       '<div class="body"><span class="nm">'+nm+'</span>'+
       '<span class="tag">🎁 ফ্রি গিফট</span>'+
       '<div class="pr">'+oldPrice+'<span class="free">৳০</span></div></div>';
+    if (row){ row.innerHTML = html; return; }
+    row = document.createElement('div'); row.id = GIFT_ID; row.innerHTML = html;
     var a = panelAnchor();
     if (a && a.list && a.list.parentNode) a.list.parentNode.insertBefore(row, a.list.nextSibling);
     else place(row, false);
@@ -2546,6 +2561,78 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
     });
   }
 
+  // Real cart add/remove — GUEST ONLY (localStorage cart). Logged-in carts
+  // are server-side with no client-exposed auth token (see qty-stepper
+  // comment above), so there's no safe API call to add/remove a line for
+  // them; those users keep the display-only row below. Backend
+  // (evaluateGiftLine, order.service.ts) now re-prices this exact product id
+  // to 0 in place if it's already a cart line when the customer is eligible,
+  // instead of charging it — that guard is what makes this safe to do.
+  function cartKey(){
+    for (var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k && k.indexOf('Amolbooks_USER_CART')===0) return k; }
+    return null;
+  }
+  function readGuestCart(k){ try{ var a=JSON.parse(localStorage.getItem(k)); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+  function guestCartHasGift(cart, giftId){
+    return cart.some(function(it){ return it && String(it.product)===String(giftId); });
+  }
+
+  var giftSyncing = false;
+  function syncGiftInCart(cfg, earned){
+    if (giftSyncing) return false;
+    var giftId = cfg.giftProduct && cfg.giftProduct._id; if (!giftId) return false;
+    var k = cartKey(); if (!k) return false; // logged-in: no safe path, caller falls back to overlay row
+    var cart = readGuestCart(k);
+    var has = guestCartHasGift(cart, giftId);
+    if (earned && !has){
+      cart.push({ product: giftId, selectedQty: 1 });
+      localStorage.setItem(k, JSON.stringify(cart));
+      giftSyncing = true;
+      location.reload();
+      return true;
+    }
+    if (!earned && has){
+      var next = cart.filter(function(it){ return !(it && String(it.product)===String(giftId)); });
+      localStorage.setItem(k, JSON.stringify(next));
+      giftSyncing = true;
+      location.reload();
+      return true;
+    }
+    return has; // true if it's genuinely already a real cart line, nothing to sync
+  }
+
+  // Angular renders the now-real notebook row at its actual ৳150 price (it
+  // has no concept of "free" — only the backend applies that at order time).
+  // Retext both the checkout-panel row and the drawer's own row to ৳০ so
+  // what the customer SEES matches what they'll actually be charged, instead
+  // of a ৳150 line that only turns out free after placing the order.
+  // Re-applied every tick since Angular's own change detection (e.g. when
+  // another line's qty changes) can redraw these nodes and revert the text.
+  function retextRealGiftRow(nm){
+    var rows = document.querySelectorAll('.cart-product-item');
+    for (var i=0;i<rows.length;i++){
+      var h4 = rows[i].querySelector('h4');
+      if (!h4 || h4.textContent.trim()!==nm) continue;
+      var cur = rows[i].querySelector('.cart-product-price .current-price');
+      if (cur && cur.textContent.indexOf('৳০')===-1) cur.textContent = ' ৳০ ';
+      var oldC = rows[i].querySelector('.cart-product-price .old-price-container');
+      if (oldC) oldC.style.display = 'none';
+      var stepper = rows[i].querySelector('.ab-corow');
+      if (stepper) stepper.style.display = 'none'; // not user-adjustable — it's a fixed 1x free gift
+    }
+    var texts = document.querySelectorAll('.cart-text');
+    for (var j=0;j<texts.length;j++){
+      var h4b = texts[j].querySelector('h4');
+      if (!h4b || h4b.textContent.trim()!==nm) continue;
+      var priceB = texts[j].querySelector('.quantity-price .price b');
+      if (priceB && priceB.textContent.indexOf('৳০')===-1) priceB.textContent = '৳০ ';
+      var unitSpan = texts[j].querySelector('span');
+      if (unitSpan && unitSpan.textContent.indexOf('Unit Price') !== -1) unitSpan.textContent = 'ফ্রি গিফট';
+      var qDiv = texts[j].querySelector('.quantity');
+      if (qDiv) qDiv.style.display = 'none';
+    }
+  }
+
   function tick(){
     if (!onCheckout()) { clearAll(); return; }
     if (!panelAnchor()) return;
@@ -2554,14 +2641,27 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
       cfgPending = true;
       fetch(API_BASE+'/order-offer/get').then(function(r){return r.json();}).then(function(res){
         cfgPending = false;
-        if (res && res.data && (res.data.giftEnabled || res.data.giftMinAmount)) { cfgCache = res.data; warmGiftPrice(cfgCache); }
+        if (res && res.data && (res.data.giftEnabled || res.data.giftMinAmount)) {
+          cfgCache = res.data; warmGiftPrice(cfgCache);
+          window.__abGiftProductName = (cfgCache.giftProduct && cfgCache.giftProduct.name) || null;
+        }
       }).catch(function(){ cfgPending = false; });
       return;
     }
     styleOnce();
     var state = cartState();
     var earned = renderProgress(cfgCache, state);
-    renderGiftRow(cfgCache, earned);
+    if (giftSyncing) return; // reload already in flight from this tick's sync below
+    var isRealGuestLine = syncGiftInCart(cfgCache, earned);
+    if (giftSyncing) return;
+    if (isRealGuestLine) {
+      var giftRowEl = document.getElementById(GIFT_ID);
+      if (giftRowEl) giftRowEl.parentNode.removeChild(giftRowEl); // real row exists now, drop the overlay
+      var nm = (cfgCache.giftProduct && cfgCache.giftProduct.name) || cfgCache.giftLabel || 'ফ্রি নোটবুক';
+      retextRealGiftRow(nm);
+    } else {
+      renderGiftRow(cfgCache, earned); // logged-in fallback, or not-yet-synced guest tick
+    }
     renderMoreBooks();
   }
 
