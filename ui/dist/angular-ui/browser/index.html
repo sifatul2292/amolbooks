@@ -2219,58 +2219,355 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
 </script>
 
 <script>
-/* Checkout item-list quantity stepper (guest cart). Renders [- n +] on each
-   .cart-product-item row on /checkout, edits the guest localStorage cart, then
-   reloads so Angular recomputes totals (no desync). Logged-in carts are
-   server-side (no localStorage) and are skipped. Rows mapped to cart entries by
-   index; if counts differ the stepper is not shown (never edits the wrong item). */
+/* Checkout item-list quantity stepper. Renders [- +] on each visible
+   .cart-product-item row on /checkout and proxy-clicks the REAL fa-minus/
+   fa-plus buttons in the cart drawer (app keeps it mounted globally, just
+   hidden, on every route — confirmed live). The drawer and the checkout
+   page's own item list + Checkout Summary (Subtotal/Discount/Total) are
+   bound to the same Angular cart state, so this updates everything live,
+   with zero reload and zero client-side price math of our own — Angular
+   does the real calculation. Also confirmed live: Angular's own minus
+   button floor-guards at qty 1 (never removes the item), so no extra guard
+   needed here. Works for guest AND logged-in alike since it never touches
+   localStorage. Rows are matched to drawer entries by product name (h4
+   text) — the only key shared by both components; if no match is found
+   for a row, that row is skipped (never wired to the wrong item). */
 (function(){
   function onCheckout(){var p=location.pathname;return p.indexOf('/checkout')===0&&p.indexOf('order-success')===-1;}
-  function cartKey(){for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k.indexOf('Amolbooks_USER_CART')===0)return k;}return null;}
-  function readCart(k){try{return JSON.parse(localStorage.getItem(k))||[];}catch(e){return [];}}
-  function bn(n){var m=['০','১','২','৩','৪','৫','৬','৭','৮','৯'];return String(n).replace(/\d/g,function(d){return m[d];});}
   function styleOnce(){
     if(document.getElementById('ab-coqty-style'))return;
     var s=document.createElement('style');s.id='ab-coqty-style';
-    s.textContent='.ab-coqty{display:inline-flex;align-items:center;margin-top:6px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;width:fit-content}'
+    s.textContent='.ab-corow{display:inline-flex;align-items:center;gap:8px;margin-top:6px}'
+      +'.ab-coqty{display:inline-flex;align-items:center;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;width:fit-content}'
       +'.ab-coqty button{width:32px;height:32px;border:none;background:#f1f5f9;color:#129245;font-size:18px;font-weight:700;cursor:pointer;line-height:1}'
       +'.ab-coqty button:active{background:#e2e8f0}'
-      +'.ab-coqty span{min-width:40px;text-align:center;font-weight:700;font-size:14px;color:#1e293b}';
+      +'.ab-codel{width:32px;height:32px;border:1px solid #fecaca;border-radius:8px;background:#fef2f2;color:#dc2626;font-size:14px;cursor:pointer}'
+      +'.ab-codel:active{background:#fee2e2}';
     document.head.appendChild(s);
+  }
+  var _drawerCache=null;
+  function drawerRoot(){
+    if(_drawerCache&&document.contains(_drawerCache)&&_drawerCache.querySelectorAll('.fa-plus').length)return _drawerCache;
+    var hdrs=document.querySelectorAll('h3');
+    for(var i=0;i<hdrs.length;i++){
+      if((hdrs[i].textContent||'').trim().indexOf('কার্ট আইটেম')===0){
+        var d=hdrs[i].closest('div'),hops=0;
+        while(d&&d.querySelectorAll('.fa-plus').length===0&&hops<8){d=d.parentElement;hops++;}
+        if(d&&d.querySelectorAll('.fa-plus').length){_drawerCache=d;return d;}
+      }
+    }
+    return null;
+  }
+  // Delete's real click target is the <span> INSIDE .del, not the .del div
+  // itself (confirmed live — clicking the div did nothing, the span removed
+  // the item instantly). No confirm() dialog involved.
+  function drawerButtons(name){
+    var root=drawerRoot(); if(!root)return null;
+    var texts=root.querySelectorAll('.cart-text');
+    for(var i=0;i<texts.length;i++){
+      var h4=texts[i].querySelector('h4');
+      if(h4&&h4.textContent.trim()===name){
+        var mi=texts[i].querySelector('.fa-minus'),pl=texts[i].querySelector('.fa-plus');
+        var itemRoot=texts[i].closest('.cart-item');
+        var del=itemRoot?itemRoot.querySelector('.del span'):null;
+        return {minus:mi&&mi.closest('button'),plus:pl&&pl.closest('button'),del:del};
+      }
+    }
+    return null;
   }
   function build(){
     if(!onCheckout())return;
-    var k=cartKey(); if(!k)return;                       // logged-in / no guest cart -> skip
-    var cart=readCart(k); if(!cart.length)return;
-    var rows=document.querySelectorAll('.cart-product-item');
-    if(!rows.length||rows.length!==cart.length)return;   // can't map safely -> skip
+    var rows=[].filter.call(document.querySelectorAll('.cart-product-item'),function(r){return r.offsetParent!==null;});
+    if(!rows.length)return;
     styleOnce();
-    [].forEach.call(rows,function(row,idx){
+    [].forEach.call(rows,function(row){
       if(row.getAttribute('data-ab-qty'))return;
+      var h4=row.querySelector('h4'); if(!h4)return;
+      var name=h4.textContent.trim();
+      var db=drawerButtons(name); if(!db||!db.minus||!db.plus)return; // no safe match -> skip this row
       var host=null,sp=row.querySelectorAll('span,div,p');
       for(var i=0;i<sp.length;i++){if(/পরিমাণ\s*[:：]/.test(sp[i].textContent||'')&&sp[i].children.length<=1){host=sp[i];break;}}
       var anchor=(host&&host.parentElement)||row.querySelector('.cart-product-info')||row;
       row.setAttribute('data-ab-qty','1');
+      var wrap=document.createElement('div');wrap.className='ab-corow';
       var box=document.createElement('div');box.className='ab-coqty';
       var dec=document.createElement('button');dec.type='button';dec.textContent='−';
-      var num=document.createElement('span');num.textContent=bn(cart[idx].selectedQty||1);
       var inc=document.createElement('button');inc.type='button';inc.textContent='+';
-      box.appendChild(dec);box.appendChild(num);box.appendChild(inc);
-      anchor.appendChild(box);
-      function change(delta){
-        var c=readCart(k); if(!c[idx])return;
-        var q=Number(c[idx].selectedQty||1)+delta; if(q<1)q=1;
-        c[idx].selectedQty=q; localStorage.setItem(k,JSON.stringify(c));
-        location.reload();
+      box.appendChild(dec);box.appendChild(inc);
+      wrap.appendChild(box);
+      if(db.del){
+        var rm=document.createElement('button');rm.type='button';rm.className='ab-codel';rm.title='সরিয়ে ফেলুন';
+        rm.innerHTML='<i class="fa fa-trash-alt"></i>';
+        rm.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();var d=drawerButtons(name);if(d&&d.del)d.del.click();});
+        wrap.appendChild(rm);
       }
-      dec.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();change(-1);});
-      inc.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();change(1);});
+      anchor.appendChild(wrap);
+      dec.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();var d=drawerButtons(name);if(d&&d.minus)d.minus.click();});
+      inc.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();var d=drawerButtons(name);if(d&&d.plus)d.plus.click();});
     });
   }
   var mo=new MutationObserver(function(){build();});
   mo.observe(document.body,{childList:true,subtree:true});
   document.addEventListener('DOMContentLoaded',build);
   build();
+})();
+</script>
+
+<script>
+/* Checkout item-list: free-notebook progress bar + earned-gift row + "buy more
+   books" CTA, inside the "মোট আইটেম" panel. Threshold/product data pulled live
+   from GET /api/order-offer/get so the on-page promise always matches what
+   evaluateGiftLine() actually attaches server-side (order.service.ts) — see
+   [[project_salesboost_widgets]]. Guest total uses salePrice*qty from the
+   localStorage cart (same formula the backend uses); logged-in carts are
+   server-side (no localStorage) so total is parsed from the rendered rows.
+   New nodes are inserted as SIBLINGS of the Angular *ngFor row list — never as
+   children of it — so Angular re-rendering the list can't wipe them (same safe
+   pattern as the checkout-gift lever). Quantity changes still go through the
+   existing guest stepper above (edit + reload): the order summary's delivery
+   fee/coupon math is real Angular state, so faking it client-side risks a
+   displayed price that doesn't match the submitted order. This block just
+   re-renders fresh after that reload, with the bar animating via CSS
+   transition, which reads as dynamic without that risk. */
+(function(){
+  'use strict';
+
+  var API_BASE = 'https://apisub.amolbooks.com/api';
+  var PROGRESS_ID = 'ab-co-progress';
+  var GIFT_ID = 'ab-co-giftrow';
+  var MORE_ID = 'ab-co-more';
+  var cfgCache = null, cfgPending = false;
+
+  function onCheckout(){ var p=location.pathname; return p.indexOf('/checkout')===0 && p.indexOf('order-success')===-1; }
+
+  function toBn(n){ var m=['০','১','২','৩','৪','৫','৬','৭','৮','৯']; return String(n).replace(/\d/g,function(d){return m[d];}); }
+  function bnToNum(s){ var m={'০':'0','১':'1','২':'2','৩':'3','৪':'4','৫':'5','৬':'6','৭':'7','৮':'8','৯':'9'}; return String(s).replace(/[০-৯]/g,function(d){return m[d];}); }
+
+  // Guest cart in localStorage is only {product:<id>, selectedQty} — no price
+  // or slug — so total is always read from the rendered rows, which Angular
+  // has already resolved to real sale prices (works for guest AND logged-in
+  // alike). The row-list also renders a second, hidden, off-screen copy
+  // elsewhere in the DOM (confirmed live) — must filter to visible only or
+  // totals double-count.
+  function rows(){
+    return [].filter.call(document.querySelectorAll('.cart-product-item'), function(r){ return r.offsetParent!==null; });
+  }
+  // .current-price is the row's LINE TOTAL (unit price already multiplied by
+  // qty by Angular) — confirmed live: qty 2->1 took ৳২০৪ to ৳১০২, an exact
+  // halving. Do NOT multiply by qty again here — that was the original bug,
+  // squaring the quantity factor and showing a remaining-amount that didn't
+  // match the real Checkout Summary subtotal.
+  function rowLineTotal(row){
+    var el = row.querySelector('.cart-product-price .current-price');
+    var t = el ? el.textContent : '';
+    var m = bnToNum(t).match(/\d+/);
+    return m ? parseInt(m[0],10) : 0;
+  }
+  function domTotal(){
+    var r = rows(), sum = 0;
+    for (var i=0;i<r.length;i++) sum += rowLineTotal(r[i]);
+    return sum;
+  }
+  // Buy-X-of-a-specific-book trigger needs the product slug, which isn't
+  // available client-side (see above) — only the amount threshold is checked
+  // here. evaluateGiftLine() on the server still honors the buy-X rule
+  // regardless; this widget just won't show its confirmation row for that
+  // specific case.
+  function cartState(){
+    return { total: domTotal() };
+  }
+
+  function styleOnce(){
+    if (document.getElementById('ab-co-style')) return;
+    var s = document.createElement('style'); s.id = 'ab-co-style';
+    s.textContent =
+      '#'+PROGRESS_ID+'{margin:10px 0;padding:12px 14px;border-radius:13px;box-sizing:border-box;'+
+        'font-family:hind-siliguri,sans-serif;background:linear-gradient(135deg,#1f8354,#2ea86a);color:#fff}'+
+      '#'+PROGRESS_ID+' .row{display:flex;align-items:center;gap:11px}'+
+      '#'+PROGRESS_ID+' .nb{width:40px;height:50px;border-radius:6px;object-fit:cover;background:#fff;flex:0 0 auto}'+
+      '#'+PROGRESS_ID+' .t{flex:1;min-width:0}'+
+      '#'+PROGRESS_ID+' .h{font-size:13px;font-weight:700;line-height:1.5}'+
+      '#'+PROGRESS_ID+' .h b{color:#f4d44e}'+
+      '#'+PROGRESS_ID+' .bar{margin-top:8px;height:9px;border-radius:6px;background:rgba(255,255,255,.18);overflow:hidden}'+
+      '#'+PROGRESS_ID+' .fill{height:100%;background:#f4d44e;width:0;transition:width .6s ease}'+
+      '#'+GIFT_ID+'{display:flex;align-items:flex-start;gap:14px;padding-top:14px;margin-top:14px;'+
+        'border-top:1px solid #eee;font-family:hind-siliguri,sans-serif}'+
+      '#'+GIFT_ID+' img{width:64px;height:78px;border-radius:8px;object-fit:cover;background:#f5f5f5;flex:0 0 auto}'+
+      '#'+GIFT_ID+' .body{flex:1;min-width:0}'+
+      '#'+GIFT_ID+' .nm{display:block;font-size:15px;font-weight:700;color:#1a1a1a}'+
+      '#'+GIFT_ID+' .tag{display:inline-block;margin-top:5px;background:#f4d44e;color:#173a2b;font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px}'+
+      '#'+GIFT_ID+' .pr{margin-top:7px;font-size:14px}'+
+      '#'+GIFT_ID+' .old{color:#94a3b8;text-decoration:line-through;margin-right:8px}'+
+      '#'+GIFT_ID+' .free{color:#1f8354;font-weight:800}'+
+      '#'+MORE_ID+'{display:block;text-align:center;margin:10px 0 4px;padding:11px;border-radius:10px;'+
+        'border:1.5px solid #1f5038;color:#173a2b;font-family:hind-siliguri,sans-serif;font-size:13.5px;font-weight:700;'+
+        'text-decoration:none;background:#fff}'+
+      '#'+MORE_ID+':active{background:#f1faf4}';
+    document.head.appendChild(s);
+  }
+
+  function findHeader(){
+    var els = document.querySelectorAll('h1,h2,h3,h4,div,span,p');
+    for (var i=0;i<els.length;i++){
+      var t = (els[i].textContent||'').trim();
+      if (/^মোট\s*আইটেম/.test(t) && t.length<40 && els[i].offsetParent!==null) return els[i];
+    }
+    return null;
+  }
+
+  // Anchor is always OUTSIDE the Angular-owned row list: before it (progress
+  // bar) or after it (gift row / CTA), never a child of it.
+  function panelAnchor(){
+    var r = rows();
+    if (r.length && r[0].parentElement) return { list: r[0].parentElement };
+    var h = findHeader();
+    if (h) return { header: h };
+    return null;
+  }
+
+  function place(el, before){
+    var a = panelAnchor(); if (!a) return false;
+    if (a.list && a.list.parentNode){
+      if (before) a.list.parentNode.insertBefore(el, a.list);
+      else a.list.parentNode.insertBefore(el, a.list.nextSibling);
+      return true;
+    }
+    if (a.header && a.header.parentNode){
+      a.header.parentNode.insertBefore(el, a.header.nextSibling);
+      return true;
+    }
+    return false;
+  }
+
+  // Re-rendering innerHTML every tick recreated the .fill node each time —
+  // it always starts at width:0, so the setTimeout-driven CSS transition
+  // replayed 0%->pct on every 800ms poll, flickering. Now only rewrite the
+  // markup when the visible content actually changes; otherwise just update
+  // the existing .fill width directly (no node replaced, no transition
+  // restart).
+  var lastSig = null;
+  function renderProgress(cfg, state){
+    var threshold = Number(cfg.giftMinAmount) || 0;
+    var earned = threshold>0 && state.total>=threshold;
+    var box = document.getElementById(PROGRESS_ID);
+
+    if (!earned && threshold<=0){ if (box) box.parentNode.removeChild(box); lastSig=null; return false; }
+    if (!box){
+      box = document.createElement('div'); box.id = PROGRESS_ID;
+      if (!place(box, true)) return earned;
+      lastSig = null;
+    }
+
+    var remaining = Math.max(0, Math.ceil(threshold - state.total));
+    var pct = earned?100:Math.min(100, threshold>0?Math.round((state.total/threshold)*100):0);
+    var img = (cfg.giftProduct && cfg.giftProduct.image) || '';
+    var sig = earned+'|'+remaining+'|'+img;
+
+    if (sig !== lastSig){
+      lastSig = sig;
+      var imgHtml = img ? '<img class="nb" src="'+img+'" alt="ফ্রি নোটবুক">' : '';
+      var msg = earned
+        ? '<div class="h">🎉 অভিনন্দন! আপনি একটি <b>ফ্রি নোটবুক</b> পেয়েছেন 🎁</div>'
+        : '<div class="h">🎁 আর মাত্র <b>৳'+toBn(remaining)+'</b> টাকার বই যোগ করুন — পেয়ে যান <b>ফ্রি নোটবুক</b>!</div>';
+      box.innerHTML = '<div class="row">'+imgHtml+'<div class="t">'+msg+'<div class="bar"><div class="fill"></div></div></div></div>';
+      var f = box.querySelector('.fill');
+      if (f) setTimeout(function(){ f.style.width = pct+'%'; }, 50);
+    } else {
+      var f2 = box.querySelector('.fill');
+      if (f2) f2.style.width = pct+'%';
+    }
+    return earned;
+  }
+
+  // The notebook's own sale price (for the strikethrough) isn't in the
+  // OrderOffer config — only fetchable from its product record. Fetched once
+  // and cached; if it isn't back yet the row still renders (just without the
+  // strikethrough line) rather than blocking on it.
+  var giftPriceCache = null, giftPricePending = false;
+  function warmGiftPrice(cfg){
+    if (giftPriceCache!=null || giftPricePending) return;
+    var slug = cfg.giftProduct && cfg.giftProduct.slug; if (!slug) return;
+    giftPricePending = true;
+    fetch(API_BASE+'/product/get-by-slug/'+encodeURIComponent(slug)).then(function(r){return r.json();}).then(function(res){
+      giftPricePending = false;
+      var d = res && res.data;
+      var p = d ? (d.regularPrice!=null?d.regularPrice:d.salePrice) : null;
+      if (p!=null) giftPriceCache = Number(p);
+    }).catch(function(){ giftPricePending = false; });
+  }
+
+  // This row is DISPLAY ONLY — it is never written into the real cart.
+  // Backend reasoning (order.service.ts newOrderMake/evaluateGiftLine):
+  // every line is re-priced server-side from the live product record, and
+  // evaluateGiftLine explicitly SKIPS adding the real free line if the gift
+  // product is already present among the submitted items. So actually
+  // adding the notebook to the guest localStorage cart (or via the
+  // authenticated add-to-cart API) would make the customer get CHARGED the
+  // real ৳150 for it AND suppress the real free line — the opposite of the
+  // feature. The real ৳0 gift line is attached correctly server-side at
+  // order creation regardless; this row just needs to look like it's
+  // already in the list, so it's placed directly after the last real item
+  // (not inside Angular's row list, still a plain sibling) and styled to
+  // match a real row.
+  function placeAfterListArea(el){
+    var a = panelAnchor(); if (!a || !a.list) return false;
+    var anchor = document.getElementById(GIFT_ID) || a.list;
+    if (!anchor.parentNode) return false;
+    anchor.parentNode.insertBefore(el, anchor.nextSibling);
+    return true;
+  }
+
+  function renderGiftRow(cfg, earned){
+    var row = document.getElementById(GIFT_ID);
+    if (!earned){ if (row) row.parentNode.removeChild(row); return; }
+    if (row) return;
+    var img = (cfg.giftProduct && cfg.giftProduct.image) || '';
+    var nm = (cfg.giftProduct && cfg.giftProduct.name) || cfg.giftLabel || 'ফ্রি নোটবুক';
+    var oldPrice = giftPriceCache!=null ? '<span class="old">৳'+toBn(giftPriceCache)+'</span>' : '';
+    row = document.createElement('div'); row.id = GIFT_ID;
+    row.innerHTML = (img?'<img src="'+img+'" alt="'+nm+'">':'') +
+      '<div class="body"><span class="nm">'+nm+'</span>'+
+      '<span class="tag">🎁 ফ্রি গিফট</span>'+
+      '<div class="pr">'+oldPrice+'<span class="free">৳০</span></div></div>';
+    var a = panelAnchor();
+    if (a && a.list && a.list.parentNode) a.list.parentNode.insertBefore(row, a.list.nextSibling);
+    else place(row, false);
+  }
+
+  function renderMoreBooks(){
+    if (document.getElementById(MORE_ID)) return;
+    var a = document.createElement('a'); a.id = MORE_ID; a.href = '/product-list'; a.textContent = '+ আরও বই কিনুন';
+    if (!placeAfterListArea(a)) place(a, false);
+  }
+
+  function clearAll(){
+    [PROGRESS_ID, GIFT_ID, MORE_ID].forEach(function(id){
+      var el = document.getElementById(id); if (el && el.parentNode) el.parentNode.removeChild(el);
+    });
+  }
+
+  function tick(){
+    if (!onCheckout()) { clearAll(); return; }
+    if (!panelAnchor()) return;
+    if (!cfgCache){
+      if (cfgPending) return;
+      cfgPending = true;
+      fetch(API_BASE+'/order-offer/get').then(function(r){return r.json();}).then(function(res){
+        cfgPending = false;
+        if (res && res.data && (res.data.giftEnabled || res.data.giftMinAmount)) { cfgCache = res.data; warmGiftPrice(cfgCache); }
+      }).catch(function(){ cfgPending = false; });
+      return;
+    }
+    styleOnce();
+    var state = cartState();
+    var earned = renderProgress(cfgCache, state);
+    renderGiftRow(cfgCache, earned);
+    renderMoreBooks();
+  }
+
+  setInterval(tick, 800);
+  document.addEventListener('DOMContentLoaded', tick);
+  tick();
 })();
 </script>
 <script src="/ab-widgets.js?v=18" defer></script>
