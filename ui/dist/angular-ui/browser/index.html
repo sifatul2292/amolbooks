@@ -2284,7 +2284,6 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
       if(row.getAttribute('data-ab-qty'))return;
       var h4=row.querySelector('h4'); if(!h4)return;
       var name=h4.textContent.trim();
-      if(window.__abGiftProductName&&name===window.__abGiftProductName)return; // free gift row — fixed qty, not user-adjustable
       var db=drawerButtons(name); if(!db||!db.minus||!db.plus)return; // no safe match -> skip this row
       var host=null,sp=row.querySelectorAll('span,div,p');
       for(var i=0;i<sp.length;i++){if(/পরিমাণ\s*[:：]/.test(sp[i].textContent||'')&&sp[i].children.length<=1){host=sp[i];break;}}
@@ -2361,7 +2360,10 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
   function rowLineTotal(row){
     var el = row.querySelector('.cart-product-price .current-price');
     var t = el ? el.textContent : '';
-    var m = bnToNum(t).match(/\d+/);
+    // Strip thousands-separator commas first — ৳১,২০০ would otherwise parse
+    // as just "1" (regex stops at the comma), silently truncating any price
+    // over 999.
+    var m = bnToNum(t).replace(/,/g,'').match(/\d+/);
     return m ? parseInt(m[0],10) : 0;
   }
   function domTotal(){
@@ -2561,13 +2563,20 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
     });
   }
 
-  // Real cart add/remove — GUEST ONLY (localStorage cart). Logged-in carts
-  // are server-side with no client-exposed auth token (see qty-stepper
-  // comment above), so there's no safe API call to add/remove a line for
-  // them; those users keep the display-only row below. Backend
-  // (evaluateGiftLine, order.service.ts) now re-prices this exact product id
-  // to 0 in place if it's already a cart line when the customer is eligible,
-  // instead of charging it — that guard is what makes this safe to do.
+  // GUEST cart only — real add/remove, zero reload. Angular DOES pick up a
+  // brand-new localStorage entry and render it as a genuine row (real price,
+  // real everything), but only as a side effect of a real user interaction
+  // with an EXISTING cart item (it refetches/re-renders its whole product
+  // list on that interaction) — never from the write itself, and never
+  // from passively waiting (verified: 8s of doing nothing renders nothing).
+  // So the write is immediately followed by a proxy-clicked +/− nudge on
+  // some other real item (nudgeAngularRefresh, below) purely to trigger that
+  // refetch. Until the nudge lands, renderGiftRow's overlay covers the gap
+  // so there's no visible flicker. Verified live: Angular's own qty/delete
+  // writes patch the array by matching product id rather than overwriting
+  // it wholesale from a stale in-memory copy, so this entry survives real
+  // interactions with the other real items. Logged-in carts are server-side
+  // (no client-exposed auth token) so they keep the overlay-only row.
   function cartKey(){
     for (var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k && k.indexOf('Amolbooks_USER_CART')===0) return k; }
     return null;
@@ -2576,49 +2585,69 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
   function guestCartHasGift(cart, giftId){
     return cart.some(function(it){ return it && String(it.product)===String(giftId); });
   }
+  // Angular only refetches/re-renders its cart list (product data, prices,
+  // the whole row) on a real user interaction with an EXISTING item — never
+  // from the localStorage write itself, and never from passively waiting
+  // (verified: 8s of doing nothing after the write renders nothing). So
+  // right after writing, a real + then − is proxy-clicked on some other
+  // item already in the cart (net zero change to it) purely to make Angular
+  // run that refetch — same trick as the qty/delete buttons, just aimed at
+  // triggering a full refresh instead of a specific item's own change.
+  function nudgeAngularRefresh(skipName){
+    var rowsEls = document.querySelectorAll('.cart-product-item');
+    for (var i=0;i<rowsEls.length;i++){
+      var h4 = rowsEls[i].querySelector('h4');
+      if (h4 && h4.textContent.trim()===skipName) continue; // don't nudge the gift's own row
+      var box = rowsEls[i].querySelector('.ab-coqty');
+      if (!box) continue;
+      var inc = box.querySelector('button:last-child');
+      var dec = box.querySelector('button:first-child');
+      if (inc && dec){
+        inc.click();
+        setTimeout(function(){ dec.click(); }, 150);
+        return true;
+      }
+    }
+    return false;
+  }
 
-  var giftSyncing = false;
-  function syncGiftInCart(cfg, earned){
-    if (giftSyncing) return false;
-    var giftId = cfg.giftProduct && cfg.giftProduct._id; if (!giftId) return false;
-    var k = cartKey(); if (!k) return false; // logged-in: no safe path, caller falls back to overlay row
+  function syncGiftSilently(cfg, earned, nm){
+    var giftId = cfg.giftProduct && cfg.giftProduct._id; if (!giftId) return;
+    var k = cartKey(); if (!k) return; // logged-in: server cart, no client write path — overlay row still shows
     var cart = readGuestCart(k);
     var has = guestCartHasGift(cart, giftId);
     if (earned && !has){
       cart.push({ product: giftId, selectedQty: 1 });
       localStorage.setItem(k, JSON.stringify(cart));
-      giftSyncing = true;
-      location.reload();
-      return true;
-    }
-    if (!earned && has){
+      nudgeAngularRefresh(nm);
+    } else if (!earned && has){
       var next = cart.filter(function(it){ return !(it && String(it.product)===String(giftId)); });
       localStorage.setItem(k, JSON.stringify(next));
-      giftSyncing = true;
-      location.reload();
-      return true;
+      nudgeAngularRefresh(nm);
     }
-    return has; // true if it's genuinely already a real cart line, nothing to sync
   }
 
-  // Angular renders the now-real notebook row at its actual ৳150 price (it
-  // has no concept of "free" — only the backend applies that at order time).
-  // Retext both the checkout-panel row and the drawer's own row to ৳০ so
-  // what the customer SEES matches what they'll actually be charged, instead
-  // of a ৳150 line that only turns out free after placing the order.
-  // Re-applied every tick since Angular's own change detection (e.g. when
-  // another line's qty changes) can redraw these nodes and revert the text.
+  function isGiftRealRow(nm){
+    return rows().some(function(r){ var h4=r.querySelector('h4'); return h4 && h4.textContent.trim()===nm; });
+  }
+
+  // Once Angular genuinely renders the gift as a real row (after the nudge
+  // above), it shows the real ৳150 price — Angular has no concept of "free",
+  // only the backend applies that at order time. Retext to ৳০ so what's
+  // shown matches what's actually charged, and hide its qty stepper (fixed
+  // 1x free item, not user-adjustable). Re-applied every tick since Angular
+  // can redraw these nodes (e.g. after another item's real qty change).
   function retextRealGiftRow(nm){
-    var rows = document.querySelectorAll('.cart-product-item');
-    for (var i=0;i<rows.length;i++){
-      var h4 = rows[i].querySelector('h4');
+    var r = rows();
+    for (var i=0;i<r.length;i++){
+      var h4 = r[i].querySelector('h4');
       if (!h4 || h4.textContent.trim()!==nm) continue;
-      var cur = rows[i].querySelector('.cart-product-price .current-price');
+      var cur = r[i].querySelector('.cart-product-price .current-price');
       if (cur && cur.textContent.indexOf('৳০')===-1) cur.textContent = ' ৳০ ';
-      var oldC = rows[i].querySelector('.cart-product-price .old-price-container');
+      var oldC = r[i].querySelector('.cart-product-price .old-price-container');
       if (oldC) oldC.style.display = 'none';
-      var stepper = rows[i].querySelector('.ab-corow');
-      if (stepper) stepper.style.display = 'none'; // not user-adjustable — it's a fixed 1x free gift
+      var stepper = r[i].querySelector('.ab-corow');
+      if (stepper) stepper.style.display = 'none';
     }
     var texts = document.querySelectorAll('.cart-text');
     for (var j=0;j<texts.length;j++){
@@ -2633,6 +2662,18 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
     }
   }
 
+  // Keeps the header's "(N)" in sync with what's actually visible (real
+  // rows + the overlay row when shown) instead of Angular's own count, which
+  // never learns about the overlay. Re-applied every tick since Angular's
+  // own re-renders (e.g. after a real qty change elsewhere) redraw this text.
+  function retextHeaderCount(giftRowShown){
+    var h = findHeader(); if (!h) return;
+    var real = rows().length;
+    var want = real + (giftRowShown ? 1 : 0);
+    var next = h.textContent.replace(/\(\s*[0-9০-৯]+\s*\)/, '('+want+')');
+    if (next !== h.textContent) h.textContent = next;
+  }
+
   function tick(){
     if (!onCheckout()) { clearAll(); return; }
     if (!panelAnchor()) return;
@@ -2641,27 +2682,24 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
       cfgPending = true;
       fetch(API_BASE+'/order-offer/get').then(function(r){return r.json();}).then(function(res){
         cfgPending = false;
-        if (res && res.data && (res.data.giftEnabled || res.data.giftMinAmount)) {
-          cfgCache = res.data; warmGiftPrice(cfgCache);
-          window.__abGiftProductName = (cfgCache.giftProduct && cfgCache.giftProduct.name) || null;
-        }
+        if (res && res.data && (res.data.giftEnabled || res.data.giftMinAmount)) { cfgCache = res.data; warmGiftPrice(cfgCache); }
       }).catch(function(){ cfgPending = false; });
       return;
     }
     styleOnce();
     var state = cartState();
     var earned = renderProgress(cfgCache, state);
-    if (giftSyncing) return; // reload already in flight from this tick's sync below
-    var isRealGuestLine = syncGiftInCart(cfgCache, earned);
-    if (giftSyncing) return;
-    if (isRealGuestLine) {
-      var giftRowEl = document.getElementById(GIFT_ID);
-      if (giftRowEl) giftRowEl.parentNode.removeChild(giftRowEl); // real row exists now, drop the overlay
-      var nm = (cfgCache.giftProduct && cfgCache.giftProduct.name) || cfgCache.giftLabel || 'ফ্রি নোটবুক';
+    var nm = (cfgCache.giftProduct && cfgCache.giftProduct.name) || cfgCache.giftLabel || 'ফ্রি নোটবুক';
+    syncGiftSilently(cfgCache, earned, nm);
+    var realRow = isGiftRealRow(nm);
+    if (realRow) {
+      var overlay = document.getElementById(GIFT_ID);
+      if (overlay) overlay.parentNode.removeChild(overlay);
       retextRealGiftRow(nm);
     } else {
-      renderGiftRow(cfgCache, earned); // logged-in fallback, or not-yet-synced guest tick
+      renderGiftRow(cfgCache, earned);
     }
+    retextHeaderCount(earned && !realRow);
     renderMoreBooks();
   }
 
