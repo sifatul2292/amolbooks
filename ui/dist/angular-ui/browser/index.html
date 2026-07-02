@@ -2384,7 +2384,7 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
     if (document.getElementById('ab-co-style')) return;
     var s = document.createElement('style'); s.id = 'ab-co-style';
     s.textContent =
-      '#'+PROGRESS_ID+'{margin:10px 0;padding:12px 14px;border-radius:13px;box-sizing:border-box;'+
+      '#'+PROGRESS_ID+'{margin:10px 0;margin-left:10px;margin-right:10px;padding:12px 14px;border-radius:13px;box-sizing:border-box;'+
         'font-family:hind-siliguri,sans-serif;background:linear-gradient(135deg,#1f8354,#2ea86a);color:#fff}'+
       '#'+PROGRESS_ID+' .row{display:flex;align-items:center;gap:11px}'+
       '#'+PROGRESS_ID+' .nb{width:40px;height:50px;border-radius:6px;object-fit:cover;background:#fff;flex:0 0 auto}'+
@@ -2406,7 +2406,7 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
       '#'+GIFT_ID+' .pr{margin-top:7px;font-size:14px}'+
       '#'+GIFT_ID+' .old{color:#94a3b8;text-decoration:line-through;margin-right:8px}'+
       '#'+GIFT_ID+' .free{color:#1f8354;font-weight:800}'+
-      '#'+MORE_ID+'{display:block;text-align:center;margin:10px 0 4px;padding:11px;border-radius:10px;'+
+      '#'+MORE_ID+'{display:block;text-align:center;margin:10px 0 4px;margin-right:10px;margin-bottom:10px;margin-left:10px;padding:11px;border-radius:10px;'+
         'border:1.5px solid #1f5038;color:#173a2b;font-family:hind-siliguri,sans-serif;font-size:13.5px;font-weight:700;'+
         'text-decoration:none;background:#fff}'+
       '#'+MORE_ID+':active{background:#f1faf4}';
@@ -2474,8 +2474,8 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
       lastSig = sig;
       var imgHtml = img ? '<img class="nb" src="'+img+'" alt="ফ্রি নোটবুক">' : '';
       var msg = earned
-        ? '<div class="h">🎉 অভিনন্দন! আপনি একটি <b>ফ্রি নোটবুক</b> পেয়েছেন 🎁</div>'
-        : '<div class="h">🎁 আর মাত্র <b>৳'+toBn(remaining)+'</b> টাকার বই যোগ করুন — পেয়ে যান <b>ফ্রি নোটবুক</b>!</div>';
+        ? '<div class="h">🎉 অভিনন্দন! আপনি এই আকর্ষণীয় নোটবুকটি <b>Gift</b> পেয়েছেন 🎁</div>'
+        : '<div class="h">🎁 আর মাত্র <b>৳'+toBn(remaining)+'</b> টাকার বই যোগ করুন — পেয়ে যান <b>৮০ পেইজের ফ্রি নোটবুক</b>!</div>';
       box.innerHTML = '<div class="row">'+imgHtml+'<div class="t">'+msg+'<div class="bar"><div class="fill"></div></div></div></div>';
       var f = box.querySelector('.fill');
       if (f) setTimeout(function(){ f.style.width = pct+'%'; }, 50);
