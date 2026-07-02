@@ -2393,9 +2393,13 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
       '#'+PROGRESS_ID+' .h b{color:#f4d44e}'+
       '#'+PROGRESS_ID+' .bar{margin-top:8px;height:9px;border-radius:6px;background:rgba(255,255,255,.18);overflow:hidden}'+
       '#'+PROGRESS_ID+' .fill{height:100%;background:#f4d44e;width:0;transition:width .6s ease}'+
-      '#'+GIFT_ID+'{display:flex;align-items:flex-start;gap:14px;padding-top:14px;margin-top:14px;'+
-        'border-top:1px solid #eee;font-family:hind-siliguri,sans-serif}'+
-      '#'+GIFT_ID+' img{width:64px;height:78px;border-radius:8px;object-fit:cover;background:#f5f5f5;flex:0 0 auto}'+
+      // Matches .cart-product-item exactly: its real parent (.cart-products-list)
+      // has padding:15px that this row — a sibling OUTSIDE that list on purpose,
+      // so Angular re-rendering the list can't wipe it — never inherits, so the
+      // same 15px is added directly here, plus the same 80x80 image and 15px gap.
+      '#'+GIFT_ID+'{display:flex;align-items:flex-start;gap:15px;padding:14px 15px 0 15px;margin-top:14px;'+
+        'border-top:1px solid #eee;font-family:hind-siliguri,sans-serif;box-sizing:border-box}'+
+      '#'+GIFT_ID+' img{width:80px;height:80px;border-radius:8px;object-fit:cover;background:#f5f5f5;flex:0 0 auto}'+
       '#'+GIFT_ID+' .body{flex:1;min-width:0}'+
       '#'+GIFT_ID+' .nm{display:block;font-size:15px;font-weight:700;color:#1a1a1a}'+
       '#'+GIFT_ID+' .tag{display:inline-block;margin-top:5px;background:#f4d44e;color:#173a2b;font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px}'+
@@ -2563,117 +2567,11 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
     });
   }
 
-  // GUEST cart only — real add/remove, zero reload. Angular DOES pick up a
-  // brand-new localStorage entry and render it as a genuine row (real price,
-  // real everything), but only as a side effect of a real user interaction
-  // with an EXISTING cart item (it refetches/re-renders its whole product
-  // list on that interaction) — never from the write itself, and never
-  // from passively waiting (verified: 8s of doing nothing renders nothing).
-  // So the write is immediately followed by a proxy-clicked +/− nudge on
-  // some other real item (nudgeAngularRefresh, below) purely to trigger that
-  // refetch. Until the nudge lands, renderGiftRow's overlay covers the gap
-  // so there's no visible flicker. Verified live: Angular's own qty/delete
-  // writes patch the array by matching product id rather than overwriting
-  // it wholesale from a stale in-memory copy, so this entry survives real
-  // interactions with the other real items. Logged-in carts are server-side
-  // (no client-exposed auth token) so they keep the overlay-only row.
-  function cartKey(){
-    for (var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k && k.indexOf('Amolbooks_USER_CART')===0) return k; }
-    return null;
-  }
-  function readGuestCart(k){ try{ var a=JSON.parse(localStorage.getItem(k)); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
-  function guestCartHasGift(cart, giftId){
-    return cart.some(function(it){ return it && String(it.product)===String(giftId); });
-  }
-  // Angular only refetches/re-renders its cart list (product data, prices,
-  // the whole row) on a real user interaction with an EXISTING item — never
-  // from the localStorage write itself, and never from passively waiting
-  // (verified: 8s of doing nothing after the write renders nothing). So
-  // right after writing, a real + then − is proxy-clicked on some other
-  // item already in the cart (net zero change to it) purely to make Angular
-  // run that refetch — same trick as the qty/delete buttons, just aimed at
-  // triggering a full refresh instead of a specific item's own change.
-  function nudgeAngularRefresh(skipName){
-    var rowsEls = document.querySelectorAll('.cart-product-item');
-    for (var i=0;i<rowsEls.length;i++){
-      var h4 = rowsEls[i].querySelector('h4');
-      if (h4 && h4.textContent.trim()===skipName) continue; // don't nudge the gift's own row
-      var box = rowsEls[i].querySelector('.ab-coqty');
-      if (!box) continue;
-      var inc = box.querySelector('button:last-child');
-      var dec = box.querySelector('button:first-child');
-      if (inc && dec){
-        inc.click();
-        setTimeout(function(){ dec.click(); }, 150);
-        return true;
-      }
-    }
-    return false;
-  }
-
-  function syncGiftSilently(cfg, earned, nm){
-    var giftId = cfg.giftProduct && cfg.giftProduct._id; if (!giftId) return;
-    var k = cartKey(); if (!k) return; // logged-in: server cart, no client write path — overlay row still shows
-    var cart = readGuestCart(k);
-    var has = guestCartHasGift(cart, giftId);
-    if (earned && !has){
-      cart.push({ product: giftId, selectedQty: 1 });
-      localStorage.setItem(k, JSON.stringify(cart));
-      nudgeAngularRefresh(nm);
-    } else if (!earned && has){
-      var next = cart.filter(function(it){ return !(it && String(it.product)===String(giftId)); });
-      localStorage.setItem(k, JSON.stringify(next));
-      nudgeAngularRefresh(nm);
-    }
-  }
-
-  function isGiftRealRow(nm){
-    return rows().some(function(r){ var h4=r.querySelector('h4'); return h4 && h4.textContent.trim()===nm; });
-  }
-
-  // Once Angular genuinely renders the gift as a real row (after the nudge
-  // above), it shows the real ৳150 price — Angular has no concept of "free",
-  // only the backend applies that at order time. Retext to ৳০ so what's
-  // shown matches what's actually charged, and hide its qty stepper (fixed
-  // 1x free item, not user-adjustable). Re-applied every tick since Angular
-  // can redraw these nodes (e.g. after another item's real qty change).
-  function retextRealGiftRow(nm){
-    var r = rows();
-    for (var i=0;i<r.length;i++){
-      var h4 = r[i].querySelector('h4');
-      if (!h4 || h4.textContent.trim()!==nm) continue;
-      var cur = r[i].querySelector('.cart-product-price .current-price');
-      if (cur && cur.textContent.indexOf('৳০')===-1) cur.textContent = ' ৳০ ';
-      var oldC = r[i].querySelector('.cart-product-price .old-price-container');
-      if (oldC) oldC.style.display = 'none';
-      var stepper = r[i].querySelector('.ab-corow');
-      if (stepper) stepper.style.display = 'none';
-    }
-    var texts = document.querySelectorAll('.cart-text');
-    for (var j=0;j<texts.length;j++){
-      var h4b = texts[j].querySelector('h4');
-      if (!h4b || h4b.textContent.trim()!==nm) continue;
-      var priceB = texts[j].querySelector('.quantity-price .price b');
-      if (priceB && priceB.textContent.indexOf('৳০')===-1) priceB.textContent = '৳০ ';
-      var unitSpan = texts[j].querySelector('span');
-      if (unitSpan && unitSpan.textContent.indexOf('Unit Price') !== -1) unitSpan.textContent = 'ফ্রি গিফট';
-      var qDiv = texts[j].querySelector('.quantity');
-      if (qDiv) qDiv.style.display = 'none';
-    }
-  }
-
-  // Keeps the header's "(N)" in sync with what's actually visible (real
-  // rows + the overlay row when shown) instead of Angular's own count, which
-  // never learns about the overlay. Re-applied every tick since Angular's
-  // own re-renders (e.g. after a real qty change elsewhere) redraw this text.
-  function retextHeaderCount(giftRowShown){
-    var h = findHeader(); if (!h) return;
-    var real = rows().length;
-    var want = real + (giftRowShown ? 1 : 0);
-    var next = h.textContent.replace(/\(\s*[0-9০-৯]+\s*\)/, '('+want+')');
-    if (next !== h.textContent) h.textContent = next;
-  }
-
+  // Zero-reload, display-only. A "real cart line via silent write + proxy
+  // nudge" version exists and works (verified live), but was set aside in
+  // favor of this simpler always-safe overlay. The real ৳0 gift line still
+  // attaches correctly server-side at actual order creation regardless
+  // (evaluateGiftLine, order.service.ts), independent of this row.
   function tick(){
     if (!onCheckout()) { clearAll(); return; }
     if (!panelAnchor()) return;
@@ -2689,17 +2587,7 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
     styleOnce();
     var state = cartState();
     var earned = renderProgress(cfgCache, state);
-    var nm = (cfgCache.giftProduct && cfgCache.giftProduct.name) || cfgCache.giftLabel || 'ফ্রি নোটবুক';
-    syncGiftSilently(cfgCache, earned, nm);
-    var realRow = isGiftRealRow(nm);
-    if (realRow) {
-      var overlay = document.getElementById(GIFT_ID);
-      if (overlay) overlay.parentNode.removeChild(overlay);
-      retextRealGiftRow(nm);
-    } else {
-      renderGiftRow(cfgCache, earned);
-    }
-    retextHeaderCount(earned && !realRow);
+    renderGiftRow(cfgCache, earned);
     renderMoreBooks();
   }
 
