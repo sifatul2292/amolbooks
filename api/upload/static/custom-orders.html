@@ -31,7 +31,7 @@
       --sidebar: 240px;
       --radius:  14px;
     }
-    html, body { height: 100%; font-family: 'Inter', 'Segoe UI', sans-serif; background: #f0f2f8; color: #1e293b; -webkit-font-smoothing: antialiased; }
+    html, body { height: 100%; overflow-x: clip; font-family: 'Inter', 'Segoe UI', sans-serif; background: #f0f2f8; color: #1e293b; -webkit-font-smoothing: antialiased; }
 
     /* ── Layout ── */
     .layout { display: flex; min-height: 100vh; }
@@ -884,7 +884,7 @@
     body.salesman-mode .money-stat { display: none !important; }
     body.salesman-mode .stats-row { grid-template-columns: repeat(2,1fr); }
 
-    /* Hallmark · pre-emit critique: P4 H5 E4 S5 R4 V4 */
+    /* Hallmark · pre-emit critique: P4 H5 E5 S5 R5 V4 */
     /* ── Stock Management ── */
     body.stock-mode .content > :not(#stockView) { display: none !important; }
     #stockView { display: none; }
@@ -938,6 +938,19 @@
     .stock-prod-price { font-size: 11.5px; color: var(--g700); font-weight: 800; }
     .stock-prod-sold { font-size: 10.5px; color: var(--p-dark); font-weight: 800; }
     .stock-status { min-height: 23px; display: flex; justify-content: flex-end; flex-shrink: 0; }
+    .stock-demand-metrics {
+      display: grid; grid-template-columns: repeat(3,minmax(0,1fr));
+      border: 1px solid var(--g200); border-radius: 10px; overflow: hidden; background: var(--g50);
+    }
+    .stock-demand-metric { min-width: 0; padding: 8px; border-right: 1px solid var(--g200); }
+    .stock-demand-metric:last-child { border-right: none; background: var(--p-light); }
+    .stock-demand-label {
+      display: block; color: var(--g500); font-size: 9.5px; font-weight: 800;
+      letter-spacing: .055em; line-height: 1.25; text-transform: uppercase; white-space: nowrap;
+    }
+    .stock-demand-value { display: block; margin-top: 4px; color: var(--g900); font-size: 13px; font-weight: 900; white-space: nowrap; }
+    .stock-demand-metric:last-child .stock-demand-value { color: var(--p-dark); }
+    .stock-demand-unit { color: var(--g500); font-size: 9px; font-weight: 700; }
     .stock-card-body { display: grid; grid-template-columns: minmax(0,1.35fr) minmax(92px,.65fr); gap: 12px; align-items: end; }
     .stock-field { min-width: 0; }
     .stock-field-label {
@@ -996,6 +1009,7 @@
       #stockView .stock-stats { grid-template-columns: minmax(0,1fr); }
       .stock-grid { grid-template-columns: minmax(0,1fr); padding: 10px; gap: 10px; }
       .stock-card { padding: 14px; }
+      .stock-demand-metric { padding: 8px; }
       .stock-card-body { grid-template-columns: minmax(0,1.3fr) minmax(88px,.7fr); }
       .stock-tools > .btn-reset { flex: 1; }
       body.stock-mode .topbar > .topbar-btn:not(.danger),
@@ -1005,6 +1019,8 @@
       .stock-card-body { grid-template-columns: minmax(0,1fr); }
       .stock-card-footer { flex-wrap: wrap; }
       .stock-save-state { width: 100%; margin-left: 0; }
+      .stock-demand-value { white-space: normal; }
+      .stock-demand-unit { display: block; margin-top: 2px; }
     }
   </style>
 </head>
@@ -2907,6 +2923,11 @@
         + (Number(p.totalSold) > 0 ? '<span class="stock-prod-sold"><i class="fas fa-arrow-trend-up"></i> '+esc(String(p.totalSold))+' sold</span>' : '')
         + '</div></div>'
         + '<div class="stock-status">'+stockStatusPill(p.stock, p.lowStockThreshold)+'</div></div>'
+        + '<div class="stock-demand-metrics" aria-label="Product demand metrics">'
+        + '<div class="stock-demand-metric"><span class="stock-demand-label">Today</span><span class="stock-demand-value">'+esc(String(Number(p.soldToday)||0))+' <span class="stock-demand-unit">sold</span></span></div>'
+        + '<div class="stock-demand-metric"><span class="stock-demand-label">Last 30 days</span><span class="stock-demand-value">'+esc(String(Number(p.soldLast30Days)||0))+' <span class="stock-demand-unit">sold</span></span></div>'
+        + '<div class="stock-demand-metric" title="Forecast: 70% of the latest 30 days plus 30% of the preceding 30 days"><span class="stock-demand-label">Next 30 days</span><span class="stock-demand-value">~'+esc(String(Number(p.predictedNeedNext30Days)||0))+' <span class="stock-demand-unit">needed</span></span></div>'
+        + '</div>'
         + '<div class="stock-card-body">'
         + '<div class="stock-field"><label class="stock-field-label">Current stock</label><div class="stock-stepper">'
         + '<button type="button" class="stock-step-btn" onclick="adjustStock(this,-1)" aria-label="Decrease stock">−</button>'
@@ -3097,15 +3118,15 @@
   };
 
   function loadStockSummary() {
-    fetch(API + '/api/product/stock-list?page=1&limit=1', { headers: authHeaders() })
+    fetch(API + '/api/product/stock-list?page=1&limit=1&includeSalesMetrics=false', { headers: authHeaders() })
       .then(function(r){ return r.json(); })
       .then(function(resp){ document.getElementById('stockTrackedCount').textContent = (resp && resp.count) || 0; })
       .catch(function(){});
-    fetch(API + '/api/product/stock-list?page=1&limit=1&lowOnly=true', { headers: authHeaders() })
+    fetch(API + '/api/product/stock-list?page=1&limit=1&lowOnly=true&includeSalesMetrics=false', { headers: authHeaders() })
       .then(function(r){ return r.json(); })
       .then(function(resp){ document.getElementById('stockLowCount').textContent = (resp && resp.count) || 0; })
       .catch(function(){});
-    fetch(API + '/api/product/stock-list?page=1&limit=1&outOnly=true', { headers: authHeaders() })
+    fetch(API + '/api/product/stock-list?page=1&limit=1&outOnly=true&includeSalesMetrics=false', { headers: authHeaders() })
       .then(function(r){ return r.json(); })
       .then(function(resp){ document.getElementById('stockOutCount').textContent = (resp && resp.count) || 0; })
       .catch(function(){});

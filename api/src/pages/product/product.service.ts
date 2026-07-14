@@ -33,6 +33,9 @@ import { Setting } from '../customization/setting/interface/setting.interface';
 import { StockMovement } from '../../interfaces/common/stock-movement.interface';
 import { StockPurchase } from '../../interfaces/common/stock-purchase.interface';
 import { CreateStockPurchaseDto, GetStockMovementsDto } from '../../dto/stock.dto';
+import { Order } from '../../interfaces/common/order.interface';
+import { OrderStatus } from '../../enum/order.enum';
+import * as moment from 'moment-timezone';
 const ObjectId = Types.ObjectId;
 
 @Injectable()
@@ -56,6 +59,7 @@ export class ProductService {
     private readonly stockMovementModel: Model<StockMovement>,
     @InjectModel('StockPurchase')
     private readonly stockPurchaseModel: Model<StockPurchase>,
+    @InjectModel('Order') private readonly orderModel: Model<Order>,
     private configService: ConfigService,
     private utilsService: UtilsService,
     private fbCatalogService: FbCatalogService,
@@ -1623,6 +1627,99 @@ ${items.join('\n')}
    * STOCK MANAGEMENT (custom-orders.html)
    * getStockList / updateStock / decreaseStockForItems
    */
+  private async getStockSalesMetrics(productIds: Types.ObjectId[]): Promise<
+    Map<
+      string,
+      {
+        soldToday: number;
+        soldLast30Days: number;
+        predictedNeedNext30Days: number;
+      }
+    >
+  > {
+    const metrics = new Map();
+    if (!productIds.length) {
+      return metrics;
+    }
+
+    try {
+      const now = moment().tz('Asia/Dhaka');
+      const todayStart = now.clone().startOf('day').toDate();
+      const last30DaysStart = now.clone().subtract(30, 'days').toDate();
+      const previous30DaysStart = now.clone().subtract(60, 'days').toDate();
+      const quantity = { $ifNull: ['$orderedItems.quantity', 0] };
+
+      const rows = await this.orderModel.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: previous30DaysStart, $lte: now.toDate() },
+            orderStatus: {
+              $nin: [OrderStatus.CANCEL, OrderStatus.REFUND, OrderStatus.RETURN],
+            },
+            'orderedItems._id': { $in: productIds },
+          },
+        },
+        { $unwind: '$orderedItems' },
+        { $match: { 'orderedItems._id': { $in: productIds } } },
+        {
+          $group: {
+            _id: '$orderedItems._id',
+            soldToday: {
+              $sum: {
+                $cond: [{ $gte: ['$createdAt', todayStart] }, quantity, 0],
+              },
+            },
+            soldLast30Days: {
+              $sum: {
+                $cond: [{ $gte: ['$createdAt', last30DaysStart] }, quantity, 0],
+              },
+            },
+            soldPrevious30Days: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $gte: ['$createdAt', previous30DaysStart] },
+                      { $lt: ['$createdAt', last30DaysStart] },
+                    ],
+                  },
+                  quantity,
+                  0,
+                ],
+              },
+            },
+          },
+        },
+      ]);
+
+      rows.forEach((row) => {
+        const soldToday = Math.max(0, Number(row.soldToday) || 0);
+        const soldLast30Days = Math.max(0, Number(row.soldLast30Days) || 0);
+        const soldPrevious30Days = Math.max(
+          0,
+          Number(row.soldPrevious30Days) || 0,
+        );
+        const predictedNeedNext30Days = Math.ceil(
+          soldPrevious30Days > 0
+            ? soldLast30Days * 0.7 + soldPrevious30Days * 0.3
+            : soldLast30Days,
+        );
+
+        metrics.set(String(row._id), {
+          soldToday,
+          soldLast30Days,
+          predictedNeedNext30Days,
+        });
+      });
+    } catch (err) {
+      this.logger.warn(
+        `Stock sales metrics unavailable: ${err?.message || err}`,
+      );
+    }
+
+    return metrics;
+  }
+
   async getStockList(query: any): Promise<ResponsePayload> {
     try {
       const page = Math.max(1, parseInt(query?.page, 10) || 1);
@@ -1630,6 +1727,7 @@ ${items.join('\n')}
       const q = (query?.q || '').trim();
       const lowOnly = String(query?.lowOnly) === 'true';
       const outOnly = String(query?.outOnly) === 'true';
+      const includeSalesMetrics = String(query?.includeSalesMetrics) !== 'false';
 
       const filter: any = {};
       if (q) {
@@ -1657,10 +1755,25 @@ ${items.join('\n')}
         .limit(limit)
         .lean();
 
+      let resultData: any[] = data;
+      if (includeSalesMetrics && data.length) {
+        const productIds = data.map((product: any) => new ObjectId(product._id));
+        const salesMetrics = await this.getStockSalesMetrics(productIds);
+        const emptyMetrics = {
+          soldToday: 0,
+          soldLast30Days: 0,
+          predictedNeedNext30Days: 0,
+        };
+        resultData = data.map((product: any) => ({
+          ...product,
+          ...(salesMetrics.get(String(product._id)) || emptyMetrics),
+        }));
+      }
+
       return {
         success: true,
         message: 'Success',
-        data,
+        data: resultData,
         count: total,
       } as ResponsePayload;
     } catch (err) {

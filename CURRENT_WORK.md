@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-07-14. Branch: `main`. Working tree: modified with stock-management card redesign._
+_Last updated: 2026-07-15. Branch: `main`. Working tree: modified with stock demand metrics and forecast._
 
 ## Recently completed (git log, newest first)
 
@@ -28,6 +28,7 @@ Nothing active.
   - Each card now surfaces product image/name/SKU/price, live stock status, quantity stepper, low-stock threshold, restock/history actions, and inline save feedback.
   - Stock and threshold edits autosave after a short debounce; rapid edits are versioned so an older response cannot overwrite newer UI state.
   - Stock results are globally ranked by the existing `totalSold` counter before pagination, with sold quantities shown on cards; filters and search keep the same best-selling-first order.
+  - Product cards show units sold today, units sold in the rolling last 30 days, and a next-30-day demand forecast. Forecasts weight the latest 30 days at 70% and the preceding 30 days at 30%, falling back to the latest period when no older sales exist; cancelled/refunded/returned orders are excluded.
   - Simplified the stock-mode top bar and responsive summary cards so the page has no horizontal overflow down to 320px.
   - Preserved the existing stock APIs, order deduction, cancel/return restocking, purchase logging, and movement history behavior.
 - Salesman custom-order access tightening:
@@ -68,6 +69,10 @@ Nothing active.
 
 ## Commands already run this session
 
+- Stock demand metrics browser preview: verified real card markup with four-digit forecasts at 1440/768/414/375/320px, no page or metric overflow, and no browser console errors.
+- Stock page inline scripts after demand strip → all 3 passed Node syntax checks.
+- `cd api && npm run lint` after demand metrics → still fails before linting because ESLint reports the configured glob is fully ignored.
+- `cd api && npm run build` after demand metrics → passed (TypeScript deprecation warnings only).
 - Best-selling stock sort: confirmed `totalSold` is the existing order-created sales counter and the stock query sorts by it before pagination.
 - Stock card inline scripts after sold-count cue → all 3 passed Node syntax checks.
 - `cd api && npm run lint` after best-selling sort → still fails before linting because ESLint reports the configured glob is fully ignored.

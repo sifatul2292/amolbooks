@@ -12,6 +12,7 @@ import { SettingSchema } from '../customization/setting/schema/setting.schema';
 import { BoughtTogetherConfigSchema } from '../../schema/bought-together-config.schema';
 import { StockMovementSchema } from '../../schema/stock-movement.schema';
 import { StockPurchaseSchema } from '../../schema/stock-purchase.schema';
+import { OrderSchema } from '../../schema/order.schema';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { StockPurchaseSchema } from '../../schema/stock-purchase.schema';
       { name: 'BoughtTogetherConfig', schema: BoughtTogetherConfigSchema },
       { name: 'StockMovement', schema: StockMovementSchema },
       { name: 'StockPurchase', schema: StockPurchaseSchema },
+      { name: 'Order', schema: OrderSchema },
     ]),
   ],
   providers: [ProductService],
