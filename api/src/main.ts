@@ -3,10 +3,12 @@ import { AppModule } from './app.module';
 import { Logger, VersioningType } from '@nestjs/common';
 import { json, urlencoded } from 'express';
 import { join } from 'path';
+import { readFileSync } from 'fs';
 import * as express from 'express';
 import * as helmet from 'helmet';
 import * as compression from 'compression';
 import { RedirectUrlMiddleware } from './middleware/redirect-url.middleware';
+import { STOREFRONT_PRICE_SCRIPT } from './storefront-price-script';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule, { cors: true });
@@ -88,9 +90,40 @@ async function bootstrap() {
 
   // SPA fallback: serves index.html for any unhandled route
   const httpAdapter = app.getHttpAdapter().getInstance() as express.Express;
+  const storefrontIndexPath = join(
+    __dirname,
+    '..',
+    '..',
+    'ui',
+    'dist',
+    'angular-ui',
+    'browser',
+    'index.html',
+  );
+  const storefrontPriceScriptTag =
+    '<script src="/storefront-price-english-digits.js" defer></script>';
+
+  httpAdapter.get(
+    '/storefront-price-english-digits.js',
+    (_req: express.Request, res: express.Response) => {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.type('application/javascript').send(STOREFRONT_PRICE_SCRIPT);
+    },
+  );
+
   httpAdapter.use((_req: express.Request, res: express.Response) => {
     if (!res.headersSent) {
-      res.sendFile(join(__dirname, '..', '..', 'ui', 'dist', 'angular-ui', 'browser', 'index.html'));
+      try {
+        const indexHtml = readFileSync(storefrontIndexPath, 'utf8');
+        const html = indexHtml.includes(storefrontPriceScriptTag)
+          ? indexHtml
+          : indexHtml.includes('</body>')
+            ? indexHtml.replace('</body>', `${storefrontPriceScriptTag}</body>`)
+            : `${indexHtml}${storefrontPriceScriptTag}`;
+        res.type('html').send(html);
+      } catch (error) {
+        res.sendFile(storefrontIndexPath);
+      }
     }
   });
 

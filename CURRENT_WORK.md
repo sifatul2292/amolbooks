@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-07-14. Branch: `main`. Working tree: clean after salesman custom-order access controls are committed._
+_Last updated: 2026-07-14. Branch: `main`. Working tree: modified with local storefront price digit/font injection._
 
 ## Recently completed (git log, newest first)
 
@@ -26,9 +26,14 @@ Nothing active.
 - Salesman custom-order access tightening:
   - `api/upload/static/custom-orders.html` detects `role: salesman` from the stored admin JWT, hides Import WooCommerce, Profit Dashboard, Back to Admin, the analytics snapshot, and money summary cards.
   - Profit/ad-spend dashboard APIs require Super Admin/Admin role guards so hidden analytics are not exposed by direct API calls.
+- Product price readability tweak:
+  - Added API-served `/storefront-price-english-digits.js` injection in `api/src/main.ts`, leaving compiled `ui/dist` untouched.
+  - Added `api/src/storefront-price-script.ts` to convert Bangla numerals inside product price blocks to English numerals and apply a clearer numeric font.
 
 ## Files most recently touched (why)
 
+- `api/src/main.ts` — injects the local storefront price script into served SPA HTML.
+- `api/src/storefront-price-script.ts` — storefront price digit/font override script.
 - `api/upload/static/custom-orders.html` — salesman-only custom order UI restrictions and hidden amount cards.
 - `api/src/pages/dashboard/dashboard.controller.ts` — protect profit/manual-sales dashboard endpoints from salesman access.
 - `api/src/pages/meta-ads/meta-ads.controller.ts` — protect Meta Ads spend/config/expense endpoints from salesman access.
@@ -59,6 +64,9 @@ Nothing active.
 - `cd api && npm run lint` → failed before linting because ESLint reports the configured glob is fully ignored.
 - `cd api && npm run build` → passed.
 - `git diff --check` → passed.
+- Added local product-price injection; API build is required for deployment.
+- `node` syntax check for `api/src/storefront-price-script.ts` script body → passed.
+- `cd api && npm run build` after local injection → passed.
 
 ## Do NOT touch / be careful
 
