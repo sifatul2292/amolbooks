@@ -3,7 +3,7 @@ import { AppModule } from './app.module';
 import { Logger, VersioningType } from '@nestjs/common';
 import { json, urlencoded } from 'express';
 import { join } from 'path';
-import { readFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import * as express from 'express';
 import * as helmet from 'helmet';
 import * as compression from 'compression';
@@ -80,19 +80,56 @@ async function bootstrap() {
     'browser',
     'index.html',
   );
+  const storefrontPriceScriptFileName = 'storefront-price-english-digits.js';
   const storefrontPriceScriptTag =
-    '<script src="/storefront-price-english-digits.js" defer></script>';
+    `<script src="/${storefrontPriceScriptFileName}?v=20260714-3" defer></script>`;
+  const legacyStorefrontPriceScriptTagPattern =
+    /\s*<script src="\/storefront-price-english-digits\.js(?:\?v=[^"]*)?" defer><\/script>/g;
   const staticAssetPattern =
     /\.(js|css|map|json|xml|txt|ico|svg|png|jpg|jpeg|gif|webp|woff2?|ttf|eot)$/i;
+
+  function installStaticStorefrontPatch() {
+    try {
+      const storefrontScriptPath = join(
+        __dirname,
+        '..',
+        '..',
+        'ui',
+        'dist',
+        'angular-ui',
+        'browser',
+        storefrontPriceScriptFileName,
+      );
+      writeFileSync(storefrontScriptPath, STOREFRONT_PRICE_SCRIPT, 'utf8');
+
+      const indexHtml = readFileSync(storefrontIndexPath, 'utf8');
+      const cleanedHtml = indexHtml.replace(
+        legacyStorefrontPriceScriptTagPattern,
+        '',
+      );
+      const patchedHtml = cleanedHtml.includes('</body>')
+        ? cleanedHtml.replace('</body>', `${storefrontPriceScriptTag}</body>`)
+        : `${cleanedHtml}${storefrontPriceScriptTag}`;
+
+      if (patchedHtml !== indexHtml) {
+        writeFileSync(storefrontIndexPath, patchedHtml, 'utf8');
+      }
+      logger.log('Static storefront patch installed');
+    } catch (error) {
+      logger.warn(`Static storefront patch skipped: ${error.message}`);
+    }
+  }
 
   function sendStorefrontIndex(res: express.Response) {
     try {
       const indexHtml = readFileSync(storefrontIndexPath, 'utf8');
-      const html = indexHtml.includes(storefrontPriceScriptTag)
-        ? indexHtml
-        : indexHtml.includes('</body>')
-          ? indexHtml.replace('</body>', `${storefrontPriceScriptTag}</body>`)
-          : `${indexHtml}${storefrontPriceScriptTag}`;
+      const cleanedHtml = indexHtml.replace(
+        legacyStorefrontPriceScriptTagPattern,
+        '',
+      );
+      const html = cleanedHtml.includes('</body>')
+        ? cleanedHtml.replace('</body>', `${storefrontPriceScriptTag}</body>`)
+        : `${cleanedHtml}${storefrontPriceScriptTag}`;
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.type('html').send(html);
     } catch (error) {
@@ -100,9 +137,11 @@ async function bootstrap() {
     }
   }
 
+  installStaticStorefrontPatch();
+
   const httpAdapter = app.getHttpAdapter().getInstance() as express.Express;
   httpAdapter.get(
-    '/storefront-price-english-digits.js',
+    `/${storefrontPriceScriptFileName}`,
     (_req: express.Request, res: express.Response) => {
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.type('application/javascript').send(STOREFRONT_PRICE_SCRIPT);

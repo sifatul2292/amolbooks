@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-07-14. Branch: `main`. Working tree: modified with local storefront price font/digit injection and checkout terms block hide._
+_Last updated: 2026-07-14. Branch: `main`. Working tree: modified with API startup static storefront patch installer._
 
 ## Recently completed (git log, newest first)
 
@@ -31,6 +31,7 @@ Nothing active.
   - Moved the storefront HTML injection middleware before `ServeStaticModule` registration so static storefront routes receive the script instead of bypassing the fallback.
   - Added `api/src/storefront-price-script.ts` to convert Bangla numerals inside product, cart sidebar, and checkout summary price blocks to English numerals and apply a clearer numeric font.
   - Hid the checkout `.condition-area` terms/instructions block and auto-check the hidden terms field defensively.
+  - Added an API startup installer that writes the same script/tag into `ui/dist/angular-ui/browser` at runtime, so nginx-served `amolbooks.com` storefront pages receive the local patch without GTM.
 
 ## Files most recently touched (why)
 
@@ -72,6 +73,7 @@ Nothing active.
 - Moved storefront price injection earlier in `api/src/main.ts`; `cd api && npm run build` → passed.
 - Extended local price font/digit script to cart sidebar and checkout selectors; Nest watch compile → passed with 0 errors.
 - Hid checkout condition/terms block in the local injected script; Nest watch compile → passed with 0 errors.
+- Added API startup static storefront patch installer; `cd api && npm run build` → passed.
 
 ## Do NOT touch / be careful
 
