@@ -884,13 +884,17 @@
     body.salesman-mode .money-stat { display: none !important; }
     body.salesman-mode .stats-row { grid-template-columns: repeat(2,1fr); }
 
+    /* Hallmark · pre-emit critique: P4 H5 E4 S5 R4 V4 */
     /* ── Stock Management ── */
     body.stock-mode .content > :not(#stockView) { display: none !important; }
     #stockView { display: none; }
     body.stock-mode #stockView { display: block; }
+    body.stock-mode .topbar .search-wrap,
+    body.stock-mode .topbar .ai-topbar-btn { display: none; }
     .stock-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
     .stock-head h2 { font-size: 19px; font-weight: 900; color: var(--g900); letter-spacing: -.02em; }
     .stock-head h2 i { color: var(--p); margin-right: 8px; }
+    #stockView .stock-stats { grid-template-columns: repeat(3,minmax(0,1fr)); }
     .stock-tools { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
     .stock-search {
       display: flex; align-items: center; gap: 8px; background: #fff;
@@ -906,18 +910,61 @@
       box-shadow: 0 1px 3px rgba(0,0,0,.05); user-select: none; white-space: nowrap;
     }
     .stock-low-toggle.active { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
-    .stock-tbl-img { width: 40px; height: 50px; object-fit: cover; border-radius: 6px; background: var(--g100); flex-shrink: 0; }
-    .stock-prod { display: flex; align-items: center; gap: 10px; min-width: 0; }
-    .stock-prod > div { min-width: 0; flex: 1; }
-    .stock-prod-name { font-weight: 700; color: #1e293b; font-size: 13px; line-height: 1.4; word-break: normal; overflow-wrap: anywhere; }
-    #stockView table tbody td { vertical-align: middle; }
-    .stock-prod-sku { font-size: 11px; color: var(--g400); margin-top: 2px; }
+    .stock-grid {
+      display: grid; grid-template-columns: repeat(3,minmax(0,1fr));
+      gap: 14px; padding: 14px; background: var(--g100);
+    }
+    .stock-card {
+      min-width: 0; background: #fff; border: 1px solid var(--g200); border-radius: 14px;
+      padding: 16px; display: flex; flex-direction: column; gap: 15px;
+      box-shadow: 0 1px 2px rgba(15,23,42,.04); transition: border-color .15s, box-shadow .15s, transform .15s;
+    }
+    .stock-card:hover { border-color: var(--g300); box-shadow: 0 8px 24px rgba(15,23,42,.08); transform: translateY(-1px); }
+    .stock-card.is-saving { border-color: var(--p); }
+    .stock-card.is-error { border-color: var(--red); }
+    .stock-card-head { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+    .stock-card-img {
+      width: 58px; height: 72px; object-fit: cover; border-radius: 9px;
+      background: var(--g100); border: 1px solid var(--g200); flex-shrink: 0;
+    }
+    .stock-card-img-placeholder { display: flex; align-items: center; justify-content: center; color: var(--g300); font-size: 20px; }
+    .stock-prod { min-width: 0; flex: 1; }
+    .stock-prod-name {
+      min-width: 0; font-weight: 800; color: #1e293b; font-size: 13px; line-height: 1.4;
+      overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .stock-prod-meta { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-top: 6px; }
+    .stock-prod-sku { font-size: 10.5px; color: var(--g500); }
+    .stock-prod-price { font-size: 11.5px; color: var(--g700); font-weight: 800; }
+    .stock-prod-sold { font-size: 10.5px; color: var(--p-dark); font-weight: 800; }
+    .stock-status { min-height: 23px; display: flex; justify-content: flex-end; flex-shrink: 0; }
+    .stock-card-body { display: grid; grid-template-columns: minmax(0,1.35fr) minmax(92px,.65fr); gap: 12px; align-items: end; }
+    .stock-field { min-width: 0; }
+    .stock-field-label {
+      display: block; margin-bottom: 6px; color: var(--g500); font-size: 9.5px;
+      font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+    }
+    .stock-stepper { display: grid; grid-template-columns: 34px minmax(0,1fr) 34px; min-width: 0; }
+    .stock-step-btn {
+      height: 38px; border: 1.5px solid var(--g200); background: var(--g50); color: var(--g700);
+      font-size: 15px; font-weight: 800; cursor: pointer; transition: background .15s, color .15s, border-color .15s;
+    }
+    .stock-step-btn:first-child { border-radius: 9px 0 0 9px; }
+    .stock-step-btn:last-child { border-radius: 0 9px 9px 0; }
+    .stock-step-btn:hover { background: var(--p-light); border-color: var(--p); color: var(--p-dark); }
+    .stock-step-btn:focus-visible, .stock-action:focus-visible { outline: 3px solid rgba(124,58,237,.2); outline-offset: 2px; }
     .stock-input {
       width: 80px; border: 1.5px solid var(--g200); border-radius: 8px;
       padding: 6px 9px; font-size: 13px; font-weight: 600; color: #1e293b;
       outline: none; font-family: inherit; text-align: center;
     }
     .stock-input:focus { border-color: var(--p); box-shadow: 0 0 0 3px rgba(124,58,237,.1); }
+    .stock-stepper .stock-input {
+      width: 100%; height: 38px; border-left: none; border-right: none; border-radius: 0;
+      font-size: 15px; font-weight: 800; box-shadow: none;
+    }
+    .stock-stepper .stock-input:focus { position: relative; border-color: var(--p); box-shadow: inset 0 0 0 1px var(--p); }
+    .stock-threshold-input { width: 100%; height: 38px; }
     .stock-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; }
     .stock-pill.untracked { background: var(--g100); color: var(--g500); }
     .stock-pill.ok { background: #d1fae5; color: #065f46; }
@@ -930,6 +977,35 @@
     }
     .btn-stock-save:hover { background: var(--p-dark); }
     .btn-stock-save:disabled { opacity: .5; cursor: not-allowed; }
+    .stock-card-footer { border-top: 1px solid var(--g100); padding-top: 12px; display: flex; align-items: center; gap: 7px; }
+    .stock-action {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      border: 1px solid var(--g200); border-radius: 8px; padding: 7px 9px;
+      background: #fff; color: var(--g700); font-family: inherit; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap;
+      transition: background .15s, border-color .15s, color .15s;
+    }
+    .stock-action:hover { background: var(--g50); border-color: var(--g300); color: var(--g900); }
+    .stock-action.primary { color: var(--p-dark); border-color: #ddd6fe; background: #f5f3ff; }
+    .stock-save-state { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; color: var(--g400); font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .stock-save-state.saving { color: var(--p); }
+    .stock-save-state.saved { color: var(--green); }
+    .stock-save-state.error { color: var(--red); }
+    .stock-grid-message { grid-column: 1/-1; min-height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; color: var(--g500); font-size: 13px; }
+    @media(max-width:1180px) { .stock-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+    @media(max-width:680px) {
+      #stockView .stock-stats { grid-template-columns: minmax(0,1fr); }
+      .stock-grid { grid-template-columns: minmax(0,1fr); padding: 10px; gap: 10px; }
+      .stock-card { padding: 14px; }
+      .stock-card-body { grid-template-columns: minmax(0,1.3fr) minmax(88px,.7fr); }
+      .stock-tools > .btn-reset { flex: 1; }
+      body.stock-mode .topbar > .topbar-btn:not(.danger),
+      body.stock-mode .topbar > a.topbar-btn { display: none; }
+    }
+    @media(max-width:380px) {
+      .stock-card-body { grid-template-columns: minmax(0,1fr); }
+      .stock-card-footer { flex-wrap: wrap; }
+      .stock-save-state { width: 100%; margin-left: 0; }
+    }
   </style>
 </head>
 <body>
@@ -1072,10 +1148,10 @@
         <div class="stock-head">
           <h2><i class="fas fa-boxes-stacked"></i>Stock Management</h2>
         </div>
-        <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stats-row stock-stats">
           <div class="stat-card c3">
             <div class="stat-icon"><i class="fas fa-cubes"></i></div>
-            <div class="stat-info"><label>Tracked Products</label><div class="val" id="stockTrackedCount">—</div></div>
+            <div class="stat-info"><label>All Products</label><div class="val" id="stockTrackedCount">—</div></div>
           </div>
           <div class="stat-card c2">
             <div class="stat-icon"><i class="fas fa-triangle-exclamation"></i></div>
@@ -1097,23 +1173,8 @@
           <button class="btn-reset" onclick="loadStockList()"><i class="fas fa-sync-alt"></i> Refresh</button>
         </div>
         <div class="table-card">
-          <div class="table-wrap">
-            <table style="min-width:760px;table-layout:fixed;width:100%">
-              <thead>
-                <tr>
-                  <th style="padding-left:18px;width:auto">Product</th>
-                  <th style="width:90px">Price</th>
-                  <th style="width:110px">Stock</th>
-                  <th style="width:120px">Low Alert ≤</th>
-                  <th style="width:130px">Status</th>
-                  <th style="width:90px"></th>
-                  <th style="width:170px"></th>
-                </tr>
-              </thead>
-              <tbody id="stockBody">
-                <tr class="loading-row"><td colspan="7"><div class="spinner"></div><div>Loading products…</div></td></tr>
-              </tbody>
-            </table>
+          <div class="stock-grid" id="stockBody" aria-live="polite">
+            <div class="stock-grid-message"><div class="spinner"></div><div>Loading products…</div></div>
           </div>
           <div class="pagination-bar">
             <div class="pagination-info" id="stockPageInfo">—</div>
@@ -2799,6 +2860,7 @@
 
   /* ── Stock Management ── */
   var stockState = { page: 1, limit: 50, q: '', lowOnly: false, totalCount: 0 };
+  var stockSaveTimers = {};
 
   function stockStatusPill(stock, thr) {
     if (stock === null || stock === undefined) return '<span class="stock-pill untracked">Not tracked</span>';
@@ -2811,7 +2873,7 @@
   window.loadStockList = function () {
     if (!getToken()) { showLogin('Please log in to manage stock.'); return; }
     var body = document.getElementById('stockBody');
-    body.innerHTML = '<tr class="loading-row"><td colspan="7"><div class="spinner"></div><div>Loading products…</div></td></tr>';
+    body.innerHTML = '<div class="stock-grid-message"><div class="spinner"></div><div>Loading products…</div></div>';
     var url = API + '/api/product/stock-list?page=' + stockState.page + '&limit=' + stockState.limit
       + '&q=' + encodeURIComponent(stockState.q) + (stockState.lowOnly ? '&lowOnly=true' : '');
     fetch(url, { headers: authHeaders() })
@@ -2825,39 +2887,95 @@
       })
       .catch(function(err){
         if (err.message==='auth') return;
-        body.innerHTML = '<tr class="empty-row"><td colspan="7">Failed to load. '+esc(err.message)+'</td></tr>';
+        body.innerHTML = '<div class="stock-grid-message"><i class="fas fa-circle-exclamation"></i><div>Failed to load. '+esc(err.message)+'</div></div>';
       });
   };
 
   function renderStockRows(rows) {
     var body = document.getElementById('stockBody');
-    if (!rows.length) { body.innerHTML = '<tr class="empty-row"><td colspan="7">No products found.</td></tr>'; return; }
+    if (!rows.length) { body.innerHTML = '<div class="stock-grid-message"><i class="fas fa-box-open"></i><div>No products found.</div></div>'; return; }
     body.innerHTML = rows.map(function(p){
       var img = (p.images && p.images[0]) ? p.images[0] : '';
       var stockVal = (p.stock === null || p.stock === undefined) ? '' : p.stock;
       var thrVal = (p.lowStockThreshold === null || p.lowStockThreshold === undefined) ? '' : p.lowStockThreshold;
-      return '<tr data-id="'+p._id+'" data-name="'+esc(p.name||'')+'">'
-        + '<td style="padding-left:18px"><div class="stock-prod">'
-        + (img ? '<img class="stock-tbl-img" src="'+esc(img)+'" onerror="this.style.visibility=\'hidden\'">' : '<div class="stock-tbl-img"></div>')
-        + '<div><div class="stock-prod-name">'+esc(p.name||'—')+'</div>'
-        + (p.sku ? '<div class="stock-prod-sku">SKU: '+esc(p.sku)+'</div>' : '')
-        + '</div></div></td>'
-        + '<td>৳'+esc(String(p.salePrice||0))+'</td>'
-        + '<td><input type="number" min="0" class="stock-input" value="'+stockVal+'" placeholder="—"></td>'
-        + '<td><input type="number" min="0" class="stock-input" value="'+thrVal+'" placeholder="5"></td>'
-        + '<td class="stock-status">'+stockStatusPill(p.stock, p.lowStockThreshold)+'</td>'
-        + '<td><button class="btn-stock-save" onclick="saveStock(this)">Save</button></td>'
-        + '<td><button class="btn-reset" style="padding:6px 10px;font-size:12px" onclick="openRestockModal(this)"><i class="fas fa-truck-loading"></i> Restock</button> '
-        + '<button class="btn-reset" style="padding:6px 10px;font-size:12px" onclick="openHistoryModal(this)"><i class="fas fa-clock-rotate-left"></i></button></td>'
-        + '</tr>';
+      return '<article class="stock-card" data-id="'+p._id+'" data-name="'+esc(p.name||'')+'" data-save-version="0" data-was-tracked="'+(stockVal !== '' ? 'true' : 'false')+'">'
+        + '<div class="stock-card-head">'
+        + (img ? '<img class="stock-card-img" src="'+esc(img)+'" alt="" onerror="this.style.visibility=\'hidden\'">' : '<div class="stock-card-img stock-card-img-placeholder"><i class="fas fa-book"></i></div>')
+        + '<div class="stock-prod"><div class="stock-prod-name" title="'+esc(p.name||'—')+'">'+esc(p.name||'—')+'</div>'
+        + '<div class="stock-prod-meta">'+(p.sku ? '<span class="stock-prod-sku">SKU: '+esc(p.sku)+'</span>' : '')
+        + '<span class="stock-prod-price">৳'+esc(String(p.salePrice||0))+'</span>'
+        + (Number(p.totalSold) > 0 ? '<span class="stock-prod-sold"><i class="fas fa-arrow-trend-up"></i> '+esc(String(p.totalSold))+' sold</span>' : '')
+        + '</div></div>'
+        + '<div class="stock-status">'+stockStatusPill(p.stock, p.lowStockThreshold)+'</div></div>'
+        + '<div class="stock-card-body">'
+        + '<div class="stock-field"><label class="stock-field-label">Current stock</label><div class="stock-stepper">'
+        + '<button type="button" class="stock-step-btn" onclick="adjustStock(this,-1)" aria-label="Decrease stock">−</button>'
+        + '<input type="number" min="0" inputmode="numeric" class="stock-input stock-qty-input" value="'+stockVal+'" placeholder="—" aria-label="Current stock" oninput="onStockFieldInput(this)">'
+        + '<button type="button" class="stock-step-btn" onclick="adjustStock(this,1)" aria-label="Increase stock">+</button></div></div>'
+        + '<div class="stock-field"><label class="stock-field-label">Low alert ≤</label>'
+        + '<input type="number" min="0" inputmode="numeric" class="stock-input stock-threshold-input" value="'+thrVal+'" placeholder="5" aria-label="Low stock threshold" oninput="onStockFieldInput(this)"></div></div>'
+        + '<div class="stock-card-footer">'
+        + '<button type="button" class="stock-action primary" onclick="openRestockModal(this)"><i class="fas fa-truck-loading"></i> Restock</button>'
+        + '<button type="button" class="stock-action" onclick="openHistoryModal(this)" title="View stock history"><i class="fas fa-clock-rotate-left"></i> History</button>'
+        + '<span class="stock-save-state"><i class="fas fa-circle-check"></i> Up to date</span></div>'
+        + '</article>';
     }).join('');
   }
 
+  function stockCardFrom(el) { return el && el.closest('.stock-card'); }
+
+  function updateStockCardStatus(card) {
+    if (!card) return;
+    var stockInput = card.querySelector('.stock-qty-input');
+    var thresholdInput = card.querySelector('.stock-threshold-input');
+    var stockBlank = stockInput.value.trim() === '';
+    var stock = stockBlank ? null : Math.max(0, Number(stockInput.value) || 0);
+    var threshold = thresholdInput.value.trim() === '' ? null : Math.max(0, Number(thresholdInput.value) || 0);
+    card.querySelector('.stock-status').innerHTML = stockBlank && card.getAttribute('data-was-tracked') === 'true'
+      ? '<span class="stock-pill low"><i class="fas fa-pen"></i> Enter stock</span>'
+      : stockStatusPill(stock, threshold);
+  }
+
+  function setStockSaveState(card, state, label) {
+    if (!card) return;
+    card.classList.toggle('is-saving', state === 'saving');
+    card.classList.toggle('is-error', state === 'error');
+    var el = card.querySelector('.stock-save-state');
+    var icons = { dirty: 'fa-pen', saving: 'fa-circle-notch fa-spin', saved: 'fa-circle-check', error: 'fa-circle-exclamation' };
+    el.className = 'stock-save-state ' + state;
+    el.innerHTML = '<i class="fas '+(icons[state] || icons.saved)+'"></i> ' + esc(label);
+  }
+
+  function queueStockSave(card) {
+    if (!card) return;
+    var id = card.getAttribute('data-id');
+    var version = Number(card.getAttribute('data-save-version') || 0) + 1;
+    card.setAttribute('data-save-version', version);
+    setStockSaveState(card, 'dirty', 'Unsaved change');
+    clearTimeout(stockSaveTimers[id]);
+    stockSaveTimers[id] = setTimeout(function(){ saveStockCard(card, version); }, 700);
+  }
+
+  window.adjustStock = function (btn, delta) {
+    var card = stockCardFrom(btn);
+    var input = card.querySelector('.stock-qty-input');
+    var current = input.value.trim() === '' ? 0 : Number(input.value) || 0;
+    input.value = Math.max(0, Math.floor(current + delta));
+    updateStockCardStatus(card);
+    queueStockSave(card);
+  };
+
+  window.onStockFieldInput = function (input) {
+    var card = stockCardFrom(input);
+    updateStockCardStatus(card);
+    queueStockSave(card);
+  };
+
   var restockTargetId = null;
   window.openRestockModal = function (btn) {
-    var tr = btn.closest('tr');
-    restockTargetId = tr.getAttribute('data-id');
-    document.getElementById('restockProductName').textContent = 'Restock — ' + tr.getAttribute('data-name');
+    var card = stockCardFrom(btn);
+    restockTargetId = card.getAttribute('data-id');
+    document.getElementById('restockProductName').textContent = 'Restock — ' + card.getAttribute('data-name');
     document.getElementById('restockQty').value = '';
     document.getElementById('restockUnitCost').value = '';
     document.getElementById('restockSupplier').value = '';
@@ -2897,9 +3015,9 @@
   }
 
   window.openHistoryModal = function (btn) {
-    var tr = btn.closest('tr');
-    var id = tr.getAttribute('data-id');
-    document.getElementById('historyProductName').textContent = 'Stock History — ' + tr.getAttribute('data-name');
+    var card = stockCardFrom(btn);
+    var id = card.getAttribute('data-id');
+    document.getElementById('historyProductName').textContent = 'Stock History — ' + card.getAttribute('data-name');
     document.getElementById('historyModal').classList.add('open');
     var body = document.getElementById('historyBody');
     body.innerHTML = '<tr><td colspan="5"><div class="spinner"></div></td></tr>';
@@ -2919,31 +3037,42 @@
       .catch(function(err){ if (err.message!=='auth') body.innerHTML = '<tr><td colspan="5">Failed to load: '+esc(err.message)+'</td></tr>'; });
   };
 
-  window.saveStock = function (btn) {
-    var tr = btn.closest('tr');
-    var id = tr.getAttribute('data-id');
-    var inputs = tr.querySelectorAll('.stock-input');
-    var stock = inputs[0].value.trim();
-    var thr = inputs[1].value.trim();
+  function saveStockCard(card, version) {
+    if (!card || !document.body.contains(card)) return;
+    var id = card.getAttribute('data-id');
+    var stock = card.querySelector('.stock-qty-input').value.trim();
+    var thr = card.querySelector('.stock-threshold-input').value.trim();
     var payload = {};
-    if (stock !== '') payload.stock = Number(stock);
-    if (thr !== '') payload.lowStockThreshold = Number(thr);
-    if (payload.stock === undefined && payload.lowStockThreshold === undefined) { showToast('Enter a stock value first', 'info'); return; }
-    btn.disabled = true; btn.textContent = 'Saving…';
+    if (stock !== '') payload.stock = Math.max(0, Math.floor(Number(stock) || 0));
+    if (thr !== '') payload.lowStockThreshold = Math.max(0, Math.floor(Number(thr) || 0));
+    if (stock === '' && card.getAttribute('data-was-tracked') === 'true') {
+      setStockSaveState(card, 'error', 'Enter stock quantity'); return;
+    }
+    if (payload.stock === undefined && payload.lowStockThreshold === undefined) {
+      setStockSaveState(card, 'saved', 'Up to date'); return;
+    }
+    if (payload.stock !== undefined) card.querySelector('.stock-qty-input').value = payload.stock;
+    if (payload.lowStockThreshold !== undefined) card.querySelector('.stock-threshold-input').value = payload.lowStockThreshold;
+    setStockSaveState(card, 'saving', 'Saving…');
     fetch(API + '/api/product/stock/' + id, { method:'PUT', headers: authHeaders(), body: JSON.stringify(payload) })
       .then(function(r){ if (r.status===401){ clearToken(); showLogin('Session expired. Please log in again.'); throw new Error('auth'); } return r.json(); })
       .then(function(resp){
         if (resp && resp.success) {
-          showToast('Stock updated', 'success');
-          var newStock = stock !== '' ? Number(stock) : (payload.stock !== undefined ? payload.stock : null);
-          var newThr = thr !== '' ? Number(thr) : null;
-          tr.querySelector('.stock-status').innerHTML = stockStatusPill(stock!==''?Number(stock):null, thr!==''?Number(thr):null);
-          loadStockSummary();
-        } else { showToast((resp && resp.message) || 'Update failed', 'error'); }
+          if (payload.stock !== undefined) card.setAttribute('data-was-tracked', 'true');
+          if (Number(card.getAttribute('data-save-version') || 0) === version) {
+            setStockSaveState(card, 'saved', 'Saved');
+            setTimeout(function(){
+              if (document.body.contains(card) && Number(card.getAttribute('data-save-version') || 0) === version) setStockSaveState(card, 'saved', 'Up to date');
+            }, 1800);
+          } else {
+            clearTimeout(stockSaveTimers[id]);
+            stockSaveTimers[id] = setTimeout(function(){ saveStockCard(card, Number(card.getAttribute('data-save-version') || 0)); }, 250);
+          }
+          updateStockCardStatus(card); loadStockSummary();
+        } else { setStockSaveState(card, 'error', 'Save failed'); showToast((resp && resp.message) || 'Update failed', 'error'); }
       })
-      .catch(function(err){ if (err.message!=='auth') showToast('Failed: '+err.message, 'error'); })
-      .finally(function(){ btn.disabled = false; btn.textContent = 'Save'; });
-  };
+      .catch(function(err){ if (err.message!=='auth') { setStockSaveState(card, 'error', 'Save failed'); showToast('Failed: '+err.message, 'error'); } });
+  }
 
   function updateStockPager() {
     var totalPages = Math.max(1, Math.ceil(stockState.totalCount / stockState.limit));

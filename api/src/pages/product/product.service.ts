@@ -1648,8 +1648,11 @@ ${items.join('\n')}
       const total = await this.productModel.countDocuments(filter);
       const data = await this.productModel
         .find(filter)
-        .select('name nameEn sku images salePrice stock lowStockThreshold')
-        .sort({ name: 1 })
+        .select(
+          'name nameEn sku images salePrice stock lowStockThreshold totalSold',
+        )
+        // Rank globally before pagination so best sellers always appear first.
+        .sort({ totalSold: -1, name: 1, _id: 1 })
         .skip((page - 1) * limit)
         .limit(limit)
         .lean();

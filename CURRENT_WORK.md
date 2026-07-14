@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-07-14. Branch: `main`. Working tree: modified with API startup static storefront patch installer._
+_Last updated: 2026-07-14. Branch: `main`. Working tree: modified with stock-management card redesign._
 
 ## Recently completed (git log, newest first)
 
@@ -23,6 +23,13 @@ Nothing active.
 
 ## Completed this session
 
+- Stock-management page modernization:
+  - Replaced the wide product table in `api/upload/static/custom-orders.html` with a responsive three-column product card grid (two columns at tablet width, one on phones).
+  - Each card now surfaces product image/name/SKU/price, live stock status, quantity stepper, low-stock threshold, restock/history actions, and inline save feedback.
+  - Stock and threshold edits autosave after a short debounce; rapid edits are versioned so an older response cannot overwrite newer UI state.
+  - Stock results are globally ranked by the existing `totalSold` counter before pagination, with sold quantities shown on cards; filters and search keep the same best-selling-first order.
+  - Simplified the stock-mode top bar and responsive summary cards so the page has no horizontal overflow down to 320px.
+  - Preserved the existing stock APIs, order deduction, cancel/return restocking, purchase logging, and movement history behavior.
 - Salesman custom-order access tightening:
   - `api/upload/static/custom-orders.html` detects `role: salesman` from the stored admin JWT, hides Import WooCommerce, Profit Dashboard, Back to Admin, the analytics snapshot, and money summary cards.
   - Profit/ad-spend dashboard APIs require Super Admin/Admin role guards so hidden analytics are not exposed by direct API calls.
@@ -37,7 +44,7 @@ Nothing active.
 
 - `api/src/main.ts` — injects the local storefront price script into served SPA HTML.
 - `api/src/storefront-price-script.ts` — storefront price digit/font override script.
-- `api/upload/static/custom-orders.html` — salesman-only custom order UI restrictions and hidden amount cards.
+- `api/upload/static/custom-orders.html` — salesman restrictions plus responsive stock cards and autosaving quantity controls.
 - `api/src/pages/dashboard/dashboard.controller.ts` — protect profit/manual-sales dashboard endpoints from salesman access.
 - `api/src/pages/meta-ads/meta-ads.controller.ts` — protect Meta Ads spend/config/expense endpoints from salesman access.
 - `gtm-snippets/lever5-checkout-gift.html` — checkout free-gift widget iterations (above).
@@ -61,6 +68,15 @@ Nothing active.
 
 ## Commands already run this session
 
+- Best-selling stock sort: confirmed `totalSold` is the existing order-created sales counter and the stock query sorts by it before pagination.
+- Stock card inline scripts after sold-count cue → all 3 passed Node syntax checks.
+- `cd api && npm run lint` after best-selling sort → still fails before linting because ESLint reports the configured glob is fully ignored.
+- `cd api && npm run build` after best-selling sort → passed (TypeScript deprecation warnings only).
+- Stock redesign browser preview with mock inventory: verified 3 columns at 1440px, 2 at 768px, and 1 at 414/375/320px with no horizontal overflow; quick quantity autosave passed and browser console had no errors.
+- Stock page inline scripts parsed with Node `new Function` syntax checks → all 3 passed.
+- `git diff --check` after stock redesign → passed.
+- `cd api && npm run lint` after stock redesign → still fails before linting because ESLint reports the configured glob is fully ignored.
+- `cd api && npm run build` after stock redesign → passed (TypeScript deprecation warnings only).
 - `git status` → clean before edits.
 - Read `PROJECT_CONTEXT.md` and `CURRENT_WORK.md`.
 - Inspected custom-orders static page and relevant admin/order/dashboard/meta controllers.
