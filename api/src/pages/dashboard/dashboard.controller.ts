@@ -80,6 +80,9 @@ export class DashboardController {
 
   @Version(VERSION_NEUTRAL)
   @Get('profit-analytics')
+  @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @UseGuards(AdminRolesGuard)
+  @UseGuards(AdminJwtAuthGuard)
   async getProfitAnalytics(
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
@@ -89,6 +92,9 @@ export class DashboardController {
 
   @Version(VERSION_NEUTRAL)
   @Get('products-sold')
+  @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @UseGuards(AdminRolesGuard)
+  @UseGuards(AdminJwtAuthGuard)
   async getProductsSold(
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
@@ -98,6 +104,9 @@ export class DashboardController {
 
   @Version(VERSION_NEUTRAL)
   @Get('top-products')
+  @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @UseGuards(AdminRolesGuard)
+  @UseGuards(AdminJwtAuthGuard)
   async getTopProducts(
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
@@ -108,6 +117,9 @@ export class DashboardController {
 
   @Version(VERSION_NEUTRAL)
   @Get('manual-sales')
+  @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @UseGuards(AdminRolesGuard)
+  @UseGuards(AdminJwtAuthGuard)
   async getManualSales(
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
@@ -117,12 +129,18 @@ export class DashboardController {
 
   @Version(VERSION_NEUTRAL)
   @Post('manual-sales')
+  @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @UseGuards(AdminRolesGuard)
+  @UseGuards(AdminJwtAuthGuard)
   async addManualSale(@Body() body: any) {
     return await this.dashboardService.addManualSale(body);
   }
 
   @Version(VERSION_NEUTRAL)
   @Delete('manual-sales/:id')
+  @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @UseGuards(AdminRolesGuard)
+  @UseGuards(AdminJwtAuthGuard)
   async deleteManualSale(@Param('id') id: string) {
     return await this.dashboardService.deleteManualSale(id);
   }

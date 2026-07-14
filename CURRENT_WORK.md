@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-07-07. Branch: `main`. Working tree: clean (before this doc was added)._
+_Last updated: 2026-07-14. Branch: `main`. Working tree: clean after salesman custom-order access controls are committed._
 
 ## Recently completed (git log, newest first)
 
@@ -19,10 +19,19 @@ display-only, then margin/copy polish.
 
 ## In progress
 
-Nothing active. Working tree clean as of last check.
+Nothing active.
+
+## Completed this session
+
+- Salesman custom-order access tightening:
+  - `api/upload/static/custom-orders.html` detects `role: salesman` from the stored admin JWT, hides Import WooCommerce, Profit Dashboard, Back to Admin, the analytics snapshot, and money summary cards.
+  - Profit/ad-spend dashboard APIs require Super Admin/Admin role guards so hidden analytics are not exposed by direct API calls.
 
 ## Files most recently touched (why)
 
+- `api/upload/static/custom-orders.html` — salesman-only custom order UI restrictions and hidden amount cards.
+- `api/src/pages/dashboard/dashboard.controller.ts` — protect profit/manual-sales dashboard endpoints from salesman access.
+- `api/src/pages/meta-ads/meta-ads.controller.ts` — protect Meta Ads spend/config/expense endpoints from salesman access.
 - `gtm-snippets/lever5-checkout-gift.html` — checkout free-gift widget iterations (above).
 - Backend free-gift/recent-buyers endpoints (`api/src/pages/order`, `OrderOffer` schema) —
   supporting the GTM levers.
@@ -44,8 +53,12 @@ Nothing active. Working tree clean as of last check.
 
 ## Commands already run this session
 
-- `git status` → clean. `git branch` → `main`.
-- Repo inspection only; no build/test executed this session.
+- `git status` → clean before edits.
+- Read `PROJECT_CONTEXT.md` and `CURRENT_WORK.md`.
+- Inspected custom-orders static page and relevant admin/order/dashboard/meta controllers.
+- `cd api && npm run lint` → failed before linting because ESLint reports the configured glob is fully ignored.
+- `cd api && npm run build` → passed.
+- `git diff --check` → passed.
 
 ## Do NOT touch / be careful
 

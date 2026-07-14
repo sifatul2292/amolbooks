@@ -880,6 +880,9 @@
     }
     .snap-link:hover { opacity: 1; }
     .snap-divider { border: none; border-top: 1px solid rgba(255,255,255,.06); margin: 0; }
+    body.salesman-mode [data-salesman-hidden],
+    body.salesman-mode .money-stat { display: none !important; }
+    body.salesman-mode .stats-row { grid-template-columns: repeat(2,1fr); }
 
     /* ── Stock Management ── */
     body.stock-mode .content > :not(#stockView) { display: none !important; }
@@ -981,26 +984,26 @@
       <a href="custom-orders.html?view=incomplete" class="nav-item nav-subitem" id="navIncompleteOrders">
         <i class="fas fa-clock"></i> Incomplete Order
       </a>
-      <a href="import-woo-orders.html" class="nav-item">
+      <a href="import-woo-orders.html" class="nav-item" data-salesman-hidden>
         <i class="fas fa-file-import"></i> Import WooCommerce
       </a>
       <div class="nav-label" style="margin-top:8px">Inventory</div>
       <a href="custom-orders.html?view=stock" class="nav-item" id="navStock">
         <i class="fas fa-boxes-stacked"></i> Stock Management
       </a>
-      <div class="nav-label" style="margin-top:8px">Analytics</div>
-      <a href="profit-dashboard.html" class="nav-item">
+      <div class="nav-label" style="margin-top:8px" data-salesman-hidden>Analytics</div>
+      <a href="profit-dashboard.html" class="nav-item" data-salesman-hidden>
         <i class="fas fa-chart-line"></i> Profit Dashboard
       </a>
-      <div class="nav-label" style="margin-top:8px">Navigation</div>
-      <a href="https://adminsub.amolbooks.com/dashboard" class="nav-item">
+      <div class="nav-label" style="margin-top:8px" data-salesman-hidden>Navigation</div>
+      <a href="https://adminsub.amolbooks.com/dashboard" class="nav-item" data-salesman-hidden>
         <i class="fas fa-arrow-left"></i> Back to Admin
       </a>
     </nav>
 
     <!-- Analytics Snapshot Widget -->
-    <hr class="snap-divider">
-    <div class="snap-widget">
+    <hr class="snap-divider" data-salesman-hidden>
+    <div class="snap-widget" data-salesman-hidden>
       <div class="snap-header" onclick="toggleSnap()">
         <span class="snap-title"><i class="fas fa-chart-bar" style="margin-right:5px;color:#7c3aed"></i>Today's Snapshot</span>
         <i class="fas fa-chevron-down snap-toggle" id="snapToggle"></i>
@@ -1029,7 +1032,7 @@
       </div>
     </div>
 
-    <div class="sidebar-footer">
+    <div class="sidebar-footer" data-salesman-hidden>
       <a href="https://adminsub.amolbooks.com/dashboard">
         <i class="fas fa-home"></i> Return to Dashboard
       </a>
@@ -1159,7 +1162,7 @@
           <div class="stat-icon"><i class="fas fa-shopping-bag"></i></div>
           <div class="stat-info"><label id="totalOrdersLabel">Processing Orders</label><div class="val" id="totalOrders">—</div></div>
         </div>
-        <div class="stat-card c2">
+        <div class="stat-card c2 money-stat">
           <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
           <div class="stat-info"><label>Total Amount</label><div class="val" id="totalAmount">—</div></div>
         </div>
@@ -1167,7 +1170,7 @@
           <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
           <div class="stat-info"><label>Today Orders</label><div class="val" id="todayOrders">—</div></div>
         </div>
-        <div class="stat-card c4">
+        <div class="stat-card c4 money-stat">
           <div class="stat-icon"><i class="fas fa-coins"></i></div>
           <div class="stat-info"><label>Today Amount</label><div class="val" id="todayAmount">—</div></div>
         </div>
@@ -1175,7 +1178,7 @@
           <div class="stat-icon"><i class="fas fa-circle-check"></i></div>
           <div class="stat-info"><label>Today Converted</label><div class="val" id="convertedOrders">—</div></div>
         </div>
-        <div class="stat-card incomplete-only" id="convertedAmountCard" style="display:none;background:linear-gradient(135deg,#0d9488,#0f766e)">
+        <div class="stat-card incomplete-only money-stat" id="convertedAmountCard" style="display:none;background:linear-gradient(135deg,#0d9488,#0f766e)">
           <div class="stat-icon"><i class="fas fa-hand-holding-dollar"></i></div>
           <div class="stat-info"><label>Today Conv. Amount</label><div class="val" id="convertedAmount">—</div></div>
         </div>
@@ -1183,7 +1186,7 @@
           <div class="stat-icon"><i class="fas fa-clipboard-check"></i></div>
           <div class="stat-info"><label>All Converted</label><div class="val" id="allConvertedOrders">—</div></div>
         </div>
-        <div class="stat-card incomplete-only" id="allConvertedAmountCard" style="display:none;background:linear-gradient(135deg,#db2777,#9d174d)">
+        <div class="stat-card incomplete-only money-stat" id="allConvertedAmountCard" style="display:none;background:linear-gradient(135deg,#db2777,#9d174d)">
           <div class="stat-icon"><i class="fas fa-sack-dollar"></i></div>
           <div class="stat-info"><label>All Conv. Amount</label><div class="val" id="allConvertedAmount">—</div></div>
         </div>
@@ -1624,6 +1627,7 @@
   };
 
   function loadSnap() {
+    if (isSalesman()) return;
     var today = new Date().toISOString().slice(0, 10);
     var h = authHeaders ? authHeaders() : {};
     var profitP = fetch(API + '/api/dashboard/profit-analytics?startDate=' + today + '&endDate=' + today, { headers: h })
@@ -1678,8 +1682,32 @@
 
   /* ── Auth ── */
   function getToken() { return localStorage.getItem('co_admin_token') || null; }
-  function saveToken(t) { localStorage.setItem('co_admin_token', t); }
-  function clearToken() { localStorage.removeItem('co_admin_token'); }
+  function saveToken(t) { localStorage.setItem('co_admin_token', t); applyRoleMode(); }
+  function clearToken() {
+    localStorage.removeItem('co_admin_token');
+    document.body.classList.remove('salesman-mode');
+  }
+  function getTokenPayload() {
+    var token = getToken();
+    if (!token) return null;
+    try {
+      var part = token.split('.')[1];
+      if (!part) return null;
+      part = part.replace(/-/g, '+').replace(/_/g, '/');
+      return JSON.parse(decodeURIComponent(Array.prototype.map.call(atob(part), function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join('')));
+    } catch (e) {
+      return null;
+    }
+  }
+  function isSalesman() {
+    var payload = getTokenPayload();
+    return !!payload && payload.role === 'salesman';
+  }
+  function applyRoleMode() {
+    document.body.classList.toggle('salesman-mode', isSalesman());
+  }
 
   function showLogin(msg) {
     document.getElementById('login-overlay').classList.remove('hidden');
@@ -1705,7 +1733,17 @@
     })
     .then(function(r){ return r.json(); })
     .then(function(data){
-      if (data && data.token) { saveToken(data.token); hideLogin(); if (isStockView) { loadStockList(); } else { loadRepeatCustomers(); loadTodayStats(); loadSnap(); } }
+      if (data && data.token) {
+        saveToken(data.token);
+        hideLogin();
+        if (isStockView) { loadStockList(); }
+        else {
+          loadRepeatCustomers();
+          loadTodayStats();
+          loadStatusCounts();
+          if (!isSalesman()) loadSnap();
+        }
+      }
       else { errEl.textContent = 'Invalid username or password.'; errEl.style.display = 'block'; }
     })
     .catch(function(){ errEl.textContent = 'Connection error. Try again.'; errEl.style.display = 'block'; })
@@ -1965,7 +2003,10 @@
     // In incomplete view the list mixes abandoned + converted rows, so the
     // Incomplete/Total cards are owned by loadTodayStats (abandoned-only) instead.
     if (isIncompleteView) return;
-    document.getElementById('totalAmount').textContent = '৳' + Number(grandTotal).toLocaleString('en-BD', { maximumFractionDigits: 0 });
+    document.getElementById('totalOrders').textContent = Number(count || 0).toLocaleString();
+    if (!isSalesman()) {
+      document.getElementById('totalAmount').textContent = '৳' + Number(grandTotal).toLocaleString('en-BD', { maximumFractionDigits: 0 });
+    }
   }
 
   // Fetch incomplete-order count + grandTotal sum for a given filter, then write
@@ -1983,11 +2024,11 @@
     .then(function(resp){
       var tot = (resp.calculation && resp.calculation.grandTotal) ? resp.calculation.grandTotal : 0;
       document.getElementById(countId).textContent = (resp.count || 0).toLocaleString();
-      document.getElementById(amountId).textContent = '৳' + Number(tot).toLocaleString('en-BD', { maximumFractionDigits: 0 });
+      if (!isSalesman()) document.getElementById(amountId).textContent = '৳' + Number(tot).toLocaleString('en-BD', { maximumFractionDigits: 0 });
     })
     .catch(function(){
       document.getElementById(countId).textContent = '—';
-      document.getElementById(amountId).textContent = '—';
+      if (!isSalesman()) document.getElementById(amountId).textContent = '—';
     });
   }
 
@@ -2019,11 +2060,11 @@
     .then(function(resp){
       document.getElementById('todayOrders').textContent = (resp.count || 0).toLocaleString();
       var tot = (resp.calculation && resp.calculation.grandTotal) ? resp.calculation.grandTotal : 0;
-      document.getElementById('todayAmount').textContent = '৳' + Number(tot).toLocaleString('en-BD', { maximumFractionDigits: 0 });
+      if (!isSalesman()) document.getElementById('todayAmount').textContent = '৳' + Number(tot).toLocaleString('en-BD', { maximumFractionDigits: 0 });
     })
     .catch(function(){
       document.getElementById('todayOrders').textContent = '—';
-      document.getElementById('todayAmount').textContent = '—';
+      if (!isSalesman()) document.getElementById('todayAmount').textContent = '—';
     });
   }
 
@@ -2954,11 +2995,18 @@
   })();
 
   /* ── Init ── */
+  applyRoleMode();
   configureView();
   if (isStockView) {
     if (getToken()) { hideLogin(); loadStockList(); }
     else { showLogin(); }
-  } else if (getToken()) { hideLogin(); loadRepeatCustomers(); loadTodayStats(); loadStatusCounts(); loadSnap(); }
+  } else if (getToken()) {
+    hideLogin();
+    loadRepeatCustomers();
+    loadTodayStats();
+    loadStatusCounts();
+    if (!isSalesman()) loadSnap();
+  }
   else { showLogin(); }
 })();
 </script>
