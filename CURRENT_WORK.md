@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-07-14. Branch: `main`. Working tree: modified with local storefront price digit/font injection._
+_Last updated: 2026-07-14. Branch: `main`. Working tree: modified with local storefront price font/digit injection and checkout terms block hide._
 
 ## Recently completed (git log, newest first)
 
@@ -28,7 +28,9 @@ Nothing active.
   - Profit/ad-spend dashboard APIs require Super Admin/Admin role guards so hidden analytics are not exposed by direct API calls.
 - Product price readability tweak:
   - Added API-served `/storefront-price-english-digits.js` injection in `api/src/main.ts`, leaving compiled `ui/dist` untouched.
-  - Added `api/src/storefront-price-script.ts` to convert Bangla numerals inside product price blocks to English numerals and apply a clearer numeric font.
+  - Moved the storefront HTML injection middleware before `ServeStaticModule` registration so static storefront routes receive the script instead of bypassing the fallback.
+  - Added `api/src/storefront-price-script.ts` to convert Bangla numerals inside product, cart sidebar, and checkout summary price blocks to English numerals and apply a clearer numeric font.
+  - Hid the checkout `.condition-area` terms/instructions block and auto-check the hidden terms field defensively.
 
 ## Files most recently touched (why)
 
@@ -67,6 +69,9 @@ Nothing active.
 - Added local product-price injection; API build is required for deployment.
 - `node` syntax check for `api/src/storefront-price-script.ts` script body → passed.
 - `cd api && npm run build` after local injection → passed.
+- Moved storefront price injection earlier in `api/src/main.ts`; `cd api && npm run build` → passed.
+- Extended local price font/digit script to cart sidebar and checkout selectors; Nest watch compile → passed with 0 errors.
+- Hid checkout condition/terms block in the local injected script; Nest watch compile → passed with 0 errors.
 
 ## Do NOT touch / be careful
 

@@ -69,6 +69,66 @@ async function bootstrap() {
   // admin reference this prefix without the global 'api' prefix. Registered
   // before init() so it wins over ServeStatic (/api/upload) and the SPA fallback.
   app.use('/upload', express.static(join(__dirname, '..', 'upload')));
+
+  const storefrontIndexPath = join(
+    __dirname,
+    '..',
+    '..',
+    'ui',
+    'dist',
+    'angular-ui',
+    'browser',
+    'index.html',
+  );
+  const storefrontPriceScriptTag =
+    '<script src="/storefront-price-english-digits.js" defer></script>';
+  const staticAssetPattern =
+    /\.(js|css|map|json|xml|txt|ico|svg|png|jpg|jpeg|gif|webp|woff2?|ttf|eot)$/i;
+
+  function sendStorefrontIndex(res: express.Response) {
+    try {
+      const indexHtml = readFileSync(storefrontIndexPath, 'utf8');
+      const html = indexHtml.includes(storefrontPriceScriptTag)
+        ? indexHtml
+        : indexHtml.includes('</body>')
+          ? indexHtml.replace('</body>', `${storefrontPriceScriptTag}</body>`)
+          : `${indexHtml}${storefrontPriceScriptTag}`;
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.type('html').send(html);
+    } catch (error) {
+      res.sendFile(storefrontIndexPath);
+    }
+  }
+
+  const httpAdapter = app.getHttpAdapter().getInstance() as express.Express;
+  httpAdapter.get(
+    '/storefront-price-english-digits.js',
+    (_req: express.Request, res: express.Response) => {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.type('application/javascript').send(STOREFRONT_PRICE_SCRIPT);
+    },
+  );
+
+  // Serve injected storefront HTML before ServeStaticModule can serve the SPA.
+  // This keeps ui/dist untouched while making the local storefront change apply.
+  httpAdapter.use(
+    (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      const accept = String(req.headers.accept || '');
+      const path = req.path || '';
+      if (
+        req.method !== 'GET' ||
+        !accept.includes('text/html') ||
+        path.startsWith('/api') ||
+        path.startsWith('/upload') ||
+        path.startsWith('/invoice') ||
+        path === '/storefront-price-english-digits.js' ||
+        staticAssetPattern.test(path)
+      ) {
+        return next();
+      }
+      return sendStorefrontIndex(res);
+    },
+  );
   // app.enableCors();
   // Version Control
   app.enableVersioning({
@@ -89,41 +149,9 @@ async function bootstrap() {
   redirectMiddlewareRef = app.get(RedirectUrlMiddleware);
 
   // SPA fallback: serves index.html for any unhandled route
-  const httpAdapter = app.getHttpAdapter().getInstance() as express.Express;
-  const storefrontIndexPath = join(
-    __dirname,
-    '..',
-    '..',
-    'ui',
-    'dist',
-    'angular-ui',
-    'browser',
-    'index.html',
-  );
-  const storefrontPriceScriptTag =
-    '<script src="/storefront-price-english-digits.js" defer></script>';
-
-  httpAdapter.get(
-    '/storefront-price-english-digits.js',
-    (_req: express.Request, res: express.Response) => {
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.type('application/javascript').send(STOREFRONT_PRICE_SCRIPT);
-    },
-  );
-
   httpAdapter.use((_req: express.Request, res: express.Response) => {
     if (!res.headersSent) {
-      try {
-        const indexHtml = readFileSync(storefrontIndexPath, 'utf8');
-        const html = indexHtml.includes(storefrontPriceScriptTag)
-          ? indexHtml
-          : indexHtml.includes('</body>')
-            ? indexHtml.replace('</body>', `${storefrontPriceScriptTag}</body>`)
-            : `${indexHtml}${storefrontPriceScriptTag}`;
-        res.type('html').send(html);
-      } catch (error) {
-        res.sendFile(storefrontIndexPath);
-      }
+      sendStorefrontIndex(res);
     }
   });
 

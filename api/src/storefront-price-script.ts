@@ -31,9 +31,29 @@ export const STOREFRONT_PRICE_SCRIPT = `
     '.discount-amount',
     '.price-cart .price',
     '.product-info .price',
+    '.cart-product-price',
+    '.cart-product-price *',
+    '.current-price',
+    '.old-price',
+    '.old-price-container',
+    '.summery-area .summery-list',
+    '.summery-area .summery-list *',
+    '.promo-code-area',
+    '.promo-code-area *',
+    '.cartSubTotal',
+    '.cartDiscountAmount',
+    '.Subtotal',
+    '.pricePipe',
+    '.order-total',
     'app-product-card-one .price',
     'app-product-card-one [class*="price"]',
     'app-product-details [class*="price"]',
+    'app-cart-slide .cart-product-price',
+    'app-cart-slide .current-price',
+    'app-cart-slide .old-price',
+    'app-checkout .cart-product-price',
+    'app-checkout .summery-area .summery-list',
+    'app-checkout .promo-code-area',
   ].join(',');
 
   function styleOnce() {
@@ -42,10 +62,16 @@ export const STOREFRONT_PRICE_SCRIPT = `
     s.id = STYLE_ID;
     s.textContent =
       '.price-wrapper,.price-section,.price-area,.product-price,.sale-price,.regular-price,.new-price,.discount-amount,' +
-      '.price-cart .price,.product-info .price,app-product-card-one .price,app-product-card-one [class*="price"],app-product-details [class*="price"]{' +
+      '.price-cart .price,.product-info .price,.cart-product-price,.cart-product-price *,.current-price,.old-price,.old-price-container,' +
+      '.summery-area .summery-list,.summery-area .summery-list *,.promo-code-area,.promo-code-area *,.cartSubTotal,.cartDiscountAmount,.Subtotal,.pricePipe,.order-total,' +
+      'app-product-card-one .price,app-product-card-one [class*="price"],app-product-details [class*="price"],' +
+      'app-cart-slide .cart-product-price,app-cart-slide .current-price,app-cart-slide .old-price,app-checkout .cart-product-price,app-checkout .summery-area .summery-list,app-checkout .promo-code-area{' +
         'font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important;' +
         'font-variant-numeric:tabular-nums!important;' +
         'letter-spacing:0!important;' +
+      '}' +
+      'app-checkout .condition-area{' +
+        'display:none!important;' +
       '}';
     document.head.appendChild(s);
   }
@@ -78,9 +104,20 @@ export const STOREFRONT_PRICE_SCRIPT = `
     document.querySelectorAll(priceSelectors).forEach(convertTextNodes);
   }
 
+  function acceptHiddenCheckoutTerms() {
+    var input = document.querySelector('app-checkout input[formcontrolname="isCheckedTerms"]');
+    if (!input || input.checked) return;
+    input.checked = true;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
   function scheduleConvert() {
     clearTimeout(timer);
-    timer = setTimeout(convertPrices, 80);
+    timer = setTimeout(function () {
+      convertPrices();
+      acceptHiddenCheckoutTerms();
+    }, 80);
   }
 
   function restartObserver() {
@@ -92,6 +129,7 @@ export const STOREFRONT_PRICE_SCRIPT = `
   function boot() {
     if (!document.body) return;
     convertPrices();
+    acceptHiddenCheckoutTerms();
     restartObserver();
   }
 
