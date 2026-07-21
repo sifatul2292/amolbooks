@@ -1781,6 +1781,90 @@ ${items.join('\n')}
     }
   }
 
+  async getUrgentStock(query: any): Promise<ResponsePayload> {
+    try {
+      const requestedDays = parseInt(query?.days, 10);
+      const urgentDays = Math.min(
+        90,
+        Math.max(1, Number.isFinite(requestedDays) ? requestedDays : 14),
+      );
+      const products = await this.productModel
+        .find({ stock: { $ne: null } })
+        .select('name nameEn sku images salePrice stock')
+        .lean();
+
+      const productIds = products.map(
+        (product: any) => new ObjectId(product._id),
+      );
+      const salesMetrics = await this.getStockSalesMetrics(productIds);
+
+      const urgentProducts = products
+        .map((product: any) => {
+          const stock = Math.max(0, Number(product.stock) || 0);
+          const metrics = salesMetrics.get(String(product._id)) || {
+            soldToday: 0,
+            soldLast30Days: 0,
+            predictedNeedNext30Days: 0,
+          };
+          const predictedNeedNext30Days = Math.max(
+            0,
+            Number(metrics.predictedNeedNext30Days) || 0,
+          );
+          const dailyDemand = predictedNeedNext30Days / 30;
+          const daysRemaining =
+            stock <= 0 ? 0 : dailyDemand > 0 ? stock / dailyDemand : null;
+          const isUrgent =
+            stock <= 0 ||
+            (daysRemaining !== null && daysRemaining <= urgentDays);
+
+          if (!isUrgent) return null;
+
+          return {
+            ...product,
+            ...metrics,
+            daysRemaining:
+              daysRemaining === null
+                ? null
+                : Math.round(daysRemaining * 10) / 10,
+            suggestedRestockQty: Math.max(
+              0,
+              Math.ceil(predictedNeedNext30Days - stock),
+            ),
+            urgency:
+              stock <= 0
+                ? 'out'
+                : daysRemaining <= 7
+                  ? 'critical'
+                  : 'warning',
+          };
+        })
+        .filter(Boolean)
+        .sort((a: any, b: any) => {
+          const aOut = a.stock <= 0 ? 0 : 1;
+          const bOut = b.stock <= 0 ? 0 : 1;
+          if (aOut !== bOut) return aOut - bOut;
+
+          const aDays = a.daysRemaining ?? Number.POSITIVE_INFINITY;
+          const bDays = b.daysRemaining ?? Number.POSITIVE_INFINITY;
+          if (aDays !== bDays) return aDays - bDays;
+
+          if (a.predictedNeedNext30Days !== b.predictedNeedNext30Days) {
+            return b.predictedNeedNext30Days - a.predictedNeedNext30Days;
+          }
+          return String(a.name || '').localeCompare(String(b.name || ''));
+        });
+
+      return {
+        success: true,
+        message: 'Success',
+        data: urgentProducts,
+        count: urgentProducts.length,
+      } as ResponsePayload;
+    } catch (err) {
+      throw new InternalServerErrorException(err.message);
+    }
+  }
+
   async updateStock(
     id: string,
     body: { stock?: number; lowStockThreshold?: number; note?: string },

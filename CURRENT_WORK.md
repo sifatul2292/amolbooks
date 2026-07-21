@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-07-15. Branch: `main`. Working tree: modified with stock demand metrics and forecast._
+_Last updated: 2026-07-21. Branch: `main`. Working tree: modified with stock demand metrics, forecast, and urgent-restock rail._
 
 ## Recently completed (git log, newest first)
 
@@ -23,6 +23,12 @@ Nothing active.
 
 ## Completed this session
 
+- Urgent-restock prioritization:
+  - Added authenticated `GET /api/product/stock-urgent?days=14`, which evaluates every tracked product against the existing weighted demand forecast rather than the current inventory page or manual low-stock threshold.
+  - Urgent results include out-of-stock products plus products projected to run out within 14 days, sorted by out-of-stock, shortest coverage, and highest forecast demand; untracked/zero-demand products are excluded unless already out of stock.
+  - Added a sticky, independently scrolling Urgent Restock rail beside the desktop stock grid, with compact stock/forecast/coverage cues and suggested 30-day reorder quantities.
+  - At 1320px and below the rail moves above the inventory grid as a horizontally scrollable strip; verified no page overflow through 320px.
+  - Rail Restock actions reuse the existing purchase modal and prefill the suggested quantity; successful purchases and manual stock edits refresh the rail immediately.
 - Stock-management page modernization:
   - Replaced the wide product table in `api/upload/static/custom-orders.html` with a responsive three-column product card grid (two columns at tablet width, one on phones).
   - Each card now surfaces product image/name/SKU/price, live stock status, quantity stepper, low-stock threshold, restock/history actions, and inline save feedback.
@@ -46,6 +52,7 @@ Nothing active.
 - `api/src/main.ts` — injects the local storefront price script into served SPA HTML.
 - `api/src/storefront-price-script.ts` — storefront price digit/font override script.
 - `api/upload/static/custom-orders.html` — salesman restrictions plus responsive stock cards and autosaving quantity controls.
+- `api/src/pages/product/product.controller.ts` / `product.service.ts` — authenticated global urgent-stock feed and forecast-based urgency ranking.
 - `api/src/pages/dashboard/dashboard.controller.ts` — protect profit/manual-sales dashboard endpoints from salesman access.
 - `api/src/pages/meta-ads/meta-ads.controller.ts` — protect Meta Ads spend/config/expense endpoints from salesman access.
 - `gtm-snippets/lever5-checkout-gift.html` — checkout free-gift widget iterations (above).
@@ -69,6 +76,10 @@ Nothing active.
 
 ## Commands already run this session
 
+- Urgent-restock rail: verified 0/1/7/14-day products are included, 15-day products are excluded, and untracked/zero-demand products are excluded unless out of stock.
+- Urgent-restock browser preview: verified right rail at 1440px and horizontal above-grid rail at 1280/768/375/320px with no page overflow; suggested quantity prefill passed.
+- Stock page inline scripts after urgent-restock changes → all 3 passed Node syntax checks.
+- `cd api && npm run build` after urgent-restock endpoint → passed (TypeScript deprecation warnings only).
 - Stock demand metrics browser preview: verified real card markup with four-digit forecasts at 1440/768/414/375/320px, no page or metric overflow, and no browser console errors.
 - Stock page inline scripts after demand strip → all 3 passed Node syntax checks.
 - `cd api && npm run lint` after demand metrics → still fails before linting because ESLint reports the configured glob is fully ignored.

@@ -910,8 +910,13 @@
       box-shadow: 0 1px 3px rgba(0,0,0,.05); user-select: none; white-space: nowrap;
     }
     .stock-low-toggle.active { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+    .stock-layout {
+      display: grid; grid-template-columns: minmax(0,1fr) 340px;
+      grid-template-areas: "main rail"; gap: 14px; align-items: start;
+    }
+    .stock-main { grid-area: main; min-width: 0; }
     .stock-grid {
-      display: grid; grid-template-columns: repeat(3,minmax(0,1fr));
+      display: grid; grid-template-columns: repeat(2,minmax(0,1fr));
       gap: 14px; padding: 14px; background: var(--g100);
     }
     .stock-card {
@@ -1004,7 +1009,74 @@
     .stock-save-state.saved { color: var(--green); }
     .stock-save-state.error { color: var(--red); }
     .stock-grid-message { grid-column: 1/-1; min-height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; color: var(--g500); font-size: 13px; }
-    @media(max-width:1180px) { .stock-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+    .urgent-restock {
+      grid-area: rail; min-width: 0; position: sticky; top: 84px;
+      max-height: calc(100vh - 106px); display: flex; flex-direction: column;
+      background: #fff; border: 1px solid #fecaca; border-radius: 16px;
+      box-shadow: 0 2px 16px rgba(127,29,29,.08); overflow: hidden;
+    }
+    .urgent-restock-head {
+      display: flex; align-items: center; gap: 9px; padding: 14px 15px;
+      background: linear-gradient(135deg,#fff7ed,#fef2f2); border-bottom: 1px solid #fee2e2;
+    }
+    .urgent-restock-head i { color: #dc2626; }
+    .urgent-restock-title { color: var(--g900); font-size: 13px; font-weight: 900; }
+    .urgent-restock-subtitle { margin-top: 2px; color: var(--g500); font-size: 10px; font-weight: 600; }
+    .urgent-restock-count {
+      min-width: 24px; height: 24px; margin-left: auto; padding: 0 7px;
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 999px; background: #dc2626; color: #fff; font-size: 11px; font-weight: 900;
+    }
+    .urgent-restock-list { min-height: 130px; padding: 10px; overflow-y: auto; }
+    .urgent-item {
+      padding: 11px; border: 1px solid #fed7aa; border-left: 4px solid #f59e0b;
+      border-radius: 11px; background: #fffbeb;
+    }
+    .urgent-item + .urgent-item { margin-top: 9px; }
+    .urgent-item.critical { border-color: #fecaca; border-left-color: #dc2626; background: #fff7f7; }
+    .urgent-item-top { display: flex; align-items: flex-start; gap: 9px; min-width: 0; }
+    .urgent-item-img {
+      width: 40px; height: 50px; flex-shrink: 0; object-fit: cover; border-radius: 7px;
+      border: 1px solid rgba(148,163,184,.3); background: #fff;
+    }
+    .urgent-item-img-placeholder { display: flex; align-items: center; justify-content: center; color: var(--g300); }
+    .urgent-item-copy { min-width: 0; flex: 1; }
+    .urgent-item-name {
+      color: var(--g900); font-size: 11.5px; line-height: 1.35; font-weight: 800;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .urgent-item-state { display: block; margin-top: 4px; color: #b45309; font-size: 10.5px; font-weight: 900; }
+    .urgent-item.critical .urgent-item-state { color: #b91c1c; }
+    .urgent-item-metrics {
+      display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px;
+      margin-top: 9px; color: var(--g600); font-size: 10px; font-weight: 700;
+    }
+    .urgent-item-metrics strong { display: block; margin-top: 2px; color: var(--g900); font-size: 12px; font-weight: 900; }
+    .urgent-item-action { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+    .urgent-order-qty { color: var(--g600); font-size: 10.5px; font-weight: 700; }
+    .urgent-order-qty strong { color: var(--g900); }
+    .urgent-restock-btn {
+      margin-left: auto; display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+      border: none; border-radius: 8px; padding: 7px 10px; background: #dc2626; color: #fff;
+      font-family: inherit; font-size: 10.5px; font-weight: 800; cursor: pointer;
+    }
+    .urgent-restock-btn:hover { background: #b91c1c; }
+    .urgent-restock-btn:focus-visible { outline: 3px solid rgba(220,38,38,.2); outline-offset: 2px; }
+    .urgent-restock-message {
+      min-height: 130px; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 8px; padding: 20px; color: var(--g500); text-align: center; font-size: 11.5px;
+    }
+    .urgent-retry {
+      border: 1px solid var(--g200); border-radius: 8px; padding: 6px 10px;
+      background: #fff; color: var(--g700); font-family: inherit; font-size: 11px; font-weight: 700; cursor: pointer;
+    }
+    @media(max-width:1320px) {
+      .stock-layout { grid-template-columns: minmax(0,1fr); grid-template-areas: "rail" "main"; }
+      .urgent-restock { position: static; max-height: none; }
+      .urgent-restock-list { display: flex; gap: 9px; overflow-x: auto; overflow-y: hidden; }
+      .urgent-item { min-width: 285px; max-width: 310px; }
+      .urgent-item + .urgent-item { margin-top: 0; }
+    }
     @media(max-width:680px) {
       #stockView .stock-stats { grid-template-columns: minmax(0,1fr); }
       .stock-grid { grid-template-columns: minmax(0,1fr); padding: 10px; gap: 10px; }
@@ -1012,6 +1084,7 @@
       .stock-demand-metric { padding: 8px; }
       .stock-card-body { grid-template-columns: minmax(0,1.3fr) minmax(88px,.7fr); }
       .stock-tools > .btn-reset { flex: 1; }
+      .urgent-item { min-width: min(285px,calc(100vw - 58px)); }
       body.stock-mode .topbar > .topbar-btn:not(.danger),
       body.stock-mode .topbar > a.topbar-btn { display: none; }
     }
@@ -1186,19 +1259,34 @@
           <div class="stock-low-toggle" id="stockLowToggle" onclick="toggleStockLowOnly()">
             <i class="fas fa-triangle-exclamation"></i> Low stock only
           </div>
-          <button class="btn-reset" onclick="loadStockList()"><i class="fas fa-sync-alt"></i> Refresh</button>
+          <button class="btn-reset" onclick="loadStockList();loadUrgentStock()"><i class="fas fa-sync-alt"></i> Refresh</button>
         </div>
-        <div class="table-card">
-          <div class="stock-grid" id="stockBody" aria-live="polite">
-            <div class="stock-grid-message"><div class="spinner"></div><div>Loading products…</div></div>
-          </div>
-          <div class="pagination-bar">
-            <div class="pagination-info" id="stockPageInfo">—</div>
-            <div class="pagination-controls">
-              <button class="page-btn" id="stockPrev" onclick="stockGoPage(-1)">‹ Prev</button>
-              <button class="page-btn" id="stockNext" onclick="stockGoPage(1)">Next ›</button>
+        <div class="stock-layout">
+          <div class="table-card stock-main">
+            <div class="stock-grid" id="stockBody" aria-live="polite">
+              <div class="stock-grid-message"><div class="spinner"></div><div>Loading products…</div></div>
+            </div>
+            <div class="pagination-bar">
+              <div class="pagination-info" id="stockPageInfo">—</div>
+              <div class="pagination-controls">
+                <button class="page-btn" id="stockPrev" onclick="stockGoPage(-1)">‹ Prev</button>
+                <button class="page-btn" id="stockNext" onclick="stockGoPage(1)">Next ›</button>
+              </div>
             </div>
           </div>
+          <aside class="urgent-restock" aria-labelledby="urgentRestockTitle">
+            <div class="urgent-restock-head">
+              <i class="fas fa-bolt"></i>
+              <div>
+                <div class="urgent-restock-title" id="urgentRestockTitle">Urgent Restock</div>
+                <div class="urgent-restock-subtitle">Projected to run out within 14 days</div>
+              </div>
+              <span class="urgent-restock-count" id="urgentRestockCount">—</span>
+            </div>
+            <div class="urgent-restock-list" id="urgentRestockList" aria-live="polite">
+              <div class="urgent-restock-message"><div class="spinner"></div><div>Checking demand…</div></div>
+            </div>
+          </aside>
         </div>
       </div>
 
@@ -2877,6 +2965,7 @@
   /* ── Stock Management ── */
   var stockState = { page: 1, limit: 50, q: '', lowOnly: false, totalCount: 0 };
   var stockSaveTimers = {};
+  var urgentLoadVersion = 0;
 
   function stockStatusPill(stock, thr) {
     if (stock === null || stock === undefined) return '<span class="stock-pill untracked">Not tracked</span>';
@@ -2904,6 +2993,61 @@
       .catch(function(err){
         if (err.message==='auth') return;
         body.innerHTML = '<div class="stock-grid-message"><i class="fas fa-circle-exclamation"></i><div>Failed to load. '+esc(err.message)+'</div></div>';
+      });
+  };
+
+  function urgentDaysLabel(product) {
+    if (Number(product.stock) <= 0) return 'Out of stock';
+    var days = Number(product.daysRemaining);
+    if (!isFinite(days)) return 'Demand unavailable';
+    if (days < 1) return 'Less than 1 day left';
+    var wholeDays = Math.floor(days);
+    return wholeDays + ' day' + (wholeDays === 1 ? '' : 's') + ' left';
+  }
+
+  function renderUrgentStock(rows) {
+    var list = document.getElementById('urgentRestockList');
+    document.getElementById('urgentRestockCount').textContent = rows.length;
+    if (!rows.length) {
+      list.innerHTML = '<div class="urgent-restock-message"><i class="fas fa-circle-check" style="color:#059669;font-size:20px"></i><div>No urgent restocks</div></div>';
+      return;
+    }
+    list.innerHTML = rows.map(function(p){
+      var img = (p.images && p.images[0]) ? p.images[0] : '';
+      var suggested = Math.max(0, Number(p.suggestedRestockQty) || 0);
+      var critical = p.urgency === 'out' || p.urgency === 'critical';
+      return '<article class="urgent-item '+(critical ? 'critical' : '')+'">'
+        + '<div class="urgent-item-top">'
+        + (img ? '<img class="urgent-item-img" src="'+esc(img)+'" alt="" onerror="this.style.visibility=\'hidden\'">' : '<div class="urgent-item-img urgent-item-img-placeholder"><i class="fas fa-book"></i></div>')
+        + '<div class="urgent-item-copy"><div class="urgent-item-name" title="'+esc(p.name||'—')+'">'+esc(p.name||'—')+'</div>'
+        + '<span class="urgent-item-state">'+esc(urgentDaysLabel(p))+'</span></div></div>'
+        + '<div class="urgent-item-metrics"><span>Current stock<strong>'+esc(String(Number(p.stock)||0))+'</strong></span>'
+        + '<span>30-day demand<strong>~'+esc(String(Number(p.predictedNeedNext30Days)||0))+'</strong></span></div>'
+        + '<div class="urgent-item-action"><span class="urgent-order-qty">Suggested: <strong>'+(suggested ? '~'+esc(String(suggested)) : '—')+'</strong></span>'
+        + '<button type="button" class="urgent-restock-btn" data-id="'+esc(p._id)+'" data-name="'+esc(p.name||'')+'" data-suggested="'+esc(String(suggested))+'" onclick="openUrgentRestock(this)"><i class="fas fa-truck-loading"></i> Restock</button></div>'
+        + '</article>';
+    }).join('');
+  }
+
+  window.loadUrgentStock = function () {
+    if (!getToken()) return;
+    var version = ++urgentLoadVersion;
+    var list = document.getElementById('urgentRestockList');
+    list.innerHTML = '<div class="urgent-restock-message"><div class="spinner"></div><div>Checking demand…</div></div>';
+    fetch(API + '/api/product/stock-urgent?days=14', { headers: authHeaders() })
+      .then(function(r){
+        if (r.status===401){ clearToken(); showLogin('Session expired. Please log in again.'); throw new Error('auth'); }
+        if (!r.ok) throw new Error('HTTP '+r.status);
+        return r.json();
+      })
+      .then(function(resp){
+        if (version !== urgentLoadVersion) return;
+        renderUrgentStock((resp && resp.data) || []);
+      })
+      .catch(function(err){
+        if (err.message==='auth' || version !== urgentLoadVersion) return;
+        document.getElementById('urgentRestockCount').textContent = '!';
+        list.innerHTML = '<div class="urgent-restock-message"><i class="fas fa-circle-exclamation" style="color:#dc2626"></i><div>Could not load urgent products.</div><button type="button" class="urgent-retry" onclick="loadUrgentStock()">Try again</button></div>';
       });
   };
 
@@ -2993,15 +3137,27 @@
   };
 
   var restockTargetId = null;
-  window.openRestockModal = function (btn) {
-    var card = stockCardFrom(btn);
-    restockTargetId = card.getAttribute('data-id');
-    document.getElementById('restockProductName').textContent = 'Restock — ' + card.getAttribute('data-name');
-    document.getElementById('restockQty').value = '';
+  function openRestockForProduct(id, name, suggestedQty) {
+    restockTargetId = id;
+    document.getElementById('restockProductName').textContent = 'Restock — ' + name;
+    document.getElementById('restockQty').value = suggestedQty > 0 ? suggestedQty : '';
     document.getElementById('restockUnitCost').value = '';
     document.getElementById('restockSupplier').value = '';
     document.getElementById('restockNote').value = '';
     document.getElementById('restockModal').classList.add('open');
+  }
+
+  window.openRestockModal = function (btn) {
+    var card = stockCardFrom(btn);
+    openRestockForProduct(card.getAttribute('data-id'), card.getAttribute('data-name'), 0);
+  };
+
+  window.openUrgentRestock = function (btn) {
+    openRestockForProduct(
+      btn.getAttribute('data-id'),
+      btn.getAttribute('data-name'),
+      Math.max(0, Number(btn.getAttribute('data-suggested')) || 0)
+    );
   };
 
   window.submitRestock = function () {
@@ -3023,7 +3179,7 @@
         if (resp && resp.success) {
           showToast('Restock recorded', 'success');
           document.getElementById('restockModal').classList.remove('open');
-          loadStockList();
+          loadStockList(); loadUrgentStock();
         } else { showToast((resp && resp.message) || 'Restock failed', 'error'); }
       })
       .catch(function(err){ if (err.message!=='auth') showToast('Failed: '+err.message, 'error'); })
@@ -3089,7 +3245,7 @@
             clearTimeout(stockSaveTimers[id]);
             stockSaveTimers[id] = setTimeout(function(){ saveStockCard(card, Number(card.getAttribute('data-save-version') || 0)); }, 250);
           }
-          updateStockCardStatus(card); loadStockSummary();
+          updateStockCardStatus(card); loadStockSummary(); loadUrgentStock();
         } else { setStockSaveState(card, 'error', 'Save failed'); showToast((resp && resp.message) || 'Update failed', 'error'); }
       })
       .catch(function(err){ if (err.message!=='auth') { setStockSaveState(card, 'error', 'Save failed'); showToast('Failed: '+err.message, 'error'); } });
@@ -3148,7 +3304,7 @@
   applyRoleMode();
   configureView();
   if (isStockView) {
-    if (getToken()) { hideLogin(); loadStockList(); }
+    if (getToken()) { hideLogin(); loadStockList(); loadUrgentStock(); }
     else { showLogin(); }
   } else if (getToken()) {
     hideLogin();

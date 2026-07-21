@@ -132,6 +132,14 @@ export class ProductController {
     return await this.productService.getStockList(query);
   }
 
+  @Get('/stock-urgent')
+  @UseGuards(AdminJwtAuthGuard)
+  async getUrgentStock(
+    @Query() query: Record<string, any>,
+  ): Promise<ResponsePayload> {
+    return await this.productService.getUrgentStock(query);
+  }
+
   @Put('/stock/:id')
   @UseGuards(AdminJwtAuthGuard)
   async updateStock(
