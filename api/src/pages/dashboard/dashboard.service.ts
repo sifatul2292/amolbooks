@@ -15,12 +15,27 @@ import { ResponsePayload } from '../../interfaces/core/response-payload.interfac
 import { Product } from '../../interfaces/common/product.interface';
 import { FilterAndPaginationOrderDto } from '../../dto/order.dto';
 import { ErrorCodes } from '../../enum/error-code.enum';
+import * as moment from 'moment-timezone';
 
 const ObjectId = Types.ObjectId;
+const DASHBOARD_TIME_ZONE = 'Asia/Dhaka';
 
 @Injectable()
 export class DashboardService {
   private logger = new Logger(DashboardService.name);
+
+  private getDashboardDateRange(startDate: string, endDate: string) {
+    return {
+      start: moment
+        .tz(startDate, 'YYYY-MM-DD', true, DASHBOARD_TIME_ZONE)
+        .startOf('day')
+        .toDate(),
+      end: moment
+        .tz(endDate, 'YYYY-MM-DD', true, DASHBOARD_TIME_ZONE)
+        .endOf('day')
+        .toDate(),
+    };
+  }
 
   constructor(
     @InjectModel('Admin')
@@ -706,9 +721,7 @@ export class DashboardService {
 
   async getTopProducts(startDate: string, endDate: string): Promise<ResponsePayload> {
     try {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
+      const { start, end } = this.getDashboardDateRange(startDate, endDate);
 
       const rows = await this.orderModel.aggregate([
         {
@@ -740,9 +753,7 @@ export class DashboardService {
 
   async getProductsSold(startDate: string, endDate: string): Promise<ResponsePayload> {
     try {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
+      const { start, end } = this.getDashboardDateRange(startDate, endDate);
 
       const rows = await this.orderModel.aggregate([
         {
@@ -791,9 +802,7 @@ export class DashboardService {
 
   async getProfitAnalytics(startDate: string, endDate: string): Promise<ResponsePayload> {
     try {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
+      const { start, end } = this.getDashboardDateRange(startDate, endDate);
 
       const daily = await this.orderModel.aggregate([
         {

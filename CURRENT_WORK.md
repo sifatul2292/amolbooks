@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-07-21. Branch: `main`. Working tree: modified with stock demand metrics, forecast, and urgent-restock rail._
+_Last updated: 2026-07-23. Branch: `main`. Profit-dashboard Dhaka timezone fix completed._
 
 ## Recently completed (git log, newest first)
 
@@ -22,6 +22,11 @@ display-only, then margin/copy polish.
 Nothing active.
 
 ## Completed this session
+
+- Profit-dashboard Dhaka date fix:
+  - Profit analytics, product drill-down, and top-product queries now convert selected calendar dates to full `Asia/Dhaka` day boundaries before querying MongoDB.
+  - This includes orders created from 12:00 AM through 5:59 AM Dhaka time that were previously omitted from a single-day selection because `YYYY-MM-DD` was parsed as UTC.
+  - Dashboard-generated "today" date strings now explicitly use `Asia/Dhaka`, independent of the browser/device timezone.
 
 - Urgent-restock prioritization:
   - Added authenticated `GET /api/product/stock-urgent?days=14`, which evaluates every tracked product against the existing weighted demand forecast rather than the current inventory page or manual low-stock threshold.
@@ -75,6 +80,13 @@ Nothing active.
 3. Add a minimal smoke test / health endpoint check for the free-gift + recent-buyers flows.
 
 ## Commands already run this session
+
+- Profit-dashboard date diagnosis: confirmed single-day queries began at `00:00 UTC` (`06:00 Asia/Dhaka`) while calendar grouping already used `+06:00`.
+- Profit-dashboard Dhaka range check: confirmed `2026-07-23` maps to `2026-07-22T18:00:00.000Z` through `2026-07-23T17:59:59.999Z`.
+- Profit-dashboard inline script syntax check → passed.
+- `cd api && npm run build` after profit-dashboard fix → passed (TypeScript deprecation warnings only).
+- `cd api && npm run lint` after profit-dashboard fix → still fails before linting because ESLint reports the configured glob is fully ignored.
+- `git diff --check` after profit-dashboard fix → passed.
 
 - Urgent-restock rail: verified 0/1/7/14-day products are included, 15-day products are excluded, and untracked/zero-demand products are excluded unless out of stock.
 - Urgent-restock browser preview: verified right rail at 1440px and horizontal above-grid rail at 1280/768/375/320px with no page overflow; suggested quantity prefill passed.

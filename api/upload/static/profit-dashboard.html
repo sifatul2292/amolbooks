@@ -414,7 +414,14 @@
   }
 
   /* ── Date ranges ── */
-  function toYMD(d) { return d.toISOString().slice(0, 10); }
+  function toYMD(d) {
+    var parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Dhaka', year: 'numeric', month: '2-digit', day: '2-digit'
+    }).formatToParts(d);
+    var values = {};
+    parts.forEach(function (part) { values[part.type] = part.value; });
+    return values.year + '-' + values.month + '-' + values.day;
+  }
 
   window.setRange = function (key) {
     document.querySelectorAll('.dtab').forEach(function (b) { b.classList.remove('active'); });
