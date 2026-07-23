@@ -29,7 +29,7 @@ Nothing active.
   - Added sanitized short descriptions to every included book and replaced misleading list-price-only labels with calculated selling prices and savings (for example, ৳550 − ৳240 = ৳310 and ৳900 − ৳194 = ৳706).
   - Restyled the included-book rows, metadata, price summary, and mobile purchase actions using the existing Amol green/cream visual language.
   - Removed translator and category fields from package book rows, and simplified the package totals to book count plus the actual discounted package price only.
-  - Set offer `6a0d86a34bce4a2c973790bd` to the confirmed ৳1,221 package total instead of the stale API calculation of ৳1,675.
+  - Package pricing is now dynamic: sum each included product's discounted unit price multiplied by its package quantity, then apply the backend package-level cash or percentage discount once.
 
 - Profit-dashboard Dhaka date fix:
   - Profit analytics, product drill-down, and top-product queries now convert selected calendar dates to full `Asia/Dhaka` day boundaries before querying MongoDB.
@@ -64,6 +64,9 @@ Nothing active.
 
 - `api/src/main.ts` — injects the local storefront price script into served SPA HTML.
 - `api/src/storefront-price-script.ts` — storefront price digit/font override script.
+- `api/src/storefront-special-package-script.ts` — special-package page redesign and dynamic package-price display.
+- `api/src/shared/utils/special-package-price.util.ts` — shared product-subtotal calculation for special packages.
+- Special-package, cart, and order services — populate package products and use their discounted subtotal before applying the backend package discount.
 - `api/upload/static/custom-orders.html` — salesman restrictions plus responsive stock cards and autosaving quantity controls.
 - `api/src/pages/product/product.controller.ts` / `product.service.ts` — authenticated global urgent-stock feed and forecast-based urgency ranking.
 - `api/src/pages/dashboard/dashboard.controller.ts` — protect profit/manual-sales dashboard endpoints from salesman access.
@@ -75,7 +78,6 @@ Nothing active.
 ## Known bugs / incomplete / TODOs
 
 - No committed test coverage; `npm test` is scaffolding only.
-- Special-package `6a0d86a34bce4a2c973790bd` still has stale stored pricing (`salePrice: 1725`, `discountAmount: 50`) in the production API; the confirmed customer price is ৳1,221 and the package record should be corrected so checkout and reporting use the same amount.
 - Deploy script TODO (per ops notes): finalize `/home/amolbooks/deploy.sh` wrapper on VPS
   with `.env` safety net.
 - Meta Ads env vars may not be set in production.
@@ -90,15 +92,17 @@ Nothing active.
 
 ## Commands already run this session
 
-- Confirmed-package-price correction: offer hero and bottom summary now display ৳1,221 instead of the stale API-derived ৳1,675.
-- Special-package injected script syntax check after the ৳1,221 correction → passed.
-- `cd api && npm run build` after the ৳1,221 correction → passed (TypeScript deprecation warnings only).
+- Dynamic special-package cash-discount check: ৳310 + ৳706 + ৳212 = ৳1,228 product subtotal; backend cash discount ৳20 produces ৳1,208 → passed.
+- Dynamic special-package percentage/quantity check: discounted product subtotal ৳230; backend 10% package discount produces ৳207 → passed.
+- Special-package injected script syntax check after dynamic pricing → passed.
+- `cd api && npm run build` after dynamic special-package pricing → passed (TypeScript deprecation warnings only).
+- `cd api && npm run lint` after dynamic special-package pricing → still fails before linting because ESLint reports the configured glob is fully ignored.
 - Special-package production data check: confirmed ৳550 − ৳240 = ৳310, ৳900 − ৳194 = ৳706, and ৳275 − ৳63 = ৳212; confirmed package and product descriptions are populated.
 - Special-package injected DOM test: all three corrected prices, three descriptions, and package summary rendered from mocked API data.
 - Special-package live-page browser verification at 320/375/414/768/1440px: no horizontal overflow; corrected prices and all descriptions rendered at every width.
 - Special-package desktop and 375px mobile visual QA: constrained artwork, responsive Split Studio hero, compact book rows, and inline purchase panel verified.
 - Special-package palette contrast check: body, muted, accent, and focus colors meet their applicable WCAG contrast thresholds on both offer surfaces.
-- Special-package metadata/total refinement verified at 375px and 1440px: only author metadata remains; totals show book count and the confirmed package price ৳1,221, with no overflow.
+- Special-package metadata/total refinement verified at 375px and 1440px: only author metadata remains; totals show book count and one final discounted package price, with no overflow.
 - Special-package injected script syntax check → passed.
 - `cd api && npm run build` after special-package redesign → passed (TypeScript deprecation warnings only).
 - `cd api && npm run lint` after special-package redesign → still fails before linting because ESLint reports the configured glob is fully ignored.

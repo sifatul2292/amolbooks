@@ -21,6 +21,7 @@ import {
   UpdateSpecialPackageDto,
 } from '../../../dto/special-package.dto';
 import { JobSchedulerService } from '../../../shared/job-scheduler/job-scheduler.service';
+import { withCalculatedSpecialPackageSubtotal } from '../../../shared/utils/special-package-price.util';
 
 const ObjectId = Types.ObjectId;
 
@@ -294,10 +295,10 @@ export class SpecialPackageService {
           }
         });
 
-        return {
+        return withCalculatedSpecialPackageSubtotal({
           ...specialPackage?._doc,
           products: transformedProducts,
-        };
+        });
       });
 
       // Return response
@@ -360,7 +361,10 @@ export class SpecialPackageService {
           return transFrom;
         }
       });
-      data = { ...data?._doc, ...{ products: newdata } };
+      data = withCalculatedSpecialPackageSubtotal({
+        ...data?._doc,
+        products: newdata,
+      });
       // console.warn(data)
       return {
         success: true,
@@ -421,7 +425,10 @@ export class SpecialPackageService {
           return transFrom;
         }
       });
-      data = { ...data._doc, ...{ products: newdata } };
+      data = withCalculatedSpecialPackageSubtotal({
+        ...data._doc,
+        products: newdata,
+      });
       // console.warn(data)
       return {
         success: true,
@@ -443,7 +450,7 @@ export class SpecialPackageService {
       return {
         success: true,
         message: 'Success',
-        data,
+        data: withCalculatedSpecialPackageSubtotal(data),
       } as ResponsePayload;
     } catch (err) {
       throw new InternalServerErrorException(err.message);

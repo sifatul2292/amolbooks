@@ -19,9 +19,6 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
   var lastPath = '';
   var requestId = '';
   var packageCache = {};
-  var confirmedPackagePrices = {
-    '6a0d86a34bce4a2c973790bd': 1221,
-  };
   var timer = null;
   var observer = null;
 
@@ -540,21 +537,30 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
       ? item.selectedVariation
       : null;
     var base = Number(variation && (variation.salePrice || variation.price)) || Number(item && item.salePrice) || 0;
-    var discountType = Number((variation && variation.discountType) || (item && item.discountType)) || 0;
-    var discount = Number((variation && variation.discountAmount) || (item && item.discountAmount)) || 0;
-    if (discountType === 1) return Math.max(0, Math.round(base - (base * discount / 100)));
-    if (discountType === 2) return Math.max(0, Math.round(base - discount));
-    return Math.round(base);
+    var discountType = Number(variation && variation.discountType != null
+      ? variation.discountType
+      : item && item.discountType) || 0;
+    var discount = Number(variation && variation.discountAmount != null
+      ? variation.discountAmount
+      : item && item.discountAmount) || 0;
+    if (discountType === 1) return Math.max(0, Math.floor(base - (base * discount / 100)));
+    if (discountType === 2) return Math.max(0, Math.floor(base - discount));
+    return Math.floor(base);
   }
 
   function formatMoney(value) {
     return '৳' + Math.round(Number(value) || 0).toLocaleString('en-BD');
   }
 
-  function packagePrice(id, data) {
-    return Object.prototype.hasOwnProperty.call(confirmedPackagePrices, id)
-      ? confirmedPackagePrices[id]
-      : effectivePrice(data);
+  function packagePrice(data) {
+    var productsTotal = (data.products || []).reduce(function (total, product) {
+      var quantity = product.quantity == null
+        ? 1
+        : Math.max(0, Math.floor(Number(product.quantity) || 0));
+      return total + effectivePrice(product) * quantity;
+    }, 0);
+    var pricedPackage = Object.assign({}, data, { salePrice: productsTotal });
+    return effectivePrice(pricedPackage);
   }
 
   function addFact(parent, label, value) {
@@ -578,7 +584,7 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
 
     var facts = createElement('div', 'ab-offer-facts');
     addFact(facts, 'প্যাকেজে বই', String((data.products || []).length) + 'টি');
-    addFact(facts, 'প্যাকেজ মূল্য', formatMoney(packagePrice(id, data)));
+    addFact(facts, 'প্যাকেজ মূল্য', formatMoney(packagePrice(data)));
     summary.appendChild(facts);
     banner.appendChild(summary);
   }
@@ -632,7 +638,7 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
     totals.appendChild(createElement(
       'strong',
       'ab-package-total',
-      'প্যাকেজ মূল্য: ' + formatMoney(packagePrice(id, data)),
+      'প্যাকেজ মূল্য: ' + formatMoney(packagePrice(data)),
     ));
   }
 

@@ -49,6 +49,7 @@ import * as crypto from 'crypto';
 import { Admin } from '../../../interfaces/admin/admin.interface';
 import { AnalyticsService } from '../../../shared/analytics/analytics.service';
 import { StockMovement } from '../../../interfaces/common/stock-movement.interface';
+import { withCalculatedSpecialPackageSubtotal } from '../../../shared/utils/special-package-price.util';
 const ObjectId = Types.ObjectId;
 
 // Process-level TTL cache for the public recent-buyers feed. Caps DB load on a
@@ -2288,9 +2289,14 @@ export class OrderService {
       const specialPackages = fSpecialPackages.length
         ? JSON.parse(
             JSON.stringify(
-              await this.specialPackageModel.find({
-                _id: { $in: fSpecialPackages.map((id) => new ObjectId(id)) },
-              }),
+              await this.specialPackageModel
+                .find({
+                  _id: { $in: fSpecialPackages.map((id) => new ObjectId(id)) },
+                })
+                .populate(
+                  'products.product',
+                  'salePrice discountType discountAmount variationsOptions hasVariations',
+                ),
             ),
           )
         : [];
@@ -2301,7 +2307,9 @@ export class OrderService {
             (t2) => t2._id === t1.product,
           );
           const productFromSpecialPackages = specialPackages.find(
-            (t2) => t2._id === t1.product,
+            (t2) =>
+              String(t2._id) ===
+              String(t1.specialPackage || t1.product),
           );
           return {
             ...t1,
@@ -2319,7 +2327,14 @@ export class OrderService {
               'product',
               'name nameEn slug author description publisher salePrice sku tax discountType discountAmount images quantity trackQuantity category subCategory brand tags unit',
             )
-            .populate('specialPackage'),
+            .populate({
+              path: 'specialPackage',
+              populate: {
+                path: 'products.product',
+                select:
+                  'salePrice discountType discountAmount variationsOptions hasVariations',
+              },
+            }),
         ),
       );
     }
@@ -2329,9 +2344,12 @@ export class OrderService {
         if (item.cartType === 1) {
           if (item.specialPackage) {
             const images = [item.specialPackage.image];
+            const specialPackage = withCalculatedSpecialPackageSubtotal(
+              item.specialPackage,
+            );
             return {
               ...item,
-              product: { ...item.specialPackage, images },
+              product: { ...specialPackage, images },
             };
           }
           return null;

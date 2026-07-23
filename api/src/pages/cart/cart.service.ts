@@ -19,6 +19,7 @@ import { Cart } from 'src/interfaces/common/cart.interface';
 import { User } from '../../interfaces/user/user.interface';
 import { VariationOption } from '../../interfaces/common/variation.interface';
 import { SpecialPackage } from '../../interfaces/common/special-package.interface';
+import { withCalculatedSpecialPackageSubtotal } from '../../shared/utils/special-package-price.util';
 
 const ObjectId = Types.ObjectId;
 
@@ -235,7 +236,14 @@ export class CartService {
           'product',
           'name nameEn slug description salePrice sku tax discountType discountAmount images quantity trackQuantity category subCategory brand tags unit weight',
         )
-        .populate('specialPackage');
+        .populate({
+          path: 'specialPackage',
+          populate: {
+            path: 'products.product',
+            select:
+              'salePrice discountType discountAmount variationsOptions hasVariations',
+          },
+        });
 
       // console.log('data', data);
 
@@ -245,10 +253,13 @@ export class CartService {
         data.map(async (item: any) => {
           if (item.cartType == 1 && item.specialPackage != null) {
             const images = [item.specialPackage.image];
+            const specialPackage = withCalculatedSpecialPackageSubtotal(
+              item.specialPackage,
+            );
             item = {
               ...item._doc,
               ...{
-                product: { ...item.specialPackage._doc, ...{ images: images } },
+                product: { ...specialPackage, ...{ images: images } },
               },
             };
             delete item.comboPackage;
@@ -701,10 +712,13 @@ export class CartService {
       const finalCartItems: any[] = [];
       for (const item of cartItemDto) {
         if (item.cartType === 1) {
-          const comboData = await this.specialPackageModel.findById(
-            item.specialPackage,
-          );
-          const jComboData = JSON.parse(JSON.stringify(comboData));
+          const comboData = await this.specialPackageModel
+            .findById(item.specialPackage)
+            .populate(
+              'products.product',
+              'salePrice discountType discountAmount variationsOptions hasVariations',
+            );
+          const jComboData = withCalculatedSpecialPackageSubtotal(comboData);
           const cCartItem = {
             product: {
               _id: jComboData._id,
