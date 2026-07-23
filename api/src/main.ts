@@ -9,6 +9,7 @@ import * as helmet from 'helmet';
 import * as compression from 'compression';
 import { RedirectUrlMiddleware } from './middleware/redirect-url.middleware';
 import { STOREFRONT_PRICE_SCRIPT } from './storefront-price-script';
+import { STOREFRONT_SPECIAL_PACKAGE_SCRIPT } from './storefront-special-package-script';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule, { cors: true });
@@ -83,8 +84,14 @@ async function bootstrap() {
   const storefrontPriceScriptFileName = 'storefront-price-english-digits.js';
   const storefrontPriceScriptTag =
     `<script src="/${storefrontPriceScriptFileName}?v=20260714-3" defer></script>`;
+  const storefrontSpecialPackageScriptFileName =
+    'storefront-special-package.js';
+  const storefrontSpecialPackageScriptTag =
+    `<script src="/${storefrontSpecialPackageScriptFileName}?v=20260724-1" defer></script>`;
   const legacyStorefrontPriceScriptTagPattern =
     /\s*<script src="\/storefront-price-english-digits\.js(?:\?v=[^"]*)?" defer><\/script>/g;
+  const legacyStorefrontSpecialPackageScriptTagPattern =
+    /\s*<script src="\/storefront-special-package\.js(?:\?v=[^"]*)?" defer><\/script>/g;
   const staticAssetPattern =
     /\.(js|css|map|json|xml|txt|ico|svg|png|jpg|jpeg|gif|webp|woff2?|ttf|eot)$/i;
 
@@ -101,15 +108,31 @@ async function bootstrap() {
         storefrontPriceScriptFileName,
       );
       writeFileSync(storefrontScriptPath, STOREFRONT_PRICE_SCRIPT, 'utf8');
+      const storefrontSpecialPackageScriptPath = join(
+        __dirname,
+        '..',
+        '..',
+        'ui',
+        'dist',
+        'angular-ui',
+        'browser',
+        storefrontSpecialPackageScriptFileName,
+      );
+      writeFileSync(
+        storefrontSpecialPackageScriptPath,
+        STOREFRONT_SPECIAL_PACKAGE_SCRIPT,
+        'utf8',
+      );
 
       const indexHtml = readFileSync(storefrontIndexPath, 'utf8');
-      const cleanedHtml = indexHtml.replace(
-        legacyStorefrontPriceScriptTagPattern,
-        '',
-      );
+      const cleanedHtml = indexHtml
+        .replace(legacyStorefrontPriceScriptTagPattern, '')
+        .replace(legacyStorefrontSpecialPackageScriptTagPattern, '');
+      const storefrontPatchScriptTags =
+        storefrontPriceScriptTag + storefrontSpecialPackageScriptTag;
       const patchedHtml = cleanedHtml.includes('</body>')
-        ? cleanedHtml.replace('</body>', `${storefrontPriceScriptTag}</body>`)
-        : `${cleanedHtml}${storefrontPriceScriptTag}`;
+        ? cleanedHtml.replace('</body>', `${storefrontPatchScriptTags}</body>`)
+        : `${cleanedHtml}${storefrontPatchScriptTags}`;
 
       if (patchedHtml !== indexHtml) {
         writeFileSync(storefrontIndexPath, patchedHtml, 'utf8');
@@ -123,13 +146,14 @@ async function bootstrap() {
   function sendStorefrontIndex(res: express.Response) {
     try {
       const indexHtml = readFileSync(storefrontIndexPath, 'utf8');
-      const cleanedHtml = indexHtml.replace(
-        legacyStorefrontPriceScriptTagPattern,
-        '',
-      );
+      const cleanedHtml = indexHtml
+        .replace(legacyStorefrontPriceScriptTagPattern, '')
+        .replace(legacyStorefrontSpecialPackageScriptTagPattern, '');
+      const storefrontPatchScriptTags =
+        storefrontPriceScriptTag + storefrontSpecialPackageScriptTag;
       const html = cleanedHtml.includes('</body>')
-        ? cleanedHtml.replace('</body>', `${storefrontPriceScriptTag}</body>`)
-        : `${cleanedHtml}${storefrontPriceScriptTag}`;
+        ? cleanedHtml.replace('</body>', `${storefrontPatchScriptTags}</body>`)
+        : `${cleanedHtml}${storefrontPatchScriptTags}`;
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.type('html').send(html);
     } catch (error) {
@@ -147,6 +171,15 @@ async function bootstrap() {
       res.type('application/javascript').send(STOREFRONT_PRICE_SCRIPT);
     },
   );
+  httpAdapter.get(
+    `/${storefrontSpecialPackageScriptFileName}`,
+    (_req: express.Request, res: express.Response) => {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res
+        .type('application/javascript')
+        .send(STOREFRONT_SPECIAL_PACKAGE_SCRIPT);
+    },
+  );
 
   // Serve injected storefront HTML before ServeStaticModule can serve the SPA.
   // This keeps ui/dist untouched while making the local storefront change apply.
@@ -161,6 +194,7 @@ async function bootstrap() {
         path.startsWith('/upload') ||
         path.startsWith('/invoice') ||
         path === '/storefront-price-english-digits.js' ||
+        path === '/storefront-special-package.js' ||
         staticAssetPattern.test(path)
       ) {
         return next();

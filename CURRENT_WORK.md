@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-07-23. Branch: `main`. Profit-dashboard Dhaka timezone fix completed._
+_Last updated: 2026-07-24. Branch: `main`. Special-package storefront redesign completed locally._
 
 ## Recently completed (git log, newest first)
 
@@ -22,6 +22,14 @@ display-only, then margin/copy polish.
 Nothing active.
 
 ## Completed this session
+
+- Special-package detail redesign implementation:
+  - Added an API-served storefront enhancement for `/special-package-details/:id`, leaving compiled Angular artifacts untouched.
+  - Reframed the oversized offer banner as a responsive Split Studio layout with package title, description, book count, and package price alongside contained artwork.
+  - Added sanitized short descriptions to every included book and replaced misleading list-price-only labels with calculated selling prices and savings (for example, ৳550 − ৳240 = ৳310 and ৳900 − ৳194 = ৳706).
+  - Restyled the included-book rows, metadata, price summary, and mobile purchase actions using the existing Amol green/cream visual language.
+  - Removed translator and category fields from package book rows, and simplified the package totals to book count plus the actual discounted package price only.
+  - Set offer `6a0d86a34bce4a2c973790bd` to the confirmed ৳1,221 package total instead of the stale API calculation of ৳1,675.
 
 - Profit-dashboard Dhaka date fix:
   - Profit analytics, product drill-down, and top-product queries now convert selected calendar dates to full `Asia/Dhaka` day boundaries before querying MongoDB.
@@ -67,6 +75,7 @@ Nothing active.
 ## Known bugs / incomplete / TODOs
 
 - No committed test coverage; `npm test` is scaffolding only.
+- Special-package `6a0d86a34bce4a2c973790bd` still has stale stored pricing (`salePrice: 1725`, `discountAmount: 50`) in the production API; the confirmed customer price is ৳1,221 and the package record should be corrected so checkout and reporting use the same amount.
 - Deploy script TODO (per ops notes): finalize `/home/amolbooks/deploy.sh` wrapper on VPS
   with `.env` safety net.
 - Meta Ads env vars may not be set in production.
@@ -80,6 +89,20 @@ Nothing active.
 3. Add a minimal smoke test / health endpoint check for the free-gift + recent-buyers flows.
 
 ## Commands already run this session
+
+- Confirmed-package-price correction: offer hero and bottom summary now display ৳1,221 instead of the stale API-derived ৳1,675.
+- Special-package injected script syntax check after the ৳1,221 correction → passed.
+- `cd api && npm run build` after the ৳1,221 correction → passed (TypeScript deprecation warnings only).
+- Special-package production data check: confirmed ৳550 − ৳240 = ৳310, ৳900 − ৳194 = ৳706, and ৳275 − ৳63 = ৳212; confirmed package and product descriptions are populated.
+- Special-package injected DOM test: all three corrected prices, three descriptions, and package summary rendered from mocked API data.
+- Special-package live-page browser verification at 320/375/414/768/1440px: no horizontal overflow; corrected prices and all descriptions rendered at every width.
+- Special-package desktop and 375px mobile visual QA: constrained artwork, responsive Split Studio hero, compact book rows, and inline purchase panel verified.
+- Special-package palette contrast check: body, muted, accent, and focus colors meet their applicable WCAG contrast thresholds on both offer surfaces.
+- Special-package metadata/total refinement verified at 375px and 1440px: only author metadata remains; totals show book count and the confirmed package price ৳1,221, with no overflow.
+- Special-package injected script syntax check → passed.
+- `cd api && npm run build` after special-package redesign → passed (TypeScript deprecation warnings only).
+- `cd api && npm run lint` after special-package redesign → still fails before linting because ESLint reports the configured glob is fully ignored.
+- `git diff --check` after special-package redesign → passed.
 
 - Profit-dashboard date diagnosis: confirmed single-day queries began at `00:00 UTC` (`06:00 Asia/Dhaka`) while calendar grouping already used `+06:00`.
 - Profit-dashboard Dhaka range check: confirmed `2026-07-23` maps to `2026-07-22T18:00:00.000Z` through `2026-07-23T17:59:59.999Z`.

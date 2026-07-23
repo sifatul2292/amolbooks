@@ -1,0 +1,14 @@
+{
+  "date": "2026-07-24",
+  "framework": "Compiled Angular storefront with NestJS-served additive scripts",
+  "font_stack": "Hind Siliguri with Bengali serif fallback for display roles",
+  "palette": "Existing Amol forest green, warm cream, and neutral ink",
+  "motion": "Motion-cut; one restrained reveal with reduced-motion fallback",
+  "spacing": "Scoped 4-point-derived semantic scale",
+  "preserve": [
+    "Existing storefront header and footer",
+    "Compiled Angular bundle",
+    "Amol brand palette",
+    "Existing cart and checkout event handlers"
+  ]
+}
