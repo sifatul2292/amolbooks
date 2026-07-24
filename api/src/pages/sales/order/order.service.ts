@@ -3328,12 +3328,45 @@ export class OrderService {
     updateIncompleteOrderDto: UpdateIncompleteOrderDto,
   ): Promise<ResponsePayload> {
     try {
-      await this.incompleteOrderModel.findByIdAndUpdate(id, {
-        $set: updateIncompleteOrderDto,
-      });
+      // This endpoint also saves fraud checks and admin notes from the
+      // incomplete-order table. Keep conversion and audit fields immutable.
+      const editableFields = [
+        'name',
+        'phoneNo',
+        'email',
+        'city',
+        'shippingAddress',
+        'paymentType',
+        'paymentStatus',
+        'deliveryCharge',
+        'subTotal',
+        'discount',
+        'grandTotal',
+        'orderedItems',
+        'note',
+        'adminNote',
+        'fraudChecker',
+      ];
+      const dto = updateIncompleteOrderDto as Record<string, any>;
+      const updateData = editableFields.reduce((result, field) => {
+        if (Object.prototype.hasOwnProperty.call(dto || {}, field)) {
+          result[field] = dto[field];
+        }
+        return result;
+      }, {} as Record<string, any>);
+
+      const data = await this.incompleteOrderModel.findByIdAndUpdate(
+        id,
+        { $set: updateData },
+        { new: true, runValidators: true },
+      );
+      if (!data) {
+        throw new NotFoundException('Incomplete order not found');
+      }
       return {
         success: true,
         message: 'Incomplete order updated successfully',
+        data,
       } as ResponsePayload;
     } catch (err) {
       this.logger.error(err);

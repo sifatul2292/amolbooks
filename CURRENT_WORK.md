@@ -23,6 +23,12 @@ Nothing active.
 
 ## Completed this session
 
+- Incomplete-order editing:
+  - Added an Edit action to unconverted rows in the API-served incomplete-orders dashboard, without changing the compiled admin bundle.
+  - Added a responsive editor for customer/contact/address/payment details, customer note, delivery charge, products, quantities, and per-product unit prices.
+  - Product add/replace uses Amolbooks' existing catalog search API; product, delivery, and grand totals recalculate immediately and the saved values flow into the existing Add Order and Send to Courier actions.
+  - Added an API-served, cache-busted editor asset and restricted incomplete-order updates to authenticated admins plus an explicit editable-field allowlist, protecting conversion and audit fields.
+
 - Special-package detail redesign implementation:
   - Added an API-served storefront enhancement for `/special-package-details/:id`, leaving compiled Angular artifacts untouched.
   - Reframed the oversized offer banner as a responsive Split Studio layout with package title, description, book count, and package price alongside contained artwork.
@@ -64,6 +70,9 @@ Nothing active.
 ## Files most recently touched (why)
 
 - `api/src/main.ts` — injects the local storefront price script into served SPA HTML.
+- `api/src/admin-incomplete-order-editor-script.ts` — responsive incomplete-order editor served by the API.
+- `api/upload/static/custom-orders.html` — exposes Edit on unconverted incomplete-order rows.
+- Incomplete-order controller/service — require admin authentication and safely persist editor fields.
 - `api/src/storefront-price-script.ts` — storefront price digit/font override script.
 - `api/src/storefront-special-package-script.ts` — special-package page redesign and dynamic package-price display.
 - `api/src/shared/utils/special-package-price.util.ts` — shared product-subtotal calculation for special packages.
@@ -93,6 +102,12 @@ Nothing active.
 
 ## Commands already run this session
 
+- Incomplete-order editor JavaScript syntax check → passed.
+- Mocked DOM/load/product-search/totals/save flow → passed; verified Amolbooks catalog request shape and admin auth header.
+- Incomplete-order update allowlist smoke test → passed; editable values persist while forged `status` and `orderId` values are ignored.
+- `cd api && npm run build` after incomplete-order editing → passed (TypeScript deprecation warnings only).
+- `cd api && npm run lint` after incomplete-order editing → still fails before linting because ESLint reports the configured glob is fully ignored.
+- `git diff --check` after incomplete-order editing → passed.
 - Storefront special-package cache-bust check: injected asset version is now the first 12 characters of its SHA-256 content hash (`d8e6e766a7c1` for this build), with no hardcoded package price or duplicate bottom-total element → passed.
 - Live special-package API check: product subtotal ৳1,228, cash discount ৳20, final Angular package total ৳1,208 → passed.
 - Live responsive audit at 320/375/414/768px: no horizontal overflow and purchase button labels remain single-line.

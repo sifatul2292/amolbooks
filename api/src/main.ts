@@ -11,6 +11,7 @@ import { createHash } from 'crypto';
 import { RedirectUrlMiddleware } from './middleware/redirect-url.middleware';
 import { STOREFRONT_PRICE_SCRIPT } from './storefront-price-script';
 import { STOREFRONT_SPECIAL_PACKAGE_SCRIPT } from './storefront-special-package-script';
+import { ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT } from './admin-incomplete-order-editor-script';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule, { cors: true });
@@ -93,6 +94,8 @@ async function bootstrap() {
     .slice(0, 12);
   const storefrontSpecialPackageScriptTag =
     `<script src="/${storefrontSpecialPackageScriptFileName}?v=${storefrontSpecialPackageScriptVersion}" defer></script>`;
+  const adminIncompleteOrderEditorScriptFileName =
+    'incomplete-order-editor.js';
   const legacyStorefrontPriceScriptTagPattern =
     /\s*<script src="\/storefront-price-english-digits\.js(?:\?v=[^"]*)?" defer><\/script>/g;
   const legacyStorefrontSpecialPackageScriptTagPattern =
@@ -185,6 +188,15 @@ async function bootstrap() {
         .send(STOREFRONT_SPECIAL_PACKAGE_SCRIPT);
     },
   );
+  httpAdapter.get(
+    `/${adminIncompleteOrderEditorScriptFileName}`,
+    (_req: express.Request, res: express.Response) => {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res
+        .type('application/javascript')
+        .send(ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT);
+    },
+  );
 
   // Serve injected storefront HTML before ServeStaticModule can serve the SPA.
   // This keeps ui/dist untouched while making the local storefront change apply.
@@ -200,6 +212,7 @@ async function bootstrap() {
         path.startsWith('/invoice') ||
         path === '/storefront-price-english-digits.js' ||
         path === '/storefront-special-package.js' ||
+        path === '/incomplete-order-editor.js' ||
         staticAssetPattern.test(path)
       ) {
         return next();

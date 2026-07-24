@@ -379,6 +379,7 @@ export class OrderController {
   @Version(VERSION_NEUTRAL)
   @Put('/update-incomplete-order-by-id/:id')
   @UsePipes(ValidationPipe)
+  @UseGuards(AdminJwtAuthGuard)
   async updateIncompleteOrderById(
     @Param('id', MongoIdValidationPipe) id: string,
     @Body() updateIncompleteOrderDto: UpdateIncompleteOrderDto,

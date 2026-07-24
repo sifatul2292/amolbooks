@@ -2600,6 +2600,7 @@
         '</div>';
     }
     return '<div style="display:flex;gap:6px;flex-wrap:wrap">' + view +
+      '<button class="btn-action" onclick="AmolbooksIncompleteEditor.open(\''+o._id+'\')" title="Edit customer, products and price" style="background:#ede9fe;color:#6d28d9;border-color:#c4b5fd"><i class="fas fa-pen"></i> Edit</button>' +
       '<button class="btn-action" onclick="convertIncompleteOrder(\''+o._id+'\')" title="Create order from this abandoned checkout" style="background:#dcfce7;color:#166534;border-color:#bbf7d0"><i class="fas fa-plus"></i> Add Order</button>' +
       '<button class="btn-action" onclick="deleteIncompleteOrder(\''+o._id+'\')" title="Delete abandoned order" style="background:#fee2e2;color:#991b1b;border-color:#fecaca"><i class="fas fa-trash"></i></button>' +
       '</div>';
@@ -3645,5 +3646,6 @@
   });
 })();
 </script>
+<script src="/incomplete-order-editor.js?v=20260724-1" defer></script>
 <script>if(window.innerWidth>768){var el=document.getElementById("dateRow");if(el)el.style.display="flex";}</script></body>
 </html>
