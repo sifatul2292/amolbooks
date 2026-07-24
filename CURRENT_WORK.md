@@ -30,6 +30,7 @@ Nothing active.
   - Restyled the included-book rows, metadata, price summary, and mobile purchase actions using the existing Amol green/cream visual language.
   - Removed translator and category fields from package book rows, and simplified the package totals to book count plus the actual discounted package price only.
   - Package pricing is now dynamic: sum each included product's discounted unit price multiplied by its package quantity, then apply the backend package-level cash or percentage discount once.
+  - Removed the duplicate injected bottom total so the page uses Angular's backend-calculated package total, and changed the injected script URL to a content hash so Cloudflare's immutable cache cannot keep serving stale pricing code after deployments.
 
 - Profit-dashboard Dhaka date fix:
   - Profit analytics, product drill-down, and top-product queries now convert selected calendar dates to full `Asia/Dhaka` day boundaries before querying MongoDB.
@@ -92,6 +93,10 @@ Nothing active.
 
 ## Commands already run this session
 
+- Storefront special-package cache-bust check: injected asset version is now the first 12 characters of its SHA-256 content hash (`d8e6e766a7c1` for this build), with no hardcoded package price or duplicate bottom-total element → passed.
+- Live special-package API check: product subtotal ৳1,228, cash discount ৳20, final Angular package total ৳1,208 → passed.
+- Live responsive audit at 320/375/414/768px: no horizontal overflow and purchase button labels remain single-line.
+- Live production inspection: Angular's original package total was correctly ৳1,208, while Cloudflare served the old hardcoded ৳1,221 injected script from an immutable one-year cache under unchanged `?v=20260724-1`.
 - Dynamic special-package cash-discount check: ৳310 + ৳706 + ৳212 = ৳1,228 product subtotal; backend cash discount ৳20 produces ৳1,208 → passed.
 - Dynamic special-package percentage/quantity check: discounted product subtotal ৳230; backend 10% package discount produces ৳207 → passed.
 - Special-package injected script syntax check after dynamic pricing → passed.

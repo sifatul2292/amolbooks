@@ -346,23 +346,8 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    app-special-package-details .section2-bottom.prices button:nth-child(2),
-    app-special-package-details .section2-bottom.prices button:nth-child(3) {
+    app-special-package-details .section2-bottom.prices button:nth-child(2) {
       display: none !important;
-    }
-
-    app-special-package-details .ab-package-total {
-      display: flex;
-      min-height: 2.85rem;
-      align-items: center;
-      justify-content: center;
-      padding-inline: var(--ab-offer-md);
-      color: white;
-      background: var(--ab-offer-accent-dark);
-      border-radius: var(--ab-offer-xs);
-      font-family: var(--ab-offer-body);
-      font-weight: 700;
-      white-space: nowrap;
     }
 
     app-special-package-details .section2-bottom button {
@@ -632,22 +617,11 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
     return true;
   }
 
-  function enhancePackageTotal(root, id, data) {
-    var totals = root.querySelector('.section2-bottom.prices');
-    if (!totals || totals.querySelector('.ab-package-total')) return;
-    totals.appendChild(createElement(
-      'strong',
-      'ab-package-total',
-      'প্যাকেজ মূল্য: ' + formatMoney(packagePrice(data)),
-    ));
-  }
-
   function applyEnhancements(id, data) {
     var root = document.querySelector('app-special-package-details');
     if (!root || root.getAttribute('data-ab-offer-enhanced') === id) return;
     enhanceHero(root, id, data);
     if (!enhanceProducts(root, data)) return;
-    enhancePackageTotal(root, id, data);
     root.setAttribute('data-ab-offer-enhanced', id);
   }
 

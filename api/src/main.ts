@@ -7,6 +7,7 @@ import { readFileSync, writeFileSync } from 'fs';
 import * as express from 'express';
 import * as helmet from 'helmet';
 import * as compression from 'compression';
+import { createHash } from 'crypto';
 import { RedirectUrlMiddleware } from './middleware/redirect-url.middleware';
 import { STOREFRONT_PRICE_SCRIPT } from './storefront-price-script';
 import { STOREFRONT_SPECIAL_PACKAGE_SCRIPT } from './storefront-special-package-script';
@@ -86,8 +87,12 @@ async function bootstrap() {
     `<script src="/${storefrontPriceScriptFileName}?v=20260714-3" defer></script>`;
   const storefrontSpecialPackageScriptFileName =
     'storefront-special-package.js';
+  const storefrontSpecialPackageScriptVersion = createHash('sha256')
+    .update(STOREFRONT_SPECIAL_PACKAGE_SCRIPT)
+    .digest('hex')
+    .slice(0, 12);
   const storefrontSpecialPackageScriptTag =
-    `<script src="/${storefrontSpecialPackageScriptFileName}?v=20260724-1" defer></script>`;
+    `<script src="/${storefrontSpecialPackageScriptFileName}?v=${storefrontSpecialPackageScriptVersion}" defer></script>`;
   const legacyStorefrontPriceScriptTagPattern =
     /\s*<script src="\/storefront-price-english-digits\.js(?:\?v=[^"]*)?" defer><\/script>/g;
   const legacyStorefrontSpecialPackageScriptTagPattern =
