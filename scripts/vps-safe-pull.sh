@@ -48,16 +48,17 @@ if [ -z "$CHANGED" ]; then
 fi
 
 # Belt-and-braces: never let runtime uploads slip into the checkout set. The
-# tracked admin dashboard HTML files under api/upload/static are application
-# assets, not user uploads, so they are the only explicit exception.
+# tracked admin dashboard HTML files and the profit-dashboard token stylesheet
+# under api/upload/static are application assets, not user uploads, so they are
+# the only explicit exceptions.
 SAFE_CHANGED="$(printf '%s\n' "$CHANGED" | awk '
   /^api\/backup\/db\// { next }
-  /^api\/upload\// && $0 !~ /^api\/upload\/static\/[^\/]+\.html$/ { next }
+  /^api\/upload\// && $0 !~ /^api\/upload\/static\/[^\/]+\.html$/ && $0 != "api/upload/static/profit-dashboard-tokens.css" { next }
   { print }
 ')"
 SKIPPED="$(printf '%s\n' "$CHANGED" | awk '
   /^api\/backup\/db\// { print; next }
-  /^api\/upload\// && $0 !~ /^api\/upload\/static\/[^\/]+\.html$/ { print }
+  /^api\/upload\// && $0 !~ /^api\/upload\/static\/[^\/]+\.html$/ && $0 != "api/upload/static/profit-dashboard-tokens.css" { print }
 ')"
 
 echo "[safe-pull] files to update:"

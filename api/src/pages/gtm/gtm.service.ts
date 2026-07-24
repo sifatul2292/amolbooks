@@ -33,6 +33,9 @@ export class GtmService {
    * Uses hashed email (em) > hashed phone (ph) > client IP as fallback.
    */
   private getDistinctId(userData: any, ip: string): string {
+    if (userData?.analytics_anonymous_id) {
+      return `anon:${String(userData.analytics_anonymous_id).slice(0, 120)}`;
+    }
     if (userData?.em && userData.em !== 'null') return `em:${userData.em}`;
     if (userData?.ph && userData.ph !== 'null') return `ph:${userData.ph}`;
     return `ip:${ip || 'unknown'}`;

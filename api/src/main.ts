@@ -12,6 +12,7 @@ import { RedirectUrlMiddleware } from './middleware/redirect-url.middleware';
 import { STOREFRONT_PRICE_SCRIPT } from './storefront-price-script';
 import { STOREFRONT_SPECIAL_PACKAGE_SCRIPT } from './storefront-special-package-script';
 import { ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT } from './admin-incomplete-order-editor-script';
+import { STOREFRONT_ATTRIBUTION_SCRIPT } from './storefront-attribution-script';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule, { cors: true });
@@ -94,12 +95,21 @@ async function bootstrap() {
     .slice(0, 12);
   const storefrontSpecialPackageScriptTag =
     `<script src="/${storefrontSpecialPackageScriptFileName}?v=${storefrontSpecialPackageScriptVersion}" defer></script>`;
+  const storefrontAttributionScriptFileName = 'storefront-attribution.js';
+  const storefrontAttributionScriptVersion = createHash('sha256')
+    .update(STOREFRONT_ATTRIBUTION_SCRIPT)
+    .digest('hex')
+    .slice(0, 12);
+  const storefrontAttributionScriptTag =
+    `<script src="/${storefrontAttributionScriptFileName}?v=${storefrontAttributionScriptVersion}" defer></script>`;
   const adminIncompleteOrderEditorScriptFileName =
     'incomplete-order-editor.js';
   const legacyStorefrontPriceScriptTagPattern =
     /\s*<script src="\/storefront-price-english-digits\.js(?:\?v=[^"]*)?" defer><\/script>/g;
   const legacyStorefrontSpecialPackageScriptTagPattern =
     /\s*<script src="\/storefront-special-package\.js(?:\?v=[^"]*)?" defer><\/script>/g;
+  const legacyStorefrontAttributionScriptTagPattern =
+    /\s*<script src="\/storefront-attribution\.js(?:\?v=[^"]*)?" defer><\/script>/g;
   const staticAssetPattern =
     /\.(js|css|map|json|xml|txt|ico|svg|png|jpg|jpeg|gif|webp|woff2?|ttf|eot)$/i;
 
@@ -131,13 +141,29 @@ async function bootstrap() {
         STOREFRONT_SPECIAL_PACKAGE_SCRIPT,
         'utf8',
       );
+      const storefrontAttributionScriptPath = join(
+        __dirname,
+        '..',
+        '..',
+        'ui',
+        'dist',
+        'angular-ui',
+        'browser',
+        storefrontAttributionScriptFileName,
+      );
+      writeFileSync(
+        storefrontAttributionScriptPath,
+        STOREFRONT_ATTRIBUTION_SCRIPT,
+        'utf8',
+      );
 
       const indexHtml = readFileSync(storefrontIndexPath, 'utf8');
       const cleanedHtml = indexHtml
         .replace(legacyStorefrontPriceScriptTagPattern, '')
-        .replace(legacyStorefrontSpecialPackageScriptTagPattern, '');
+        .replace(legacyStorefrontSpecialPackageScriptTagPattern, '')
+        .replace(legacyStorefrontAttributionScriptTagPattern, '');
       const storefrontPatchScriptTags =
-        storefrontPriceScriptTag + storefrontSpecialPackageScriptTag;
+        storefrontAttributionScriptTag + storefrontPriceScriptTag + storefrontSpecialPackageScriptTag;
       const patchedHtml = cleanedHtml.includes('</body>')
         ? cleanedHtml.replace('</body>', `${storefrontPatchScriptTags}</body>`)
         : `${cleanedHtml}${storefrontPatchScriptTags}`;
@@ -156,9 +182,10 @@ async function bootstrap() {
       const indexHtml = readFileSync(storefrontIndexPath, 'utf8');
       const cleanedHtml = indexHtml
         .replace(legacyStorefrontPriceScriptTagPattern, '')
-        .replace(legacyStorefrontSpecialPackageScriptTagPattern, '');
+        .replace(legacyStorefrontSpecialPackageScriptTagPattern, '')
+        .replace(legacyStorefrontAttributionScriptTagPattern, '');
       const storefrontPatchScriptTags =
-        storefrontPriceScriptTag + storefrontSpecialPackageScriptTag;
+        storefrontAttributionScriptTag + storefrontPriceScriptTag + storefrontSpecialPackageScriptTag;
       const html = cleanedHtml.includes('</body>')
         ? cleanedHtml.replace('</body>', `${storefrontPatchScriptTags}</body>`)
         : `${cleanedHtml}${storefrontPatchScriptTags}`;
@@ -172,6 +199,13 @@ async function bootstrap() {
   installStaticStorefrontPatch();
 
   const httpAdapter = app.getHttpAdapter().getInstance() as express.Express;
+  httpAdapter.get(
+    `/${storefrontAttributionScriptFileName}`,
+    (_req: express.Request, res: express.Response) => {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.type('application/javascript').send(STOREFRONT_ATTRIBUTION_SCRIPT);
+    },
+  );
   httpAdapter.get(
     `/${storefrontPriceScriptFileName}`,
     (_req: express.Request, res: express.Response) => {
@@ -212,6 +246,7 @@ async function bootstrap() {
         path.startsWith('/invoice') ||
         path === '/storefront-price-english-digits.js' ||
         path === '/storefront-special-package.js' ||
+        path === '/storefront-attribution.js' ||
         path === '/incomplete-order-editor.js' ||
         staticAssetPattern.test(path)
       ) {

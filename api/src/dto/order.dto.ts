@@ -56,6 +56,30 @@ export class AddOrderDto {
   @IsOptional()
   @IsString()
   incompleteOrderId: string;
+
+  @IsOptional()
+  @IsObject()
+  attribution: any;
+
+  @IsOptional()
+  @IsNumber()
+  actualCourierCost: number;
+
+  @IsOptional()
+  @IsNumber()
+  packagingCost: number;
+
+  @IsOptional()
+  @IsNumber()
+  paymentFee: number;
+
+  @IsOptional()
+  @IsNumber()
+  refundAmount: number;
+
+  @IsOptional()
+  @IsNumber()
+  returnLoss: number;
 }
 
 export class FilterOrderDto {

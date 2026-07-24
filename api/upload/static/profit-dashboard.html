@@ -3,914 +3,634 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profit Dashboard — Amolbooks</title>
+  <title>Profit &amp; Growth — Amolbooks</title>
   <link rel="icon" type="image/x-icon" href="favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Inter+Tight:wght@600;700;800&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="profit-dashboard-tokens.css?v=20260724-1">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --p: #7c3aed; --p-dark: #5b21b6; --p-light: #ede9fe;
-      --green: #059669; --green-l: #d1fae5;
-      --red: #dc2626; --red-l: #fee2e2;
-      --blue: #2563eb; --blue-l: #dbeafe;
-      --orange: #d97706; --orange-l: #fef3c7;
-      --g50: #f8fafc; --g100: #f1f5f9; --g200: #e2e8f0;
-      --g300: #cbd5e1; --g400: #94a3b8; --g500: #64748b;
-      --g700: #334155; --g900: #0f172a;
-      --sidebar: 220px; --radius: 10px;
+    /* Hallmark · genre: modern-minimal · macrostructure: Workbench · theme: Amol admin · designed-as-app · contrast: pass (46–50) · tokens: pass (58) · mobile: pass (36, 59, 61–68) */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { min-height: 100%; margin: 0; overflow-x: clip; }
+    body { background: var(--color-paper); color: var(--color-ink); font-family: var(--font-body); font-size: var(--text-md); -webkit-font-smoothing: antialiased; }
+    button, input, select, textarea { color: inherit; font: inherit; }
+    button, a { -webkit-tap-highlight-color: var(--color-transparent); }
+    button { white-space: nowrap; }
+    [hidden] { display: none !important; }
+
+    .layout { min-height: 100vh; }
+    .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 300; display: flex; width: var(--sidebar-width); flex-direction: column; overflow-y: auto; background: var(--color-sidebar); color: var(--color-sidebar-text); }
+    .brand { display: flex; align-items: center; gap: var(--space-xs); min-height: var(--topbar-height); padding: var(--space-sm); border-bottom: var(--rule-thin) solid var(--color-sidebar-2); text-decoration: none; color: var(--color-accent-ink); }
+    .brand-mark { display: grid; width: 2rem; height: 2rem; place-items: center; border-radius: var(--radius-input); background: var(--color-accent); color: var(--color-accent-ink); }
+    .brand strong { display: block; font-family: var(--font-display); font-size: var(--text-md); }
+    .brand small { display: block; margin-top: 0.125rem; color: var(--color-sidebar-muted); font-size: var(--text-xs); }
+    .nav { flex: 1; padding: var(--space-sm) 0; }
+    .nav-label { margin: var(--space-sm) var(--space-sm) var(--space-2xs); color: var(--color-sidebar-muted); font: 700 var(--text-xs)/1 var(--font-outlier); letter-spacing: 0.08em; text-transform: uppercase; }
+    .nav-link { display: flex; min-height: 2.75rem; align-items: center; gap: var(--space-xs); padding: 0 var(--space-sm); border-left: 0.1875rem solid var(--color-transparent); color: var(--color-sidebar-text); font-size: var(--text-sm); font-weight: 600; text-decoration: none; transition: background-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out); }
+    .nav-link:hover { background: var(--color-sidebar-2); color: var(--color-accent-ink); }
+    .nav-link:active { background: var(--color-accent-strong); }
+    .nav-link:focus-visible { outline: 0.125rem solid var(--color-focus); outline-offset: -0.1875rem; }
+    .nav-link.active { border-left-color: var(--color-focus); background: var(--color-sidebar-2); color: var(--color-accent-ink); }
+    .nav-link i { width: 1rem; text-align: center; }
+    .sidebar-footer { padding: var(--space-sm); border-top: var(--rule-thin) solid var(--color-sidebar-2); }
+
+    .main { min-width: 0; margin-left: var(--sidebar-width); }
+    .topbar { position: sticky; top: 0; z-index: 250; display: flex; min-height: var(--topbar-height); align-items: center; gap: var(--space-sm); padding: var(--space-xs) var(--space-md); border-bottom: var(--rule-thin) solid var(--color-rule); background: var(--color-paper-2); }
+    .topbar-title { min-width: 0; }
+    .topbar-title h1 { min-width: 0; margin: 0; overflow-wrap: anywhere; font: 800 var(--text-lg)/1.15 var(--font-display); letter-spacing: -0.02em; }
+    .topbar-title p { margin: var(--space-3xs) 0 0; color: var(--color-muted); font-size: var(--text-xs); }
+    .topbar-actions { display: flex; align-items: center; gap: var(--space-2xs); margin-left: auto; }
+    .mobile-menu { display: none; }
+
+    .button { display: inline-flex; min-height: var(--control-height); align-items: center; justify-content: center; gap: var(--space-2xs); padding: 0 var(--space-sm); border: var(--rule-thin) solid var(--color-rule); border-radius: var(--radius-input); outline: 0.125rem solid var(--color-transparent); background: var(--color-paper-2); color: var(--color-ink); font-size: var(--text-sm); font-weight: 700; cursor: pointer; transition: background-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out), transform var(--dur-short) var(--ease-out); }
+    .button:hover { background: var(--color-paper-3); }
+    .button:focus-visible { outline-color: var(--color-focus); outline-offset: 0.125rem; }
+    .button:active { transform: translateY(0.0625rem); }
+    .button:disabled, .button[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; }
+    .button.primary { border-color: var(--color-accent); background: var(--color-accent); color: var(--color-accent-ink); }
+    .button.primary:hover { border-color: var(--color-accent-strong); background: var(--color-accent-strong); }
+    .button.success { border-color: var(--color-success); background: var(--color-success); color: var(--color-accent-ink); }
+    .button.danger { border-color: var(--color-danger); background: var(--color-danger); color: var(--color-accent-ink); }
+    .button.loading { cursor: wait; }
+    .button.loading i { animation: spin 0.8s linear infinite; }
+    .icon-button { width: var(--control-height); padding: 0; }
+    .status-pill { display: inline-flex; min-height: 1.875rem; align-items: center; gap: var(--space-2xs); padding: 0 var(--space-xs); border-radius: var(--radius-pill); background: var(--color-paper-3); color: var(--color-ink-2); font-size: var(--text-xs); font-weight: 700; }
+    .status-pill.good { background: var(--color-success-soft); color: var(--color-success-strong); }
+    .status-pill.warn { background: var(--color-warning-soft); color: var(--color-warning-strong); }
+    .status-pill.bad { background: var(--color-danger-soft); color: var(--color-danger-strong); }
+
+    .content { width: 100%; max-width: 110rem; margin: 0 auto; padding: var(--space-md); }
+    .control-rail { display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-md); padding: var(--space-sm); border: var(--rule-thin) solid var(--color-rule); border-radius: var(--radius-card); background: var(--color-paper-2); }
+    .date-tabs { display: flex; gap: var(--space-3xs); padding: var(--space-3xs); border-radius: var(--radius-input); background: var(--color-paper-3); }
+    .date-tab { min-height: 2.25rem; padding: 0 var(--space-xs); border: 0; border-radius: var(--radius-xs); outline: 0.125rem solid var(--color-transparent); background: var(--color-transparent); color: var(--color-muted); font-size: var(--text-xs); font-weight: 700; cursor: pointer; }
+    .date-tab:hover { background: var(--color-paper-2); color: var(--color-ink); }
+    .date-tab:focus-visible { outline-color: var(--color-focus); }
+    .date-tab:active { transform: translateY(0.0625rem); }
+    .date-tab.active { background: var(--color-accent); color: var(--color-accent-ink); }
+    .custom-range { display: flex; align-items: center; gap: var(--space-2xs); margin-left: auto; }
+    .field { min-width: 0; }
+    .field label { display: block; margin: 0 0 var(--space-2xs); color: var(--color-ink-2); font-size: var(--text-xs); font-weight: 700; }
+    .control { width: 100%; min-height: var(--control-height); padding: 0 var(--space-xs); border: var(--rule-thin) solid var(--color-rule); border-radius: var(--radius-input); outline: 0.125rem solid var(--color-transparent); background: var(--color-paper-2); transition: border-color var(--dur-short) var(--ease-out), background-color var(--dur-short) var(--ease-out); }
+    .control:hover { border-color: var(--color-muted); }
+    .control:focus { border-color: var(--color-accent); outline-color: var(--color-focus); outline-offset: 0.0625rem; }
+    .control:disabled { opacity: 0.55; cursor: not-allowed; }
+    textarea.control { min-height: 5.5rem; padding-block: var(--space-xs); resize: vertical; }
+    .helper { min-height: 1lh; margin: var(--space-3xs) 0 0; color: var(--color-muted); font-size: var(--text-xs); }
+    .helper.error { color: var(--color-danger-strong); }
+    .helper.success { color: var(--color-success-strong); }
+
+    .intro { display: flex; align-items: end; gap: var(--space-lg); margin: var(--space-lg) 0 var(--space-md); }
+    .intro-copy { min-width: 0; max-width: 46rem; }
+    .intro h2 { min-width: 0; margin: 0; overflow-wrap: anywhere; font: 800 var(--text-display)/1.04 var(--font-display); letter-spacing: -0.035em; }
+    .intro p { margin: var(--space-2xs) 0 0; color: var(--color-ink-2); line-height: 1.55; }
+    .legend { display: flex; flex-wrap: wrap; gap: var(--space-2xs); margin-left: auto; }
+    .legend-item { display: flex; align-items: center; gap: var(--space-3xs); color: var(--color-muted); font-size: var(--text-xs); }
+    .legend-dot { width: 0.5rem; height: 0.5rem; border-radius: var(--radius-pill); background: var(--color-muted); }
+    .legend-dot.actual { background: var(--color-success); }
+    .legend-dot.estimated { background: var(--color-warning); }
+    .legend-dot.allocated { background: var(--color-accent); }
+
+    .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-xs); }
+    .metric { min-width: 0; min-height: 9.5rem; padding: var(--space-sm); border: var(--rule-thin) solid var(--color-rule); border-radius: var(--radius-card); background: var(--color-paper-2); }
+    .metric.primary-metric { grid-column: span 2; background: var(--color-sidebar); color: var(--color-accent-ink); }
+    .metric-head { display: flex; min-width: 0; align-items: center; gap: var(--space-2xs); }
+    .metric-label { min-width: 0; color: var(--color-muted); font-size: var(--text-xs); font-weight: 700; letter-spacing: 0.035em; text-transform: uppercase; }
+    .primary-metric .metric-label { color: var(--color-sidebar-text); }
+    .basis { margin-left: auto; padding: var(--space-3xs) var(--space-2xs); border-radius: var(--radius-pill); background: var(--color-paper-3); color: var(--color-ink-2); font-size: 0.625rem; font-weight: 800; text-transform: uppercase; }
+    .basis.actual { background: var(--color-success-soft); color: var(--color-success-strong); }
+    .basis.estimated { background: var(--color-warning-soft); color: var(--color-warning-strong); }
+    .basis.allocated { background: var(--color-accent-soft); color: var(--color-accent-strong); }
+    .basis.unavailable { background: var(--color-danger-soft); color: var(--color-danger-strong); }
+    .primary-metric .basis { background: var(--color-sidebar-2); color: var(--color-sidebar-text); }
+    .metric-value { margin-top: var(--space-md); font: 800 clamp(1.65rem, 2.5vw, 2.55rem)/1 var(--font-display); letter-spacing: -0.04em; }
+    .metric-foot { display: flex; align-items: end; gap: var(--space-xs); margin-top: var(--space-xs); color: var(--color-muted); font-size: var(--text-xs); }
+    .primary-metric .metric-foot { color: var(--color-sidebar-text); }
+    .delta { margin-left: auto; font-weight: 800; }
+    .delta.up { color: var(--color-success-strong); }
+    .delta.down { color: var(--color-danger-strong); }
+    .primary-metric .delta.up { color: var(--color-success-soft); }
+    .primary-metric .delta.down { color: var(--color-danger-soft); }
+
+    .workbench-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.65fr); gap: var(--space-xs); margin-top: var(--space-xs); }
+    .panel { min-width: 0; border: var(--rule-thin) solid var(--color-rule); border-radius: var(--radius-panel); background: var(--color-paper-2); box-shadow: var(--shadow-panel); }
+    .panel-head { display: flex; min-width: 0; align-items: center; gap: var(--space-sm); padding: var(--space-sm); border-bottom: var(--rule-thin) solid var(--color-rule); }
+    .panel-title { min-width: 0; }
+    .panel-title h3 { min-width: 0; margin: 0; overflow-wrap: anywhere; font: 800 var(--text-lg)/1.2 var(--font-display); letter-spacing: -0.02em; }
+    .panel-title p { margin: var(--space-3xs) 0 0; color: var(--color-muted); font-size: var(--text-xs); }
+    .panel-tools { display: flex; align-items: center; gap: var(--space-2xs); margin-left: auto; }
+    .panel-body { padding: var(--space-sm); }
+    .segmented { display: flex; gap: var(--space-3xs); padding: var(--space-3xs); border-radius: var(--radius-input); background: var(--color-paper-3); }
+    .segment { min-height: 2rem; padding: 0 var(--space-xs); border: 0; border-radius: var(--radius-xs); outline: 0.125rem solid var(--color-transparent); background: var(--color-transparent); color: var(--color-muted); font-size: var(--text-xs); font-weight: 700; cursor: pointer; }
+    .segment:hover { color: var(--color-ink); }
+    .segment:focus-visible { outline-color: var(--color-focus); }
+    .segment:active { transform: translateY(0.0625rem); }
+    .segment.active { background: var(--color-paper-2); color: var(--color-ink); }
+
+    .opportunity-list { display: grid; gap: var(--space-2xs); }
+    .opportunity { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-xs); padding: var(--space-xs); border: var(--rule-thin) solid var(--color-rule); border-radius: var(--radius-card); }
+    .opportunity-icon { display: grid; width: 2.5rem; height: 2.5rem; place-items: center; border-radius: var(--radius-input); background: var(--color-paper-3); color: var(--color-ink-2); }
+    .opportunity.critical .opportunity-icon { background: var(--color-danger-soft); color: var(--color-danger-strong); }
+    .opportunity.high .opportunity-icon { background: var(--color-warning-soft); color: var(--color-warning-strong); }
+    .opportunity.medium .opportunity-icon { background: var(--color-info-soft); color: var(--color-info); }
+    .opportunity h4 { min-width: 0; margin: 0; overflow-wrap: anywhere; font-size: var(--text-sm); }
+    .opportunity p { margin: var(--space-3xs) 0 0; color: var(--color-muted); font-size: var(--text-xs); line-height: 1.45; }
+    .action-tag { border: 0; background: var(--color-transparent); color: var(--color-accent-strong); font-size: var(--text-xs); font-weight: 800; cursor: pointer; }
+    .action-tag:hover { color: var(--color-accent); }
+    .action-tag.acted { color: var(--color-success-strong); cursor: default; }
+
+    .funnel { display: grid; gap: var(--space-2xs); }
+    .funnel-stage { position: relative; overflow: hidden; padding: var(--space-xs); border-radius: var(--radius-input); background: var(--color-paper-3); }
+    .funnel-fill { position: absolute; inset: 0 auto 0 0; min-width: 0.25rem; background: var(--color-accent-soft); }
+    .funnel-content { position: relative; display: flex; align-items: center; gap: var(--space-xs); }
+    .funnel-label { color: var(--color-ink-2); font-size: var(--text-xs); font-weight: 700; }
+    .funnel-value { margin-left: auto; font: 800 var(--text-md)/1 var(--font-display); }
+    .funnel-rate { min-width: 3.5rem; color: var(--color-muted); font-size: var(--text-xs); text-align: right; }
+    .drop-note { margin: var(--space-xs) 0 0; padding: var(--space-xs); border-radius: var(--radius-input); background: var(--color-warning-soft); color: var(--color-warning-strong); font-size: var(--text-xs); line-height: 1.45; }
+
+    .chart-wrap { position: relative; min-height: 18rem; }
+    .trend-chart { display: block; width: 100%; height: 18rem; overflow: visible; }
+    .chart-grid { stroke: var(--color-chart-grid); stroke-width: 1; }
+    .chart-label { fill: var(--color-muted); font: 600 10px var(--font-body); }
+    .chart-line { fill: var(--color-transparent); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .chart-line.revenue { stroke: var(--color-info); }
+    .chart-line.expected { stroke: var(--color-success); }
+    .chart-line.realized { stroke: var(--color-accent); }
+    .chart-empty { display: grid; min-height: 16rem; place-items: center; color: var(--color-muted); text-align: center; }
+
+    .heatmap { display: grid; grid-template-columns: repeat(auto-fit, minmax(2.75rem, 1fr)); gap: var(--space-3xs); }
+    .heat-cell { min-height: 3.25rem; padding: var(--space-2xs); border-radius: var(--radius-xs); background: var(--color-paper-3); }
+    .heat-cell.level-1 { background: var(--color-accent-soft); }
+    .heat-cell.level-2 { background: var(--color-info-soft); }
+    .heat-cell.level-3 { background: var(--color-success-soft); }
+    .heat-date { display: block; color: var(--color-muted); font-size: 0.625rem; }
+    .heat-value { display: block; margin-top: var(--space-2xs); font-size: var(--text-xs); font-weight: 800; }
+
+    .table-wrap { width: 100%; overflow-x: auto; }
+    table { width: 100%; min-width: 68rem; border-collapse: collapse; }
+    th { padding: var(--space-xs); border-bottom: var(--rule-thin) solid var(--color-rule); color: var(--color-muted); font-size: var(--text-xs); letter-spacing: 0.025em; text-align: left; text-transform: uppercase; }
+    td { padding: var(--space-xs); border-bottom: var(--rule-thin) solid var(--color-rule); font-size: var(--text-sm); vertical-align: middle; }
+    tbody tr:hover { background: var(--color-paper); }
+    tbody tr:last-child td { border-bottom: 0; }
+    .product-name { max-width: 20rem; font-weight: 700; }
+    .money-positive { color: var(--color-success-strong); font-weight: 800; }
+    .money-negative { color: var(--color-danger-strong); font-weight: 800; }
+    .recommendation { display: inline-flex; min-height: 1.75rem; align-items: center; padding: 0 var(--space-2xs); border-radius: var(--radius-pill); background: var(--color-paper-3); color: var(--color-ink-2); font-size: var(--text-xs); font-weight: 800; }
+    .recommendation.scale { background: var(--color-success-soft); color: var(--color-success-strong); }
+    .recommendation.restock { background: var(--color-danger-soft); color: var(--color-danger-strong); }
+    .recommendation.improve-page, .recommendation.reduce-promotion { background: var(--color-warning-soft); color: var(--color-warning-strong); }
+    .recommendation.bundle { background: var(--color-accent-soft); color: var(--color-accent-strong); }
+
+    .quality-layout { display: grid; grid-template-columns: minmax(17rem, 0.6fr) minmax(0, 1.4fr); gap: var(--space-sm); }
+    .status-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2xs); }
+    .status-card { padding: var(--space-xs); border-radius: var(--radius-input); background: var(--color-paper-3); }
+    .status-card span { display: block; color: var(--color-muted); font-size: var(--text-xs); }
+    .status-card strong { display: block; margin-top: var(--space-2xs); font: 800 var(--text-xl)/1 var(--font-display); }
+    .mini-table { width: 100%; min-width: 0; }
+    .mini-table th, .mini-table td { padding: var(--space-2xs); }
+    .segment-tabs { display: flex; flex-wrap: wrap; gap: var(--space-3xs); margin-bottom: var(--space-xs); }
+
+    .quality-score { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-md); align-items: center; }
+    .score-ring { display: grid; width: 7rem; height: 7rem; place-items: center; border: 0.625rem solid var(--color-paper-3); border-top-color: var(--color-accent); border-radius: 50%; font: 800 var(--text-2xl)/1 var(--font-display); }
+    .coverage-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2xs); }
+    .coverage { padding: var(--space-xs); border-radius: var(--radius-input); background: var(--color-paper-3); }
+    .coverage span { color: var(--color-muted); font-size: var(--text-xs); }
+    .coverage strong { display: block; margin-top: var(--space-2xs); }
+    .warning-list { margin: var(--space-sm) 0 0; padding-left: 1.2rem; color: var(--color-warning-strong); font-size: var(--text-xs); line-height: 1.65; }
+
+    .empty { padding: var(--space-xl); color: var(--color-muted); text-align: center; }
+    .skeleton { min-height: 1.25rem; border-radius: var(--radius-xs); background: var(--color-paper-3); animation: pulse 1.2s var(--ease-in-out) infinite; }
+    .loading-screen { display: grid; min-height: 22rem; place-items: center; color: var(--color-muted); }
+    .error-banner { margin-bottom: var(--space-sm); padding: var(--space-sm); border: var(--rule-thin) solid var(--color-danger); border-radius: var(--radius-card); background: var(--color-danger-soft); color: var(--color-danger-strong); }
+
+    .drawer-backdrop { position: fixed; inset: 0; z-index: 500; background: var(--color-overlay); opacity: 0; transition: opacity var(--dur-medium) var(--ease-out); }
+    .drawer-backdrop.open { opacity: 1; }
+    .drawer { position: fixed; inset: 0 0 0 auto; z-index: 510; display: flex; width: min(34rem, 100%); flex-direction: column; background: var(--color-paper-2); box-shadow: var(--shadow-panel); transform: translateX(100%); transition: transform var(--dur-medium) var(--ease-out); }
+    .drawer.open { transform: translateX(0); }
+    .drawer-head { display: flex; min-height: var(--topbar-height); align-items: center; gap: var(--space-sm); padding: var(--space-sm); border-bottom: var(--rule-thin) solid var(--color-rule); }
+    .drawer-head h2 { min-width: 0; margin: 0; overflow-wrap: anywhere; font: 800 var(--text-xl)/1.1 var(--font-display); }
+    .drawer-head button { margin-left: auto; }
+    .drawer-body { flex: 1; overflow-y: auto; padding: var(--space-sm); }
+    .drawer-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3xs); margin-bottom: var(--space-sm); padding: var(--space-3xs); border-radius: var(--radius-input); background: var(--color-paper-3); }
+    .drawer-tab { min-height: 2.5rem; border: 0; border-radius: var(--radius-xs); outline: 0.125rem solid var(--color-transparent); background: var(--color-transparent); font-size: var(--text-xs); font-weight: 800; cursor: pointer; }
+    .drawer-tab:hover { color: var(--color-accent-strong); }
+    .drawer-tab:focus-visible { outline-color: var(--color-focus); }
+    .drawer-tab:active { transform: translateY(0.0625rem); }
+    .drawer-tab.active { background: var(--color-paper-2); color: var(--color-accent-strong); }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-sm); }
+    .field.full { grid-column: 1 / -1; }
+    .form-actions { display: flex; justify-content: flex-end; gap: var(--space-2xs); margin-top: var(--space-sm); }
+    .recent-list { margin-top: var(--space-md); border-top: var(--rule-thin) solid var(--color-rule); }
+    .recent-row { display: flex; align-items: center; gap: var(--space-2xs); padding: var(--space-xs) 0; border-bottom: var(--rule-thin) solid var(--color-rule); font-size: var(--text-xs); }
+    .recent-row strong { margin-left: auto; }
+    .recent-row button { border: 0; background: var(--color-transparent); color: var(--color-danger-strong); cursor: pointer; }
+    .panel-gap { margin-top: var(--space-xs); }
+    .recent-row button:focus-visible { outline: 0.125rem solid var(--color-focus); }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse { 50% { opacity: 0.48; } }
+
+    @media (max-width: 75rem) {
+      .summary-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .metric.primary-metric { grid-column: span 1; }
+      .workbench-grid { grid-template-columns: minmax(0, 1fr); }
+      .quality-layout { grid-template-columns: minmax(0, 1fr); }
     }
-    html, body { height: 100%; font-family: 'Inter', sans-serif; background: #f0f2f8; color: #1e293b; -webkit-font-smoothing: antialiased; }
-    .layout { display: flex; min-height: 100vh; }
-
-    /* Sidebar */
-    .sidebar { width: var(--sidebar); background: linear-gradient(180deg,#13111e,#1a1730); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 200; overflow-y: auto; border-right: 1px solid rgba(255,255,255,.06); }
-    .sidebar-logo { padding: 20px 18px 16px; border-bottom: 1px solid rgba(255,255,255,.07); display: flex; align-items: center; gap: 10px; }
-    .sidebar-logo-icon { width: 36px; height: 36px; border-radius: 9px; background: linear-gradient(135deg,var(--p),#4f46e5); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
-    .sidebar-logo span { font-size: 14px; font-weight: 800; color: #fff; }
-    .sidebar-logo small { display: block; font-size: 10px; color: #64748b; font-weight: 500; }
-    .sidebar-nav { padding: 14px 0; flex: 1; }
-    .nav-label { font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #475569; padding: 10px 18px 4px; }
-    .nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 18px; font-size: 12.5px; font-weight: 600; color: #94a3b8; text-decoration: none; border-left: 3px solid transparent; transition: all .15s; }
-    .nav-item:hover { background: rgba(255,255,255,.04); color: #cbd5e1; }
-    .nav-item.active { background: rgba(124,58,237,.15); color: #a78bfa; border-left-color: #7c3aed; }
-    .nav-item i { width: 15px; text-align: center; font-size: 12px; opacity: .85; }
-    .sidebar-footer { padding: 14px 18px; border-top: 1px solid rgba(255,255,255,.06); }
-    .sidebar-footer a { color: #64748b; text-decoration: none; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; }
-    .sidebar-footer a:hover { color: #94a3b8; }
-
-    /* Main */
-    .main { flex: 1; margin-left: var(--sidebar); min-height: 100vh; display: flex; flex-direction: column; }
-
-    /* Topbar */
-    .topbar { background: #fff; border-bottom: 1px solid var(--g200); padding: 0 20px; height: 52px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; }
-    .topbar-title { font-size: 14px; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 7px; }
-    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
-    .meta-btn { display: flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; padding: 5px 12px; border-radius: 20px; cursor: pointer; border: none; font-family: inherit; transition: all .15s; }
-    .meta-btn.connected { background: var(--green-l); color: var(--green); }
-    .meta-btn.disconnected { background: var(--g100); color: var(--g500); }
-    .meta-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-
-    /* Content */
-    .content { padding: 18px 20px; flex: 1; max-width: 1000px; }
-
-    /* Date bar */
-    .date-bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
-    .date-tabs { display: flex; gap: 3px; background: #fff; border: 1px solid var(--g200); border-radius: 9px; padding: 3px; }
-    .dtab { padding: 5px 12px; font-size: 12px; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; background: none; color: var(--g500); transition: all .15s; font-family: inherit; }
-    .dtab:hover { background: var(--g100); }
-    .dtab.active { background: var(--p); color: #fff; }
-    .custom-wrap { display: flex; gap: 6px; align-items: center; }
-    .custom-wrap input[type="date"] { padding: 5px 8px; border: 1px solid var(--g200); border-radius: 7px; font-size: 12px; font-family: inherit; color: #1e293b; outline: none; background: #fff; }
-    .custom-wrap input[type="date"]:focus { border-color: var(--p); }
-    .btn-apply { padding: 5px 13px; background: var(--p); color: #fff; border: none; border-radius: 7px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
-    .btn-apply:hover { background: var(--p-dark); }
-
-    /* Summary cards */
-    .summary { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-    .scard { flex: 1; min-width: 160px; background: #fff; border-radius: var(--radius); padding: 14px 16px; border: 1px solid var(--g200); }
-    .scard-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--g400); margin-bottom: 6px; }
-    .scard-val { font-size: 22px; font-weight: 900; color: #1e293b; letter-spacing: -.02em; }
-    .scard-val.green { color: var(--green); }
-    .scard-val.red { color: var(--red); }
-    .scard-sub { font-size: 11px; color: var(--g400); margin-top: 3px; }
-
-    /* Table */
-    .day-table { background: #fff; border-radius: var(--radius); border: 1px solid var(--g200); overflow: hidden; }
-    .day-table-header { display: grid; grid-template-columns: 120px 1fr 1fr 1fr 1fr 1fr 1fr 32px; gap: 0; padding: 10px 16px; background: var(--g50); border-bottom: 1px solid var(--g200); }
-    .th { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--g400); }
-    .day-row { border-bottom: 1px solid var(--g100); }
-    .day-row:last-child { border-bottom: none; }
-    .day-main { display: grid; grid-template-columns: 120px 1fr 1fr 1fr 1fr 1fr 1fr 32px; gap: 0; padding: 12px 16px; cursor: pointer; transition: background .12s; align-items: center; }
-    .day-main:hover { background: var(--g50); }
-    .day-date { font-size: 13px; font-weight: 700; color: #1e293b; }
-    .day-sub { font-size: 10.5px; color: var(--g400); margin-top: 1px; }
-    .day-cell { font-size: 13px; font-weight: 600; color: #1e293b; }
-    .day-cell.revenue { color: var(--blue); }
-    .day-cell.adspend { color: var(--orange); }
-    .day-cell.profit-pos { color: var(--green); font-weight: 800; }
-    .day-cell.profit-neg { color: var(--red); font-weight: 800; }
-    .day-cell.profit-na { color: var(--g400); }
-    .expand-btn { display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 6px; border: none; background: var(--g100); color: var(--g500); cursor: pointer; transition: all .15s; font-size: 10px; }
-    .expand-btn:hover { background: var(--p-light); color: var(--p); }
-    .expand-btn.open { background: var(--p-light); color: var(--p); transform: rotate(180deg); }
-
-    /* Product list */
-    .products-panel { background: var(--g50); border-top: 1px solid var(--g100); padding: 10px 16px 12px 136px; display: none; }
-    .products-panel.open { display: block; }
-    .products-panel-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--g400); margin-bottom: 8px; }
-    .product-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--g200); }
-    .product-row:last-child { border-bottom: none; }
-    .product-name { font-size: 12.5px; font-weight: 600; color: #1e293b; flex: 1; }
-    .product-qty { font-size: 11.5px; color: var(--g500); margin-left: 10px; white-space: nowrap; }
-    .product-rev { font-size: 12px; font-weight: 700; color: var(--blue); margin-left: 10px; white-space: nowrap; min-width: 80px; text-align: right; }
-    .products-loading { font-size: 12px; color: var(--g400); padding: 6px 0; }
-    .products-empty { font-size: 12px; color: var(--g400); font-style: italic; }
-
-    /* Empty state */
-    .empty-state { text-align: center; padding: 40px 20px; color: var(--g400); }
-    .empty-state i { font-size: 32px; margin-bottom: 10px; display: block; }
-    .empty-state p { font-size: 13px; }
-
-    /* Meta connect */
-    .meta-note { background: var(--orange-l); border: 1px solid #fed7aa; border-radius: var(--radius); padding: 10px 14px; font-size: 12px; color: #92400e; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
-    .meta-note a { color: #92400e; font-weight: 700; }
-
-    /* Manual spend */
-    .spend-input-row { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
-    .spend-input-row label { font-size: 12px; font-weight: 700; color: var(--g700); }
-    .spend-input-row input[type="date"], .spend-input-row input[type="number"] { padding: 5px 9px; border: 1px solid var(--g200); border-radius: 7px; font-size: 12px; font-family: inherit; color: #1e293b; outline: none; background: #fff; }
-    .spend-input-row input[type="date"]:focus, .spend-input-row input[type="number"]:focus { border-color: var(--p); }
-    .btn-save-spend { padding: 5px 13px; background: var(--orange); color: #fff; border: none; border-radius: 7px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
-    .btn-save-spend:hover { background: #b45309; }
-    .spend-section { background: #fff; border: 1px solid var(--g200); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px; }
-    .spend-section-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; color: var(--g500); margin-bottom: 10px; }
-
-    /* ── Calendar ── */
-    .section-block { background: #fff; border: 1px solid var(--g200); border-radius: var(--radius); margin-bottom: 14px; overflow: hidden; }
-    .section-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--g100); }
-    .section-head-title { font-size: 12px; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 7px; }
-    .cal-nav { display: flex; align-items: center; gap: 8px; }
-    .cal-nav-btn { background: var(--g100); border: none; border-radius: 6px; width: 26px; height: 26px; cursor: pointer; font-size: 12px; color: var(--g700); display: flex; align-items: center; justify-content: center; transition: background .12s; }
-    .cal-nav-btn:hover { background: var(--p-light); color: var(--p); }
-    .cal-month-label { font-size: 13px; font-weight: 700; color: #1e293b; min-width: 120px; text-align: center; }
-    .cal-grid { padding: 10px 12px 14px; }
-    .cal-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 4px; }
-    .cal-wd { text-align: center; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--g400); padding: 4px 0; }
-    .cal-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
-    .cal-cell { min-height: 64px; border-radius: 7px; padding: 5px 5px 4px; background: var(--g50); border: 1px solid var(--g100); transition: border-color .12s, box-shadow .12s; }
-    .cal-cell.empty { background: none; border-color: transparent; }
-    .cal-cell.has-data { background: #fff; border-color: var(--g200); cursor: default; }
-    .cal-cell.has-data:hover { border-color: var(--p); box-shadow: 0 0 0 2px var(--p-light); }
-    .cal-cell.today { border-color: var(--p) !important; background: var(--p-light); }
-    .cal-day-num { font-size: 12px; font-weight: 700; color: var(--g500); margin-bottom: 3px; }
-    .cal-cell.has-data .cal-day-num { color: #1e293b; }
-    .cal-cell.today .cal-day-num { color: var(--p); }
-    .cal-rev { font-size: 10.5px; font-weight: 700; color: var(--blue); line-height: 1.3; }
-    .cal-sold { font-size: 10px; color: var(--g500); line-height: 1.3; }
-
-    /* ── Top Products ── */
-    .top-products-list { padding: 0 16px 4px; }
-    .tp-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--g100); }
-    .tp-row:last-child { border-bottom: none; }
-    .tp-rank { font-size: 11px; font-weight: 800; color: var(--g300); width: 20px; flex-shrink: 0; text-align: center; }
-    .tp-rank.gold { color: #f59e0b; }
-    .tp-rank.silver { color: var(--g400); }
-    .tp-rank.bronze { color: #cd7c3c; }
-    .tp-name { font-size: 12.5px; font-weight: 600; color: #1e293b; flex: 1; }
-    .tp-bar-wrap { width: 80px; height: 6px; background: var(--g100); border-radius: 3px; flex-shrink: 0; }
-    .tp-bar { height: 6px; background: var(--p); border-radius: 3px; transition: width .4s; }
-    .tp-qty { font-size: 12px; font-weight: 700; color: var(--p); min-width: 30px; text-align: right; flex-shrink: 0; }
-    .tp-rev { font-size: 11.5px; color: var(--g400); min-width: 70px; text-align: right; flex-shrink: 0; }
-    .tp-loading { text-align: center; padding: 20px; color: var(--g400); font-size: 12px; }
-
-    @media (max-width: 768px) {
-      .sidebar { display: none; }
+    @media (max-width: 62rem) {
+      .sidebar { transform: translateX(-100%); transition: transform var(--dur-medium) var(--ease-out); }
+      .sidebar.open { transform: translateX(0); }
       .main { margin-left: 0; }
-      .content { padding: 12px; }
-      .day-table-header { display: none; }
-      .day-main { grid-template-columns: 1fr 1fr; gap: 4px; }
-      .products-panel { padding-left: 12px; }
-      .summary { flex-direction: column; }
-      .cal-cell { min-height: 52px; }
-      .tp-bar-wrap, .tp-rev { display: none; }
+      .mobile-menu { display: inline-flex; }
+      .control-rail { align-items: stretch; flex-direction: column; }
+      .custom-range { margin-left: 0; }
+      .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .coverage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 48rem) {
+      .topbar { padding-inline: var(--space-xs); }
+      .topbar-title p, #metaBtnText, .topbar .quality-text { display: none; }
+      .content { padding: var(--space-xs); }
+      .date-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .date-tab { padding-inline: var(--space-2xs); }
+      .custom-range { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+      .intro { align-items: start; flex-direction: column; gap: var(--space-xs); }
+      .legend { margin-left: 0; }
+      .summary-grid { grid-template-columns: minmax(0, 1fr); }
+      .metric { min-height: 8.25rem; }
+      .panel-head { align-items: flex-start; flex-direction: column; }
+      .panel-tools { width: 100%; margin-left: 0; }
+      .opportunity { grid-template-columns: auto minmax(0, 1fr); }
+      .action-tag { grid-column: 2; }
+      .quality-score { grid-template-columns: minmax(0, 1fr); }
+      .score-ring { width: 6rem; height: 6rem; }
+      .form-grid { grid-template-columns: minmax(0, 1fr); }
+      .field.full { grid-column: auto; }
+    }
+    @media (max-width: 26rem) {
+      .topbar-title, #syncBtn, #metaBtn { display: none; }
+      .topbar-actions .status-pill { display: none; }
+      .button { padding-inline: var(--space-xs); }
+      .date-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .custom-range { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+      .custom-range .button { grid-column: 1 / -1; }
+      .coverage-grid, .status-grid { grid-template-columns: minmax(0, 1fr); }
+      .drawer-tabs { grid-template-columns: minmax(0, 1fr); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
     }
   </style>
 </head>
 <body>
-<div class="layout">
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <div class="sidebar-logo-icon">📚</div>
-      <div><span>Amolbooks</span><small>Admin Panel</small></div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="nav-label">Sales</div>
-      <a href="https://adminsub.amolbooks.com/dashboard" class="nav-item"><i class="fas fa-list-ul"></i> Orders (Angular)</a>
-      <a href="custom-orders.html" class="nav-item"><i class="fas fa-sliders-h"></i> Amolbooks Orders</a>
-      <a href="import-woo-orders.html" class="nav-item"><i class="fas fa-file-import"></i> Import WooCommerce</a>
-      <div class="nav-label" style="margin-top:8px">Analytics</div>
-      <a href="profit-dashboard.html" class="nav-item active"><i class="fas fa-chart-line"></i> Profit Dashboard</a>
-      <div class="nav-label" style="margin-top:8px">Navigation</div>
-      <a href="https://adminsub.amolbooks.com/dashboard" class="nav-item"><i class="fas fa-arrow-left"></i> Back to Admin</a>
-    </nav>
-    <div class="sidebar-footer">
-      <a href="https://adminsub.amolbooks.com/dashboard"><i class="fas fa-home"></i> Return to Dashboard</a>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar" aria-label="Admin navigation">
+      <a class="brand" href="custom-orders.html">
+        <span class="brand-mark" aria-hidden="true"><i class="fas fa-book-open"></i></span>
+        <span><strong>Amolbooks</strong><small>Admin Panel</small></span>
+      </a>
+      <nav class="nav">
+        <div class="nav-label">Sales</div>
+        <a class="nav-link" href="https://adminsub.amolbooks.com/orders"><i class="fas fa-list"></i>Orders (Angular)</a>
+        <a class="nav-link" href="custom-orders.html"><i class="fas fa-sliders"></i>Amolbooks Orders</a>
+        <a class="nav-link" href="import-woo-orders.html"><i class="fas fa-file-import"></i>Import WooCommerce</a>
+        <div class="nav-label">Analytics</div>
+        <a class="nav-link active" href="profit-dashboard.html"><i class="fas fa-chart-line"></i>Profit &amp; Growth</a>
+        <div class="nav-label">Navigation</div>
+        <a class="nav-link" href="https://adminsub.amolbooks.com"><i class="fas fa-arrow-left"></i>Back to Admin</a>
+      </nav>
+      <div class="sidebar-footer"><a class="nav-link" href="custom-orders.html"><i class="fas fa-house"></i>Return to Dashboard</a></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="button icon-button mobile-menu" id="menuBtn" type="button" aria-label="Open navigation"><i class="fas fa-bars"></i></button>
+        <div class="topbar-title">
+          <h1>Profit &amp; Growth</h1>
+          <p>Decide what to scale, fix, and restock.</p>
+        </div>
+        <div class="topbar-actions">
+          <span class="status-pill" id="qualityPill"><i class="fas fa-shield-halved"></i><span class="quality-text">Data quality</span> <strong id="qualityPillValue">—</strong></span>
+          <button class="button" id="syncBtn" type="button" onclick="syncSpend()" hidden><i class="fas fa-rotate" id="syncIcon"></i><span>Sync</span></button>
+          <button class="button" id="metaBtn" type="button" onclick="handleMetaClick()"><i class="fab fa-meta"></i><span id="metaBtnText">Connect Meta</span></button>
+          <button class="button primary" type="button" onclick="openDrawer('manual')"><i class="fas fa-plus"></i>Enter data</button>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="control-rail">
+          <div class="date-tabs" aria-label="Date presets">
+            <button class="date-tab active" type="button" data-range="today" onclick="setRange('today', this)">Today</button>
+            <button class="date-tab" type="button" data-range="yesterday" onclick="setRange('yesterday', this)">Yesterday</button>
+            <button class="date-tab" type="button" data-range="7d" onclick="setRange('7d', this)">Last 7 days</button>
+            <button class="date-tab" type="button" data-range="month" onclick="setRange('month', this)">This month</button>
+            <button class="date-tab" type="button" data-range="lastmonth" onclick="setRange('lastmonth', this)">Last month</button>
+          </div>
+          <div class="custom-range">
+            <input class="control" type="date" id="customFrom" aria-label="Start date">
+            <input class="control" type="date" id="customTo" aria-label="End date">
+            <button class="button primary" type="button" onclick="applyCustom()">Apply</button>
+          </div>
+        </div>
+
+        <div id="errorBanner" class="error-banner" role="alert" hidden></div>
+
+        <section class="intro">
+          <div class="intro-copy">
+            <h2>From orders to the next decision.</h2>
+            <p>Expected profit shows the current order cohort. Realized profit shows delivered outcomes. Estimated costs remain visible instead of pretending incomplete data is exact.</p>
+          </div>
+          <div class="legend" aria-label="Metric basis legend">
+            <span class="legend-item"><span class="legend-dot actual"></span>Actual</span>
+            <span class="legend-item"><span class="legend-dot estimated"></span>Estimated</span>
+            <span class="legend-item"><span class="legend-dot allocated"></span>Allocated</span>
+          </div>
+        </section>
+
+        <section class="summary-grid" aria-label="Executive scorecard">
+          <article class="metric primary-metric" id="metric-expected"><div class="metric-head"><span class="metric-label">Expected contribution</span><span class="basis" id="basis-expected">—</span></div><div class="metric-value" id="value-expected">—</div><div class="metric-foot"><span>Placed and active cohort</span><span class="delta" id="delta-expected">—</span></div></article>
+          <article class="metric primary-metric" id="metric-realized"><div class="metric-head"><span class="metric-label">Realized contribution</span><span class="basis" id="basis-realized">—</span></div><div class="metric-value" id="value-realized">—</div><div class="metric-foot"><span>Delivered cohort</span><span class="delta" id="delta-realized">—</span></div></article>
+          <article class="metric"><div class="metric-head"><span class="metric-label">Net revenue</span><span class="basis" id="basis-revenue">—</span></div><div class="metric-value" id="value-revenue">—</div><div class="metric-foot"><span id="placed-orders">— orders</span><span class="delta" id="delta-revenue">—</span></div></article>
+          <article class="metric"><div class="metric-head"><span class="metric-label">Delivered orders</span><span class="basis actual">Actual</span></div><div class="metric-value" id="value-delivered">—</div><div class="metric-foot"><span>Fulfilled outcomes</span><span class="delta" id="delta-delivered">—</span></div></article>
+          <article class="metric"><div class="metric-head"><span class="metric-label">Average order value</span><span class="basis actual">Actual</span></div><div class="metric-value" id="value-aov">—</div><div class="metric-foot"><span>Valid placed orders</span><span class="delta" id="delta-aov">—</span></div></article>
+          <article class="metric"><div class="metric-head"><span class="metric-label">Contribution margin</span><span class="basis" id="basis-margin">—</span></div><div class="metric-value" id="value-margin">—</div><div class="metric-foot"><span>After ads and known costs</span><span class="delta" id="delta-margin">—</span></div></article>
+          <article class="metric"><div class="metric-head"><span class="metric-label">Ad spend</span><span class="basis" id="basis-spend">—</span></div><div class="metric-value" id="value-spend">—</div><div class="metric-foot"><span>Selected period</span><span class="delta" id="delta-spend">—</span></div></article>
+          <article class="metric"><div class="metric-head"><span class="metric-label">Cost per delivered order</span><span class="basis" id="basis-cpdo">—</span></div><div class="metric-value" id="value-cpdo">—</div><div class="metric-foot"><span>Allocated ad spend</span><span class="delta" id="delta-cpdo">—</span></div></article>
+        </section>
+
+        <div class="workbench-grid">
+          <section class="panel">
+            <header class="panel-head"><div class="panel-title"><h3>Action Center</h3><p>The five highest-value actions supported by current data.</p></div><span class="status-pill" id="actionCount">— actions</span></header>
+            <div class="panel-body"><div class="opportunity-list" id="opportunityList"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div></div>
+          </section>
+          <section class="panel">
+            <header class="panel-head"><div class="panel-title"><h3>Sales funnel</h3><p id="funnelNote">PostHog identity + order outcomes.</p></div></header>
+            <div class="panel-body"><div class="funnel" id="funnelStages"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div><div id="dropNote"></div></div>
+          </section>
+        </div>
+
+        <section class="panel panel-gap">
+          <header class="panel-head"><div class="panel-title"><h3>Performance trend</h3><p>Revenue and contribution over the selected period.</p></div><div class="panel-tools"><div class="segmented"><button class="segment active" type="button" data-granularity="daily" onclick="setGranularity('daily', this)">Daily</button><button class="segment" type="button" data-granularity="weekly" onclick="setGranularity('weekly', this)">Weekly</button></div></div></header>
+          <div class="panel-body"><div class="chart-wrap" id="trendChart"><div class="chart-empty"><i class="fas fa-circle-notch fa-spin"></i></div></div><div class="heatmap" id="heatmap" aria-label="Compact revenue heatmap"></div></div>
+        </section>
+
+        <section class="panel panel-gap">
+          <header class="panel-head"><div class="panel-title"><h3>Product performance</h3><p>Contribution is before order-level fulfillment and allocated advertising.</p></div><span class="status-pill" id="productCount">— products</span></header>
+          <div class="table-wrap"><table><thead><tr><th>Product</th><th>Units</th><th>Net sales</th><th>Contribution</th><th>Margin</th><th>Views</th><th>Conversion</th><th>Loss rate</th><th>Stock cover</th><th>Decision</th></tr></thead><tbody id="productRows"><tr><td colspan="10"><div class="empty">Loading product economics…</div></td></tr></tbody></table></div>
+        </section>
+
+        <div class="workbench-grid">
+          <section class="panel">
+            <header class="panel-head"><div class="panel-title"><h3>Order quality</h3><p>Delivery, cancellation, refund, and return outcomes.</p></div></header>
+            <div class="panel-body quality-layout">
+              <div class="status-grid" id="statusGrid"></div>
+              <div><div class="segment-tabs" id="qualityTabs"><button class="segment active" type="button" data-quality="bySource" onclick="setQualityView('bySource', this)">Source</button><button class="segment" type="button" data-quality="byPayment" onclick="setQualityView('byPayment', this)">Payment</button><button class="segment" type="button" data-quality="byLocation" onclick="setQualityView('byLocation', this)">Location</button><button class="segment" type="button" data-quality="byCustomerType" onclick="setQualityView('byCustomerType', this)">Customer</button><button class="segment" type="button" data-quality="byOrderValue" onclick="setQualityView('byOrderValue', this)">Order value</button><button class="segment" type="button" data-quality="campaigns" onclick="setQualityView('campaigns', this)">Campaign</button></div><div id="qualityTable"></div></div>
+            </div>
+          </section>
+          <section class="panel">
+            <header class="panel-head"><div class="panel-title"><h3>Data quality</h3><p>How much of this dashboard is decision-safe.</p></div></header>
+            <div class="panel-body"><div class="quality-score"><div class="score-ring" id="qualityScore">—</div><div class="coverage-grid" id="coverageGrid"></div></div><ul class="warning-list" id="warningList"></ul></div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
+  <aside class="drawer" id="dataDrawer" aria-hidden="true" aria-label="Enter business data">
+    <header class="drawer-head"><h2>Enter business data</h2><button class="button icon-button" type="button" onclick="closeDrawer()" aria-label="Close data entry"><i class="fas fa-xmark"></i></button></header>
+    <div class="drawer-body">
+      <div class="drawer-tabs"><button class="drawer-tab active" type="button" data-drawer="manual" onclick="showDrawerTab('manual', this)">Phone sale</button><button class="drawer-tab" type="button" data-drawer="spend" onclick="showDrawerTab('spend', this)">Ad spend</button><button class="drawer-tab" type="button" data-drawer="costs" onclick="showDrawerTab('costs', this)">Order costs</button></div>
+
+      <form id="manualForm" onsubmit="saveManualSale(event)">
+        <div class="form-grid">
+          <div class="field"><label for="msDate">Date</label><input class="control" id="msDate" type="date" required></div>
+          <div class="field"><label for="msSource">Source</label><select class="control" id="msSource"><option value="whatsapp">WhatsApp</option><option value="phone">Phone</option><option value="other">Other</option></select></div>
+          <div class="field"><label for="msRevenue">Revenue (৳)</label><input class="control" id="msRevenue" type="number" min="0" step="1" required></div>
+          <div class="field"><label for="msCost">Product cost (৳)</label><input class="control" id="msCost" type="number" min="0" step="1"></div>
+          <div class="field"><label for="msCourier">Actual courier cost (৳)</label><input class="control" id="msCourier" type="number" min="0" step="1"><p class="helper">Leave blank if unknown.</p></div>
+          <div class="field"><label for="msOrders">Orders</label><input class="control" id="msOrders" type="number" min="1" step="1" value="1"></div>
+          <div class="field"><label for="msOutcome">Outcome</label><select class="control" id="msOutcome"><option value="active">Active</option><option value="delivered">Delivered</option><option value="cancelled">Cancelled</option><option value="refunded">Refunded</option><option value="returned">Returned</option></select></div>
+          <div class="field"><label for="msPayment">Payment</label><select class="control" id="msPayment"><option value="unpaid">Unpaid</option><option value="paid">Paid</option><option value="partial">Partial</option></select></div>
+          <div class="field"><label for="msCampaign">Campaign</label><input class="control" id="msCampaign" maxlength="200" placeholder="Optional"></div>
+          <div class="field"><label for="msPhone">Customer phone</label><input class="control" id="msPhone" maxlength="30" placeholder="Optional"></div>
+          <div class="field full"><label for="msNote">Note</label><textarea class="control" id="msNote" maxlength="500" placeholder="Optional context"></textarea></div>
+        </div>
+        <p class="helper" id="manualStatus" role="status"></p>
+        <div class="form-actions"><button class="button primary" id="manualSave" type="submit"><i class="fas fa-check"></i>Save phone sale</button></div>
+        <div class="recent-list" id="manualSalesList"></div>
+      </form>
+
+      <form id="spendForm" onsubmit="saveSpend(event)" hidden>
+        <div class="form-grid">
+          <div class="field"><label for="spendDate">Date</label><input class="control" id="spendDate" type="date" required></div>
+          <div class="field"><label for="spendAmount">Amount (৳)</label><input class="control" id="spendAmount" type="number" min="0" step="1" required></div>
+        </div>
+        <p class="helper">Manual spend replaces the amount already logged for that date.</p>
+        <p class="helper" id="spendStatus" role="status"></p>
+        <div class="form-actions"><button class="button primary" id="spendSave" type="submit"><i class="fas fa-check"></i>Save ad spend</button></div>
+      </form>
+
+      <form id="costsForm" onsubmit="saveOrderCosts(event)" hidden>
+        <div class="form-grid">
+          <div class="field full"><label for="costOrderId">Order ID</label><input class="control" id="costOrderId" required placeholder="Order number or Mongo ID"></div>
+          <div class="field"><label for="costCourier">Actual courier (৳)</label><input class="control" id="costCourier" type="number" min="0" step="1"></div>
+          <div class="field"><label for="costPackaging">Packaging (৳)</label><input class="control" id="costPackaging" type="number" min="0" step="1"></div>
+          <div class="field"><label for="costPayment">Payment fee (৳)</label><input class="control" id="costPayment" type="number" min="0" step="1"></div>
+          <div class="field"><label for="costRefund">Refund amount (৳)</label><input class="control" id="costRefund" type="number" min="0" step="1"></div>
+          <div class="field"><label for="costReturn">Return loss (৳)</label><input class="control" id="costReturn" type="number" min="0" step="1"></div>
+        </div>
+        <p class="helper">Blank fields remain unchanged. Enter zero only when the verified cost is zero.</p>
+        <p class="helper" id="costStatus" role="status"></p>
+        <div class="form-actions"><button class="button primary" id="costSave" type="submit"><i class="fas fa-check"></i>Save order costs</button></div>
+      </form>
     </div>
   </aside>
-
-  <div class="main">
-    <div class="topbar">
-      <div class="topbar-title"><i class="fas fa-chart-line" style="color:var(--p)"></i> Profit Dashboard</div>
-      <div class="topbar-right">
-        <button class="meta-btn disconnected" id="syncBtn" onclick="syncSpend()" style="display:none;background:var(--blue-l);color:var(--blue)">
-          <i class="fas fa-sync-alt" id="syncIcon"></i>
-          <span>Sync Spend</span>
-        </button>
-        <button class="meta-btn disconnected" id="metaBtn" onclick="handleMetaClick()">
-          <span class="meta-dot"></span>
-          <span id="metaBtnText">Connect Meta</span>
-        </button>
-      </div>
-    </div>
-
-    <div class="content">
-      <!-- Date range -->
-      <div class="date-bar">
-        <div class="date-tabs">
-          <button class="dtab active" onclick="setRange('today')">Today</button>
-          <button class="dtab" onclick="setRange('yesterday')">Yesterday</button>
-          <button class="dtab" onclick="setRange('7d')">Last 7 Days</button>
-          <button class="dtab" onclick="setRange('month')">This Month</button>
-          <button class="dtab" onclick="setRange('lastmonth')">Last Month</button>
-        </div>
-        <div class="custom-wrap">
-          <input type="date" id="customFrom">
-          <span style="font-size:12px;color:var(--g400)">→</span>
-          <input type="date" id="customTo">
-          <button class="btn-apply" onclick="applyCustom()">Apply</button>
-        </div>
-      </div>
-
-      <!-- Summary -->
-      <div class="summary" id="summary">
-        <div class="scard">
-          <div class="scard-label">Total Revenue</div>
-          <div class="scard-val" id="s-revenue">—</div>
-          <div class="scard-sub" id="s-orders">— orders</div>
-        </div>
-        <div class="scard">
-          <div class="scard-label">Product Cost</div>
-          <div class="scard-val" id="s-cost">—</div>
-          <div class="scard-sub" id="s-cost-note">From cost price</div>
-        </div>
-        <div class="scard">
-          <div class="scard-label">Delivery Charge</div>
-          <div class="scard-val" id="s-delivery">—</div>
-          <div class="scard-sub" id="s-delivery-note">Included in revenue</div>
-        </div>
-        <div class="scard">
-          <div class="scard-label">Meta Ad Spend</div>
-          <div class="scard-val" id="s-adspend">—</div>
-          <div class="scard-sub" id="s-meta-note">Connect Meta to auto-sync</div>
-        </div>
-        <div class="scard">
-          <div class="scard-label">Net Profit</div>
-          <div class="scard-val" id="s-profit">—</div>
-          <div class="scard-sub" id="s-margin">Revenue − Cost − Delivery − Ads</div>
-        </div>
-      </div>
-
-      <!-- Meta ad account ID override -->
-      <div class="spend-section" id="accountSection" style="display:none">
-        <div class="spend-section-title"><i class="fab fa-facebook" style="color:#1877f2;margin-right:5px"></i>Ad Account ID</div>
-        <div class="spend-input-row">
-          <label>Account ID</label>
-          <input type="text" id="adAccountIdInput" placeholder="e.g. 1025891126119809" style="width:200px;padding:5px 9px;border:1px solid var(--g200);border-radius:7px;font-size:12px;font-family:inherit;outline:none;background:#fff">
-          <button class="btn-save-spend" onclick="saveAccountId()" style="background:var(--blue)">Save</button>
-          <span id="accountIdNote" style="font-size:11px;color:var(--g400)"></span>
-        </div>
-      </div>
-
-      <!-- Manual ad spend entry -->
-      <div class="spend-section" id="spendSection" style="display:none">
-        <div class="spend-section-title"><i class="fab fa-facebook" style="color:#1877f2;margin-right:5px"></i>Log Ad Spend Manually</div>
-        <div class="spend-input-row">
-          <label>Date</label>
-          <input type="date" id="spendDate">
-          <label>Amount (৳)</label>
-          <input type="number" id="spendAmount" placeholder="0" min="0" step="1" style="width:100px">
-          <button class="btn-save-spend" onclick="saveSpend()">Save</button>
-        </div>
-      </div>
-
-      <!-- Manual WhatsApp / Phone order entry -->
-      <div class="spend-section" id="manualSaleSection">
-        <div class="spend-section-title"><i class="fab fa-whatsapp" style="color:#25d366;margin-right:5px"></i>Log WhatsApp / Phone Order</div>
-        <div class="spend-input-row" style="flex-wrap:wrap;gap:8px">
-          <label>Date</label>
-          <input type="date" id="msDate">
-          <label>Revenue (৳)</label>
-          <input type="number" id="msRevenue" placeholder="0" min="0" step="1" style="width:90px">
-          <label>Cost (৳)</label>
-          <input type="number" id="msCost" placeholder="0" min="0" step="1" style="width:80px">
-          <label>Delivery (৳)</label>
-          <input type="number" id="msDelivery" placeholder="0" min="0" step="1" style="width:80px">
-          <label>Orders</label>
-          <input type="number" id="msOrders" placeholder="1" min="1" step="1" style="width:50px" value="1">
-          <select id="msSource" style="padding:5px 8px;border:1px solid var(--g200);border-radius:7px;font-size:12px;font-family:inherit;background:#fff">
-            <option value="whatsapp">WhatsApp</option>
-            <option value="phone">Phone</option>
-            <option value="other">Other</option>
-          </select>
-          <input type="text" id="msNote" placeholder="Note (optional)" style="width:120px;padding:5px 8px;border:1px solid var(--g200);border-radius:7px;font-size:12px;font-family:inherit;background:#fff">
-          <button class="btn-save-spend" onclick="saveManualSale()" style="background:#25d366">Add</button>
-        </div>
-        <div id="manualSalesList" style="margin-top:8px;font-size:11px;color:var(--g500)"></div>
-      </div>
-
-      <!-- Day-wise table -->
-      <div class="day-table" id="dayTable">
-        <div class="day-table-header">
-          <span class="th">Date</span>
-          <span class="th">Orders</span>
-          <span class="th">Revenue</span>
-          <span class="th">Cost</span>
-          <span class="th">Delivery</span>
-          <span class="th">Ad Spend</span>
-          <span class="th">Profit</span>
-          <span class="th"></span>
-        </div>
-        <div id="dayRows">
-          <div class="empty-state"><i class="fas fa-circle-notch fa-spin"></i><p>Loading…</p></div>
-        </div>
-      </div>
-
-      <!-- Calendar -->
-      <div class="section-block" style="margin-top:14px">
-        <div class="section-head">
-          <div class="section-head-title"><i class="fas fa-calendar-alt" style="color:var(--p)"></i> Revenue Calendar</div>
-          <div class="cal-nav">
-            <button class="cal-nav-btn" onclick="calPrev()"><i class="fas fa-chevron-left"></i></button>
-            <span class="cal-month-label" id="calMonthLabel">—</span>
-            <button class="cal-nav-btn" onclick="calNext()"><i class="fas fa-chevron-right"></i></button>
-          </div>
-        </div>
-        <div class="cal-grid">
-          <div class="cal-weekdays">
-            <div class="cal-wd">Sun</div><div class="cal-wd">Mon</div><div class="cal-wd">Tue</div>
-            <div class="cal-wd">Wed</div><div class="cal-wd">Thu</div><div class="cal-wd">Fri</div>
-            <div class="cal-wd">Sat</div>
-          </div>
-          <div class="cal-days" id="calDays">
-            <div class="tp-loading"><i class="fas fa-circle-notch fa-spin"></i></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Top Products -->
-      <div class="section-block" style="margin-top:14px">
-        <div class="section-head">
-          <div class="section-head-title"><i class="fas fa-trophy" style="color:#f59e0b"></i> Top Products</div>
-          <span style="font-size:11px;color:var(--g400)" id="topProdRange">—</span>
-        </div>
-        <div class="top-products-list" id="topProdList">
-          <div class="tp-loading"><i class="fas fa-circle-notch fa-spin"></i> Loading…</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
 <script>
 (function () {
   'use strict';
-
   var API = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://apisub.amolbooks.com';
-  var ADMIN_URL = 'https://adminsub.amolbooks.com';
-  var token = null;
-  var rangeStart = '', rangeEnd = '';
-  var productsByDate = {};
-  var spendByDate = {};
+  var rangeStart = '';
+  var rangeEnd = '';
+  var dashboardData = null;
+  var trendData = [];
+  var granularity = 'daily';
+  var qualityView = 'bySource';
   var metaConnected = false;
-  var revenueByDate = {};
-  var orderCountByDate = {};
-  var costByDate = {};
-  var deliveryByDate = {};
-  var calYear = new Date().getFullYear();
-  var calMonth = new Date().getMonth();
+  var lastFocus = null;
 
-  /* ── Auth ── */
-  function getToken() { return localStorage.getItem('profit_admin_token'); }
-  function saveToken(t) { localStorage.setItem('profit_admin_token', t); }
-  function headers() {
-    var h = { 'Content-Type': 'application/json' };
-    var t = getToken();
-    if (t) h.administrator = t;
-    return h;
+  function getToken() { return localStorage.getItem('co_admin_token') || localStorage.getItem('profit_admin_token'); }
+  function saveToken(token) { localStorage.setItem('profit_admin_token', token); }
+  function headers() { return { 'Content-Type': 'application/json', administrator: getToken() || '' }; }
+  function esc(value) { return String(value == null ? '' : value).replace(/[&<>'"]/g, function (char) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]; }); }
+  function fmt(value) { return Math.round(Number(value) || 0).toLocaleString('en-BD'); }
+  function money(value, basis) { if (value == null) return '—'; return (basis === 'estimated' ? '~' : basis === 'allocated' ? '≈' : '') + '৳' + fmt(value); }
+  function pct(value) { return value == null ? '—' : (Math.round(value * 10) / 10) + '%'; }
+  function pad(value) { return value < 10 ? '0' + value : String(value); }
+  function dhakaToday() { var parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Dhaka', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date()); var map = {}; parts.forEach(function (part) { map[part.type] = part.value; }); return map.year + '-' + map.month + '-' + map.day; }
+  function localDate(ymd) { return new Date(ymd + 'T12:00:00'); }
+  function ymd(date) { return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()); }
+  function setText(id, text) { var el = document.getElementById(id); if (el) el.textContent = text; }
+  function setStatus(id, message, type) { var el = document.getElementById(id); if (!el) return; el.textContent = message || ''; el.className = 'helper' + (type ? ' ' + type : ''); }
+  function request(url, options) { return fetch(API + url, Object.assign({ headers: headers() }, options || {})).then(function (response) { return response.text().then(function (text) { var payload = {}; try { payload = text ? JSON.parse(text) : {}; } catch (_) {} if (!response.ok || payload.success === false) throw new Error(payload.message || 'Request failed (HTTP ' + response.status + ')'); return payload; }); }); }
+
+  function initAuth() {
+    var token = getToken();
+    if (token) { saveToken(token); init(); return; }
+    var email = prompt('Admin email:');
+    var password = prompt('Password:');
+    if (!email || !password) return;
+    fetch(API + '/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email, password: password }) })
+      .then(function (response) { return response.json(); })
+      .then(function (payload) { var tokenValue = payload && payload.data && (payload.data.token || payload.data.accessToken); if (!tokenValue) throw new Error('Login failed'); saveToken(tokenValue); init(); })
+      .catch(function (error) { showError(error.message); });
   }
 
-  /* ── Login via custom-orders token (shared storage key) ── */
   function init() {
-    var t = localStorage.getItem('co_admin_token') || localStorage.getItem('profit_admin_token');
-    if (t) { saveToken(t); loadAll(); }
-    else { autoLogin(); }
-  }
-
-  function autoLogin() {
-    var u = prompt('Admin email:');
-    var p = prompt('Password:');
-    if (!u || !p) return;
-    fetch(API + '/api/admin/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: u, password: p }),
-    }).then(function (r) { return r.json(); }).then(function (d) {
-      if (d && d.token) { saveToken(d.token); loadAll(); }
-      else { alert('Login failed'); }
-    });
-  }
-
-  /* ── Date ranges ── */
-  function toYMD(d) {
-    var parts = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Asia/Dhaka', year: 'numeric', month: '2-digit', day: '2-digit'
-    }).formatToParts(d);
-    var values = {};
-    parts.forEach(function (part) { values[part.type] = part.value; });
-    return values.year + '-' + values.month + '-' + values.day;
-  }
-
-  window.setRange = function (key) {
-    document.querySelectorAll('.dtab').forEach(function (b) { b.classList.remove('active'); });
-    var today = new Date();
-    if (key === 'today') {
-      rangeStart = rangeEnd = toYMD(today);
-      event.target.classList.add('active');
-    } else if (key === 'yesterday') {
-      var y = new Date(today); y.setDate(y.getDate() - 1);
-      rangeStart = rangeEnd = toYMD(y);
-      event.target.classList.add('active');
-    } else if (key === '7d') {
-      var s = new Date(today); s.setDate(s.getDate() - 6);
-      rangeStart = toYMD(s); rangeEnd = toYMD(today);
-      event.target.classList.add('active');
-    } else if (key === 'month') {
-      var m = new Date(today.getFullYear(), today.getMonth(), 1);
-      rangeStart = toYMD(m); rangeEnd = toYMD(today);
-      event.target.classList.add('active');
-    } else if (key === 'lastmonth') {
-      var lm = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-      var lme = new Date(today.getFullYear(), today.getMonth(), 0);
-      rangeStart = toYMD(lm); rangeEnd = toYMD(lme);
-      event.target.classList.add('active');
-    }
-    loadAll();
-  };
-
-  window.applyCustom = function () {
-    rangeStart = document.getElementById('customFrom').value;
-    rangeEnd = document.getElementById('customTo').value;
-    if (!rangeStart || !rangeEnd) return;
-    document.querySelectorAll('.dtab').forEach(function (b) { b.classList.remove('active'); });
-    loadAll();
-  };
-
-  /* ── Load all data ── */
-  function loadAll() {
-    if (!rangeStart || !rangeEnd) return;
-    document.getElementById('dayRows').innerHTML = '<div class="empty-state"><i class="fas fa-circle-notch fa-spin"></i><p>Loading…</p></div>';
-    document.getElementById('topProdList').innerHTML = '<div class="tp-loading"><i class="fas fa-circle-notch fa-spin"></i> Loading…</div>';
-    var s = rangeStart, e = rangeEnd;
-    var q = '?startDate=' + s + '&endDate=' + e;
-    var h = headers();
-    Promise.all([
-      fetch(API + '/api/dashboard/profit-analytics' + q, { headers: h }).then(function (r) { return r.json(); }).catch(function () { return null; }),
-      fetch(API + '/api/meta-ads/spend' + q, { headers: h }).then(function (r) { return r.json(); }).catch(function () { return null; }),
-      fetch(API + '/api/dashboard/top-products' + q, { headers: h }).then(function (r) { return r.json(); }).catch(function () { return null; }),
-    ]).then(function (res) {
-      renderDashboard(res[0], res[1]);
-      renderTopProducts(res[2], s, e);
-    });
+    rangeStart = rangeEnd = dhakaToday();
+    document.getElementById('customFrom').value = rangeStart;
+    document.getElementById('customTo').value = rangeEnd;
+    document.getElementById('msDate').value = rangeEnd;
+    document.getElementById('spendDate').value = rangeEnd;
     checkMetaStatus();
-    loadCalendarMonth();
+    loadDashboard();
     loadManualSalesList();
   }
 
-  function renderDashboard(profit, spend) {
-    spendByDate = {};
-    revenueByDate = {};
-    orderCountByDate = {};
-    costByDate = {};
-    deliveryByDate = {};
-    if (spend && spend.success && spend.data && spend.data.daily) {
-      spend.data.daily.forEach(function (d) { spendByDate[d.date] = d.spend || 0; });
-    }
-
-    var daily = (profit && profit.success && profit.data && profit.data.daily) ? profit.data.daily : [];
-    var totRev = 0, totOrders = 0, totSpend = 0, totCost = 0, totDelivery = 0;
-
-    daily.forEach(function (d) {
-      revenueByDate[d.date] = d.revenue || 0;
-      orderCountByDate[d.date] = d.orderCount || 0;
-      costByDate[d.date] = d.totalCost || 0;
-      deliveryByDate[d.date] = d.deliveryCharge || 0;
-      totRev += d.revenue || 0;
-      totOrders += d.orderCount || 0;
-      totCost += d.totalCost || 0;
-      totDelivery += d.deliveryCharge || 0;
-      totSpend += spendByDate[d.date] || 0;
-    });
-
-    if (spend && spend.success && spend.data && spend.data.total) {
-      totSpend = spend.data.total;
-    }
-
-    setText('s-revenue', '৳' + fmt(totRev));
-    setText('s-orders', totOrders + ' orders');
-    setText('s-cost', totCost > 0 ? '৳' + fmt(totCost) : '—');
-    setText('s-delivery', totDelivery > 0 ? '৳' + fmt(totDelivery) : '—');
-    setText('s-adspend', totSpend > 0 ? '৳' + fmt(totSpend) : '—');
-
-    var profitVal = totRev - totCost - totDelivery - totSpend;
-    var profEl = document.getElementById('s-profit');
-    var hasDeductions = totCost > 0 || totDelivery > 0 || totSpend > 0;
-    if (hasDeductions) {
-      profEl.textContent = (profitVal < 0 ? '-৳' : '৳') + fmt(Math.abs(profitVal));
-      profEl.className = 'scard-val ' + (profitVal >= 0 ? 'green' : 'red');
-      var margin = totRev > 0 ? Math.round(profitVal / totRev * 100) : 0;
-      setText('s-margin', margin + '% margin');
-    } else {
-      profEl.textContent = '—';
-      profEl.className = 'scard-val';
-      setText('s-margin', 'Revenue − Cost − Delivery − Ads');
-    }
-
-    renderRows(daily);
-  }
-
-  function renderRows(daily) {
-    var container = document.getElementById('dayRows');
-    if (!daily.length) {
-      container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No orders in this range</p></div>';
-      return;
-    }
-
-    // Sort descending (newest first)
-    daily = daily.slice().sort(function (a, b) { return b.date.localeCompare(a.date); });
-
-    container.innerHTML = daily.map(function (d, i) {
-      var sp = spendByDate[d.date] || 0;
-      var cost = d.totalCost || 0;
-      var del = d.deliveryCharge || 0;
-      var pv = d.revenue - cost - del - sp;
-      var hasDeductions = cost > 0 || del > 0 || sp > 0;
-      var profCls = hasDeductions ? (pv >= 0 ? 'profit-pos' : 'profit-neg') : 'profit-na';
-      var profStr = hasDeductions ? ((pv < 0 ? '-৳' : '৳') + fmt(Math.abs(pv))) : '—';
-      var spStr = sp > 0 ? '৳' + fmt(sp) : '—';
-      var costStr = cost > 0 ? '৳' + fmt(cost) : '—';
-      var delStr = del > 0 ? '৳' + fmt(del) : '—';
-      var dateLabel = formatDate(d.date);
-
-      return '<div class="day-row" id="row-' + i + '">' +
-        '<div class="day-main" onclick="toggleProducts(' + i + ',\'' + d.date + '\')">' +
-          '<div><div class="day-date">' + dateLabel + '</div><div class="day-sub">' + d.date + '</div></div>' +
-          '<div class="day-cell">' + d.orderCount + '</div>' +
-          '<div class="day-cell revenue">৳' + fmt(d.revenue) + '</div>' +
-          '<div class="day-cell" style="color:var(--red)">' + costStr + '</div>' +
-          '<div class="day-cell" style="color:var(--g500)">' + delStr + '</div>' +
-          '<div class="day-cell adspend">' + spStr + '</div>' +
-          '<div class="day-cell ' + profCls + '">' + profStr + '</div>' +
-          '<button class="expand-btn" id="expbtn-' + i + '"><i class="fas fa-chevron-down"></i></button>' +
-        '</div>' +
-        '<div class="products-panel" id="products-' + i + '">' +
-          '<div class="products-panel-title"><i class="fas fa-box" style="margin-right:4px"></i>Products Sold</div>' +
-          '<div class="products-loading" id="pload-' + i + '"><i class="fas fa-circle-notch fa-spin"></i> Loading products…</div>' +
-          '<div id="plist-' + i + '"></div>' +
-        '</div>' +
-      '</div>';
-    }).join('');
-  }
-
-  var openPanels = {};
-
-  window.toggleProducts = function (idx, date) {
-    var panel = document.getElementById('products-' + idx);
-    var btn = document.getElementById('expbtn-' + idx);
-    if (!panel) return;
-
-    var isOpen = openPanels[idx];
-    openPanels[idx] = !isOpen;
-    panel.classList.toggle('open', !isOpen);
-    if (btn) btn.classList.toggle('open', !isOpen);
-
-    if (!isOpen && !productsByDate[date]) {
-      loadProducts(idx, date);
-    }
+  window.setRange = function (type, button) {
+    var today = localDate(dhakaToday());
+    var start = new Date(today);
+    var end = new Date(today);
+    if (type === 'yesterday') { start.setDate(start.getDate() - 1); end = new Date(start); }
+    if (type === '7d') start.setDate(start.getDate() - 6);
+    if (type === 'month') start = new Date(today.getFullYear(), today.getMonth(), 1, 12);
+    if (type === 'lastmonth') { start = new Date(today.getFullYear(), today.getMonth() - 1, 1, 12); end = new Date(today.getFullYear(), today.getMonth(), 0, 12); }
+    rangeStart = ymd(start); rangeEnd = ymd(end);
+    document.getElementById('customFrom').value = rangeStart;
+    document.getElementById('customTo').value = rangeEnd;
+    document.querySelectorAll('.date-tab').forEach(function (tab) { tab.classList.toggle('active', tab === button); });
+    loadDashboard(); loadManualSalesList();
+  };
+  window.applyCustom = function () {
+    var start = document.getElementById('customFrom').value;
+    var end = document.getElementById('customTo').value;
+    if (!start || !end || start > end) { showError('Choose a valid date range.'); return; }
+    rangeStart = start; rangeEnd = end;
+    document.querySelectorAll('.date-tab').forEach(function (tab) { tab.classList.remove('active'); });
+    loadDashboard(); loadManualSalesList();
   };
 
-  function loadProducts(idx, date) {
-    if (productsByDate[date]) { renderProducts(idx, productsByDate[date]); return; }
-    fetch(API + '/api/dashboard/products-sold?startDate=' + date + '&endDate=' + date, { headers: headers() })
-      .then(function (r) { return r.json(); })
-      .then(function (res) {
-        var products = [];
-        if (res && res.success && res.data && res.data.length) {
-          var row = res.data.find(function (r) { return r.date === date; });
-          products = row ? (row.products || []) : [];
-        }
-        productsByDate[date] = products;
-        renderProducts(idx, products);
-      })
-      .catch(function () {
-        productsByDate[date] = [];
-        renderProducts(idx, []);
-      });
+  function showError(message) { var el = document.getElementById('errorBanner'); el.textContent = message; el.hidden = false; }
+  function clearError() { document.getElementById('errorBanner').hidden = true; }
+  function loadDashboard() {
+    clearError();
+    request('/api/v2/dashboard/decision-analytics?startDate=' + encodeURIComponent(rangeStart) + '&endDate=' + encodeURIComponent(rangeEnd))
+      .then(function (payload) { dashboardData = payload.data; trendData = dashboardData.trend || []; renderAll(); })
+      .catch(function (error) { showError(error.message); });
   }
 
-  function renderProducts(idx, products) {
-    var loadEl = document.getElementById('pload-' + idx);
-    var listEl = document.getElementById('plist-' + idx);
-    if (loadEl) loadEl.style.display = 'none';
-    if (!listEl) return;
-
-    if (!products || !products.length) {
-      listEl.innerHTML = '<div class="products-empty">No product details available</div>';
-      return;
-    }
-
-    // Sort by quantity desc
-    products = products.slice().sort(function (a, b) { return b.quantity - a.quantity; });
-    listEl.innerHTML = products.map(function (p) {
-      return '<div class="product-row">' +
-        '<span class="product-name">' + (p.name || 'Unknown') + '</span>' +
-        '<span class="product-qty">× ' + p.quantity + '</span>' +
-        '<span class="product-rev">৳' + fmt(p.revenue || 0) + '</span>' +
-      '</div>';
-    }).join('');
+  function renderAll() {
+    renderSummary(); renderOpportunities(); renderFunnel(); renderTrend(); renderProducts(); renderOrderQuality(); renderDataQuality();
   }
 
-  /* ── Meta ── */
-  function checkMetaStatus() {
-    fetch(API + '/api/meta-ads/status', { headers: headers() })
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        metaConnected = d && d.connected;
-        var btn = document.getElementById('metaBtn');
-        var txt = document.getElementById('metaBtnText');
-        var secEl = document.getElementById('spendSection');
-        if (metaConnected) {
-          btn.className = 'meta-btn connected';
-          txt.textContent = 'Meta Connected';
-          if (secEl) secEl.style.display = 'none';
-          var sb = document.getElementById('syncBtn');
-          if (sb) sb.style.display = 'flex';
-          var acSec = document.getElementById('accountSection');
-          if (acSec) acSec.style.display = 'block';
-          var acInput = document.getElementById('adAccountIdInput');
-          if (acInput && d.adAccountId) acInput.placeholder = d.adAccountId.replace('act_', '');
-        } else {
-          btn.className = 'meta-btn disconnected';
-          txt.textContent = 'Connect Meta';
-          if (secEl) secEl.style.display = 'block';
-          document.getElementById('spendDate').value = toYMD(new Date());
-          document.getElementById('msDate').value = toYMD(new Date());
-          var sb = document.getElementById('syncBtn');
-          if (sb) sb.style.display = 'none';
-        }
-        document.getElementById('msDate').value = toYMD(new Date());
-      }).catch(function () {
-        document.getElementById('spendSection').style.display = 'block';
-        document.getElementById('spendDate').value = toYMD(new Date());
-        document.getElementById('msDate').value = toYMD(new Date());
-      });
+  function metric(key, valueId, basisId, deltaId, isPercent, inverse) {
+    var current = dashboardData.summary[key] || {};
+    var comparison = dashboardData.comparison[key] || {};
+    var value = current.amount !== undefined ? current.amount : current.value;
+    setText(valueId, isPercent ? pct(value) : current.currency ? money(value, current.basis) : fmt(value));
+    var basis = current.basis || 'actual';
+    var basisEl = document.getElementById(basisId);
+    if (basisEl) { basisEl.textContent = basis; basisEl.className = 'basis ' + basis; basisEl.title = (current.missing || []).join(' '); }
+    var delta = comparison.changePct;
+    var deltaEl = document.getElementById(deltaId);
+    if (deltaEl) { deltaEl.textContent = delta == null ? 'No comparison' : (delta > 0 ? '+' : '') + (Math.round(delta * 10) / 10) + '%'; var good = inverse ? delta < 0 : delta > 0; deltaEl.className = 'delta ' + (delta === 0 || delta == null ? '' : good ? 'up' : 'down'); }
+  }
+  function renderSummary() {
+    metric('expectedContribution', 'value-expected', 'basis-expected', 'delta-expected');
+    metric('realizedContribution', 'value-realized', 'basis-realized', 'delta-realized');
+    metric('netRevenue', 'value-revenue', 'basis-revenue', 'delta-revenue');
+    metric('deliveredOrders', 'value-delivered', null, 'delta-delivered');
+    metric('averageOrderValue', 'value-aov', null, 'delta-aov');
+    metric('contributionMargin', 'value-margin', 'basis-margin', 'delta-margin', true);
+    metric('adSpend', 'value-spend', 'basis-spend', 'delta-spend', false, true);
+    metric('costPerDeliveredOrder', 'value-cpdo', 'basis-cpdo', 'delta-cpdo', false, true);
+    setText('placed-orders', fmt(dashboardData.summary.placedOrders.value) + ' valid orders');
   }
 
-  window.syncSpend = function () {
-    var icon = document.getElementById('syncIcon');
-    if (icon) icon.className = 'fas fa-sync-alt fa-spin';
-    // Always sync last 30 days — Meta has ~24h delay so passing today returns nothing
-    fetch(API + '/api/meta-ads/sync', {
-      method: 'POST',
-      headers: headers(),
-      body: JSON.stringify({}),
-    })
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        if (icon) icon.className = 'fas fa-sync-alt';
-        if (d && d.error) {
-          alert('Sync error: ' + d.error + '\nAd account: ' + (d.adAccountId || 'none'));
-        } else if (d && d.synced !== undefined) {
-          var msg = 'Synced ' + d.synced + ' day(s) of ad spend.\n';
-          msg += 'Range: ' + d.since + ' → ' + d.until + '\n';
-          msg += 'Meta returned ' + d.rawRows + ' row(s).';
-          if (d.synced === 0 && d.rawRows === 0) {
-            msg += '\n\nNo spend data found. Possible reasons:\n- No active campaigns in this period\n- Ad account: ' + d.adAccountId;
-          }
-          alert(msg);
-        }
-        loadAll();
-      })
-      .catch(function () {
-        if (icon) icon.className = 'fas fa-sync-alt';
-        alert('Sync failed. Check server logs.');
-      });
+  function opportunityIcon(type) { return ({ stock: 'fa-boxes-stacked', conversion: 'fa-arrow-trend-up', growth: 'fa-bullhorn', quality: 'fa-triangle-exclamation', campaign: 'fa-bullseye', data: 'fa-database' })[type] || 'fa-lightbulb'; }
+  function renderOpportunities() {
+    var items = dashboardData.opportunities || [];
+    setText('actionCount', items.length + (items.length === 1 ? ' action' : ' actions'));
+    document.getElementById('opportunityList').innerHTML = items.length ? items.map(function (item, index) { var result = item.experiment && item.experiment.change && item.experiment.change.realizedContribution; var resultText = result == null ? '' : ' Realized contribution changed ' + (result > 0 ? '+' : '') + '৳' + fmt(result) + ' since action.'; var control = item.actedOn ? '<span class="action-tag acted">Acted on</span>' : '<button class="action-tag" type="button" onclick="markAction(' + index + ', this)">Mark acted</button>'; return '<article class="opportunity ' + esc(item.priority) + '"><div class="opportunity-icon"><i class="fas ' + opportunityIcon(item.type) + '"></i></div><div><h4>' + esc(item.title) + '</h4><p>' + esc(item.detail + resultText) + '</p></div>' + control + '</article>'; }).join('') : '<div class="empty">No urgent action is supported by the selected data.</div>';
+  }
+
+  window.markAction = function (index, button) {
+    var item = (dashboardData.opportunities || [])[index];
+    if (!item || !button) return;
+    button.disabled = true; button.textContent = 'Saving…';
+    request('/api/v2/dashboard/recommendation-actions', { method: 'POST', body: JSON.stringify({ opportunity: item, rangeStart: rangeStart, rangeEnd: rangeEnd, baseline: dashboardData.summary }) })
+      .then(function (payload) { item.actedOn = true; item.actedOnAt = payload.data.actedOnAt; renderOpportunities(); })
+      .catch(function (error) { button.disabled = false; button.textContent = 'Mark acted'; showError(error.message); });
   };
 
-  window.handleMetaClick = function () {
-    if (metaConnected) {
-      if (!confirm('Disconnect Meta Ads?')) return;
-      fetch(API + '/api/meta-ads/disconnect', { method: 'POST', headers: headers() })
-        .then(function () { metaConnected = false; checkMetaStatus(); });
-    } else {
-      fetch(API + '/api/meta-ads/auth-url', { headers: headers() })
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
-          if (d && d.url) window.location.href = d.url;
-          else alert('META_APP_ID not configured in server .env');
-        });
-    }
-  };
-
-  window.saveAccountId = function () {
-    var val = document.getElementById('adAccountIdInput').value.trim();
-    if (!val) { alert('Enter ad account ID'); return; }
-    fetch(API + '/api/meta-ads/set-account', {
-      method: 'POST', headers: headers(),
-      body: JSON.stringify({ adAccountId: val }),
-    }).then(function (r) { return r.json(); })
-      .then(function (d) {
-        var note = document.getElementById('accountIdNote');
-        if (d.success) {
-          if (note) note.textContent = 'Saved: ' + d.adAccountId;
-          document.getElementById('adAccountIdInput').value = '';
-          document.getElementById('adAccountIdInput').placeholder = val;
-        } else {
-          if (note) note.textContent = 'Failed';
-        }
-      });
-  };
-
-  window.saveSpend = function () {
-    var date = document.getElementById('spendDate').value;
-    var amount = parseFloat(document.getElementById('spendAmount').value);
-    if (!date || isNaN(amount)) { alert('Enter date and amount'); return; }
-    fetch(API + '/api/meta-ads/manual-spend', {
-      method: 'POST',
-      headers: headers(),
-      body: JSON.stringify({ date: date, spend: amount }),
-    }).then(function (r) { return r.json(); })
-      .then(function () {
-        document.getElementById('spendAmount').value = '';
-        loadAll();
-      });
-  };
-
-  /* ── Manual Sales (WhatsApp/Phone) ── */
-  window.saveManualSale = function () {
-    var date = document.getElementById('msDate').value;
-    var revenue = parseFloat(document.getElementById('msRevenue').value);
-    if (!date || isNaN(revenue) || revenue <= 0) { alert('Enter date and revenue'); return; }
-    var body = {
-      date: date,
-      revenue: revenue,
-      cost: parseFloat(document.getElementById('msCost').value) || 0,
-      deliveryCharge: parseFloat(document.getElementById('msDelivery').value) || 0,
-      orders: parseInt(document.getElementById('msOrders').value) || 1,
-      source: document.getElementById('msSource').value,
-      note: document.getElementById('msNote').value || '',
-    };
-    fetch(API + '/api/dashboard/manual-sales', {
-      method: 'POST', headers: headers(), body: JSON.stringify(body),
-    }).then(function (r) { return r.json(); }).then(function () {
-      document.getElementById('msRevenue').value = '';
-      document.getElementById('msCost').value = '';
-      document.getElementById('msDelivery').value = '';
-      document.getElementById('msNote').value = '';
-      loadManualSalesList();
-      loadAll();
-    });
-  };
-
-  window.deleteManualSale = function (id) {
-    if (!confirm('Delete this manual sale entry?')) return;
-    fetch(API + '/api/dashboard/manual-sales/' + id, {
-      method: 'DELETE', headers: headers(),
-    }).then(function () { loadManualSalesList(); loadAll(); });
-  };
-
-  function loadManualSalesList() {
-    var q = '?startDate=' + (rangeStart || toYMD(new Date())) + '&endDate=' + (rangeEnd || toYMD(new Date()));
-    fetch(API + '/api/dashboard/manual-sales' + q, { headers: headers() })
-      .then(function (r) { return r.json(); })
-      .then(function (res) {
-        var list = document.getElementById('manualSalesList');
-        if (!res || !res.success || !res.data || !res.data.length) { list.innerHTML = ''; return; }
-        var src = { whatsapp: '📱 WA', phone: '📞 Phone', other: '📋 Other' };
-        list.innerHTML = '<div style="margin-bottom:4px;font-weight:600;color:var(--g700)">Recent entries:</div>' +
-          res.data.slice(0, 10).map(function (m) {
-            return '<div style="display:flex;gap:8px;align-items:center;padding:3px 0;border-bottom:1px solid var(--g100)">' +
-              '<span>' + m.date + '</span>' +
-              '<span style="color:var(--blue);font-weight:600">৳' + fmt(m.revenue) + '</span>' +
-              '<span style="color:var(--g400)">' + (src[m.source] || m.source) + '</span>' +
-              (m.note ? '<span style="color:var(--g400)">' + m.note + '</span>' : '') +
-              '<button onclick="deleteManualSale(\'' + m._id + '\')" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:11px;padding:2px 4px" title="Delete">✕</button>' +
-            '</div>';
-          }).join('');
-      })
-      .catch(function () {});
+  function renderFunnel() {
+    var funnel = dashboardData.funnel || {};
+    var stages = funnel.stages || [];
+    var max = stages.reduce(function (value, stage) { return stage.value == null ? value : Math.max(value, stage.value); }, 0) || 1;
+    document.getElementById('funnelStages').innerHTML = stages.map(function (stage) { var width = stage.value == null ? 0 : Math.max(2, stage.value / max * 100); return '<div class="funnel-stage"><div class="funnel-fill" style="width:' + width + '%"></div><div class="funnel-content"><span class="funnel-label">' + esc(stage.label) + '</span><strong class="funnel-value">' + (stage.value == null ? '—' : fmt(stage.value)) + '</strong><span class="funnel-rate">' + (stage.conversionFromPrevious == null ? '' : pct(stage.conversionFromPrevious)) + '</span></div></div>'; }).join('');
+    setText('funnelNote', funnel.available ? 'Stable browser identity + order outcomes.' : (funnel.reason || 'Funnel tracking unavailable.'));
+    document.getElementById('dropNote').innerHTML = funnel.largestDrop ? '<p class="drop-note"><strong>Largest drop:</strong> ' + esc(funnel.largestDrop.from) + ' → ' + esc(funnel.largestDrop.to) + ' (' + pct(funnel.largestDrop.conversion) + ' continue).</p>' : '';
   }
 
-  /* ── Calendar ── */
-  function loadCalendarMonth() {
-    var firstDay = new Date(calYear, calMonth, 1);
-    var lastDay  = new Date(calYear, calMonth + 1, 0);
-    var s = toYMD(firstDay), e = toYMD(lastDay);
-    var label = firstDay.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
-    setText('calMonthLabel', label);
-
-    fetch(API + '/api/dashboard/profit-analytics?startDate=' + s + '&endDate=' + e, { headers: headers() })
-      .then(function (r) { return r.json(); })
-      .then(function (res) {
-        var calData = {};
-        if (res && res.success && res.data && res.data.daily) {
-          res.data.daily.forEach(function (d) { calData[d.date] = d; });
-        }
-        renderCalendar(calYear, calMonth, calData);
-      })
-      .catch(function () { renderCalendar(calYear, calMonth, {}); });
+  window.setGranularity = function (value, button) { granularity = value; document.querySelectorAll('[data-granularity]').forEach(function (item) { item.classList.toggle('active', item === button); }); renderTrend(); };
+  function aggregateWeekly(rows) { var groups = {}; rows.forEach(function (row) { var date = localDate(row.date); var day = date.getDay(); date.setDate(date.getDate() - day); var key = ymd(date); if (!groups[key]) groups[key] = { date: key, revenue: 0, expectedContribution: 0, realizedContribution: 0, adSpend: 0, orders: 0, hasExpected: false }; groups[key].revenue += Number(row.revenue) || 0; groups[key].orders += Number(row.orders) || 0; groups[key].adSpend += Number(row.adSpend) || 0; if (row.expectedContribution != null) { groups[key].expectedContribution += Number(row.expectedContribution) || 0; groups[key].hasExpected = true; } groups[key].realizedContribution += Number(row.realizedContribution) || 0; }); return Object.keys(groups).sort().map(function (key) { if (!groups[key].hasExpected) groups[key].expectedContribution = null; return groups[key]; }); }
+  function renderTrend() {
+    var rows = granularity === 'weekly' ? aggregateWeekly(trendData) : trendData.slice();
+    renderHeatmap(trendData);
+    if (!rows.length) { document.getElementById('trendChart').innerHTML = '<div class="chart-empty">No trend data for this period.</div>'; return; }
+    var values = [];
+    rows.forEach(function (row) { ['revenue', 'expectedContribution', 'realizedContribution'].forEach(function (key) { if (row[key] != null) values.push(Number(row[key]) || 0); }); });
+    var min = Math.min.apply(Math, values.concat([0])); var max = Math.max.apply(Math, values.concat([1])); var span = max - min || 1;
+    var width = 900, height = 260, left = 58, right = 18, top = 16, bottom = 34; var innerW = width - left - right, innerH = height - top - bottom;
+    function x(index) { return left + (rows.length === 1 ? innerW / 2 : index / (rows.length - 1) * innerW); }
+    function y(value) { return top + (max - value) / span * innerH; }
+    function points(key) { return rows.map(function (row, index) { return row[key] == null ? null : x(index).toFixed(1) + ',' + y(Number(row[key]) || 0).toFixed(1); }).filter(Boolean).join(' '); }
+    var grid = ''; for (var i = 0; i <= 4; i++) { var gy = top + innerH * i / 4; var label = max - span * i / 4; grid += '<line class="chart-grid" x1="' + left + '" y1="' + gy + '" x2="' + (width - right) + '" y2="' + gy + '"></line><text class="chart-label" x="0" y="' + (gy + 4) + '">৳' + fmt(label) + '</text>'; }
+    var labels = rows.map(function (row, index) { if (rows.length > 10 && index % Math.ceil(rows.length / 7) !== 0 && index !== rows.length - 1) return ''; return '<text class="chart-label" text-anchor="middle" x="' + x(index) + '" y="' + (height - 8) + '">' + esc(row.date.slice(5)) + '</text>'; }).join('');
+    document.getElementById('trendChart').innerHTML = '<svg class="trend-chart" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Revenue and contribution trend">' + grid + labels + '<polyline class="chart-line revenue" points="' + points('revenue') + '"></polyline><polyline class="chart-line expected" points="' + points('expectedContribution') + '"></polyline><polyline class="chart-line realized" points="' + points('realizedContribution') + '"></polyline></svg>';
   }
+  function renderHeatmap(rows) { var recent = rows.slice(-42); var max = recent.reduce(function (value, row) { return Math.max(value, Number(row.revenue) || 0); }, 0) || 1; document.getElementById('heatmap').innerHTML = recent.map(function (row) { var ratio = (Number(row.revenue) || 0) / max; var level = ratio > 0.66 ? 3 : ratio > 0.33 ? 2 : ratio > 0 ? 1 : 0; return '<div class="heat-cell level-' + level + '" title="' + esc(row.date) + ': ৳' + fmt(row.revenue) + '"><span class="heat-date">' + esc(row.date.slice(5)) + '</span><span class="heat-value">৳' + fmt(row.revenue) + '</span></div>'; }).join(''); }
 
-  function renderCalendar(year, month, calData) {
-    var container = document.getElementById('calDays');
-    var firstDow = new Date(year, month, 1).getDay();
-    var daysInMonth = new Date(year, month + 1, 0).getDate();
-    var todayStr = toYMD(new Date());
-    var cells = [];
+  function recClass(value) { return String(value || '').toLowerCase().replace(/\s+/g, '-'); }
+  function renderProducts() { var rows = dashboardData.productPerformance.rows || []; setText('productCount', rows.length + (rows.length === 1 ? ' product' : ' products')); document.getElementById('productRows').innerHTML = rows.length ? rows.map(function (row) { var contribution = row.contribution.amount; return '<tr><td class="product-name">' + esc(row.name) + '</td><td>' + fmt(row.units) + '</td><td>' + money(row.netSales.amount, row.netSales.basis) + '</td><td class="' + (contribution < 0 ? 'money-negative' : 'money-positive') + '">' + money(contribution, row.contribution.basis) + '</td><td>' + pct(row.margin.value) + '</td><td>' + (row.views == null ? '—' : fmt(row.views)) + '</td><td>' + pct(row.conversion.value) + '</td><td>' + pct(row.cancellationRate) + '</td><td>' + (row.stockCoverageDays == null ? '—' : Math.round(row.stockCoverageDays) + 'd') + '</td><td><span class="recommendation ' + recClass(row.recommendation) + '">' + esc(row.recommendation) + '</span></td></tr>'; }).join('') : '<tr><td colspan="10"><div class="empty">No product data in this range.</div></td></tr>'; }
 
-    for (var i = 0; i < firstDow; i++) cells.push('<div class="cal-cell empty"></div>');
+  window.setQualityView = function (value, button) { qualityView = value; document.querySelectorAll('[data-quality]').forEach(function (item) { item.classList.toggle('active', item === button); }); renderQualityTable(); };
+  function renderOrderQuality() { var status = dashboardData.orderQuality.status || {}; var cards = [{ label: 'Delivery rate', value: pct(status.deliveryRate) }, { label: 'Cancellation', value: pct(status.cancellationRate) }, { label: 'Refund', value: pct(status.refundRate) }, { label: 'Return', value: pct(status.returnRate) }]; document.getElementById('statusGrid').innerHTML = cards.map(function (card) { return '<div class="status-card"><span>' + esc(card.label) + '</span><strong>' + esc(card.value) + '</strong></div>'; }).join(''); renderQualityTable(); }
+  function renderQualityTable() { var rows = dashboardData.orderQuality[qualityView] || []; if (qualityView === 'campaigns') { document.getElementById('qualityTable').innerHTML = rows.length ? '<table class="mini-table"><thead><tr><th>Campaign</th><th>Spend</th><th>Orders</th><th>Delivered</th><th>Cost / delivered</th></tr></thead><tbody>' + rows.map(function (row) { return '<tr><td>' + esc(row.campaignName) + '</td><td>৳' + fmt(row.spend) + '</td><td>' + fmt(row.orders) + '</td><td>' + fmt(row.delivered) + '</td><td>' + (row.costPerDeliveredOrder == null ? '—' : '৳' + fmt(row.costPerDeliveredOrder)) + '</td></tr>'; }).join('') + '</tbody></table>' : '<div class="empty">Campaign spend or attribution is unavailable.</div>'; return; } document.getElementById('qualityTable').innerHTML = rows.length ? '<table class="mini-table"><thead><tr><th>Segment</th><th>Orders</th><th>Delivery</th><th>Loss</th></tr></thead><tbody>' + rows.map(function (row) { return '<tr><td>' + esc(row.label) + '</td><td>' + fmt(row.orders) + '</td><td>' + pct(row.deliveryRate) + '</td><td>' + pct(row.lossRate) + '</td></tr>'; }).join('') + '</tbody></table>' : '<div class="empty">No segment data in this range.</div>'; }
 
-    for (var d = 1; d <= daysInMonth; d++) {
-      var ymd = year + '-' + pad(month + 1) + '-' + pad(d);
-      var data = calData[ymd];
-      var isToday = ymd === todayStr;
-      var cls = 'cal-cell' + (data ? ' has-data' : '') + (isToday ? ' today' : '');
-      var inner = '<div class="cal-day-num">' + d + '</div>';
-      if (data) {
-        inner += '<div class="cal-rev">৳' + fmt(data.revenue) + '</div>';
-        inner += '<div class="cal-sold">' + data.orderCount + ' order' + (data.orderCount !== 1 ? 's' : '') + '</div>';
-      }
-      cells.push('<div class="' + cls + '">' + inner + '</div>');
-    }
+  function renderDataQuality() { var quality = dashboardData.dataQuality || {}; setText('qualityScore', fmt(quality.score)); setText('qualityPillValue', fmt(quality.score) + '%'); var pill = document.getElementById('qualityPill'); pill.className = 'status-pill ' + (quality.score >= 80 ? 'good' : quality.score >= 55 ? 'warn' : 'bad'); var coverage = [{ label: 'COGS available', value: quality.cogsCoverage }, { label: 'Historical COGS', value: quality.historicalCogsCoverage }, { label: 'Actual courier', value: quality.actualCourierCoverage }, { label: 'Operational costs', value: quality.operationalCostCoverage }, { label: 'Attribution', value: quality.attributionCoverage }, { label: 'Ad spend', value: quality.adSpendCoverage }, { label: 'Funnel', value: quality.funnelAvailable ? 100 : 0 }]; document.getElementById('coverageGrid').innerHTML = coverage.map(function (item) { return '<div class="coverage"><span>' + esc(item.label) + '</span><strong>' + pct(item.value) + '</strong></div>'; }).join(''); document.getElementById('warningList').innerHTML = (quality.warnings || []).map(function (warning) { return '<li>' + esc(warning) + '</li>'; }).join(''); }
 
-    container.innerHTML = cells.join('');
-  }
+  window.openDrawer = function (tab) { lastFocus = document.activeElement; var backdrop = document.getElementById('drawerBackdrop'); var drawer = document.getElementById('dataDrawer'); backdrop.hidden = false; requestAnimationFrame(function () { backdrop.classList.add('open'); drawer.classList.add('open'); }); drawer.setAttribute('aria-hidden', 'false'); showDrawerTab(tab || 'manual'); setTimeout(function () { var input = drawer.querySelector('form:not([hidden]) .control'); if (input) input.focus(); }, 50); };
+  window.closeDrawer = function () { var backdrop = document.getElementById('drawerBackdrop'); var drawer = document.getElementById('dataDrawer'); backdrop.classList.remove('open'); drawer.classList.remove('open'); drawer.setAttribute('aria-hidden', 'true'); setTimeout(function () { backdrop.hidden = true; }, 230); if (lastFocus && lastFocus.focus) lastFocus.focus(); };
+  window.showDrawerTab = function (tab, button) { ['manual', 'spend', 'costs'].forEach(function (name) { document.getElementById(name + 'Form').hidden = name !== tab; }); document.querySelectorAll('[data-drawer]').forEach(function (item) { item.classList.toggle('active', button ? item === button : item.getAttribute('data-drawer') === tab); }); };
+  document.getElementById('drawerBackdrop').addEventListener('click', closeDrawer);
+  document.addEventListener('keydown', function (event) { if (event.key === 'Escape' && document.getElementById('dataDrawer').classList.contains('open')) closeDrawer(); });
 
-  window.calPrev = function () {
-    calMonth--;
-    if (calMonth < 0) { calMonth = 11; calYear--; }
-    loadCalendarMonth();
-  };
-  window.calNext = function () {
-    calMonth++;
-    if (calMonth > 11) { calMonth = 0; calYear++; }
-    loadCalendarMonth();
-  };
+  function setButtonLoading(id, loading) { var button = document.getElementById(id); if (!button) return; button.disabled = loading; button.classList.toggle('loading', loading); }
+  window.saveManualSale = function (event) { event.preventDefault(); setButtonLoading('manualSave', true); setStatus('manualStatus', 'Saving…'); var optional = function (id) { var value = document.getElementById(id).value; return value === '' ? undefined : Number(value); }; var body = { date: document.getElementById('msDate').value, source: document.getElementById('msSource').value, revenue: Number(document.getElementById('msRevenue').value), cost: optional('msCost'), actualCourierCost: optional('msCourier'), orders: Number(document.getElementById('msOrders').value) || 1, outcome: document.getElementById('msOutcome').value, paymentStatus: document.getElementById('msPayment').value, campaign: document.getElementById('msCampaign').value, customerPhone: document.getElementById('msPhone').value, note: document.getElementById('msNote').value }; request('/api/dashboard/manual-sales', { method: 'POST', body: JSON.stringify(body) }).then(function () { setStatus('manualStatus', 'Phone sale saved.', 'success'); document.getElementById('msRevenue').value = ''; document.getElementById('msCost').value = ''; document.getElementById('msCourier').value = ''; document.getElementById('msNote').value = ''; loadManualSalesList(); loadDashboard(); }).catch(function (error) { setStatus('manualStatus', error.message, 'error'); }).finally(function () { setButtonLoading('manualSave', false); }); };
+  window.saveSpend = function (event) { event.preventDefault(); setButtonLoading('spendSave', true); setStatus('spendStatus', 'Saving…'); var body = { date: document.getElementById('spendDate').value, spend: Number(document.getElementById('spendAmount').value) }; request('/api/meta-ads/manual-spend', { method: 'POST', body: JSON.stringify(body) }).then(function () { setStatus('spendStatus', 'Ad spend saved.', 'success'); document.getElementById('spendAmount').value = ''; loadDashboard(); }).catch(function (error) { setStatus('spendStatus', error.message, 'error'); }).finally(function () { setButtonLoading('spendSave', false); }); };
+  window.saveOrderCosts = function (event) { event.preventDefault(); setButtonLoading('costSave', true); setStatus('costStatus', 'Saving…'); var fields = { actualCourierCost: 'costCourier', packagingCost: 'costPackaging', paymentFee: 'costPayment', refundAmount: 'costRefund', returnLoss: 'costReturn' }; var body = {}; Object.keys(fields).forEach(function (key) { var value = document.getElementById(fields[key]).value; if (value !== '') body[key] = Number(value); }); var orderId = document.getElementById('costOrderId').value.trim(); request('/api/v2/dashboard/order-costs/' + encodeURIComponent(orderId), { method: 'POST', body: JSON.stringify(body) }).then(function () { setStatus('costStatus', 'Verified order costs saved.', 'success'); Object.keys(fields).forEach(function (key) { document.getElementById(fields[key]).value = ''; }); loadDashboard(); }).catch(function (error) { setStatus('costStatus', error.message, 'error'); }).finally(function () { setButtonLoading('costSave', false); }); };
 
-  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function loadManualSalesList() { if (!rangeStart) return; request('/api/dashboard/manual-sales?startDate=' + encodeURIComponent(rangeStart) + '&endDate=' + encodeURIComponent(rangeEnd)).then(function (payload) { var rows = (payload.data || []).slice(0, 10); document.getElementById('manualSalesList').innerHTML = rows.length ? rows.map(function (row) { return '<div class="recent-row"><span>' + esc(row.date) + '</span><span>' + esc(row.source) + '</span><span>' + esc(row.outcome || 'active') + '</span><strong>৳' + fmt(row.revenue) + '</strong><button type="button" aria-label="Delete phone sale" onclick="deleteManualSale(\'' + esc(row._id) + '\')"><i class="fas fa-trash"></i></button></div>'; }).join('') : ''; }).catch(function () {}); }
+  window.deleteManualSale = function (id) { request('/api/dashboard/manual-sales/' + encodeURIComponent(id), { method: 'DELETE' }).then(function () { loadManualSalesList(); loadDashboard(); }).catch(function (error) { setStatus('manualStatus', error.message, 'error'); }); };
 
-  /* ── Top Products ── */
-  function renderTopProducts(res, s, e) {
-    var el = document.getElementById('topProdList');
-    var rangeEl = document.getElementById('topProdRange');
-    if (rangeEl) rangeEl.textContent = formatDate(s) + ' – ' + formatDate(e);
+  function checkMetaStatus() { request('/api/meta-ads/status').then(function (payload) { metaConnected = !!payload.connected; document.getElementById('metaBtnText').textContent = metaConnected ? 'Meta connected' : 'Connect Meta'; document.getElementById('metaBtn').classList.toggle('success', metaConnected); document.getElementById('syncBtn').hidden = !metaConnected; }).catch(function () {}); }
+  window.handleMetaClick = function () { if (metaConnected) { if (!confirm('Disconnect Meta Ads?')) return; request('/api/meta-ads/disconnect', { method: 'POST', body: '{}' }).then(function () { metaConnected = false; checkMetaStatus(); loadDashboard(); }); return; } request('/api/meta-ads/auth-url').then(function (payload) { if (payload.url) window.location.href = payload.url; else throw new Error(payload.message || 'Meta is not configured.'); }).catch(function (error) { showError(error.message); }); };
+  window.syncSpend = function () { var button = document.getElementById('syncBtn'); button.classList.add('loading'); button.disabled = true; document.getElementById('syncIcon').className = 'fas fa-rotate'; request('/api/meta-ads/sync', { method: 'POST', body: JSON.stringify({ startDate: rangeStart, endDate: rangeEnd }) }).then(function (payload) { if (payload.error) throw new Error(payload.error); loadDashboard(); }).catch(function (error) { showError(error.message); }).finally(function () { button.classList.remove('loading'); button.disabled = false; }); };
 
-    if (!res || !res.success || !res.data || !res.data.length) {
-      el.innerHTML = '<div class="tp-loading" style="color:var(--g400)">No data for this range</div>';
-      return;
-    }
-
-    var products = res.data;
-    var maxQty = products[0] ? products[0].quantity : 1;
-    var rankLabels = ['gold', 'silver', 'bronze'];
-
-    el.innerHTML = products.map(function (p, i) {
-      var pct = Math.round((p.quantity / maxQty) * 100);
-      var rankCls = i < 3 ? rankLabels[i] : '';
-      var rankNum = i < 3 ? ['🥇', '🥈', '🥉'][i] : (i + 1);
-      return '<div class="tp-row">' +
-        '<div class="tp-rank ' + rankCls + '">' + rankNum + '</div>' +
-        '<div class="tp-name">' + (p.name || 'Unknown') + '</div>' +
-        '<div class="tp-bar-wrap"><div class="tp-bar" style="width:' + pct + '%"></div></div>' +
-        '<div class="tp-qty">' + p.quantity + '</div>' +
-        '<div class="tp-rev">৳' + fmt(p.revenue) + '</div>' +
-      '</div>';
-    }).join('');
-  }
-
-  /* ── Helpers ── */
-  function fmt(n) { return Math.round(n).toLocaleString('en-BD'); }
-  function setText(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
-  function formatDate(ymd) {
-    var d = new Date(ymd + 'T00:00:00');
-    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-  }
-
-  /* ── Init ── */
-  var today = new Date();
-  rangeStart = rangeEnd = toYMD(today);
-  document.getElementById('customFrom').value = rangeStart;
-  document.getElementById('customTo').value = rangeEnd;
-
-  // Check if came back from Meta OAuth
-  var urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('meta') === 'connected') {
-    setTimeout(function () { loadAll(); }, 500);
-  }
-
-  init();
+  document.getElementById('menuBtn').addEventListener('click', function () { document.getElementById('sidebar').classList.toggle('open'); });
+  initAuth();
 })();
 </script>
 </body>

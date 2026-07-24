@@ -5,5 +5,12 @@
     "theme": "Garden adapted to Amol brand",
     "enrichment": "existing offer artwork",
     "brief": "Redesign the special-package detail page with contained artwork, correct product prices, and descriptions"
+  },
+  {
+    "date": "2026-07-24",
+    "macrostructure": "Workbench",
+    "theme": "Amol admin",
+    "enrichment": "none",
+    "brief": "Turn the static profit report into a responsive profit and growth decision cockpit"
   }
 ]

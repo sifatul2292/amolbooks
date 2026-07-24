@@ -137,6 +137,7 @@ export class OrderService {
     }
 
     mData = this.normalizeAdminOrderData(mData);
+    mData.orderedItems = await this.attachCostSnapshots(mData.orderedItems);
 
     const newData = new this.orderModel(mData);
 
@@ -310,6 +311,9 @@ export class OrderService {
         year: this.utilsService.getDateYear(new Date()),
       };
 
+      newOrderMake.orderedItems = await this.attachCostSnapshots(
+        newOrderMake.orderedItems,
+      );
       const mData = { ...newOrderMake, ...dataExtra };
       const newData = new this.orderModel(mData);
 
@@ -728,6 +732,89 @@ export class OrderService {
       .filter((item) => Boolean(item));
   }
 
+  private async attachCostSnapshots(items: any[]): Promise<any[]> {
+    if (!Array.isArray(items) || !items.length) return [];
+
+    const ids = items
+      .map((item) => item?._id || item?.product || item?.productId)
+      .filter((id) => id && ObjectId.isValid(id));
+    const products = ids.length
+      ? await this.productModel
+          .find({ _id: { $in: ids } })
+          .select('_id costPrice')
+          .lean()
+      : [];
+    const catalogCost = new Map(
+      products.map((product: any) => [
+        String(product._id),
+        this.optionalNonNegativeNumber(product.costPrice),
+      ]),
+    );
+
+    return items.map((item) => {
+      const itemCost = this.optionalNonNegativeNumber(item?.costPriceAtOrder);
+      const fallback = catalogCost.get(
+        String(item?._id || item?.product || item?.productId || ''),
+      );
+      const costPriceAtOrder = itemCost ?? fallback;
+      return costPriceAtOrder === undefined
+        ? { ...item }
+        : { ...item, costPriceAtOrder };
+    });
+  }
+
+  private optionalNonNegativeNumber(value: any): number | undefined {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+  }
+
+  private getProductUnitCostSnapshot(product: any): number | undefined {
+    const directCost = this.optionalNonNegativeNumber(product?.costPrice);
+    if (directCost !== undefined) return directCost;
+
+    if (!Array.isArray(product?.products)) return undefined;
+    let complete = true;
+    const packageCost = product.products.reduce((sum: number, entry: any) => {
+      const itemCost = this.optionalNonNegativeNumber(entry?.product?.costPrice);
+      if (itemCost === undefined) {
+        complete = false;
+        return sum;
+      }
+      return sum + itemCost * Math.max(1, Number(entry?.quantity) || 1);
+    }, 0);
+    return complete ? packageCost : undefined;
+  }
+
+  private normalizeAttribution(value: any): any {
+    if (!value || typeof value !== 'object') return undefined;
+    const text = (input: any, max = 500) => {
+      if (input === undefined || input === null) return undefined;
+      return String(input).trim().slice(0, max) || undefined;
+    };
+    const touch = (input: any) => {
+      if (!input || typeof input !== 'object') return undefined;
+      return {
+        source: text(input.source, 120),
+        medium: text(input.medium, 120),
+        campaign: text(input.campaign, 200),
+        campaignId: text(input.campaignId, 120),
+        adSet: text(input.adSet, 200),
+        adSetId: text(input.adSetId, 120),
+        ad: text(input.ad, 200),
+        adId: text(input.adId, 120),
+        landingPage: text(input.landingPage),
+        referrer: text(input.referrer),
+        fbclid: text(input.fbclid, 300),
+        capturedAt: input.capturedAt ? new Date(input.capturedAt) : undefined,
+      };
+    };
+    return {
+      anonymousId: text(value.anonymousId, 120),
+      firstTouch: touch(value.firstTouch),
+      lastTouch: touch(value.lastTouch),
+    };
+  }
+
   private normalizeOrderItem(item: any): any {
     const product = this.getOrderItemProduct(item);
     const productId = this.getOrderItemProductId(item, product);
@@ -779,6 +866,9 @@ export class OrderService {
       regularPrice,
       unitPrice: salePrice,
       salePrice,
+      costPriceAtOrder:
+        this.optionalNonNegativeNumber(item?.costPriceAtOrder) ??
+        this.optionalNonNegativeNumber(product?.costPrice),
       quantity,
       orderType: item?.orderType ?? 'regular',
       discountAmount: this.toFiniteNumber(item?.discountAmount, 0),
@@ -1192,14 +1282,16 @@ export class OrderService {
     if (deleteMany) {
       await this.orderModel.deleteMany({});
     }
-    const mData = addOrdersDto.map((m) => {
+    const mData = await Promise.all(addOrdersDto.map(async (m: any) => {
       return {
         ...m,
+        orderedItems: await this.attachCostSnapshots(m.orderedItems || []),
+        attribution: this.normalizeAttribution(m.attribution),
         ...{
           slug: this.utilsService.transformToSlug(m.name),
         },
       };
-    });
+    }));
     try {
       const saveData = await this.orderModel.insertMany(mData);
       return {
@@ -2295,7 +2387,7 @@ export class OrderService {
                 })
                 .populate(
                   'products.product',
-                  'salePrice discountType discountAmount variationsOptions hasVariations',
+                  'salePrice costPrice discountType discountAmount variationsOptions hasVariations',
                 ),
             ),
           )
@@ -2325,14 +2417,14 @@ export class OrderService {
             .find({ user: orderData.user })
             .populate(
               'product',
-              'name nameEn slug author description publisher salePrice sku tax discountType discountAmount images quantity trackQuantity category subCategory brand tags unit',
+              'name nameEn slug author description publisher salePrice costPrice sku tax discountType discountAmount images quantity trackQuantity category subCategory brand tags unit',
             )
             .populate({
               path: 'specialPackage',
               populate: {
                 path: 'products.product',
                 select:
-                  'salePrice discountType discountAmount variationsOptions hasVariations',
+                  'salePrice costPrice discountType discountAmount variationsOptions hasVariations',
               },
             }),
         ),
@@ -2396,6 +2488,7 @@ export class OrderService {
       regularPrice: this.utilsService.transform(m.product, 'regularPrice'),
       unitPrice: this.utilsService.transform(m.product, 'salePrice'),
       salePrice: this.utilsService.transform(m.product, 'salePrice'),
+      costPriceAtOrder: this.getProductUnitCostSnapshot(m.product),
       quantity: m.selectedQty,
       orderType: 'regular',
     }));
@@ -2490,6 +2583,7 @@ export class OrderService {
       couponDiscount,
       hasOrderTimeline: true,
       orderTimeline: orderData?.orderTimeline,
+      attribution: this.normalizeAttribution(orderData?.attribution),
     };
 
     return newOrderData;

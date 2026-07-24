@@ -919,14 +919,44 @@ export class DashboardService {
   }
 
   async addManualSale(body: any): Promise<any> {
+    const nonNegative = (value: any, fallback = 0) => {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+    };
     const record = await this.manualSaleModel.create({
       date: body.date,
-      revenue: body.revenue || 0,
-      cost: body.cost || 0,
-      deliveryCharge: body.deliveryCharge || 0,
-      orders: body.orders || 1,
+      revenue: nonNegative(body.revenue),
+      cost: body.cost === '' || body.cost == null
+        ? undefined
+        : nonNegative(body.cost),
+      deliveryCharge: nonNegative(body.deliveryCharge),
+      actualCourierCost: body.actualCourierCost === '' || body.actualCourierCost == null
+        ? undefined
+        : nonNegative(body.actualCourierCost),
+      packagingCost: body.packagingCost === '' || body.packagingCost == null
+        ? undefined
+        : nonNegative(body.packagingCost),
+      paymentFee: body.paymentFee === '' || body.paymentFee == null
+        ? undefined
+        : nonNegative(body.paymentFee),
+      refundAmount: body.refundAmount === '' || body.refundAmount == null
+        ? undefined
+        : nonNegative(body.refundAmount),
+      returnLoss: body.returnLoss === '' || body.returnLoss == null
+        ? undefined
+        : nonNegative(body.returnLoss),
+      orders: Math.max(1, Math.floor(nonNegative(body.orders, 1))),
       source: body.source || 'whatsapp',
-      note: body.note || '',
+      campaign: String(body.campaign || '').slice(0, 200),
+      customerPhone: String(body.customerPhone || '').slice(0, 30),
+      paymentStatus: ['paid', 'unpaid', 'partial'].includes(body.paymentStatus)
+        ? body.paymentStatus
+        : 'unpaid',
+      outcome: ['active', 'delivered', 'cancelled', 'refunded', 'returned'].includes(body.outcome)
+        ? body.outcome
+        : 'active',
+      products: Array.isArray(body.products) ? body.products.slice(0, 50) : [],
+      note: String(body.note || '').slice(0, 500),
     });
     return { success: true, data: record };
   }

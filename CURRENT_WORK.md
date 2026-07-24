@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-07-24. Branch: `main`. Special-package storefront redesign completed locally._
+_Last updated: 2026-07-24. Branch: `main`. Profit & Growth decision dashboard completed locally._
 
 ## Recently completed (git log, newest first)
 
@@ -22,6 +22,17 @@ display-only, then margin/copy polish.
 Nothing active.
 
 ## Completed this session
+
+- Profit & Growth decision dashboard:
+  - Added authenticated `GET /api/v2/dashboard/decision-analytics` without breaking the existing profit endpoints. The response contains summary/comparison metrics, trend, product performance, order quality, funnel, ranked opportunities, and data-quality coverage with actual/estimated/allocated/unavailable money bases.
+  - Split contribution into expected profit for valid active/placed orders and realized profit for delivered orders, with cancellation/refund/return handling, equal-length previous-period comparisons, Dhaka date boundaries, allocated ad spend, and explicit missing-data warnings. Missing COGS or incomplete daily ad coverage now makes profit unavailable instead of silently subtracting zero.
+  - Snapshot `costPriceAtOrder` on new order lines and added actual courier, packaging, payment, refund, and return-loss fields. Existing lines without snapshots remain unavailable until reviewed and backfilled; current catalog cost is never substituted into historical profit.
+  - Added persistent first/last-touch order attribution plus a stable anonymous storefront ID, and made PostHog funnel queries reuse that identity when the required environment variables are configured.
+  - Extended paginated daily Meta synchronization with campaign/ad-set/ad breakdowns, added product profitability/stock-cover decisions, frequent product-pair candidates, source/payment/location/customer/value-band quality segments, and new/repeat customer, second-purchase, reorder-interval, and customer-value metrics.
+  - Standardized manual phone/WhatsApp sales with outcome, payment, campaign, phone, products, and operational-cost fields; moved all entry forms into a drawer.
+  - Replaced the fixed-width report with a responsive Workbench dashboard: eight comparison scorecards, Action Center, funnel, daily/weekly trend, compact heatmap, product decision table, order quality, and data quality. Verified 320/375/414/768/1440px with no page overflow.
+  - Added authenticated order-cost correction and recommendation-action endpoints. “Mark acted” stores the recommendation baseline and later returns before/after metric deltas for the experiment loop.
+  - New optional funnel configuration: `POSTHOG_PERSONAL_API_KEY`, `POSTHOG_PROJECT_ID`, and `POSTHOG_QUERY_HOST` (defaults to `https://us.posthog.com`).
 
 - Incomplete-order editing:
   - Added an Edit action to unconverted rows in the API-served incomplete-orders dashboard, without changing the compiled admin bundle.
@@ -70,6 +81,12 @@ Nothing active.
 
 ## Files most recently touched (why)
 
+- `api/src/pages/dashboard/decision-dashboard.service.ts` — versioned decision analytics, trusted profit calculations, recommendations, cohorts, and experiment baselines.
+- `api/src/pages/dashboard/schema/analytics-action.schema.ts` — persistent acted-on recommendations.
+- `api/upload/static/profit-dashboard.html` / `profit-dashboard-tokens.css` — responsive decision cockpit and named visual tokens.
+- Order/manual-sale/Meta schemas and order service — historical costs, attribution, operating-cost fields, richer phone sales, and granular ad spend.
+- `api/src/storefront-attribution-script.ts` / `api/src/main.ts` — stable storefront identity and first/last-touch capture without editing compiled UI assets.
+- `scripts/vps-safe-pull.sh` — explicitly permits the tracked dashboard token stylesheet while preserving runtime uploads.
 - `api/src/main.ts` — injects the local storefront price script into served SPA HTML.
 - `api/src/admin-incomplete-order-editor-script.ts` — responsive incomplete-order editor served by the API.
 - `api/upload/static/custom-orders.html` — exposes Edit on unconverted incomplete-order rows.
@@ -88,6 +105,8 @@ Nothing active.
 
 ## Known bugs / incomplete / TODOs
 
+- Historical orders created before this change need a reviewed COGS/courier/fee backfill to become fully actual; missing historical COGS makes contribution unavailable meanwhile.
+- PostHog funnel stages remain unavailable until the personal API key and project ID are configured in production.
 - No committed test coverage; `npm test` is scaffolding only.
 - Deploy script TODO (per ops notes): finalize `/home/amolbooks/deploy.sh` wrapper on VPS
   with `.env` safety net.
@@ -102,6 +121,16 @@ Nothing active.
 3. Add a minimal smoke test / health endpoint check for the free-gift + recent-buyers flows.
 
 ## Commands already run this session
+
+- Profit decision fixture: verified cancelled revenue exclusion, expected contribution ৳218, allocated realized contribution ৳144.43, 67% historical COGS coverage, restock recommendation, 50% second-purchase rate, and recommendation baseline persistence.
+- Historical-cost drift fixture: changed the catalog cost of a legacy line from ৳100 to ৳999; both overall and product contribution remained unavailable instead of rewriting history → passed.
+- Profit-dashboard and storefront-attribution JavaScript syntax checks → passed.
+- Profit-dashboard browser fixture: populated metrics, basis labels, Action Center, funnel, trends, product decisions, order-quality segments, and data warnings rendered with no browser errors.
+- Profit-dashboard interaction checks: Daily/Weekly switch, data-entry drawer, and Mark acted controls → passed.
+- Profit-dashboard responsive audit at 320/375/414/768/1440px: no document overflow, no wrapped buttons, responsive scorecard columns, and horizontally contained product table → passed.
+- `cd api && npm run build` after the decision dashboard and experiment loop → passed (TypeScript deprecation warnings only).
+- `cd api && npm run lint` → still fails before linting because ESLint reports the configured glob is fully ignored.
+- `bash -n scripts/vps-safe-pull.sh` and `git diff --check` → passed.
 
 - Live production check after the first deploy → confirmed the old dashboard HTML had no Edit button or editor script because `vps-safe-pull.sh` skipped all `api/upload/*` paths.
 - Incomplete-order editor JavaScript syntax check → passed.

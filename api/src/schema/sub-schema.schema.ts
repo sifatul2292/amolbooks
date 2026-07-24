@@ -441,6 +441,13 @@ export const ORDER_ITEM_SCHEMA = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    // Immutable unit COGS captured when the order is created. Older orders may
+    // not have this field; analytics labels their catalog-cost fallback as an
+    // estimate instead of silently rewriting history.
+    costPriceAtOrder: {
+      type: Number,
+      required: false,
+    },
     quantity: {
       type: Number,
       required: true,

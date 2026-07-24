@@ -15,6 +15,7 @@ import {
   VERSION_NEUTRAL
 } from "@nestjs/common";
 import { DashboardService } from './dashboard.service';
+import { DecisionDashboardService } from './decision-dashboard.service';
 import { AdminRolesGuard } from '../../guards/admin-roles.guard';
 import { AdminRoles } from '../../enum/admin-roles.enum';
 import { AdminMetaRoles } from '../../decorator/admin-roles.decorator';
@@ -26,7 +27,10 @@ import { FilterAndPaginationOrderDto } from '../../dto/order.dto';
 export class DashboardController {
   private logger = new Logger(DashboardController.name);
 
-  constructor(private dashboardService: DashboardService) {}
+  constructor(
+    private dashboardService: DashboardService,
+    private decisionDashboardService: DecisionDashboardService,
+  ) {}
 
   /**
    * GET
@@ -88,6 +92,36 @@ export class DashboardController {
     @Query('endDate') endDate: string,
   ) {
     return await this.dashboardService.getProfitAnalytics(startDate, endDate);
+  }
+
+  @Version('2')
+  @Get('decision-analytics')
+  @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @UseGuards(AdminRolesGuard)
+  @UseGuards(AdminJwtAuthGuard)
+  async getDecisionAnalytics(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ) {
+    return this.decisionDashboardService.getDecisionAnalytics(startDate, endDate);
+  }
+
+  @Version('2')
+  @Post('order-costs/:orderId')
+  @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @UseGuards(AdminRolesGuard)
+  @UseGuards(AdminJwtAuthGuard)
+  async saveOrderCosts(@Param('orderId') orderId: string, @Body() body: any) {
+    return this.decisionDashboardService.saveOrderCosts(orderId, body);
+  }
+
+  @Post('recommendation-actions')
+  @Version('2')
+  @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @UseGuards(AdminRolesGuard)
+  @UseGuards(AdminJwtAuthGuard)
+  markRecommendationActedOn(@Body() body: any): Promise<any> {
+    return this.decisionDashboardService.markRecommendationActedOn(body);
   }
 
   @Version(VERSION_NEUTRAL)

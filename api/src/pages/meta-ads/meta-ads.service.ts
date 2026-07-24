@@ -112,10 +112,11 @@ export class MetaAdsService {
 
     const qs = new URLSearchParams({
       access_token: token.accessToken,
-      fields: 'spend,date_start',
+      fields: 'spend,date_start,campaign_id,campaign_name,adset_id,adset_name,ad_id,ad_name',
+      level: 'ad',
       time_increment: '1',
       time_range: JSON.stringify({ since, until }),
-      limit: '100',
+      limit: '500',
     });
     const fullUrl = `https://graph.facebook.com/v20.0/${token.adAccountId}/insights?${qs.toString()}`;
 
@@ -158,22 +159,55 @@ export class MetaAdsService {
       return { synced: 0, error: 'Unexpected Meta response shape. Reconnect Meta and try again.', adAccountId: token.adAccountId, since, until };
     }
 
-    const rows: any[] = parsed.data || [];
-    let synced = 0;
-    for (const row of rows) {
-      const spend = parseFloat(row.spend) || 0;
-      if (spend > 0) {
-        await this.spendModel.findOneAndUpdate(
-          { date: row.date_start },
-          { date: row.date_start, spend, source: 'api' },
-          { upsert: true, new: true },
-        );
-        synced++;
+    const rows: any[] = [...(parsed.data || [])];
+    let nextUrl = parsed.paging?.next;
+    let pages = 1;
+    while (nextUrl && pages < 50) {
+      try {
+        const nextResult = await this.httpsGet(nextUrl);
+        const nextPage = JSON.parse(nextResult.body);
+        if (nextPage?.error || !Array.isArray(nextPage?.data)) {
+          this.logger.warn('Meta pagination stopped on page ' + (pages + 1) + '.');
+          break;
+        }
+        rows.push(...nextPage.data);
+        nextUrl = nextPage.paging?.next;
+        pages++;
+      } catch (error) {
+        this.logger.warn('Meta pagination failed on page ' + (pages + 1) + ': ' + (error?.message || error));
+        break;
       }
+    }
+    if (nextUrl) this.logger.warn('Meta insights pagination reached the 50-page safety limit.');
+    const byDate = new Map<string, any[]>();
+    rows.forEach((row) => {
+      const spend = parseFloat(row.spend) || 0;
+      if (!row.date_start || spend <= 0) return;
+      if (!byDate.has(row.date_start)) byDate.set(row.date_start, []);
+      byDate.get(row.date_start).push({
+        campaignId: row.campaign_id || '',
+        campaignName: row.campaign_name || 'Unlabelled campaign',
+        adSetId: row.adset_id || '',
+        adSetName: row.adset_name || '',
+        adId: row.ad_id || '',
+        adName: row.ad_name || '',
+        spend,
+      });
+    });
+
+    let synced = 0;
+    for (const [date, breakdown] of byDate.entries()) {
+      const spend = breakdown.reduce((sum, row) => sum + row.spend, 0);
+      await this.spendModel.findOneAndUpdate(
+        { date },
+        { date, spend, source: 'api', currency: 'BDT', breakdown },
+        { upsert: true, new: true },
+      );
+      synced++;
     }
 
     await this.tokenModel.findOneAndUpdate({}, { lastSync: new Date() });
-    return { synced, since, until, adAccountId: token.adAccountId, rawRows: rows.length };
+    return { synced, since, until, adAccountId: token.adAccountId, rawRows: rows.length, pages };
   }
 
   async getSpend(startDate: string, endDate: string): Promise<any> {
@@ -182,13 +216,28 @@ export class MetaAdsService {
       .sort({ date: 1 })
       .lean();
     const total = records.reduce((s, r) => s + (r.spend || 0), 0);
-    return { success: true, data: { daily: records, total } };
+    const campaignMap = new Map<string, any>();
+    records.forEach((record: any) => {
+      (record.breakdown || []).forEach((row: any) => {
+        const key = row.campaignId || row.campaignName || 'unknown';
+        if (!campaignMap.has(key)) {
+          campaignMap.set(key, {
+            campaignId: row.campaignId || '',
+            campaignName: row.campaignName || 'Unlabelled campaign',
+            spend: 0,
+          });
+        }
+        campaignMap.get(key).spend += row.spend || 0;
+      });
+    });
+    const campaigns = Array.from(campaignMap.values()).sort((a, b) => b.spend - a.spend);
+    return { success: true, data: { daily: records, total, campaigns } };
   }
 
   async saveManualSpend(date: string, spend: number): Promise<any> {
     const record = await this.spendModel.findOneAndUpdate(
       { date },
-      { date, spend, source: 'manual' },
+      { date, spend, source: 'manual', currency: 'BDT', breakdown: [] },
       { upsert: true, new: true },
     );
     return { success: true, data: record };

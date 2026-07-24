@@ -1,14 +1,14 @@
 {
   "date": "2026-07-24",
-  "framework": "Compiled Angular storefront with NestJS-served additive scripts",
-  "font_stack": "Hind Siliguri with Bengali serif fallback for display roles",
-  "palette": "Existing Amol forest green, warm cream, and neutral ink",
-  "motion": "Motion-cut; one restrained reveal with reduced-motion fallback",
-  "spacing": "Scoped 4-point-derived semantic scale",
+  "framework": "Authenticated API-served static dashboard with a versioned NestJS analytics endpoint",
+  "font_stack": "Inter Tight for display roles and Inter for data-dense interface text",
+  "palette": "Amol purple, near-black executive metrics, semantic data-quality states, and neutral workbench surfaces",
+  "motion": "Short drawer, hover, and loading transitions with a reduced-motion fallback",
+  "spacing": "Named 4-point-derived tokens shared through profit-dashboard-tokens.css",
   "preserve": [
-    "Existing storefront header and footer",
-    "Compiled Angular bundle",
-    "Amol brand palette",
-    "Existing cart and checkout event handlers"
+    "Existing authenticated static dashboard surface",
+    "Compiled admin assets",
+    "Manual phone-order and ad-spend entry",
+    "Existing Meta connection workflow"
   ]
 }
