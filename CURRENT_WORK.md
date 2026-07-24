@@ -28,6 +28,7 @@ Nothing active.
   - Added a responsive editor for customer/contact/address/payment details, customer note, delivery charge, products, quantities, and per-product unit prices.
   - Product add/replace uses Amolbooks' existing catalog search API; product, delivery, and grand totals recalculate immediately and the saved values flow into the existing Add Order and Send to Courier actions.
   - Added an API-served, cache-busted editor asset and restricted incomplete-order updates to authenticated admins plus an explicit editable-field allowlist, protecting conversion and audit fields.
+  - Fixed VPS deployment of the editor button: the safe-pull script now permits only tracked `api/upload/static/*.html` application assets while continuing to exclude product images, invoices, CSVs, backups, and every other runtime upload path.
 
 - Special-package detail redesign implementation:
   - Added an API-served storefront enhancement for `/special-package-details/:id`, leaving compiled Angular artifacts untouched.
@@ -102,6 +103,7 @@ Nothing active.
 
 ## Commands already run this session
 
+- Live production check after the first deploy → confirmed the old dashboard HTML had no Edit button or editor script because `vps-safe-pull.sh` skipped all `api/upload/*` paths.
 - Incomplete-order editor JavaScript syntax check → passed.
 - Mocked DOM/load/product-search/totals/save flow → passed; verified Amolbooks catalog request shape and admin auth header.
 - Incomplete-order update allowlist smoke test → passed; editable values persist while forged `status` and `orderId` values are ignored.

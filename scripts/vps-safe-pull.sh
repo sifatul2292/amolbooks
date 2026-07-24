@@ -47,9 +47,18 @@ if [ -z "$CHANGED" ]; then
   exit 0
 fi
 
-# Belt-and-braces: never let an upload path slip into the checkout set.
-SAFE_CHANGED="$(printf '%s\n' "$CHANGED" | grep -vE '^api/upload/|^api/backup/db/' || true)"
-SKIPPED="$(printf '%s\n' "$CHANGED" | grep -E '^api/upload/|^api/backup/db/' || true)"
+# Belt-and-braces: never let runtime uploads slip into the checkout set. The
+# tracked admin dashboard HTML files under api/upload/static are application
+# assets, not user uploads, so they are the only explicit exception.
+SAFE_CHANGED="$(printf '%s\n' "$CHANGED" | awk '
+  /^api\/backup\/db\// { next }
+  /^api\/upload\// && $0 !~ /^api\/upload\/static\/[^\/]+\.html$/ { next }
+  { print }
+')"
+SKIPPED="$(printf '%s\n' "$CHANGED" | awk '
+  /^api\/backup\/db\// { print; next }
+  /^api\/upload\// && $0 !~ /^api\/upload\/static\/[^\/]+\.html$/ { print }
+')"
 
 echo "[safe-pull] files to update:"
 printf '%s\n' "$SAFE_CHANGED" | sed 's/^/  /'
