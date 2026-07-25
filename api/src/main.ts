@@ -110,6 +110,92 @@ async function bootstrap() {
     /https:\/\/load\.server\.amolbooks\.com\/2kpblypwe\.js\?8=[^'"\s<]+/g;
   const legacyStapeGtmNoscriptUrlPattern =
     /https:\/\/load\.server\.amolbooks\.com\/ns\.html\?id=GTM-NNZV54QJ/g;
+  const legacyStorefrontViewItemMirrorCode =
+    'var ec=obj.ecommerce||{},items=toItems(ec),val=cartVal(items);';
+  const storefrontViewItemMirrorMarker =
+    'var finalViewValue=Number((((ec.detail||{}).custom_data)||{}).value);';
+  const storefrontViewItemMirrorCode = `${legacyStorefrontViewItemMirrorCode}
+    if(obj.event==='view_item'){
+      ${storefrontViewItemMirrorMarker}
+      if(isFinite(finalViewValue)&&finalViewValue>=0){
+        val=finalViewValue;
+        if(items[0])items[0].price=finalViewValue;
+      }
+    }`;
+  const legacyStorefrontGtmBootstrapCode = `window.addEventListener('load', function () { setTimeout(function () {
+    function loadGtm() {
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = '${storefrontGtmLoaderUrl}';
+      document.head.appendChild(s);
+    }
+    var normalizer = document.createElement('script');
+    normalizer.src = 'dl-normalize.js';
+    normalizer.defer = true;
+    normalizer.onload = loadGtm;
+    document.head.appendChild(normalizer);
+  }, 10000); });`;
+  const storefrontGtmBootstrapMarker =
+    'window.__amolGtmBootstrapScheduled=true;';
+  const storefrontGtmBootstrapCode = `(function(){
+    if(window.__amolGtmBootstrapScheduled)return;
+    ${storefrontGtmBootstrapMarker}
+    function loadGtm(){
+      if(window.__amolGtmLoading||window.__amolGtmReady)return;
+      window.__amolGtmLoading=true;
+      window.dataLayer=window.dataLayer||[];
+      var normalizer=document.createElement('script');
+      normalizer.src='dl-normalize.js';
+      normalizer.defer=true;
+      normalizer.onload=function(){
+        window.dataLayer.push({'gtm.start':new Date().getTime(),event:'gtm.js'});
+        var s=document.createElement('script');
+        s.async=true;
+        s.src='${storefrontGtmLoaderUrl}';
+        s.onload=function(){
+          window.__amolGtmReady=true;
+          window.__amolGtmLoading=false;
+          window.dispatchEvent(new CustomEvent('amol-gtm-ready'));
+        };
+        s.onerror=function(){window.__amolGtmLoading=false;};
+        document.head.appendChild(s);
+      };
+      normalizer.onerror=function(){window.__amolGtmLoading=false;};
+      document.head.appendChild(normalizer);
+    }
+    if(window.location.pathname.indexOf('order-success')!==-1){
+      loadGtm();
+    }else{
+      window.addEventListener('load',function(){setTimeout(loadGtm,10000);});
+    }
+  })();`;
+  const storefrontPendingPurchaseHelperMarker =
+    'window.__amolFlushPendingPurchase=function(){';
+  const storefrontPendingPurchaseHelper = `
+  window.__amolFlushPendingPurchase=function(){
+    if(!window.__amolGtmReady)return false;
+    var raw;
+    try{raw=sessionStorage.getItem('_pendingPurchase');}catch(e){return false;}
+    if(!raw)return true;
+    try{
+      var payload=JSON.parse(raw);
+      window.dataLayer=window.dataLayer||[];
+      window.dataLayer.push({ecommerce:null});
+      window.dataLayer.push(payload);
+      sessionStorage.removeItem('_pendingPurchase');
+      return true;
+    }catch(e){return false;}
+  };
+  window.addEventListener('amol-gtm-ready',function(){window.__amolFlushPendingPurchase();});
+
+`;
+  const storefrontHistoryPurchaseCode =
+    "var _pp=sessionStorage.getItem('_pendingPurchase');\n          if(_pp){try{var _pd=JSON.parse(_pp);window.dataLayer.push({ecommerce:null});window.dataLayer.push(_pd);sessionStorage.removeItem('_pendingPurchase');}catch(e){}}";
+  const storefrontDOMContentPurchaseCode =
+    "var _pp2=sessionStorage.getItem('_pendingPurchase');\n      if(_pp2){try{var _pd2=JSON.parse(_pp2);window.dataLayer.push({ecommerce:null});window.dataLayer.push(_pd2);sessionStorage.removeItem('_pendingPurchase');}catch(e){}}";
+  const storefrontHistoryMarker = '  /* ── history.pushState: SPA nav ── */';
   const adminIncompleteOrderEditorScriptFileName =
     'incomplete-order-editor.js';
   const legacyStorefrontPriceScriptTagPattern =
@@ -122,13 +208,43 @@ async function bootstrap() {
     /\.(js|css|map|json|xml|txt|ico|svg|png|jpg|jpeg|gif|webp|woff2?|ttf|eot)$/i;
 
   function replaceStorefrontTrackingLoader(indexHtml: string) {
-    return indexHtml
+    const trackingHtml = indexHtml
       .replace(legacyStapeGtmLoaderUrlPattern, storefrontGtmLoaderUrl)
       .replace(legacyStapeGtmNoscriptUrlPattern, storefrontGtmNoscriptUrl)
       .replace(
         '<!-- GTM/Stape loads after first paint. -->',
         '<!-- GTM/Tagioo loads after first paint. -->',
       );
+
+    let patchedTrackingHtml = trackingHtml;
+    if (!patchedTrackingHtml.includes(storefrontViewItemMirrorMarker)) {
+      patchedTrackingHtml = patchedTrackingHtml.replace(
+        legacyStorefrontViewItemMirrorCode,
+        storefrontViewItemMirrorCode,
+      );
+    }
+    if (!patchedTrackingHtml.includes(storefrontGtmBootstrapMarker)) {
+      patchedTrackingHtml = patchedTrackingHtml.replace(
+        legacyStorefrontGtmBootstrapCode,
+        storefrontGtmBootstrapCode,
+      );
+    }
+    if (!patchedTrackingHtml.includes(storefrontPendingPurchaseHelperMarker)) {
+      patchedTrackingHtml = patchedTrackingHtml
+        .replace(
+          storefrontHistoryMarker,
+          storefrontPendingPurchaseHelper + storefrontHistoryMarker,
+        )
+        .replace(
+          storefrontHistoryPurchaseCode,
+          'window.__amolFlushPendingPurchase();',
+        )
+        .replace(
+          storefrontDOMContentPurchaseCode,
+          'window.__amolFlushPendingPurchase();',
+        );
+    }
+    return patchedTrackingHtml;
   }
 
   function installStaticStorefrontPatch() {

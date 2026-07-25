@@ -26,6 +26,8 @@ Nothing active.
 - Tagioo server-side tracking migration:
   - Added an idempotent API startup/response patch that replaces the hardcoded Stape web GTM loader and noscript URLs with Tagioo's first-party loader on `server.amolbooks.com`, without directly editing the compiled storefront.
   - Kept the existing Web GTM container ID, dataLayer event names, server event domain, and delayed-loading behavior unchanged.
+  - Corrected the mirrored server-side ViewContent value to use Angular's already-calculated final customer price from `ecommerce.detail.custom_data.value`, instead of the product's pre-discount `salePrice`; cart, checkout, and Purchase calculations are unchanged.
+  - Made Brave/Shields Purchase delivery resilient: the first-party Tagioo loader starts immediately on the order-success route, pending Purchase stays in session storage until the loader signals ready, and the normal 10-second GTM delay remains on every other route.
 
 - Profit & Growth decision dashboard:
   - Added authenticated `GET /api/v2/dashboard/decision-analytics` without breaking the existing profit endpoints. The response contains summary/comparison metrics, trend, product performance, order quality, funnel, ranked opportunities, and data-quality coverage with actual/estimated/allocated/unavailable money bases.
