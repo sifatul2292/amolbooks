@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-07-24. Branch: `main`. Profit & Growth decision dashboard completed locally._
+_Last updated: 2026-07-25. Branch: `main`. Tagioo tracking-loader cutover prepared locally._
 
 ## Recently completed (git log, newest first)
 
@@ -22,6 +22,10 @@ display-only, then margin/copy polish.
 Nothing active.
 
 ## Completed this session
+
+- Tagioo server-side tracking migration:
+  - Added an idempotent API startup/response patch that replaces the hardcoded Stape web GTM loader and noscript URLs with Tagioo's first-party loader on `server.amolbooks.com`, without directly editing the compiled storefront.
+  - Kept the existing Web GTM container ID, dataLayer event names, server event domain, and delayed-loading behavior unchanged.
 
 - Profit & Growth decision dashboard:
   - Added authenticated `GET /api/v2/dashboard/decision-analytics` without breaking the existing profit endpoints. The response contains summary/comparison metrics, trend, product performance, order quality, funnel, ranked opportunities, and data-quality coverage with actual/estimated/allocated/unavailable money bases.

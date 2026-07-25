@@ -102,6 +102,14 @@ async function bootstrap() {
     .slice(0, 12);
   const storefrontAttributionScriptTag =
     `<script src="/${storefrontAttributionScriptFileName}?v=${storefrontAttributionScriptVersion}" defer></script>`;
+  const storefrontGtmLoaderUrl =
+    'https://server.amolbooks.com/tagioo-loader/gtm.js?id=GTM-NNZV54QJ';
+  const storefrontGtmNoscriptUrl =
+    'https://server.amolbooks.com/tagioo-loader/ns.html?id=GTM-NNZV54QJ';
+  const legacyStapeGtmLoaderUrlPattern =
+    /https:\/\/load\.server\.amolbooks\.com\/2kpblypwe\.js\?8=[^'"\s<]+/g;
+  const legacyStapeGtmNoscriptUrlPattern =
+    /https:\/\/load\.server\.amolbooks\.com\/ns\.html\?id=GTM-NNZV54QJ/g;
   const adminIncompleteOrderEditorScriptFileName =
     'incomplete-order-editor.js';
   const legacyStorefrontPriceScriptTagPattern =
@@ -112,6 +120,16 @@ async function bootstrap() {
     /\s*<script src="\/storefront-attribution\.js(?:\?v=[^"]*)?" defer><\/script>/g;
   const staticAssetPattern =
     /\.(js|css|map|json|xml|txt|ico|svg|png|jpg|jpeg|gif|webp|woff2?|ttf|eot)$/i;
+
+  function replaceStorefrontTrackingLoader(indexHtml: string) {
+    return indexHtml
+      .replace(legacyStapeGtmLoaderUrlPattern, storefrontGtmLoaderUrl)
+      .replace(legacyStapeGtmNoscriptUrlPattern, storefrontGtmNoscriptUrl)
+      .replace(
+        '<!-- GTM/Stape loads after first paint. -->',
+        '<!-- GTM/Tagioo loads after first paint. -->',
+      );
+  }
 
   function installStaticStorefrontPatch() {
     try {
@@ -158,7 +176,7 @@ async function bootstrap() {
       );
 
       const indexHtml = readFileSync(storefrontIndexPath, 'utf8');
-      const cleanedHtml = indexHtml
+      const cleanedHtml = replaceStorefrontTrackingLoader(indexHtml)
         .replace(legacyStorefrontPriceScriptTagPattern, '')
         .replace(legacyStorefrontSpecialPackageScriptTagPattern, '')
         .replace(legacyStorefrontAttributionScriptTagPattern, '');
@@ -180,7 +198,7 @@ async function bootstrap() {
   function sendStorefrontIndex(res: express.Response) {
     try {
       const indexHtml = readFileSync(storefrontIndexPath, 'utf8');
-      const cleanedHtml = indexHtml
+      const cleanedHtml = replaceStorefrontTrackingLoader(indexHtml)
         .replace(legacyStorefrontPriceScriptTagPattern, '')
         .replace(legacyStorefrontSpecialPackageScriptTagPattern, '')
         .replace(legacyStorefrontAttributionScriptTagPattern, '');
