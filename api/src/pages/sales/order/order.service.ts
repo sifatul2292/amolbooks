@@ -288,27 +288,44 @@ export class OrderService {
     }
   }
 
-  async addManualOrderAdmin(
+  async trackManualOrderMetaAdmin(
     admin: Admin,
-    addOrderDto: AddOrderDto,
+    orderId: string,
+    source?: string,
   ): Promise<ResponsePayload> {
     if (!admin || !admin._id) {
       throw new BadRequestException('Admin authentication failed');
     }
 
-    const manualOrderSource = this.normalizeManualOrderSource(
-      addOrderDto.manualOrderSource || 'whatsapp',
-    );
-    const manualOrderData = {
-      ...addOrderDto,
-      manualOrderSource,
-      orderFrom: this.manualOrderLabel(manualOrderSource),
-    } as AddOrderDto;
+    const order: any = await this.orderModel.findById(orderId);
+    if (!order) throw new NotFoundException('Order not found');
 
-    return this.addOrder(manualOrderData, {
-      isManualOrder: true,
-      manualOrderSource,
-    });
+    const manualOrderSource = this.normalizeManualOrderSource(
+      source || 'whatsapp',
+    );
+    await this.orderModel.updateOne(
+      { _id: order._id },
+      {
+        $set: {
+          orderFrom: this.manualOrderLabel(manualOrderSource),
+          manualOrderSource,
+        },
+      },
+    );
+    await this.sendManualOrderToMeta(order, manualOrderSource);
+
+    const result: any = await this.orderModel
+      .findById(order._id)
+      .select('metaPurchaseStatus metaPurchaseEventId metaPurchaseError')
+      .lean();
+    const sent = result?.metaPurchaseStatus === 'sent';
+    return {
+      success: sent,
+      message: sent
+        ? 'Manual Purchase sent to Meta'
+        : result?.metaPurchaseError || 'Manual Purchase was not sent to Meta',
+      data: result,
+    } as ResponsePayload;
   }
 
   async addOrder(
