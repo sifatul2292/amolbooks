@@ -787,8 +787,8 @@ export class OrderService {
             manual_order_source: manualOrderSource,
           });
 
-        if (!tagiooResult?.unique_event_id) {
-          throw new Error('Tagioo did not return a server event ID');
+        if (!tagiooResult?.accepted) {
+          throw new Error('Tagioo did not accept the server event');
         }
 
         await this.orderModel.updateOne(
@@ -798,7 +798,7 @@ export class OrderService {
               metaPurchaseStatus: 'sent',
               metaPurchaseSentAt: new Date(),
               metaPurchaseDeliveryChannel: 'tagioo',
-              tagiooPurchaseEventId: String(tagiooResult.unique_event_id),
+              tagiooPurchaseEventId: eventId,
             },
             $unset: { metaPurchaseError: 1, tagiooPurchaseError: 1 },
           },

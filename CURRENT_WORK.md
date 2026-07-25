@@ -29,6 +29,7 @@ Nothing active.
   - Kept the direct Meta CAPI integration as a same-event-ID fallback only when Tagioo transport fails, preventing lost conversions while retaining Meta deduplication safety.
   - Persisted whether each Purchase used Tagioo or direct fallback, the Tagioo event ID, and any Tagioo transport error for production diagnosis.
   - Sent a harmless `amolbooks_manual_transport_test` event to production `/data`; it returned HTTP 200 with a server `unique_event_id`, proving the Data Client is live without generating a fake Purchase.
+  - After production showed the SDK-style POST as an incoming Purchase but omitted it from Purchase Inspector, aligned backend delivery with the web container's existing Data Tag transport: `event=purchase` plus Base64-encoded event metadata in `dtdc`. A harmless custom-event probe of this exact transport returned HTTP 200 and the expected tracking-pixel response.
 
 - AI Assist definitive spinner/root-cause fix:
   - Fixed the actual browser exception: the separate AI Assist IIFE was calling private `getToken`, `authHeaders`, and `showLogin` functions from another scope after enabling the spinner, so execution stopped before either the request or timeout existed.

@@ -490,15 +490,15 @@ let OrderService = OrderService_1 = class OrderService {
                     page_path: '/',
                     manual_order_source: manualOrderSource,
                 });
-                if (!(tagiooResult === null || tagiooResult === void 0 ? void 0 : tagiooResult.unique_event_id)) {
-                    throw new Error('Tagioo did not return a server event ID');
+                if (!(tagiooResult === null || tagiooResult === void 0 ? void 0 : tagiooResult.accepted)) {
+                    throw new Error('Tagioo did not accept the server event');
                 }
                 await this.orderModel.updateOne({ _id: saveData._id, metaPurchaseEventId: eventId }, {
                     $set: {
                         metaPurchaseStatus: 'sent',
                         metaPurchaseSentAt: new Date(),
                         metaPurchaseDeliveryChannel: 'tagioo',
-                        tagiooPurchaseEventId: String(tagiooResult.unique_event_id),
+                        tagiooPurchaseEventId: eventId,
                     },
                     $unset: { metaPurchaseError: 1, tagiooPurchaseError: 1 },
                 });

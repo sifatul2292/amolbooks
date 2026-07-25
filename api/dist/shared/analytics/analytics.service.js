@@ -21,11 +21,15 @@ let AnalyticsService = AnalyticsService_1 = class AnalyticsService {
     }
     async trackServerContainerEvent(eventName, eventData) {
         const endpoint = 'https://server.amolbooks.com/data';
-        const response = await (0, rxjs_1.firstValueFrom)(this.httpService.post(endpoint, Object.assign(Object.assign({}, eventData), { event_name: eventName, v: 2 }), {
-            params: { v: 2, event_name: eventName },
+        const encodedEventData = Buffer.from(JSON.stringify(eventData), 'utf8').toString('base64');
+        const response = await (0, rxjs_1.firstValueFrom)(this.httpService.get(endpoint, {
+            params: { v: 2, event: eventName, dtdc: encodedEventData },
             timeout: 10000,
         }));
-        return response.data;
+        return {
+            accepted: response.status >= 200 && response.status < 300,
+            status: response.status,
+        };
     }
     async trackFbConversionEventClient(fbPixelId, fbPixelAccessToken, data) {
         var _a, _b, _c, _d, _e;

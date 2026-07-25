@@ -18,22 +18,28 @@ export class AnalyticsService {
     eventData: Record<string, any>,
   ): Promise<any> {
     const endpoint = 'https://server.amolbooks.com/data';
+    // Match the Stape Data Tag "auto" transport already used by the web GTM
+    // container. Tagioo accepts the SDK POST-body transport too, but its
+    // Purchase Inspector only extracts value/transaction metadata from the
+    // event + dtdc request shape used by the existing browser purchases.
+    const encodedEventData = Buffer.from(
+      JSON.stringify(eventData),
+      'utf8',
+    ).toString('base64');
     const response = await firstValueFrom(
-      this.httpService.post(
+      this.httpService.get(
         endpoint,
         {
-          ...eventData,
-          event_name: eventName,
-          v: 2,
-        },
-        {
-          params: { v: 2, event_name: eventName },
+          params: { v: 2, event: eventName, dtdc: encodedEventData },
           timeout: 10000,
         },
       ),
     );
 
-    return response.data;
+    return {
+      accepted: response.status >= 200 && response.status < 300,
+      status: response.status,
+    };
   }
 
   /**
