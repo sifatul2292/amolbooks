@@ -17,14 +17,14 @@ export declare const PraptisthanaSchema: mongoose.Schema<any, mongoose.Model<any
         name?: string;
     };
     address?: string;
-    phone?: string;
-    area?: {
-        _id?: mongoose.Types.ObjectId;
-        name?: string;
-    };
     zone?: {
         _id?: mongoose.Types.ObjectId;
         name?: string;
     };
+    area?: {
+        _id?: mongoose.Types.ObjectId;
+        name?: string;
+    };
+    phone?: string;
     amount?: string;
 }>;

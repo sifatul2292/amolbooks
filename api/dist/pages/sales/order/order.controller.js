@@ -37,6 +37,15 @@ let OrderController = OrderController_1 = class OrderController {
     async addOrder(addOrderDto, admin) {
         return await this.orderService.addOrderAdmin(admin, addOrderDto);
     }
+    async trackManualOrderMeta(id, body, admin) {
+        return await this.orderService.trackManualOrderMetaAdmin(admin, id, body === null || body === void 0 ? void 0 : body.manualOrderSource);
+    }
+    async addAiAssistOrder(addOrderDto, admin) {
+        return await this.orderService.addAiAssistOrderAdmin(admin, addOrderDto);
+    }
+    async getManualOrderRequestStatus(requestId, admin) {
+        return this.orderService.getManualOrderRequestStatusAdmin(admin, requestId);
+    }
     async updateDate() {
         return await this.orderService.updateDate();
     }
@@ -133,6 +142,35 @@ __decorate([
     __metadata("design:paramtypes", [order_dto_1.AddOrderDto, Object]),
     __metadata("design:returntype", Promise)
 ], OrderController.prototype, "addOrder", null);
+__decorate([
+    (0, common_1.Post)('/track-manual-meta/:id'),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __param(0, (0, common_1.Param)('id', mongo_id_validation_pipe_1.MongoIdValidationPipe)),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, get_admin_decorator_1.GetAdmin)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "trackManualOrderMeta", null);
+__decorate([
+    (0, common_1.Post)('/add-ai-assist'),
+    (0, common_1.UsePipes)(common_1.ValidationPipe),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, get_admin_decorator_1.GetAdmin)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [order_dto_1.AddOrderDto, Object]),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "addAiAssistOrder", null);
+__decorate([
+    (0, common_1.Get)('/manual-request-status/:requestId'),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __param(0, (0, common_1.Param)('requestId')),
+    __param(1, (0, get_admin_decorator_1.GetAdmin)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "getManualOrderRequestStatus", null);
 __decorate([
     (0, common_1.Put)('/updateDate'),
     __metadata("design:type", Function),
@@ -382,6 +420,7 @@ __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Put)('/update-incomplete-order-by-id/:id'),
     (0, common_1.UsePipes)(common_1.ValidationPipe),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
     __param(0, (0, common_1.Param)('id', mongo_id_validation_pipe_1.MongoIdValidationPipe)),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),

@@ -21,9 +21,11 @@ const config_1 = require("@nestjs/config");
 const utils_service_1 = require("../../shared/utils/utils.service");
 const error_code_enum_1 = require("../../enum/error-code.enum");
 const fb_catalog_service_1 = require("../../shared/fb-catalog/fb-catalog.service");
+const order_enum_1 = require("../../enum/order.enum");
+const moment = require("moment-timezone");
 const ObjectId = mongoose_2.Types.ObjectId;
 let ProductService = ProductService_1 = class ProductService {
-    constructor(productModel, categoryModel, brandModel, publisherModel, settingModel, redirectUrlModel, shopInformationModel, boughtTogetherConfigModel, configService, utilsService, fbCatalogService, cacheManager) {
+    constructor(productModel, categoryModel, brandModel, publisherModel, settingModel, redirectUrlModel, shopInformationModel, boughtTogetherConfigModel, stockMovementModel, stockPurchaseModel, orderModel, configService, utilsService, fbCatalogService, cacheManager) {
         this.productModel = productModel;
         this.categoryModel = categoryModel;
         this.brandModel = brandModel;
@@ -32,6 +34,9 @@ let ProductService = ProductService_1 = class ProductService {
         this.redirectUrlModel = redirectUrlModel;
         this.shopInformationModel = shopInformationModel;
         this.boughtTogetherConfigModel = boughtTogetherConfigModel;
+        this.stockMovementModel = stockMovementModel;
+        this.stockPurchaseModel = stockPurchaseModel;
+        this.orderModel = orderModel;
         this.configService = configService;
         this.utilsService = utilsService;
         this.fbCatalogService = fbCatalogService;
@@ -1217,6 +1222,347 @@ ${items.join('\n')}
         });
         return [headers.join(','), ...rows].join('\n');
     }
+    async getStockSalesMetrics(productIds) {
+        const metrics = new Map();
+        if (!productIds.length) {
+            return metrics;
+        }
+        try {
+            const now = moment().tz('Asia/Dhaka');
+            const todayStart = now.clone().startOf('day').toDate();
+            const last30DaysStart = now.clone().subtract(30, 'days').toDate();
+            const previous30DaysStart = now.clone().subtract(60, 'days').toDate();
+            const quantity = { $ifNull: ['$orderedItems.quantity', 0] };
+            const rows = await this.orderModel.aggregate([
+                {
+                    $match: {
+                        createdAt: { $gte: previous30DaysStart, $lte: now.toDate() },
+                        orderStatus: {
+                            $nin: [order_enum_1.OrderStatus.CANCEL, order_enum_1.OrderStatus.REFUND, order_enum_1.OrderStatus.RETURN],
+                        },
+                        'orderedItems._id': { $in: productIds },
+                    },
+                },
+                { $unwind: '$orderedItems' },
+                { $match: { 'orderedItems._id': { $in: productIds } } },
+                {
+                    $group: {
+                        _id: '$orderedItems._id',
+                        soldToday: {
+                            $sum: {
+                                $cond: [{ $gte: ['$createdAt', todayStart] }, quantity, 0],
+                            },
+                        },
+                        soldLast30Days: {
+                            $sum: {
+                                $cond: [{ $gte: ['$createdAt', last30DaysStart] }, quantity, 0],
+                            },
+                        },
+                        soldPrevious30Days: {
+                            $sum: {
+                                $cond: [
+                                    {
+                                        $and: [
+                                            { $gte: ['$createdAt', previous30DaysStart] },
+                                            { $lt: ['$createdAt', last30DaysStart] },
+                                        ],
+                                    },
+                                    quantity,
+                                    0,
+                                ],
+                            },
+                        },
+                    },
+                },
+            ]);
+            rows.forEach((row) => {
+                const soldToday = Math.max(0, Number(row.soldToday) || 0);
+                const soldLast30Days = Math.max(0, Number(row.soldLast30Days) || 0);
+                const soldPrevious30Days = Math.max(0, Number(row.soldPrevious30Days) || 0);
+                const predictedNeedNext30Days = Math.ceil(soldPrevious30Days > 0
+                    ? soldLast30Days * 0.7 + soldPrevious30Days * 0.3
+                    : soldLast30Days);
+                metrics.set(String(row._id), {
+                    soldToday,
+                    soldLast30Days,
+                    predictedNeedNext30Days,
+                });
+            });
+        }
+        catch (err) {
+            this.logger.warn(`Stock sales metrics unavailable: ${(err === null || err === void 0 ? void 0 : err.message) || err}`);
+        }
+        return metrics;
+    }
+    async getStockList(query) {
+        try {
+            const page = Math.max(1, parseInt(query === null || query === void 0 ? void 0 : query.page, 10) || 1);
+            const limit = Math.min(200, Math.max(1, parseInt(query === null || query === void 0 ? void 0 : query.limit, 10) || 50));
+            const q = ((query === null || query === void 0 ? void 0 : query.q) || '').trim();
+            const lowOnly = String(query === null || query === void 0 ? void 0 : query.lowOnly) === 'true';
+            const outOnly = String(query === null || query === void 0 ? void 0 : query.outOnly) === 'true';
+            const includeSalesMetrics = String(query === null || query === void 0 ? void 0 : query.includeSalesMetrics) !== 'false';
+            const filter = {};
+            if (q) {
+                const rx = this.utilsService.createRegexFromString(q);
+                filter.$or = [{ name: rx }, { nameEn: rx }, { sku: rx }];
+            }
+            if (outOnly) {
+                filter.stock = { $ne: null, $lte: 0 };
+            }
+            else if (lowOnly) {
+                filter.stock = { $ne: null };
+                filter.$expr = {
+                    $lte: ['$stock', { $ifNull: ['$lowStockThreshold', 0] }],
+                };
+            }
+            const total = await this.productModel.countDocuments(filter);
+            const data = await this.productModel
+                .find(filter)
+                .select('name nameEn sku images salePrice stock lowStockThreshold totalSold')
+                .sort({ totalSold: -1, name: 1, _id: 1 })
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .lean();
+            let resultData = data;
+            if (includeSalesMetrics && data.length) {
+                const productIds = data.map((product) => new ObjectId(product._id));
+                const salesMetrics = await this.getStockSalesMetrics(productIds);
+                const emptyMetrics = {
+                    soldToday: 0,
+                    soldLast30Days: 0,
+                    predictedNeedNext30Days: 0,
+                };
+                resultData = data.map((product) => (Object.assign(Object.assign({}, product), (salesMetrics.get(String(product._id)) || emptyMetrics))));
+            }
+            return {
+                success: true,
+                message: 'Success',
+                data: resultData,
+                count: total,
+            };
+        }
+        catch (err) {
+            throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
+    async getUrgentStock(query) {
+        try {
+            const requestedDays = parseInt(query === null || query === void 0 ? void 0 : query.days, 10);
+            const urgentDays = Math.min(90, Math.max(1, Number.isFinite(requestedDays) ? requestedDays : 14));
+            const products = await this.productModel
+                .find({ stock: { $ne: null } })
+                .select('name nameEn sku images salePrice stock')
+                .lean();
+            const productIds = products.map((product) => new ObjectId(product._id));
+            const salesMetrics = await this.getStockSalesMetrics(productIds);
+            const urgentProducts = products
+                .map((product) => {
+                const stock = Math.max(0, Number(product.stock) || 0);
+                const metrics = salesMetrics.get(String(product._id)) || {
+                    soldToday: 0,
+                    soldLast30Days: 0,
+                    predictedNeedNext30Days: 0,
+                };
+                const predictedNeedNext30Days = Math.max(0, Number(metrics.predictedNeedNext30Days) || 0);
+                const dailyDemand = predictedNeedNext30Days / 30;
+                const daysRemaining = stock <= 0 ? 0 : dailyDemand > 0 ? stock / dailyDemand : null;
+                const isUrgent = stock <= 0 ||
+                    (daysRemaining !== null && daysRemaining <= urgentDays);
+                if (!isUrgent)
+                    return null;
+                return Object.assign(Object.assign(Object.assign({}, product), metrics), { daysRemaining: daysRemaining === null
+                        ? null
+                        : Math.round(daysRemaining * 10) / 10, suggestedRestockQty: Math.max(0, Math.ceil(predictedNeedNext30Days - stock)), urgency: stock <= 0
+                        ? 'out'
+                        : daysRemaining <= 7
+                            ? 'critical'
+                            : 'warning' });
+            })
+                .filter(Boolean)
+                .sort((a, b) => {
+                var _a, _b;
+                const aOut = a.stock <= 0 ? 0 : 1;
+                const bOut = b.stock <= 0 ? 0 : 1;
+                if (aOut !== bOut)
+                    return aOut - bOut;
+                const aDays = (_a = a.daysRemaining) !== null && _a !== void 0 ? _a : Number.POSITIVE_INFINITY;
+                const bDays = (_b = b.daysRemaining) !== null && _b !== void 0 ? _b : Number.POSITIVE_INFINITY;
+                if (aDays !== bDays)
+                    return aDays - bDays;
+                if (a.predictedNeedNext30Days !== b.predictedNeedNext30Days) {
+                    return b.predictedNeedNext30Days - a.predictedNeedNext30Days;
+                }
+                return String(a.name || '').localeCompare(String(b.name || ''));
+            });
+            return {
+                success: true,
+                message: 'Success',
+                data: urgentProducts,
+                count: urgentProducts.length,
+            };
+        }
+        catch (err) {
+            throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
+    async updateStock(id, body, admin) {
+        try {
+            const set = {};
+            if ((body === null || body === void 0 ? void 0 : body.stock) !== undefined &&
+                body.stock !== null &&
+                body.stock !== '') {
+                set.stock = Math.max(0, Math.floor(Number(body.stock)) || 0);
+            }
+            if ((body === null || body === void 0 ? void 0 : body.lowStockThreshold) !== undefined &&
+                body.lowStockThreshold !== null &&
+                body.lowStockThreshold !== '') {
+                set.lowStockThreshold = Math.max(0, Math.floor(Number(body.lowStockThreshold)) || 0);
+            }
+            if (!Object.keys(set).length) {
+                return { success: false, message: 'Nothing to update' };
+            }
+            const before = await this.productModel
+                .findById(id)
+                .select('stock sku')
+                .lean();
+            await this.productModel.updateOne({ _id: id }, { $set: set });
+            if (before && set.stock !== undefined) {
+                const priorStock = typeof before.stock === 'number' ? before.stock : 0;
+                const qtyChange = set.stock - priorStock;
+                if (qtyChange !== 0) {
+                    try {
+                        await this.stockMovementModel.create({
+                            product: id,
+                            sku: before.sku,
+                            qtyChange,
+                            stockAfter: set.stock,
+                            reason: 'manual_adjustment',
+                            note: body === null || body === void 0 ? void 0 : body.note,
+                            adminId: admin === null || admin === void 0 ? void 0 : admin._id,
+                            adminName: admin === null || admin === void 0 ? void 0 : admin.name,
+                        });
+                    }
+                    catch (err) {
+                        this.logger.warn(`Failed to log stock movement for product ${id}: ${(err === null || err === void 0 ? void 0 : err.message) || err}`);
+                    }
+                }
+            }
+            return { success: true, message: 'Stock updated' };
+        }
+        catch (err) {
+            throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
+    async addStockPurchase(dto, admin) {
+        try {
+            const product = await this.productModel
+                .findById(dto.productId)
+                .select('sku stock')
+                .lean();
+            if (!product) {
+                throw new common_1.NotFoundException('Product not found');
+            }
+            const qty = Math.max(1, Math.floor(Number(dto.qty)) || 1);
+            const unitCost = Math.max(0, Number(dto.unitCost) || 0);
+            const totalCost = qty * unitCost;
+            const updated = await this.productModel.findByIdAndUpdate(dto.productId, {
+                $inc: { stock: qty },
+                $set: { costPrice: unitCost },
+            }, { new: true });
+            const purchase = await this.stockPurchaseModel.create({
+                product: dto.productId,
+                sku: product.sku,
+                qty,
+                unitCost,
+                totalCost,
+                supplierName: dto.supplierName,
+                note: dto.note,
+                adminId: admin === null || admin === void 0 ? void 0 : admin._id,
+                adminName: admin === null || admin === void 0 ? void 0 : admin.name,
+            });
+            try {
+                await this.stockMovementModel.create({
+                    product: dto.productId,
+                    sku: product.sku,
+                    qtyChange: qty,
+                    stockAfter: updated === null || updated === void 0 ? void 0 : updated.stock,
+                    reason: 'purchase',
+                    referenceType: 'purchase',
+                    referenceId: purchase._id,
+                    note: dto.note,
+                    adminId: admin === null || admin === void 0 ? void 0 : admin._id,
+                    adminName: admin === null || admin === void 0 ? void 0 : admin.name,
+                });
+            }
+            catch (err) {
+                this.logger.warn(`Failed to log stock movement for purchase ${purchase._id}: ${(err === null || err === void 0 ? void 0 : err.message) || err}`);
+            }
+            return {
+                success: true,
+                message: 'Stock purchase recorded',
+                data: purchase,
+            };
+        }
+        catch (err) {
+            if (err instanceof common_1.NotFoundException)
+                throw err;
+            throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
+    async getStockMovements(query) {
+        try {
+            const page = Math.max(1, Number(query === null || query === void 0 ? void 0 : query.page) || 1);
+            const limit = Math.min(200, Math.max(1, Number(query === null || query === void 0 ? void 0 : query.limit) || 50));
+            const filter = {};
+            if (query === null || query === void 0 ? void 0 : query.productId) {
+                filter.product = query.productId;
+            }
+            const total = await this.stockMovementModel.countDocuments(filter);
+            const data = await this.stockMovementModel
+                .find(filter)
+                .populate('product', 'name sku')
+                .sort({ createdAt: -1 })
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .lean();
+            return {
+                success: true,
+                message: 'Success',
+                data,
+                count: total,
+            };
+        }
+        catch (err) {
+            throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
+    async decreaseStockForItems(items) {
+        if (!Array.isArray(items) || !items.length)
+            return;
+        const ops = items
+            .map((it) => {
+            const id = (it === null || it === void 0 ? void 0 : it._id) || (it === null || it === void 0 ? void 0 : it.product) || (it === null || it === void 0 ? void 0 : it.productId);
+            const qty = Math.max(1, Math.floor(Number(it === null || it === void 0 ? void 0 : it.quantity)) || 1);
+            if (!id)
+                return null;
+            return {
+                updateOne: {
+                    filter: { _id: id, stock: { $ne: null } },
+                    update: { $inc: { stock: -qty } },
+                },
+            };
+        })
+            .filter(Boolean);
+        if (!ops.length)
+            return;
+        try {
+            await this.productModel.bulkWrite(ops);
+        }
+        catch (err) {
+            this.logger.warn(`decreaseStockForItems failed: ${(err === null || err === void 0 ? void 0 : err.message) || err}`);
+        }
+    }
 };
 ProductService = ProductService_1 = __decorate([
     (0, common_1.Injectable)(),
@@ -1228,8 +1574,14 @@ ProductService = ProductService_1 = __decorate([
     __param(5, (0, mongoose_1.InjectModel)('RedirectUrl')),
     __param(6, (0, mongoose_1.InjectModel)('ShopInformation')),
     __param(7, (0, mongoose_1.InjectModel)('BoughtTogetherConfig')),
-    __param(11, (0, common_1.Inject)(common_1.CACHE_MANAGER)),
+    __param(8, (0, mongoose_1.InjectModel)('StockMovement')),
+    __param(9, (0, mongoose_1.InjectModel)('StockPurchase')),
+    __param(10, (0, mongoose_1.InjectModel)('Order')),
+    __param(14, (0, common_1.Inject)(common_1.CACHE_MANAGER)),
     __metadata("design:paramtypes", [mongoose_2.Model,
+        mongoose_2.Model,
+        mongoose_2.Model,
+        mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,

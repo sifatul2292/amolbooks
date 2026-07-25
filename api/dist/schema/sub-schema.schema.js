@@ -408,6 +408,10 @@ exports.ORDER_ITEM_SCHEMA = new mongoose.Schema({
         type: Number,
         required: true,
     },
+    costPriceAtOrder: {
+        type: Number,
+        required: false,
+    },
     quantity: {
         type: Number,
         required: true,

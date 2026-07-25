@@ -9,6 +9,34 @@ export class AnalyticsService {
   constructor(private readonly httpService: HttpService) {}
 
   /**
+   * Sends an event to the first-party server GTM Data Client. A successful
+   * response means the event was claimed by the published server container,
+   * so it is visible in the hosting event log and can run the existing tags.
+   */
+  public async trackServerContainerEvent(
+    eventName: string,
+    eventData: Record<string, any>,
+  ): Promise<any> {
+    const endpoint = 'https://server.amolbooks.com/data';
+    const response = await firstValueFrom(
+      this.httpService.post(
+        endpoint,
+        {
+          ...eventData,
+          event_name: eventName,
+          v: 2,
+        },
+        {
+          params: { v: 2, event_name: eventName },
+          timeout: 10000,
+        },
+      ),
+    );
+
+    return response.data;
+  }
+
+  /**
    * Tracker
    * trackFbConversionEvent()
    */

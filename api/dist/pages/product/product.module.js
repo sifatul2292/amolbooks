@@ -19,6 +19,9 @@ const shop_information_schema_1 = require("../../schema/shop-information.schema"
 const redirect_url_schema_1 = require("../../schema/redirect-url.schema");
 const setting_schema_1 = require("../customization/setting/schema/setting.schema");
 const bought_together_config_schema_1 = require("../../schema/bought-together-config.schema");
+const stock_movement_schema_1 = require("../../schema/stock-movement.schema");
+const stock_purchase_schema_1 = require("../../schema/stock-purchase.schema");
+const order_schema_1 = require("../../schema/order.schema");
 let ProductModule = class ProductModule {
 };
 ProductModule = __decorate([
@@ -33,6 +36,9 @@ ProductModule = __decorate([
                 { name: 'ShopInformation', schema: shop_information_schema_1.ShopInformationSchema },
                 { name: 'Setting', schema: setting_schema_1.SettingSchema },
                 { name: 'BoughtTogetherConfig', schema: bought_together_config_schema_1.BoughtTogetherConfigSchema },
+                { name: 'StockMovement', schema: stock_movement_schema_1.StockMovementSchema },
+                { name: 'StockPurchase', schema: stock_purchase_schema_1.StockPurchaseSchema },
+                { name: 'Order', schema: order_schema_1.OrderSchema },
             ]),
         ],
         providers: [product_service_1.ProductService],

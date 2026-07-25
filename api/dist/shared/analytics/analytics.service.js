@@ -19,12 +19,21 @@ let AnalyticsService = AnalyticsService_1 = class AnalyticsService {
         this.httpService = httpService;
         this.logger = new common_1.Logger(AnalyticsService_1.name);
     }
+    async trackServerContainerEvent(eventName, eventData) {
+        const endpoint = 'https://server.amolbooks.com/data';
+        const response = await (0, rxjs_1.firstValueFrom)(this.httpService.post(endpoint, Object.assign(Object.assign({}, eventData), { event_name: eventName, v: 2 }), {
+            params: { v: 2, event_name: eventName },
+            timeout: 10000,
+        }));
+        return response.data;
+    }
     async trackFbConversionEventClient(fbPixelId, fbPixelAccessToken, data) {
         var _a, _b, _c, _d, _e;
         const fbEndpoint = `https://graph.facebook.com/v22.0/${fbPixelId}/events`;
         try {
             const response = await (0, rxjs_1.firstValueFrom)(this.httpService.post(fbEndpoint, data, {
                 params: { access_token: fbPixelAccessToken },
+                timeout: 10000,
             }));
             return response.data;
         }

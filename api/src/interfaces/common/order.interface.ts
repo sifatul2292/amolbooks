@@ -24,6 +24,9 @@ export interface Order {
   metaPurchaseAttemptCount?: number;
   metaPurchaseSentAt?: Date;
   metaPurchaseError?: string;
+  metaPurchaseDeliveryChannel?: 'tagioo' | 'direct_meta_fallback';
+  tagiooPurchaseEventId?: string;
+  tagiooPurchaseError?: string;
   orderedItems: OrderedItem[];
   subTotal: number;
   area?: Area;

@@ -84,12 +84,12 @@ export declare const DELIVERY_CHARGE_SETTING: mongoose.Schema<any, mongoose.Mode
 }>, {
     name?: string;
     status?: string;
+    note?: string;
     type?: string;
     city?: string;
     insideCity?: number;
     outsideCity?: number;
     freeDeliveryMinAmount?: number;
-    note?: string;
     isAdvancePayment?: boolean;
 }>;
 export declare const PACKAGE_ITEMS: mongoose.Schema<any, mongoose.Model<any, any, any, any, any>, {}, {}, {}, {}, mongoose.ResolveSchemaOptions<{
@@ -141,6 +141,7 @@ export declare const ORDER_ITEM_SCHEMA: mongoose.Schema<any, mongoose.Model<any,
     };
     regularPrice?: number;
     image?: string;
+    costPriceAtOrder?: number;
     unit?: string;
     isGift?: boolean;
 }>;
@@ -225,6 +226,7 @@ export declare const PRODUCT_DISCOUNT_OPTIONS1: mongoose.Schema<any, mongoose.Mo
         redeemValue?: number;
         discountStartDateTime?: Date;
         discountEndDateTime?: Date;
+        totalSold?: number;
         hasVariations?: boolean;
         unit?: string;
         slug2?: string;
@@ -237,7 +239,6 @@ export declare const PRODUCT_DISCOUNT_OPTIONS1: mongoose.Schema<any, mongoose.Mo
         }>;
         videoUrl?: string;
         specifications?: any[];
-        totalSold?: number;
         ratingAvr?: number;
         ratingCount?: number;
         ratingTotal?: number;

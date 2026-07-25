@@ -19,6 +19,7 @@ const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const config_1 = require("@nestjs/config");
 const utils_service_1 = require("../../shared/utils/utils.service");
+const special_package_price_util_1 = require("../../shared/utils/special-package-price.util");
 const ObjectId = mongoose_2.Types.ObjectId;
 let CartService = CartService_1 = class CartService {
     constructor(userModel, cartModel, specialPackageModel, productModel, configService, utilsService) {
@@ -133,14 +134,21 @@ let CartService = CartService_1 = class CartService {
             const data = await this.cartModel
                 .find({ user: user._id })
                 .populate('product', 'name nameEn slug description salePrice sku tax discountType discountAmount images quantity trackQuantity category subCategory brand tags unit weight')
-                .populate('specialPackage');
+                .populate({
+                path: 'specialPackage',
+                populate: {
+                    path: 'products.product',
+                    select: 'salePrice discountType discountAmount variationsOptions hasVariations',
+                },
+            });
             const finalData = [];
             if (data && data.length) {
                 data.map(async (item) => {
                     if (item.cartType == 1 && item.specialPackage != null) {
                         const images = [item.specialPackage.image];
+                        const specialPackage = (0, special_package_price_util_1.withCalculatedSpecialPackageSubtotal)(item.specialPackage);
                         item = Object.assign(Object.assign({}, item._doc), {
-                            product: Object.assign(Object.assign({}, item.specialPackage._doc), { images: images }),
+                            product: Object.assign(Object.assign({}, specialPackage), { images: images }),
                         });
                         delete item.comboPackage;
                         delete item['product']['image'];
@@ -387,8 +395,10 @@ let CartService = CartService_1 = class CartService {
             const finalCartItems = [];
             for (const item of cartItemDto) {
                 if (item.cartType === 1) {
-                    const comboData = await this.specialPackageModel.findById(item.specialPackage);
-                    const jComboData = JSON.parse(JSON.stringify(comboData));
+                    const comboData = await this.specialPackageModel
+                        .findById(item.specialPackage)
+                        .populate('products.product', 'salePrice discountType discountAmount variationsOptions hasVariations');
+                    const jComboData = (0, special_package_price_util_1.withCalculatedSpecialPackageSubtotal)(comboData);
                     const cCartItem = {
                         product: {
                             _id: jComboData._id,

@@ -20,8 +20,22 @@ const mongoose_2 = require("mongoose");
 const config_1 = require("@nestjs/config");
 const utils_service_1 = require("../../shared/utils/utils.service");
 const error_code_enum_1 = require("../../enum/error-code.enum");
+const moment = require("moment-timezone");
 const ObjectId = mongoose_2.Types.ObjectId;
+const DASHBOARD_TIME_ZONE = 'Asia/Dhaka';
 let DashboardService = DashboardService_1 = class DashboardService {
+    getDashboardDateRange(startDate, endDate) {
+        return {
+            start: moment
+                .tz(startDate, 'YYYY-MM-DD', true, DASHBOARD_TIME_ZONE)
+                .startOf('day')
+                .toDate(),
+            end: moment
+                .tz(endDate, 'YYYY-MM-DD', true, DASHBOARD_TIME_ZONE)
+                .endOf('day')
+                .toDate(),
+        };
+    }
     constructor(adminModel, userModel, productModel, orderModel, manualSaleModel, configService, utilsService) {
         this.adminModel = adminModel;
         this.userModel = userModel;
@@ -579,9 +593,7 @@ let DashboardService = DashboardService_1 = class DashboardService {
     }
     async getTopProducts(startDate, endDate) {
         try {
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-            end.setHours(23, 59, 59, 999);
+            const { start, end } = this.getDashboardDateRange(startDate, endDate);
             const rows = await this.orderModel.aggregate([
                 {
                     $match: {
@@ -611,9 +623,7 @@ let DashboardService = DashboardService_1 = class DashboardService {
     }
     async getProductsSold(startDate, endDate) {
         try {
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-            end.setHours(23, 59, 59, 999);
+            const { start, end } = this.getDashboardDateRange(startDate, endDate);
             const rows = await this.orderModel.aggregate([
                 {
                     $match: {
@@ -660,9 +670,7 @@ let DashboardService = DashboardService_1 = class DashboardService {
     }
     async getProfitAnalytics(startDate, endDate) {
         try {
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-            end.setHours(23, 59, 59, 999);
+            const { start, end } = this.getDashboardDateRange(startDate, endDate);
             const daily = await this.orderModel.aggregate([
                 {
                     $match: {
@@ -766,14 +774,44 @@ let DashboardService = DashboardService_1 = class DashboardService {
         return { success: true, data: records };
     }
     async addManualSale(body) {
+        const nonNegative = (value, fallback = 0) => {
+            const parsed = Number(value);
+            return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+        };
         const record = await this.manualSaleModel.create({
             date: body.date,
-            revenue: body.revenue || 0,
-            cost: body.cost || 0,
-            deliveryCharge: body.deliveryCharge || 0,
-            orders: body.orders || 1,
+            revenue: nonNegative(body.revenue),
+            cost: body.cost === '' || body.cost == null
+                ? undefined
+                : nonNegative(body.cost),
+            deliveryCharge: nonNegative(body.deliveryCharge),
+            actualCourierCost: body.actualCourierCost === '' || body.actualCourierCost == null
+                ? undefined
+                : nonNegative(body.actualCourierCost),
+            packagingCost: body.packagingCost === '' || body.packagingCost == null
+                ? undefined
+                : nonNegative(body.packagingCost),
+            paymentFee: body.paymentFee === '' || body.paymentFee == null
+                ? undefined
+                : nonNegative(body.paymentFee),
+            refundAmount: body.refundAmount === '' || body.refundAmount == null
+                ? undefined
+                : nonNegative(body.refundAmount),
+            returnLoss: body.returnLoss === '' || body.returnLoss == null
+                ? undefined
+                : nonNegative(body.returnLoss),
+            orders: Math.max(1, Math.floor(nonNegative(body.orders, 1))),
             source: body.source || 'whatsapp',
-            note: body.note || '',
+            campaign: String(body.campaign || '').slice(0, 200),
+            customerPhone: String(body.customerPhone || '').slice(0, 30),
+            paymentStatus: ['paid', 'unpaid', 'partial'].includes(body.paymentStatus)
+                ? body.paymentStatus
+                : 'unpaid',
+            outcome: ['active', 'delivered', 'cancelled', 'refunded', 'returned'].includes(body.outcome)
+                ? body.outcome
+                : 'active',
+            products: Array.isArray(body.products) ? body.products.slice(0, 50) : [],
+            note: String(body.note || '').slice(0, 500),
         });
         return { success: true, data: record };
     }

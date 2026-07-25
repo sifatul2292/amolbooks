@@ -14,12 +14,29 @@ export interface Order {
     courierLink: string;
     shippingAddress: string;
     paymentType: string;
+    orderFrom?: string;
+    manualOrderSource?: string;
+    manualOrderRequestId?: string;
+    metaPurchaseStatus?: 'sending' | 'sent' | 'failed';
+    metaPurchaseEventId?: string;
+    metaPurchaseLastAttemptAt?: Date;
+    metaPurchaseAttemptCount?: number;
+    metaPurchaseSentAt?: Date;
+    metaPurchaseError?: string;
+    metaPurchaseDeliveryChannel?: 'tagioo' | 'direct_meta_fallback';
+    tagiooPurchaseEventId?: string;
+    tagiooPurchaseError?: string;
     orderedItems: OrderedItem[];
     subTotal: number;
     area?: Area;
     division?: Division;
     zone?: Zone;
     deliveryCharge: number;
+    actualCourierCost?: number;
+    packagingCost?: number;
+    paymentFee?: number;
+    refundAmount?: number;
+    returnLoss?: number;
     weightBasedDeliveryCharge?: number;
     discount: number;
     grandTotal: number;
@@ -39,6 +56,13 @@ export interface Order {
     productDiscount?: number;
     note?: string;
     adminNote?: string;
+    stockDecremented?: boolean;
+    stockRestocked?: boolean;
+    attribution?: {
+        anonymousId?: string;
+        firstTouch?: OrderAttributionTouch;
+        lastTouch?: OrderAttributionTouch;
+    };
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -56,6 +80,21 @@ export interface OrderedItem {
     unitPrice: number;
     quantity: number;
     orderType: string;
+    costPriceAtOrder?: number;
+}
+export interface OrderAttributionTouch {
+    source?: string;
+    medium?: string;
+    campaign?: string;
+    campaignId?: string;
+    adSet?: string;
+    adSetId?: string;
+    ad?: string;
+    adId?: string;
+    landingPage?: string;
+    referrer?: string;
+    fbclid?: string;
+    capturedAt?: Date;
 }
 export interface OrderTimeline {
     confirmed: OrderTimelineType;

@@ -66,6 +66,56 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], AddOrderDto.prototype, "incompleteOrderId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsObject)(),
+    __metadata("design:type", Object)
+], AddOrderDto.prototype, "attribution", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsIn)([
+        'whatsapp',
+        'whatsapp_ad',
+        'phone',
+        'facebook',
+        'instagram',
+        'email',
+        'walk_in',
+        'other',
+    ]),
+    __metadata("design:type", String)
+], AddOrderDto.prototype, "manualOrderSource", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], AddOrderDto.prototype, "manualOrderRequestId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], AddOrderDto.prototype, "actualCourierCost", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], AddOrderDto.prototype, "packagingCost", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], AddOrderDto.prototype, "paymentFee", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], AddOrderDto.prototype, "refundAmount", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], AddOrderDto.prototype, "returnLoss", void 0);
 exports.AddOrderDto = AddOrderDto;
 class FilterOrderDto {
 }

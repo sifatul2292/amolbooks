@@ -9,6 +9,11 @@ export declare class OrderController {
     private logger;
     constructor(orderService: OrderService);
     addOrder(addOrderDto: AddOrderDto, admin: Admin): Promise<ResponsePayload>;
+    trackManualOrderMeta(id: string, body: {
+        manualOrderSource?: string;
+    }, admin: Admin): Promise<ResponsePayload>;
+    addAiAssistOrder(addOrderDto: AddOrderDto, admin: Admin): Promise<ResponsePayload>;
+    getManualOrderRequestStatus(requestId: string, admin: Admin): Promise<ResponsePayload>;
     updateDate(): Promise<ResponsePayload>;
     checkFraudSpy(body: {
         phone: string;

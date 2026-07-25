@@ -29,11 +29,21 @@ export declare const ManualSaleSchema: Schema<any, import("mongoose").Model<any,
     createdAt: NativeDate;
     updatedAt: NativeDate;
 } & {
-    date: string;
+    products: any[];
     note: string;
+    date: string;
+    source: "whatsapp" | "phone" | "other";
+    campaign: string;
+    paymentStatus: "partial" | "unpaid" | "paid";
     deliveryCharge: number;
     revenue: number;
-    cost: number;
     orders: number;
-    source: "phone" | "whatsapp" | "other";
+    customerPhone: string;
+    outcome: "active" | "delivered" | "cancelled" | "refunded" | "returned";
+    actualCourierCost?: number;
+    packagingCost?: number;
+    paymentFee?: number;
+    refundAmount?: number;
+    returnLoss?: number;
+    cost?: number;
 }>;

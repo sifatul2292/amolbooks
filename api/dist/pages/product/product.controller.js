@@ -25,6 +25,7 @@ const admin_jwt_auth_guard_1 = require("../../guards/admin-jwt-auth.guard");
 const product_service_1 = require("./product.service");
 const product_dto_1 = require("../../dto/product.dto");
 const mongo_id_validation_pipe_1 = require("../../pipes/mongo-id-validation.pipe");
+const stock_dto_1 = require("../../dto/stock.dto");
 let ProductController = ProductController_1 = class ProductController {
     constructor(productService) {
         this.productService = productService;
@@ -44,6 +45,29 @@ let ProductController = ProductController_1 = class ProductController {
     }
     async getAllProducts(filterProductDto, searchString) {
         return this.productService.getAllProducts(filterProductDto, searchString);
+    }
+    async getStockList(query) {
+        return await this.productService.getStockList(query);
+    }
+    async getUrgentStock(query) {
+        return await this.productService.getUrgentStock(query);
+    }
+    async updateStock(id, body, req) {
+        const user = req.user;
+        return await this.productService.updateStock(id, body, {
+            _id: user === null || user === void 0 ? void 0 : user._id,
+            name: user === null || user === void 0 ? void 0 : user.username,
+        });
+    }
+    async addStockPurchase(body, req) {
+        const user = req.user;
+        return await this.productService.addStockPurchase(body, {
+            _id: user === null || user === void 0 ? void 0 : user._id,
+            name: user === null || user === void 0 ? void 0 : user.username,
+        });
+    }
+    async getStockMovements(query) {
+        return await this.productService.getStockMovements(query);
     }
     async getProductByIds(getProductByIdsDto, select) {
         return await this.productService.getProductByIds(getProductByIdsDto, select);
@@ -154,6 +178,50 @@ __decorate([
     __metadata("design:paramtypes", [product_dto_1.FilterAndPaginationProductDto, String]),
     __metadata("design:returntype", Promise)
 ], ProductController.prototype, "getAllProducts", null);
+__decorate([
+    (0, common_1.Get)('/stock-list'),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], ProductController.prototype, "getStockList", null);
+__decorate([
+    (0, common_1.Get)('/stock-urgent'),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], ProductController.prototype, "getUrgentStock", null);
+__decorate([
+    (0, common_1.Put)('/stock/:id'),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __param(0, (0, common_1.Param)('id', mongo_id_validation_pipe_1.MongoIdValidationPipe)),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, stock_dto_1.UpdateStockDto, Object]),
+    __metadata("design:returntype", Promise)
+], ProductController.prototype, "updateStock", null);
+__decorate([
+    (0, common_1.Post)('/stock/purchase'),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    (0, common_1.UsePipes)(common_1.ValidationPipe),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [stock_dto_1.CreateStockPurchaseDto, Object]),
+    __metadata("design:returntype", Promise)
+], ProductController.prototype, "addStockPurchase", null);
+__decorate([
+    (0, common_1.Get)('/stock/movements'),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [stock_dto_1.GetStockMovementsDto]),
+    __metadata("design:returntype", Promise)
+], ProductController.prototype, "getStockMovements", null);
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Post)('/get-products-by-ids'),

@@ -94,6 +94,7 @@ let MetaAdsService = MetaAdsService_1 = class MetaAdsService {
         });
     }
     async syncSpend(startDate, endDate) {
+        var _a, _b;
         const token = await this.tokenModel.findOne().lean();
         if (!(token === null || token === void 0 ? void 0 : token.accessToken))
             throw new common_1.InternalServerErrorException('Meta not connected');
@@ -104,10 +105,11 @@ let MetaAdsService = MetaAdsService_1 = class MetaAdsService {
         const until = endDate || this.daysAgo(1);
         const qs = new URLSearchParams({
             access_token: token.accessToken,
-            fields: 'spend,date_start',
+            fields: 'spend,date_start,campaign_id,campaign_name,adset_id,adset_name,ad_id,ad_name',
+            level: 'ad',
             time_increment: '1',
             time_range: JSON.stringify({ since, until }),
-            limit: '100',
+            limit: '500',
         });
         const fullUrl = `https://graph.facebook.com/v20.0/${token.adAccountId}/insights?${qs.toString()}`;
         let rawBody;
@@ -126,7 +128,7 @@ let MetaAdsService = MetaAdsService_1 = class MetaAdsService {
         try {
             parsed = JSON.parse(rawBody);
         }
-        catch (_a) {
+        catch (_c) {
             return {
                 synced: 0,
                 error: `Meta returned non-JSON (HTTP ${httpStatus}). Body: ${rawBody.slice(0, 150)}`,
@@ -149,17 +151,53 @@ let MetaAdsService = MetaAdsService_1 = class MetaAdsService {
         if (!parsed || !Array.isArray(parsed.data)) {
             return { synced: 0, error: 'Unexpected Meta response shape. Reconnect Meta and try again.', adAccountId: token.adAccountId, since, until };
         }
-        const rows = parsed.data || [];
-        let synced = 0;
-        for (const row of rows) {
-            const spend = parseFloat(row.spend) || 0;
-            if (spend > 0) {
-                await this.spendModel.findOneAndUpdate({ date: row.date_start }, { date: row.date_start, spend, source: 'api' }, { upsert: true, new: true });
-                synced++;
+        const rows = [...(parsed.data || [])];
+        let nextUrl = (_a = parsed.paging) === null || _a === void 0 ? void 0 : _a.next;
+        let pages = 1;
+        while (nextUrl && pages < 50) {
+            try {
+                const nextResult = await this.httpsGet(nextUrl);
+                const nextPage = JSON.parse(nextResult.body);
+                if ((nextPage === null || nextPage === void 0 ? void 0 : nextPage.error) || !Array.isArray(nextPage === null || nextPage === void 0 ? void 0 : nextPage.data)) {
+                    this.logger.warn('Meta pagination stopped on page ' + (pages + 1) + '.');
+                    break;
+                }
+                rows.push(...nextPage.data);
+                nextUrl = (_b = nextPage.paging) === null || _b === void 0 ? void 0 : _b.next;
+                pages++;
+            }
+            catch (error) {
+                this.logger.warn('Meta pagination failed on page ' + (pages + 1) + ': ' + ((error === null || error === void 0 ? void 0 : error.message) || error));
+                break;
             }
         }
+        if (nextUrl)
+            this.logger.warn('Meta insights pagination reached the 50-page safety limit.');
+        const byDate = new Map();
+        rows.forEach((row) => {
+            const spend = parseFloat(row.spend) || 0;
+            if (!row.date_start || spend <= 0)
+                return;
+            if (!byDate.has(row.date_start))
+                byDate.set(row.date_start, []);
+            byDate.get(row.date_start).push({
+                campaignId: row.campaign_id || '',
+                campaignName: row.campaign_name || 'Unlabelled campaign',
+                adSetId: row.adset_id || '',
+                adSetName: row.adset_name || '',
+                adId: row.ad_id || '',
+                adName: row.ad_name || '',
+                spend,
+            });
+        });
+        let synced = 0;
+        for (const [date, breakdown] of byDate.entries()) {
+            const spend = breakdown.reduce((sum, row) => sum + row.spend, 0);
+            await this.spendModel.findOneAndUpdate({ date }, { date, spend, source: 'api', currency: 'BDT', breakdown }, { upsert: true, new: true });
+            synced++;
+        }
         await this.tokenModel.findOneAndUpdate({}, { lastSync: new Date() });
-        return { synced, since, until, adAccountId: token.adAccountId, rawRows: rows.length };
+        return { synced, since, until, adAccountId: token.adAccountId, rawRows: rows.length, pages };
     }
     async getSpend(startDate, endDate) {
         const records = await this.spendModel
@@ -167,10 +205,25 @@ let MetaAdsService = MetaAdsService_1 = class MetaAdsService {
             .sort({ date: 1 })
             .lean();
         const total = records.reduce((s, r) => s + (r.spend || 0), 0);
-        return { success: true, data: { daily: records, total } };
+        const campaignMap = new Map();
+        records.forEach((record) => {
+            (record.breakdown || []).forEach((row) => {
+                const key = row.campaignId || row.campaignName || 'unknown';
+                if (!campaignMap.has(key)) {
+                    campaignMap.set(key, {
+                        campaignId: row.campaignId || '',
+                        campaignName: row.campaignName || 'Unlabelled campaign',
+                        spend: 0,
+                    });
+                }
+                campaignMap.get(key).spend += row.spend || 0;
+            });
+        });
+        const campaigns = Array.from(campaignMap.values()).sort((a, b) => b.spend - a.spend);
+        return { success: true, data: { daily: records, total, campaigns } };
     }
     async saveManualSpend(date, spend) {
-        const record = await this.spendModel.findOneAndUpdate({ date }, { date, spend, source: 'manual' }, { upsert: true, new: true });
+        const record = await this.spendModel.findOneAndUpdate({ date }, { date, spend, source: 'manual', currency: 'BDT', breakdown: [] }, { upsert: true, new: true });
         return { success: true, data: record };
     }
     async deleteSpend(id) {

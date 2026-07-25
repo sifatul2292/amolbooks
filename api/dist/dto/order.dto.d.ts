@@ -10,6 +10,14 @@ export declare class AddOrderDto {
     user: string;
     coupon: string;
     incompleteOrderId: string;
+    attribution: any;
+    manualOrderSource: string;
+    manualOrderRequestId: string;
+    actualCourierCost: number;
+    packagingCost: number;
+    paymentFee: number;
+    refundAmount: number;
+    returnLoss: number;
 }
 export declare class FilterOrderDto {
     name: string;

@@ -20,18 +20,18 @@ export declare const UserSchema: mongoose.Schema<any, mongoose.Model<any, any, a
         name?: string;
     };
     email?: string;
-    gender?: string;
-    profileImg?: string;
     phoneNo?: string;
-    birthDate?: string;
-    registrationType?: string;
-    addressLine?: string;
-    area?: {
-        _id?: mongoose.Types.ObjectId;
-        name?: string;
-    };
     zone?: {
         _id?: mongoose.Types.ObjectId;
         name?: string;
     };
+    area?: {
+        _id?: mongoose.Types.ObjectId;
+        name?: string;
+    };
+    gender?: string;
+    profileImg?: string;
+    birthDate?: string;
+    registrationType?: string;
+    addressLine?: string;
 }>;

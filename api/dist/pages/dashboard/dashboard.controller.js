@@ -16,13 +16,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DashboardController = void 0;
 const common_1 = require("@nestjs/common");
 const dashboard_service_1 = require("./dashboard.service");
+const decision_dashboard_service_1 = require("./decision-dashboard.service");
 const admin_roles_guard_1 = require("../../guards/admin-roles.guard");
 const admin_roles_enum_1 = require("../../enum/admin-roles.enum");
 const admin_roles_decorator_1 = require("../../decorator/admin-roles.decorator");
 const admin_jwt_auth_guard_1 = require("../../guards/admin-jwt-auth.guard");
 let DashboardController = DashboardController_1 = class DashboardController {
-    constructor(dashboardService) {
+    constructor(dashboardService, decisionDashboardService) {
         this.dashboardService = dashboardService;
+        this.decisionDashboardService = decisionDashboardService;
         this.logger = new common_1.Logger(DashboardController_1.name);
     }
     async getAdminDashboard(searchString) {
@@ -50,6 +52,15 @@ let DashboardController = DashboardController_1 = class DashboardController {
     }
     async getProfitAnalytics(startDate, endDate) {
         return await this.dashboardService.getProfitAnalytics(startDate, endDate);
+    }
+    async getDecisionAnalytics(startDate, endDate) {
+        return this.decisionDashboardService.getDecisionAnalytics(startDate, endDate);
+    }
+    async saveOrderCosts(orderId, body) {
+        return this.decisionDashboardService.saveOrderCosts(orderId, body);
+    }
+    markRecommendationActedOn(body) {
+        return this.decisionDashboardService.markRecommendationActedOn(body);
     }
     async getProductsSold(startDate, endDate) {
         return await this.dashboardService.getProductsSold(startDate, endDate);
@@ -103,6 +114,9 @@ __decorate([
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Get)('profit-analytics'),
+    (0, admin_roles_decorator_1.AdminMetaRoles)(admin_roles_enum_1.AdminRoles.SUPER_ADMIN, admin_roles_enum_1.AdminRoles.ADMIN),
+    (0, common_1.UseGuards)(admin_roles_guard_1.AdminRolesGuard),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
     __param(0, (0, common_1.Query)('startDate')),
     __param(1, (0, common_1.Query)('endDate')),
     __metadata("design:type", Function),
@@ -110,8 +124,46 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], DashboardController.prototype, "getProfitAnalytics", null);
 __decorate([
+    (0, common_1.Version)('2'),
+    (0, common_1.Get)('decision-analytics'),
+    (0, admin_roles_decorator_1.AdminMetaRoles)(admin_roles_enum_1.AdminRoles.SUPER_ADMIN, admin_roles_enum_1.AdminRoles.ADMIN),
+    (0, common_1.UseGuards)(admin_roles_guard_1.AdminRolesGuard),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __param(0, (0, common_1.Query)('startDate')),
+    __param(1, (0, common_1.Query)('endDate')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], DashboardController.prototype, "getDecisionAnalytics", null);
+__decorate([
+    (0, common_1.Version)('2'),
+    (0, common_1.Post)('order-costs/:orderId'),
+    (0, admin_roles_decorator_1.AdminMetaRoles)(admin_roles_enum_1.AdminRoles.SUPER_ADMIN, admin_roles_enum_1.AdminRoles.ADMIN),
+    (0, common_1.UseGuards)(admin_roles_guard_1.AdminRolesGuard),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __param(0, (0, common_1.Param)('orderId')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], DashboardController.prototype, "saveOrderCosts", null);
+__decorate([
+    (0, common_1.Post)('recommendation-actions'),
+    (0, common_1.Version)('2'),
+    (0, admin_roles_decorator_1.AdminMetaRoles)(admin_roles_enum_1.AdminRoles.SUPER_ADMIN, admin_roles_enum_1.AdminRoles.ADMIN),
+    (0, common_1.UseGuards)(admin_roles_guard_1.AdminRolesGuard),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], DashboardController.prototype, "markRecommendationActedOn", null);
+__decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Get)('products-sold'),
+    (0, admin_roles_decorator_1.AdminMetaRoles)(admin_roles_enum_1.AdminRoles.SUPER_ADMIN, admin_roles_enum_1.AdminRoles.ADMIN),
+    (0, common_1.UseGuards)(admin_roles_guard_1.AdminRolesGuard),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
     __param(0, (0, common_1.Query)('startDate')),
     __param(1, (0, common_1.Query)('endDate')),
     __metadata("design:type", Function),
@@ -121,6 +173,9 @@ __decorate([
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Get)('top-products'),
+    (0, admin_roles_decorator_1.AdminMetaRoles)(admin_roles_enum_1.AdminRoles.SUPER_ADMIN, admin_roles_enum_1.AdminRoles.ADMIN),
+    (0, common_1.UseGuards)(admin_roles_guard_1.AdminRolesGuard),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
     __param(0, (0, common_1.Query)('startDate')),
     __param(1, (0, common_1.Query)('endDate')),
     __metadata("design:type", Function),
@@ -130,6 +185,9 @@ __decorate([
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Get)('manual-sales'),
+    (0, admin_roles_decorator_1.AdminMetaRoles)(admin_roles_enum_1.AdminRoles.SUPER_ADMIN, admin_roles_enum_1.AdminRoles.ADMIN),
+    (0, common_1.UseGuards)(admin_roles_guard_1.AdminRolesGuard),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
     __param(0, (0, common_1.Query)('startDate')),
     __param(1, (0, common_1.Query)('endDate')),
     __metadata("design:type", Function),
@@ -139,6 +197,9 @@ __decorate([
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Post)('manual-sales'),
+    (0, admin_roles_decorator_1.AdminMetaRoles)(admin_roles_enum_1.AdminRoles.SUPER_ADMIN, admin_roles_enum_1.AdminRoles.ADMIN),
+    (0, common_1.UseGuards)(admin_roles_guard_1.AdminRolesGuard),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -147,6 +208,9 @@ __decorate([
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Delete)('manual-sales/:id'),
+    (0, admin_roles_decorator_1.AdminMetaRoles)(admin_roles_enum_1.AdminRoles.SUPER_ADMIN, admin_roles_enum_1.AdminRoles.ADMIN),
+    (0, common_1.UseGuards)(admin_roles_guard_1.AdminRolesGuard),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -154,7 +218,8 @@ __decorate([
 ], DashboardController.prototype, "deleteManualSale", null);
 DashboardController = DashboardController_1 = __decorate([
     (0, common_1.Controller)('dashboard'),
-    __metadata("design:paramtypes", [dashboard_service_1.DashboardService])
+    __metadata("design:paramtypes", [dashboard_service_1.DashboardService,
+        decision_dashboard_service_1.DecisionDashboardService])
 ], DashboardController);
 exports.DashboardController = DashboardController;
 //# sourceMappingURL=dashboard.controller.js.map

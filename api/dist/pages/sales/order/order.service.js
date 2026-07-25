@@ -26,11 +26,14 @@ const email_service_1 = require("../../../shared/email/email.service");
 const product_enum_1 = require("../../../enum/product.enum");
 const courier_service_1 = require("../../../shared/courier/courier.service");
 const schedule = require("node-schedule");
+const crypto = require("crypto");
+const analytics_service_1 = require("../../../shared/analytics/analytics.service");
+const special_package_price_util_1 = require("../../../shared/utils/special-package-price.util");
 const ObjectId = mongoose_2.Types.ObjectId;
 const RECENT_BUYERS_TTL_MS = 120000;
 const recentBuyersCache = new Map();
 let OrderService = OrderService_1 = class OrderService {
-    constructor(adminModel, orderModel, incompleteOrderModel, productModel, specialPackageModel, uniqueIdModel, cartModel, userModel, settingModel, couponModel, courierService, shopInformationModel, orderOfferModel, configService, utilsService, bulkSmsService, emailService) {
+    constructor(adminModel, orderModel, incompleteOrderModel, productModel, specialPackageModel, uniqueIdModel, cartModel, userModel, settingModel, couponModel, courierService, shopInformationModel, orderOfferModel, stockMovementModel, configService, utilsService, bulkSmsService, emailService, analyticsService) {
         this.adminModel = adminModel;
         this.orderModel = orderModel;
         this.incompleteOrderModel = incompleteOrderModel;
@@ -44,22 +47,42 @@ let OrderService = OrderService_1 = class OrderService {
         this.courierService = courierService;
         this.shopInformationModel = shopInformationModel;
         this.orderOfferModel = orderOfferModel;
+        this.stockMovementModel = stockMovementModel;
         this.configService = configService;
         this.utilsService = utilsService;
         this.bulkSmsService = bulkSmsService;
         this.emailService = emailService;
+        this.analyticsService = analyticsService;
         this.logger = new common_1.Logger(OrderService_1.name);
         this.checkAndUpdateCourierStatus();
+        this.scheduleManualMetaPurchaseRetries();
     }
     async addOrderAdmin(admin, addOrderDto) {
         if (!admin || !admin._id) {
             this.logger.error('Admin data is missing in addOrderAdmin');
             throw new common_1.BadRequestException('Admin authentication failed: Admin data is missing');
         }
+        const manualOrderRequestId = String(addOrderDto.manualOrderRequestId || '').trim();
+        if (manualOrderRequestId) {
+            const existingOrder = await this.orderModel
+                .findOne({ manualOrderRequestId })
+                .select('_id orderId')
+                .maxTimeMS(5000)
+                .lean();
+            if (existingOrder) {
+                return {
+                    success: true,
+                    message: 'Order already created',
+                    data: existingOrder,
+                };
+            }
+        }
         let user;
         let mData;
-        const adminData = await this.adminModel.findById(admin._id);
-        const incOrder = await this.uniqueIdModel.findOneAndUpdate({}, { $inc: { orderId: 1 } }, { new: true, upsert: true });
+        const adminData = await this.adminModel
+            .findById(admin._id)
+            .maxTimeMS(5000);
+        const incOrder = await this.uniqueIdModel.findOneAndUpdate({}, { $inc: { orderId: 1 } }, { new: true, upsert: true, maxTimeMS: 5000 });
         const orderIdUnique = this.utilsService.padLeadingZeros(incOrder.orderId);
         const dataExtra = {
             orderId: orderIdUnique,
@@ -67,7 +90,9 @@ let OrderService = OrderService_1 = class OrderService {
             year: this.utilsService.getDateYear(new Date()),
         };
         if (addOrderDto.phoneNo && !addOrderDto.user) {
-            user = await this.userModel.findOne({ phoneNo: addOrderDto.phoneNo });
+            user = await this.userModel
+                .findOne({ phoneNo: addOrderDto.phoneNo })
+                .maxTimeMS(5000);
             if (user) {
                 mData = Object.assign(Object.assign(Object.assign({}, addOrderDto), dataExtra), { user: user._id });
             }
@@ -78,7 +103,12 @@ let OrderService = OrderService_1 = class OrderService {
         else {
             mData = Object.assign(Object.assign(Object.assign({}, addOrderDto), dataExtra), adminData);
         }
+        const adminManualSource = this.normalizeManualOrderSource(addOrderDto.manualOrderSource);
+        mData.manualOrderSource = adminManualSource;
+        mData.orderFrom =
+            mData.orderFrom || this.manualOrderLabel(adminManualSource);
         mData = this.normalizeAdminOrderData(mData);
+        mData.orderedItems = await this.attachCostSnapshots(mData.orderedItems);
         const newData = new this.orderModel(mData);
         try {
             const saveData = await newData.save();
@@ -86,83 +116,182 @@ let OrderService = OrderService_1 = class OrderService {
                 _id: saveData._id,
                 orderId: saveData.orderId,
             };
-            await this.cleanupIncompleteOrdersForPlacedOrder(saveData, addOrderDto.incompleteOrderId);
-            if (addOrderDto.incompleteOrderId) {
-                try {
-                    await this.markIncompleteOrderConverted(addOrderDto.incompleteOrderId, saveData.orderId);
-                }
-                catch (error) {
-                    this.logger.warn(`Order ${saveData.orderId} was created, but incomplete order conversion marking failed:`, (error === null || error === void 0 ? void 0 : error.message) || error);
-                }
-            }
-            if (addOrderDto.user) {
-                await this.cartModel.deleteMany({
-                    user: new ObjectId(addOrderDto.user),
-                });
-                await this.userModel.findOneAndUpdate({ _id: addOrderDto.user }, {
-                    $set: {
-                        carts: [],
-                    },
-                });
-                if (addOrderDto.coupon) {
-                    await this.userModel.findOneAndUpdate({ _id: addOrderDto.user }, {
-                        $push: {
-                            usedCoupons: addOrderDto.coupon,
-                        },
-                    });
-                }
-            }
-            for (const f of (addOrderDto['orderedItems'] || [])) {
-                try {
-                    if (!(f === null || f === void 0 ? void 0 : f._id) || !ObjectId.isValid(f._id)) {
-                        this.logger.warn(`Skipping stock update for order ${saveData.orderId}: invalid product id ${f === null || f === void 0 ? void 0 : f._id}`);
-                        continue;
-                    }
-                    const quantity = Number(f.quantity) || 0;
-                    if (quantity <= 0) {
-                        continue;
-                    }
-                    const product = await this.productModel.findById(f._id);
-                    if (!product) {
-                        this.logger.warn(`Skipping stock update for order ${saveData.orderId}: product ${f._id} not found`);
-                        continue;
-                    }
-                    await this.productModel.findByIdAndUpdate(f._id, {
-                        $inc: Object.assign(Object.assign({}, (product.quantity > 0 ? { quantity: -quantity } : {})), { totalSold: quantity }),
-                    });
-                }
-                catch (error) {
-                    this.logger.warn(`Order ${saveData.orderId} was created, but stock update failed for product ${f === null || f === void 0 ? void 0 : f._id}:`, (error === null || error === void 0 ? void 0 : error.message) || error);
-                }
-            }
             const response = {
                 success: true,
                 message: 'Order Added Success',
                 data,
             };
-            if (addOrderDto.incompleteOrderId) {
-                try {
-                    await this.markIncompleteOrderConverted(addOrderDto.incompleteOrderId, saveData.orderId);
-                }
-                catch (error) {
-                    this.logger.warn(`Order ${saveData.orderId} was created, but incomplete order conversion marking failed:`, (error === null || error === void 0 ? void 0 : error.message) || error);
-                }
-            }
+            this.processAdminOrderBookkeeping(saveData, addOrderDto).catch((error) => {
+                this.logger.error(`Admin bookkeeping failed for order ${saveData.orderId}:`, error);
+            });
+            this.sendManualOrderToMeta(saveData, adminManualSource).catch((error) => {
+                this.logger.error(`Manual-order CAPI task failed for order ${saveData.orderId}:`, error);
+            });
             this.processOrderBackgroundTasks(saveData, addOrderDto).catch((error) => {
                 this.logger.error(`Error in background order processing for order ${saveData.orderId}:`, error);
             });
             return response;
         }
         catch (error) {
+            if (manualOrderRequestId && Number(error === null || error === void 0 ? void 0 : error.code) === 11000) {
+                const existingOrder = await this.orderModel
+                    .findOne({ manualOrderRequestId })
+                    .select('_id orderId')
+                    .maxTimeMS(5000)
+                    .lean();
+                if (existingOrder) {
+                    return {
+                        success: true,
+                        message: 'Order already created',
+                        data: existingOrder,
+                    };
+                }
+            }
             console.log(error);
             throw new common_1.InternalServerErrorException(error.message);
         }
+    }
+    async processAdminOrderBookkeeping(saveData, addOrderDto) {
+        if (addOrderDto.incompleteOrderId) {
+            try {
+                await this.markIncompleteOrderConverted(addOrderDto.incompleteOrderId, saveData.orderId);
+            }
+            catch (error) {
+                this.logger.warn(`Order ${saveData.orderId} was created, but incomplete order conversion marking failed:`, (error === null || error === void 0 ? void 0 : error.message) || error);
+            }
+        }
+        for (const item of (addOrderDto['orderedItems'] || [])) {
+            try {
+                if (!(item === null || item === void 0 ? void 0 : item._id) || !ObjectId.isValid(item._id))
+                    continue;
+                const quantity = Number(item.quantity) || 0;
+                if (quantity <= 0)
+                    continue;
+                await this.productModel.findByIdAndUpdate(item._id, {
+                    $inc: { totalSold: quantity },
+                });
+            }
+            catch (error) {
+                this.logger.warn(`Order ${saveData.orderId} was created, but totalSold update failed for product ${item === null || item === void 0 ? void 0 : item._id}:`, (error === null || error === void 0 ? void 0 : error.message) || error);
+            }
+        }
+    }
+    async trackManualOrderMetaAdmin(admin, orderId, source) {
+        if (!admin || !admin._id) {
+            throw new common_1.BadRequestException('Admin authentication failed');
+        }
+        const order = await this.orderModel.findById(orderId);
+        if (!order)
+            throw new common_1.NotFoundException('Order not found');
+        const manualOrderSource = this.normalizeManualOrderSource(source || 'whatsapp');
+        await this.orderModel.updateOne({ _id: order._id }, {
+            $set: {
+                orderFrom: this.manualOrderLabel(manualOrderSource),
+                manualOrderSource,
+            },
+        });
+        await this.sendManualOrderToMeta(order, manualOrderSource);
+        const result = await this.orderModel
+            .findById(order._id)
+            .select('metaPurchaseStatus metaPurchaseEventId metaPurchaseError metaPurchaseDeliveryChannel tagiooPurchaseEventId tagiooPurchaseError')
+            .lean();
+        const sent = (result === null || result === void 0 ? void 0 : result.metaPurchaseStatus) === 'sent';
+        return {
+            success: sent,
+            message: sent
+                ? (result === null || result === void 0 ? void 0 : result.metaPurchaseDeliveryChannel) === 'tagioo'
+                    ? 'Manual Purchase accepted by Tagioo'
+                    : 'Manual Purchase sent through direct Meta fallback'
+                : (result === null || result === void 0 ? void 0 : result.metaPurchaseError) || 'Manual Purchase was not sent to Meta',
+            data: result,
+        };
+    }
+    async getManualOrderRequestStatusAdmin(admin, requestId) {
+        if (!admin || !admin._id) {
+            throw new common_1.BadRequestException('Admin authentication failed');
+        }
+        const normalizedRequestId = String(requestId || '').trim().slice(0, 120);
+        if (!/^ai_[A-Za-z0-9_-]+$/.test(normalizedRequestId)) {
+            throw new common_1.BadRequestException('Invalid manual order request ID');
+        }
+        const order = await this.orderModel
+            .findOne({ manualOrderRequestId: normalizedRequestId })
+            .select('_id orderId')
+            .maxTimeMS(5000)
+            .lean();
+        return {
+            success: true,
+            message: order ? 'Order created' : 'Order is still processing',
+            data: order
+                ? { status: 'completed', _id: order._id, orderId: order.orderId }
+                : { status: 'pending' },
+        };
+    }
+    async addAiAssistOrderAdmin(admin, addOrderDto) {
+        if (!admin || !admin._id) {
+            throw new common_1.BadRequestException('Admin authentication failed');
+        }
+        const rawCart = Array.isArray(addOrderDto.cartData)
+            ? addOrderDto.cartData
+            : [];
+        const selections = rawCart
+            .map((item) => ({
+            productId: String((item === null || item === void 0 ? void 0 : item.product) || ''),
+            quantity: Math.max(1, Math.floor(Number(item === null || item === void 0 ? void 0 : item.selectedQty) || 1)),
+        }))
+            .filter((item) => ObjectId.isValid(item.productId));
+        if (!selections.length) {
+            throw new common_1.BadRequestException('Please select at least one product');
+        }
+        const products = await this.productModel
+            .find({ _id: { $in: selections.map((item) => item.productId) } })
+            .maxTimeMS(8000)
+            .lean();
+        const productById = new Map(products.map((product) => [String(product._id), product]));
+        if (productById.size !==
+            new Set(selections.map((item) => item.productId)).size) {
+            throw new common_1.BadRequestException('One or more selected products are no longer available');
+        }
+        const orderedItems = selections.map((selection) => {
+            var _a;
+            const product = productById.get(selection.productId);
+            const regularPrice = this.utilsService.transform(product, 'regularPrice');
+            const salePrice = this.utilsService.transform(product, 'salePrice');
+            return {
+                _id: String(product._id),
+                name: product.name,
+                nameEn: product.nameEn,
+                slug: product.slug,
+                image: ((_a = product.images) === null || _a === void 0 ? void 0 : _a[0]) || null,
+                author: product.author,
+                category: product.category,
+                subCategory: product.subCategory,
+                publisher: product.publisher,
+                brand: product.brand,
+                regularPrice,
+                unitPrice: salePrice,
+                salePrice,
+                quantity: selection.quantity,
+                orderType: 'regular',
+                discountType: product.discountType,
+                discountAmount: product.discountAmount,
+            };
+        });
+        const subTotal = orderedItems.reduce((sum, item) => sum + item.regularPrice * item.quantity, 0);
+        const saleTotal = orderedItems.reduce((sum, item) => sum + item.salePrice * item.quantity, 0);
+        const deliveryCharge = Math.max(0, Number(addOrderDto.deliveryCharge) || 0);
+        const manualOrderDto = Object.assign(Object.assign({}, addOrderDto), { orderedItems,
+            subTotal, discount: Math.max(0, subTotal - saleTotal), deliveryCharge, grandTotal: saleTotal + deliveryCharge, paymentStatus: addOrderDto.paymentStatus || 'unpaid', orderStatus: order_enum_1.OrderStatus.PENDING, manualOrderSource: 'whatsapp', orderFrom: 'WhatsApp' });
+        return this.addOrderAdmin(admin, manualOrderDto);
     }
     async addOrder(addOrderDto) {
         try {
             let newOrderMake;
             const fraudCheckerData = null;
-            newOrderMake = await this.newOrderMake(addOrderDto);
+            const orderInput = Object.assign({}, addOrderDto);
+            orderInput.orderFrom = 'Website';
+            delete orderInput.manualOrderSource;
+            newOrderMake = await this.newOrderMake(orderInput);
             const incOrder = await this.uniqueIdModel.findOneAndUpdate({}, { $inc: { orderId: 1 } }, { new: true, upsert: true });
             const orderIdUnique = this.utilsService.padLeadingZeros(incOrder.orderId);
             const dataExtra = {
@@ -170,6 +299,7 @@ let OrderService = OrderService_1 = class OrderService {
                 month: this.utilsService.getDateMonth(false, new Date()),
                 year: this.utilsService.getDateYear(new Date()),
             };
+            newOrderMake.orderedItems = await this.attachCostSnapshots(newOrderMake.orderedItems);
             const mData = Object.assign(Object.assign({}, newOrderMake), dataExtra);
             const newData = new this.orderModel(mData);
             const saveData = await newData.save();
@@ -183,7 +313,7 @@ let OrderService = OrderService_1 = class OrderService {
                 message: 'Order Added Success',
                 data,
             };
-            this.processOrderBackgroundTasks(saveData, addOrderDto).catch((error) => {
+            this.processOrderBackgroundTasks(saveData, orderInput).catch((error) => {
                 this.logger.error(`Error in background order processing for order ${saveData.orderId}:`, error);
             });
             return response;
@@ -195,6 +325,10 @@ let OrderService = OrderService_1 = class OrderService {
     }
     async processOrderBackgroundTasks(saveData, addOrderDto) {
         try {
+            const stockDecremented = await this.decreaseProductStock(saveData._id, saveData === null || saveData === void 0 ? void 0 : saveData.orderedItems);
+            if (stockDecremented) {
+                await this.orderModel.updateOne({ _id: saveData._id }, { $set: { stockDecremented: true } });
+            }
             if (addOrderDto.phoneNo) {
                 try {
                     const fraudCheckerData = await this.courierService.checkFraudOrder(addOrderDto.phoneNo);
@@ -256,6 +390,285 @@ let OrderService = OrderService_1 = class OrderService {
             this.logger.error(`Error processing background tasks for order ${saveData.orderId}:`, error);
         }
     }
+    async sendManualOrderToMeta(saveData, manualOrderSource) {
+        const eventId = `order_${saveData.orderId}`;
+        const staleSendingBefore = new Date(Date.now() - 10 * 60 * 1000);
+        const claimedOrder = await this.orderModel.findOneAndUpdate({
+            _id: saveData._id,
+            $or: [
+                { metaPurchaseStatus: { $exists: false } },
+                { metaPurchaseStatus: 'failed' },
+                {
+                    metaPurchaseStatus: 'sending',
+                    metaPurchaseLastAttemptAt: { $lt: staleSendingBefore },
+                },
+            ],
+        }, {
+            $set: {
+                manualOrderSource,
+                metaPurchaseStatus: 'sending',
+                metaPurchaseEventId: eventId,
+                metaPurchaseLastAttemptAt: new Date(),
+            },
+            $inc: { metaPurchaseAttemptCount: 1 },
+            $unset: { metaPurchaseError: 1 },
+        }, { new: true });
+        if (!claimedOrder) {
+            this.logger.log(`Manual-order CAPI Purchase already claimed/sent for order ${saveData.orderId}`);
+            return;
+        }
+        let tagiooError = '';
+        try {
+            const hash = (value) => crypto
+                .createHash('sha256')
+                .update(String(value).trim().toLowerCase())
+                .digest('hex');
+            const phoneDigits = String(claimedOrder.phoneNo || '').replace(/\D/g, '');
+            const normalizedPhone = phoneDigits.startsWith('88')
+                ? phoneDigits
+                : `88${phoneDigits}`;
+            const nameParts = String(claimedOrder.name || '')
+                .trim()
+                .split(/\s+/)
+                .filter(Boolean);
+            const trackableItems = (claimedOrder.orderedItems || []).filter((item) => item === null || item === void 0 ? void 0 : item._id);
+            const contents = trackableItems.map((item) => {
+                var _a, _b;
+                return ({
+                    id: String(item._id),
+                    quantity: Math.max(1, Number(item.quantity) || 1),
+                    item_price: Number((_b = (_a = item.unitPrice) !== null && _a !== void 0 ? _a : item.salePrice) !== null && _b !== void 0 ? _b : 0),
+                });
+            });
+            const eventTimestamp = new Date(claimedOrder.createdAt || Date.now()).getTime();
+            const contentIds = contents.map((item) => item.id);
+            const tagiooUserData = {
+                address: { country_code: 'BD' },
+            };
+            if (normalizedPhone.length > 2) {
+                tagiooUserData.sha256_phone_number = hash(normalizedPhone);
+            }
+            if (claimedOrder.email) {
+                tagiooUserData.sha256_email_address = hash(claimedOrder.email);
+            }
+            if (nameParts[0]) {
+                tagiooUserData.address.sha256_first_name = hash(nameParts[0]);
+            }
+            if (nameParts.length > 1) {
+                tagiooUserData.address.sha256_last_name = hash(nameParts.slice(1).join(''));
+            }
+            if (claimedOrder.city) {
+                tagiooUserData.address.sha256_city = hash(claimedOrder.city);
+            }
+            try {
+                const tagiooResult = await this.analyticsService.trackServerContainerEvent('purchase', {
+                    client_id: `admin.${String(claimedOrder._id)}`,
+                    event_id: eventId,
+                    event_time: Math.floor(eventTimestamp / 1000),
+                    transaction_id: String(claimedOrder.orderId),
+                    order_id: String(claimedOrder.orderId),
+                    currency: 'BDT',
+                    value: Number(claimedOrder.grandTotal || 0),
+                    content_type: 'product',
+                    content_ids: contentIds,
+                    contents,
+                    meta_content_ids: contentIds,
+                    meta_contents: contents,
+                    items: trackableItems.map((item) => {
+                        var _a, _b;
+                        return ({
+                            item_id: String(item._id),
+                            item_name: String(item.name || item._id),
+                            price: Number((_b = (_a = item.unitPrice) !== null && _a !== void 0 ? _a : item.salePrice) !== null && _b !== void 0 ? _b : 0),
+                            quantity: Math.max(1, Number(item.quantity) || 1),
+                        });
+                    }),
+                    user_data: tagiooUserData,
+                    action_source: this.metaActionSource(manualOrderSource),
+                    page_hostname: 'amolbooks.com',
+                    page_location: 'https://amolbooks.com/',
+                    page_path: '/',
+                    manual_order_source: manualOrderSource,
+                });
+                if (!(tagiooResult === null || tagiooResult === void 0 ? void 0 : tagiooResult.unique_event_id)) {
+                    throw new Error('Tagioo did not return a server event ID');
+                }
+                await this.orderModel.updateOne({ _id: saveData._id, metaPurchaseEventId: eventId }, {
+                    $set: {
+                        metaPurchaseStatus: 'sent',
+                        metaPurchaseSentAt: new Date(),
+                        metaPurchaseDeliveryChannel: 'tagioo',
+                        tagiooPurchaseEventId: String(tagiooResult.unique_event_id),
+                    },
+                    $unset: { metaPurchaseError: 1, tagiooPurchaseError: 1 },
+                });
+                this.logger.log(`Manual-order Purchase accepted by Tagioo for order ${saveData.orderId}`);
+                return;
+            }
+            catch (error) {
+                tagiooError = String((error === null || error === void 0 ? void 0 : error.message) || error).slice(0, 500);
+                this.logger.warn(`Tagioo Purchase failed for order ${saveData.orderId}; using direct Meta fallback: ${tagiooError}`);
+            }
+            const fSetting = await this.settingModel.findOne().select('analytics');
+            const analytics = fSetting === null || fSetting === void 0 ? void 0 : fSetting.analytics;
+            if (!(analytics === null || analytics === void 0 ? void 0 : analytics.facebookPixelId) ||
+                !(analytics === null || analytics === void 0 ? void 0 : analytics.facebookPixelAccessToken)) {
+                throw new Error('Meta Pixel ID or access token is not configured');
+            }
+            const userData = {};
+            if (normalizedPhone.length > 2)
+                userData.ph = hash(normalizedPhone);
+            if (claimedOrder.email)
+                userData.em = hash(claimedOrder.email);
+            if (nameParts[0])
+                userData.fn = hash(nameParts[0]);
+            if (nameParts.length > 1) {
+                userData.ln = hash(nameParts.slice(1).join(''));
+            }
+            if (claimedOrder.city)
+                userData.ct = hash(claimedOrder.city);
+            userData.country = hash('bd');
+            if (!userData.ph && !userData.em) {
+                throw new Error('Manual order has no phone or email for Meta matching');
+            }
+            const payload = {
+                event_name: 'Purchase',
+                event_time: Math.floor(eventTimestamp / 1000),
+                action_source: this.metaActionSource(manualOrderSource),
+                event_id: eventId,
+                custom_data: {
+                    currency: 'BDT',
+                    value: Number(claimedOrder.grandTotal || 0),
+                    content_type: 'product',
+                    content_ids: contentIds,
+                    contents,
+                    order_id: String(claimedOrder.orderId),
+                },
+                user_data: userData,
+            };
+            const requestData = analytics.isEnablePixelTestEvent &&
+                analytics.facebookPixelTestEventId
+                ? {
+                    data: [payload],
+                    test_event_code: analytics.facebookPixelTestEventId,
+                }
+                : { data: [payload] };
+            let result = null;
+            for (let attempt = 1; attempt <= 3; attempt += 1) {
+                result = await this.analyticsService.trackFbConversionEventClient(analytics.facebookPixelId, analytics.facebookPixelAccessToken, requestData);
+                if (result && Number(result.events_received) >= 1)
+                    break;
+                if (attempt < 3) {
+                    await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+                }
+            }
+            if (!result || Number(result.events_received) < 1) {
+                throw new Error('Meta did not acknowledge the Purchase event after 3 attempts');
+            }
+            await this.orderModel.updateOne({ _id: saveData._id, metaPurchaseEventId: eventId }, {
+                $set: {
+                    metaPurchaseStatus: 'sent',
+                    metaPurchaseSentAt: new Date(),
+                    metaPurchaseDeliveryChannel: 'direct_meta_fallback',
+                    tagiooPurchaseError: tagiooError,
+                },
+                $unset: { metaPurchaseError: 1 },
+            });
+            this.logger.log(`Manual-order Purchase sent through direct Meta fallback for order ${saveData.orderId}`);
+        }
+        catch (error) {
+            const message = String((error === null || error === void 0 ? void 0 : error.message) || error).slice(0, 500);
+            await this.orderModel.updateOne({ _id: saveData._id, metaPurchaseEventId: eventId }, {
+                $set: Object.assign({ metaPurchaseStatus: 'failed', metaPurchaseError: message }, (tagiooError ? { tagiooPurchaseError: tagiooError } : {})),
+            });
+            this.logger.warn(`Manual-order CAPI Purchase failed for order ${saveData.orderId}: ${message}`);
+        }
+    }
+    normalizeManualOrderSource(value) {
+        const allowed = [
+            'whatsapp',
+            'whatsapp_ad',
+            'phone',
+            'facebook',
+            'instagram',
+            'email',
+            'walk_in',
+            'other',
+        ];
+        return allowed.includes(value) ? value : 'other';
+    }
+    manualOrderLabel(source) {
+        const labels = {
+            whatsapp: 'WhatsApp',
+            whatsapp_ad: 'WhatsApp Ad',
+            phone: 'Phone',
+            facebook: 'Facebook',
+            instagram: 'Instagram',
+            email: 'Email',
+            walk_in: 'Walk-in',
+            other: 'Manual',
+        };
+        return labels[source];
+    }
+    metaActionSource(source) {
+        if (source === 'whatsapp_ad')
+            return 'business_messaging';
+        if (source === 'phone')
+            return 'phone_call';
+        if (source === 'email')
+            return 'email';
+        if (source === 'walk_in')
+            return 'physical_store';
+        if (source === 'whatsapp' ||
+            source === 'facebook' ||
+            source === 'instagram') {
+            return 'chat';
+        }
+        return 'other';
+    }
+    scheduleManualMetaPurchaseRetries() {
+        const retry = () => {
+            this.retryPendingManualMetaPurchases().catch((error) => {
+                this.logger.error('Manual-order CAPI recovery job failed:', (error === null || error === void 0 ? void 0 : error.message) || error);
+            });
+        };
+        setTimeout(retry, 5000);
+        schedule.scheduleJob('*/5 * * * *', retry);
+    }
+    async retryPendingManualMetaPurchases() {
+        const recentOrderCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        const staleSendingBefore = new Date(Date.now() - 10 * 60 * 1000);
+        const orders = await this.orderModel
+            .find({
+            manualOrderSource: { $exists: true, $ne: null },
+            createdAt: { $gte: recentOrderCutoff },
+            $and: [
+                {
+                    $or: [
+                        { metaPurchaseStatus: { $exists: false } },
+                        { metaPurchaseStatus: 'failed' },
+                        {
+                            metaPurchaseStatus: 'sending',
+                            metaPurchaseLastAttemptAt: { $lt: staleSendingBefore },
+                        },
+                    ],
+                },
+                {
+                    $or: [
+                        { metaPurchaseAttemptCount: { $exists: false } },
+                        { metaPurchaseAttemptCount: { $lt: 5 } },
+                    ],
+                },
+            ],
+        })
+            .select('_id orderId manualOrderSource')
+            .sort({ createdAt: 1 })
+            .limit(25)
+            .lean();
+        for (const order of orders) {
+            await this.sendManualOrderToMeta(order, this.normalizeManualOrderSource(order.manualOrderSource));
+        }
+    }
     normalizeAdminOrderData(orderData) {
         const orderedItems = this.normalizeOrderItems((orderData === null || orderData === void 0 ? void 0 : orderData.orderedItems) || []);
         if (!orderedItems.length) {
@@ -273,6 +686,113 @@ let OrderService = OrderService_1 = class OrderService {
             discount,
             grandTotal });
     }
+    async decreaseProductStock(orderId, items) {
+        try {
+            if (!Array.isArray(items) || !items.length)
+                return false;
+            const parsed = items
+                .map((it) => {
+                const id = (it === null || it === void 0 ? void 0 : it._id) || (it === null || it === void 0 ? void 0 : it.product) || (it === null || it === void 0 ? void 0 : it.productId);
+                const qty = Math.max(1, Math.floor(Number(it === null || it === void 0 ? void 0 : it.quantity)) || 1);
+                if (!id)
+                    return null;
+                return { id, qty };
+            })
+                .filter(Boolean);
+            if (!parsed.length)
+                return false;
+            const ops = parsed.map(({ id, qty }) => ({
+                updateOne: {
+                    filter: { _id: id, stock: { $ne: null } },
+                    update: { $inc: { stock: -qty } },
+                },
+            }));
+            await this.productModel.bulkWrite(ops);
+            const trackedIds = parsed.map((p) => p.id);
+            const trackedProducts = await this.productModel
+                .find({ _id: { $in: trackedIds } })
+                .select('sku stock')
+                .lean();
+            const trackedById = new Map(trackedProducts.map((p) => [String(p._id), p]));
+            const movements = parsed
+                .filter(({ id }) => trackedById.has(String(id)))
+                .map(({ id, qty }) => {
+                const product = trackedById.get(String(id));
+                return {
+                    product: id,
+                    sku: product === null || product === void 0 ? void 0 : product.sku,
+                    qtyChange: -qty,
+                    stockAfter: product === null || product === void 0 ? void 0 : product.stock,
+                    reason: 'order',
+                    referenceType: 'order',
+                    referenceId: orderId,
+                };
+            });
+            if (movements.length) {
+                try {
+                    await this.stockMovementModel.insertMany(movements);
+                }
+                catch (err) {
+                    this.logger.warn(`Failed to log stock movements for order ${orderId}: ${(err === null || err === void 0 ? void 0 : err.message) || err}`);
+                }
+            }
+            return true;
+        }
+        catch (err) {
+            this.logger.warn(`decreaseProductStock failed: ${(err === null || err === void 0 ? void 0 : err.message) || err}`);
+            return false;
+        }
+    }
+    async restockProducts(orderId, items, reason) {
+        try {
+            if (!Array.isArray(items) || !items.length)
+                return;
+            const parsed = items
+                .map((it) => {
+                const id = (it === null || it === void 0 ? void 0 : it._id) || (it === null || it === void 0 ? void 0 : it.product) || (it === null || it === void 0 ? void 0 : it.productId);
+                const qty = Math.max(1, Math.floor(Number(it === null || it === void 0 ? void 0 : it.quantity)) || 1);
+                if (!id)
+                    return null;
+                return { id, qty };
+            })
+                .filter(Boolean);
+            if (!parsed.length)
+                return;
+            const ops = parsed.map(({ id, qty }) => ({
+                updateOne: {
+                    filter: { _id: id, stock: { $ne: null } },
+                    update: { $inc: { stock: qty } },
+                },
+            }));
+            await this.productModel.bulkWrite(ops);
+            const trackedIds = parsed.map((p) => p.id);
+            const trackedProducts = await this.productModel
+                .find({ _id: { $in: trackedIds } })
+                .select('sku stock')
+                .lean();
+            const trackedById = new Map(trackedProducts.map((p) => [String(p._id), p]));
+            const movements = parsed
+                .filter(({ id }) => trackedById.has(String(id)))
+                .map(({ id, qty }) => {
+                const product = trackedById.get(String(id));
+                return {
+                    product: id,
+                    sku: product === null || product === void 0 ? void 0 : product.sku,
+                    qtyChange: qty,
+                    stockAfter: product === null || product === void 0 ? void 0 : product.stock,
+                    reason,
+                    referenceType: 'order',
+                    referenceId: orderId,
+                };
+            });
+            if (movements.length) {
+                await this.stockMovementModel.insertMany(movements);
+            }
+        }
+        catch (err) {
+            this.logger.warn(`restockProducts failed for order ${orderId}: ${(err === null || err === void 0 ? void 0 : err.message) || err}`);
+        }
+    }
     normalizeOrderItems(items) {
         if (!Array.isArray(items)) {
             return [];
@@ -281,8 +801,87 @@ let OrderService = OrderService_1 = class OrderService {
             .map((item) => this.normalizeOrderItem(item))
             .filter((item) => Boolean(item));
     }
+    async attachCostSnapshots(items) {
+        if (!Array.isArray(items) || !items.length)
+            return [];
+        const ids = items
+            .map((item) => (item === null || item === void 0 ? void 0 : item._id) || (item === null || item === void 0 ? void 0 : item.product) || (item === null || item === void 0 ? void 0 : item.productId))
+            .filter((id) => id && ObjectId.isValid(id));
+        const products = ids.length
+            ? await this.productModel
+                .find({ _id: { $in: ids } })
+                .select('_id costPrice')
+                .maxTimeMS(5000)
+                .lean()
+            : [];
+        const catalogCost = new Map(products.map((product) => [
+            String(product._id),
+            this.optionalNonNegativeNumber(product.costPrice),
+        ]));
+        return items.map((item) => {
+            const itemCost = this.optionalNonNegativeNumber(item === null || item === void 0 ? void 0 : item.costPriceAtOrder);
+            const fallback = catalogCost.get(String((item === null || item === void 0 ? void 0 : item._id) || (item === null || item === void 0 ? void 0 : item.product) || (item === null || item === void 0 ? void 0 : item.productId) || ''));
+            const costPriceAtOrder = itemCost !== null && itemCost !== void 0 ? itemCost : fallback;
+            return costPriceAtOrder === undefined
+                ? Object.assign({}, item) : Object.assign(Object.assign({}, item), { costPriceAtOrder });
+        });
+    }
+    optionalNonNegativeNumber(value) {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+    }
+    getProductUnitCostSnapshot(product) {
+        const directCost = this.optionalNonNegativeNumber(product === null || product === void 0 ? void 0 : product.costPrice);
+        if (directCost !== undefined)
+            return directCost;
+        if (!Array.isArray(product === null || product === void 0 ? void 0 : product.products))
+            return undefined;
+        let complete = true;
+        const packageCost = product.products.reduce((sum, entry) => {
+            var _a;
+            const itemCost = this.optionalNonNegativeNumber((_a = entry === null || entry === void 0 ? void 0 : entry.product) === null || _a === void 0 ? void 0 : _a.costPrice);
+            if (itemCost === undefined) {
+                complete = false;
+                return sum;
+            }
+            return sum + itemCost * Math.max(1, Number(entry === null || entry === void 0 ? void 0 : entry.quantity) || 1);
+        }, 0);
+        return complete ? packageCost : undefined;
+    }
+    normalizeAttribution(value) {
+        if (!value || typeof value !== 'object')
+            return undefined;
+        const text = (input, max = 500) => {
+            if (input === undefined || input === null)
+                return undefined;
+            return String(input).trim().slice(0, max) || undefined;
+        };
+        const touch = (input) => {
+            if (!input || typeof input !== 'object')
+                return undefined;
+            return {
+                source: text(input.source, 120),
+                medium: text(input.medium, 120),
+                campaign: text(input.campaign, 200),
+                campaignId: text(input.campaignId, 120),
+                adSet: text(input.adSet, 200),
+                adSetId: text(input.adSetId, 120),
+                ad: text(input.ad, 200),
+                adId: text(input.adId, 120),
+                landingPage: text(input.landingPage),
+                referrer: text(input.referrer),
+                fbclid: text(input.fbclid, 300),
+                capturedAt: input.capturedAt ? new Date(input.capturedAt) : undefined,
+            };
+        };
+        return {
+            anonymousId: text(value.anonymousId, 120),
+            firstTouch: touch(value.firstTouch),
+            lastTouch: touch(value.lastTouch),
+        };
+    }
     normalizeOrderItem(item) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y;
         const product = this.getOrderItemProduct(item);
         const productId = this.getOrderItemProductId(item, product);
         if (!productId) {
@@ -307,11 +906,12 @@ let OrderService = OrderService_1 = class OrderService {
             regularPrice,
             unitPrice: salePrice,
             salePrice,
+            costPriceAtOrder: (_u = this.optionalNonNegativeNumber(item === null || item === void 0 ? void 0 : item.costPriceAtOrder)) !== null && _u !== void 0 ? _u : this.optionalNonNegativeNumber(product === null || product === void 0 ? void 0 : product.costPrice),
             quantity,
-            orderType: (_u = item === null || item === void 0 ? void 0 : item.orderType) !== null && _u !== void 0 ? _u : 'regular',
+            orderType: (_v = item === null || item === void 0 ? void 0 : item.orderType) !== null && _v !== void 0 ? _v : 'regular',
             discountAmount: this.toFiniteNumber(item === null || item === void 0 ? void 0 : item.discountAmount, 0),
-            discountType: (_v = item === null || item === void 0 ? void 0 : item.discountType) !== null && _v !== void 0 ? _v : null,
-            unit: (_x = (_w = item === null || item === void 0 ? void 0 : item.unit) !== null && _w !== void 0 ? _w : product === null || product === void 0 ? void 0 : product.unit) !== null && _x !== void 0 ? _x : null,
+            discountType: (_w = item === null || item === void 0 ? void 0 : item.discountType) !== null && _w !== void 0 ? _w : null,
+            unit: (_y = (_x = item === null || item === void 0 ? void 0 : item.unit) !== null && _x !== void 0 ? _x : product === null || product === void 0 ? void 0 : product.unit) !== null && _y !== void 0 ? _y : null,
         };
     }
     getOrderItemProduct(item) {
@@ -644,11 +1244,11 @@ let OrderService = OrderService_1 = class OrderService {
         if (deleteMany) {
             await this.orderModel.deleteMany({});
         }
-        const mData = addOrdersDto.map((m) => {
-            return Object.assign(Object.assign({}, m), {
+        const mData = await Promise.all(addOrdersDto.map(async (m) => {
+            return Object.assign(Object.assign(Object.assign({}, m), { orderedItems: await this.attachCostSnapshots(m.orderedItems || []), attribution: this.normalizeAttribution(m.attribution) }), {
                 slug: this.utilsService.transformToSlug(m.name),
             });
-        });
+        }));
         try {
             const saveData = await this.orderModel.insertMany(mData);
             return {
@@ -1425,6 +2025,12 @@ let OrderService = OrderService_1 = class OrderService {
             else {
                 orderTimeline = null;
             }
+            const isRestockStatus = [
+                order_enum_1.OrderStatus.CANCEL,
+                order_enum_1.OrderStatus.REFUND,
+                order_enum_1.OrderStatus.RETURN,
+            ].includes(orderStatus);
+            const shouldRestock = isRestockStatus && data.stockDecremented === true && !data.stockRestocked;
             const mData = {
                 courierLink: updateOrderStatusDto.courierLink,
                 orderStatus: orderStatus,
@@ -1433,26 +2039,21 @@ let OrderService = OrderService_1 = class OrderService {
                 deliveryDate: deliveryDate,
                 deliveryDateString: deliveryDateString,
             };
+            if (shouldRestock) {
+                mData.stockRestocked = true;
+            }
             await this.orderModel.findByIdAndUpdate(id, {
                 $set: mData,
             });
+            if (shouldRestock) {
+                const restockReason = orderStatus === order_enum_1.OrderStatus.RETURN
+                    ? 'return_restock'
+                    : 'cancel_restock';
+                await this.restockProducts(id, data['orderedItems'], restockReason);
+            }
             if (orderStatus === 2) {
                 const message = `আপনার অর্ডার আইডি ${data === null || data === void 0 ? void 0 : data.orderId} নিশ্চিত করা হয়েছে। ডেলিভারি সময়: ঢাকার ভিতরে ১–২ কার্যদিবস, ঢাকার বাইরে ৩–৬ কার্যদিবস। ধন্যবাদ আলম বুক এর সঙ্গে থাকার জন্য।`;
                 this.bulkSmsService.sentSingleSms(data.phoneNo, message);
-            }
-            if (orderStatus === 5) {
-                for (const f of data['orderedItems']) {
-                    await this.productModel.findByIdAndUpdate(f._id, {
-                        $inc: {
-                            totalSold: f.quantity,
-                        },
-                    });
-                    await this.productModel.findByIdAndUpdate(f._id, {
-                        $inc: {
-                            quantity: -f.quantity,
-                        },
-                    });
-                }
             }
             return {
                 success: true,
@@ -1509,14 +2110,17 @@ let OrderService = OrderService_1 = class OrderService {
                 .filter((item) => item.cartType === 1)
                 .map((item) => item.specialPackage);
             const specialPackages = fSpecialPackages.length
-                ? JSON.parse(JSON.stringify(await this.specialPackageModel.find({
+                ? JSON.parse(JSON.stringify(await this.specialPackageModel
+                    .find({
                     _id: { $in: fSpecialPackages.map((id) => new ObjectId(id)) },
-                })))
+                })
+                    .populate('products.product', 'salePrice costPrice discountType discountAmount variationsOptions hasVariations')))
                 : [];
             if ((fProducts && fProducts.length) || specialPackages) {
                 cartItems = orderData.cartData.map((t1) => {
                     const productFromFProducts = fProducts.find((t2) => t2._id === t1.product);
-                    const productFromSpecialPackages = specialPackages.find((t2) => t2._id === t1.product);
+                    const productFromSpecialPackages = specialPackages.find((t2) => String(t2._id) ===
+                        String(t1.specialPackage || t1.product));
                     return Object.assign(Object.assign({}, t1), { product: Object.assign({}, productFromFProducts), specialPackage: Object.assign({}, productFromSpecialPackages) });
                 });
             }
@@ -1524,15 +2128,22 @@ let OrderService = OrderService_1 = class OrderService {
         else {
             cartItems = JSON.parse(JSON.stringify(await this.cartModel
                 .find({ user: orderData.user })
-                .populate('product', 'name nameEn slug author description publisher salePrice sku tax discountType discountAmount images quantity trackQuantity category subCategory brand tags unit')
-                .populate('specialPackage')));
+                .populate('product', 'name nameEn slug author description publisher salePrice costPrice sku tax discountType discountAmount images quantity trackQuantity category subCategory brand tags unit')
+                .populate({
+                path: 'specialPackage',
+                populate: {
+                    path: 'products.product',
+                    select: 'salePrice costPrice discountType discountAmount variationsOptions hasVariations',
+                },
+            })));
         }
         const finalData = cartItems
             .map((item) => {
             if (item.cartType === 1) {
                 if (item.specialPackage) {
                     const images = [item.specialPackage.image];
-                    return Object.assign(Object.assign({}, item), { product: Object.assign(Object.assign({}, item.specialPackage), { images }) });
+                    const specialPackage = (0, special_package_price_util_1.withCalculatedSpecialPackageSubtotal)(item.specialPackage);
+                    return Object.assign(Object.assign({}, item), { product: Object.assign(Object.assign({}, specialPackage), { images }) });
                 }
                 return null;
             }
@@ -1577,14 +2188,14 @@ let OrderService = OrderService_1 = class OrderService {
                 regularPrice: this.utilsService.transform(m.product, 'regularPrice'),
                 unitPrice: this.utilsService.transform(m.product, 'salePrice'),
                 salePrice: this.utilsService.transform(m.product, 'salePrice'),
+                costPriceAtOrder: this.getProductUnitCostSnapshot(m.product),
                 quantity: m.selectedQty,
                 orderType: 'regular',
             });
         });
         const cartSubTotal = finalData.reduce((acc, t) => acc +
             this.utilsService.transform(t.product, 'regularPrice', t.selectedQty), 0);
-        const giftEligibleSubTotal = finalData.reduce((acc, t) => acc + this.utilsService.transform(t.product, 'salePrice', t.selectedQty), 0);
-        const giftLine = await this.evaluateGiftLine(products, giftEligibleSubTotal);
+        const giftLine = await this.evaluateGiftLine(products, finalData);
         if (giftLine)
             products.push(giftLine);
         const cartDiscountAmount = finalData.reduce((acc, t) => acc +
@@ -1608,7 +2219,8 @@ let OrderService = OrderService_1 = class OrderService {
             area: orderData === null || orderData === void 0 ? void 0 : orderData.area,
             zone: orderData === null || orderData === void 0 ? void 0 : orderData.zone,
             city: orderData === null || orderData === void 0 ? void 0 : orderData.city,
-            orderFrom: 'Website',
+            orderFrom: (orderData === null || orderData === void 0 ? void 0 : orderData.orderFrom) || 'Website',
+            manualOrderSource: orderData === null || orderData === void 0 ? void 0 : orderData.manualOrderSource,
             paymentType: orderData === null || orderData === void 0 ? void 0 : orderData.paymentType,
             country: orderData === null || orderData === void 0 ? void 0 : orderData.country,
             paymentStatus: 'unpaid',
@@ -1628,10 +2240,11 @@ let OrderService = OrderService_1 = class OrderService {
             couponDiscount,
             hasOrderTimeline: true,
             orderTimeline: orderData === null || orderData === void 0 ? void 0 : orderData.orderTimeline,
+            attribution: this.normalizeAttribution(orderData === null || orderData === void 0 ? void 0 : orderData.attribution),
         };
         return newOrderData;
     }
-    async evaluateGiftLine(products, cartSaleSubTotal) {
+    async evaluateGiftLine(products, finalData) {
         try {
             const cfg = JSON.parse(JSON.stringify(await this.orderOfferModel.findOne({})));
             if (!cfg || !cfg.giftEnabled || !cfg.giftProduct || !cfg.giftProduct._id) {
@@ -1642,10 +2255,14 @@ let OrderService = OrderService_1 = class OrderService {
                 this.logger.error('evaluateGiftLine: invalid giftProduct._id ' + giftId);
                 return null;
             }
-            if (products.some((p) => String(p._id) === giftId))
-                return null;
+            const giftEligibleSubTotal = finalData.reduce((acc, t) => {
+                var _a;
+                if (String((_a = t.product) === null || _a === void 0 ? void 0 : _a._id) === giftId)
+                    return acc;
+                return (acc + this.utilsService.transform(t.product, 'salePrice', t.selectedQty));
+            }, 0);
             let eligible = false;
-            if (cfg.giftMinAmount && cartSaleSubTotal >= Number(cfg.giftMinAmount)) {
+            if (cfg.giftMinAmount && giftEligibleSubTotal >= Number(cfg.giftMinAmount)) {
                 eligible = true;
             }
             if (!eligible && cfg.giftBuyXProductSlug && cfg.giftBuyXQty) {
@@ -1654,8 +2271,20 @@ let OrderService = OrderService_1 = class OrderService {
                     eligible = true;
                 }
             }
-            if (!eligible)
+            const existing = products.find((p) => String(p._id) === giftId);
+            if (!eligible) {
                 return null;
+            }
+            if (existing) {
+                existing.regularPrice = 0;
+                existing.unitPrice = 0;
+                existing.salePrice = 0;
+                existing.discountType = undefined;
+                existing.discountAmount = 0;
+                existing.orderType = 'gift';
+                existing.isGift = true;
+                return null;
+            }
             return {
                 _id: cfg.giftProduct._id,
                 name: cfg.giftProduct.name || cfg.giftLabel || 'উপহার',
@@ -2042,7 +2671,7 @@ let OrderService = OrderService_1 = class OrderService {
         }
     }
     async getAllIncompleteOrders(filterDto, searchQuery) {
-        var _a, _b;
+        var _a, _b, _c, _d;
         const { filter, pagination, sort, select } = filterDto;
         const aggregateStages = [];
         let mFilter = {};
@@ -2118,37 +2747,44 @@ let OrderService = OrderService_1 = class OrderService {
         if (Object.keys(mSort).length) {
             aggregateStages.push({ $sort: mSort });
         }
-        const countStages = [...aggregateStages];
+        let pageSize = 25;
+        let currentPage = 1;
         if (pagination) {
-            const pageSize = pagination.pageSize && Number(pagination.pageSize) > 0
-                ? Number(pagination.pageSize)
-                : 25;
-            const currentPage = pagination.currentPage && Number(pagination.currentPage) > 0
-                ? Number(pagination.currentPage)
-                : 1;
+            pageSize =
+                pagination.pageSize && Number(pagination.pageSize) > 0
+                    ? Number(pagination.pageSize)
+                    : 25;
+            currentPage =
+                pagination.currentPage && Number(pagination.currentPage) > 0
+                    ? Number(pagination.currentPage)
+                    : 1;
             mPagination = {
                 skip: pageSize * (currentPage - 1),
                 limit: pageSize,
             };
-            aggregateStages.push({ $skip: mPagination.skip });
-            aggregateStages.push({ $limit: mPagination.limit });
         }
+        const dataPipeline = [
+            { $skip: mPagination.skip || 0 },
+            { $limit: mPagination.limit || pageSize },
+        ];
         if (Object.keys(mSelect).length) {
-            aggregateStages.push({ $project: mSelect });
+            dataPipeline.push({ $project: mSelect });
         }
+        aggregateStages.push({
+            $facet: {
+                data: dataPipeline,
+                count: [{ $count: 'count' }],
+                calculation: [
+                    { $group: { _id: null, grandTotal: { $sum: '$grandTotal' } } },
+                ],
+            },
+        });
         try {
-            const data = await this.incompleteOrderModel.aggregate(aggregateStages);
-            const countAgg = await this.incompleteOrderModel.aggregate([
-                ...countStages,
-                { $count: 'count' },
-            ]);
-            const count = ((_a = countAgg[0]) === null || _a === void 0 ? void 0 : _a.count) || 0;
-            const calculationAgg = await this.incompleteOrderModel.aggregate([
-                ...countStages,
-                { $group: { _id: null, grandTotal: { $sum: '$grandTotal' } } },
-            ]);
+            const [result] = await this.incompleteOrderModel.aggregate(aggregateStages);
+            const data = (result === null || result === void 0 ? void 0 : result.data) || [];
+            const count = ((_b = (_a = result === null || result === void 0 ? void 0 : result.count) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.count) || 0;
             const calculation = {
-                grandTotal: ((_b = calculationAgg[0]) === null || _b === void 0 ? void 0 : _b.grandTotal) || 0,
+                grandTotal: ((_d = (_c = result === null || result === void 0 ? void 0 : result.calculation) === null || _c === void 0 ? void 0 : _c[0]) === null || _d === void 0 ? void 0 : _d.grandTotal) || 0,
             };
             return {
                 success: true,
@@ -2184,12 +2820,38 @@ let OrderService = OrderService_1 = class OrderService {
     }
     async updateIncompleteOrderById(id, updateIncompleteOrderDto) {
         try {
-            await this.incompleteOrderModel.findByIdAndUpdate(id, {
-                $set: updateIncompleteOrderDto,
-            });
+            const editableFields = [
+                'name',
+                'phoneNo',
+                'email',
+                'city',
+                'shippingAddress',
+                'paymentType',
+                'paymentStatus',
+                'deliveryCharge',
+                'subTotal',
+                'discount',
+                'grandTotal',
+                'orderedItems',
+                'note',
+                'adminNote',
+                'fraudChecker',
+            ];
+            const dto = updateIncompleteOrderDto;
+            const updateData = editableFields.reduce((result, field) => {
+                if (Object.prototype.hasOwnProperty.call(dto || {}, field)) {
+                    result[field] = dto[field];
+                }
+                return result;
+            }, {});
+            const data = await this.incompleteOrderModel.findByIdAndUpdate(id, { $set: updateData }, { new: true, runValidators: true });
+            if (!data) {
+                throw new common_1.NotFoundException('Incomplete order not found');
+            }
             return {
                 success: true,
                 message: 'Incomplete order updated successfully',
+                data,
             };
         }
         catch (err) {
@@ -2227,6 +2889,7 @@ OrderService = OrderService_1 = __decorate([
     __param(9, (0, mongoose_1.InjectModel)('Coupon')),
     __param(11, (0, mongoose_1.InjectModel)('ShopInformation')),
     __param(12, (0, mongoose_1.InjectModel)('OrderOffer')),
+    __param(13, (0, mongoose_1.InjectModel)('StockMovement')),
     __metadata("design:paramtypes", [mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,
@@ -2240,10 +2903,12 @@ OrderService = OrderService_1 = __decorate([
         courier_service_1.CourierService,
         mongoose_2.Model,
         mongoose_2.Model,
+        mongoose_2.Model,
         config_1.ConfigService,
         utils_service_1.UtilsService,
         bulk_sms_service_1.BulkSmsService,
-        email_service_1.EmailService])
+        email_service_1.EmailService,
+        analytics_service_1.AnalyticsService])
 ], OrderService);
 exports.OrderService = OrderService;
 //# sourceMappingURL=order.service.js.map

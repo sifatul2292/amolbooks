@@ -23,6 +23,13 @@ Nothing active.
 
 ## Completed this session
 
+- Manual admin-order Tagioo delivery:
+  - Changed authenticated admin/AI-assisted Purchase tracking from direct-Meta-only to Tagioo server GTM first, using the already-published first-party Data Client endpoint at `https://server.amolbooks.com/data`.
+  - Manual Purchase events now carry the stable order event ID, final grand total/currency, order and catalog product IDs, quantities/prices, source, and SHA-256 customer matching fields so the existing server-container Purchase tags can process them.
+  - Kept the direct Meta CAPI integration as a same-event-ID fallback only when Tagioo transport fails, preventing lost conversions while retaining Meta deduplication safety.
+  - Persisted whether each Purchase used Tagioo or direct fallback, the Tagioo event ID, and any Tagioo transport error for production diagnosis.
+  - Sent a harmless `amolbooks_manual_transport_test` event to production `/data`; it returned HTTP 200 with a server `unique_event_id`, proving the Data Client is live without generating a fake Purchase.
+
 - AI Assist definitive spinner/root-cause fix:
   - Fixed the actual browser exception: the separate AI Assist IIFE was calling private `getToken`, `authHeaders`, and `showLogin` functions from another scope after enabling the spinner, so execution stopped before either the request or timeout existed.
   - Made AI Assist authentication self-contained, exposed the existing order-list refresh intentionally, and added an authenticated request-ID status endpoint so a saved order is recognized even if the original POST response is delayed.
@@ -149,6 +156,11 @@ Nothing active.
 3. Add a minimal smoke test / health endpoint check for the free-gift + recent-buyers flows.
 
 ## Commands already run this session
+
+- Tagioo Data Client production probe (`amolbooks_manual_transport_test`) → HTTP 200 with a server `unique_event_id`; no fake Purchase was sent.
+- `cd api && npm run build` after manual-order Tagioo routing → passed (TypeScript deprecation warnings only).
+- `cd api && npm run lint` after manual-order Tagioo routing → still cannot lint because the configured glob is fully ignored.
+- `git diff --check` after manual-order Tagioo routing → passed.
 
 - Profit decision fixture: verified cancelled revenue exclusion, expected contribution ৳218, allocated realized contribution ৳144.43, 67% historical COGS coverage, restock recommendation, 50% second-purchase rate, and recommendation baseline persistence.
 - Historical-cost drift fixture: changed the catalog cost of a legacy line from ৳100 to ৳999; both overall and product contribution remained unavailable instead of rewriting history → passed.

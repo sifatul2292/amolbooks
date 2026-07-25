@@ -29,6 +29,9 @@ let GtmService = GtmService_1 = class GtmService {
         this.logger = new common_1.Logger(GtmService_1.name);
     }
     getDistinctId(userData, ip) {
+        if (userData === null || userData === void 0 ? void 0 : userData.analytics_anonymous_id) {
+            return `anon:${String(userData.analytics_anonymous_id).slice(0, 120)}`;
+        }
         if ((userData === null || userData === void 0 ? void 0 : userData.em) && userData.em !== 'null')
             return `em:${userData.em}`;
         if ((userData === null || userData === void 0 ? void 0 : userData.ph) && userData.ph !== 'null')

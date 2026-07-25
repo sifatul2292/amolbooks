@@ -18,6 +18,7 @@ exports.OrderSchema = new mongoose.Schema({
     phoneNo: {
         type: String,
         required: true,
+        index: true,
     },
     email: {
         type: String,
@@ -95,6 +96,96 @@ exports.OrderSchema = new mongoose.Schema({
         type: String,
         required: false,
     },
+    manualOrderSource: {
+        type: String,
+        enum: [
+            'whatsapp',
+            'whatsapp_ad',
+            'phone',
+            'facebook',
+            'instagram',
+            'email',
+            'walk_in',
+            'other',
+        ],
+        required: false,
+    },
+    manualOrderRequestId: {
+        type: String,
+        required: false,
+        unique: true,
+        sparse: true,
+    },
+    metaPurchaseStatus: {
+        type: String,
+        enum: ['sending', 'sent', 'failed'],
+        required: false,
+    },
+    metaPurchaseEventId: {
+        type: String,
+        required: false,
+    },
+    metaPurchaseLastAttemptAt: {
+        type: Date,
+        required: false,
+    },
+    metaPurchaseAttemptCount: {
+        type: Number,
+        required: false,
+        default: 0,
+    },
+    metaPurchaseSentAt: {
+        type: Date,
+        required: false,
+    },
+    metaPurchaseError: {
+        type: String,
+        required: false,
+    },
+    metaPurchaseDeliveryChannel: {
+        type: String,
+        enum: ['tagioo', 'direct_meta_fallback'],
+        required: false,
+    },
+    tagiooPurchaseEventId: {
+        type: String,
+        required: false,
+    },
+    tagiooPurchaseError: {
+        type: String,
+        required: false,
+    },
+    attribution: {
+        anonymousId: { type: String, required: false },
+        firstTouch: {
+            source: { type: String, required: false },
+            medium: { type: String, required: false },
+            campaign: { type: String, required: false },
+            campaignId: { type: String, required: false },
+            adSet: { type: String, required: false },
+            adSetId: { type: String, required: false },
+            ad: { type: String, required: false },
+            adId: { type: String, required: false },
+            landingPage: { type: String, required: false },
+            referrer: { type: String, required: false },
+            fbclid: { type: String, required: false },
+            capturedAt: { type: Date, required: false },
+        },
+        lastTouch: {
+            source: { type: String, required: false },
+            medium: { type: String, required: false },
+            campaign: { type: String, required: false },
+            campaignId: { type: String, required: false },
+            adSet: { type: String, required: false },
+            adSetId: { type: String, required: false },
+            ad: { type: String, required: false },
+            adId: { type: String, required: false },
+            landingPage: { type: String, required: false },
+            referrer: { type: String, required: false },
+            fbclid: { type: String, required: false },
+            capturedAt: { type: Date, required: false },
+        },
+    },
     paymentStatus: {
         type: String,
         required: true,
@@ -112,6 +203,11 @@ exports.OrderSchema = new mongoose.Schema({
         type: Number,
         required: false,
     },
+    actualCourierCost: { type: Number, required: false },
+    packagingCost: { type: Number, required: false },
+    paymentFee: { type: Number, required: false },
+    refundAmount: { type: Number, required: false },
+    returnLoss: { type: Number, required: false },
     fraudChecker: {
         type: mongoose_1.Schema.Types.Mixed,
         required: false,
@@ -238,8 +334,19 @@ exports.OrderSchema = new mongoose.Schema({
         type: Number,
         required: false,
     },
+    stockDecremented: {
+        type: Boolean,
+        required: false,
+        default: false,
+    },
+    stockRestocked: {
+        type: Boolean,
+        required: false,
+        default: false,
+    },
 }, {
     versionKey: false,
     timestamps: true,
 });
+exports.OrderSchema.index({ phoneNo: 1, createdAt: 1 });
 //# sourceMappingURL=order.schema.js.map

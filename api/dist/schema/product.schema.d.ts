@@ -59,6 +59,8 @@ export declare const ProductSchema: mongoose.Schema<any, mongoose.Model<any, any
     hasTax?: boolean;
     tax?: number;
     sku?: string;
+    stock?: number;
+    lowStockThreshold?: number;
     emiMonth?: number[];
     threeMonth?: number;
     emiAmount?: number;
@@ -108,6 +110,7 @@ export declare const ProductSchema: mongoose.Schema<any, mongoose.Model<any, any
     boughtTogetherIds?: string[];
     isFacebookCatalog?: boolean;
     priority?: number;
+    totalSold?: number;
     hasVariations?: boolean;
     unit?: string;
     variations?: mongoose.Types.DocumentArray<{
@@ -117,7 +120,6 @@ export declare const ProductSchema: mongoose.Schema<any, mongoose.Model<any, any
     }>;
     videoUrl?: string;
     specifications?: any[];
-    totalSold?: number;
     ratingAvr?: number;
     ratingCount?: number;
     ratingTotal?: number;

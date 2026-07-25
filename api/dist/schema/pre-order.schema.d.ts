@@ -9,7 +9,7 @@ export declare const PreOrderSchema: mongoose.Schema<any, mongoose.Model<any, an
     name: string;
     product: mongoose.Types.ObjectId;
     phoneNo: string;
-    status?: "cancelled" | "pending" | "completed";
+    status?: "cancelled" | "completed" | "pending";
     email?: string;
     user?: mongoose.Types.ObjectId;
 }>;

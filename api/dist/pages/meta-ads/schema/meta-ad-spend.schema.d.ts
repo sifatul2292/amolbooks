@@ -31,8 +31,17 @@ export declare const MetaAdSpendSchema: Schema<any, import("mongoose").Model<any
 } & {
     date: string;
     currency: string;
-    source: "api" | "manual";
+    source: "manual" | "api";
     spend: number;
+    breakdown: {
+        spend: number;
+        campaignId?: string;
+        adSetId?: string;
+        adId?: string;
+        campaignName?: string;
+        adSetName?: string;
+        adName?: string;
+    }[];
 }>;
 export declare const MetaTokenSchema: Schema<any, import("mongoose").Model<any, any, any, any, any>, {}, {}, {}, {}, import("mongoose").ResolveSchemaOptions<{
     timestamps: true;
@@ -42,6 +51,6 @@ export declare const MetaTokenSchema: Schema<any, import("mongoose").Model<any, 
 } & {
     accessToken?: string;
     adAccountId?: string;
-    expiresAt?: Date;
     lastSync?: Date;
+    expiresAt?: Date;
 }>;

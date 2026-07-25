@@ -141,6 +141,19 @@ export const OrderSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    metaPurchaseDeliveryChannel: {
+      type: String,
+      enum: ['tagioo', 'direct_meta_fallback'],
+      required: false,
+    },
+    tagiooPurchaseEventId: {
+      type: String,
+      required: false,
+    },
+    tagiooPurchaseError: {
+      type: String,
+      required: false,
+    },
     attribution: {
       anonymousId: { type: String, required: false },
       firstTouch: {

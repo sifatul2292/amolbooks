@@ -109,6 +109,16 @@ exports.ProductSchema = new mongoose.Schema({
         required: false,
         default: 0,
     },
+    stock: {
+        type: Number,
+        required: false,
+        default: null,
+    },
+    lowStockThreshold: {
+        type: Number,
+        required: false,
+        default: null,
+    },
     threeMonth: {
         type: Number,
         required: false,

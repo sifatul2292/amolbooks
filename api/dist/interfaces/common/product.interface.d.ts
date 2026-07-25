@@ -20,6 +20,8 @@ export interface Product {
     hasTax?: boolean;
     tax?: number;
     sku: string;
+    stock?: number | null;
+    lowStockThreshold?: number | null;
     emiMonth?: number[];
     threeMonth?: number;
     emiAmount?: number;

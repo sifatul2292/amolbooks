@@ -16,6 +16,7 @@ export declare class DashboardService {
     private configService;
     private utilsService;
     private logger;
+    private getDashboardDateRange;
     constructor(adminModel: Model<Admin>, userModel: Model<User>, productModel: Model<Product>, orderModel: Model<Order>, manualSaleModel: Model<any>, configService: ConfigService, utilsService: UtilsService);
     getAdminDashboard(filterOrderDto: FilterAndPaginationOrderDto, searchQuery?: string): Promise<ResponsePayload>;
     getOrderDashboard(): Promise<ResponsePayload>;

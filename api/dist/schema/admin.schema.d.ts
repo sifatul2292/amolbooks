@@ -13,9 +13,9 @@ export declare const AdminSchema: mongoose.Schema<any, mongoose.Model<any, any, 
     hasAccess: boolean;
     role: string;
     email?: string;
+    phoneNo?: string;
     gender?: string;
     profileImg?: string;
-    phoneNo?: string;
     permissions?: string[];
     registrationAt?: string;
     lastLoggedIn?: Date;

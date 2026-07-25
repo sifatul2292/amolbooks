@@ -12,6 +12,10 @@ import { ShopInformation } from '../../interfaces/common/shop-information.interf
 import { RedirectUrl } from '../../interfaces/common/redirect-url.interface';
 import { FbCatalogService } from '../../shared/fb-catalog/fb-catalog.service';
 import { Setting } from '../customization/setting/interface/setting.interface';
+import { StockMovement } from '../../interfaces/common/stock-movement.interface';
+import { StockPurchase } from '../../interfaces/common/stock-purchase.interface';
+import { CreateStockPurchaseDto, GetStockMovementsDto } from '../../dto/stock.dto';
+import { Order } from '../../interfaces/common/order.interface';
 export declare class ProductService {
     private readonly productModel;
     private readonly categoryModel;
@@ -21,6 +25,9 @@ export declare class ProductService {
     private readonly redirectUrlModel;
     private readonly shopInformationModel;
     private readonly boughtTogetherConfigModel;
+    private readonly stockMovementModel;
+    private readonly stockPurchaseModel;
+    private readonly orderModel;
     private configService;
     private utilsService;
     private fbCatalogService;
@@ -28,7 +35,7 @@ export declare class ProductService {
     private logger;
     private readonly cacheProductPage;
     private readonly cacheProductCount;
-    constructor(productModel: Model<Product>, categoryModel: Model<Category>, brandModel: Model<Brand>, publisherModel: Model<Publisher>, settingModel: Model<Setting>, redirectUrlModel: Model<RedirectUrl>, shopInformationModel: Model<ShopInformation>, boughtTogetherConfigModel: Model<any>, configService: ConfigService, utilsService: UtilsService, fbCatalogService: FbCatalogService, cacheManager: Cache);
+    constructor(productModel: Model<Product>, categoryModel: Model<Category>, brandModel: Model<Brand>, publisherModel: Model<Publisher>, settingModel: Model<Setting>, redirectUrlModel: Model<RedirectUrl>, shopInformationModel: Model<ShopInformation>, boughtTogetherConfigModel: Model<any>, stockMovementModel: Model<StockMovement>, stockPurchaseModel: Model<StockPurchase>, orderModel: Model<Order>, configService: ConfigService, utilsService: UtilsService, fbCatalogService: FbCatalogService, cacheManager: Cache);
     private normalizeProductImageUrl;
     private normalizeProductImageFields;
     addProduct(addProductDto: AddProductDto): Promise<ResponsePayload>;
@@ -60,4 +67,21 @@ export declare class ProductService {
     findAllPublished(): Promise<Product[]>;
     getMetaFeedXml(): Promise<string>;
     getMetaFeed(): Promise<string>;
+    private getStockSalesMetrics;
+    getStockList(query: any): Promise<ResponsePayload>;
+    getUrgentStock(query: any): Promise<ResponsePayload>;
+    updateStock(id: string, body: {
+        stock?: number;
+        lowStockThreshold?: number;
+        note?: string;
+    }, admin?: {
+        _id?: string;
+        name?: string;
+    }): Promise<ResponsePayload>;
+    addStockPurchase(dto: CreateStockPurchaseDto, admin?: {
+        _id?: string;
+        name?: string;
+    }): Promise<ResponsePayload>;
+    getStockMovements(query: GetStockMovementsDto): Promise<ResponsePayload>;
+    decreaseStockForItems(items: any[]): Promise<void>;
 }

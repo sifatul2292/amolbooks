@@ -313,13 +313,17 @@ export class OrderService {
 
     const result: any = await this.orderModel
       .findById(order._id)
-      .select('metaPurchaseStatus metaPurchaseEventId metaPurchaseError')
+      .select(
+        'metaPurchaseStatus metaPurchaseEventId metaPurchaseError metaPurchaseDeliveryChannel tagiooPurchaseEventId tagiooPurchaseError',
+      )
       .lean();
     const sent = result?.metaPurchaseStatus === 'sent';
     return {
       success: sent,
       message: sent
-        ? 'Manual Purchase sent to Meta'
+        ? result?.metaPurchaseDeliveryChannel === 'tagioo'
+          ? 'Manual Purchase accepted by Tagioo'
+          : 'Manual Purchase sent through direct Meta fallback'
         : result?.metaPurchaseError || 'Manual Purchase was not sent to Meta',
       data: result,
     } as ResponsePayload;
@@ -705,16 +709,8 @@ export class OrderService {
       return;
     }
 
+    let tagiooError = '';
     try {
-      const fSetting = await this.settingModel.findOne().select('analytics');
-      const analytics: any = fSetting?.analytics;
-      if (
-        !analytics?.facebookPixelId ||
-        !analytics?.facebookPixelAccessToken
-      ) {
-        throw new Error('Meta Pixel ID or access token is not configured');
-      }
-
       const hash = (value: string) =>
         crypto
           .createHash('sha256')
@@ -724,35 +720,122 @@ export class OrderService {
       const normalizedPhone = phoneDigits.startsWith('88')
         ? phoneDigits
         : `88${phoneDigits}`;
-      const userData: any = {};
-      if (normalizedPhone.length > 2) userData.ph = hash(normalizedPhone);
-      if (claimedOrder.email) userData.em = hash(claimedOrder.email);
-
       const nameParts = String(claimedOrder.name || '')
         .trim()
         .split(/\s+/)
         .filter(Boolean);
+
+      const trackableItems = (claimedOrder.orderedItems || []).filter(
+        (item: any) => item?._id,
+      );
+      const contents = trackableItems.map((item: any) => ({
+        id: String(item._id),
+        quantity: Math.max(1, Number(item.quantity) || 1),
+        item_price: Number(item.unitPrice ?? item.salePrice ?? 0),
+      }));
+      const eventTimestamp = new Date(
+        claimedOrder.createdAt || Date.now(),
+      ).getTime();
+      const contentIds = contents.map((item: any) => item.id);
+      const tagiooUserData: any = {
+        address: { country_code: 'BD' },
+      };
+      if (normalizedPhone.length > 2) {
+        tagiooUserData.sha256_phone_number = hash(normalizedPhone);
+      }
+      if (claimedOrder.email) {
+        tagiooUserData.sha256_email_address = hash(claimedOrder.email);
+      }
+      if (nameParts[0]) {
+        tagiooUserData.address.sha256_first_name = hash(nameParts[0]);
+      }
+      if (nameParts.length > 1) {
+        tagiooUserData.address.sha256_last_name = hash(
+          nameParts.slice(1).join(''),
+        );
+      }
+      if (claimedOrder.city) {
+        tagiooUserData.address.sha256_city = hash(claimedOrder.city);
+      }
+
+      try {
+        const tagiooResult =
+          await this.analyticsService.trackServerContainerEvent('purchase', {
+            client_id: `admin.${String(claimedOrder._id)}`,
+            event_id: eventId,
+            event_time: Math.floor(eventTimestamp / 1000),
+            transaction_id: String(claimedOrder.orderId),
+            order_id: String(claimedOrder.orderId),
+            currency: 'BDT',
+            value: Number(claimedOrder.grandTotal || 0),
+            content_type: 'product',
+            content_ids: contentIds,
+            contents,
+            meta_content_ids: contentIds,
+            meta_contents: contents,
+            items: trackableItems.map((item: any) => ({
+              item_id: String(item._id),
+              item_name: String(item.name || item._id),
+              price: Number(item.unitPrice ?? item.salePrice ?? 0),
+              quantity: Math.max(1, Number(item.quantity) || 1),
+            })),
+            user_data: tagiooUserData,
+            action_source: this.metaActionSource(manualOrderSource),
+            page_hostname: 'amolbooks.com',
+            page_location: 'https://amolbooks.com/',
+            page_path: '/',
+            manual_order_source: manualOrderSource,
+          });
+
+        if (!tagiooResult?.unique_event_id) {
+          throw new Error('Tagioo did not return a server event ID');
+        }
+
+        await this.orderModel.updateOne(
+          { _id: saveData._id, metaPurchaseEventId: eventId },
+          {
+            $set: {
+              metaPurchaseStatus: 'sent',
+              metaPurchaseSentAt: new Date(),
+              metaPurchaseDeliveryChannel: 'tagioo',
+              tagiooPurchaseEventId: String(tagiooResult.unique_event_id),
+            },
+            $unset: { metaPurchaseError: 1, tagiooPurchaseError: 1 },
+          },
+        );
+        this.logger.log(
+          `Manual-order Purchase accepted by Tagioo for order ${saveData.orderId}`,
+        );
+        return;
+      } catch (error) {
+        tagiooError = String(error?.message || error).slice(0, 500);
+        this.logger.warn(
+          `Tagioo Purchase failed for order ${saveData.orderId}; using direct Meta fallback: ${tagiooError}`,
+        );
+      }
+
+      const fSetting = await this.settingModel.findOne().select('analytics');
+      const analytics: any = fSetting?.analytics;
+      if (
+        !analytics?.facebookPixelId ||
+        !analytics?.facebookPixelAccessToken
+      ) {
+        throw new Error('Meta Pixel ID or access token is not configured');
+      }
+
+      const userData: any = {};
+      if (normalizedPhone.length > 2) userData.ph = hash(normalizedPhone);
+      if (claimedOrder.email) userData.em = hash(claimedOrder.email);
       if (nameParts[0]) userData.fn = hash(nameParts[0]);
       if (nameParts.length > 1) {
         userData.ln = hash(nameParts.slice(1).join(''));
       }
       if (claimedOrder.city) userData.ct = hash(claimedOrder.city);
       userData.country = hash('bd');
-
       if (!userData.ph && !userData.em) {
         throw new Error('Manual order has no phone or email for Meta matching');
       }
 
-      const contents = (claimedOrder.orderedItems || [])
-        .filter((item: any) => item?._id)
-        .map((item: any) => ({
-          id: String(item._id),
-          quantity: Math.max(1, Number(item.quantity) || 1),
-          item_price: Number(item.unitPrice ?? item.salePrice ?? 0),
-        }));
-      const eventTimestamp = new Date(
-        claimedOrder.createdAt || Date.now(),
-      ).getTime();
       const payload: any = {
         event_name: 'Purchase',
         event_time: Math.floor(eventTimestamp / 1000),
@@ -762,7 +845,7 @@ export class OrderService {
           currency: 'BDT',
           value: Number(claimedOrder.grandTotal || 0),
           content_type: 'product',
-          content_ids: contents.map((item: any) => item.id),
+          content_ids: contentIds,
           contents,
           order_id: String(claimedOrder.orderId),
         },
@@ -801,12 +884,14 @@ export class OrderService {
           $set: {
             metaPurchaseStatus: 'sent',
             metaPurchaseSentAt: new Date(),
+            metaPurchaseDeliveryChannel: 'direct_meta_fallback',
+            tagiooPurchaseError: tagiooError,
           },
           $unset: { metaPurchaseError: 1 },
         },
       );
       this.logger.log(
-        `Manual-order CAPI Purchase sent for order ${saveData.orderId}`,
+        `Manual-order Purchase sent through direct Meta fallback for order ${saveData.orderId}`,
       );
     } catch (error) {
       const message = String(error?.message || error).slice(0, 500);
@@ -816,6 +901,7 @@ export class OrderService {
           $set: {
             metaPurchaseStatus: 'failed',
             metaPurchaseError: message,
+            ...(tagiooError ? { tagiooPurchaseError: tagiooError } : {}),
           },
         },
       );

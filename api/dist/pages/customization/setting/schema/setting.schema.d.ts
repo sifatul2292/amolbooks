@@ -52,12 +52,12 @@ export declare const SettingSchema: mongoose.Schema<any, mongoose.Model<any, any
     deliveryCharges: mongoose.Types.DocumentArray<{
         name?: string;
         status?: string;
+        note?: string;
         type?: string;
         city?: string;
         insideCity?: number;
         outsideCity?: number;
         freeDeliveryMinAmount?: number;
-        note?: string;
         isAdvancePayment?: boolean;
     }>;
     paymentMethods: mongoose.Types.DocumentArray<{

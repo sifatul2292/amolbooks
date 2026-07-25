@@ -21,6 +21,7 @@ const config_1 = require("@nestjs/config");
 const utils_service_1 = require("../../../shared/utils/utils.service");
 const error_code_enum_1 = require("../../../enum/error-code.enum");
 const job_scheduler_service_1 = require("../../../shared/job-scheduler/job-scheduler.service");
+const special_package_price_util_1 = require("../../../shared/utils/special-package-price.util");
 const ObjectId = mongoose_2.Types.ObjectId;
 let SpecialPackageService = SpecialPackageService_1 = class SpecialPackageService {
     constructor(specialPackageModel, productModel, configService, utilsService, jobSchedulerService) {
@@ -217,7 +218,7 @@ let SpecialPackageService = SpecialPackageService_1 = class SpecialPackageServic
                         return transformedProduct;
                     }
                 });
-                return Object.assign(Object.assign({}, specialPackage === null || specialPackage === void 0 ? void 0 : specialPackage._doc), { products: transformedProducts });
+                return (0, special_package_price_util_1.withCalculatedSpecialPackageSubtotal)(Object.assign(Object.assign({}, specialPackage === null || specialPackage === void 0 ? void 0 : specialPackage._doc), { products: transformedProducts }));
             });
             return {
                 success: true,
@@ -261,7 +262,7 @@ let SpecialPackageService = SpecialPackageService_1 = class SpecialPackageServic
                     return transFrom;
                 }
             });
-            data = Object.assign(Object.assign({}, data === null || data === void 0 ? void 0 : data._doc), { products: newdata });
+            data = (0, special_package_price_util_1.withCalculatedSpecialPackageSubtotal)(Object.assign(Object.assign({}, data === null || data === void 0 ? void 0 : data._doc), { products: newdata }));
             return {
                 success: true,
                 message: 'Success',
@@ -303,7 +304,7 @@ let SpecialPackageService = SpecialPackageService_1 = class SpecialPackageServic
                     return transFrom;
                 }
             });
-            data = Object.assign(Object.assign({}, data._doc), { products: newdata });
+            data = (0, special_package_price_util_1.withCalculatedSpecialPackageSubtotal)(Object.assign(Object.assign({}, data._doc), { products: newdata }));
             return {
                 success: true,
                 message: 'Success',
@@ -323,7 +324,7 @@ let SpecialPackageService = SpecialPackageService_1 = class SpecialPackageServic
             return {
                 success: true,
                 message: 'Success',
-                data,
+                data: (0, special_package_price_util_1.withCalculatedSpecialPackageSubtotal)(data),
             };
         }
         catch (err) {

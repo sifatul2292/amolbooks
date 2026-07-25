@@ -15,11 +15,11 @@ export declare const AddressSchema: mongoose.Schema<any, mongoose.Model<any, any
     };
     address?: string;
     city?: string;
-    area?: {
+    zone?: {
         _id?: mongoose.Types.ObjectId;
         name?: string;
     };
-    zone?: {
+    area?: {
         _id?: mongoose.Types.ObjectId;
         name?: string;
     };
