@@ -23,6 +23,12 @@ Nothing active.
 
 ## Completed this session
 
+- Offline/manual Meta Purchase tracking hardening:
+  - Replaced the public anonymous `source: admin_manual` marker with an authenticated admin-only manual-order endpoint; website orders continue through Tagioo and cannot enter the offline CAPI branch.
+  - WhatsApp orders now send Meta Purchase with `action_source: chat`; click-to-WhatsApp, phone, email, walk-in, and other manual sources map to their corresponding Meta action sources.
+  - Manual Purchase payloads use final order totals and Mongo product IDs matching the Meta catalog, with normalized/hash-only customer matching data.
+  - Added atomic MongoDB claiming plus persisted sending/sent/failed state and stable order event IDs, preventing repeated application submissions and recording real Meta acknowledgement or failure.
+
 - Tagioo server-side tracking migration:
   - Added an idempotent API startup/response patch that replaces the hardcoded Stape web GTM loader and noscript URLs with Tagioo's first-party loader on `server.amolbooks.com`, without directly editing the compiled storefront.
   - Kept the existing Web GTM container ID, dataLayer event names, server event domain, and delayed-loading behavior unchanged.

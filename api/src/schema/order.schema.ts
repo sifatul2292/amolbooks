@@ -95,6 +95,41 @@ export const OrderSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    manualOrderSource: {
+      type: String,
+      enum: [
+        'whatsapp',
+        'whatsapp_ad',
+        'phone',
+        'facebook',
+        'instagram',
+        'email',
+        'walk_in',
+        'other',
+      ],
+      required: false,
+    },
+    metaPurchaseStatus: {
+      type: String,
+      enum: ['sending', 'sent', 'failed'],
+      required: false,
+    },
+    metaPurchaseEventId: {
+      type: String,
+      required: false,
+    },
+    metaPurchaseLastAttemptAt: {
+      type: Date,
+      required: false,
+    },
+    metaPurchaseSentAt: {
+      type: Date,
+      required: false,
+    },
+    metaPurchaseError: {
+      type: String,
+      required: false,
+    },
     attribution: {
       anonymousId: { type: String, required: false },
       firstTouch: {

@@ -3602,9 +3602,15 @@
       return { product: p._id, selectedQty: p.qty, cartType: 0 };
     });
 
-    fetch(API + '/api/order/add-order-by-anonymous', {
+    if (!getToken()) {
+      resetBtn();
+      showLogin('Please log in to create manual orders.');
+      return;
+    }
+
+    fetch(API + '/api/order/add-manual', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders(),
       body: JSON.stringify({
         phoneNo: phone,
         name: name,
@@ -3615,7 +3621,7 @@
         carts: carts,
         cartData: cartData,
         note: note,
-        source: 'admin_manual'
+        manualOrderSource: 'whatsapp'
       })
     })
     .then(function(r) {

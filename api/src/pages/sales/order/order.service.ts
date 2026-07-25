@@ -58,6 +58,21 @@ const ObjectId = Types.ObjectId;
 const RECENT_BUYERS_TTL_MS = 120000; // 2 min
 const recentBuyersCache = new Map<string, { at: number; data: any[] }>();
 
+type ManualOrderSource =
+  | 'whatsapp'
+  | 'whatsapp_ad'
+  | 'phone'
+  | 'facebook'
+  | 'instagram'
+  | 'email'
+  | 'walk_in'
+  | 'other';
+
+interface OrderBackgroundOptions {
+  isManualOrder?: boolean;
+  manualOrderSource?: ManualOrderSource;
+}
+
 @Injectable()
 export class OrderService {
   private logger = new Logger(OrderService.name);
@@ -136,6 +151,12 @@ export class OrderService {
       mData = { ...addOrderDto, ...dataExtra, ...adminData };
     }
 
+    const adminManualSource = this.normalizeManualOrderSource(
+      addOrderDto.manualOrderSource,
+    );
+    mData.manualOrderSource = adminManualSource;
+    mData.orderFrom =
+      mData.orderFrom || this.manualOrderLabel(adminManualSource);
     mData = this.normalizeAdminOrderData(mData);
     mData.orderedItems = await this.attachCostSnapshots(mData.orderedItems);
 
@@ -250,7 +271,10 @@ export class OrderService {
 
       // Run background tasks after response is prepared (fire and forget)
       // This will execute after the response is sent to UI
-      this.processOrderBackgroundTasks(saveData, addOrderDto).catch((error) => {
+      this.processOrderBackgroundTasks(saveData, addOrderDto, {
+        isManualOrder: true,
+        manualOrderSource: adminManualSource,
+      }).catch((error) => {
         this.logger.error(
           `Error in background order processing for order ${saveData.orderId}:`,
           error,
@@ -264,14 +288,45 @@ export class OrderService {
     }
   }
 
-  async addOrder(addOrderDto: AddOrderDto): Promise<ResponsePayload> {
+  async addManualOrderAdmin(
+    admin: Admin,
+    addOrderDto: AddOrderDto,
+  ): Promise<ResponsePayload> {
+    if (!admin || !admin._id) {
+      throw new BadRequestException('Admin authentication failed');
+    }
+
+    const manualOrderSource = this.normalizeManualOrderSource(
+      addOrderDto.manualOrderSource || 'whatsapp',
+    );
+    const manualOrderData = {
+      ...addOrderDto,
+      manualOrderSource,
+      orderFrom: this.manualOrderLabel(manualOrderSource),
+    } as AddOrderDto;
+
+    return this.addOrder(manualOrderData, {
+      isManualOrder: true,
+      manualOrderSource,
+    });
+  }
+
+  async addOrder(
+    addOrderDto: AddOrderDto,
+    backgroundOptions: OrderBackgroundOptions = {},
+  ): Promise<ResponsePayload> {
     try {
       let newOrderMake: any;
       const fraudCheckerData: any = null;
+      const orderInput: any = { ...addOrderDto };
+      if (!backgroundOptions.isManualOrder) {
+        orderInput.orderFrom = 'Website';
+        delete orderInput.manualOrderSource;
+      }
 
       // New Order Make
       // if (addOrderDto.user) {
-      newOrderMake = await this.newOrderMake(addOrderDto);
+      newOrderMake = await this.newOrderMake(orderInput);
       // console.log('newOrderMake data', newOrderMake);
       // } else {
       //   newOrderMake = await this.newOrderMake(addOrderDto);
@@ -339,7 +394,11 @@ export class OrderService {
 
       // Run background tasks after response is prepared (fire and forget)
       // This will execute after the response is sent to UI
-      this.processOrderBackgroundTasks(saveData, addOrderDto).catch((error) => {
+      this.processOrderBackgroundTasks(
+        saveData,
+        orderInput,
+        backgroundOptions,
+      ).catch((error) => {
         this.logger.error(
           `Error in background order processing for order ${saveData.orderId}:`,
           error,
@@ -360,6 +419,7 @@ export class OrderService {
   private async processOrderBackgroundTasks(
     saveData: any,
     addOrderDto: AddOrderDto,
+    options: OrderBackgroundOptions = {},
   ): Promise<void> {
     try {
       // 0) Manual stock decrement (custom-orders.html). Only products with a
@@ -474,11 +534,14 @@ export class OrderService {
         }
       }
 
-      // 6) Meta CAPI Purchase — ONLY for manual/admin-entered orders
-      //    (source === 'admin_manual'). Web orders fire Purchase via Stape, so
-      //    they are intentionally excluded here to avoid duplicate events.
-      if (addOrderDto && (addOrderDto as any).source === 'admin_manual') {
-        await this.sendManualOrderToMeta(saveData);
+      // 6) Meta CAPI Purchase — ONLY for authenticated admin/manual flows.
+      // Public website orders fire Purchase through Tagioo and never reach
+      // this branch, preventing browser/server duplicates.
+      if (options.isManualOrder) {
+        await this.sendManualOrderToMeta(
+          saveData,
+          options.manualOrderSource || 'other',
+        );
       }
     } catch (error) {
       this.logger.error(
@@ -490,59 +553,199 @@ export class OrderService {
   }
 
   /**
-   * sendManualOrderToMeta
-   * Sends a server-side Meta CAPI Purchase for manually-entered (offline) orders.
-   * No fbc/fbp available (no browser), so match relies on hashed phone/email.
-   * action_source 'phone_call' marks it offline. Failures are swallowed.
+   * Sends one server-side Meta Purchase for an authenticated manual order.
+   * The database claim prevents repeat submissions while the stable event ID
+   * gives Meta a second deduplication layer if a network retry is ambiguous.
    */
-  private async sendManualOrderToMeta(saveData: any): Promise<void> {
+  private async sendManualOrderToMeta(
+    saveData: any,
+    manualOrderSource: ManualOrderSource,
+  ): Promise<void> {
+    const eventId = `order_${saveData.orderId}`;
+    const staleSendingBefore = new Date(Date.now() - 10 * 60 * 1000);
+    const claimedOrder: any = await this.orderModel.findOneAndUpdate(
+      {
+        _id: saveData._id,
+        $or: [
+          { metaPurchaseStatus: { $exists: false } },
+          { metaPurchaseStatus: 'failed' },
+          {
+            metaPurchaseStatus: 'sending',
+            metaPurchaseLastAttemptAt: { $lt: staleSendingBefore },
+          },
+        ],
+      },
+      {
+        $set: {
+          manualOrderSource,
+          metaPurchaseStatus: 'sending',
+          metaPurchaseEventId: eventId,
+          metaPurchaseLastAttemptAt: new Date(),
+        },
+        $unset: { metaPurchaseError: 1 },
+      },
+      { new: true },
+    );
+
+    if (!claimedOrder) {
+      this.logger.log(
+        `Manual-order CAPI Purchase already claimed/sent for order ${saveData.orderId}`,
+      );
+      return;
+    }
+
     try {
       const fSetting = await this.settingModel.findOne().select('analytics');
-      const a: any = fSetting?.analytics;
-      if (!a?.facebookPixelId || !a?.facebookPixelAccessToken) return;
-
-      const sha = (v: string) =>
-        crypto.createHash('sha256').update(String(v).trim().toLowerCase()).digest('hex');
-
-      const phoneDigits = String(saveData.phoneNo || '').replace(/\D/g, '');
-      const user_data: any = {};
-      if (phoneDigits) {
-        user_data.ph = sha(phoneDigits.startsWith('88') ? phoneDigits : '88' + phoneDigits);
+      const analytics: any = fSetting?.analytics;
+      if (
+        !analytics?.facebookPixelId ||
+        !analytics?.facebookPixelAccessToken
+      ) {
+        throw new Error('Meta Pixel ID or access token is not configured');
       }
-      if (saveData.email) user_data.em = sha(saveData.email);
-      if (!user_data.ph && !user_data.em) return; // nothing to match on
 
+      const hash = (value: string) =>
+        crypto
+          .createHash('sha256')
+          .update(String(value).trim().toLowerCase())
+          .digest('hex');
+      const phoneDigits = String(claimedOrder.phoneNo || '').replace(/\D/g, '');
+      const normalizedPhone = phoneDigits.startsWith('88')
+        ? phoneDigits
+        : `88${phoneDigits}`;
+      const userData: any = {};
+      if (normalizedPhone.length > 2) userData.ph = hash(normalizedPhone);
+      if (claimedOrder.email) userData.em = hash(claimedOrder.email);
+
+      const nameParts = String(claimedOrder.name || '')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+      if (nameParts[0]) userData.fn = hash(nameParts[0]);
+      if (nameParts.length > 1) {
+        userData.ln = hash(nameParts.slice(1).join(''));
+      }
+      if (claimedOrder.city) userData.ct = hash(claimedOrder.city);
+      userData.country = hash('bd');
+
+      if (!userData.ph && !userData.em) {
+        throw new Error('Manual order has no phone or email for Meta matching');
+      }
+
+      const contents = (claimedOrder.orderedItems || [])
+        .filter((item: any) => item?._id)
+        .map((item: any) => ({
+          id: String(item._id),
+          quantity: Math.max(1, Number(item.quantity) || 1),
+          item_price: Number(item.unitPrice ?? item.salePrice ?? 0),
+        }));
+      const eventTimestamp = new Date(
+        claimedOrder.createdAt || Date.now(),
+      ).getTime();
       const payload: any = {
         event_name: 'Purchase',
-        event_time: Math.floor(Date.now() / 1000),
-        action_source: 'phone_call',
-        event_id: 'order_' + saveData.orderId, // dedup key
+        event_time: Math.floor(eventTimestamp / 1000),
+        action_source: this.metaActionSource(manualOrderSource),
+        event_id: eventId,
         custom_data: {
           currency: 'BDT',
-          value: Number(saveData.grandTotal || 0),
+          value: Number(claimedOrder.grandTotal || 0),
           content_type: 'product',
-          contents: (saveData.orderedItems || []).map((i: any) => ({
-            id: i.slug || String(i._id),
-            quantity: i.quantity || 1,
-          })),
+          content_ids: contents.map((item: any) => item.id),
+          contents,
+          order_id: String(claimedOrder.orderId),
         },
-        user_data,
+        user_data: userData,
       };
-
-      const data =
-        a.isEnablePixelTestEvent && a.facebookPixelTestEventId
-          ? { data: [payload], test_event_code: a.facebookPixelTestEventId }
+      const requestData =
+        analytics.isEnablePixelTestEvent &&
+        analytics.facebookPixelTestEventId
+          ? {
+              data: [payload],
+              test_event_code: analytics.facebookPixelTestEventId,
+            }
           : { data: [payload] };
 
-      await this.analyticsService.trackFbConversionEventClient(
-        a.facebookPixelId,
-        a.facebookPixelAccessToken,
-        data,
+      const result = await this.analyticsService.trackFbConversionEventClient(
+        analytics.facebookPixelId,
+        analytics.facebookPixelAccessToken,
+        requestData,
       );
-      this.logger.log(`Manual-order CAPI Purchase sent for order ${saveData.orderId}`);
-    } catch (e) {
-      this.logger.warn('Manual-order CAPI Purchase failed: ' + (e?.message || e));
+      if (!result || Number(result.events_received) < 1) {
+        throw new Error('Meta did not acknowledge the Purchase event');
+      }
+
+      await this.orderModel.updateOne(
+        { _id: saveData._id, metaPurchaseEventId: eventId },
+        {
+          $set: {
+            metaPurchaseStatus: 'sent',
+            metaPurchaseSentAt: new Date(),
+          },
+          $unset: { metaPurchaseError: 1 },
+        },
+      );
+      this.logger.log(
+        `Manual-order CAPI Purchase sent for order ${saveData.orderId}`,
+      );
+    } catch (error) {
+      const message = String(error?.message || error).slice(0, 500);
+      await this.orderModel.updateOne(
+        { _id: saveData._id, metaPurchaseEventId: eventId },
+        {
+          $set: {
+            metaPurchaseStatus: 'failed',
+            metaPurchaseError: message,
+          },
+        },
+      );
+      this.logger.warn(
+        `Manual-order CAPI Purchase failed for order ${saveData.orderId}: ${message}`,
+      );
     }
+  }
+
+  private normalizeManualOrderSource(value: any): ManualOrderSource {
+    const allowed: ManualOrderSource[] = [
+      'whatsapp',
+      'whatsapp_ad',
+      'phone',
+      'facebook',
+      'instagram',
+      'email',
+      'walk_in',
+      'other',
+    ];
+    return allowed.includes(value) ? value : 'other';
+  }
+
+  private manualOrderLabel(source: ManualOrderSource): string {
+    const labels: Record<ManualOrderSource, string> = {
+      whatsapp: 'WhatsApp',
+      whatsapp_ad: 'WhatsApp Ad',
+      phone: 'Phone',
+      facebook: 'Facebook',
+      instagram: 'Instagram',
+      email: 'Email',
+      walk_in: 'Walk-in',
+      other: 'Manual',
+    };
+    return labels[source];
+  }
+
+  private metaActionSource(source: ManualOrderSource): string {
+    if (source === 'whatsapp_ad') return 'business_messaging';
+    if (source === 'phone') return 'phone_call';
+    if (source === 'email') return 'email';
+    if (source === 'walk_in') return 'physical_store';
+    if (
+      source === 'whatsapp' ||
+      source === 'facebook' ||
+      source === 'instagram'
+    ) {
+      return 'chat';
+    }
+    return 'other';
   }
 
   private normalizeAdminOrderData(orderData: any): any {
@@ -2563,7 +2766,8 @@ export class OrderService {
       area: orderData?.area,
       zone: orderData?.zone,
       city: orderData?.city,
-      orderFrom: 'Website',
+      orderFrom: orderData?.orderFrom || 'Website',
+      manualOrderSource: orderData?.manualOrderSource,
       paymentType: orderData?.paymentType,
       country: orderData?.country,
       paymentStatus: 'unpaid',

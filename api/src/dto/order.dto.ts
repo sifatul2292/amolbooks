@@ -62,6 +62,20 @@ export class AddOrderDto {
   attribution: any;
 
   @IsOptional()
+  @IsString()
+  @IsIn([
+    'whatsapp',
+    'whatsapp_ad',
+    'phone',
+    'facebook',
+    'instagram',
+    'email',
+    'walk_in',
+    'other',
+  ])
+  manualOrderSource: string;
+
+  @IsOptional()
   @IsNumber()
   actualCourierCost: number;
 

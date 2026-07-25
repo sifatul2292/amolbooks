@@ -15,6 +15,13 @@ export interface Order {
   courierLink: string;
   shippingAddress: string;
   paymentType: string;
+  orderFrom?: string;
+  manualOrderSource?: string;
+  metaPurchaseStatus?: 'sending' | 'sent' | 'failed';
+  metaPurchaseEventId?: string;
+  metaPurchaseLastAttemptAt?: Date;
+  metaPurchaseSentAt?: Date;
+  metaPurchaseError?: string;
   orderedItems: OrderedItem[];
   subTotal: number;
   area?: Area;

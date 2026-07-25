@@ -75,6 +75,26 @@ export class OrderController {
     return await this.orderService.addOrderAdmin(admin, addOrderDto);
   }
 
+  @Post('/add-manual')
+  @UsePipes(ValidationPipe)
+  @AdminMetaRoles(
+    AdminRoles.SUPER_ADMIN,
+    AdminRoles.ADMIN,
+    AdminRoles.EDITOR,
+    AdminRoles.Collector,
+    AdminRoles.SALESMAN,
+  )
+  @UseGuards(AdminRolesGuard)
+  @AdminMetaPermissions(AdminPermissions.CREATE)
+  @UseGuards(AdminPermissionGuard)
+  @UseGuards(AdminJwtAuthGuard)
+  async addManualOrder(
+    @Body() addOrderDto: AddOrderDto,
+    @GetAdmin() admin: Admin,
+  ): Promise<ResponsePayload> {
+    return await this.orderService.addManualOrderAdmin(admin, addOrderDto);
+  }
+
   @Put('/updateDate')
   // @UsePipes(ValidationPipe)
   // @AdminMetaRoles(AdminRoles.SUPER_ADMIN)
