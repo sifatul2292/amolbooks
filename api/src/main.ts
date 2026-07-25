@@ -122,6 +122,66 @@ async function bootstrap() {
         if(items[0])items[0].price=finalViewValue;
       }
     }`;
+  const legacyStorefrontCartValueCode =
+    'function cartVal(items){return items.reduce(function(s,i){return s+(i.price||0)*(i.quantity||1);},0);}';
+  const storefrontFinalPriceMarker = 'function finalTrackingPrice(p){';
+  const storefrontFinalPriceHelpers = `${legacyStorefrontCartValueCode}
+  var _trackingPriceById={};
+  ${storefrontFinalPriceMarker}
+    if(!p)return 0;
+    var explicit=Number(p.afterDiscountPrice);
+    if(p.afterDiscountPrice!=null&&isFinite(explicit)&&explicit>=0)return explicit;
+    var sale=Number(p.salePrice!=null?p.salePrice:p.regularPrice)||0;
+    var discount=Number(p.discountAmount)||0;
+    var type=Number(p.discountType)||0;
+    if(type===1)return Math.max(0,Math.floor(sale-(sale*discount/100)));
+    if(type===2)return Math.max(0,Math.floor(sale-discount));
+    return Math.max(0,Math.floor(sale));
+  }
+  function rememberTrackingProduct(p){
+    if(!p||p._id==null)return;
+    if(p.afterDiscountPrice==null&&p.salePrice==null&&p.regularPrice==null)return;
+    _trackingPriceById[String(p._id)]=finalTrackingPrice(p);
+  }
+  function applyTrackingPrices(items){
+    return items.map(function(item){
+      var id=String(item.item_id||'');
+      if(id&&Object.prototype.hasOwnProperty.call(_trackingPriceById,id)){
+        item.price=_trackingPriceById[id];
+      }
+      return item;
+    });
+  }`;
+  const storefrontCartCheckoutMirrorMarker =
+    "if(obj.event==='add_to_cart'||obj.event==='begin_checkout')items=applyTrackingPrices(items);";
+  const storefrontCartCheckoutMirrorCode =
+    `var ec=obj.ecommerce||{},items=toItems(ec);${storefrontCartCheckoutMirrorMarker}var val=cartVal(items);`;
+  const storefrontProductResponseCacheMarker =
+    'if(Array.isArray(d.data))d.data.forEach(rememberTrackingProduct);';
+  const legacyStorefrontSuccessfulResponseCode =
+    'if(!d||!d.success)return;';
+  const storefrontSuccessfulResponseCode = `${legacyStorefrontSuccessfulResponseCode}
+        ${storefrontProductResponseCacheMarker}
+        else if(d.data&&typeof d.data==='object'){
+          rememberTrackingProduct(d.data);
+          if(d.data.product&&typeof d.data.product==='object')rememberTrackingProduct(d.data.product);
+        }`;
+  const legacyStorefrontAddToCartPriceCode =
+    'atcItem.price=atcP.salePrice||atcP.regularPrice||0;';
+  const storefrontAddToCartPriceCode =
+    'rememberTrackingProduct(atcP);atcItem.price=finalTrackingPrice(atcP);';
+  const legacyStorefrontLoggedInCartPriceCode =
+    "items.push({item_id:String(p._id||''),item_name:p.name||'',price:p.salePrice||p.regularPrice||0,quantity:i.selectedQty||1});";
+  const storefrontLoggedInCartPriceCode =
+    "rememberTrackingProduct(p);items.push({item_id:String(p._id||''),item_name:p.name||'',price:finalTrackingPrice(p),quantity:i.selectedQty||1});";
+  const legacyStorefrontGuestProductMapCode =
+    'd.data.forEach(function(p){if(p&&p._id)prodMap[String(p._id)]=p;});';
+  const storefrontGuestProductMapCode =
+    'd.data.forEach(function(p){if(p&&p._id){rememberTrackingProduct(p);prodMap[String(p._id)]=p;}});';
+  const legacyStorefrontGuestCartPriceCode =
+    "items2.push({item_id:id,item_name:p?p.name||'':'',price:p?p.salePrice||p.regularPrice||0:0,quantity:i.selectedQty||1});";
+  const storefrontGuestCartPriceCode =
+    "items2.push({item_id:id,item_name:p?p.name||'':'',price:p?finalTrackingPrice(p):0,quantity:i.selectedQty||1});";
   const legacyStorefrontGtmBootstrapCode = `window.addEventListener('load', function () { setTimeout(function () {
     function loadGtm() {
       window.dataLayer = window.dataLayer || [];
@@ -223,6 +283,41 @@ async function bootstrap() {
         storefrontViewItemMirrorCode,
       );
     }
+    if (!patchedTrackingHtml.includes(storefrontFinalPriceMarker)) {
+      patchedTrackingHtml = patchedTrackingHtml.replace(
+        legacyStorefrontCartValueCode,
+        storefrontFinalPriceHelpers,
+      );
+    }
+    if (!patchedTrackingHtml.includes(storefrontCartCheckoutMirrorMarker)) {
+      patchedTrackingHtml = patchedTrackingHtml.replace(
+        legacyStorefrontViewItemMirrorCode,
+        storefrontCartCheckoutMirrorCode,
+      );
+    }
+    if (!patchedTrackingHtml.includes(storefrontProductResponseCacheMarker)) {
+      patchedTrackingHtml = patchedTrackingHtml.replace(
+        legacyStorefrontSuccessfulResponseCode,
+        storefrontSuccessfulResponseCode,
+      );
+    }
+    patchedTrackingHtml = patchedTrackingHtml
+      .replace(
+        legacyStorefrontAddToCartPriceCode,
+        storefrontAddToCartPriceCode,
+      )
+      .replace(
+        legacyStorefrontLoggedInCartPriceCode,
+        storefrontLoggedInCartPriceCode,
+      )
+      .replace(
+        legacyStorefrontGuestProductMapCode,
+        storefrontGuestProductMapCode,
+      )
+      .replace(
+        legacyStorefrontGuestCartPriceCode,
+        storefrontGuestCartPriceCode,
+      );
     if (!patchedTrackingHtml.includes(storefrontGtmBootstrapMarker)) {
       patchedTrackingHtml = patchedTrackingHtml.replace(
         legacyStorefrontGtmBootstrapCode,
