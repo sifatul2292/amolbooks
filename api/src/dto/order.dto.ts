@@ -76,6 +76,10 @@ export class AddOrderDto {
   manualOrderSource: string;
 
   @IsOptional()
+  @IsString()
+  manualOrderRequestId: string;
+
+  @IsOptional()
   @IsNumber()
   actualCourierCost: number;
 

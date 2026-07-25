@@ -68,11 +68,6 @@ type ManualOrderSource =
   | 'walk_in'
   | 'other';
 
-interface OrderBackgroundOptions {
-  isManualOrder?: boolean;
-  manualOrderSource?: ManualOrderSource;
-}
-
 @Injectable()
 export class OrderService {
   private logger = new Logger(OrderService.name);
@@ -104,6 +99,7 @@ export class OrderService {
     private analyticsService: AnalyticsService,
   ) {
     this.checkAndUpdateCourierStatus();
+    this.scheduleManualMetaPurchaseRetries();
   }
 
   /**
@@ -119,6 +115,22 @@ export class OrderService {
       throw new BadRequestException(
         'Admin authentication failed: Admin data is missing',
       );
+    }
+    const manualOrderRequestId = String(
+      addOrderDto.manualOrderRequestId || '',
+    ).trim();
+    if (manualOrderRequestId) {
+      const existingOrder: any = await this.orderModel
+        .findOne({ manualOrderRequestId })
+        .select('_id orderId')
+        .lean();
+      if (existingOrder) {
+        return {
+          success: true,
+          message: 'Order already created',
+          data: existingOrder,
+        } as ResponsePayload;
+      }
     }
     let user;
     let mData;
@@ -177,104 +189,33 @@ export class OrderService {
         orderId: saveData.orderId,
       };
 
-      await this.cleanupIncompleteOrdersForPlacedOrder(
-        saveData,
-        addOrderDto.incompleteOrderId,
-      );
-
-      if (addOrderDto.incompleteOrderId) {
-        try {
-          await this.markIncompleteOrderConverted(
-            addOrderDto.incompleteOrderId,
-            saveData.orderId,
-          );
-        } catch (error) {
-          this.logger.warn(
-            `Order ${saveData.orderId} was created, but incomplete order conversion marking failed:`,
-            error?.message || error,
-          );
-        }
-      }
-
-      if (addOrderDto.user) {
-        await this.cartModel.deleteMany({
-          user: new ObjectId(addOrderDto.user),
-        });
-        await this.userModel.findOneAndUpdate(
-          { _id: addOrderDto.user },
-          {
-            $set: {
-              carts: [],
-            },
-          },
-        );
-        if (addOrderDto.coupon) {
-          await this.userModel.findOneAndUpdate(
-            { _id: addOrderDto.user },
-            {
-              $push: {
-                usedCoupons: addOrderDto.coupon,
-              },
-            },
-          );
-        }
-      }
-
-      // Sales-counter increment only. Actual stock deduction is unified into
-      // `decreaseProductStock` (single source of truth via the `stock` field
-      // + StockMovement log) — the legacy `quantity` field is no longer
-      // decremented here to stop the two counters from drifting apart.
-      for (const f of (addOrderDto['orderedItems'] || [])) {
-        try {
-          if (!f?._id || !ObjectId.isValid(f._id)) {
-            this.logger.warn(
-              `Skipping totalSold update for order ${saveData.orderId}: invalid product id ${f?._id}`,
-            );
-            continue;
-          }
-
-          const quantity = Number(f.quantity) || 0;
-          if (quantity <= 0) {
-            continue;
-          }
-
-          await this.productModel.findByIdAndUpdate(f._id, {
-            $inc: { totalSold: quantity },
-          });
-        } catch (error) {
-          this.logger.warn(
-            `Order ${saveData.orderId} was created, but totalSold update failed for product ${f?._id}:`,
-            error?.message || error,
-          );
-        }
-      }
-
       const response = {
         success: true,
         message: 'Order Added Success',
         data,
       } as ResponsePayload;
 
-      if (addOrderDto.incompleteOrderId) {
-        try {
-          await this.markIncompleteOrderConverted(
-            addOrderDto.incompleteOrderId,
-            saveData.orderId,
-          );
-        } catch (error) {
-          this.logger.warn(
-            `Order ${saveData.orderId} was created, but incomplete order conversion marking failed:`,
-            error?.message || error,
-          );
-        }
-      }
+      // Nothing after save may hold the admin response open. Conversion
+      // marking and sales counters are durable follow-up work.
+      this.processAdminOrderBookkeeping(saveData, addOrderDto).catch((error) => {
+        this.logger.error(
+          `Admin bookkeeping failed for order ${saveData.orderId}:`,
+          error,
+        );
+      });
 
-      // Run background tasks after response is prepared (fire and forget)
-      // This will execute after the response is sent to UI
-      this.processOrderBackgroundTasks(saveData, addOrderDto, {
-        isManualOrder: true,
-        manualOrderSource: adminManualSource,
-      }).catch((error) => {
+      // Meta delivery is intentionally independent from stock, invoice, fraud,
+      // SMS, and email work. A failure in any of those tasks must never prevent
+      // an authenticated admin order from reaching Meta.
+      this.sendManualOrderToMeta(saveData, adminManualSource).catch((error) => {
+        this.logger.error(
+          `Manual-order CAPI task failed for order ${saveData.orderId}:`,
+          error,
+        );
+      });
+
+      // Run the remaining background tasks without blocking order creation.
+      this.processOrderBackgroundTasks(saveData, addOrderDto).catch((error) => {
         this.logger.error(
           `Error in background order processing for order ${saveData.orderId}:`,
           error,
@@ -283,8 +224,58 @@ export class OrderService {
 
       return response;
     } catch (error) {
+      if (manualOrderRequestId && Number(error?.code) === 11000) {
+        const existingOrder: any = await this.orderModel
+          .findOne({ manualOrderRequestId })
+          .select('_id orderId')
+          .lean();
+        if (existingOrder) {
+          return {
+            success: true,
+            message: 'Order already created',
+            data: existingOrder,
+          } as ResponsePayload;
+        }
+      }
       console.log(error);
       throw new InternalServerErrorException(error.message);
+    }
+  }
+
+  private async processAdminOrderBookkeeping(
+    saveData: any,
+    addOrderDto: AddOrderDto,
+  ): Promise<void> {
+    if (addOrderDto.incompleteOrderId) {
+      try {
+        await this.markIncompleteOrderConverted(
+          addOrderDto.incompleteOrderId,
+          saveData.orderId,
+        );
+      } catch (error) {
+        this.logger.warn(
+          `Order ${saveData.orderId} was created, but incomplete order conversion marking failed:`,
+          error?.message || error,
+        );
+      }
+    }
+
+    // Sales-counter increment only. Stock deduction remains in
+    // decreaseProductStock, preserving its existing single source of truth.
+    for (const item of (addOrderDto['orderedItems'] || [])) {
+      try {
+        if (!item?._id || !ObjectId.isValid(item._id)) continue;
+        const quantity = Number(item.quantity) || 0;
+        if (quantity <= 0) continue;
+        await this.productModel.findByIdAndUpdate(item._id, {
+          $inc: { totalSold: quantity },
+        });
+      } catch (error) {
+        this.logger.warn(
+          `Order ${saveData.orderId} was created, but totalSold update failed for product ${item?._id}:`,
+          error?.message || error,
+        );
+      }
     }
   }
 
@@ -416,18 +407,13 @@ export class OrderService {
     return this.addOrderAdmin(admin, manualOrderDto);
   }
 
-  async addOrder(
-    addOrderDto: AddOrderDto,
-    backgroundOptions: OrderBackgroundOptions = {},
-  ): Promise<ResponsePayload> {
+  async addOrder(addOrderDto: AddOrderDto): Promise<ResponsePayload> {
     try {
       let newOrderMake: any;
       const fraudCheckerData: any = null;
       const orderInput: any = { ...addOrderDto };
-      if (!backgroundOptions.isManualOrder) {
-        orderInput.orderFrom = 'Website';
-        delete orderInput.manualOrderSource;
-      }
+      orderInput.orderFrom = 'Website';
+      delete orderInput.manualOrderSource;
 
       // New Order Make
       // if (addOrderDto.user) {
@@ -499,11 +485,7 @@ export class OrderService {
 
       // Run background tasks after response is prepared (fire and forget)
       // This will execute after the response is sent to UI
-      this.processOrderBackgroundTasks(
-        saveData,
-        orderInput,
-        backgroundOptions,
-      ).catch((error) => {
+      this.processOrderBackgroundTasks(saveData, orderInput).catch((error) => {
         this.logger.error(
           `Error in background order processing for order ${saveData.orderId}:`,
           error,
@@ -524,7 +506,6 @@ export class OrderService {
   private async processOrderBackgroundTasks(
     saveData: any,
     addOrderDto: AddOrderDto,
-    options: OrderBackgroundOptions = {},
   ): Promise<void> {
     try {
       // 0) Manual stock decrement (custom-orders.html). Only products with a
@@ -639,15 +620,6 @@ export class OrderService {
         }
       }
 
-      // 6) Meta CAPI Purchase — ONLY for authenticated admin/manual flows.
-      // Public website orders fire Purchase through Tagioo and never reach
-      // this branch, preventing browser/server duplicates.
-      if (options.isManualOrder) {
-        await this.sendManualOrderToMeta(
-          saveData,
-          options.manualOrderSource || 'other',
-        );
-      }
     } catch (error) {
       this.logger.error(
         `Error processing background tasks for order ${saveData.orderId}:`,
@@ -687,6 +659,7 @@ export class OrderService {
           metaPurchaseEventId: eventId,
           metaPurchaseLastAttemptAt: new Date(),
         },
+        $inc: { metaPurchaseAttemptCount: 1 },
         $unset: { metaPurchaseError: 1 },
       },
       { new: true },
@@ -771,13 +744,22 @@ export class OrderService {
             }
           : { data: [payload] };
 
-      const result = await this.analyticsService.trackFbConversionEventClient(
-        analytics.facebookPixelId,
-        analytics.facebookPixelAccessToken,
-        requestData,
-      );
+      let result: any = null;
+      for (let attempt = 1; attempt <= 3; attempt += 1) {
+        result = await this.analyticsService.trackFbConversionEventClient(
+          analytics.facebookPixelId,
+          analytics.facebookPixelAccessToken,
+          requestData,
+        );
+        if (result && Number(result.events_received) >= 1) break;
+        if (attempt < 3) {
+          await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+        }
+      }
       if (!result || Number(result.events_received) < 1) {
-        throw new Error('Meta did not acknowledge the Purchase event');
+        throw new Error(
+          'Meta did not acknowledge the Purchase event after 3 attempts',
+        );
       }
 
       await this.orderModel.updateOne(
@@ -851,6 +833,63 @@ export class OrderService {
       return 'chat';
     }
     return 'other';
+  }
+
+  /**
+   * Recover recent manual purchases after transient Meta/network errors or a
+   * process restart between saving the order and starting its CAPI task.
+   */
+  private scheduleManualMetaPurchaseRetries(): void {
+    const retry = () => {
+      this.retryPendingManualMetaPurchases().catch((error) => {
+        this.logger.error(
+          'Manual-order CAPI recovery job failed:',
+          error?.message || error,
+        );
+      });
+    };
+
+    setTimeout(retry, 5000);
+    schedule.scheduleJob('*/5 * * * *', retry);
+  }
+
+  private async retryPendingManualMetaPurchases(): Promise<void> {
+    const recentOrderCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const staleSendingBefore = new Date(Date.now() - 10 * 60 * 1000);
+    const orders: any[] = await this.orderModel
+      .find({
+        manualOrderSource: { $exists: true, $ne: null },
+        createdAt: { $gte: recentOrderCutoff },
+        $and: [
+          {
+            $or: [
+              { metaPurchaseStatus: { $exists: false } },
+              { metaPurchaseStatus: 'failed' },
+              {
+                metaPurchaseStatus: 'sending',
+                metaPurchaseLastAttemptAt: { $lt: staleSendingBefore },
+              },
+            ],
+          },
+          {
+            $or: [
+              { metaPurchaseAttemptCount: { $exists: false } },
+              { metaPurchaseAttemptCount: { $lt: 5 } },
+            ],
+          },
+        ],
+      })
+      .select('_id orderId manualOrderSource')
+      .sort({ createdAt: 1 })
+      .limit(25)
+      .lean();
+
+    for (const order of orders) {
+      await this.sendManualOrderToMeta(
+        order,
+        this.normalizeManualOrderSource(order.manualOrderSource),
+      );
+    }
   }
 
   private normalizeAdminOrderData(orderData: any): any {

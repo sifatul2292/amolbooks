@@ -109,6 +109,12 @@ export const OrderSchema = new mongoose.Schema(
       ],
       required: false,
     },
+    manualOrderRequestId: {
+      type: String,
+      required: false,
+      unique: true,
+      sparse: true,
+    },
     metaPurchaseStatus: {
       type: String,
       enum: ['sending', 'sent', 'failed'],
@@ -121,6 +127,11 @@ export const OrderSchema = new mongoose.Schema(
     metaPurchaseLastAttemptAt: {
       type: Date,
       required: false,
+    },
+    metaPurchaseAttemptCount: {
+      type: Number,
+      required: false,
+      default: 0,
     },
     metaPurchaseSentAt: {
       type: Date,

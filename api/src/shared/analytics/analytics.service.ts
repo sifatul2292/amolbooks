@@ -23,6 +23,10 @@ export class AnalyticsService {
       const response = await firstValueFrom(
         this.httpService.post(fbEndpoint, data, {
           params: { access_token: fbPixelAccessToken },
+          // Never leave a background conversion stuck indefinitely. Manual
+          // orders retry with the same event_id, so Meta can safely deduplicate
+          // an ambiguous network response.
+          timeout: 10000,
         }),
       );
 

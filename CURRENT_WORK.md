@@ -23,6 +23,17 @@ Nothing active.
 
 ## Completed this session
 
+- AI Assist order-creation hang fix:
+  - The authenticated admin endpoint now returns immediately after the order is durably saved; incomplete-order marking, sales counters, stock, invoice, fraud, cart, SMS/email, and Meta work no longer hold the modal request open.
+  - Added a stable per-attempt manual-order request ID with database uniqueness, so a browser timeout or retry returns the already-created order instead of creating a duplicate.
+  - Added a 30-second browser abort that always restores the Create Order button and gives a safe retry message rather than leaving the modal on “Creating…” forever.
+
+- Manual admin-order Meta delivery reliability:
+  - Detached the authenticated manual-order Meta CAPI Purchase from the shared stock/invoice/fraud/SMS/email background chain, so an unrelated operational failure can no longer skip the Meta event.
+  - Added three bounded CAPI attempts using the same stable order event ID for safe Meta deduplication, plus a 10-second HTTP timeout and persisted sent/failed/attempt diagnostics on the order.
+  - Added capped recovery on API startup and every five minutes for recent manual orders that were missed, failed, or left in a stale sending state; this also recovers across a process restart without replaying successful events.
+  - Website orders remain on the Tagioo path and are excluded from this direct manual-order CAPI flow, preventing duplicate Purchase events.
+
 - Offline/manual Meta Purchase tracking hardening:
   - Removed the public anonymous `source: admin_manual` marker. AI Assist now uses a dedicated authenticated endpoint that reloads selected products, computes discounted totals server-side, and delegates to the proven admin-order creation flow; website orders continue through Tagioo and cannot enter the offline CAPI branch.
   - WhatsApp orders now send Meta Purchase with `action_source: chat`; click-to-WhatsApp, phone, email, walk-in, and other manual sources map to their corresponding Meta action sources.

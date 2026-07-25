@@ -17,9 +17,11 @@ export interface Order {
   paymentType: string;
   orderFrom?: string;
   manualOrderSource?: string;
+  manualOrderRequestId?: string;
   metaPurchaseStatus?: 'sending' | 'sent' | 'failed';
   metaPurchaseEventId?: string;
   metaPurchaseLastAttemptAt?: Date;
+  metaPurchaseAttemptCount?: number;
   metaPurchaseSentAt?: Date;
   metaPurchaseError?: string;
   orderedItems: OrderedItem[];
