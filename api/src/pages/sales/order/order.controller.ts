@@ -89,6 +89,16 @@ export class OrderController {
     );
   }
 
+  @Post('/add-ai-assist')
+  @UsePipes(ValidationPipe)
+  @UseGuards(AdminJwtAuthGuard)
+  async addAiAssistOrder(
+    @Body() addOrderDto: AddOrderDto,
+    @GetAdmin() admin: Admin,
+  ): Promise<ResponsePayload> {
+    return await this.orderService.addAiAssistOrderAdmin(admin, addOrderDto);
+  }
+
   @Put('/updateDate')
   // @UsePipes(ValidationPipe)
   // @AdminMetaRoles(AdminRoles.SUPER_ADMIN)

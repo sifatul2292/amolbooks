@@ -24,7 +24,7 @@ Nothing active.
 ## Completed this session
 
 - Offline/manual Meta Purchase tracking hardening:
-  - Removed the public anonymous `source: admin_manual` marker. AI Assist keeps its proven order-creation endpoint, then calls a separate authenticated admin-only Meta sync endpoint with the saved order ID; website orders continue through Tagioo and cannot enter the offline CAPI branch.
+  - Removed the public anonymous `source: admin_manual` marker. AI Assist now uses a dedicated authenticated endpoint that reloads selected products, computes discounted totals server-side, and delegates to the proven admin-order creation flow; website orders continue through Tagioo and cannot enter the offline CAPI branch.
   - WhatsApp orders now send Meta Purchase with `action_source: chat`; click-to-WhatsApp, phone, email, walk-in, and other manual sources map to their corresponding Meta action sources.
   - Manual Purchase payloads use final order totals and Mongo product IDs matching the Meta catalog, with normalized/hash-only customer matching data.
   - Added atomic MongoDB claiming plus persisted sending/sent/failed state and stable order event IDs, preventing repeated application submissions and recording real Meta acknowledgement or failure.

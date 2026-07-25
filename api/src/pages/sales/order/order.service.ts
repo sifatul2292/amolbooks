@@ -328,6 +328,94 @@ export class OrderService {
     } as ResponsePayload;
   }
 
+  async addAiAssistOrderAdmin(
+    admin: Admin,
+    addOrderDto: AddOrderDto,
+  ): Promise<ResponsePayload> {
+    if (!admin || !admin._id) {
+      throw new BadRequestException('Admin authentication failed');
+    }
+
+    const rawCart = Array.isArray((addOrderDto as any).cartData)
+      ? (addOrderDto as any).cartData
+      : [];
+    const selections = rawCart
+      .map((item: any) => ({
+        productId: String(item?.product || ''),
+        quantity: Math.max(1, Math.floor(Number(item?.selectedQty) || 1)),
+      }))
+      .filter((item: any) => ObjectId.isValid(item.productId));
+    if (!selections.length) {
+      throw new BadRequestException('Please select at least one product');
+    }
+
+    const products: any[] = await this.productModel
+      .find({ _id: { $in: selections.map((item: any) => item.productId) } })
+      .lean();
+    const productById = new Map(
+      products.map((product: any) => [String(product._id), product]),
+    );
+    if (
+      productById.size !==
+      new Set(selections.map((item) => item.productId)).size
+    ) {
+      throw new BadRequestException(
+        'One or more selected products are no longer available',
+      );
+    }
+
+    const orderedItems = selections.map((selection: any) => {
+      const product: any = productById.get(selection.productId);
+      const regularPrice = this.utilsService.transform(product, 'regularPrice');
+      const salePrice = this.utilsService.transform(product, 'salePrice');
+      return {
+        _id: String(product._id),
+        name: product.name,
+        nameEn: product.nameEn,
+        slug: product.slug,
+        image: product.images?.[0] || null,
+        author: product.author,
+        category: product.category,
+        subCategory: product.subCategory,
+        publisher: product.publisher,
+        brand: product.brand,
+        regularPrice,
+        unitPrice: salePrice,
+        salePrice,
+        quantity: selection.quantity,
+        orderType: 'regular',
+        discountType: product.discountType,
+        discountAmount: product.discountAmount,
+      };
+    });
+    const subTotal = orderedItems.reduce(
+      (sum: number, item: any) => sum + item.regularPrice * item.quantity,
+      0,
+    );
+    const saleTotal = orderedItems.reduce(
+      (sum: number, item: any) => sum + item.salePrice * item.quantity,
+      0,
+    );
+    const deliveryCharge = Math.max(
+      0,
+      Number((addOrderDto as any).deliveryCharge) || 0,
+    );
+    const manualOrderDto = {
+      ...addOrderDto,
+      orderedItems,
+      subTotal,
+      discount: Math.max(0, subTotal - saleTotal),
+      deliveryCharge,
+      grandTotal: saleTotal + deliveryCharge,
+      paymentStatus: (addOrderDto as any).paymentStatus || 'unpaid',
+      orderStatus: OrderStatus.PENDING,
+      manualOrderSource: 'whatsapp',
+      orderFrom: 'WhatsApp',
+    } as AddOrderDto;
+
+    return this.addOrderAdmin(admin, manualOrderDto);
+  }
+
   async addOrder(
     addOrderDto: AddOrderDto,
     backgroundOptions: OrderBackgroundOptions = {},

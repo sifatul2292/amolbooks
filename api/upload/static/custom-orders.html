@@ -3608,9 +3608,9 @@
       return;
     }
 
-    fetch(API + '/api/order/add-order-by-anonymous', {
+    fetch(API + '/api/order/add-ai-assist', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders(),
       body: JSON.stringify({
         phoneNo: phone,
         name: name,
@@ -3630,28 +3630,11 @@
       resetBtn();
       if (d.ok && d.res && (d.res.success !== false)) {
         var orderId = (d.res.data && d.res.data.orderId) || d.res.orderId || '';
-        var mongoId = d.res.data && d.res.data._id;
         toast('Order' + (orderId ? ' #' + orderId : '') + ' created!', 'success');
         window.closeAiAssist();
         if (window.loadSnap) window.loadSnap();
         if (window.loadTodayStats) window.loadTodayStats();
         if (typeof loadOrders === 'function') loadOrders();
-        if (mongoId) {
-          fetch(API + '/api/order/track-manual-meta/' + encodeURIComponent(mongoId), {
-            method: 'POST',
-            headers: authHeaders(),
-            body: JSON.stringify({ manualOrderSource: 'whatsapp' })
-          })
-          .then(function(r) { return r.json().then(function(res) { return { ok: r.ok, res: res }; }); })
-          .then(function(meta) {
-            if (!meta.ok || !meta.res || meta.res.success === false) {
-              toast('Order created, but Meta sync failed. Please check API logs.', 'error');
-            }
-          })
-          .catch(function() {
-            toast('Order created, but Meta sync failed. Please check API logs.', 'error');
-          });
-        }
       } else {
         toast((d.res && d.res.message) || ('Error ' + d.status), 'error');
       }
