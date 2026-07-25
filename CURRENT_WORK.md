@@ -23,6 +23,11 @@ Nothing active.
 
 ## Completed this session
 
+- AI Assist definitive spinner/root-cause fix:
+  - Fixed the actual browser exception: the separate AI Assist IIFE was calling private `getToken`, `authHeaders`, and `showLogin` functions from another scope after enabling the spinner, so execution stopped before either the request or timeout existed.
+  - Made AI Assist authentication self-contained, exposed the existing order-list refresh intentionally, and added an authenticated request-ID status endpoint so a saved order is recognized even if the original POST response is delayed.
+  - The modal now polls durable order state and has a hard 20-second terminal deadline on every path, while retaining duplicate-safe retries.
+
 - AI Assist order-creation hang fix:
   - The authenticated admin endpoint now returns immediately after the order is durably saved; incomplete-order marking, sales counters, stock, invoice, fraud, cart, SMS/email, and Meta work no longer hold the modal request open.
   - Added a stable per-attempt manual-order request ID with database uniqueness, so a browser timeout or retry returns the already-created order instead of creating a duplicate.

@@ -123,6 +123,7 @@ export class OrderService {
       const existingOrder: any = await this.orderModel
         .findOne({ manualOrderRequestId })
         .select('_id orderId')
+        .maxTimeMS(5000)
         .lean();
       if (existingOrder) {
         return {
@@ -134,13 +135,15 @@ export class OrderService {
     }
     let user;
     let mData;
-    const adminData = await this.adminModel.findById(admin._id);
+    const adminData = await this.adminModel
+      .findById(admin._id)
+      .maxTimeMS(5000);
     // this.logger.error(addOrderDto);
     // Increment Order Id Unique
     const incOrder = await this.uniqueIdModel.findOneAndUpdate(
       {},
       { $inc: { orderId: 1 } },
-      { new: true, upsert: true },
+      { new: true, upsert: true, maxTimeMS: 5000 },
     );
 
     const orderIdUnique = this.utilsService.padLeadingZeros(incOrder.orderId);
@@ -152,7 +155,9 @@ export class OrderService {
     };
 
     if (addOrderDto.phoneNo && !addOrderDto.user) {
-      user = await this.userModel.findOne({ phoneNo: addOrderDto.phoneNo });
+      user = await this.userModel
+        .findOne({ phoneNo: addOrderDto.phoneNo })
+        .maxTimeMS(5000);
       // console.log(user);
       if (user) {
         mData = { ...addOrderDto, ...dataExtra, ...{ user: user._id } };
@@ -228,6 +233,7 @@ export class OrderService {
         const existingOrder: any = await this.orderModel
           .findOne({ manualOrderRequestId })
           .select('_id orderId')
+          .maxTimeMS(5000)
           .lean();
         if (existingOrder) {
           return {
@@ -319,6 +325,32 @@ export class OrderService {
     } as ResponsePayload;
   }
 
+  async getManualOrderRequestStatusAdmin(
+    admin: Admin,
+    requestId: string,
+  ): Promise<ResponsePayload> {
+    if (!admin || !admin._id) {
+      throw new BadRequestException('Admin authentication failed');
+    }
+    const normalizedRequestId = String(requestId || '').trim().slice(0, 120);
+    if (!/^ai_[A-Za-z0-9_-]+$/.test(normalizedRequestId)) {
+      throw new BadRequestException('Invalid manual order request ID');
+    }
+
+    const order: any = await this.orderModel
+      .findOne({ manualOrderRequestId: normalizedRequestId })
+      .select('_id orderId')
+      .maxTimeMS(5000)
+      .lean();
+    return {
+      success: true,
+      message: order ? 'Order created' : 'Order is still processing',
+      data: order
+        ? { status: 'completed', _id: order._id, orderId: order.orderId }
+        : { status: 'pending' },
+    } as ResponsePayload;
+  }
+
   async addAiAssistOrderAdmin(
     admin: Admin,
     addOrderDto: AddOrderDto,
@@ -342,6 +374,7 @@ export class OrderService {
 
     const products: any[] = await this.productModel
       .find({ _id: { $in: selections.map((item: any) => item.productId) } })
+      .maxTimeMS(8000)
       .lean();
     const productById = new Map(
       products.map((product: any) => [String(product._id), product]),
@@ -1089,6 +1122,7 @@ export class OrderService {
       ? await this.productModel
           .find({ _id: { $in: ids } })
           .select('_id costPrice')
+          .maxTimeMS(5000)
           .lean()
       : [];
     const catalogCost = new Map(

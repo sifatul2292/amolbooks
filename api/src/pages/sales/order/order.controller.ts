@@ -99,6 +99,18 @@ export class OrderController {
     return await this.orderService.addAiAssistOrderAdmin(admin, addOrderDto);
   }
 
+  @Get('/manual-request-status/:requestId')
+  @UseGuards(AdminJwtAuthGuard)
+  async getManualOrderRequestStatus(
+    @Param('requestId') requestId: string,
+    @GetAdmin() admin: Admin,
+  ): Promise<ResponsePayload> {
+    return this.orderService.getManualOrderRequestStatusAdmin(
+      admin,
+      requestId,
+    );
+  }
+
   @Put('/updateDate')
   // @UsePipes(ValidationPipe)
   // @AdminMetaRoles(AdminRoles.SUPER_ADMIN)

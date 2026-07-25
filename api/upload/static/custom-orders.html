@@ -2962,6 +2962,7 @@
 
   window.loadSnap = loadSnap;
   window.loadTodayStats = loadTodayStats;
+  window.loadOrders = loadOrders;
 
   /* ── Stock Management ── */
   var stockState = { page: 1, limit: 50, q: '', lowOnly: false, totalCount: 0 };
@@ -3324,6 +3325,28 @@
   var API = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://apisub.amolbooks.com';
   var bnDigits = {'০':'0','১':'1','২':'2','৩':'3','৪':'4','৫':'5','৬':'6','৭':'7','৮':'8','৯':'9'};
 
+  /* This script is deliberately self-contained. The page's main auth helpers
+     live inside another IIFE and are not visible here. Calling them by their
+     private names caused Create Order to throw after enabling the spinner. */
+  function aiGetToken() {
+    return localStorage.getItem('co_admin_token') || null;
+  }
+  function aiAuthHeaders() {
+    var headers = { 'Content-Type': 'application/json' };
+    var token = aiGetToken();
+    if (token) headers.administrator = token;
+    return headers;
+  }
+  function aiShowLogin(message) {
+    var overlay = document.getElementById('login-overlay');
+    var error = document.getElementById('login-error');
+    if (overlay) overlay.classList.remove('hidden');
+    if (error) {
+      error.textContent = message || 'Please sign in again.';
+      error.style.display = 'block';
+    }
+  }
+
   function bnToEn(str) {
     return str.replace(/[০-৯]/g, function(d) { return bnDigits[d]; });
   }
@@ -3611,14 +3634,13 @@
       return { product: p._id, selectedQty: p.qty, cartType: 0 };
     });
 
-    if (!getToken()) {
+    if (!aiGetToken()) {
       resetBtn();
-      showLogin('Please log in to create manual orders.');
+      aiShowLogin('Please log in to create manual orders.');
       return;
     }
 
     var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    var timeoutId = controller ? setTimeout(function() { controller.abort(); }, 30000) : null;
     var requestBody = {
       phoneNo: phone,
       name: name,
@@ -3637,9 +3659,78 @@
     }
     requestBody.manualOrderRequestId = aiPendingRequestId;
 
+    var settled = false;
+    var postError = '';
+    var pollTimer = null;
+    var deadlineTimer = null;
+
+    function clearRequestTimers() {
+      if (pollTimer) clearTimeout(pollTimer);
+      if (deadlineTimer) clearTimeout(deadlineTimer);
+    }
+    function finishSuccess(orderId) {
+      if (settled) return;
+      settled = true;
+      clearRequestTimers();
+      if (controller) controller.abort();
+      resetBtn();
+      aiPendingRequestId = '';
+      aiPendingFingerprint = '';
+      toast('Order' + (orderId ? ' #' + orderId : '') + ' created!', 'success');
+      window.closeAiAssist();
+      if (window.loadSnap) window.loadSnap();
+      if (window.loadTodayStats) window.loadTodayStats();
+      if (window.loadOrders) window.loadOrders();
+    }
+    function finishError(message) {
+      if (settled) return;
+      settled = true;
+      clearRequestTimers();
+      if (controller) controller.abort();
+      resetBtn();
+      toast(message, 'error');
+    }
+    function scheduleStatusCheck(delay) {
+      if (settled) return;
+      pollTimer = setTimeout(checkOrderStatus, delay);
+    }
+    function checkOrderStatus() {
+      if (settled) return;
+      fetch(API + '/api/order/manual-request-status/' + encodeURIComponent(aiPendingRequestId), {
+        headers: aiAuthHeaders()
+      })
+      .then(function(r) {
+        if (r.status === 401 || r.status === 403) {
+          aiShowLogin('Session expired. Please log in again.');
+          throw new Error('Session expired');
+        }
+        return r.json();
+      })
+      .then(function(res) {
+        if (settled) return;
+        if (res && res.data && res.data.status === 'completed') {
+          finishSuccess(res.data.orderId || '');
+        } else if (postError) {
+          finishError(postError);
+        } else {
+          scheduleStatusCheck(1000);
+        }
+      })
+      .catch(function(err) {
+        if (settled) return;
+        if (postError) finishError(postError);
+        else scheduleStatusCheck(1000);
+      });
+    }
+
+    deadlineTimer = setTimeout(function() {
+      finishError('Order creation could not be confirmed within 20 seconds. Click Create Order again safely; it will not create a duplicate.');
+    }, 20000);
+    scheduleStatusCheck(750);
+
     fetch(API + '/api/order/add-ai-assist', {
       method: 'POST',
-      headers: authHeaders(),
+      headers: aiAuthHeaders(),
       body: JSON.stringify(requestBody),
       signal: controller ? controller.signal : undefined
     })
@@ -3647,29 +3738,19 @@
       return r.json().then(function(res) { return { ok: r.ok, status: r.status, res: res }; });
     })
     .then(function(d) {
-      if (timeoutId) clearTimeout(timeoutId);
-      resetBtn();
+      if (settled) return;
       if (d.ok && d.res && (d.res.success !== false)) {
         var orderId = (d.res.data && d.res.data.orderId) || d.res.orderId || '';
-        aiPendingRequestId = '';
-        aiPendingFingerprint = '';
-        toast('Order' + (orderId ? ' #' + orderId : '') + ' created!', 'success');
-        window.closeAiAssist();
-        if (window.loadSnap) window.loadSnap();
-        if (window.loadTodayStats) window.loadTodayStats();
-        if (typeof loadOrders === 'function') loadOrders();
+        finishSuccess(orderId);
       } else {
-        toast((d.res && d.res.message) || ('Error ' + d.status), 'error');
+        postError = (d.res && d.res.message) || ('Error ' + d.status);
+        checkOrderStatus();
       }
     })
     .catch(function(err) {
-      if (timeoutId) clearTimeout(timeoutId);
-      resetBtn();
-      if (err && err.name === 'AbortError') {
-        toast('The server took too long. Click Create Order again safely; it will not duplicate the order.', 'error');
-      } else {
-        toast('Request failed: ' + (err.message || err), 'error');
-      }
+      if (settled || (err && err.name === 'AbortError')) return;
+      postError = 'Request failed: ' + (err.message || err);
+      checkOrderStatus();
     });
   };
 
