@@ -740,6 +740,19 @@ export class OrderService {
       const tagiooUserData: any = {
         address: { country_code: 'BD' },
       };
+      let externalId = `manual_${String(claimedOrder._id)}`;
+      if (claimedOrder.user) {
+        externalId = `user_${String(claimedOrder.user)}`;
+      } else if (claimedOrder.attribution?.anonymousId) {
+        externalId = String(claimedOrder.attribution.anonymousId);
+      } else if (normalizedPhone.length > 2) {
+        externalId = `customer_${hash(normalizedPhone)}`;
+      } else if (claimedOrder.email) {
+        externalId = `customer_${hash(claimedOrder.email)}`;
+      }
+      // The existing Web GTM Data Tag sends customer_id as user_id. Match that
+      // server-container data model so its Meta tag emits external_id.
+      tagiooUserData.user_id = externalId;
       if (normalizedPhone.length > 2) {
         tagiooUserData.sha256_phone_number = hash(normalizedPhone);
       }
@@ -824,6 +837,7 @@ export class OrderService {
       }
 
       const userData: any = {};
+      userData.external_id = externalId;
       if (normalizedPhone.length > 2) userData.ph = hash(normalizedPhone);
       if (claimedOrder.email) userData.em = hash(claimedOrder.email);
       if (nameParts[0]) userData.fn = hash(nameParts[0]);

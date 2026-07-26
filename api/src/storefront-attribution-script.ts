@@ -76,6 +76,20 @@ export const STOREFRONT_ATTRIBUTION_SCRIPT = String.raw`(function (root) {
     return saved;
   }
 
+  function enrichPendingPurchase() {
+    try {
+      var raw = root.sessionStorage.getItem('_pendingPurchase');
+      if (!raw) return;
+      var payload = safeParse(raw, null);
+      if (!payload || typeof payload !== 'object') return;
+      payload.user_data = payload.user_data || {};
+      if (!payload.user_data.customer_id) {
+        payload.user_data.customer_id = anonymousId();
+        root.sessionStorage.setItem('_pendingPurchase', JSON.stringify(payload));
+      }
+    } catch (_) {}
+  }
+
   function isJsonBody(body) {
     return typeof body === 'string' && body.length > 1 && (body[0] === '{' || body[0] === '[');
   }
@@ -88,7 +102,9 @@ export const STOREFRONT_ATTRIBUTION_SCRIPT = String.raw`(function (root) {
 
     if (/\/api\/gtm\//.test(path)) {
       payload.user_data = payload.user_data || {};
-      payload.user_data.analytics_anonymous_id = anonymousId();
+      var trackingId = anonymousId();
+      payload.user_data.analytics_anonymous_id = trackingId;
+      if (!payload.user_data.customer_id) payload.user_data.customer_id = trackingId;
       return JSON.stringify(payload);
     }
     if (/\/api\/(?:v\d+\/)?order\/(?:add-order-by-(?:user|anonymous)|add)(?:\?|$)/.test(path)) {
@@ -99,6 +115,7 @@ export const STOREFRONT_ATTRIBUTION_SCRIPT = String.raw`(function (root) {
   }
 
   attribution();
+  enrichPendingPurchase();
 
   if (typeof root.fetch === 'function') {
     var originalFetch = root.fetch;

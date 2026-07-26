@@ -391,6 +391,7 @@ let OrderService = OrderService_1 = class OrderService {
         }
     }
     async sendManualOrderToMeta(saveData, manualOrderSource) {
+        var _a;
         const eventId = `order_${saveData.orderId}`;
         const staleSendingBefore = new Date(Date.now() - 10 * 60 * 1000);
         const claimedOrder = await this.orderModel.findOneAndUpdate({
@@ -445,6 +446,20 @@ let OrderService = OrderService_1 = class OrderService {
             const tagiooUserData = {
                 address: { country_code: 'BD' },
             };
+            let externalId = `manual_${String(claimedOrder._id)}`;
+            if (claimedOrder.user) {
+                externalId = `user_${String(claimedOrder.user)}`;
+            }
+            else if ((_a = claimedOrder.attribution) === null || _a === void 0 ? void 0 : _a.anonymousId) {
+                externalId = String(claimedOrder.attribution.anonymousId);
+            }
+            else if (normalizedPhone.length > 2) {
+                externalId = `customer_${hash(normalizedPhone)}`;
+            }
+            else if (claimedOrder.email) {
+                externalId = `customer_${hash(claimedOrder.email)}`;
+            }
+            tagiooUserData.user_id = externalId;
             if (normalizedPhone.length > 2) {
                 tagiooUserData.sha256_phone_number = hash(normalizedPhone);
             }
@@ -516,6 +531,7 @@ let OrderService = OrderService_1 = class OrderService {
                 throw new Error('Meta Pixel ID or access token is not configured');
             }
             const userData = {};
+            userData.external_id = externalId;
             if (normalizedPhone.length > 2)
                 userData.ph = hash(normalizedPhone);
             if (claimedOrder.email)

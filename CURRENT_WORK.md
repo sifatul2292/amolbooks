@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-07-25. Branch: `main`. Tagioo tracking-loader cutover prepared locally._
+_Last updated: 2026-07-26. Branch: `main`. Meta Purchase External ID coverage fix prepared locally._
 
 ## Recently completed (git log, newest first)
 
@@ -22,6 +22,13 @@ display-only, then margin/copy polish.
 Nothing active.
 
 ## Completed this session
+
+- Meta Purchase External ID coverage:
+  - Confirmed the existing Web GTM Purchase tags already map `user_data.customer_id` to Meta `external_id` and the Data Tag's `user_id`; the missing source value, rather than the tag configuration, was the root cause.
+  - Storefront Purchase payloads now include the existing persistent first-party anonymous ID as `user_data.customer_id` before the pending Purchase is released to GTM. Existing customer IDs are preserved.
+  - Direct `/api/gtm/*` browser payloads now carry the same customer ID alongside the analytics anonymous ID.
+  - Manual/admin purchases now send `user_id` through Tagioo and `external_id` through the direct Meta fallback, preferring the account ID, then attribution ID, then a deterministic non-plaintext customer key.
+  - No event names, values, triggers, Pixel IDs, tokens, or Purchase deduplication IDs were changed.
 
 - Manual admin-order Tagioo delivery:
   - Changed authenticated admin/AI-assisted Purchase tracking from direct-Meta-only to Tagioo server GTM first, using the already-published first-party Data Client endpoint at `https://server.amolbooks.com/data`.
@@ -157,6 +164,11 @@ Nothing active.
 3. Add a minimal smoke test / health endpoint check for the free-gift + recent-buyers flows.
 
 ## Commands already run this session
+
+- Storefront External ID fixture: created a pending Purchase without `customer_id`, ran the injected attribution script, and confirmed the stable ID was persisted and added to the Purchase → passed.
+- `cd api && npm run build` after Meta Purchase External ID coverage → passed (TypeScript deprecation warnings only).
+- `cd api && npm run lint` after External ID coverage → still cannot lint because the configured glob is fully ignored.
+- `git diff --check` after External ID coverage → passed.
 
 - Tagioo Data Client production probe (`amolbooks_manual_transport_test`) → HTTP 200 with a server `unique_event_id`; no fake Purchase was sent.
 - `cd api && npm run build` after manual-order Tagioo routing → passed (TypeScript deprecation warnings only).

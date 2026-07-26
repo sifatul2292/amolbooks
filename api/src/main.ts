@@ -233,14 +233,36 @@ async function bootstrap() {
   })();`;
   const storefrontPendingPurchaseHelperMarker =
     'window.__amolFlushPendingPurchase=function(){';
+  const storefrontPurchaseExternalIdHelperMarker =
+    'window.__amolEnsurePurchaseExternalId=function(payload){';
+  const storefrontPurchaseExternalIdHelper = `
+  window.__amolEnsurePurchaseExternalId=function(payload){
+    if(!payload||typeof payload!=='object')return payload;
+    payload.user_data=payload.user_data||{};
+    if(payload.user_data.customer_id)return payload;
+    try{
+      var key='amol_analytics_anonymous_id';
+      var id=localStorage.getItem(key);
+      if(!id){
+        id=window.crypto&&typeof window.crypto.randomUUID==='function'
+          ?window.crypto.randomUUID()
+          :'anon-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12);
+        localStorage.setItem(key,id);
+      }
+      payload.user_data.customer_id=id;
+    }catch(e){}
+    return payload;
+  };
+`;
   const storefrontPendingPurchaseHelper = `
+${storefrontPurchaseExternalIdHelper}
   window.__amolFlushPendingPurchase=function(){
     if(!window.__amolGtmReady)return false;
     var raw;
     try{raw=sessionStorage.getItem('_pendingPurchase');}catch(e){return false;}
     if(!raw)return true;
     try{
-      var payload=JSON.parse(raw);
+      var payload=window.__amolEnsurePurchaseExternalId(JSON.parse(raw));
       window.dataLayer=window.dataLayer||[];
       window.dataLayer.push({ecommerce:null});
       window.dataLayer.push(payload);
@@ -337,6 +359,20 @@ async function bootstrap() {
         .replace(
           storefrontDOMContentPurchaseCode,
           'window.__amolFlushPendingPurchase();',
+        );
+    }
+    if (
+      !patchedTrackingHtml.includes(storefrontPurchaseExternalIdHelperMarker)
+    ) {
+      patchedTrackingHtml = patchedTrackingHtml
+        .replace(
+          storefrontPendingPurchaseHelperMarker,
+          storefrontPurchaseExternalIdHelper +
+            storefrontPendingPurchaseHelperMarker,
+        )
+        .replace(
+          'var payload=JSON.parse(raw);',
+          'var payload=window.__amolEnsurePurchaseExternalId(JSON.parse(raw));',
         );
     }
     return patchedTrackingHtml;
