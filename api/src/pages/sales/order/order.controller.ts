@@ -415,12 +415,25 @@ export class OrderController {
   @Version(VERSION_NEUTRAL)
   @Put('/update-incomplete-order-by-id/:id')
   @UsePipes(ValidationPipe)
-  @UseGuards(AdminJwtAuthGuard)
   async updateIncompleteOrderById(
     @Param('id', MongoIdValidationPipe) id: string,
     @Body() updateIncompleteOrderDto: UpdateIncompleteOrderDto,
   ): Promise<ResponsePayload> {
     return await this.orderService.updateIncompleteOrderById(id, updateIncompleteOrderDto);
+  }
+
+  @Version(VERSION_NEUTRAL)
+  @Put('/update-incomplete-order-admin/:id')
+  @UsePipes(ValidationPipe)
+  @UseGuards(AdminJwtAuthGuard)
+  async updateIncompleteOrderByAdmin(
+    @Param('id', MongoIdValidationPipe) id: string,
+    @Body() updateIncompleteOrderDto: UpdateIncompleteOrderDto,
+  ): Promise<ResponsePayload> {
+    return await this.orderService.updateIncompleteOrderByAdmin(
+      id,
+      updateIncompleteOrderDto,
+    );
   }
 
   @Version(VERSION_NEUTRAL)

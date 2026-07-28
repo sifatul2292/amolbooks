@@ -182,7 +182,7 @@ export const ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT = String.raw`
       grandTotal: computed.grandTotal, orderedItems: orderedItems, note: byId('ie-note').value.trim()
     };
     var button = byId('ie-save'); button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…'; setStatus('');
-    fetch(API + '/api/order/update-incomplete-order-by-id/' + encodeURIComponent(currentId), { method: 'PUT', headers: headers(), body: JSON.stringify(payload) })
+    fetch(API + '/api/order/update-incomplete-order-admin/' + encodeURIComponent(currentId), { method: 'PUT', headers: headers(), body: JSON.stringify(payload) })
       .then(parseResponse).then(function () { setStatus('Changes saved. Refreshing the order list…', 'success'); root.setTimeout(function () { root.location.reload(); }, 450); })
       .catch(function (error) { setStatus(error.message || 'Could not save changes.', 'error'); button.disabled = false; button.innerHTML = '<i class="fas fa-save"></i> Save changes'; });
   }

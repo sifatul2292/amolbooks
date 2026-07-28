@@ -2400,7 +2400,7 @@
       var info = renderFraudChip(container, btn2, overall);
       btn2.textContent='Recheck'; btn2.classList.remove('loading'); btn2.disabled=false;
       showToast('Orders: '+info.total+' | Success: '+info.ratio.toFixed(1)+'%', info.ratio>=80?'success':'error');
-      fetch(API + (isIncompleteView ? '/api/order/update-incomplete-order-by-id/' : '/api/order/update/') + mongoId,{method:'PUT',headers:authHeaders(),body:JSON.stringify({fraudChecker:resp.data})}).catch(function(){});
+      fetch(API + (isIncompleteView ? '/api/order/update-incomplete-order-admin/' : '/api/order/update/') + mongoId,{method:'PUT',headers:authHeaders(),body:JSON.stringify({fraudChecker:resp.data})}).catch(function(){});
     })
     .catch(function(err){
       showToast('FraudSpy error: '+err.message,'error');
@@ -2429,7 +2429,7 @@
         '<span class="mfr-ratio '+rCls+'">'+ratio.toFixed(1)+'% success</span>';
       btn.textContent='Recheck';
       showToast('Orders: '+(overall.total||0)+' | Success: '+ratio.toFixed(1)+'%', ratio>=80?'success':'error');
-      if (mongoId) fetch(API + (isIncompleteView ? '/api/order/update-incomplete-order-by-id/' : '/api/order/update/') + mongoId,{method:'PUT',headers:authHeaders(),body:JSON.stringify({fraudChecker:resp.data})}).catch(function(){});
+      if (mongoId) fetch(API + (isIncompleteView ? '/api/order/update-incomplete-order-admin/' : '/api/order/update/') + mongoId,{method:'PUT',headers:authHeaders(),body:JSON.stringify({fraudChecker:resp.data})}).catch(function(){});
       var order=allOrdersById[String(mongoId)]; if(order) order.fraudChecker=resp.data;
     })
     .catch(function(err){btn.textContent='Check';btn.disabled=false;showToast('Error: '+err.message,'error');});
@@ -2904,7 +2904,7 @@
     saveBtn.onclick = function () {
       var val = textarea.value.trim();
       saveBtn.disabled = true; saveBtn.textContent = '…';
-      fetch(API + (isIncompleteView ? '/api/order/update-incomplete-order-by-id/' : '/api/order/update/') + mongoId, {
+      fetch(API + (isIncompleteView ? '/api/order/update-incomplete-order-admin/' : '/api/order/update/') + mongoId, {
         method: 'PUT', headers: authHeaders(),
         body: JSON.stringify({ adminNote: val }),
       })

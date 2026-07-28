@@ -3903,10 +3903,14 @@ export class OrderService {
     id: string,
     updateIncompleteOrderDto: UpdateIncompleteOrderDto,
   ): Promise<ResponsePayload> {
-    try {
-      // This endpoint also saves fraud checks and admin notes from the
-      // incomplete-order table. Keep conversion and audit fields immutable.
-      const editableFields = [
+    // The compiled checkout creates an incomplete order as soon as a phone
+    // number is valid, then uses this route to add the address and later form
+    // changes. Keep this public for that storefront flow, but never accept
+    // admin-only fields here.
+    return this.updateIncompleteOrderFields(
+      id,
+      updateIncompleteOrderDto,
+      [
         'name',
         'phoneNo',
         'email',
@@ -3920,9 +3924,41 @@ export class OrderService {
         'grandTotal',
         'orderedItems',
         'note',
-        'adminNote',
-        'fraudChecker',
-      ];
+      ],
+      false,
+    );
+  }
+
+  async updateIncompleteOrderByAdmin(
+    id: string,
+    updateIncompleteOrderDto: UpdateIncompleteOrderDto,
+  ): Promise<ResponsePayload> {
+    return this.updateIncompleteOrderFields(id, updateIncompleteOrderDto, [
+      'name',
+      'phoneNo',
+      'email',
+      'city',
+      'shippingAddress',
+      'paymentType',
+      'paymentStatus',
+      'deliveryCharge',
+      'subTotal',
+      'discount',
+      'grandTotal',
+      'orderedItems',
+      'note',
+      'adminNote',
+      'fraudChecker',
+    ]);
+  }
+
+  private async updateIncompleteOrderFields(
+    id: string,
+    updateIncompleteOrderDto: UpdateIncompleteOrderDto,
+    editableFields: string[],
+    allowConverted = true,
+  ): Promise<ResponsePayload> {
+    try {
       const dto = updateIncompleteOrderDto as Record<string, any>;
       const updateData = editableFields.reduce((result, field) => {
         if (Object.prototype.hasOwnProperty.call(dto || {}, field)) {
@@ -3931,8 +3967,11 @@ export class OrderService {
         return result;
       }, {} as Record<string, any>);
 
-      const data = await this.incompleteOrderModel.findByIdAndUpdate(
-        id,
+      const match = allowConverted
+        ? { _id: id }
+        : { _id: id, status: { $ne: 'converted' } };
+      const data = await this.incompleteOrderModel.findOneAndUpdate(
+        match,
         { $set: updateData },
         { new: true, runValidators: true },
       );

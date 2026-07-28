@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-07-26. Branch: `main`. Meta Purchase External ID coverage fix prepared locally._
+_Last updated: 2026-07-28. Branch: `main`. Incomplete-checkout address capture fix prepared locally._
 
 ## Recently completed (git log, newest first)
 
@@ -22,6 +22,13 @@ display-only, then margin/copy polish.
 Nothing active.
 
 ## Completed this session
+
+- Incomplete-checkout address capture regression:
+  - Found that checkout first creates an incomplete order when the phone number becomes valid, then progressively updates that record as the customer enters the address and other fields.
+  - The July 24 admin-editor security change put `AdminJwtAuthGuard` on the shared update endpoint, causing every storefront follow-up update to return 401 and leaving the initial phone-only record in the dashboard.
+  - Restored the existing storefront update route with a strict checkout-field allowlist and protection against modifying converted records.
+  - Added a separate admin-authenticated update route for editor changes, fraud results, and admin notes; conversion/audit fields remain immutable.
+  - Existing address-less records cannot be backfilled automatically because the rejected address values were never persisted; they can be completed manually with Edit.
 
 - Meta Purchase External ID coverage:
   - Confirmed the existing Web GTM Purchase tags already map `user_data.customer_id` to Meta `external_id` and the Data Tag's `user_id`; the missing source value, rather than the tag configuration, was the root cause.
@@ -164,6 +171,12 @@ Nothing active.
 3. Add a minimal smoke test / health endpoint check for the free-gift + recent-buyers flows.
 
 ## Commands already run this session
+
+- Incomplete-order public/admin update allowlist smoke test: storefront address persisted, privileged/immutable fields were rejected, converted records were protected, and authenticated admin fields remained available → passed.
+- `api/upload/static/custom-orders.html` inline scripts and the injected incomplete-order editor script syntax checks → passed.
+- `cd api && npm run build` after the incomplete-order address fix → passed (TypeScript deprecation warnings only).
+- `cd api && npm run lint` after the incomplete-order address fix → still cannot lint because the configured glob is fully ignored.
+- `git diff --check` after the incomplete-order address fix → passed.
 
 - Storefront External ID fixture: created a pending Purchase without `customer_id`, ran the injected attribution script, and confirmed the stable ID was persisted and added to the Purchase → passed.
 - `cd api && npm run build` after Meta Purchase External ID coverage → passed (TypeScript deprecation warnings only).
