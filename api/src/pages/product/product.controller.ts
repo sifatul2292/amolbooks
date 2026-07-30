@@ -124,6 +124,12 @@ export class ProductController {
   /**
    * STOCK MANAGEMENT (custom-orders.html)
    */
+  @Get('/stock-publishers')
+  @UseGuards(AdminJwtAuthGuard)
+  async getStockPublishers(): Promise<ResponsePayload> {
+    return await this.productService.getStockPublishers();
+  }
+
   @Get('/stock-list')
   @UseGuards(AdminJwtAuthGuard)
   async getStockList(

@@ -903,6 +903,17 @@
     }
     .stock-search i { color: var(--g400); font-size: 12px; }
     .stock-search input { border: none; outline: none; font-size: 13px; font-weight: 500; width: 100%; font-family: inherit; color: #1e293b; background: none; }
+    .stock-publisher-filter {
+      display: flex; align-items: center; gap: 8px; min-width: 220px; max-width: 300px;
+      background: #fff; border: 1.5px solid var(--g200); border-radius: 10px;
+      padding: 0 11px; box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    }
+    .stock-publisher-filter i { color: var(--p); font-size: 12px; }
+    .stock-publisher-filter select {
+      min-width: 0; width: 100%; height: 36px; border: none; outline: none; background: #fff;
+      color: var(--g700); font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+    }
+    .stock-publisher-filter:focus-within { border-color: var(--p); box-shadow: 0 0 0 3px rgba(124,58,237,.1); }
     .stock-low-toggle {
       display: flex; align-items: center; gap: 7px; background: #fff;
       border: 1.5px solid var(--g200); border-radius: 10px; padding: 8px 13px;
@@ -1079,6 +1090,7 @@
     }
     @media(max-width:680px) {
       #stockView .stock-stats { grid-template-columns: minmax(0,1fr); }
+      .stock-search, .stock-publisher-filter { min-width: 100%; max-width: none; }
       .stock-grid { grid-template-columns: minmax(0,1fr); padding: 10px; gap: 10px; }
       .stock-card { padding: 14px; }
       .stock-demand-metric { padding: 8px; }
@@ -1254,12 +1266,18 @@
         <div class="stock-tools">
           <div class="stock-search">
             <i class="fas fa-search"></i>
-            <input type="text" id="stockSearch" placeholder="Search product / SKU…">
+            <input type="text" id="stockSearch" placeholder="Search product / SKU / publisher…">
+          </div>
+          <div class="stock-publisher-filter">
+            <i class="fas fa-building"></i>
+            <select id="stockPublisher" aria-label="Filter stock by publisher">
+              <option value="">All publishers</option>
+            </select>
           </div>
           <div class="stock-low-toggle" id="stockLowToggle" onclick="toggleStockLowOnly()">
             <i class="fas fa-triangle-exclamation"></i> Low stock only
           </div>
-          <button class="btn-reset" onclick="loadStockList();loadUrgentStock()"><i class="fas fa-sync-alt"></i> Refresh</button>
+          <button class="btn-reset" onclick="loadStockPublishers();loadStockList();loadUrgentStock()"><i class="fas fa-sync-alt"></i> Refresh</button>
         </div>
         <div class="stock-layout">
           <div class="table-card stock-main">
@@ -1901,7 +1919,7 @@
       if (data && data.token) {
         saveToken(data.token);
         hideLogin();
-        if (isStockView) { loadStockList(); }
+        if (isStockView) { loadStockPublishers(); loadStockList(); loadUrgentStock(); }
         else {
           loadRepeatCustomers();
           loadTodayStats();
@@ -2965,7 +2983,7 @@
   window.loadOrders = loadOrders;
 
   /* ── Stock Management ── */
-  var stockState = { page: 1, limit: 50, q: '', lowOnly: false, totalCount: 0 };
+  var stockState = { page: 1, limit: 50, q: '', publisherId: '', lowOnly: false, totalCount: 0 };
   var stockSaveTimers = {};
   var urgentLoadVersion = 0;
 
@@ -2982,7 +3000,9 @@
     var body = document.getElementById('stockBody');
     body.innerHTML = '<div class="stock-grid-message"><div class="spinner"></div><div>Loading products…</div></div>';
     var url = API + '/api/product/stock-list?page=' + stockState.page + '&limit=' + stockState.limit
-      + '&q=' + encodeURIComponent(stockState.q) + (stockState.lowOnly ? '&lowOnly=true' : '');
+      + '&q=' + encodeURIComponent(stockState.q)
+      + (stockState.publisherId ? '&publisherId=' + encodeURIComponent(stockState.publisherId) : '')
+      + (stockState.lowOnly ? '&lowOnly=true' : '');
     fetch(url, { headers: authHeaders() })
       .then(function(r){ if (r.status===401){ clearToken(); showLogin('Session expired. Please log in again.'); throw new Error('auth'); } return r.json(); })
       .then(function(resp){
@@ -3036,7 +3056,9 @@
     var version = ++urgentLoadVersion;
     var list = document.getElementById('urgentRestockList');
     list.innerHTML = '<div class="urgent-restock-message"><div class="spinner"></div><div>Checking demand…</div></div>';
-    fetch(API + '/api/product/stock-urgent?days=14', { headers: authHeaders() })
+    var url = API + '/api/product/stock-urgent?days=14'
+      + (stockState.publisherId ? '&publisherId=' + encodeURIComponent(stockState.publisherId) : '');
+    fetch(url, { headers: authHeaders() })
       .then(function(r){
         if (r.status===401){ clearToken(); showLogin('Session expired. Please log in again.'); throw new Error('auth'); }
         if (!r.ok) throw new Error('HTTP '+r.status);
@@ -3065,6 +3087,7 @@
         + (img ? '<img class="stock-card-img" src="'+esc(img)+'" alt="" onerror="this.style.visibility=\'hidden\'">' : '<div class="stock-card-img stock-card-img-placeholder"><i class="fas fa-book"></i></div>')
         + '<div class="stock-prod"><div class="stock-prod-name" title="'+esc(p.name||'—')+'">'+esc(p.name||'—')+'</div>'
         + '<div class="stock-prod-meta">'+(p.sku ? '<span class="stock-prod-sku">SKU: '+esc(p.sku)+'</span>' : '')
+        + (p.publisher && p.publisher.name ? '<span class="stock-prod-sku"><i class="fas fa-building"></i> '+esc(p.publisher.name)+'</span>' : '')
         + '<span class="stock-prod-price">৳'+esc(String(p.salePrice||0))+'</span>'
         + (Number(p.totalSold) > 0 ? '<span class="stock-prod-sold"><i class="fas fa-arrow-trend-up"></i> '+esc(String(p.totalSold))+' sold</span>' : '')
         + '</div></div>'
@@ -3276,19 +3299,42 @@
   };
 
   function loadStockSummary() {
-    fetch(API + '/api/product/stock-list?page=1&limit=1&includeSalesMetrics=false', { headers: authHeaders() })
+    var publisherParam = stockState.publisherId ? '&publisherId=' + encodeURIComponent(stockState.publisherId) : '';
+    fetch(API + '/api/product/stock-list?page=1&limit=1&includeSalesMetrics=false' + publisherParam, { headers: authHeaders() })
       .then(function(r){ return r.json(); })
       .then(function(resp){ document.getElementById('stockTrackedCount').textContent = (resp && resp.count) || 0; })
       .catch(function(){});
-    fetch(API + '/api/product/stock-list?page=1&limit=1&lowOnly=true&includeSalesMetrics=false', { headers: authHeaders() })
+    fetch(API + '/api/product/stock-list?page=1&limit=1&lowOnly=true&includeSalesMetrics=false' + publisherParam, { headers: authHeaders() })
       .then(function(r){ return r.json(); })
       .then(function(resp){ document.getElementById('stockLowCount').textContent = (resp && resp.count) || 0; })
       .catch(function(){});
-    fetch(API + '/api/product/stock-list?page=1&limit=1&outOnly=true&includeSalesMetrics=false', { headers: authHeaders() })
+    fetch(API + '/api/product/stock-list?page=1&limit=1&outOnly=true&includeSalesMetrics=false' + publisherParam, { headers: authHeaders() })
       .then(function(r){ return r.json(); })
       .then(function(resp){ document.getElementById('stockOutCount').textContent = (resp && resp.count) || 0; })
       .catch(function(){});
   }
+
+  window.loadStockPublishers = function () {
+    if (!getToken()) return;
+    var select = document.getElementById('stockPublisher');
+    var selected = stockState.publisherId;
+    fetch(API + '/api/product/stock-publishers', { headers: authHeaders() })
+      .then(function(r){
+        if (r.status===401){ clearToken(); showLogin('Session expired. Please log in again.'); throw new Error('auth'); }
+        if (!r.ok) throw new Error('HTTP '+r.status);
+        return r.json();
+      })
+      .then(function(resp){
+        var rows = (resp && resp.data) || [];
+        select.innerHTML = '<option value="">All publishers</option>' + rows.map(function(p){
+          return '<option value="'+esc(String(p._id))+'">'+esc(p.name||'Unnamed publisher')+' ('+esc(String(p.productCount||0))+')</option>';
+        }).join('');
+        select.value = selected;
+      })
+      .catch(function(err){
+        if (err.message!=='auth') showToast('Could not load publisher filter', 'error');
+      });
+  };
 
   (function(){
     var si = document.getElementById('stockSearch');
@@ -3300,13 +3346,22 @@
         st = setTimeout(function(){ stockState.q = v; stockState.page = 1; loadStockList(); }, 400);
       });
     }
+    var publisher = document.getElementById('stockPublisher');
+    if (publisher) {
+      publisher.addEventListener('change', function(){
+        stockState.publisherId = this.value;
+        stockState.page = 1;
+        loadStockList();
+        loadUrgentStock();
+      });
+    }
   })();
 
   /* ── Init ── */
   applyRoleMode();
   configureView();
   if (isStockView) {
-    if (getToken()) { hideLogin(); loadStockList(); loadUrgentStock(); }
+    if (getToken()) { hideLogin(); loadStockPublishers(); loadStockList(); loadUrgentStock(); }
     else { showLogin(); }
   } else if (getToken()) {
     hideLogin();

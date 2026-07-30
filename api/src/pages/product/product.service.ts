@@ -1725,6 +1725,7 @@ ${items.join('\n')}
       const page = Math.max(1, parseInt(query?.page, 10) || 1);
       const limit = Math.min(200, Math.max(1, parseInt(query?.limit, 10) || 50));
       const q = (query?.q || '').trim();
+      const publisherId = String(query?.publisherId || '').trim();
       const lowOnly = String(query?.lowOnly) === 'true';
       const outOnly = String(query?.outOnly) === 'true';
       const includeSalesMetrics = String(query?.includeSalesMetrics) !== 'false';
@@ -1732,7 +1733,18 @@ ${items.join('\n')}
       const filter: any = {};
       if (q) {
         const rx = this.utilsService.createRegexFromString(q);
-        filter.$or = [{ name: rx }, { nameEn: rx }, { sku: rx }];
+        filter.$or = [
+          { name: rx },
+          { nameEn: rx },
+          { sku: rx },
+          { 'publisher.name': rx },
+        ];
+      }
+      if (publisherId) {
+        if (!ObjectId.isValid(publisherId)) {
+          throw new BadRequestException('Invalid publisher');
+        }
+        filter['publisher._id'] = new ObjectId(publisherId);
       }
       if (outOnly) {
         filter.stock = { $ne: null, $lte: 0 };
@@ -1747,7 +1759,7 @@ ${items.join('\n')}
       const data = await this.productModel
         .find(filter)
         .select(
-          'name nameEn sku images salePrice stock lowStockThreshold totalSold',
+          'name nameEn sku images salePrice stock lowStockThreshold totalSold publisher',
         )
         // Rank globally before pagination so best sellers always appear first.
         .sort({ totalSold: -1, name: 1, _id: 1 })
@@ -1781,16 +1793,54 @@ ${items.join('\n')}
     }
   }
 
+  async getStockPublishers(): Promise<ResponsePayload> {
+    try {
+      const data = await this.productModel.aggregate([
+        {
+          $match: {
+            'publisher._id': { $ne: null },
+            'publisher.name': { $type: 'string', $ne: '' },
+          },
+        },
+        {
+          $group: {
+            _id: '$publisher._id',
+            name: { $first: '$publisher.name' },
+            productCount: { $sum: 1 },
+          },
+        },
+        { $sort: { name: 1 } },
+      ]);
+
+      return {
+        success: true,
+        message: 'Success',
+        data,
+        count: data.length,
+      } as ResponsePayload;
+    } catch (err) {
+      throw new InternalServerErrorException(err.message);
+    }
+  }
+
   async getUrgentStock(query: any): Promise<ResponsePayload> {
     try {
       const requestedDays = parseInt(query?.days, 10);
+      const publisherId = String(query?.publisherId || '').trim();
       const urgentDays = Math.min(
         90,
         Math.max(1, Number.isFinite(requestedDays) ? requestedDays : 14),
       );
+      const filter: any = { stock: { $ne: null } };
+      if (publisherId) {
+        if (!ObjectId.isValid(publisherId)) {
+          throw new BadRequestException('Invalid publisher');
+        }
+        filter['publisher._id'] = new ObjectId(publisherId);
+      }
       const products = await this.productModel
-        .find({ stock: { $ne: null } })
-        .select('name nameEn sku images salePrice stock')
+        .find(filter)
+        .select('name nameEn sku images salePrice stock publisher')
         .lean();
 
       const productIds = products.map(

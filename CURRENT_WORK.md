@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-07-28. Branch: `main`. Incomplete-checkout address capture fix prepared locally._
+_Last updated: 2026-07-30. Branch: `main`. Stock publisher filter prepared locally._
 
 ## Recently completed (git log, newest first)
 
@@ -22,6 +22,13 @@ display-only, then margin/copy polish.
 Nothing active.
 
 ## Completed this session
+
+- Stock management publisher filter:
+  - Added an authenticated publisher-option endpoint sourced from publishers actually attached to products, including each publisher's product count.
+  - Added a responsive publisher dropdown to the stock toolbar and publisher labels to product cards.
+  - Publisher selection now scopes the paginated product list, all/low/out summary counts, and urgent-restock rail; free-text search also matches publisher names.
+  - Stock page inline scripts parsed successfully, `git diff --check` passed, and `cd api && npm run build` passed (TypeScript deprecation warnings only).
+  - `cd api && npm run lint` still fails before linting because ESLint reports the configured glob is fully ignored.
 
 - Incomplete-checkout address capture regression:
   - Found that checkout first creates an incomplete order when the phone number becomes valid, then progressively updates that record as the customer enters the address and other fields.
