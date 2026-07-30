@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-07-30. Branch: `main`. Stock publisher filter prepared locally._
+_Last updated: 2026-07-30. Branch: `main`. Profit-dashboard sold-product completeness fix prepared locally._
 
 ## Recently completed (git log, newest first)
 
@@ -22,6 +22,13 @@ display-only, then margin/copy polish.
 Nothing active.
 
 ## Completed this session
+
+- Profit-dashboard sold-product completeness:
+  - Removed the hard 50-row API cap that silently omitted sold products from longer dashboard ranges.
+  - Product performance now returns every product with at least one unit in a valid order, excludes products found only in cancelled/refunded/returned orders, and sorts by units sold then net sales.
+  - Added total distinct products and total units to the response and dashboard badge so the visible table can be reconciled against the selected period.
+  - A 60-product fixture returned all 60 products and 1,830 units while excluding a cancelled-only product; dashboard inline-script parsing, `git diff --check`, and `cd api && npm run build` passed.
+  - `cd api && npm run lint` still fails before linting because ESLint reports the configured glob is fully ignored.
 
 - Stock management publisher filter:
   - Added an authenticated publisher-option endpoint sourced from publishers actually attached to products, including each publisher's product count.

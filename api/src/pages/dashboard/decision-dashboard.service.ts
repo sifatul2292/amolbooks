@@ -529,7 +529,7 @@ export class DecisionDashboardService {
       });
     });
 
-    const result = Array.from(rows.values()).map((row) => {
+    const result = Array.from(rows.values()).filter((row) => row.units > 0).map((row) => {
       const analytics = posthogProducts[row.productId] || {};
       const contribution = row.netSales - row.cogs;
       const margin = row.netSales ? (contribution / row.netSales) * 100 : 0;
@@ -576,10 +576,15 @@ export class DecisionDashboardService {
         recommendation,
       };
     });
-    result.sort((a, b) => (b.contribution.amount || 0) - (a.contribution.amount || 0));
+    result.sort((a, b) => {
+      if (b.units !== a.units) return b.units - a.units;
+      return b.netSales.amount - a.netSales.amount;
+    });
     return {
-      note: 'Product contribution excludes order-level fulfillment costs and allocated ad spend.',
-      rows: result.slice(0, 50),
+      note: 'All products sold in valid orders. Product contribution excludes order-level fulfillment costs and allocated ad spend.',
+      totalProducts: result.length,
+      totalUnits: result.reduce((sum, row) => sum + row.units, 0),
+      rows: result,
       bundles: this.buildProductPairs(validOrders),
     };
   }
