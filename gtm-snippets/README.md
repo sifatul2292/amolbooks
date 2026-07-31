@@ -15,7 +15,7 @@ Each `.html` file = one GTM Custom-HTML tag. Paste the file contents (including 
 | `lever3-sticky-cta.html` | Sticky bottom Order bar (mobile) + rotating ticker: real recent buyers + bonus-urgency line | Product page, mobile ≤768px |
 | `lever1-buy2-banner.html` | "২টি কিনুন — নোটবুক ফ্রি" banner | Only the configured book |
 | `lever0-cart-threshold.html` | Live cart progress + free-notebook row after either gift rule is earned | Cart page / cart drawer |
-| `lever7-checkout-summary.html` | Two-row summary: actual order value + dynamic shipping charge | Checkout page |
+| `lever7-checkout-summary.html` | Three-row summary: actual order value + shipping + final total | Checkout page |
 
 ## GTM setup (per tag)
 

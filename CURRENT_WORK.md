@@ -25,12 +25,13 @@ Nothing active.
 
 - Checkout order-summary simplification:
   - The initial GTM-only delivery did not activate after a VPS pull because repository files do not publish a GTM container; moved the behavior into the existing API-injected storefront price script so the normal VPS build/restart deploys it automatically.
-  - The enhancement removes the displayed list-price subtotal, discount, and redundant grand-total rows from both mobile and desktop summaries.
-  - The summary now shows only the actual order value and the existing dynamic shipping-charge row; actual order value is calculated as grand total minus shipping, with subtotal minus discount as a fallback.
-  - Angular's original calculated values remain in the DOM but hidden, so quantity, coupon, and delivery-area changes continue to update the displayed amount without hard-coding the screenshot's ৳602 value.
+  - The enhancement removes the displayed list-price subtotal and discount rows from both mobile and desktop summaries.
+  - The summary now shows the actual order value, shipping charge, and final payable total; actual order value is calculated as grand total minus shipping, with subtotal minus discount as a fallback.
+  - Angular's original calculated values remain in the DOM, so quantity, coupon, and delivery-area changes continue to update the displayed amounts without hard-coding screenshot values.
   - Replaced the price script's fixed cache version with a content hash so nginx/Cloudflare cannot retain the pre-fix checkout script after deployment.
   - JavaScript syntax, a mobile/desktop checkout DOM fixture (৳602 plus a live recalculation to ৳710), `git diff --check`, and `cd api && npm run build` passed.
   - The API-injected script fixture also passed with the production screenshot values (৳250 − ৳55 = ৳195) and a live total/shipping update to ৳210 on both mobile and desktop summaries.
+  - Follow-up fixture verified the restored final payable row: actual ৳195 + shipping ৳60 + final total ৳255, including recovery when the previous script had already marked the total row hidden.
   - `cd api && npm run lint` remains blocked before linting because ESLint reports the configured glob is fully ignored.
 
 - Profit-dashboard sold-product completeness:

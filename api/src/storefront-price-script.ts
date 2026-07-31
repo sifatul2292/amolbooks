@@ -159,7 +159,7 @@ export const STOREFRONT_PRICE_SCRIPT = `
 
       subtotalRow.classList.add('ab-actual-order-row');
       discountRow.classList.add('ab-summary-hidden');
-      totalRow.classList.add('ab-summary-hidden');
+      totalRow.classList.remove('ab-summary-hidden');
 
       for (var i = 0; i < subtotalRow.children.length; i++) {
         var child = subtotalRow.children[i];

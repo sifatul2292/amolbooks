@@ -1,11 +1,12 @@
 <!--
   Lever 7: Simplified checkout order summary (app-checkout).
-  Keeps only:
+  Shows:
     1. Actual order value (grand total minus shipping)
     2. The checkout's existing dynamic shipping-charge row
+    3. The checkout's existing dynamic grand-total row
 
-  The original subtotal, discount, and grand-total values remain owned by Angular
-  and are only hidden, so quantity, coupon, and delivery-area changes stay live.
+  The original list-price subtotal and discount values remain owned by Angular and
+  are only hidden, so quantity, coupon, and delivery-area changes stay live.
 -->
 <script>
 (function () {
@@ -77,7 +78,7 @@
 
     subtotalRow.classList.add('ab-actual-order-row');
     discountRow.classList.add('ab-summary-hidden');
-    totalRow.classList.add('ab-summary-hidden');
+    totalRow.classList.remove('ab-summary-hidden');
 
     for (var i = 0; i < subtotalRow.children.length; i++) {
       var child = subtotalRow.children[i];
