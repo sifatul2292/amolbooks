@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-07-30. Branch: `main`. Profit-dashboard sold-product completeness fix prepared locally._
+_Last updated: 2026-07-31. Branch: `main`. Checkout order-summary simplification prepared locally._
 
 ## Recently completed (git log, newest first)
 
@@ -22,6 +22,13 @@ display-only, then margin/copy polish.
 Nothing active.
 
 ## Completed this session
+
+- Checkout order-summary simplification:
+  - Added a GTM checkout enhancement that removes the displayed list-price subtotal, discount, and redundant grand-total rows from both mobile and desktop summaries.
+  - The summary now shows only the actual order value and the existing dynamic shipping-charge row; actual order value is calculated as grand total minus shipping, with subtotal minus discount as a fallback.
+  - Angular's original calculated values remain in the DOM but hidden, so quantity, coupon, and delivery-area changes continue to update the displayed amount without hard-coding the screenshot's ৳602 value.
+  - JavaScript syntax, a mobile/desktop checkout DOM fixture (৳602 plus a live recalculation to ৳710), `git diff --check`, and `cd api && npm run build` passed.
+  - `cd api && npm run lint` remains blocked before linting because ESLint reports the configured glob is fully ignored.
 
 - Profit-dashboard sold-product completeness:
   - Removed the hard 50-row API cap that silently omitted sold products from longer dashboard ranges.

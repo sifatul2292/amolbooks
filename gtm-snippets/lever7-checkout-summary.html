@@ -1,0 +1,116 @@
+<!--
+  Lever 7: Simplified checkout order summary (app-checkout).
+  Keeps only:
+    1. Actual order value (grand total minus shipping)
+    2. The checkout's existing dynamic shipping-charge row
+
+  The original subtotal, discount, and grand-total values remain owned by Angular
+  and are only hidden, so quantity, coupon, and delivery-area changes stay live.
+-->
+<script>
+(function () {
+  'use strict';
+
+  var STYLE_ID = 'ab-checkout-summary-style';
+  var LABEL_CLASS = 'ab-actual-order-label';
+  var VALUE_CLASS = 'ab-actual-order-value';
+
+  function onCheckout() {
+    return !!document.querySelector('app-checkout');
+  }
+
+  function styleOnce() {
+    if (document.getElementById(STYLE_ID)) return;
+    var s = document.createElement('style');
+    s.id = STYLE_ID;
+    s.textContent =
+      'app-checkout .summery-list li.ab-summary-hidden{display:none!important}' +
+      'app-checkout .summery-list li.ab-actual-order-row>.ab-summary-original{display:none!important}' +
+      'app-checkout .summery-list li.ab-actual-order-row>.' + LABEL_CLASS + '{' +
+        'color:#666;font-family:hind-siliguri,SolaimanLipi,sans-serif;font-style:normal;' +
+        'font-weight:600;max-width:none;overflow-wrap:normal;word-break:normal;white-space:normal;display:inline-block}' +
+      'app-checkout .summery-list li.ab-actual-order-row>.' + VALUE_CLASS + '{' +
+        'font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;' +
+        'font-size:18px;font-weight:500;color:#666;white-space:nowrap;display:inline-block;' +
+        'font-variant-numeric:tabular-nums;letter-spacing:0}';
+    document.head.appendChild(s);
+  }
+
+  function toEnglishDigits(text) {
+    var bn = '০১২৩৪৫৬৭৮৯';
+    return String(text || '').replace(/[০-৯]/g, function (digit) {
+      return String(bn.indexOf(digit));
+    });
+  }
+
+  function moneyFrom(element) {
+    if (!element) return NaN;
+    var matches = toEnglishDigits(element.textContent).replace(/,/g, '').match(/-?\d+(?:\.\d+)?/g);
+    return matches && matches.length ? Number(matches[matches.length - 1]) : NaN;
+  }
+
+  function formatMoney(amount) {
+    var rounded = Math.round(amount * 100) / 100;
+    return '৳' + rounded.toLocaleString('en-US', {
+      minimumFractionDigits: rounded % 1 ? 2 : 0,
+      maximumFractionDigits: 2
+    });
+  }
+
+  function simplifyList(list) {
+    var ul = list.querySelector('ul');
+    if (!ul || ul.children.length < 4) return;
+
+    var subtotalRow = ul.children[0];
+    var discountRow = ul.children[1];
+    var shippingRow = ul.children[2];
+    var totalRow = ul.children[3];
+    var subtotal = moneyFrom(subtotalRow.lastElementChild);
+    var discount = moneyFrom(discountRow.lastElementChild);
+    var shipping = moneyFrom(shippingRow.lastElementChild);
+    var grandTotal = moneyFrom(totalRow.lastElementChild);
+    var actual = grandTotal - shipping;
+
+    if (!isFinite(actual)) actual = subtotal - discount;
+    if (!isFinite(actual)) return;
+    actual = Math.max(0, actual);
+
+    subtotalRow.classList.add('ab-actual-order-row');
+    discountRow.classList.add('ab-summary-hidden');
+    totalRow.classList.add('ab-summary-hidden');
+
+    for (var i = 0; i < subtotalRow.children.length; i++) {
+      var child = subtotalRow.children[i];
+      if (!child.classList.contains(LABEL_CLASS) && !child.classList.contains(VALUE_CLASS)) {
+        child.classList.add('ab-summary-original');
+      }
+    }
+
+    var label = subtotalRow.querySelector('.' + LABEL_CLASS);
+    if (!label) {
+      label = document.createElement('span');
+      label.className = LABEL_CLASS;
+      label.textContent = 'প্রকৃত অর্ডার মূল্য';
+      subtotalRow.insertBefore(label, subtotalRow.firstChild);
+    }
+
+    var value = subtotalRow.querySelector('.' + VALUE_CLASS);
+    if (!value) {
+      value = document.createElement('span');
+      value.className = VALUE_CLASS;
+      subtotalRow.appendChild(value);
+    }
+    value.textContent = formatMoney(actual);
+  }
+
+  function tick() {
+    if (!onCheckout()) return;
+    styleOnce();
+    var lists = document.querySelectorAll('app-checkout .summery-area .summery-list');
+    for (var i = 0; i < lists.length; i++) simplifyList(lists[i]);
+  }
+
+  tick();
+  setInterval(tick, 500);
+})();
+</script>
