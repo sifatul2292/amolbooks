@@ -85,8 +85,12 @@ async function bootstrap() {
     'index.html',
   );
   const storefrontPriceScriptFileName = 'storefront-price-english-digits.js';
+  const storefrontPriceScriptVersion = createHash('sha256')
+    .update(STOREFRONT_PRICE_SCRIPT)
+    .digest('hex')
+    .slice(0, 12);
   const storefrontPriceScriptTag =
-    `<script src="/${storefrontPriceScriptFileName}?v=20260714-3" defer></script>`;
+    `<script src="/${storefrontPriceScriptFileName}?v=${storefrontPriceScriptVersion}" defer></script>`;
   const storefrontSpecialPackageScriptFileName =
     'storefront-special-package.js';
   const storefrontSpecialPackageScriptVersion = createHash('sha256')
