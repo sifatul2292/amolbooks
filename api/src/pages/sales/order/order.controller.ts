@@ -75,6 +75,14 @@ export class OrderController {
     return await this.orderService.backfillSteadfastStatus(body);
   }
 
+  @Post('/sync-steadfast-in-review')
+  @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @UseGuards(AdminRolesGuard)
+  @UseGuards(AdminJwtAuthGuard)
+  async syncSteadfastInReview(): Promise<ResponsePayload> {
+    return await this.orderService.syncSteadfastInReview();
+  }
+
   /**
    * addOrder
    * insertManyOrder

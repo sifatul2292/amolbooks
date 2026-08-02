@@ -23,6 +23,17 @@ Nothing active.
 
 ## Completed this session
 
+- Live Steadfast In Review reconciliation:
+  - Fixed the admin/Steadfast queue-count mismatch caused by stale saved `in_review` values: opening the tab now checks the current courier status server-side and repeats every 60 seconds while the tab is visible and no rows are selected.
+  - Each run is admin-only, limited to 50 saved In Review consignments, uses five concurrent Steadfast requests, prevents overlapping runs, and reuses a result for 45 seconds to control courier API load.
+  - Orders that Steadfast has advanced are updated in MongoDB and removed from the tab; unchanged orders only record their last check, while failed lookups retain their saved status and a bounded diagnostic instead of disappearing incorrectly.
+  - Print Selected excludes orders moved out by the live check, and Print All refreshes the courier queue before fetching printable orders.
+
+- Mobile order-view recovery:
+  - Corrected the responsive table column map after Courier Status and Courier Charge shifted the View action from column 10 to column 12; mobile now keeps only the essential order fields and a large icon-only View button.
+  - Reworked the order-details popup for phone viewports using safe-area padding, dynamic viewport height with `vh` fallback, a contained momentum-scrolling body, compact order/product sections, and a non-scrolling footer whose totals and actions remain reachable.
+  - Added a narrower-phone layout that removes the name column from the list and stacks modal customer/address/payment panels to prevent horizontal clipping.
+
 - In Review courier queue and thermal-label printing:
   - Added an exact courier-status In Review tab and count; orders leave the queue automatically after Steadfast changes their saved status, with a guarded 60-second refresh while the tab is visible and no rows are selected.
   - Added Print Selected and Print All In Review actions. Print All re-fetches the live queue immediately before rendering and caps a single print job at 300 labels for browser/printer safety.

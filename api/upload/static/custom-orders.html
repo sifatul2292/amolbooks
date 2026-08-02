@@ -836,41 +836,79 @@
     /* ── Mobile table ── */
     @media(max-width:768px) {
       table { min-width: 0; width: 100%; font-size: 12px; }
+      /* Mobile keeps only Select, Order, Phone, Name, Amount and View.
+         View is column 12 after Courier Status/Charge were added. */
       thead th:nth-child(5), thead th:nth-child(6),
       thead th:nth-child(8), thead th:nth-child(9),
-      thead th:nth-child(11),thead th:nth-child(12),
-      thead th:nth-child(13),thead th:nth-child(14),
-      thead th:nth-child(15),
+      thead th:nth-child(10), thead th:nth-child(11),
+      thead th:nth-child(13), thead th:nth-child(14),
+      thead th:nth-child(15), thead th:nth-child(16),
+      thead th:nth-child(17), thead th:nth-child(18),
+      thead th:nth-child(19),
       tbody td:nth-child(5), tbody td:nth-child(6),
       tbody td:nth-child(8), tbody td:nth-child(9),
-      tbody td:nth-child(11),tbody td:nth-child(12),
-      tbody td:nth-child(13),tbody td:nth-child(14),
-      tbody td:nth-child(15) { display: none; }
-      tbody td:nth-child(4) { max-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      tbody td:nth-child(10) .btn-view { width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0; border-radius: 8px; }
-      tbody td:nth-child(10) .btn-view i { font-size: 15px; }
-      thead th { padding: 11px 8px; }
-      tbody td { padding: 10px 8px; }
-      thead th:first-child, tbody td:first-child { padding-left: 12px; width: 28px; }
+      tbody td:nth-child(10), tbody td:nth-child(11),
+      tbody td:nth-child(13), tbody td:nth-child(14),
+      tbody td:nth-child(15), tbody td:nth-child(16),
+      tbody td:nth-child(17), tbody td:nth-child(18),
+      tbody td:nth-child(19) { display: none; }
+      tbody td:nth-child(2) { white-space: nowrap; }
+      tbody td:nth-child(3) { max-width: 96px; overflow: hidden; text-overflow: ellipsis; }
+      tbody td:nth-child(4) { max-width: 76px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      tbody td:nth-child(7) { white-space: nowrap; }
+      tbody td:nth-child(12), thead th:nth-child(12) { text-align: center; }
+      tbody td:nth-child(12) .btn-view { width: 38px; height: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0; border-radius: 9px; }
+      tbody td:nth-child(12) .btn-view i { font-size: 15px; }
+      thead th { padding: 10px 5px; }
+      tbody td { padding: 9px 5px; }
+      thead th:first-child, tbody td:first-child { padding-left: 10px; width: 26px; }
       .pagination-bar { padding: 10px 14px; flex-direction: column; align-items: flex-start; gap: 8px; }
 
       /* Modal: bottom sheet */
-      .modal-overlay { padding: 0; align-items: flex-end; }
+      .modal-overlay {
+        padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+        align-items: center;
+      }
       .modal-box {
         width: 100%; max-width: 100%;
-        border-radius: 20px 20px 0 0; max-height: 92vh;
+        max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); border-radius: 18px;
       }
+      #productsModal .modal-box { height: calc(100vh - 16px); height: calc(100dvh - 16px); }
       .modal-box::before {
         content: ''; display: block; width: 40px; height: 4px;
-        background: var(--g200); border-radius: 2px; margin: 10px auto 0;
+        background: var(--g200); border-radius: 2px; margin: 8px auto 0;
+        flex: 0 0 auto;
       }
-      .modal-header { padding: 10px 16px 12px; }
+      .modal-header { padding: 8px 14px 10px; flex: 0 0 auto; }
       .modal-order-id { font-size: 17px; }
+      .modal-header-right { gap: 6px; }
+      #modalStatusBadge .badge { font-size: 10px !important; padding: 4px 9px !important; }
+      .modal-close { width: 32px; height: 32px; }
+      .modal-body { min-height: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
       .modal-info-grid { grid-template-columns: 1fr 1fr; }
-      .mic { padding: 12px 14px; }
+      .mic { padding: 12px 14px; min-width: 0; }
+      .mic-val { overflow-wrap: anywhere; word-break: break-word; }
       .mic:nth-child(3) { grid-column: 1/-1; border-right: none; border-top: 1px solid var(--g100); }
-      .modal-footer { padding: 12px 16px; }
-      .footer-actions { flex-wrap: wrap; }
+      .modal-fraud-row { padding: 10px 12px; gap: 8px; }
+      .modal-section-title { padding: 11px 12px 7px; }
+      .product-table th { padding: 8px 7px; }
+      .product-table td { padding: 10px 7px; }
+      #productsModal .modal-footer { padding: 10px 12px max(10px, env(safe-area-inset-bottom)); flex: 0 0 auto; flex-direction: column; align-items: stretch; gap: 9px; }
+      #productsModal .modal-totals { width: 100%; justify-content: space-between; gap: 8px; }
+      #productsModal .footer-actions { width: 100%; flex-wrap: nowrap; }
+      #productsModal .footer-actions > * { min-width: 0; flex: 1 1 0; justify-content: center; padding: 9px 8px; white-space: nowrap; }
+    }
+    @media(max-width:480px) {
+      thead th:nth-child(4), tbody td:nth-child(4) { display: none; }
+      tbody td:nth-child(3) { max-width: 110px; }
+      .modal-info-grid { grid-template-columns: 1fr; }
+      .mic { border-right: none; border-bottom: 1px solid var(--g100); }
+      .mic:nth-child(3) { grid-column: auto; border-top: none; }
+      .mic-icon { margin-bottom: 5px; }
+      .modal-fraud-row { align-items: flex-start; }
+      .mfr-btn { margin-left: 0; }
+      .product-name { font-size: 12px; }
+      #productsModal .footer-actions > * { font-size: 11.5px; }
     }
 
     /* ── Sidebar Analytics Widget ── */
@@ -1421,7 +1459,7 @@
       </div>
 
       <div class="in-review-tools" id="inReviewTools">
-        <div class="in-review-tools-copy"><i class="fas fa-arrows-rotate"></i> Live courier queue · refreshes every 60 seconds when nothing is selected</div>
+        <div class="in-review-tools-copy" id="inReviewSyncStatus"><i class="fas fa-arrows-rotate"></i> Live courier queue · checks Steadfast every 60 seconds when nothing is selected</div>
         <div class="in-review-tools-actions">
           <button class="btn-label-print" onclick="printSelectedInReviewLabels()"><i class="fas fa-print"></i> Print Selected</button>
           <button class="btn-label-print primary" onclick="printAllInReviewLabels()"><i class="fas fa-layer-group"></i> Print All In Review</button>
@@ -1804,6 +1842,7 @@
   var isStockView = params.get('view') === 'stock';
   var courierBackfillRunning = false;
   var courierBackfillRetryMode = false;
+  var courierInReviewSyncPromise = null;
 
   /* ── State ── */
   var state = {
@@ -2432,6 +2471,56 @@
     });
   }
 
+  function setInReviewSyncText(html) {
+    var el = document.getElementById('inReviewSyncStatus');
+    if (el) el.innerHTML = html;
+  }
+
+  function syncInReviewQueue() {
+    if (courierInReviewSyncPromise) return courierInReviewSyncPromise;
+    if (!canRunCourierBackfill()) return Promise.resolve({ skipped: true });
+
+    setInReviewSyncText('<i class="fas fa-circle-notch fa-spin"></i> Checking current statuses with Steadfast…');
+    courierInReviewSyncPromise = fetch(API + '/api/order/sync-steadfast-in-review', {
+      method: 'POST', headers: authHeaders(), body: '{}',
+    })
+    .then(function(r){
+      if (r.status === 401 || r.status === 403) throw new Error('Admin permission required.');
+      if (r.status === 409) return { success: true, data: { alreadyRunning: true } };
+      return r.json().then(function(resp){
+        if (!r.ok || resp.success === false) throw new Error(resp.message || 'Courier sync failed.');
+        return resp;
+      });
+    })
+    .then(function(resp){
+      var data = resp.data || {};
+      if (data.alreadyRunning) {
+        setInReviewSyncText('<i class="fas fa-arrows-rotate"></i> Steadfast check is already running · database view refreshed');
+      } else {
+        var count = Number(data.currentCount || 0);
+        var moved = Number(data.moved || 0);
+        var countEl = document.getElementById('tabCount-in_review');
+        if (countEl) countEl.textContent = count.toLocaleString();
+        setInReviewSyncText('<i class="fas fa-circle-check"></i> Synced with Steadfast · '+count.toLocaleString()+' In Review'+(moved ? ' · '+moved.toLocaleString()+' moved out' : ''));
+      }
+      return data;
+    })
+    .catch(function(err){
+      setInReviewSyncText('<i class="fas fa-triangle-exclamation"></i> Showing saved statuses · '+escapeHtml(err.message));
+      return { syncError: err.message };
+    })
+    .finally(function(){ courierInReviewSyncPromise = null; });
+    return courierInReviewSyncPromise;
+  }
+
+  function refreshInReviewQueue() {
+    return syncInReviewQueue().then(function(data){
+      loadOrders();
+      loadStatusCounts();
+      return data;
+    });
+  }
+
   /* ── Status tab click ── */
   window.setStatusTab = function(tab) {
     state.activeTab = tab;
@@ -2442,6 +2531,7 @@
     clearSelection();
     updateInReviewTools();
     loadOrders();
+    if (tab === 'in_review') refreshInReviewQueue();
   };
 
   function updateInReviewTools() {
@@ -3070,11 +3160,29 @@
       showToast('Select at least one In Review order first.', 'error');
       return;
     }
-    var orders = selected.map(function(id){ return allOrdersById[String(id)]; }).filter(function(order){
-      return order && order.courierStatus && String(order.courierStatus.status).toLowerCase() === 'in_review';
-    });
     var printWindow = openLabelWindow();
-    if (printWindow) renderCourierLabels(orders, printWindow);
+    if (!printWindow) return;
+    syncInReviewQueue().then(function(data){
+      if (data.syncError || data.alreadyRunning) {
+        printWindow.close();
+        showToast('Wait for the Steadfast check to finish, then print again.', 'info');
+        return;
+      }
+      var movedIds = (data.movedOrderIds || []).map(String);
+      var orders = selected.map(function(id){ return allOrdersById[String(id)]; }).filter(function(order){
+        return order && movedIds.indexOf(String(order._id || order.id)) === -1 &&
+          order.courierStatus && String(order.courierStatus.status).toLowerCase() === 'in_review';
+      });
+      if (!orders.length) {
+        printWindow.close();
+        showToast('The selected orders are no longer In Review.', 'info');
+        refreshInReviewQueue();
+        return;
+      }
+      renderCourierLabels(orders, printWindow);
+      loadOrders();
+      loadStatusCounts();
+    });
   };
 
   window.printAllInReviewLabels = function () {
@@ -3090,8 +3198,14 @@
         courierData:1, courierStatus:1, division:1, area:1, zone:1, createdAt:1,
       },
     };
-    fetch(API + '/api/order/get-all', {
-      method: 'POST', headers: authHeaders(), body: JSON.stringify(body),
+    syncInReviewQueue()
+    .then(function(data){
+      if (data.syncError || data.alreadyRunning) {
+        throw new Error('Wait for the Steadfast check to finish, then print again.');
+      }
+      return fetch(API + '/api/order/get-all', {
+        method: 'POST', headers: authHeaders(), body: JSON.stringify(body),
+      });
     })
     .then(function(r){
       if (r.status === 401 || r.status === 403) throw new Error('Session expired.');
@@ -3751,8 +3865,7 @@
       !courierBackfillRunning &&
       getSelectedIds().length === 0
     ) {
-      loadOrders();
-      loadStatusCounts();
+      refreshInReviewQueue();
     }
   }, 60000);
 

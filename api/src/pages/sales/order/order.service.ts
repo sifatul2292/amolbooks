@@ -85,6 +85,9 @@ type SteadfastWebhookPayload = {
 export class OrderService {
   private logger = new Logger(OrderService.name);
   private steadfastBackfillRunning = false;
+  private steadfastInReviewSyncRunning = false;
+  private steadfastInReviewSyncCompletedAt = 0;
+  private steadfastInReviewSyncResult: ResponsePayload | null = null;
 
   constructor(
     @InjectModel('Admin') private readonly adminModel: Model<Admin>,
@@ -869,6 +872,195 @@ export class OrderService {
     } finally {
       this.steadfastBackfillRunning = false;
     }
+  }
+
+  async syncSteadfastInReview(): Promise<ResponsePayload> {
+    if (this.steadfastInReviewSyncRunning) {
+      throw new ConflictException(
+        'A Steadfast In Review sync is already running.',
+      );
+    }
+    if (
+      this.steadfastInReviewSyncResult &&
+      Date.now() - this.steadfastInReviewSyncCompletedAt < 45000
+    ) {
+      return {
+        ...this.steadfastInReviewSyncResult,
+        data: {
+          ...(this.steadfastInReviewSyncResult.data as any),
+          cached: true,
+        },
+      } as ResponsePayload;
+    }
+
+    this.steadfastInReviewSyncRunning = true;
+    try {
+      const result = await this.runSteadfastInReviewSync();
+      this.steadfastInReviewSyncResult = result;
+      this.steadfastInReviewSyncCompletedAt = Date.now();
+      return result;
+    } finally {
+      this.steadfastInReviewSyncRunning = false;
+    }
+  }
+
+  private async runSteadfastInReviewSync(): Promise<ResponsePayload> {
+    const setting = await this.settingModel
+      .findOne()
+      .select('courierMethods -_id');
+    const courierMethod = (setting?.courierMethods || []).find(
+      (courier: any) =>
+        courier.status === 'active' &&
+        courier.providerName === 'Steadfast Courier',
+    );
+    if (!courierMethod?.apiKey || !courierMethod?.secretKey) {
+      throw new BadRequestException(
+        'Active Steadfast API credentials are not configured.',
+      );
+    }
+
+    const inReviewQuery = {
+      'courierData.providerName': 'Steadfast Courier',
+      'courierData.consignmentId': { $exists: true, $nin: [null, ''] },
+      'courierStatus.status': 'in_review',
+    };
+    const orders: any[] = await this.orderModel
+      .find(inReviewQuery)
+      .sort({ 'courierStatus.lastSyncedAt': 1, createdAt: 1 })
+      .limit(50)
+      .select('orderId courierData courierStatus');
+    const courierApiConfig: CourierApiConfig = {
+      providerName: courierMethod.providerName,
+      apiKey: courierMethod.apiKey,
+      secretKey: courierMethod.secretKey,
+      merchantCode: courierMethod.merchantCode,
+      pickMerchantThana: courierMethod.thana,
+      pickMerchantDistrict: courierMethod.district,
+      pickMerchantAddress: courierMethod.address,
+      pickMerchantName: courierMethod.merchant_name,
+      pickupMerchantPhone: courierMethod.contact_number,
+    };
+    const results: Array<{
+      id: string;
+      orderId: string;
+      success: boolean;
+      status?: string;
+      moved?: boolean;
+      error?: string;
+    }> = [];
+
+    // Five concurrent lookups keep the live queue responsive without flooding Steadfast.
+    for (let index = 0; index < orders.length; index += 5) {
+      const chunk = orders.slice(index, index + 5);
+      const chunkResults = await Promise.all(
+        chunk.map(async (order: any) => {
+          const syncedAt = new Date();
+          try {
+            const response =
+              await this.courierService.getOrderStatusFormCourier(
+                courierApiConfig,
+                order.courierData.consignmentId,
+                order.orderId,
+              );
+            if (
+              response?.status !== 200 ||
+              typeof response?.delivery_status !== 'string'
+            ) {
+              throw new Error(
+                response?.details ||
+                  response?.message ||
+                  'Steadfast returned no delivery status.',
+              );
+            }
+
+            const status = response.delivery_status.trim().toLowerCase();
+            const moved = status !== 'in_review';
+            const update: any = {
+              $set: { 'courierStatus.lastSyncedAt': syncedAt },
+              $unset: { 'courierStatus.lastSyncError': 1 },
+            };
+            if (moved) {
+              const trackingMessage =
+                'Live status reconciled with Steadfast.';
+              const updatedAt = syncedAt.toISOString();
+              const eventKey = crypto
+                .createHash('sha256')
+                .update(
+                  `live_in_review_sync:${order.courierData.consignmentId}:${status}:${updatedAt}`,
+                )
+                .digest('hex');
+              update.$set = {
+                ...update.$set,
+                'courierStatus.status': status,
+                'courierStatus.notificationType': 'live_in_review_sync',
+                'courierStatus.trackingMessage': trackingMessage,
+                'courierStatus.updatedAt': updatedAt,
+                'courierStatus.receivedAt': syncedAt,
+              };
+              update.$push = {
+                courierStatusHistory: {
+                  $each: [
+                    {
+                      eventKey,
+                      notificationType: 'live_in_review_sync',
+                      status,
+                      trackingMessage,
+                      updatedAt,
+                      receivedAt: syncedAt,
+                    },
+                  ],
+                  $slice: -20,
+                },
+              };
+            }
+            await this.orderModel.updateOne({ _id: order._id }, update);
+            return {
+              id: String(order._id),
+              orderId: order.orderId,
+              success: true,
+              status,
+              moved,
+            };
+          } catch (error) {
+            const message = String(
+              error?.message || 'Steadfast status lookup failed.',
+            ).slice(0, 300);
+            await this.orderModel.updateOne(
+              { _id: order._id },
+              {
+                $set: {
+                  'courierStatus.lastSyncedAt': syncedAt,
+                  'courierStatus.lastSyncError': message,
+                },
+              },
+            );
+            return {
+              id: String(order._id),
+              orderId: order.orderId,
+              success: false,
+              error: message,
+            };
+          }
+        }),
+      );
+      results.push(...chunkResults);
+    }
+
+    const currentCount = await this.orderModel.countDocuments(inReviewQuery);
+    const moved = results.filter((result) => result.moved);
+    const failed = results.filter((result) => !result.success);
+    return {
+      success: true,
+      message: 'Steadfast In Review queue synchronized.',
+      data: {
+        checked: results.length,
+        moved: moved.length,
+        failed: failed.length,
+        currentCount,
+        movedOrderIds: moved.map((result) => result.id),
+        failures: failed.slice(0, 10),
+      },
+    } as ResponsePayload;
   }
 
   private async runSteadfastStatusBackfillBatch(body: {
