@@ -2,10 +2,12 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-07-31. Branch: `main`. Checkout order-summary simplification prepared locally._
+_Last updated: 2026-08-02. Branch: `main`. Meta OAuth zlib fix pushed; Steadfast In Review recovery fix pushed._
 
 ## Recently completed (git log, newest first)
 
+- Meta OAuth callback zlib fix (pending commit — see below)
+- `33dd40b0` Recover missed webhook transitions into Steadfast In Review
 - `0b3e31b5` Checkout gift widget: margin tweaks + copy updates
 - `b8796620` Checkout gift row: revert to display-only, fix alignment
 - `7cb58b6d` Checkout gift widget: real cart-add with zero reload, fix comma-price bug
@@ -19,9 +21,60 @@ display-only, then margin/copy polish.
 
 ## In progress
 
-Nothing active.
+Nothing active. Awaiting VPS deploy of the Meta OAuth fix and a retried Connect Meta
+(confirm the real Meta error, if any, now surfaces instead of "unexpected end of
+file"). Also awaiting VPS deploy of `33dd40b0` and live confirmation that the
+In Review count climbs from 17 toward Steadfast's real ~46.
 
 ## Completed this session
+
+- Meta Ads OAuth connect failing with "unexpected end of file":
+  - Root cause: `handleCallback` used raw NestJS `HttpService` (axios) for the 3
+    Graph API calls (short-lived token, long-lived token, `/me/adaccounts`), which
+    requests gzip by default. A truncated gzip response crashes zlib decompression
+    with the generic message "unexpected end of file", burying whatever real Meta
+    error (or success) was underneath. `httpsGet()` in this same file already works
+    around this with `Accept-Encoding: identity` (used by `syncSpend`/`diagnose`),
+    but `handleCallback` predates that fix and was never migrated.
+  - Fix: rewrote all 3 calls in `handleCallback` to use `httpsGet()` via a new
+    `graphGetJson()` helper that parses the JSON and throws Facebook's actual
+    `error.message` when present. Removed the now-unused `HttpService`/`firstValueFrom`
+    import and constructor injection.
+  - File: `api/src/pages/meta-ads/meta-ads.service.ts`.
+  - `cd api && npm run build`, `git diff --check` → passed.
+  - Not yet verified live — user confirmed `.env` values, app-live status, and
+    restarts were already correct; diagnosis came from reading a real production
+    log line (`pm2 logs amolbooks-api --lines 2000 --nostream | grep -i meta`)
+    showing `Meta OAuth callback failed: unexpected end of file` twice. Verify by
+    deploying and retrying Connect Meta — if it still fails, the log should now
+    show Meta's real error text instead.
+
+- Steadfast In Review count mismatch (dashboard showed 17, Steadfast panel showed 46):
+  - Root cause: `runSteadfastInReviewSync` only re-checked orders already tagged
+    `in_review` in our DB (to catch them leaving). Nothing re-checked orders stuck at
+    `pending`/`hold`/`unknown`/`*_approval_pending` to see if Steadfast had since moved
+    them into `in_review` — a missed or late webhook left those frozen forever. The
+    existing "Backfill Courier" button didn't help either since it only targets orders
+    with a completely empty `courierStatus.status`, and every order gets a status at
+    creation.
+  - Fix: the sync's candidate query now covers any non-terminal courier status
+    (`$nin: ['delivered','partial_delivered','cancelled']`) instead of exact
+    `in_review`, so the 60s live-check job also recovers orders that reached
+    in_review without a webhook firing. The displayed count still queries exact
+    `in_review` only. Added an `entered`/"recovered" count to the sync response and
+    admin banner so the recovery is visible.
+  - Files: `api/src/pages/sales/order/order.service.ts`, `api/upload/static/custom-orders.html`.
+  - `cd api && npm run build`, inline-script syntax check, `git diff --check` → passed.
+  - Not yet verified against live production numbers (no direct DB/Steadfast API access
+    from this session) — verify by deploying and watching the "recovered" count in the
+    In Review sync banner.
+  - Note for future sessions: caught and fixed an unrelated Edit-tool side effect during
+    this task — a targeted edit to `order.service.ts` silently normalized the entire
+    file from mixed CRLF/LF to all-CRLF, producing a ~3500-line noise diff. Rebuilt the
+    file from `git show HEAD` preserving original line endings before committing.
+  - Pushed to `origin/main` as `33dd40b0`. VPS not yet deployed — run
+    `scripts/vps-safe-pull.sh` then rebuild `api/` (source changed) per
+    [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) deploy steps.
 
 - Meta Ads OAuth diagnosis:
   - Meta callback failures now write a safe server-side error to the API logs and return to the dashboard with a clear configuration message instead of silently appearing disconnected.

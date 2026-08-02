@@ -2,8 +2,6 @@ import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
 import * as https from 'https';
 
 @Injectable()
@@ -14,7 +12,6 @@ export class MetaAdsService {
     @InjectModel('MetaAdSpend') private readonly spendModel: Model<any>,
     @InjectModel('MetaToken') private readonly tokenModel: Model<any>,
     private readonly configService: ConfigService,
-    private readonly httpService: HttpService,
   ) {}
 
   getAuthUrl(): string {
@@ -25,40 +22,59 @@ export class MetaAdsService {
     return `https://www.facebook.com/v20.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_type=code`;
   }
 
+  // Fetches a Graph API URL and parses its JSON, raising Facebook's own error
+  // message (or a clear transport failure) instead of letting an interrupted
+  // gzip response crash as an opaque zlib "unexpected end of file".
+  private async graphGetJson(url: string): Promise<any> {
+    const { body } = await this.httpsGet(url);
+    let parsed: any;
+    try {
+      parsed = JSON.parse(body);
+    } catch {
+      throw new Error(`Meta returned an unparseable response: ${body.slice(0, 200)}`);
+    }
+    if (parsed?.error) {
+      throw new Error(parsed.error.message || 'Meta Graph API returned an error.');
+    }
+    return parsed;
+  }
+
   async handleCallback(code: string): Promise<any> {
     const appId = process.env.META_APP_ID;
     const appSecret = process.env.META_APP_SECRET;
     const redirectUri = process.env.META_REDIRECT_URI;
 
     // Exchange code for short-lived token
-    const tokenRes = await firstValueFrom(
-      this.httpService.get('https://graph.facebook.com/v20.0/oauth/access_token', {
-        params: { client_id: appId, client_secret: appSecret, redirect_uri: redirectUri, code },
-      }),
+    const tokenQs = new URLSearchParams({
+      client_id: appId,
+      client_secret: appSecret,
+      redirect_uri: redirectUri,
+      code,
+    });
+    const tokenData = await this.graphGetJson(
+      `https://graph.facebook.com/v20.0/oauth/access_token?${tokenQs.toString()}`,
     );
-    const shortToken = tokenRes.data.access_token;
+    const shortToken = tokenData.access_token;
 
     // Exchange for long-lived token (60 days)
-    const longRes = await firstValueFrom(
-      this.httpService.get('https://graph.facebook.com/v20.0/oauth/access_token', {
-        params: {
-          grant_type: 'fb_exchange_token',
-          client_id: appId,
-          client_secret: appSecret,
-          fb_exchange_token: shortToken,
-        },
-      }),
+    const longQs = new URLSearchParams({
+      grant_type: 'fb_exchange_token',
+      client_id: appId,
+      client_secret: appSecret,
+      fb_exchange_token: shortToken,
+    });
+    const longData = await this.graphGetJson(
+      `https://graph.facebook.com/v20.0/oauth/access_token?${longQs.toString()}`,
     );
-    const longToken = longRes.data.access_token;
-    const expiresIn = longRes.data.expires_in || 5184000; // 60 days default
+    const longToken = longData.access_token;
+    const expiresIn = longData.expires_in || 5184000; // 60 days default
 
     // Get ad accounts for this user
-    const meRes = await firstValueFrom(
-      this.httpService.get('https://graph.facebook.com/v20.0/me/adaccounts', {
-        params: { access_token: longToken, fields: 'id,name' },
-      }),
+    const meQs = new URLSearchParams({ access_token: longToken, fields: 'id,name' });
+    const meData = await this.graphGetJson(
+      `https://graph.facebook.com/v20.0/me/adaccounts?${meQs.toString()}`,
     );
-    const adAccountId = meRes.data?.data?.[0]?.id || null;
+    const adAccountId = meData?.data?.[0]?.id || null;
 
     await this.tokenModel.findOneAndUpdate(
       {},
