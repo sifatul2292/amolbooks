@@ -23,6 +23,10 @@ Nothing active.
 
 ## Completed this session
 
+- Meta Ads OAuth diagnosis:
+  - Meta callback failures now write a safe server-side error to the API logs and return to the dashboard with a clear configuration message instead of silently appearing disconnected.
+  - The dashboard removes the one-time OAuth result query parameter after displaying it, keeping subsequent refreshes clean.
+
 - Profit & Growth authentication recovery:
   - Fixed the standalone dashboard's re-login flow to use the admin API's `username` credential and top-level `token` response instead of incompatible email/nested-token fields.
   - Dashboard and custom-orders now share the refreshed admin token; a rejected/expired token is cleared and prompts for a new sign-in rather than leaving every profit metric stuck at `Unauthorized`.

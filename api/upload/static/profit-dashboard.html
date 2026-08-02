@@ -511,6 +511,9 @@
     checkMetaStatus();
     loadDashboard();
     loadManualSalesList();
+    var metaResult = new URLSearchParams(window.location.search).get('meta');
+    if (metaResult === 'error') showError('Meta could not be connected. Confirm META_APP_ID, META_APP_SECRET, and META_REDIRECT_URI on the server, then try again.');
+    if (metaResult) window.history.replaceState({}, document.title, window.location.pathname);
   }
 
   window.setRange = function (type, button) {

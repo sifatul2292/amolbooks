@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   Param,
   Post,
   Query,
@@ -19,6 +20,8 @@ import { MetaAdsService } from './meta-ads.service';
 
 @Controller('meta-ads')
 export class MetaAdsController {
+  private readonly logger = new Logger(MetaAdsController.name);
+
   constructor(private readonly metaAdsService: MetaAdsService) {}
 
   @Version(VERSION_NEUTRAL)
@@ -36,9 +39,12 @@ export class MetaAdsController {
   @Get('callback')
   async callback(@Query('code') code: string, @Res() res: any) {
     try {
+      if (!code) throw new Error('Meta did not return an authorization code.');
       await this.metaAdsService.handleCallback(code);
       return res.redirect('https://apisub.amolbooks.com/upload/static/profit-dashboard.html?meta=connected');
     } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Meta OAuth callback failed: ${message}`);
       return res.redirect('https://apisub.amolbooks.com/upload/static/profit-dashboard.html?meta=error');
     }
   }
