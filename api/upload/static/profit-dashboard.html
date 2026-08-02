@@ -459,9 +459,11 @@
   var qualityView = 'bySource';
   var metaConnected = false;
   var lastFocus = null;
+  var authRefreshInProgress = false;
 
-  function getToken() { return localStorage.getItem('co_admin_token') || localStorage.getItem('profit_admin_token'); }
-  function saveToken(token) { localStorage.setItem('profit_admin_token', token); }
+  function getToken() { return localStorage.getItem('profit_admin_token') || localStorage.getItem('co_admin_token'); }
+  function saveToken(token) { localStorage.setItem('co_admin_token', token); localStorage.setItem('profit_admin_token', token); }
+  function clearToken() { localStorage.removeItem('co_admin_token'); localStorage.removeItem('profit_admin_token'); }
   function headers() { return { 'Content-Type': 'application/json', administrator: getToken() || '' }; }
   function esc(value) { return String(value == null ? '' : value).replace(/[&<>'"]/g, function (char) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]; }); }
   function fmt(value) { return Math.round(Number(value) || 0).toLocaleString('en-BD'); }
@@ -473,18 +475,31 @@
   function ymd(date) { return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()); }
   function setText(id, text) { var el = document.getElementById(id); if (el) el.textContent = text; }
   function setStatus(id, message, type) { var el = document.getElementById(id); if (!el) return; el.textContent = message || ''; el.className = 'helper' + (type ? ' ' + type : ''); }
-  function request(url, options) { return fetch(API + url, Object.assign({ headers: headers() }, options || {})).then(function (response) { return response.text().then(function (text) { var payload = {}; try { payload = text ? JSON.parse(text) : {}; } catch (_) {} if (!response.ok || payload.success === false) throw new Error(payload.message || 'Request failed (HTTP ' + response.status + ')'); return payload; }); }); }
+  function request(url, options) { return fetch(API + url, Object.assign({ headers: headers() }, options || {})).then(function (response) { return response.text().then(function (text) { var payload = {}; try { payload = text ? JSON.parse(text) : {}; } catch (_) {} if (!response.ok || payload.success === false) { var error = new Error(payload.message || 'Request failed (HTTP ' + response.status + ')'); error.status = response.status; throw error; } return payload; }); }); }
 
   function initAuth() {
     var token = getToken();
     if (token) { saveToken(token); init(); return; }
-    var email = prompt('Admin email:');
+    if (authRefreshInProgress) return;
+    authRefreshInProgress = true;
+    var username = prompt('Admin username:');
     var password = prompt('Password:');
-    if (!email || !password) return;
-    fetch(API + '/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email, password: password }) })
+    if (!username || !password) { authRefreshInProgress = false; showError('Sign in is required to view Profit & Growth.'); return; }
+    fetch(API + '/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: username, password: password }) })
       .then(function (response) { return response.json(); })
-      .then(function (payload) { var tokenValue = payload && payload.data && (payload.data.token || payload.data.accessToken); if (!tokenValue) throw new Error('Login failed'); saveToken(tokenValue); init(); })
-      .catch(function (error) { showError(error.message); });
+      .then(function (payload) { var tokenValue = payload && (payload.token || (payload.data && (payload.data.token || payload.data.accessToken))); if (!tokenValue) throw new Error((payload && payload.message) || 'Login failed'); saveToken(tokenValue); init(); })
+      .catch(function (error) { showError(error.message); })
+      .finally(function () { authRefreshInProgress = false; });
+  }
+
+  function recoverAuthentication(error) {
+    if (error && error.status === 401 && !authRefreshInProgress) {
+      clearToken();
+      showError('Your admin session expired. Please sign in again.');
+      initAuth();
+      return true;
+    }
+    return false;
   }
 
   function init() {
@@ -527,7 +542,7 @@
     clearError();
     request('/api/v2/dashboard/decision-analytics?startDate=' + encodeURIComponent(rangeStart) + '&endDate=' + encodeURIComponent(rangeEnd))
       .then(function (payload) { dashboardData = payload.data; trendData = dashboardData.trend || []; renderAll(); })
-      .catch(function (error) { showError(error.message); });
+      .catch(function (error) { if (!recoverAuthentication(error)) showError(error.message); });
   }
 
   function renderAll() {

@@ -23,6 +23,10 @@ Nothing active.
 
 ## Completed this session
 
+- Profit & Growth authentication recovery:
+  - Fixed the standalone dashboard's re-login flow to use the admin API's `username` credential and top-level `token` response instead of incompatible email/nested-token fields.
+  - Dashboard and custom-orders now share the refreshed admin token; a rejected/expired token is cleared and prompts for a new sign-in rather than leaving every profit metric stuck at `Unauthorized`.
+
 - Steadfast missing-charge recovery:
   - Fixed the scheduled courier status poll so it updates nested courier-status fields instead of replacing the whole object and erasing an already-saved delivery charge.
   - Normalized Steadfast charge values from numeric strings and both `delivery_charge`/`delivery_fee` response variants across webhooks, status reconciliation, historical backfill, scheduled polling, and order creation responses.
