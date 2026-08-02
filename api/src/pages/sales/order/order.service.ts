@@ -74,9 +74,10 @@ type SteadfastWebhookPayload = {
   notification_type?: 'delivery_status' | 'tracking_update';
   consignment_id?: string | number;
   invoice?: string;
-  cod_amount?: number;
+  cod_amount?: number | string;
   status?: string;
-  delivery_charge?: number;
+  delivery_charge?: number | string;
+  delivery_fee?: number | string;
   tracking_message?: string;
   updated_at?: string;
 };
@@ -117,6 +118,25 @@ export class OrderService {
   ) {
     this.checkAndUpdateCourierStatus();
     this.scheduleManualMetaPurchaseRetries();
+  }
+
+  private getSteadfastDeliveryCharge(payload: any): number | undefined {
+    const candidates = [
+      payload?.delivery_charge,
+      payload?.delivery_fee,
+      payload?.consignment?.delivery_charge,
+      payload?.consignment?.delivery_fee,
+      payload?.data?.delivery_charge,
+      payload?.data?.delivery_fee,
+    ];
+    for (const candidate of candidates) {
+      if (candidate === null || candidate === undefined || candidate === '') {
+        continue;
+      }
+      const charge = Number(candidate);
+      if (Number.isFinite(charge) && charge >= 0) return charge;
+    }
+    return undefined;
   }
 
   /**
@@ -781,6 +801,11 @@ export class OrderService {
     const trackingMessage = payload.tracking_message
       ? String(payload.tracking_message).trim()
       : undefined;
+    const codAmount =
+      payload.cod_amount === null || payload.cod_amount === undefined
+        ? undefined
+        : Number(payload.cod_amount);
+    const deliveryCharge = this.getSteadfastDeliveryCharge(payload);
     const eventKey = crypto
       .createHash('sha256')
       .update(
@@ -790,6 +815,8 @@ export class OrderService {
           invoice,
           rawStatus,
           trackingMessage,
+          codAmount: Number.isFinite(codAmount) ? codAmount : undefined,
+          deliveryCharge,
           updatedAt,
         }),
       )
@@ -840,11 +867,15 @@ export class OrderService {
         'courierStatus.updatedAt': updatedAt,
         'courierStatus.receivedAt': receivedAt,
       };
-      if (typeof payload.cod_amount === 'number') {
-        update.$set['courierStatus.codAmount'] = payload.cod_amount;
+      if (Number.isFinite(codAmount)) {
+        update.$set['courierStatus.codAmount'] = codAmount;
       }
-      if (typeof payload.delivery_charge === 'number') {
-        update.$set['courierStatus.deliveryCharge'] = payload.delivery_charge;
+      if (deliveryCharge !== undefined) {
+        update.$set['courierStatus.deliveryCharge'] = deliveryCharge;
+        update.$unset = {
+          ...(update.$unset || {}),
+          'courierStatus.chargeLookupError': 1,
+        };
       }
     }
 
@@ -924,11 +955,49 @@ export class OrderService {
       'courierData.consignmentId': { $exists: true, $nin: [null, ''] },
       'courierStatus.status': 'in_review',
     };
-    const orders: any[] = await this.orderModel
+    const inReviewOrders: any[] = await this.orderModel
       .find(inReviewQuery)
       .sort({ 'courierStatus.lastSyncedAt': 1, createdAt: 1 })
       .limit(50)
       .select('orderId courierData courierStatus');
+    const remainingSlots = Math.max(0, 50 - inReviewOrders.length);
+    let pendingChargeOrders: any[] = [];
+    if (remainingSlots > 0) {
+      const retryChargeBefore = new Date(Date.now() - 6 * 60 * 60 * 1000);
+      pendingChargeOrders = await this.orderModel
+        .find({
+          'courierData.providerName': 'Steadfast Courier',
+          'courierData.consignmentId': { $exists: true, $nin: [null, ''] },
+          'courierStatus.status': 'pending',
+          $and: [
+            {
+              $or: [
+                { 'courierStatus.deliveryCharge': { $exists: false } },
+                { 'courierStatus.deliveryCharge': null },
+              ],
+            },
+            {
+              $or: [
+                {
+                  'courierStatus.chargeLookupAttemptedAt': {
+                    $exists: false,
+                  },
+                },
+                {
+                  'courierStatus.chargeLookupAttemptedAt': {
+                    $lt: retryChargeBefore,
+                  },
+                },
+              ],
+            },
+          ],
+          _id: { $nin: inReviewOrders.map((order) => order._id) },
+        })
+        .sort({ 'courierStatus.chargeLookupAttemptedAt': 1, createdAt: 1 })
+        .limit(remainingSlots)
+        .select('orderId courierData courierStatus');
+    }
+    const orders = [...inReviewOrders, ...pendingChargeOrders];
     const courierApiConfig: CourierApiConfig = {
       providerName: courierMethod.providerName,
       apiKey: courierMethod.apiKey,
@@ -946,6 +1015,7 @@ export class OrderService {
       success: boolean;
       status?: string;
       moved?: boolean;
+      chargeUpdated?: boolean;
       error?: string;
     }> = [];
 
@@ -974,12 +1044,31 @@ export class OrderService {
             }
 
             const status = response.delivery_status.trim().toLowerCase();
-            const moved = status !== 'in_review';
+            const previousStatus = String(
+              order.courierStatus?.status || '',
+            ).toLowerCase();
+            const statusChanged = status !== previousStatus;
+            const moved =
+              previousStatus === 'in_review' && status !== 'in_review';
+            const deliveryCharge = this.getSteadfastDeliveryCharge(response);
+            const needsCharge =
+              order.courierStatus?.deliveryCharge === null ||
+              order.courierStatus?.deliveryCharge === undefined;
             const update: any = {
               $set: { 'courierStatus.lastSyncedAt': syncedAt },
               $unset: { 'courierStatus.lastSyncError': 1 },
             };
-            if (moved) {
+            if (needsCharge) {
+              update.$set['courierStatus.chargeLookupAttemptedAt'] = syncedAt;
+              if (deliveryCharge !== undefined) {
+                update.$set['courierStatus.deliveryCharge'] = deliveryCharge;
+                update.$unset['courierStatus.chargeLookupError'] = 1;
+              } else {
+                update.$set['courierStatus.chargeLookupError'] =
+                  'Steadfast status response did not include delivery charge.';
+              }
+            }
+            if (statusChanged) {
               const trackingMessage =
                 'Live status reconciled with Steadfast.';
               const updatedAt = syncedAt.toISOString();
@@ -1020,6 +1109,7 @@ export class OrderService {
               success: true,
               status,
               moved,
+              chargeUpdated: needsCharge && deliveryCharge !== undefined,
             };
           } catch (error) {
             const message = String(
@@ -1031,6 +1121,13 @@ export class OrderService {
                 $set: {
                   'courierStatus.lastSyncedAt': syncedAt,
                   'courierStatus.lastSyncError': message,
+                  ...(order.courierStatus?.deliveryCharge === null ||
+                  order.courierStatus?.deliveryCharge === undefined
+                    ? {
+                        'courierStatus.chargeLookupAttemptedAt': syncedAt,
+                        'courierStatus.chargeLookupError': message,
+                      }
+                    : {}),
                 },
               },
             );
@@ -1048,6 +1145,9 @@ export class OrderService {
 
     const currentCount = await this.orderModel.countDocuments(inReviewQuery);
     const moved = results.filter((result) => result.moved);
+    const chargesUpdated = results.filter(
+      (result) => result.chargeUpdated,
+    ).length;
     const failed = results.filter((result) => !result.success);
     return {
       success: true,
@@ -1055,6 +1155,7 @@ export class OrderService {
       data: {
         checked: results.length,
         moved: moved.length,
+        chargesUpdated,
         failed: failed.length,
         currentCount,
         movedOrderIds: moved.map((result) => result.id),
@@ -1153,25 +1254,38 @@ export class OrderService {
             }
 
             const status = response.delivery_status.trim().toLowerCase();
+            const deliveryCharge = this.getSteadfastDeliveryCharge(response);
             const eventKey = crypto
               .createHash('sha256')
               .update(
                 `historical_backfill:${order.courierData.consignmentId}:${status}`,
               )
               .digest('hex');
+            const statusSet: any = {
+              'courierStatus.status': status,
+              'courierStatus.notificationType': 'historical_backfill',
+              'courierStatus.trackingMessage':
+                'Historical status retrieved from Steadfast.',
+              'courierStatus.updatedAt': attemptedAt.toISOString(),
+              'courierStatus.receivedAt': attemptedAt,
+              'courierStatus.backfillAttemptedAt': attemptedAt,
+              'courierStatus.chargeLookupAttemptedAt': attemptedAt,
+            };
+            const statusUnset: any = {
+              'courierStatus.backfillError': 1,
+            };
+            if (deliveryCharge !== undefined) {
+              statusSet['courierStatus.deliveryCharge'] = deliveryCharge;
+              statusUnset['courierStatus.chargeLookupError'] = 1;
+            } else {
+              statusSet['courierStatus.chargeLookupError'] =
+                'Steadfast status response did not include delivery charge.';
+            }
             await this.orderModel.updateOne(
               { _id: order._id },
               {
-                $set: {
-                  'courierStatus.status': status,
-                  'courierStatus.notificationType': 'historical_backfill',
-                  'courierStatus.trackingMessage':
-                    'Historical status retrieved from Steadfast.',
-                  'courierStatus.updatedAt': attemptedAt.toISOString(),
-                  'courierStatus.receivedAt': attemptedAt,
-                  'courierStatus.backfillAttemptedAt': attemptedAt,
-                },
-                $unset: { 'courierStatus.backfillError': 1 },
+                $set: statusSet,
+                $unset: statusUnset,
                 $push: {
                   courierStatusHistory: {
                     $each: [
@@ -2923,6 +3037,13 @@ export class OrderService {
                     courierResponse?.consignment?.updated_at ||
                     new Date().toISOString(),
                   receivedAt: new Date(),
+                  ...(this.getSteadfastDeliveryCharge(courierResponse) !==
+                  undefined
+                    ? {
+                        deliveryCharge:
+                          this.getSteadfastDeliveryCharge(courierResponse),
+                      }
+                    : {}),
                 },
               },
             });
@@ -3113,6 +3234,13 @@ export class OrderService {
                       courierResponse?.consignment?.updated_at ||
                       new Date().toISOString(),
                     receivedAt: new Date(),
+                    ...(this.getSteadfastDeliveryCharge(courierResponse) !==
+                    undefined
+                      ? {
+                          deliveryCharge:
+                            this.getSteadfastDeliveryCharge(courierResponse),
+                        }
+                      : {}),
                   },
                 },
               });
@@ -4138,19 +4266,38 @@ export class OrderService {
         case 'Steadfast Courier':
           if (courierResponse.status === 200) {
             const receivedAt = new Date();
+            const deliveryCharge =
+              this.getSteadfastDeliveryCharge(courierResponse);
+            const statusSet: any = {
+              'courierStatus.status': String(
+                courierResponse.delivery_status || 'unknown',
+              ).toLowerCase(),
+              'courierStatus.notificationType': 'status_poll',
+              'courierStatus.trackingMessage':
+                order.courierStatus?.trackingMessage || '',
+              'courierStatus.updatedAt': receivedAt.toISOString(),
+              'courierStatus.receivedAt': receivedAt,
+              'courierStatus.lastSyncedAt': receivedAt,
+            };
+            const statusUnset: any = {
+              'courierStatus.lastSyncError': 1,
+            };
+            if (
+              order.courierStatus?.deliveryCharge === null ||
+              order.courierStatus?.deliveryCharge === undefined
+            ) {
+              statusSet['courierStatus.chargeLookupAttemptedAt'] = receivedAt;
+              if (deliveryCharge !== undefined) {
+                statusSet['courierStatus.deliveryCharge'] = deliveryCharge;
+                statusUnset['courierStatus.chargeLookupError'] = 1;
+              } else {
+                statusSet['courierStatus.chargeLookupError'] =
+                  'Steadfast status response did not include delivery charge.';
+              }
+            }
             await this.orderModel.findByIdAndUpdate(order.id, {
-              $set: {
-                courierStatus: {
-                  status: String(
-                    courierResponse.delivery_status || 'unknown',
-                  ).toLowerCase(),
-                  notificationType: 'status_poll',
-                  trackingMessage:
-                    order.courierStatus?.trackingMessage || '',
-                  updatedAt: receivedAt.toISOString(),
-                  receivedAt,
-                },
-              },
+              $set: statusSet,
+              $unset: statusUnset,
             });
           }
           break;

@@ -21,6 +21,8 @@ export interface Order {
     receivedAt?: Date;
     lastSyncedAt?: Date;
     lastSyncError?: string;
+    chargeLookupAttemptedAt?: Date;
+    chargeLookupError?: string;
     backfillAttemptedAt?: Date;
     backfillError?: string;
   };

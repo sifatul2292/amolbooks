@@ -1459,7 +1459,7 @@
       </div>
 
       <div class="in-review-tools" id="inReviewTools">
-        <div class="in-review-tools-copy" id="inReviewSyncStatus"><i class="fas fa-arrows-rotate"></i> Live courier queue · checks Steadfast every 60 seconds when nothing is selected</div>
+        <div class="in-review-tools-copy" id="inReviewSyncStatus"><i class="fas fa-arrows-rotate"></i> Live courier queue · checks Steadfast status and charges every 60 seconds when nothing is selected</div>
         <div class="in-review-tools-actions">
           <button class="btn-label-print" onclick="printSelectedInReviewLabels()"><i class="fas fa-print"></i> Print Selected</button>
           <button class="btn-label-print primary" onclick="printAllInReviewLabels()"><i class="fas fa-layer-group"></i> Print All In Review</button>
@@ -2023,6 +2023,7 @@
           loadRepeatCustomers();
           loadTodayStats();
           loadStatusCounts();
+          if (canRunCourierBackfill()) refreshInReviewQueue();
           if (!isSalesman()) loadSnap();
         }
       }
@@ -2499,9 +2500,10 @@
       } else {
         var count = Number(data.currentCount || 0);
         var moved = Number(data.moved || 0);
+        var chargesUpdated = Number(data.chargesUpdated || 0);
         var countEl = document.getElementById('tabCount-in_review');
         if (countEl) countEl.textContent = count.toLocaleString();
-        setInReviewSyncText('<i class="fas fa-circle-check"></i> Synced with Steadfast · '+count.toLocaleString()+' In Review'+(moved ? ' · '+moved.toLocaleString()+' moved out' : ''));
+        setInReviewSyncText('<i class="fas fa-circle-check"></i> Synced with Steadfast · '+count.toLocaleString()+' In Review'+(moved ? ' · '+moved.toLocaleString()+' moved out' : '')+(chargesUpdated ? ' · '+chargesUpdated.toLocaleString()+' charges added' : ''));
       }
       return data;
     })
@@ -2882,7 +2884,9 @@
     }
     var charge = o.courierStatus && o.courierStatus.deliveryCharge;
     if (charge === undefined || charge === null || charge === '' || !Number.isFinite(Number(charge))) {
-      return '<span style="color:#94a3b8;font-size:10.5px;white-space:nowrap">Awaiting Charge</span>';
+      var lookupError = o.courierStatus && o.courierStatus.chargeLookupError;
+      return '<span style="color:#94a3b8;font-size:10.5px;white-space:nowrap"'+
+        (lookupError ? ' title="'+esc(lookupError)+'"' : '')+'>Awaiting Charge</span>';
     }
     return '<strong style="color:#0f766e;font-size:12px;white-space:nowrap" title="Charge reported by Steadfast">৳'+
       Number(charge).toLocaleString('en-BD', { maximumFractionDigits: 2 })+'</strong>';
@@ -3880,6 +3884,7 @@
     loadRepeatCustomers();
     loadTodayStats();
     loadStatusCounts();
+    if (canRunCourierBackfill()) refreshInReviewQueue();
     if (!isSalesman()) loadSnap();
   }
   else { showLogin(); }

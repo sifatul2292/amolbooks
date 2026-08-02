@@ -195,6 +195,8 @@ export const OrderSchema = new mongoose.Schema(
       receivedAt: { type: Date, required: false },
       lastSyncedAt: { type: Date, required: false },
       lastSyncError: { type: String, required: false },
+      chargeLookupAttemptedAt: { type: Date, required: false },
+      chargeLookupError: { type: String, required: false },
       backfillAttemptedAt: { type: Date, required: false },
       backfillError: { type: String, required: false },
     },
