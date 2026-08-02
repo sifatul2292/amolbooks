@@ -9,6 +9,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -397,6 +399,24 @@
     .status-tab.active { color: var(--p); border-bottom-color: var(--p); }
     .status-tab .tab-count { font-size: 11px; font-weight: 700; background: var(--g100); color: var(--g500); border-radius: 10px; padding: 1px 7px; margin-left: 5px; transition: background .15s,color .15s; }
     .status-tab.active .tab-count { background: var(--p); color: #fff; }
+    .in-review-tools {
+      display: none; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 10px 14px; margin: -4px 0 14px;
+      background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 10px;
+    }
+    .in-review-tools.show { display: flex; }
+    .in-review-tools-copy { font-size: 11.5px; color: #5b21b6; font-weight: 600; }
+    .in-review-tools-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-label-print {
+      border: 1px solid #c4b5fd; background: #fff; color: #5b21b6;
+      border-radius: 7px; padding: 6px 11px; font-size: 11px;
+      font-weight: 800; cursor: pointer; white-space: nowrap; font-family: inherit;
+    }
+    .btn-label-print.primary { background: #6d28d9; border-color: #6d28d9; color: #fff; }
+    .btn-label-print:hover { filter: brightness(.97); }
+    @media(max-width:680px) {
+      .in-review-tools { align-items: flex-start; flex-direction: column; }
+    }
 
     /* Status select */
     .status-select {
@@ -1393,10 +1413,19 @@
       <!-- Status Tabs -->
       <div class="status-tabs" id="statusTabs">
         <div class="status-tab active" id="tab-all" onclick="setStatusTab('all')">All <span class="tab-count" id="tabCount-all">—</span></div>
+        <div class="status-tab" id="tab-in_review" onclick="setStatusTab('in_review')">In Review <span class="tab-count" id="tabCount-in_review">—</span></div>
         <div class="status-tab" id="tab-processing" onclick="setStatusTab('processing')">Processing <span class="tab-count" id="tabCount-processing">—</span></div>
         <div class="status-tab" id="tab-2" onclick="setStatusTab(2)">Confirmed <span class="tab-count" id="tabCount-2">—</span></div>
         <div class="status-tab" id="tab-6" onclick="setStatusTab(6)">Cancelled <span class="tab-count" id="tabCount-6">—</span></div>
         <div class="status-tab" id="tab-10" onclick="setStatusTab(10)">Trash <span class="tab-count" id="tabCount-10">—</span></div>
+      </div>
+
+      <div class="in-review-tools" id="inReviewTools">
+        <div class="in-review-tools-copy"><i class="fas fa-arrows-rotate"></i> Live courier queue · refreshes every 60 seconds when nothing is selected</div>
+        <div class="in-review-tools-actions">
+          <button class="btn-label-print" onclick="printSelectedInReviewLabels()"><i class="fas fa-print"></i> Print Selected</button>
+          <button class="btn-label-print primary" onclick="printAllInReviewLabels()"><i class="fas fa-layer-group"></i> Print All In Review</button>
+        </div>
       </div>
 
       <!-- Filter Bar -->
@@ -1481,6 +1510,7 @@
                 <th>Amount</th>
                 <th>Courier</th>
                 <th>Courier Status</th>
+                <th>Courier Charge</th>
                 <th>Fraud</th>
                 <th>View</th>
                 <th>Pay Type</th>
@@ -1494,7 +1524,7 @@
             </thead>
             <tbody id="ordersBody">
               <tr class="loading-row">
-                <td colspan="18"><div class="spinner"></div><div>Loading orders…</div></td>
+                <td colspan="19"><div class="spinner"></div><div>Loading orders…</div></td>
               </tr>
             </tbody>
           </table>
@@ -1807,6 +1837,7 @@
     if (totalLabel) totalLabel.textContent = isIncompleteView ? 'Incomplete Orders' : 'Processing Orders';
     var statusTabs = document.getElementById('statusTabs');
     if (statusTabs) statusTabs.style.display = isIncompleteView ? 'none' : '';
+    updateInReviewTools();
     var orderStatusBtn = document.getElementById('orderStatusBtn');
     if (orderStatusBtn && orderStatusBtn.closest('.dd-wrap')) orderStatusBtn.closest('.dd-wrap').style.display = isIncompleteView ? 'none' : '';
     var bulkStatus = document.getElementById('bulkStatus');
@@ -2050,6 +2081,7 @@
     });
     document.querySelectorAll('.status-tab').forEach(function(t){ t.classList.remove('active'); });
     var allTab = document.getElementById('tab-all'); if(allTab) allTab.classList.add('active');
+    updateInReviewTools();
     loadOrders();
   };
 
@@ -2122,7 +2154,9 @@
     if (state.paymentStatus) filter.paymentStatus = state.paymentStatus;
     if (state.paymentType)   filter.paymentType   = state.paymentType;
     // Tab-driven status filter (takes precedence over dropdown)
-    if (state.activeTab === 'processing') {
+    if (state.activeTab === 'in_review') {
+      filter['courierStatus.status'] = 'in_review';
+    } else if (state.activeTab === 'processing') {
       filter.orderStatus = { $in: PROCESSING_STATUSES };
     } else if (state.activeTab === '6') {
       filter.orderStatus = { $in: [6, 7, 9] };
@@ -2149,6 +2183,7 @@
         discount:1, orderStatus:1, paymentStatus:1, paymentType:1,
         createdAt:1, checkoutDate:1, shippingAddress:1, courierData:1, courierStatus:1,
         courierLink:1, fraudChecker:1, admin:1, user:1, deliveryDate:1, orderedItems:1,
+        division:1, area:1, zone:1,
         note:1, adminNote:1, city:1, status:1, email:1,
       },
     };
@@ -2194,7 +2229,7 @@
     .catch(function(err){
       if (err.message === 'Unauthorized') return;
       document.getElementById('ordersBody').innerHTML =
-        '<tr class="empty-row"><td colspan="18"><i class="fas fa-exclamation-triangle" style="color:#ef4444;font-size:22px;display:block;margin-bottom:10px"></i>Failed to load orders<br><small style="color:#94a3b8">' + err.message + '</small></td></tr>';
+        '<tr class="empty-row"><td colspan="19"><i class="fas fa-exclamation-triangle" style="color:#ef4444;font-size:22px;display:block;margin-bottom:10px"></i>Failed to load orders<br><small style="color:#94a3b8">' + err.message + '</small></td></tr>';
       ['totalOrders','totalAmount'].forEach(function(id){ document.getElementById(id).textContent = '—'; });
       document.getElementById('paginationInfo').textContent = '';
     });
@@ -2276,7 +2311,7 @@
     var rows = '';
     for (var i = 0; i < 8; i++) {
       rows += '<tr class="skeleton-row">';
-      for (var j = 0; j < 18; j++) rows += '<td><div class="skel" style="width:' + (55 + Math.random()*35|0) + '%"></div></td>';
+      for (var j = 0; j < 19; j++) rows += '<td><div class="skel" style="width:' + (55 + Math.random()*35|0) + '%"></div></td>';
       rows += '</tr>';
     }
     document.getElementById('ordersBody').innerHTML = rows;
@@ -2375,6 +2410,11 @@
       if (el) el.textContent = n.toLocaleString();
       document.getElementById('totalOrders').textContent = n.toLocaleString();
     });
+    // Steadfast orders still waiting for courier review
+    fetchCount({ 'courierStatus.status': 'in_review' }, function(n){
+      var el = document.getElementById('tabCount-in_review');
+      if (el) el.textContent = n.toLocaleString();
+    });
     // confirmed
     fetchCount({ orderStatus: 2 }, function(n){
       var el = document.getElementById('tabCount-2');
@@ -2399,8 +2439,15 @@
     document.querySelectorAll('.status-tab').forEach(function(t){ t.classList.remove('active'); });
     var el = document.getElementById('tab-' + tab);
     if (el) el.classList.add('active');
+    clearSelection();
+    updateInReviewTools();
     loadOrders();
   };
+
+  function updateInReviewTools() {
+    var tools = document.getElementById('inReviewTools');
+    if (tools) tools.classList.toggle('show', !isIncompleteView && state.activeTab === 'in_review');
+  }
 
   /* ── Date filter change ── */
   window.onDateChange = function() {
@@ -2739,6 +2786,18 @@
       (message ? ' title="'+esc(message)+'"' : '')+'>'+esc(mapped[0])+'</span>';
   }
 
+  function courierChargeCell(o) {
+    if (isIncompleteView || !o.courierData || !o.courierData.providerName) {
+      return '<span style="color:#94a3b8;font-size:11px">—</span>';
+    }
+    var charge = o.courierStatus && o.courierStatus.deliveryCharge;
+    if (charge === undefined || charge === null || charge === '' || !Number.isFinite(Number(charge))) {
+      return '<span style="color:#94a3b8;font-size:10.5px;white-space:nowrap">Awaiting Charge</span>';
+    }
+    return '<strong style="color:#0f766e;font-size:12px;white-space:nowrap" title="Charge reported by Steadfast">৳'+
+      Number(charge).toLocaleString('en-BD', { maximumFractionDigits: 2 })+'</strong>';
+  }
+
   /* ── Render Table ── */
   function incompleteActions(o) {
     var view = '<button class="btn-action btn-view" onclick="openProducts(\''+o._id+'\')" title="View abandoned order"><i class="fas fa-eye"></i> View</button>';
@@ -2769,7 +2828,7 @@
   function renderTable(orders, total) {
     var tbody=document.getElementById('ordersBody');
     if (!orders.length) {
-      tbody.innerHTML='<tr class="empty-row"><td colspan="18"><i class="fas fa-inbox" style="font-size:32px;color:#cbd5e1;display:block;margin-bottom:10px"></i>No orders found</td></tr>';
+      tbody.innerHTML='<tr class="empty-row"><td colspan="19"><i class="fas fa-inbox" style="font-size:32px;color:#cbd5e1;display:block;margin-bottom:10px"></i>No orders found</td></tr>';
       return;
     }
     var offset=state.page*state.pageSize;
@@ -2805,6 +2864,7 @@
           '<td><strong style="color:var(--p);font-size:13.5px">৳'+Number(o.grandTotal||0).toLocaleString()+'</strong></td>',
           '<td>'+incompleteCourierCell(o)+'</td>',
           '<td>'+courierStatusCell(o)+'</td>',
+          '<td>'+courierChargeCell(o)+'</td>',
           '<td>'+fraudCell(o.fraudChecker,o._id,o.phoneNo||'')+'</td>',
           '<td>'+incompleteActions(o)+'</td>',
           '<td>'+payTypeBadge(o.paymentType)+'</td>',
@@ -2830,6 +2890,7 @@
         '<td><strong style="color:var(--p);font-size:13.5px">৳'+Number(o.grandTotal||0).toLocaleString()+'</strong></td>',
         '<td>'+courierCell+'</td>',
         '<td>'+courierStatusCell(o)+'</td>',
+        '<td>'+courierChargeCell(o)+'</td>',
         '<td>'+fraudCell(o.fraudChecker,o._id,o.phoneNo||'')+'</td>',
         '<td><button class="btn-action btn-view" onclick="openProducts(\''+o._id+'\')" title="'+itemCount+' item(s)"><i class="fas fa-eye"></i> View'+(itemCount?' ('+itemCount+')':'')+'</button></td>',
         '<td>'+payTypeBadge(o.paymentType)+'</td>',
@@ -2860,6 +2921,196 @@
     html+='<button class="page-btn" onclick="goPage('+(state.page+1)+')"'+(state.page>=pageCount-1?' disabled':'')+'><i class="fas fa-chevron-right"></i></button>';
     ctrl.innerHTML=html;
   }
+
+  function labelBarcodeSvg(value) {
+    if (!value || typeof window.JsBarcode !== 'function') {
+      return '<div class="barcode-fallback">'+esc(value || 'NO CONSIGNMENT ID')+'</div>';
+    }
+    try {
+      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      window.JsBarcode(svg, String(value), {
+        format: 'CODE128', displayValue: false, height: 34, width: 1.35,
+        margin: 0, background: '#ffffff', lineColor: '#000000',
+      });
+      return svg.outerHTML;
+    } catch (e) {
+      return '<div class="barcode-fallback">'+esc(value)+'</div>';
+    }
+  }
+
+  function labelQrDataUrl(value) {
+    if (!value || typeof window.QRCode !== 'function') return '';
+    var holder = document.createElement('div');
+    holder.style.cssText = 'position:fixed;left:-9999px;top:-9999px;background:#fff';
+    document.body.appendChild(holder);
+    try {
+      new window.QRCode(holder, {
+        text: String(value), width: 92, height: 92,
+        colorDark: '#000000', colorLight: '#ffffff',
+        correctLevel: window.QRCode.CorrectLevel.M,
+      });
+      var canvas = holder.querySelector('canvas');
+      if (canvas) return canvas.toDataURL('image/png');
+      var image = holder.querySelector('img');
+      return image ? image.src : '';
+    } catch (e) {
+      return '';
+    } finally {
+      holder.remove();
+    }
+  }
+
+  function labelProductLines(order) {
+    var items = Array.isArray(order.orderedItems) ? order.orderedItems : [];
+    if (!items.length) return '<div class="product-line">Product description unavailable</div>';
+    return items.map(function(item, index){
+      var quantity = Number(item.quantity || item.selectedQty || 1);
+      return '<div class="product-line"><b>'+(index+1)+'.</b> '+esc(item.name || 'Unnamed product')+' <strong>×'+quantity+'</strong></div>';
+    }).join('');
+  }
+
+  function labelAddress(order) {
+    var values = [
+      order.division && order.division.name,
+      order.area && (order.area.name || order.area),
+      order.zone && order.zone.name,
+      order.shippingAddress || order.city,
+    ].filter(function(value){ return value && String(value).trim(); }).map(function(value){ return String(value).trim(); });
+    return values.filter(function(value, index){
+      return values.findIndex(function(other){ return other.toLowerCase() === value.toLowerCase(); }) === index;
+    }).join(', ') || '—';
+  }
+
+  function buildCourierLabel(order) {
+    var consignmentId = order.courierData && order.courierData.consignmentId
+      ? String(order.courierData.consignmentId) : '';
+    var trackingId = order.courierData && order.courierData.trackingId
+      ? String(order.courierData.trackingId) : consignmentId;
+    var barcode = labelBarcodeSvg(consignmentId || trackingId);
+    var qr = labelQrDataUrl(trackingId || consignmentId || order.orderId);
+    var items = Array.isArray(order.orderedItems) ? order.orderedItems : [];
+    var productLength = items.reduce(function(total, item){ return total + String(item.name || '').length; }, 0);
+    var productClass = productLength > 280 || items.length > 5
+      ? ' products-ultra' : (productLength > 150 || items.length > 3 ? ' products-compact' : '');
+    var codAmount = String(order.paymentStatus || '').toLowerCase() === 'paid'
+      ? 0 : Number(order.grandTotal || 0);
+    var printedAt = new Date().toLocaleString('en-BD', {
+      timeZone: 'Asia/Dhaka', day: '2-digit', month: '2-digit', year: '2-digit',
+      hour: '2-digit', minute: '2-digit', hour12: true,
+    });
+    return [
+      '<section class="shipping-label">',
+        '<header class="label-header"><div><div class="label-brand">AMOL BOOKS</div><div class="label-sub">Books &amp; more</div></div><div class="merchant"><b>Amol Books</b><span>Merchant ID: J0ERXA8B</span></div></header>',
+        '<div class="barcode-block">'+barcode+'<b>'+esc(consignmentId || trackingId || '—')+'</b></div>',
+        '<div class="label-meta">',
+          '<div class="qr-wrap">'+(qr?'<img src="'+qr+'" alt="QR code">':'<span>QR<br>Unavailable</span>')+'</div>',
+          '<div class="meta-grid">',
+            '<b>INVOICE</b><strong>'+esc(order.orderId || '—')+'</strong>',
+            '<b>SF-ID</b><strong>'+esc(consignmentId || '—')+'</strong>',
+            '<b>DELIVERY</b><strong>Home</strong>',
+            '<b>WEIGHT</b><strong>N/G</strong>',
+          '</div>',
+        '</div>',
+        '<div class="recipient">',
+          '<div><b>NAME</b><span>'+esc(order.name || '—')+'</span></div>',
+          '<div><b>PHONE</b><span>'+esc(order.phoneNo || '—')+'</span></div>',
+          '<div><b>ADDRESS</b><span>'+esc(labelAddress(order))+'</span></div>',
+        '</div>',
+        '<div class="products'+productClass+'"><div class="products-title">PRODUCT DESCRIPTION</div>'+labelProductLines(order)+'</div>',
+        '<div class="cod-box"><span>CASH ON DELIVERY</span><strong>৳ '+codAmount.toLocaleString('en-BD', { maximumFractionDigits: 2 })+'</strong></div>',
+        '<footer><span>Printed: '+esc(printedAt)+'</span><b>Steadfast Courier</b></footer>',
+      '</section>',
+    ].join('');
+  }
+
+  function renderCourierLabels(orders, printWindow) {
+    if (!orders.length) {
+      if (printWindow) printWindow.close();
+      showToast('No In Review orders available to print.', 'error');
+      return;
+    }
+    var labels = orders.map(buildCourierLabel).join('');
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Amol Books Courier Labels</title><style>'+[
+      '@page{size:2in 4in;margin:0}',
+      '*{box-sizing:border-box}',
+      'html,body{margin:0;padding:0;background:#fff;color:#000;font-family:Arial,"Noto Sans Bengali","Segoe UI",sans-serif}',
+      '.shipping-label{width:2in;height:4in;padding:.07in;display:grid;grid-template-rows:auto auto auto auto minmax(0,1fr) auto auto;overflow:hidden;page-break-after:always;break-after:page;background:#fff}',
+      '.shipping-label:last-child{page-break-after:auto;break-after:auto}',
+      '.label-header{display:flex;justify-content:space-between;align-items:center;border-bottom:1.5px solid #000;padding:0 1px 4px}',
+      '.label-brand{font-size:10pt;font-weight:900;letter-spacing:-.4px}.label-sub{font-size:4.8pt;text-transform:uppercase;letter-spacing:.5px}',
+      '.merchant{text-align:right;display:flex;flex-direction:column;gap:2px}.merchant b{font-size:8pt}.merchant span{font-size:5pt}',
+      '.barcode-block{text-align:center;border-bottom:1px solid #bbb;padding:4px 0 3px}.barcode-block svg{display:block;width:100%;height:34px}.barcode-block>b{font-size:7pt;letter-spacing:2px}.barcode-fallback{font-size:8pt;font-weight:900;padding:8px 0;border:1px solid #000}',
+      '.label-meta{display:grid;grid-template-columns:.62in 1fr;border-bottom:1px solid #bbb;min-height:.66in}.qr-wrap{display:flex;align-items:center;justify-content:center;border-right:1px solid #bbb;padding:3px;font-size:5pt;text-align:center}.qr-wrap img{width:.55in;height:.55in;image-rendering:pixelated}',
+      '.meta-grid{display:grid;grid-template-columns:auto 1fr;gap:2px 5px;align-content:center;padding:3px 5px;font-size:5.8pt}.meta-grid strong{text-align:right;font-size:6.3pt;overflow-wrap:anywhere}',
+      '.recipient{padding:4px 2px 3px;border-bottom:1px solid #bbb;display:flex;flex-direction:column;gap:2px}.recipient>div{display:grid;grid-template-columns:.38in 1fr;gap:3px;font-size:5.8pt;line-height:1.13}.recipient span{font-weight:650;overflow-wrap:anywhere}',
+      '.products{padding:3px 2px;min-height:0;font-size:5.8pt;line-height:1.12;overflow:hidden}.products-title{font-size:5.2pt;font-weight:900;letter-spacing:.25px;margin-bottom:2px;border-bottom:.5px solid #999}.product-line{overflow-wrap:anywhere;margin-bottom:1px}.products-compact{font-size:5.1pt;line-height:1.04}.products-ultra{font-size:4.35pt;line-height:1}',
+      '.cod-box{border:1.5px solid #000;display:flex;justify-content:space-between;align-items:center;padding:4px 6px;margin-top:2px}.cod-box span{font-size:6.3pt;font-weight:900}.cod-box strong{font-size:10pt}',
+      'footer{display:flex;justify-content:space-between;align-items:flex-end;padding-top:3px;font-size:4.7pt}footer b{font-size:5.5pt;font-style:italic}',
+      '@media screen{body{background:#6b7280}.shipping-label{margin:12px auto;box-shadow:0 2px 12px rgba(0,0,0,.35)}}',
+      '@media print{body{background:#fff}.shipping-label{margin:0;box-shadow:none}}',
+    ].join('')+'</style></head><body>'+labels+'<script>window.addEventListener("load",function(){setTimeout(function(){window.print()},250)})<\/script></body></html>';
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+  }
+
+  function openLabelWindow() {
+    var printWindow = window.open('', '_blank', 'width=520,height=760');
+    if (!printWindow) {
+      showToast('Allow pop-ups to open the courier print window.', 'error');
+      return null;
+    }
+    printWindow.document.write('<!DOCTYPE html><title>Preparing labels…</title><body style="font-family:Arial;padding:30px">Preparing courier labels…</body>');
+    return printWindow;
+  }
+
+  window.printSelectedInReviewLabels = function () {
+    var selected = getSelectedIds();
+    if (!selected.length) {
+      showToast('Select at least one In Review order first.', 'error');
+      return;
+    }
+    var orders = selected.map(function(id){ return allOrdersById[String(id)]; }).filter(function(order){
+      return order && order.courierStatus && String(order.courierStatus.status).toLowerCase() === 'in_review';
+    });
+    var printWindow = openLabelWindow();
+    if (printWindow) renderCourierLabels(orders, printWindow);
+  };
+
+  window.printAllInReviewLabels = function () {
+    var printWindow = openLabelWindow();
+    if (!printWindow) return;
+    var body = {
+      filter: { 'courierStatus.status': 'in_review' },
+      pagination: { pageSize: 301, currentPage: 0 },
+      sort: { createdAt: 1 },
+      select: {
+        orderId:1, name:1, phoneNo:1, shippingAddress:1, city:1,
+        grandTotal:1, paymentStatus:1, paymentType:1, orderedItems:1,
+        courierData:1, courierStatus:1, division:1, area:1, zone:1, createdAt:1,
+      },
+    };
+    fetch(API + '/api/order/get-all', {
+      method: 'POST', headers: authHeaders(), body: JSON.stringify(body),
+    })
+    .then(function(r){
+      if (r.status === 401 || r.status === 403) throw new Error('Session expired.');
+      return r.json();
+    })
+    .then(function(resp){
+      var orders = Array.isArray(resp.data) ? resp.data : [];
+      var count = Number(resp.count || orders.length);
+      if (count > 300) {
+        printWindow.close();
+        throw new Error('There are '+count.toLocaleString()+' In Review orders. Select and print them in batches of 300 or fewer.');
+      }
+      renderCourierLabels(orders, printWindow);
+    })
+    .catch(function(err){
+      if (printWindow && !printWindow.closed) printWindow.close();
+      showToast('Could not prepare labels: '+err.message, 'error');
+    });
+  };
 
   window.goPage = function (p) {
     if (p<0) return;
@@ -3010,7 +3261,7 @@
   /* ── Export CSV ── */
   window.exportToCSV = function () {
     if (!allOrders.length) { showToast('No orders to export.','error'); return; }
-    var headers=['SL','Order No','Phone','Name','Date','Payment Type','Payment Status','Order Status','Courier Status','Grand Total','Shipping Address'];
+    var headers=['SL','Order No','Phone','Name','Date','Payment Type','Payment Status','Order Status','Courier Status','Courier Charge','Grand Total','Shipping Address'];
     var rows=allOrders.map(function(o,i){
       return [
         i+1, o.orderId||'', o.phoneNo||'', o.name||'',
@@ -3018,6 +3269,7 @@
         o.paymentType||'', o.paymentStatus||'',
         isIncompleteView ? (o.status || 'incomplete') : (STATUS_NAMES[o.orderStatus]||o.orderStatus),
         isIncompleteView ? '' : ((o.courierStatus&&o.courierStatus.status)||''),
+        isIncompleteView ? '' : ((o.courierStatus&&o.courierStatus.deliveryCharge)!=null?o.courierStatus.deliveryCharge:''),
         o.grandTotal||0,
         '"'+(o.shippingAddress||'').replace(/"/g,'""')+'"',
       ].join(',');
@@ -3490,6 +3742,19 @@
       });
     }
   })();
+
+  // Keep the courier queue current without interrupting checkbox selections.
+  setInterval(function(){
+    if (
+      !document.hidden &&
+      state.activeTab === 'in_review' &&
+      !courierBackfillRunning &&
+      getSelectedIds().length === 0
+    ) {
+      loadOrders();
+      loadStatusCounts();
+    }
+  }, 60000);
 
   /* ── Init ── */
   applyRoleMode();

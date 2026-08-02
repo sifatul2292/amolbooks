@@ -23,6 +23,16 @@ Nothing active.
 
 ## Completed this session
 
+- In Review courier queue and thermal-label printing:
+  - Added an exact courier-status In Review tab and count; orders leave the queue automatically after Steadfast changes their saved status, with a guarded 60-second refresh while the tab is visible and no rows are selected.
+  - Added Print Selected and Print All In Review actions. Print All re-fetches the live queue immediately before rendering and caps a single print job at 300 labels for browser/printer safety.
+  - Generated one 2×4-inch page per order with Amol Books merchant identity, consignment barcode, tracking QR, invoice/SF IDs, recipient details, COD, print time, and full Amolbooks product names/quantities. Long product lists use progressively compact typography.
+  - Label generation stays in the browser; barcode/QR libraries receive no order payload over the network, and text fallbacks keep labels usable if either renderer is unavailable.
+
+- Courier charge visibility:
+  - Added a separate Courier Charge column beside Courier Status in the custom order list, showing the amount reported by Steadfast or an honest Awaiting Charge state when no webhook charge exists.
+  - Added raw courier charge to CSV exports; the display remains separate from customer delivery fees and does not change profit calculations.
+
 - Safe historical Steadfast status backfill:
   - Added a super-admin/admin-only endpoint and order-list button that retrieves missing historical courier statuses using saved Steadfast consignment IDs.
   - Backfill runs in resumable 15-order batches with at most three concurrent courier requests and a 10-second status-request timeout; closing the page or an API failure leaves untouched orders available for the next run.
