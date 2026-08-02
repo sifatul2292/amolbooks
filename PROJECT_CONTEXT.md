@@ -92,6 +92,7 @@ POSTHOG_API_KEY=<posthog-key>
 POSTHOG_HOST=<posthog-host>
 # Also expected in production per ops history:
 GREENWEBSMS_TOKEN=<sms-token>    # OTP + order SMS via bdbulksms.net; missing => SMS silently fails
+STEADFAST_WEBHOOK_TOKEN=<random-webhook-secret>
 META_APP_ID=<meta-app-id>
 META_APP_SECRET=<meta-secret>
 META_REDIRECT_URI=https://apisub.amolbooks.com/api/meta-ads/callback

@@ -11,6 +11,15 @@ export interface Order {
   email: string;
   city: string;
   courierData: any;
+  courierStatus?: {
+    status?: string;
+    notificationType?: string;
+    trackingMessage?: string;
+    codAmount?: number;
+    deliveryCharge?: number;
+    updatedAt?: string;
+    receivedAt?: Date;
+  };
   deliveryNote: any;
   courierLink: string;
   shippingAddress: string;

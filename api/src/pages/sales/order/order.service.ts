@@ -5,6 +5,8 @@ import {
   InternalServerErrorException,
   Logger,
   NotFoundException,
+  ServiceUnavailableException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -67,6 +69,17 @@ type ManualOrderSource =
   | 'email'
   | 'walk_in'
   | 'other';
+
+type SteadfastWebhookPayload = {
+  notification_type?: 'delivery_status' | 'tracking_update';
+  consignment_id?: string | number;
+  invoice?: string;
+  cod_amount?: number;
+  status?: string;
+  delivery_charge?: number;
+  tracking_message?: string;
+  updated_at?: string;
+};
 
 @Injectable()
 export class OrderService {
@@ -664,6 +677,180 @@ export class OrderService {
       );
       // Don't throw - background tasks should not fail the order
     }
+  }
+
+  /** Receive authenticated delivery and tracking updates from Steadfast. */
+  async receiveSteadfastWebhook(
+    authorization: string,
+    payload: SteadfastWebhookPayload,
+  ): Promise<void> {
+    const configuredToken = this.configService.get<string>(
+      'steadfastWebhookToken',
+    );
+    if (!configuredToken) {
+      this.logger.error('STEADFAST_WEBHOOK_TOKEN is not configured');
+      throw new ServiceUnavailableException('Webhook is not configured.');
+    }
+
+    const suppliedToken = String(authorization || '').replace(
+      /^Bearer\s+/i,
+      '',
+    );
+    const expectedHash = crypto
+      .createHash('sha256')
+      .update(configuredToken)
+      .digest();
+    const suppliedHash = crypto
+      .createHash('sha256')
+      .update(suppliedToken)
+      .digest();
+    if (!suppliedToken || !crypto.timingSafeEqual(expectedHash, suppliedHash)) {
+      throw new UnauthorizedException('Invalid webhook token.');
+    }
+
+    if (
+      !payload ||
+      !['delivery_status', 'tracking_update'].includes(
+        payload.notification_type,
+      ) ||
+      (payload.consignment_id == null && !payload.invoice)
+    ) {
+      throw new BadRequestException('Invalid Steadfast webhook payload.');
+    }
+
+    const consignmentId =
+      payload.consignment_id == null
+        ? null
+        : String(payload.consignment_id).trim();
+    const invoice = payload.invoice == null
+      ? null
+      : String(payload.invoice).trim();
+    const [byConsignment, byInvoice] = await Promise.all([
+      consignmentId
+        ? this.orderModel.findOne({
+            'courierData.providerName': 'Steadfast Courier',
+            'courierData.consignmentId': consignmentId,
+          })
+        : null,
+      invoice ? this.orderModel.findOne({ orderId: invoice }) : null,
+    ]);
+
+    if (
+      byConsignment &&
+      byInvoice &&
+      String(byConsignment._id) !== String(byInvoice._id)
+    ) {
+      throw new BadRequestException(
+        'Consignment ID and invoice identify different orders.',
+      );
+    }
+
+    const order = byConsignment || byInvoice;
+    if (!order) {
+      throw new NotFoundException('Invalid consignment ID or invoice.');
+    }
+    if (
+      order.courierData?.providerName &&
+      order.courierData.providerName !== 'Steadfast Courier'
+    ) {
+      throw new BadRequestException('Order does not use Steadfast Courier.');
+    }
+    if (
+      consignmentId &&
+      order.courierData?.consignmentId &&
+      String(order.courierData.consignmentId) !== consignmentId
+    ) {
+      throw new BadRequestException('Consignment ID does not match invoice.');
+    }
+    if (invoice && String(order.orderId) !== invoice) {
+      throw new BadRequestException('Invoice does not match consignment ID.');
+    }
+
+    const notificationType = payload.notification_type;
+    const rawStatus =
+      notificationType === 'delivery_status' && payload.status
+        ? String(payload.status).trim().toLowerCase()
+        : undefined;
+    const updatedAt = payload.updated_at
+      ? String(payload.updated_at).trim()
+      : new Date().toISOString();
+    const trackingMessage = payload.tracking_message
+      ? String(payload.tracking_message).trim()
+      : undefined;
+    const eventKey = crypto
+      .createHash('sha256')
+      .update(
+        JSON.stringify({
+          notificationType,
+          consignmentId,
+          invoice,
+          rawStatus,
+          trackingMessage,
+          updatedAt,
+        }),
+      )
+      .digest('hex');
+
+    const existingHistory = (order as any).courierStatusHistory || [];
+    if (existingHistory.some((event: any) => event.eventKey === eventKey)) {
+      return;
+    }
+
+    const receivedAt = new Date();
+    const historyEvent = {
+      eventKey,
+      notificationType,
+      status: rawStatus,
+      trackingMessage,
+      updatedAt,
+      receivedAt,
+    };
+    const currentUpdatedAt = (order as any).courierStatus?.updatedAt;
+    const incomingTimestamp = Date.parse(updatedAt.replace(' ', 'T'));
+    const currentTimestamp = currentUpdatedAt
+      ? Date.parse(String(currentUpdatedAt).replace(' ', 'T'))
+      : NaN;
+    const isCurrentEvent =
+      !currentUpdatedAt ||
+      (Number.isFinite(incomingTimestamp) && Number.isFinite(currentTimestamp)
+        ? incomingTimestamp >= currentTimestamp
+        : updatedAt >= currentUpdatedAt);
+    const update: any = {
+      $push: {
+        courierStatusHistory: {
+          $each: [historyEvent],
+          $slice: -20,
+        },
+      },
+    };
+
+    if (isCurrentEvent) {
+      const currentStatus = (order as any).courierStatus?.status;
+      update.$set = {
+        'courierStatus.status': rawStatus || currentStatus || 'in_review',
+        'courierStatus.notificationType': notificationType,
+        'courierStatus.trackingMessage':
+          trackingMessage ||
+          (order as any).courierStatus?.trackingMessage ||
+          '',
+        'courierStatus.updatedAt': updatedAt,
+        'courierStatus.receivedAt': receivedAt,
+      };
+      if (typeof payload.cod_amount === 'number') {
+        update.$set['courierStatus.codAmount'] = payload.cod_amount;
+      }
+      if (typeof payload.delivery_charge === 'number') {
+        update.$set['courierStatus.deliveryCharge'] = payload.delivery_charge;
+      }
+    }
+
+    await this.orderModel.updateOne(
+      {
+        _id: order._id,
+        'courierStatusHistory.eventKey': { $ne: eventKey },
+      },
+      update,
+    );
   }
 
   /**
@@ -2334,6 +2521,16 @@ export class OrderService {
             await this.orderModel.findByIdAndUpdate(id, {
               $set: {
                 courierData: orderCourierData,
+                courierStatus: {
+                  status:
+                    courierResponse?.consignment?.status || 'in_review',
+                  notificationType: 'order_created',
+                  trackingMessage: 'Order is waiting for courier review.',
+                  updatedAt:
+                    courierResponse?.consignment?.updated_at ||
+                    new Date().toISOString(),
+                  receivedAt: new Date(),
+                },
               },
             });
           }
@@ -2514,6 +2711,16 @@ export class OrderService {
               await this.orderModel.findByIdAndUpdate(id, {
                 $set: {
                   courierData: orderCourierData,
+                  courierStatus: {
+                    status:
+                      courierResponse?.consignment?.status || 'in_review',
+                    notificationType: 'order_created',
+                    trackingMessage: 'Order is waiting for courier review.',
+                    updatedAt:
+                      courierResponse?.consignment?.updated_at ||
+                      new Date().toISOString(),
+                    receivedAt: new Date(),
+                  },
                 },
               });
             }
@@ -3459,7 +3666,7 @@ export class OrderService {
       return;
     }
 
-    const courierMethodArray: { courier: any }[] = [];
+    let courierMethods: any[] = [];
 
     // Step 1: Prepare courier methods per shop
     try {
@@ -3467,14 +3674,9 @@ export class OrderService {
         .findOne()
         .select('courierMethods -_id');
 
-      const fCourierMethods = fSetting?.courierMethods ?? [];
-      const activeCourier = fCourierMethods.find(
-        (c: any) => c.status === 'active',
+      courierMethods = (fSetting?.courierMethods ?? []).filter(
+        (courier: any) => courier.status === 'active',
       );
-
-      if (activeCourier) {
-        courierMethodArray.push({ courier: activeCourier });
-      }
     } catch (err) {
       console.error(`Failed to fetch courier setting`, err);
     }
@@ -3485,13 +3687,16 @@ export class OrderService {
       const batch = orders.slice(i, i + BATCH_SIZE);
 
       const batchPromises = batch.map(async (order) => {
-        const matchedCourier: any = courierMethodArray;
+        const matchedCourier = courierMethods.find(
+          (courier: any) =>
+            courier.providerName === order.courierData?.providerName,
+        );
 
         if (matchedCourier) {
           try {
             await this.getAndUpdateOrderStatusFromCourier(
               order,
-              matchedCourier.courier,
+              matchedCourier,
             );
           } catch (err) {
             console.error(
@@ -3539,18 +3744,19 @@ export class OrderService {
       switch (courierResponse && courierMethod?.providerName) {
         case 'Steadfast Courier':
           if (courierResponse.status === 200) {
-            switch (courierResponse.delivery_status) {
-              case 'delivered':
-                orderStatus = 'delivered';
-                break;
-              case 'cancelled':
-                orderStatus = 'cancelled';
-                break;
-            }
-
+            const receivedAt = new Date();
             await this.orderModel.findByIdAndUpdate(order.id, {
               $set: {
-                orderStatus: orderStatus,
+                courierStatus: {
+                  status: String(
+                    courierResponse.delivery_status || 'unknown',
+                  ).toLowerCase(),
+                  notificationType: 'status_poll',
+                  trackingMessage:
+                    order.courierStatus?.trackingMessage || '',
+                  updatedAt: receivedAt.toISOString(),
+                  receivedAt,
+                },
               },
             });
           }

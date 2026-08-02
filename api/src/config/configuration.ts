@@ -68,4 +68,5 @@ export default () => ({
   // FraudSpy API
   fraudspyApiKey: process.env.FRAUDSPY_API_KEY || 'fs_live_4b3b_7dc0067d-8ed2-4322-915e-37b419008ae9_110e494edd31cc0f',
   greenwebsmsToken: process.env.GREENWEBSMS_TOKEN,
+  steadfastWebhookToken: process.env.STEADFAST_WEBHOOK_TOKEN,
 });

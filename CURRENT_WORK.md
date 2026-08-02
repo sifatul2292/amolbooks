@@ -23,6 +23,13 @@ Nothing active.
 
 ## Completed this session
 
+- Steadfast courier-status webhook and order-list column:
+  - Added a bearer-authenticated Steadfast webhook endpoint that matches orders by consignment ID with invoice/order ID fallback, stores delivery/tracking updates and a capped event history, ignores duplicate deliveries, and prevents older events from replacing newer state.
+  - Added a separate Courier Status column to the custom order list without changing Amolbooks order status, payment status, stock, or notifications.
+  - Mapped all documented Steadfast delivery states, including in-review, hold, partial delivery, and approval-pending variants; tracking messages appear on badge hover and exports now include the raw courier status.
+  - New Steadfast consignments immediately start as In Review. Corrected the existing six-hour fallback poll to match the configured courier properly and update only courier status, allowing recent pre-webhook orders to backfill.
+  - Requires `STEADFAST_WEBHOOK_TOKEN` in production and the callback URL/token to be entered in the Steadfast panel.
+
 - Checkout order-summary simplification:
   - The initial GTM-only delivery did not activate after a VPS pull because repository files do not publish a GTM container; moved the behavior into the existing API-injected storefront price script so the normal VPS build/restart deploys it automatically.
   - The enhancement removes the displayed list-price subtotal and discount rows from both mobile and desktop summaries.

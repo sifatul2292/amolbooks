@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
+  HttpCode,
   Logger,
   Param,
   Post,
@@ -49,6 +51,19 @@ export class OrderController {
   private logger = new Logger(OrderController.name);
 
   constructor(private orderService: OrderService) {}
+
+  @Post('/courier-webhook/steadfast')
+  @HttpCode(200)
+  async receiveSteadfastWebhook(
+    @Headers('authorization') authorization: string,
+    @Body() body: any,
+  ): Promise<{ status: string; message: string }> {
+    await this.orderService.receiveSteadfastWebhook(authorization, body);
+    return {
+      status: 'success',
+      message: 'Webhook received successfully.',
+    };
+  }
 
   /**
    * addOrder

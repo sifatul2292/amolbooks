@@ -411,6 +411,18 @@
     .courier-name { font-weight: 700; color: #334155; }
     .tracking-link { color: var(--blue); text-decoration: none; font-weight: 600; }
     .tracking-link:hover { text-decoration: underline; }
+    .courier-status-badge {
+      display: inline-flex; align-items: center; border-radius: 999px;
+      padding: 4px 9px; font-size: 10.5px; font-weight: 800;
+      white-space: nowrap; line-height: 1.3;
+    }
+    .courier-status-delivered { background: #d1fae5; color: #065f46; }
+    .courier-status-pending { background: #fef3c7; color: #92400e; }
+    .courier-status-review { background: #ede9fe; color: #5b21b6; }
+    .courier-status-partial { background: #ffedd5; color: #9a3412; }
+    .courier-status-cancelled { background: #fee2e2; color: #991b1b; }
+    .courier-status-hold { background: #cffafe; color: #0e7490; }
+    .courier-status-unknown { background: #f1f5f9; color: #475569; }
     .btn-courier {
       background: #0891b2; color: #fff; border: none; border-radius: 7px;
       padding: 5px 11px; font-size: 11px; font-weight: 700; cursor: pointer;
@@ -1465,6 +1477,7 @@
                 <th>Date &amp; Time</th>
                 <th>Amount</th>
                 <th>Courier</th>
+                <th>Courier Status</th>
                 <th>Fraud</th>
                 <th>View</th>
                 <th>Pay Type</th>
@@ -1478,7 +1491,7 @@
             </thead>
             <tbody id="ordersBody">
               <tr class="loading-row">
-                <td colspan="17"><div class="spinner"></div><div>Loading orders…</div></td>
+                <td colspan="18"><div class="spinner"></div><div>Loading orders…</div></td>
               </tr>
             </tbody>
           </table>
@@ -2118,7 +2131,7 @@
       select: {
         orderId:1, name:1, phoneNo:1, grandTotal:1, subTotal:1, deliveryCharge:1,
         discount:1, orderStatus:1, paymentStatus:1, paymentType:1,
-        createdAt:1, checkoutDate:1, shippingAddress:1, courierData:1,
+        createdAt:1, checkoutDate:1, shippingAddress:1, courierData:1, courierStatus:1,
         courierLink:1, fraudChecker:1, admin:1, user:1, deliveryDate:1, orderedItems:1,
         note:1, adminNote:1, city:1, status:1, email:1,
       },
@@ -2165,7 +2178,7 @@
     .catch(function(err){
       if (err.message === 'Unauthorized') return;
       document.getElementById('ordersBody').innerHTML =
-        '<tr class="empty-row"><td colspan="17"><i class="fas fa-exclamation-triangle" style="color:#ef4444;font-size:22px;display:block;margin-bottom:10px"></i>Failed to load orders<br><small style="color:#94a3b8">' + err.message + '</small></td></tr>';
+        '<tr class="empty-row"><td colspan="18"><i class="fas fa-exclamation-triangle" style="color:#ef4444;font-size:22px;display:block;margin-bottom:10px"></i>Failed to load orders<br><small style="color:#94a3b8">' + err.message + '</small></td></tr>';
       ['totalOrders','totalAmount'].forEach(function(id){ document.getElementById(id).textContent = '—'; });
       document.getElementById('paginationInfo').textContent = '';
     });
@@ -2175,7 +2188,7 @@
     var rows = '';
     for (var i = 0; i < 8; i++) {
       rows += '<tr class="skeleton-row">';
-      for (var j = 0; j < 17; j++) rows += '<td><div class="skel" style="width:' + (55 + Math.random()*35|0) + '%"></div></td>';
+      for (var j = 0; j < 18; j++) rows += '<td><div class="skel" style="width:' + (55 + Math.random()*35|0) + '%"></div></td>';
       rows += '</tr>';
     }
     document.getElementById('ordersBody').innerHTML = rows;
@@ -2608,6 +2621,36 @@
     return html+'</div>';
   }
 
+  function courierStatusCell(o) {
+    if (isIncompleteView || !o.courierData || !o.courierData.providerName) {
+      return '<span style="color:#94a3b8;font-size:11px">—</span>';
+    }
+    var raw = o.courierStatus && o.courierStatus.status
+      ? String(o.courierStatus.status).toLowerCase()
+      : '';
+    var statuses = {
+      pending: ['Pending', 'pending'],
+      in_review: ['In Review', 'review'],
+      delivered_approval_pending: ['Delivery Approval Pending', 'review'],
+      partial_delivered_approval_pending: ['Partial Approval Pending', 'review'],
+      cancelled_approval_pending: ['Cancellation Pending', 'review'],
+      unknown_approval_pending: ['Review Required', 'review'],
+      delivered: ['Delivered', 'delivered'],
+      partial_delivered: ['Partial Delivered', 'partial'],
+      cancelled: ['Cancelled', 'cancelled'],
+      hold: ['On Hold', 'hold'],
+      unknown: ['Unknown', 'unknown'],
+    };
+    var mapped = statuses[raw] || (raw
+      ? [raw.replace(/_/g, ' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); }), 'unknown']
+      : ['Awaiting Update', 'unknown']);
+    var message = o.courierStatus && o.courierStatus.trackingMessage
+      ? o.courierStatus.trackingMessage
+      : '';
+    return '<span class="courier-status-badge courier-status-'+mapped[1]+'"'+
+      (message ? ' title="'+esc(message)+'"' : '')+'>'+esc(mapped[0])+'</span>';
+  }
+
   /* ── Render Table ── */
   function incompleteActions(o) {
     var view = '<button class="btn-action btn-view" onclick="openProducts(\''+o._id+'\')" title="View abandoned order"><i class="fas fa-eye"></i> View</button>';
@@ -2638,7 +2681,7 @@
   function renderTable(orders, total) {
     var tbody=document.getElementById('ordersBody');
     if (!orders.length) {
-      tbody.innerHTML='<tr class="empty-row"><td colspan="17"><i class="fas fa-inbox" style="font-size:32px;color:#cbd5e1;display:block;margin-bottom:10px"></i>No orders found</td></tr>';
+      tbody.innerHTML='<tr class="empty-row"><td colspan="18"><i class="fas fa-inbox" style="font-size:32px;color:#cbd5e1;display:block;margin-bottom:10px"></i>No orders found</td></tr>';
       return;
     }
     var offset=state.page*state.pageSize;
@@ -2673,6 +2716,7 @@
           '<td>'+fmtDate(o.createdAt||o.checkoutDate)+'</td>',
           '<td><strong style="color:var(--p);font-size:13.5px">৳'+Number(o.grandTotal||0).toLocaleString()+'</strong></td>',
           '<td>'+incompleteCourierCell(o)+'</td>',
+          '<td>'+courierStatusCell(o)+'</td>',
           '<td>'+fraudCell(o.fraudChecker,o._id,o.phoneNo||'')+'</td>',
           '<td>'+incompleteActions(o)+'</td>',
           '<td>'+payTypeBadge(o.paymentType)+'</td>',
@@ -2697,6 +2741,7 @@
         '<td>'+fmtDate(o.createdAt||o.checkoutDate)+'</td>',
         '<td><strong style="color:var(--p);font-size:13.5px">৳'+Number(o.grandTotal||0).toLocaleString()+'</strong></td>',
         '<td>'+courierCell+'</td>',
+        '<td>'+courierStatusCell(o)+'</td>',
         '<td>'+fraudCell(o.fraudChecker,o._id,o.phoneNo||'')+'</td>',
         '<td><button class="btn-action btn-view" onclick="openProducts(\''+o._id+'\')" title="'+itemCount+' item(s)"><i class="fas fa-eye"></i> View'+(itemCount?' ('+itemCount+')':'')+'</button></td>',
         '<td>'+payTypeBadge(o.paymentType)+'</td>',
@@ -2877,13 +2922,14 @@
   /* ── Export CSV ── */
   window.exportToCSV = function () {
     if (!allOrders.length) { showToast('No orders to export.','error'); return; }
-    var headers=['SL','Order No','Phone','Name','Date','Payment Type','Payment Status','Order Status','Grand Total','Shipping Address'];
+    var headers=['SL','Order No','Phone','Name','Date','Payment Type','Payment Status','Order Status','Courier Status','Grand Total','Shipping Address'];
     var rows=allOrders.map(function(o,i){
       return [
         i+1, o.orderId||'', o.phoneNo||'', o.name||'',
         o.createdAt?new Date(o.createdAt).toLocaleString():'',
         o.paymentType||'', o.paymentStatus||'',
         isIncompleteView ? (o.status || 'incomplete') : (STATUS_NAMES[o.orderStatus]||o.orderStatus),
+        isIncompleteView ? '' : ((o.courierStatus&&o.courierStatus.status)||''),
         o.grandTotal||0,
         '"'+(o.shippingAddress||'').replace(/"/g,'""')+'"',
       ].join(',');

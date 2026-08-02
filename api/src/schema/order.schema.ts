@@ -185,6 +185,26 @@ export const OrderSchema = new mongoose.Schema(
         capturedAt: { type: Date, required: false },
       },
     },
+    courierStatus: {
+      status: { type: String, required: false },
+      notificationType: { type: String, required: false },
+      trackingMessage: { type: String, required: false },
+      codAmount: { type: Number, required: false },
+      deliveryCharge: { type: Number, required: false },
+      updatedAt: { type: String, required: false },
+      receivedAt: { type: Date, required: false },
+    },
+    courierStatusHistory: [
+      {
+        _id: false,
+        eventKey: { type: String, required: true },
+        notificationType: { type: String, required: true },
+        status: { type: String, required: false },
+        trackingMessage: { type: String, required: false },
+        updatedAt: { type: String, required: false },
+        receivedAt: { type: Date, required: true },
+      },
+    ],
     paymentStatus: {
       type: String,
       required: true,
