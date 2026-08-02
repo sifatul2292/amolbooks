@@ -961,43 +961,81 @@ export class OrderService {
       .limit(50)
       .select('orderId courierData courierStatus');
     const remainingSlots = Math.max(0, 50 - inReviewOrders.length);
-    let pendingChargeOrders: any[] = [];
+    let missingChargeOrders: any[] = [];
     if (remainingSlots > 0) {
       const retryChargeBefore = new Date(Date.now() - 6 * 60 * 60 * 1000);
-      pendingChargeOrders = await this.orderModel
-        .find({
-          'courierData.providerName': 'Steadfast Courier',
-          'courierData.consignmentId': { $exists: true, $nin: [null, ''] },
-          'courierStatus.status': 'pending',
-          $and: [
-            {
-              $or: [
-                { 'courierStatus.deliveryCharge': { $exists: false } },
-                { 'courierStatus.deliveryCharge': null },
-              ],
+      const findMissingChargeOrders = async (
+        statuses: string[],
+        limit: number,
+        excludedIds: any[],
+      ): Promise<any[]> => {
+        if (limit <= 0) return [];
+        return await this.orderModel
+          .find({
+            'courierData.providerName': 'Steadfast Courier',
+            'courierData.consignmentId': {
+              $exists: true,
+              $nin: [null, ''],
             },
-            {
-              $or: [
-                {
-                  'courierStatus.chargeLookupAttemptedAt': {
-                    $exists: false,
+            'courierStatus.status': { $in: statuses },
+            $and: [
+              {
+                $or: [
+                  { 'courierStatus.deliveryCharge': { $exists: false } },
+                  { 'courierStatus.deliveryCharge': null },
+                ],
+              },
+              {
+                $or: [
+                  {
+                    'courierStatus.chargeLookupAttemptedAt': {
+                      $exists: false,
+                    },
                   },
-                },
-                {
-                  'courierStatus.chargeLookupAttemptedAt': {
-                    $lt: retryChargeBefore,
+                  {
+                    'courierStatus.chargeLookupAttemptedAt': {
+                      $lt: retryChargeBefore,
+                    },
                   },
-                },
-              ],
-            },
+                ],
+              },
+            ],
+            _id: { $nin: excludedIds },
+          })
+          .sort({ 'courierStatus.chargeLookupAttemptedAt': 1, createdAt: -1 })
+          .limit(limit)
+          .select('orderId courierData courierStatus');
+      };
+      const excludedIds = inReviewOrders.map((order) => order._id);
+      const deliveredChargeOrders = await findMissingChargeOrders(
+        [
+          'delivered',
+          'partial_delivered',
+          'delivered_approval_pending',
+          'partial_delivered_approval_pending',
+        ],
+        remainingSlots,
+        excludedIds,
+      );
+      missingChargeOrders.push(...deliveredChargeOrders);
+      const otherSlots = remainingSlots - deliveredChargeOrders.length;
+      if (otherSlots > 0) {
+        const otherChargeOrders = await findMissingChargeOrders(
+          [
+            'pending',
+            'hold',
+            'cancelled',
+            'cancelled_approval_pending',
+            'unknown',
+            'unknown_approval_pending',
           ],
-          _id: { $nin: inReviewOrders.map((order) => order._id) },
-        })
-        .sort({ 'courierStatus.chargeLookupAttemptedAt': 1, createdAt: 1 })
-        .limit(remainingSlots)
-        .select('orderId courierData courierStatus');
+          otherSlots,
+          [...excludedIds, ...deliveredChargeOrders.map((order) => order._id)],
+        );
+        missingChargeOrders.push(...otherChargeOrders);
+      }
     }
-    const orders = [...inReviewOrders, ...pendingChargeOrders];
+    const orders = [...inReviewOrders, ...missingChargeOrders];
     const courierApiConfig: CourierApiConfig = {
       providerName: courierMethod.providerName,
       apiKey: courierMethod.apiKey,
