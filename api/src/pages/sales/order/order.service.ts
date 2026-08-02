@@ -89,6 +89,8 @@ export class OrderService {
   private steadfastInReviewSyncRunning = false;
   private steadfastInReviewSyncCompletedAt = 0;
   private steadfastInReviewSyncResult: ResponsePayload | null = null;
+  private steadfastMissingChargeSyncRunning = false;
+  private steadfastMissingChargeSyncCompletedAt = 0;
 
   constructor(
     @InjectModel('Admin') private readonly adminModel: Model<Admin>,
@@ -960,82 +962,7 @@ export class OrderService {
       .sort({ 'courierStatus.lastSyncedAt': 1, createdAt: 1 })
       .limit(50)
       .select('orderId courierData courierStatus');
-    const remainingSlots = Math.max(0, 50 - inReviewOrders.length);
-    let missingChargeOrders: any[] = [];
-    if (remainingSlots > 0) {
-      const retryChargeBefore = new Date(Date.now() - 6 * 60 * 60 * 1000);
-      const findMissingChargeOrders = async (
-        statuses: string[],
-        limit: number,
-        excludedIds: any[],
-      ): Promise<any[]> => {
-        if (limit <= 0) return [];
-        return await this.orderModel
-          .find({
-            'courierData.providerName': 'Steadfast Courier',
-            'courierData.consignmentId': {
-              $exists: true,
-              $nin: [null, ''],
-            },
-            'courierStatus.status': { $in: statuses },
-            $and: [
-              {
-                $or: [
-                  { 'courierStatus.deliveryCharge': { $exists: false } },
-                  { 'courierStatus.deliveryCharge': null },
-                ],
-              },
-              {
-                $or: [
-                  {
-                    'courierStatus.chargeLookupAttemptedAt': {
-                      $exists: false,
-                    },
-                  },
-                  {
-                    'courierStatus.chargeLookupAttemptedAt': {
-                      $lt: retryChargeBefore,
-                    },
-                  },
-                ],
-              },
-            ],
-            _id: { $nin: excludedIds },
-          })
-          .sort({ 'courierStatus.chargeLookupAttemptedAt': 1, createdAt: -1 })
-          .limit(limit)
-          .select('orderId courierData courierStatus');
-      };
-      const excludedIds = inReviewOrders.map((order) => order._id);
-      const deliveredChargeOrders = await findMissingChargeOrders(
-        [
-          'delivered',
-          'partial_delivered',
-          'delivered_approval_pending',
-          'partial_delivered_approval_pending',
-        ],
-        remainingSlots,
-        excludedIds,
-      );
-      missingChargeOrders.push(...deliveredChargeOrders);
-      const otherSlots = remainingSlots - deliveredChargeOrders.length;
-      if (otherSlots > 0) {
-        const otherChargeOrders = await findMissingChargeOrders(
-          [
-            'pending',
-            'hold',
-            'cancelled',
-            'cancelled_approval_pending',
-            'unknown',
-            'unknown_approval_pending',
-          ],
-          otherSlots,
-          [...excludedIds, ...deliveredChargeOrders.map((order) => order._id)],
-        );
-        missingChargeOrders.push(...otherChargeOrders);
-      }
-    }
-    const orders = [...inReviewOrders, ...missingChargeOrders];
+    const orders = inReviewOrders;
     const courierApiConfig: CourierApiConfig = {
       providerName: courierMethod.providerName,
       apiKey: courierMethod.apiKey,
@@ -1057,9 +984,10 @@ export class OrderService {
       error?: string;
     }> = [];
 
-    // Five concurrent lookups keep the live queue responsive without flooding Steadfast.
-    for (let index = 0; index < orders.length; index += 5) {
-      const chunk = orders.slice(index, index + 5);
+    // Eight concurrent requests keep the visible queue responsive while staying
+    // far below the legacy scheduler's 100-request batches.
+    for (let index = 0; index < orders.length; index += 8) {
+      const chunk = orders.slice(index, index + 8);
       const chunkResults = await Promise.all(
         chunk.map(async (order: any) => {
           const syncedAt = new Date();
@@ -1182,6 +1110,11 @@ export class OrderService {
     }
 
     const currentCount = await this.orderModel.countDocuments(inReviewQuery);
+    void this.syncSteadfastMissingCharges().catch((error) => {
+      this.logger.warn(
+        `Steadfast missing-charge background batch failed: ${error?.message || error}`,
+      );
+    });
     const moved = results.filter((result) => result.moved);
     const chargesUpdated = results.filter(
       (result) => result.chargeUpdated,
@@ -1200,6 +1133,163 @@ export class OrderService {
         failures: failed.slice(0, 10),
       },
     } as ResponsePayload;
+  }
+
+  private async syncSteadfastMissingCharges(): Promise<void> {
+    if (
+      this.steadfastMissingChargeSyncRunning ||
+      Date.now() - this.steadfastMissingChargeSyncCompletedAt < 5 * 60 * 1000
+    ) {
+      return;
+    }
+    this.steadfastMissingChargeSyncRunning = true;
+    try {
+      const setting = await this.settingModel
+        .findOne()
+        .select('courierMethods -_id');
+      const courierMethod = (setting?.courierMethods || []).find(
+        (courier: any) =>
+          courier.status === 'active' &&
+          courier.providerName === 'Steadfast Courier',
+      );
+      if (!courierMethod?.apiKey || !courierMethod?.secretKey) return;
+
+      const retryChargeBefore = new Date(Date.now() - 6 * 60 * 60 * 1000);
+      const findMissingChargeOrders = async (
+        statuses: string[],
+        limit: number,
+        excludedIds: any[] = [],
+      ): Promise<any[]> =>
+        this.orderModel
+          .find({
+            'courierData.providerName': 'Steadfast Courier',
+            'courierData.consignmentId': {
+              $exists: true,
+              $nin: [null, ''],
+            },
+            'courierStatus.status': { $in: statuses },
+            $and: [
+              {
+                $or: [
+                  { 'courierStatus.deliveryCharge': { $exists: false } },
+                  { 'courierStatus.deliveryCharge': null },
+                ],
+              },
+              {
+                $or: [
+                  {
+                    'courierStatus.chargeLookupAttemptedAt': {
+                      $exists: false,
+                    },
+                  },
+                  {
+                    'courierStatus.chargeLookupAttemptedAt': {
+                      $lt: retryChargeBefore,
+                    },
+                  },
+                ],
+              },
+            ],
+            _id: { $nin: excludedIds },
+          })
+          .sort({ 'courierStatus.chargeLookupAttemptedAt': 1, createdAt: -1 })
+          .limit(limit)
+          .select('orderId courierData courierStatus');
+
+      // Prioritize completed deliveries, then use remaining capacity for active
+      // consignments. This batch is deliberately independent of the visible queue.
+      const deliveredOrders = await findMissingChargeOrders(
+        [
+          'delivered',
+          'partial_delivered',
+          'delivered_approval_pending',
+          'partial_delivered_approval_pending',
+        ],
+        20,
+      );
+      const otherOrders = await findMissingChargeOrders(
+        [
+          'pending',
+          'hold',
+          'cancelled',
+          'cancelled_approval_pending',
+          'unknown',
+          'unknown_approval_pending',
+        ],
+        20 - deliveredOrders.length,
+        deliveredOrders.map((order) => order._id),
+      );
+      const orders = [...deliveredOrders, ...otherOrders];
+      const courierApiConfig: CourierApiConfig = {
+        providerName: courierMethod.providerName,
+        apiKey: courierMethod.apiKey,
+        secretKey: courierMethod.secretKey,
+        merchantCode: courierMethod.merchantCode,
+        pickMerchantThana: courierMethod.thana,
+        pickMerchantDistrict: courierMethod.district,
+        pickMerchantAddress: courierMethod.address,
+        pickMerchantName: courierMethod.merchant_name,
+        pickupMerchantPhone: courierMethod.contact_number,
+      };
+
+      for (let index = 0; index < orders.length; index += 5) {
+        await Promise.all(
+          orders.slice(index, index + 5).map(async (order: any) => {
+            const attemptedAt = new Date();
+            try {
+              const response =
+                await this.courierService.getOrderStatusFormCourier(
+                  courierApiConfig,
+                  order.courierData.consignmentId,
+                  order.orderId,
+                );
+              if (response?.status !== 200) {
+                throw new Error(
+                  response?.details ||
+                    response?.message ||
+                    'Steadfast status lookup failed.',
+                );
+              }
+              const deliveryCharge = this.getSteadfastDeliveryCharge(response);
+              await this.orderModel.updateOne(
+                { _id: order._id },
+                deliveryCharge === undefined
+                  ? {
+                      $set: {
+                        'courierStatus.chargeLookupAttemptedAt': attemptedAt,
+                        'courierStatus.chargeLookupError':
+                          'Steadfast status response did not include delivery charge.',
+                      },
+                    }
+                  : {
+                      $set: {
+                        'courierStatus.deliveryCharge': deliveryCharge,
+                        'courierStatus.chargeLookupAttemptedAt': attemptedAt,
+                      },
+                      $unset: { 'courierStatus.chargeLookupError': 1 },
+                    },
+              );
+            } catch (error) {
+              const message = String(
+                error?.message || 'Steadfast charge lookup failed.',
+              ).slice(0, 300);
+              await this.orderModel.updateOne(
+                { _id: order._id },
+                {
+                  $set: {
+                    'courierStatus.chargeLookupAttemptedAt': attemptedAt,
+                    'courierStatus.chargeLookupError': message,
+                  },
+                },
+              );
+            }
+          }),
+        );
+      }
+    } finally {
+      this.steadfastMissingChargeSyncRunning = false;
+      this.steadfastMissingChargeSyncCompletedAt = Date.now();
+    }
   }
 
   private async runSteadfastStatusBackfillBatch(body: {

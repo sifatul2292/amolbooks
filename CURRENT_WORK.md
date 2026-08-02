@@ -34,8 +34,9 @@ Nothing active.
 - Steadfast missing-charge recovery:
   - Fixed the scheduled courier status poll so it updates nested courier-status fields instead of replacing the whole object and erasing an already-saved delivery charge.
   - Normalized Steadfast charge values from numeric strings and both `delivery_charge`/`delivery_fee` response variants across webhooks, status reconciliation, historical backfill, scheduled polling, and order creation responses.
-  - The guarded live sync now uses capacity left after In Review reconciliation to prioritize delivered/partially delivered consignments missing a charge, then checks pending, held, and cancelled consignments. It retries each missing charge at most once per six hours and saves only an actual amount returned by Steadfast—never an estimated tariff.
+  - A separate guarded background batch prioritizes delivered/partially delivered consignments missing a charge, then checks pending, held, and cancelled consignments. It retries each missing charge at most once per six hours and saves only an actual amount returned by Steadfast—never an estimated tariff.
   - Admin page initialization starts the guarded reconciliation automatically; the queue banner reports charges added, while failed or charge-less lookups retain Awaiting Charge with a diagnostic tooltip.
+  - Separated missing-charge recovery from the visible In Review refresh after it made the tab wait for up to 50 courier lookups. The In Review response now processes only its own queue at a bounded concurrency of eight, then charge recovery continues independently at five concurrent requests; the browser also falls back to saved statuses after 35 seconds rather than leaving the queue spinner stuck.
 
 - Live Steadfast In Review reconciliation:
   - Fixed the admin/Steadfast queue-count mismatch caused by stale saved `in_review` values: opening the tab now checks the current courier status server-side and repeats every 60 seconds while the tab is visible and no rows are selected.

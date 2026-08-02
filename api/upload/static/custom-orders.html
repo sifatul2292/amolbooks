@@ -2482,8 +2482,10 @@
     if (!canRunCourierBackfill()) return Promise.resolve({ skipped: true });
 
     setInReviewSyncText('<i class="fas fa-circle-notch fa-spin"></i> Checking current statuses with Steadfast…');
+    var syncController = window.AbortController ? new AbortController() : null;
+    var syncTimeout = syncController ? setTimeout(function(){ syncController.abort(); }, 35000) : null;
     courierInReviewSyncPromise = fetch(API + '/api/order/sync-steadfast-in-review', {
-      method: 'POST', headers: authHeaders(), body: '{}',
+      method: 'POST', headers: authHeaders(), body: '{}', signal: syncController ? syncController.signal : undefined,
     })
     .then(function(r){
       if (r.status === 401 || r.status === 403) throw new Error('Admin permission required.');
@@ -2508,10 +2510,16 @@
       return data;
     })
     .catch(function(err){
-      setInReviewSyncText('<i class="fas fa-triangle-exclamation"></i> Showing saved statuses · '+escapeHtml(err.message));
-      return { syncError: err.message };
+      var message = err && err.name === 'AbortError'
+        ? 'Steadfast check timed out; showing saved statuses.'
+        : (err && err.message) || 'Courier sync failed.';
+      setInReviewSyncText('<i class="fas fa-triangle-exclamation"></i> Showing saved statuses · '+escapeHtml(message));
+      return { syncError: message };
     })
-    .finally(function(){ courierInReviewSyncPromise = null; });
+    .finally(function(){
+      if (syncTimeout) clearTimeout(syncTimeout);
+      courierInReviewSyncPromise = null;
+    });
     return courierInReviewSyncPromise;
   }
 
