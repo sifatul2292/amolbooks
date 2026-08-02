@@ -312,6 +312,7 @@
         <div class="topbar-actions">
           <span class="status-pill" id="qualityPill"><i class="fas fa-shield-halved"></i><span class="quality-text">Data quality</span> <strong id="qualityPillValue">—</strong></span>
           <button class="button" id="syncBtn" type="button" onclick="syncSpend()" hidden><i class="fas fa-rotate" id="syncIcon"></i><span>Sync</span></button>
+          <button class="button" id="adAccountBtn" type="button" onclick="handleAdAccountClick()" hidden title="Change which Meta ad account spend is pulled from"><i class="fas fa-bullseye"></i><span>Ad account</span></button>
           <button class="button" id="metaBtn" type="button" onclick="handleMetaClick()"><i class="fab fa-meta"></i><span id="metaBtnText">Connect Meta</span></button>
           <button class="button primary" type="button" onclick="openDrawer('manual')"><i class="fas fa-plus"></i>Enter data</button>
         </div>
@@ -643,7 +644,22 @@
   function loadManualSalesList() { if (!rangeStart) return; request('/api/dashboard/manual-sales?startDate=' + encodeURIComponent(rangeStart) + '&endDate=' + encodeURIComponent(rangeEnd)).then(function (payload) { var rows = (payload.data || []).slice(0, 10); document.getElementById('manualSalesList').innerHTML = rows.length ? rows.map(function (row) { return '<div class="recent-row"><span>' + esc(row.date) + '</span><span>' + esc(row.source) + '</span><span>' + esc(row.outcome || 'active') + '</span><strong>৳' + fmt(row.revenue) + '</strong><button type="button" aria-label="Delete phone sale" onclick="deleteManualSale(\'' + esc(row._id) + '\')"><i class="fas fa-trash"></i></button></div>'; }).join('') : ''; }).catch(function () {}); }
   window.deleteManualSale = function (id) { request('/api/dashboard/manual-sales/' + encodeURIComponent(id), { method: 'DELETE' }).then(function () { loadManualSalesList(); loadDashboard(); }).catch(function (error) { setStatus('manualStatus', error.message, 'error'); }); };
 
-  function checkMetaStatus() { request('/api/meta-ads/status').then(function (payload) { metaConnected = !!payload.connected; document.getElementById('metaBtnText').textContent = metaConnected ? 'Meta connected' : 'Connect Meta'; document.getElementById('metaBtn').classList.toggle('success', metaConnected); document.getElementById('syncBtn').hidden = !metaConnected; }).catch(function () {}); }
+  var metaAdAccountId = null;
+  function checkMetaStatus() { request('/api/meta-ads/status').then(function (payload) { metaConnected = !!payload.connected; metaAdAccountId = payload.adAccountId || null; document.getElementById('metaBtnText').textContent = metaConnected ? 'Meta connected' : 'Connect Meta'; document.getElementById('metaBtn').classList.toggle('success', metaConnected); document.getElementById('syncBtn').hidden = !metaConnected; document.getElementById('adAccountBtn').hidden = !metaConnected; }).catch(function () {}); }
+  window.handleAdAccountClick = function () {
+    var current = metaAdAccountId || '';
+    var input = window.prompt('Meta ad account ID to pull spend from (with or without the act_ prefix):', current);
+    if (input === null) return;
+    var trimmed = input.trim();
+    if (!trimmed) return;
+    request('/api/meta-ads/set-account', { method: 'POST', body: JSON.stringify({ adAccountId: trimmed }) })
+      .then(function (payload) {
+        if (payload && payload.success === false) throw new Error(payload.message || 'Could not set ad account.');
+        metaAdAccountId = payload.adAccountId || trimmed;
+        return syncSpend();
+      })
+      .catch(function (error) { showError(error.message); });
+  };
   window.handleMetaClick = function () { if (metaConnected) { if (!confirm('Disconnect Meta Ads?')) return; request('/api/meta-ads/disconnect', { method: 'POST', body: '{}' }).then(function () { metaConnected = false; checkMetaStatus(); loadDashboard(); }); return; } request('/api/meta-ads/auth-url').then(function (payload) { if (payload.url) window.location.href = payload.url; else throw new Error(payload.message || 'Meta is not configured.'); }).catch(function (error) { showError(error.message); }); };
   window.syncSpend = function () { var button = document.getElementById('syncBtn'); button.classList.add('loading'); button.disabled = true; document.getElementById('syncIcon').className = 'fas fa-rotate'; request('/api/meta-ads/sync', { method: 'POST', body: JSON.stringify({ startDate: rangeStart, endDate: rangeEnd }) }).then(function (payload) { if (payload.error) throw new Error(payload.error); loadDashboard(); }).catch(function (error) { showError(error.message); }).finally(function () { button.classList.remove('loading'); button.disabled = false; }); };
 

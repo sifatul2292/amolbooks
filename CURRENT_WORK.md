@@ -6,7 +6,8 @@ _Last updated: 2026-08-02. Branch: `main`. Meta OAuth zlib fix pushed; Steadfast
 
 ## Recently completed (git log, newest first)
 
-- Meta OAuth callback zlib fix (pending commit — see below)
+- Ad-account picker for Meta spend sync (pending commit — see below)
+- `add8d737` Fix Meta OAuth callback swallowing errors behind zlib crash
 - `33dd40b0` Recover missed webhook transitions into Steadfast In Review
 - `0b3e31b5` Checkout gift widget: margin tweaks + copy updates
 - `b8796620` Checkout gift row: revert to display-only, fix alignment
@@ -21,12 +22,34 @@ display-only, then margin/copy polish.
 
 ## In progress
 
-Nothing active. Awaiting VPS deploy of the Meta OAuth fix and a retried Connect Meta
-(confirm the real Meta error, if any, now surfaces instead of "unexpected end of
-file"). Also awaiting VPS deploy of `33dd40b0` and live confirmation that the
-In Review count climbs from 17 toward Steadfast's real ~46.
+Nothing active. Awaiting VPS deploy of the ad-account picker; user needs to set the
+correct Meta ad account ID (`1025891126119809`, confirmed from Business Settings) via
+the new "Ad account" button, then re-sync and confirm spend appears. Also awaiting
+VPS deploy of `33dd40b0` and live confirmation that the Steadfast In Review count
+climbs from 17 toward the real ~46.
 
 ## Completed this session
+
+- Meta Ads connected but ad spend stayed empty for every date range:
+  - `syncSpend` logs (`Meta insights HTTP 200, body[0..300]: {"data":[]}`) showed a
+    clean, error-free response with zero rows for both Today and Last 7 days —
+    token/app/permissions were all fine. Root cause: `handleCallback` blindly took
+    the *first* ad account from `/me/adaccounts`
+    ([meta-ads.service.ts:61](api/src/pages/meta-ads/meta-ads.service.ts:61)), which
+    only lists accounts the connecting Facebook user personally has a role on — not
+    necessarily the one actually running Amolbooks campaigns. User confirmed the real
+    ad account (`1025891126119809`, "Amol Books Ad Ac") via Meta Business Settings.
+  - Fix: the backend already had `setAdAccountId`/`POST /api/meta-ads/set-account`
+    for exactly this override, but no UI called it. Added an "Ad account" button next
+    to Sync (visible once Meta is connected) that prompts for an ad account ID
+    (prefilled with the currently stored one), posts it to `set-account`, then
+    re-syncs automatically.
+  - File: `api/upload/static/profit-dashboard.html`.
+  - Inline-script syntax check, `git diff --check` → passed. Verified the button
+    markup/handler render correctly via a static browser check (no live backend to
+    exercise the full flow from this session).
+  - Not yet verified end-to-end — user still needs to enter the correct ad account ID
+    on the live dashboard and confirm ad spend populates after Sync.
 
 - Meta Ads OAuth connect failing with "unexpected end of file":
   - Root cause: `handleCallback` used raw NestJS `HttpService` (axios) for the 3
