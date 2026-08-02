@@ -957,8 +957,19 @@ export class OrderService {
       'courierData.consignmentId': { $exists: true, $nin: [null, ''] },
       'courierStatus.status': 'in_review',
     };
+    // Orders can enter in_review without a webhook firing (missed/late webhook,
+    // or a status change that predates the webhook being configured). Checking
+    // only orders already labeled in_review can never recover those, so the
+    // sync candidates also include every non-terminal status.
+    const syncCandidatesQuery = {
+      'courierData.providerName': 'Steadfast Courier',
+      'courierData.consignmentId': { $exists: true, $nin: [null, ''] },
+      'courierStatus.status': {
+        $nin: ['delivered', 'partial_delivered', 'cancelled'],
+      },
+    };
     const inReviewOrders: any[] = await this.orderModel
-      .find(inReviewQuery)
+      .find(syncCandidatesQuery)
       .sort({ 'courierStatus.lastSyncedAt': 1, createdAt: 1 })
       .limit(50)
       .select('orderId courierData courierStatus');
@@ -980,6 +991,7 @@ export class OrderService {
       success: boolean;
       status?: string;
       moved?: boolean;
+      entered?: boolean;
       chargeUpdated?: boolean;
       error?: string;
     }> = [];
@@ -1016,6 +1028,8 @@ export class OrderService {
             const statusChanged = status !== previousStatus;
             const moved =
               previousStatus === 'in_review' && status !== 'in_review';
+            const entered =
+              previousStatus !== 'in_review' && status === 'in_review';
             const deliveryCharge = this.getSteadfastDeliveryCharge(response);
             const needsCharge =
               order.courierStatus?.deliveryCharge === null ||
@@ -1075,6 +1089,7 @@ export class OrderService {
               success: true,
               status,
               moved,
+              entered,
               chargeUpdated: needsCharge && deliveryCharge !== undefined,
             };
           } catch (error) {
@@ -1116,6 +1131,7 @@ export class OrderService {
       );
     });
     const moved = results.filter((result) => result.moved);
+    const entered = results.filter((result) => result.entered);
     const chargesUpdated = results.filter(
       (result) => result.chargeUpdated,
     ).length;
@@ -1126,10 +1142,12 @@ export class OrderService {
       data: {
         checked: results.length,
         moved: moved.length,
+        entered: entered.length,
         chargesUpdated,
         failed: failed.length,
         currentCount,
         movedOrderIds: moved.map((result) => result.id),
+        enteredOrderIds: entered.map((result) => result.id),
         failures: failed.slice(0, 10),
       },
     } as ResponsePayload;

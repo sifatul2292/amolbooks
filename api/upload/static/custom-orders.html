@@ -2502,10 +2502,11 @@
       } else {
         var count = Number(data.currentCount || 0);
         var moved = Number(data.moved || 0);
+        var entered = Number(data.entered || 0);
         var chargesUpdated = Number(data.chargesUpdated || 0);
         var countEl = document.getElementById('tabCount-in_review');
         if (countEl) countEl.textContent = count.toLocaleString();
-        setInReviewSyncText('<i class="fas fa-circle-check"></i> Synced with Steadfast · '+count.toLocaleString()+' In Review'+(moved ? ' · '+moved.toLocaleString()+' moved out' : '')+(chargesUpdated ? ' · '+chargesUpdated.toLocaleString()+' charges added' : ''));
+        setInReviewSyncText('<i class="fas fa-circle-check"></i> Synced with Steadfast · '+count.toLocaleString()+' In Review'+(moved ? ' · '+moved.toLocaleString()+' moved out' : '')+(entered ? ' · '+entered.toLocaleString()+' recovered' : '')+(chargesUpdated ? ' · '+chargesUpdated.toLocaleString()+' charges added' : ''));
       }
       return data;
     })
