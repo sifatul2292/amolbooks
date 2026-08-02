@@ -84,6 +84,7 @@ type SteadfastWebhookPayload = {
 @Injectable()
 export class OrderService {
   private logger = new Logger(OrderService.name);
+  private steadfastBackfillRunning = false;
 
   constructor(
     @InjectModel('Admin') private readonly adminModel: Model<Admin>,
@@ -851,6 +852,206 @@ export class OrderService {
       },
       update,
     );
+  }
+
+  async backfillSteadfastStatus(body: {
+    limit?: number;
+    retryFailed?: boolean;
+  }): Promise<ResponsePayload> {
+    if (this.steadfastBackfillRunning) {
+      throw new ConflictException(
+        'Another Steadfast backfill batch is already running.',
+      );
+    }
+    this.steadfastBackfillRunning = true;
+    try {
+      return await this.runSteadfastStatusBackfillBatch(body);
+    } finally {
+      this.steadfastBackfillRunning = false;
+    }
+  }
+
+  private async runSteadfastStatusBackfillBatch(body: {
+    limit?: number;
+    retryFailed?: boolean;
+  }): Promise<ResponsePayload> {
+    const requestedLimit = Number(body?.limit) || 15;
+    const limit = Math.min(Math.max(Math.floor(requestedLimit), 1), 25);
+    const retryFailed = body?.retryFailed === true;
+    const setting = await this.settingModel
+      .findOne()
+      .select('courierMethods -_id');
+    const courierMethod = (setting?.courierMethods || []).find(
+      (courier: any) =>
+        courier.status === 'active' &&
+        courier.providerName === 'Steadfast Courier',
+    );
+    if (!courierMethod?.apiKey || !courierMethod?.secretKey) {
+      throw new BadRequestException(
+        'Active Steadfast API credentials are not configured.',
+      );
+    }
+
+    const missingStatusQuery = () => ({
+      'courierData.providerName': 'Steadfast Courier',
+      'courierData.consignmentId': { $exists: true, $nin: [null, ''] },
+      $or: [
+        { 'courierStatus.status': { $exists: false } },
+        { 'courierStatus.status': null },
+        { 'courierStatus.status': '' },
+      ],
+    });
+    const candidateQuery: any = {
+      $and: [
+        missingStatusQuery(),
+        retryFailed
+          ? { 'courierStatus.backfillAttemptedAt': { $exists: true } }
+          : { 'courierStatus.backfillAttemptedAt': { $exists: false } },
+      ],
+    };
+    const orders: any[] = await this.orderModel
+      .find(candidateQuery)
+      .sort(
+        retryFailed
+          ? { 'courierStatus.backfillAttemptedAt': 1 }
+          : { createdAt: 1 },
+      )
+      .limit(limit)
+      .select('orderId courierData courierStatus');
+
+    const courierApiConfig: CourierApiConfig = {
+      providerName: courierMethod.providerName,
+      apiKey: courierMethod.apiKey,
+      secretKey: courierMethod.secretKey,
+      merchantCode: courierMethod.merchantCode,
+      pickMerchantThana: courierMethod.thana,
+      pickMerchantDistrict: courierMethod.district,
+      pickMerchantAddress: courierMethod.address,
+      pickMerchantName: courierMethod.merchant_name,
+      pickupMerchantPhone: courierMethod.contact_number,
+    };
+    const results: Array<{
+      orderId: string;
+      success: boolean;
+      error?: string;
+    }> = [];
+
+    // Three concurrent requests keeps batches quick without flooding Steadfast.
+    for (let index = 0; index < orders.length; index += 3) {
+      const chunk = orders.slice(index, index + 3);
+      const chunkResults = await Promise.all(
+        chunk.map(async (order: any) => {
+          const attemptedAt = new Date();
+          try {
+            const response =
+              await this.courierService.getOrderStatusFormCourier(
+                courierApiConfig,
+                order.courierData.consignmentId,
+                order.orderId,
+              );
+            if (
+              response?.status !== 200 ||
+              typeof response?.delivery_status !== 'string'
+            ) {
+              throw new Error(
+                response?.details ||
+                  response?.message ||
+                  'Steadfast returned no delivery status.',
+              );
+            }
+
+            const status = response.delivery_status.trim().toLowerCase();
+            const eventKey = crypto
+              .createHash('sha256')
+              .update(
+                `historical_backfill:${order.courierData.consignmentId}:${status}`,
+              )
+              .digest('hex');
+            await this.orderModel.updateOne(
+              { _id: order._id },
+              {
+                $set: {
+                  'courierStatus.status': status,
+                  'courierStatus.notificationType': 'historical_backfill',
+                  'courierStatus.trackingMessage':
+                    'Historical status retrieved from Steadfast.',
+                  'courierStatus.updatedAt': attemptedAt.toISOString(),
+                  'courierStatus.receivedAt': attemptedAt,
+                  'courierStatus.backfillAttemptedAt': attemptedAt,
+                },
+                $unset: { 'courierStatus.backfillError': 1 },
+                $push: {
+                  courierStatusHistory: {
+                    $each: [
+                      {
+                        eventKey,
+                        notificationType: 'historical_backfill',
+                        status,
+                        trackingMessage:
+                          'Historical status retrieved from Steadfast.',
+                        updatedAt: attemptedAt.toISOString(),
+                        receivedAt: attemptedAt,
+                      },
+                    ],
+                    $slice: -20,
+                  },
+                },
+              },
+            );
+            return { orderId: order.orderId, success: true };
+          } catch (error) {
+            const message = String(
+              error?.message || 'Steadfast status lookup failed.',
+            ).slice(0, 300);
+            await this.orderModel.updateOne(
+              { _id: order._id },
+              {
+                $set: {
+                  'courierStatus.backfillAttemptedAt': attemptedAt,
+                  'courierStatus.backfillError': message,
+                },
+              },
+            );
+            return {
+              orderId: order.orderId,
+              success: false,
+              error: message,
+            };
+          }
+        }),
+      );
+      results.push(...chunkResults);
+    }
+
+    const [remaining, failedTotal] = await Promise.all([
+      this.orderModel.countDocuments({
+        $and: [
+          missingStatusQuery(),
+          { 'courierStatus.backfillAttemptedAt': { $exists: false } },
+        ],
+      }),
+      this.orderModel.countDocuments({
+        $and: [
+          missingStatusQuery(),
+          { 'courierStatus.backfillAttemptedAt': { $exists: true } },
+        ],
+      }),
+    ]);
+    const updated = results.filter((result) => result.success).length;
+    const failed = results.length - updated;
+
+    return {
+      success: true,
+      message: 'Steadfast historical status batch completed.',
+      data: {
+        checked: results.length,
+        updated,
+        failed,
+        remaining,
+        failedTotal,
+        failures: results.filter((result) => !result.success).slice(0, 10),
+      },
+    } as ResponsePayload;
   }
 
   /**

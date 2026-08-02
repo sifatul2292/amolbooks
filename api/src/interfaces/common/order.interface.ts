@@ -19,6 +19,8 @@ export interface Order {
     deliveryCharge?: number;
     updatedAt?: string;
     receivedAt?: Date;
+    backfillAttemptedAt?: Date;
+    backfillError?: string;
   };
   deliveryNote: any;
   courierLink: string;

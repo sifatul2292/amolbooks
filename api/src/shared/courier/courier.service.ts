@@ -568,6 +568,7 @@ export class CourierService {
                 'Api-Key': apiKey,
                 'Secret-Key': secretKey,
               },
+              timeout: 10000,
             },
           );
 

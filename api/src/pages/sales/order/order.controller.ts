@@ -65,6 +65,16 @@ export class OrderController {
     };
   }
 
+  @Post('/backfill-steadfast-status')
+  @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @UseGuards(AdminRolesGuard)
+  @UseGuards(AdminJwtAuthGuard)
+  async backfillSteadfastStatus(
+    @Body() body: { limit?: number; retryFailed?: boolean },
+  ): Promise<ResponsePayload> {
+    return await this.orderService.backfillSteadfastStatus(body);
+  }
+
   /**
    * addOrder
    * insertManyOrder

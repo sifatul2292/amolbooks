@@ -23,6 +23,11 @@ Nothing active.
 
 ## Completed this session
 
+- Safe historical Steadfast status backfill:
+  - Added a super-admin/admin-only endpoint and order-list button that retrieves missing historical courier statuses using saved Steadfast consignment IDs.
+  - Backfill runs in resumable 15-order batches with at most three concurrent courier requests and a 10-second status-request timeout; closing the page or an API failure leaves untouched orders available for the next run.
+  - Successful results are saved as courier status plus history without changing Amolbooks order/payment status. Failed consignments record a bounded error, are skipped so later orders continue, and require an explicit retry click to prevent infinite loops.
+
 - Steadfast courier-status webhook and order-list column:
   - Added a bearer-authenticated Steadfast webhook endpoint that matches orders by consignment ID with invoice/order ID fallback, stores delivery/tracking updates and a capped event history, ignores duplicate deliveries, and prevents older events from replacing newer state.
   - Added a separate Courier Status column to the custom order list without changing Amolbooks order status, payment status, stock, or notifications.

@@ -1245,6 +1245,9 @@
       <a href="#" onclick="this.href=ADMIN_URL+'/sales/add-order';return true" target="_blank" class="topbar-btn">
         <i class="fas fa-plus"></i><span class="btn-label"> Add Order</span>
       </a>
+      <button class="topbar-btn" id="courierBackfillBtn" onclick="startCourierBackfill()" title="Retrieve missing historical Steadfast statuses" data-salesman-hidden>
+        <i class="fas fa-clock-rotate-left"></i><span class="btn-label"> Backfill Courier</span>
+      </button>
       <button class="topbar-btn" onclick="loadRepeatCustomers();loadTodayStats();loadStatusCounts();" title="Refresh">
         <i class="fas fa-sync-alt"></i>
       </button>
@@ -1769,6 +1772,8 @@
   var params = new URLSearchParams(window.location.search);
   var isIncompleteView = params.get('view') === 'incomplete';
   var isStockView = params.get('view') === 'stock';
+  var courierBackfillRunning = false;
+  var courierBackfillRetryMode = false;
 
   /* ── State ── */
   var state = {
@@ -1780,6 +1785,8 @@
   };
 
   function configureView() {
+    var backfillBtn = document.getElementById('courierBackfillBtn');
+    if (backfillBtn) backfillBtn.style.display = (canRunCourierBackfill() && !isStockView && !isIncompleteView) ? '' : 'none';
     if (isStockView) {
       document.body.classList.add('stock-mode');
       var stockNav = document.getElementById('navStock');
@@ -1901,8 +1908,17 @@
     var payload = getTokenPayload();
     return !!payload && payload.role === 'salesman';
   }
+  function canRunCourierBackfill() {
+    var payload = getTokenPayload();
+    return !!payload && (payload.role === 'super_admin' || payload.role === 'admin');
+  }
   function applyRoleMode() {
     document.body.classList.toggle('salesman-mode', isSalesman());
+    var backfillBtn = document.getElementById('courierBackfillBtn');
+    if (backfillBtn) {
+      backfillBtn.style.display =
+        canRunCourierBackfill() && !isStockView && !isIncompleteView ? '' : 'none';
+    }
   }
 
   function showLogin(msg) {
@@ -2183,6 +2199,78 @@
       document.getElementById('paginationInfo').textContent = '';
     });
   }
+
+  window.startCourierBackfill = function () {
+    if (courierBackfillRunning || !canRunCourierBackfill() || isStockView || isIncompleteView) return;
+    var prompt = courierBackfillRetryMode
+      ? 'Retry a small batch of historical courier statuses that previously failed?'
+      : 'Retrieve missing historical Steadfast statuses? This runs in small, resumable batches.';
+    if (!confirm(prompt)) return;
+
+    var btn = document.getElementById('courierBackfillBtn');
+    var retryMode = courierBackfillRetryMode;
+    var totalUpdated = 0;
+    var totalFailed = 0;
+    courierBackfillRunning = true;
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i><span class="btn-label"> Starting…</span>';
+    }
+
+    function finish(data) {
+      courierBackfillRunning = false;
+      courierBackfillRetryMode = Number(data.failedTotal || 0) > 0;
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = courierBackfillRetryMode
+          ? '<i class="fas fa-rotate"></i><span class="btn-label"> Retry Failed ('+Number(data.failedTotal||0).toLocaleString()+')</span>'
+          : '<i class="fas fa-check"></i><span class="btn-label"> Backfill Complete</span>';
+      }
+      loadOrders();
+      var message = totalUpdated.toLocaleString()+' historical statuses updated.';
+      if (data.failedTotal) message += ' '+Number(data.failedTotal).toLocaleString()+' need retry.';
+      showToast(message, data.failedTotal ? 'info' : 'success');
+    }
+
+    function runBatch() {
+      fetch(API + '/api/order/backfill-steadfast-status', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ limit: 15, retryFailed: retryMode }),
+      })
+      .then(function(r){
+        if (r.status === 401 || r.status === 403) throw new Error('Admin permission required.');
+        return r.json();
+      })
+      .then(function(resp){
+        if (resp.success === false) throw new Error(resp.message || 'Backfill failed.');
+        var data = resp.data || {};
+        totalUpdated += Number(data.updated || 0);
+        totalFailed += Number(data.failed || 0);
+        if (btn) {
+          btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i><span class="btn-label"> '+
+            totalUpdated.toLocaleString()+' updated · '+Number(data.remaining||0).toLocaleString()+' left</span>';
+        }
+        // Normal backfill continues through untouched orders. Failed retries run
+        // one controlled batch per click so a bad consignment cannot loop forever.
+        if (!retryMode && Number(data.remaining || 0) > 0) {
+          setTimeout(runBatch, 800);
+        } else {
+          finish(data);
+        }
+      })
+      .catch(function(err){
+        courierBackfillRunning = false;
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-clock-rotate-left"></i><span class="btn-label"> Backfill Courier</span>';
+        }
+        showToast('Courier backfill stopped safely: '+err.message, 'error');
+      });
+    }
+
+    runBatch();
+  };
 
   function renderSkeletons() {
     var rows = '';

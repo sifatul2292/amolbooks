@@ -193,6 +193,8 @@ export const OrderSchema = new mongoose.Schema(
       deliveryCharge: { type: Number, required: false },
       updatedAt: { type: String, required: false },
       receivedAt: { type: Date, required: false },
+      backfillAttemptedAt: { type: Date, required: false },
+      backfillError: { type: String, required: false },
     },
     courierStatusHistory: [
       {
