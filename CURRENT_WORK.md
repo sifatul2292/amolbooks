@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-08-12. Branch: `main`. Meta tracking health metric fixed (`$ne` → `$gt`) and Purchase `event_id` aligned on `order_<orderId>`; awaiting VPS deploy + Cloudflare purge. Purchase beacon GTM tag currently PAUSED — see the deploy order below before un-pausing._
+_Last updated: 2026-08-11. Branch: `main`. Meta Purchase tracking gap-fill built (uncommitted); awaiting GTM snippet publish + VPS deploy._
 
 ## Recently completed (git log, newest first)
 
@@ -55,62 +55,6 @@ VPS deploy of `33dd40b0` and live confirmation that the Steadfast In Review coun
 climbs from 17 toward the real ~46.
 
 ## Completed this session
-
-### Meta tracking health panel was reporting nothing — `$ne` vs `$gt` on a missing field
-
-`meta-tracking-health.service.ts` used `{ $ne: ['$browserPurchaseFiredAt', null] }`. In
-aggregation a **missing** field compares unequal to null, so `browserFired` counted every
-order, `reported` (an `$or` over it) counted every order, coverage pinned to 100%, and
-`untrackedWebsite` went negative and clamped to 0 via `Math.max`. Every headline number on
-the panel was an artifact. Fixed to `$gt: [field, null]`, the idiom for "present and not
-null". **Not yet deployed.**
-
-Measured against the live DB, 14d to 2026-08-12: 1,069 orders, 856 website, 213
-manual-sent, and only **3** rows with a beacon (all three were test orders placed while
-debugging). The `$ne` expression reported 1,069; `$gt` reports 3.
-
-Consequence: the beacon GTM tag only started firing on 2026-08-12, so
-`fillMissingWebsitePurchases` — which arms off the first beacon it ever sees
-(`order.service.ts` ~1892) — has never run. The 853 older website orders were never
-checked. Working as designed, but the safety net has been inert.
-
-Also verified this session, end to end: the storefront attribution capture works. Ad URL
-parameters were added in Ads Manager (`utm_source={{site_source_name}}` + campaign/adset/ad
-name and id macros); a test click stored `attribution.lastTouch` with source, campaign,
-campaignId, adSetId, adId on the order doc. Meta events route server-side through the
-Tagioo container at `server.amolbooks.com` (GTM-NNZV54QJ) — nothing hits
-`facebook.com/tr`, so ad blockers do not break Purchase.
-
-### Purchase `event_id` mismatch — browser and server could not deduplicate in Meta
-
-Traced and fixed. Tagioo was **not** at fault: its `Tagioo - event_id` variable
-(`sgtm-contro-panel/server.js` ~1458) already prefers `{{dlv - event_id}}`, then
-`transaction_id`, then a generated `tagioo-pv-*`. The random-looking
-`1786521197711_178652120545233` came from Amolbooks and was passed straight through.
-
-The storefront pushes **two** purchase messages. The Angular bundle
-(`676.b5a80feee4ac1b1f.js` + two sibling chunks) pushes
-`{event:"purchase", event_id:<random>, ecommerce:{purchase:{actionField:…}}}`, while
-`index.html` pushes `purchase_stape` with `event_id: "order_<orderId>"`. Tagioo's trigger
-fires on event name `purchase`, so it consumed the Angular message and its random id.
-Nothing consumes `purchase_stape` — that push exists only to feed the beacon. Server-side
-CAPI uses `order_<orderId>`. Two namespaces, no deduplication possible.
-
-`dl-normalize.js` already had the hook but guarded it too narrowly: it only rewrote
-`event_id` when it *equalled* `transaction_id` or was absent, and wrote a `purchase_`
-prefix that matched nothing. Now it overwrites unconditionally to `order_<transactionId>`,
-aligning the Angular push, `purchase_stape`, the Tagioo browser pixel, and the NestJS CAPI
-send on one key.
-
-Verified with a Node/`vm` harness against the real file: the Angular-shaped push comes out
-as `order_6551`, `purchase_stape` is untouched, the UA→GA4 transform still runs, and the
-7-day duplicate-purchase guard still drops a re-fire.
-
-`dl-normalize.js` is served by ServeStaticModule with no version query. **Purge the
-Cloudflare cache after deploy** or returning visitors keep the old file.
-
-Still unanswered: Meta Events Manager Purchase count for a past day vs our order count for
-that day. That is the real accuracy number; everything above is upstream of it.
 
 ### Meta Ads reported 5 purchases against 12 units sold — root cause + fix
 
