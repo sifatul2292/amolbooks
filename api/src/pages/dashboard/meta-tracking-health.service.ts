@@ -33,9 +33,12 @@ export class MetaTrackingHealthService {
     const since = new Date(Date.now() - dayCount * 24 * 60 * 60 * 1000);
 
     const isWebsite = { $eq: ['$orderFrom', 'Website'] };
+    // $gt against null, not $ne: a missing field compares unequal to null in
+    // aggregation, so $ne counted every order as reported and pinned coverage
+    // at 100%. $gt is the idiom that means "present and not null".
     const purchaseReported = {
       $or: [
-        { $ne: ['$browserPurchaseFiredAt', null] },
+        { $gt: ['$browserPurchaseFiredAt', null] },
         { $eq: ['$metaPurchaseStatus', 'sent'] },
       ],
     };
@@ -63,7 +66,7 @@ export class MetaTrackingHealthService {
           },
           isWebsite,
           reported: purchaseReported,
-          browserFired: { $ne: ['$browserPurchaseFiredAt', null] },
+          browserFired: { $gt: ['$browserPurchaseFiredAt', null] },
           gapFilled: {
             $eq: ['$metaPurchaseDeliveryChannel', 'website_gap_fill'],
           },
