@@ -143,7 +143,19 @@ export const OrderSchema = new mongoose.Schema(
     },
     metaPurchaseDeliveryChannel: {
       type: String,
-      enum: ['tagioo', 'direct_meta_fallback'],
+      enum: ['tagioo', 'direct_meta_fallback', 'website_gap_fill'],
+      required: false,
+    },
+    // Set by the storefront purchase beacon the moment the browser actually
+    // pushes purchase_stape to the dataLayer. Absence of this on a website
+    // order is the signal that Stape never received a Purchase for it, which
+    // is what the gap-fill job acts on.
+    browserPurchaseFiredAt: {
+      type: Date,
+      required: false,
+    },
+    browserPurchaseEventId: {
+      type: String,
       required: false,
     },
     tagiooPurchaseEventId: {
@@ -168,6 +180,8 @@ export const OrderSchema = new mongoose.Schema(
         landingPage: { type: String, required: false },
         referrer: { type: String, required: false },
         fbclid: { type: String, required: false },
+        fbc: { type: String, required: false },
+        fbp: { type: String, required: false },
         capturedAt: { type: Date, required: false },
       },
       lastTouch: {
@@ -182,8 +196,14 @@ export const OrderSchema = new mongoose.Schema(
         landingPage: { type: String, required: false },
         referrer: { type: String, required: false },
         fbclid: { type: String, required: false },
+        fbc: { type: String, required: false },
+        fbp: { type: String, required: false },
         capturedAt: { type: Date, required: false },
       },
+      // Client user agent and IP captured with the order POST. Meta requires a
+      // matching pair alongside fbc/fbp for a website-source event.
+      clientUserAgent: { type: String, required: false },
+      clientIpAddress: { type: String, required: false },
     },
     courierStatus: {
       status: { type: String, required: false },

@@ -10,12 +10,14 @@ import {
   Post,
   Put,
   Query,
+  Req,
   UseGuards,
   UsePipes,
   ValidationPipe,
   Version,
   VERSION_NEUTRAL,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { AdminMetaRoles } from '../../../decorator/admin-roles.decorator';
 import { AdminRoles } from '../../../enum/admin-roles.enum';
 import { AdminRolesGuard } from '../../../guards/admin-roles.guard';
@@ -63,6 +65,22 @@ export class OrderController {
       status: 'success',
       message: 'Webhook received successfully.',
     };
+  }
+
+  /**
+   * Public beacon from the storefront purchase snippet. Fired the instant the
+   * browser pushes purchase_stape to the dataLayer, so the API knows which
+   * orders Stape actually received a Purchase for. Orders without this are the
+   * ones the gap-fill job sends server-side.
+   */
+  @Version(VERSION_NEUTRAL)
+  @Post('/purchase-fired')
+  @HttpCode(200)
+  async markBrowserPurchaseFired(
+    @Body()
+    body: { orderId?: string; transaction_id?: string; eventId?: string },
+  ): Promise<ResponsePayload> {
+    return await this.orderService.markBrowserPurchaseFired(body);
   }
 
   @Post('/backfill-steadfast-status')
@@ -184,8 +202,9 @@ export class OrderController {
     @Body()
     addOrderDto: AddOrderDto,
     @GetTokenUser() user: User,
+    @Req() req: Request,
   ): Promise<ResponsePayload> {
-    return await this.orderService.addOrderByUser(addOrderDto, user);
+    return await this.orderService.addOrderByUser(addOrderDto, user, req);
   }
 
   @Post('/add-order-by-anonymous')
@@ -195,8 +214,9 @@ export class OrderController {
     @Body()
     addOrderDto: AddOrderDto,
     // @GetTokenUser() user: User,
+    @Req() req: Request,
   ): Promise<ResponsePayload> {
-    return await this.orderService.addOrderByAnonymous(addOrderDto);
+    return await this.orderService.addOrderByAnonymous(addOrderDto, req);
   }
 
   @Post('/insert-many')

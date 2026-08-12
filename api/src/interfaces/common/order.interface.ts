@@ -39,9 +39,14 @@ export interface Order {
   metaPurchaseAttemptCount?: number;
   metaPurchaseSentAt?: Date;
   metaPurchaseError?: string;
-  metaPurchaseDeliveryChannel?: 'tagioo' | 'direct_meta_fallback';
+  metaPurchaseDeliveryChannel?:
+    | 'tagioo'
+    | 'direct_meta_fallback'
+    | 'website_gap_fill';
   tagiooPurchaseEventId?: string;
   tagiooPurchaseError?: string;
+  browserPurchaseFiredAt?: Date;
+  browserPurchaseEventId?: string;
   orderedItems: OrderedItem[];
   subTotal: number;
   area?: Area;
@@ -78,6 +83,8 @@ export interface Order {
     anonymousId?: string;
     firstTouch?: OrderAttributionTouch;
     lastTouch?: OrderAttributionTouch;
+    clientUserAgent?: string;
+    clientIpAddress?: string;
   };
   createdAt?: Date;
   updatedAt?: Date;
@@ -112,6 +119,8 @@ export interface OrderAttributionTouch {
   landingPage?: string;
   referrer?: string;
   fbclid?: string;
+  fbc?: string;
+  fbp?: string;
   capturedAt?: Date;
 }
 

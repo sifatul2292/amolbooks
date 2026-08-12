@@ -365,7 +365,7 @@
             <div class="panel-body"><div class="opportunity-list" id="opportunityList"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div></div>
           </section>
           <section class="panel">
-            <header class="panel-head"><div class="panel-title"><h3>Sales funnel</h3><p id="funnelNote">PostHog identity + order outcomes.</p></div></header>
+            <header class="panel-head"><div class="panel-title"><h3>Sales funnel</h3><p id="funnelNote">GA4 traffic + order outcomes.</p></div></header>
             <div class="panel-body"><div class="funnel" id="funnelStages"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div><div id="dropNote"></div></div>
           </section>
         </div>
@@ -393,6 +393,15 @@
             <div class="panel-body"><div class="quality-score"><div class="score-ring" id="qualityScore">—</div><div class="coverage-grid" id="coverageGrid"></div></div><ul class="warning-list" id="warningList"></ul></div>
           </section>
         </div>
+
+        <section class="panel panel-gap">
+          <header class="panel-head"><div class="panel-title"><h3>Meta tracking health</h3><p>Did Meta actually receive a Purchase for every order? Events Manager cannot show lost events — only the ones that arrived.</p></div><span class="status-pill" id="trackingPill">— coverage</span></header>
+          <div class="panel-body">
+            <div class="status-grid" id="trackingTotals"></div>
+            <div id="trackingTable"></div>
+            <ul class="warning-list" id="trackingFailures"></ul>
+          </div>
+        </section>
       </div>
     </main>
   </div>
@@ -547,6 +556,50 @@
     request('/api/v2/dashboard/decision-analytics?startDate=' + encodeURIComponent(rangeStart) + '&endDate=' + encodeURIComponent(rangeEnd))
       .then(function (payload) { dashboardData = payload.data; trendData = dashboardData.trend || []; renderAll(); })
       .catch(function (error) { if (!recoverAuthentication(error)) showError(error.message); });
+    loadTrackingHealth();
+  }
+
+  // Independent of the main dashboard request on purpose: tracking health is
+  // diagnostic, and a failure here must never blank the profit numbers.
+  function loadTrackingHealth() {
+    request('/api/dashboard/meta-tracking-health?days=14')
+      .then(function (payload) { renderTrackingHealth(payload.data || {}); })
+      .catch(function (error) {
+        setText('trackingPill', 'unavailable');
+        document.getElementById('trackingTable').innerHTML = '<div class="empty">' + esc(error.message) + '</div>';
+      });
+  }
+
+  function renderTrackingHealth(data) {
+    var totals = data.totals || {};
+    var days = data.days || [];
+    setText('trackingPill', pct(totals.coverage) + ' reported');
+    var pill = document.getElementById('trackingPill');
+    if (pill) pill.className = 'status-pill ' + (totals.coverage >= 95 ? 'good' : totals.coverage >= 80 ? 'warn' : 'bad');
+
+    var cards = [
+      { label: 'Orders (' + fmt(data.rangeDays) + 'd)', value: fmt(totals.orders) + ' · ' + fmt(totals.units) + ' units' },
+      { label: 'Browser fired', value: fmt(totals.browserFired) },
+      { label: 'Gap-filled by API', value: fmt(totals.gapFilled) },
+      { label: 'Never reported', value: fmt(totals.untrackedWebsite) },
+      { label: 'Manual sent', value: fmt(totals.manualSent) },
+      { label: 'Failed', value: fmt(totals.failed) }
+    ];
+    document.getElementById('trackingTotals').innerHTML = cards.map(function (card) {
+      return '<div class="status-card"><span>' + esc(card.label) + '</span><strong>' + esc(card.value) + '</strong></div>';
+    }).join('');
+
+    document.getElementById('trackingTable').innerHTML = days.length
+      ? '<table class="mini-table"><thead><tr><th>Date</th><th>Orders</th><th>Units</th><th>Website</th><th>Browser fired</th><th>Gap-filled</th><th>Never reported</th><th>Manual sent</th><th>Failed</th><th>Reported</th></tr></thead><tbody>'
+        + days.map(function (row) {
+            return '<tr><td>' + esc(row.date) + '</td><td>' + fmt(row.orders) + '</td><td>' + fmt(row.units) + '</td><td>' + fmt(row.websiteOrders) + '</td><td>' + fmt(row.browserFired) + '</td><td>' + fmt(row.gapFilled) + '</td><td class="' + (row.untrackedWebsite > 0 ? 'money-negative' : '') + '">' + fmt(row.untrackedWebsite) + '</td><td>' + fmt(row.manualSent) + '</td><td>' + fmt(row.failed) + '</td><td>' + pct(row.coverage) + '</td></tr>';
+          }).join('')
+        + '</tbody></table>'
+      : '<div class="empty">No orders in this window.</div>';
+
+    document.getElementById('trackingFailures').innerHTML = (data.failures || []).map(function (failure) {
+      return '<li>' + esc(failure.orderId) + ' (' + esc(failure.orderFrom || 'unknown') + '): ' + esc(failure.metaPurchaseError || failure.tagiooPurchaseError || 'unknown error') + '</li>';
+    }).join('');
   }
 
   function renderAll() {

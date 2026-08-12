@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-08-02. Branch: `main`. Meta OAuth zlib fix pushed; Steadfast In Review recovery fix pushed._
+_Last updated: 2026-08-11. Branch: `main`. Meta Purchase tracking gap-fill built (uncommitted); awaiting GTM snippet publish + VPS deploy._
 
 ## Recently completed (git log, newest first)
 
@@ -22,13 +22,109 @@ display-only, then margin/copy polish.
 
 ## In progress
 
-Nothing active. Awaiting VPS deploy of the ad-account picker; user needs to set the
+**Meta Purchase tracking gap-fill (built, uncommitted, not yet deployed).** Two manual
+steps are still outstanding:
+
+1. Publish `gtm-snippets/meta-purchase-beacon.html` as a GTM Custom HTML tag on All Pages.
+   Until it is live, `attribution` never reaches the order and the gap-fill job stays idle
+   by design (it arms itself on the first beacon it ever receives).
+2. Deploy the api (`scripts/vps-safe-pull.sh`, then `npm install --legacy-peer-deps`,
+   `npm run build`, `pm2 restart amolbooks-api`).
+
+Then watch the new **Meta tracking health** panel on the profit dashboard for two days.
+`browserFired` dropping to zero means the beacon broke — in that state the gap-fill job
+would start sending for orders Stape also reported, so fix the beacon before ignoring it.
+
+**Deploy the api first, publish the GTM tag second.** Gap-fill stays disarmed until the
+first beacon exists, so the api deploy alone changes nothing about Purchase sending — a
+clean checkpoint. **Rollback is `META_GAP_FILL_DISABLED=true` in `api/.env` + `pm2 restart`,
+NOT pausing the GTM tag.** Pausing the tag stops the beacons, which makes every new order
+look unreported and would have the job send for all of them.
+
+After deploy, first thing to verify: click **Sync** on the profit dashboard and confirm ad
+spend still populates. `syncSpend` now also requests `actions,action_values` with
+`action_report_time=conversion`; if Graph rejects those params it returns
+`{synced: 0, error}` and spend silently stops updating. Fix in that case is to drop
+`action_report_time` + `action_attribution_windows` from the query — spend keeps working,
+you only lose the conversions column.
+
+Older item, still open: awaiting VPS deploy of the ad-account picker; user needs to set the
 correct Meta ad account ID (`1025891126119809`, confirmed from Business Settings) via
 the new "Ad account" button, then re-sync and confirm spend appears. Also awaiting
 VPS deploy of `33dd40b0` and live confirmation that the Steadfast In Review count
 climbs from 17 toward the real ~46.
 
 ## Completed this session
+
+### Meta Ads reported 5 purchases against 12 units sold — root cause + fix
+
+**Root cause of lost website purchases.** `ui/dist/.../index.html:482` stashes the
+`purchase_stape` payload in `sessionStorage` and only pushes it when the buyer reaches the
+thank-you page (redirect fires on a 1.2s `setTimeout`). A closed tab, a dropped mobile
+connection, or blocked storage loses that Purchase permanently. Meta's coverage stats
+cannot reveal this: "percent of events sending" measures events that arrived, never the
+ones that never fired — which is why Purchase showed fbc 98.2% / fbp 100% while the count
+was short. Purchase CAPI had been deliberately removed from the API
+(`gtm.service.ts:475`) to avoid duplicating Stape, leaving the browser as the single point
+of failure.
+
+**Approach — mutually exclusive senders, so Stape stays untouched.** The storefront reports
+which orders actually pushed a Purchase; the API sends only for the orders it did not. No
+dedup guessing, no dependence on Stape's Event ID config.
+
+- `gtm-snippets/meta-purchase-beacon.html` (new GTM tag): splices `attribution` into the
+  `/add-order-by-*` POST (`_fbc`/`_fbp` cookies, `fbclid`, first/last-touch UTMs, the
+  `_ab_xid` anonymous ID), stamps `event_id: order_<orderId>` on the `purchase_stape` push,
+  and `sendBeacon`s the order id to `POST /api/order/purchase-fired`.
+- `order.controller.ts` / `order.service.ts`: public `markBrowserPurchaseFired` sets
+  `browserPurchaseFiredAt` + `browserPurchaseEventId` (idempotent).
+- `addOrder` now takes `req` and stamps `attribution.clientUserAgent` / `clientIpAddress`
+  server-side, since Meta needs the IP + UA that produced fbc/fbp.
+- `scheduleWebsitePurchaseGapFill` (every 5 min): for website orders older than 20 min with
+  no beacon and no Meta send, posts a CAPI Purchase with `action_source: 'website'`,
+  `event_source_url`, fbc/fbp/external_id/ph/em, `event_id = order_<orderId>`, and marks
+  `metaPurchaseDeliveryChannel: 'website_gap_fill'`. Falls back to building `fbc` from a
+  stored `fbclid` when the cookie was missed. **Self-arming:** it does nothing until the
+  first beacon exists, so pre-deployment orders (whose missing beacon proves nothing) are
+  never re-sent.
+
+**Manual/WhatsApp order fixes.** The admin panel dist hardcodes `orderFrom:"admin"` and
+sends no `manualOrderSource`, so every manually typed order fell through to `'other'` →
+`action_source: 'other'`, the least attributable value Meta takes, and the existing
+`whatsapp_ad → business_messaging` mapping was unreachable. Default is now `'whatsapp'`
+(`chat`). `event_time` is clamped to `now - 6d` (`metaEventTime`) because `createdAt` on a
+manual order is when an admin typed it — Meta rejects events older than 7 days outright.
+Added `isDuplicateMetaPurchase` (same phone + same total within 24h, already reported) for
+the case where a WhatsApp buyer also self-places on the site.
+
+**Measurement, so this never needs a mongosh query again.**
+`meta-tracking-health.service.ts` + `GET /api/dashboard/meta-tracking-health` and a new
+**Meta tracking health** panel on `profit-dashboard.html`: per day, orders vs units,
+website vs manual, browser-fired / gap-filled / never-reported / manual-sent / failed,
+coverage %, the last 10 failures with their error text, and sample beacon `event_id`s
+(needed before browser and server events could ever be deduplicated instead of kept
+exclusive).
+
+**Reconciliation.** `meta-ads.service.ts` pulled `spend` only. It now also requests
+`actions,action_values` with `action_report_time=conversion` and
+`action_attribution_windows=['7d_click','1d_view']`, storing `purchases`/`purchaseValue`
+per day and per campaign. Conversion-time reporting is what makes Meta's count comparable
+to our order records at all — the default credits a sale to the day of the click.
+
+**Verified:** `tsc --noEmit` and `nest build` pass; `git diff --check` clean. Snippet
+exercised in a browser harness — attribution injected with fbc/fbp/campaign/fbclid,
+existing attribution preserved, `event_id` stamped, inner (Stape) push still receives the
+event, one beacon per order to the right URL as `application/x-www-form-urlencoded`,
+repeat pushes deduplicated, non-purchase pushes untouched. Dashboard panel rendered against
+fixture data (pill, 6 tiles, day rows, failure list). **Not verified live:** the API was
+deliberately not started locally — `.env` may point at production Mongo, and booting it
+would run the gap-fill job against real orders.
+
+**Expectation check.** This closes the lost-browser-event bucket only. The rest of the
+12-vs-5 gap is units vs orders (Meta counts purchase events, not copies), Ads Manager
+reporting on click date, non-ad sales, and WhatsApp orders that stay unattributable until
+`ctwa_clid` is available via the WhatsApp Cloud API. Campaign count should not equal order
+count even when tracking is perfect.
 
 - Meta Ads connected but ad spend stayed empty for every date range:
   - `syncSpend` logs (`Meta insights HTTP 200, body[0..300]: {"data":[]}`) showed a

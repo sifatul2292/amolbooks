@@ -116,6 +116,22 @@ export class MetaAdsService {
     });
   }
 
+  /**
+   * Reads the Purchase entry out of an insights `actions`/`action_values` array.
+   * Meta labels the pixel/CAPI purchase `offsite_conversion.fb_pixel_purchase`
+   * and also reports a rolled-up `purchase`; prefer the pixel row and fall back
+   * to the aggregate so a container change cannot silently zero this out.
+   */
+  private pickPurchaseAction(actions: any): number {
+    if (!Array.isArray(actions)) return 0;
+    const byType = (type: string) =>
+      actions.find((action: any) => action?.action_type === type);
+    const match =
+      byType('offsite_conversion.fb_pixel_purchase') || byType('purchase');
+    const value = parseFloat(match?.value);
+    return Number.isFinite(value) ? value : 0;
+  }
+
   async syncSpend(startDate?: string, endDate?: string): Promise<any> {
     const token = await this.tokenModel.findOne().lean();
     if (!token?.accessToken) throw new InternalServerErrorException('Meta not connected');
@@ -128,10 +144,16 @@ export class MetaAdsService {
 
     const qs = new URLSearchParams({
       access_token: token.accessToken,
-      fields: 'spend,date_start,campaign_id,campaign_name,adset_id,adset_name,ad_id,ad_name',
+      fields:
+        'spend,date_start,campaign_id,campaign_name,adset_id,adset_name,ad_id,ad_name,actions,action_values',
       level: 'ad',
       time_increment: '1',
       time_range: JSON.stringify({ since, until }),
+      // Report conversions on the day the purchase happened, not the day of the
+      // click. Without this, today's sales get credited to whichever earlier day
+      // the ad was clicked, and the count never lines up with our order records.
+      action_report_time: 'conversion',
+      action_attribution_windows: JSON.stringify(['7d_click', '1d_view']),
       limit: '500',
     });
     const fullUrl = `https://graph.facebook.com/v20.0/${token.adAccountId}/insights?${qs.toString()}`;
@@ -208,15 +230,33 @@ export class MetaAdsService {
         adId: row.ad_id || '',
         adName: row.ad_name || '',
         spend,
+        purchases: this.pickPurchaseAction(row.actions),
+        purchaseValue: this.pickPurchaseAction(row.action_values),
       });
     });
 
     let synced = 0;
     for (const [date, breakdown] of byDate.entries()) {
       const spend = breakdown.reduce((sum, row) => sum + row.spend, 0);
+      const purchases = breakdown.reduce(
+        (sum, row) => sum + (row.purchases || 0),
+        0,
+      );
+      const purchaseValue = breakdown.reduce(
+        (sum, row) => sum + (row.purchaseValue || 0),
+        0,
+      );
       await this.spendModel.findOneAndUpdate(
         { date },
-        { date, spend, source: 'api', currency: 'BDT', breakdown },
+        {
+          date,
+          spend,
+          purchases,
+          purchaseValue,
+          source: 'api',
+          currency: 'BDT',
+          breakdown,
+        },
         { upsert: true, new: true },
       );
       synced++;
@@ -232,6 +272,14 @@ export class MetaAdsService {
       .sort({ date: 1 })
       .lean();
     const total = records.reduce((s, r) => s + (r.spend || 0), 0);
+    const totalPurchases = records.reduce(
+      (s, r: any) => s + (r.purchases || 0),
+      0,
+    );
+    const totalPurchaseValue = records.reduce(
+      (s, r: any) => s + (r.purchaseValue || 0),
+      0,
+    );
     const campaignMap = new Map<string, any>();
     records.forEach((record: any) => {
       (record.breakdown || []).forEach((row: any) => {
@@ -241,13 +289,27 @@ export class MetaAdsService {
             campaignId: row.campaignId || '',
             campaignName: row.campaignName || 'Unlabelled campaign',
             spend: 0,
+            purchases: 0,
+            purchaseValue: 0,
           });
         }
-        campaignMap.get(key).spend += row.spend || 0;
+        const campaign = campaignMap.get(key);
+        campaign.spend += row.spend || 0;
+        campaign.purchases += row.purchases || 0;
+        campaign.purchaseValue += row.purchaseValue || 0;
       });
     });
     const campaigns = Array.from(campaignMap.values()).sort((a, b) => b.spend - a.spend);
-    return { success: true, data: { daily: records, total, campaigns } };
+    return {
+      success: true,
+      data: {
+        daily: records,
+        total,
+        totalPurchases,
+        totalPurchaseValue,
+        campaigns,
+      },
+    };
   }
 
   async saveManualSpend(date: string, spend: number): Promise<any> {

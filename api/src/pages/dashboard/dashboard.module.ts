@@ -11,6 +11,7 @@ import { HttpModule } from '@nestjs/axios';
 import { DecisionDashboardService } from './decision-dashboard.service';
 import { AnalyticsActionSchema } from './schema/analytics-action.schema';
 import { MetaAdSpendSchema } from '../meta-ads/schema/meta-ad-spend.schema';
+import { MetaTrackingHealthService } from './meta-tracking-health.service';
 
 @Module({
   imports: [
@@ -25,7 +26,11 @@ import { MetaAdSpendSchema } from '../meta-ads/schema/meta-ad-spend.schema';
       { name: 'AnalyticsAction', schema: AnalyticsActionSchema },
     ]),
   ],
-  providers: [DashboardService, DecisionDashboardService],
+  providers: [
+    DashboardService,
+    DecisionDashboardService,
+    MetaTrackingHealthService,
+  ],
   controllers: [DashboardController],
 })
 export class DashboardModule {}

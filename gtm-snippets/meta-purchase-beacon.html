@@ -1,0 +1,231 @@
+<!--
+  Meta purchase beacon + order attribution capture.
+
+  WHY: the storefront sends its Purchase to Stape from the browser only. It
+  stashes the payload in sessionStorage after the order POST and pushes it when
+  the buyer lands on the thank-you page (see index.html `_pendingPurchase`). A
+  closed tab, a dropped mobile connection, or blocked storage loses that event
+  for good, and Meta's own coverage stats cannot show it — they measure the
+  quality of events that arrived, never the ones that never fired.
+
+  This tag does two things so the API can close that hole:
+
+    1. ATTRIBUTION — splices `attribution` into the /add-order-by-* POST body:
+       the `_fbc`/`_fbp` cookies, `fbclid`, first-touch and last-touch UTM
+       campaign data, and the same `_ab_xid` anonymous ID index.html already
+       uses as external_id. The API stores this on the order, which is what lets
+       a server-side Purchase be attributed at ad level exactly like a browser
+       event would have been.
+
+    2. BEACON — when the browser really does push `purchase_stape`, reports the
+       order id to `POST /order/purchase-fired`. Orders with no beacon are the
+       ones the API's gap-fill job sends server-side. Because the API only ever
+       sends for orders the beacon did NOT confirm, browser and server can never
+       both report the same sale — no dedup guessing, no Stape config changes.
+
+       The push also gets a stable `event_id` (`order_<orderId>`) stamped in. If
+       the Stape Meta tag reads an event ID from the event data it becomes a
+       genuine dedup key; if it ignores it, nothing changes.
+
+  SAFETY:
+    - Every hook is wrapped in try/catch and never blocks an order or a push.
+    - Attribution is only added when absent — an existing value is never
+      clobbered.
+    - The beacon uses navigator.sendBeacon with a form-urlencoded body, so it is
+      a CORS-simple request that survives page unload. Failure is silent.
+    - Idempotent: re-running this tag re-uses the existing wrappers.
+
+  DEPLOY: paste as a GTM Custom HTML tag firing on All Pages. Confirm API_BASE
+  matches the environment.
+-->
+<script>
+(function () {
+  'use strict';
+
+  var API_BASE = 'https://apisub.amolbooks.com/api';
+  var STORE_KEY = '_ab_attr';
+  var XID_KEY = '_ab_xid';        /* shared with index.html _xid() */
+
+  function readCookie(name) {
+    try {
+      var match = document.cookie.match(
+        new RegExp('(?:^|; )' + name.replace(/([.*+?^${}()|[\]\\])/g, '\\$1') + '=([^;]*)')
+      );
+      return match ? decodeURIComponent(match[1]) : '';
+    } catch (e) { return ''; }
+  }
+
+  function readStore() {
+    try { return JSON.parse(localStorage.getItem(STORE_KEY) || '{}') || {}; }
+    catch (e) { return {}; }
+  }
+
+  function writeStore(value) {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(value)); } catch (e) {}
+  }
+
+  function anonymousId() {
+    try {
+      var value = localStorage.getItem(XID_KEY);
+      if (!value) {
+        value = Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+        localStorage.setItem(XID_KEY, value);
+      }
+      return value;
+    } catch (e) { return ''; }
+  }
+
+  /* ── 1. Capture first-touch / last-touch on every page ─────────────────── */
+
+  function currentTouch() {
+    var params = new URLSearchParams(location.search || '');
+    var fbclid = params.get('fbclid') || '';
+    var touch = {
+      source: params.get('utm_source') || '',
+      medium: params.get('utm_medium') || '',
+      campaign: params.get('utm_campaign') || '',
+      campaignId: params.get('utm_id') || params.get('campaign_id') || '',
+      adSet: params.get('utm_content') || '',
+      adSetId: params.get('adset_id') || '',
+      ad: params.get('utm_term') || '',
+      adId: params.get('ad_id') || '',
+      landingPage: location.origin + location.pathname,
+      referrer: document.referrer || '',
+      fbclid: fbclid,
+      capturedAt: new Date().toISOString()
+    };
+    // A visit only counts as a new touch when it actually carries campaign
+    // information or an external referrer. Internal SPA navigation must not
+    // overwrite the click that brought the buyer here.
+    var isNewTouch = !!(fbclid || touch.source || touch.campaign ||
+      (touch.referrer && touch.referrer.indexOf(location.host) === -1));
+    return { touch: touch, isNewTouch: isNewTouch };
+  }
+
+  function captureTouch() {
+    var found = currentTouch();
+    var store = readStore();
+    if (!store.firstTouch) store.firstTouch = found.touch;
+    if (found.isNewTouch || !store.lastTouch) store.lastTouch = found.touch;
+    writeStore(store);
+  }
+
+  function attribution() {
+    var store = readStore();
+    var fbc = readCookie('_fbc');
+    var fbp = readCookie('_fbp');
+    // The cookies are the freshest truth for click/browser ID, so they win over
+    // whatever was stored at first touch.
+    ['firstTouch', 'lastTouch'].forEach(function (key) {
+      if (!store[key]) return;
+      if (fbc) store[key].fbc = fbc;
+      if (fbp) store[key].fbp = fbp;
+    });
+    return {
+      anonymousId: anonymousId(),
+      firstTouch: store.firstTouch || null,
+      lastTouch: store.lastTouch || store.firstTouch || null
+    };
+  }
+
+  captureTouch();
+  var lastPath = location.pathname;
+  setInterval(function () {
+    if (location.pathname !== lastPath) {
+      lastPath = location.pathname;
+      captureTouch();
+    }
+  }, 800);
+
+  /* ── 2. Splice attribution into the order POST (runs OUTERMOST) ─────────── */
+
+  if (!XMLHttpRequest.prototype.__abAttrWrap) {
+    var _open = XMLHttpRequest.prototype.open;
+    var _send = XMLHttpRequest.prototype.send;
+
+    XMLHttpRequest.prototype.open = function (method, url) {
+      this._abAttrUrl = String(url || '');
+      return _open.apply(this, arguments);
+    };
+
+    XMLHttpRequest.prototype.send = function (body) {
+      try {
+        if (this._abAttrUrl && this._abAttrUrl.indexOf('add-order-by') !== -1 &&
+            typeof body === 'string' && body.charAt(0) === '{') {
+          var data = JSON.parse(body);
+          if (!data.attribution) {
+            data.attribution = attribution();
+            body = JSON.stringify(data);
+            arguments[0] = body;
+          }
+        }
+      } catch (e) { /* never block the order */ }
+      return _send.apply(this, arguments);
+    };
+
+    XMLHttpRequest.prototype.__abAttrWrap = true;
+  }
+
+  /* ── 3. Beacon the purchase the moment the browser pushes it ────────────── */
+
+  function reportPurchaseFired(orderId, eventId) {
+    try {
+      var payload = 'orderId=' + encodeURIComponent(orderId) +
+        '&eventId=' + encodeURIComponent(eventId || '');
+      var url = API_BASE + '/order/purchase-fired';
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(url, new Blob([payload], {
+          type: 'application/x-www-form-urlencoded'
+        }));
+        return;
+      }
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', url, true);
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      xhr.send(payload);
+    } catch (e) { /* telemetry only */ }
+  }
+
+  function alreadyReported(orderId) {
+    // The tag fires on every page and sweeps the existing dataLayer, so the same
+    // purchase entry can be seen more than once. The endpoint is idempotent, but
+    // there is no reason to keep re-sending it.
+    try {
+      var key = '_ab_pb_' + orderId;
+      if (sessionStorage.getItem(key)) return true;
+      sessionStorage.setItem(key, '1');
+      return false;
+    } catch (e) { return false; }
+  }
+
+  function handlePush(obj) {
+    if (!obj || obj.event !== 'purchase_stape') return;
+    var orderId = obj.ecommerce && obj.ecommerce.transaction_id;
+    if (!orderId) return;
+    if (!obj.event_id) obj.event_id = 'order_' + orderId;
+    if (alreadyReported(orderId)) return;
+    reportPurchaseFired(String(orderId), obj.event_id);
+  }
+
+  window.dataLayer = window.dataLayer || [];
+  if (!window.dataLayer.push.__abBeacon) {
+    var _push = window.dataLayer.push;
+    var wrapped = function () {
+      try {
+        for (var i = 0; i < arguments.length; i++) handlePush(arguments[i]);
+      } catch (e) { /* never break the dataLayer */ }
+      return _push.apply(this, arguments);
+    };
+    wrapped.__abBeacon = true;
+    // Preserve flags other wrappers set on push (index.html marks __stape).
+    if (_push.__stape) wrapped.__stape = true;
+    window.dataLayer.push = wrapped;
+  }
+
+  // A purchase already queued in sessionStorage may be pushed before this tag
+  // loads, so sweep anything sitting in the dataLayer at install time.
+  try {
+    for (var i = 0; i < window.dataLayer.length; i++) handlePush(window.dataLayer[i]);
+  } catch (e) {}
+})();
+</script>

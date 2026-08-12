@@ -60,6 +60,14 @@ const ObjectId = Types.ObjectId;
 const RECENT_BUYERS_TTL_MS = 120000; // 2 min
 const recentBuyersCache = new Map<string, { at: number; data: any[] }>();
 
+// A browser Purchase reaches Stape within seconds of the order POST. An order
+// still missing its beacon after this grace period never fired one, so the API
+// owns it. Long enough to absorb a slow thank-you page or a delayed beacon.
+const WEBSITE_PURCHASE_GRACE_MS = 20 * 60 * 1000;
+// Meta rejects CAPI events with an event_time older than 7 days. Stay a day
+// clear of the edge so a late-entered order is still accepted.
+const META_EVENT_MAX_AGE_MS = 6 * 24 * 60 * 60 * 1000;
+
 type ManualOrderSource =
   | 'whatsapp'
   | 'whatsapp_ad'
@@ -91,6 +99,8 @@ export class OrderService {
   private steadfastInReviewSyncResult: ResponsePayload | null = null;
   private steadfastMissingChargeSyncRunning = false;
   private steadfastMissingChargeSyncCompletedAt = 0;
+  private websitePurchaseGapFillRunning = false;
+  private beaconLiveSince: Date | null = null;
 
   constructor(
     @InjectModel('Admin') private readonly adminModel: Model<Admin>,
@@ -120,6 +130,7 @@ export class OrderService {
   ) {
     this.checkAndUpdateCourierStatus();
     this.scheduleManualMetaPurchaseRetries();
+    this.scheduleWebsitePurchaseGapFill();
   }
 
   private getSteadfastDeliveryCharge(payload: any): number | undefined {
@@ -207,8 +218,12 @@ export class OrderService {
       mData = { ...addOrderDto, ...dataExtra, ...adminData };
     }
 
+    // The admin panel ships as compiled dist and sends no manualOrderSource, so
+    // an unset value used to fall through to 'other' — the least attributable
+    // action_source Meta accepts. WhatsApp is what these orders actually are.
     const adminManualSource = this.normalizeManualOrderSource(
       addOrderDto.manualOrderSource,
+      'whatsapp',
     );
     mData.manualOrderSource = adminManualSource;
     mData.orderFrom =
@@ -483,13 +498,31 @@ export class OrderService {
     return this.addOrderAdmin(admin, manualOrderDto);
   }
 
-  async addOrder(addOrderDto: AddOrderDto): Promise<ResponsePayload> {
+  async addOrder(
+    addOrderDto: AddOrderDto,
+    req?: any,
+  ): Promise<ResponsePayload> {
     try {
       let newOrderMake: any;
       const fraudCheckerData: any = null;
       const orderInput: any = { ...addOrderDto };
       orderInput.orderFrom = 'Website';
       delete orderInput.manualOrderSource;
+
+      // Meta requires the same IP + user agent that produced fbc/fbp. Take them
+      // from the order request itself rather than trusting the client body, so a
+      // later server-side Purchase for this order matches what Meta expects.
+      if (req) {
+        orderInput.attribution = {
+          ...(orderInput.attribution || {}),
+          clientUserAgent:
+            orderInput.attribution?.clientUserAgent ||
+            req.headers?.['user-agent'],
+          clientIpAddress:
+            orderInput.attribution?.clientIpAddress ||
+            this.utilsService.getClientIp(req),
+        };
+      }
 
       // New Order Make
       // if (addOrderDto.user) {
@@ -1515,6 +1548,8 @@ export class OrderService {
     saveData: any,
     manualOrderSource: ManualOrderSource,
   ): Promise<void> {
+    if (await this.isDuplicateMetaPurchase(saveData)) return;
+
     const eventId = `order_${saveData.orderId}`;
     const staleSendingBefore = new Date(Date.now() - 10 * 60 * 1000);
     const claimedOrder: any = await this.orderModel.findOneAndUpdate(
@@ -1573,9 +1608,10 @@ export class OrderService {
         quantity: Math.max(1, Number(item.quantity) || 1),
         item_price: Number(item.unitPrice ?? item.salePrice ?? 0),
       }));
-      const eventTimestamp = new Date(
-        claimedOrder.createdAt || Date.now(),
-      ).getTime();
+      // Clamped, because createdAt on a manual order is when an admin typed it.
+      // A chat from four days ago entered today must still land inside the
+      // window Meta ingests instead of being rejected outright.
+      const eventTimeSeconds = this.metaEventTime(claimedOrder.createdAt);
       const contentIds = contents.map((item: any) => item.id);
       const tagiooUserData: any = {
         address: { country_code: 'BD' },
@@ -1616,7 +1652,7 @@ export class OrderService {
           await this.analyticsService.trackServerContainerEvent('purchase', {
             client_id: `admin.${String(claimedOrder._id)}`,
             event_id: eventId,
-            event_time: Math.floor(eventTimestamp / 1000),
+            event_time: eventTimeSeconds,
             transaction_id: String(claimedOrder.orderId),
             order_id: String(claimedOrder.orderId),
             currency: 'BDT',
@@ -1692,7 +1728,7 @@ export class OrderService {
 
       const payload: any = {
         event_name: 'Purchase',
-        event_time: Math.floor(eventTimestamp / 1000),
+        event_time: eventTimeSeconds,
         action_source: this.metaActionSource(manualOrderSource),
         event_id: eventId,
         custom_data: {
@@ -1765,7 +1801,381 @@ export class OrderService {
     }
   }
 
-  private normalizeManualOrderSource(value: any): ManualOrderSource {
+  /**
+   * Records that the storefront actually pushed purchase_stape for this order.
+   * Public and deliberately forgiving: a beacon is best-effort telemetry and
+   * must never surface an error to the buyer's browser.
+   */
+  async markBrowserPurchaseFired(body: {
+    orderId?: string;
+    transaction_id?: string;
+    eventId?: string;
+  }): Promise<ResponsePayload> {
+    const orderId = String(body?.orderId || body?.transaction_id || '').trim();
+    if (!orderId || orderId.length > 40) {
+      return { success: false, message: 'Missing order id' } as ResponsePayload;
+    }
+
+    const eventId = String(body?.eventId || '')
+      .trim()
+      .slice(0, 120);
+    const updated = await this.orderModel.updateOne(
+      { orderId, browserPurchaseFiredAt: { $exists: false } },
+      {
+        $set: {
+          browserPurchaseFiredAt: new Date(),
+          ...(eventId ? { browserPurchaseEventId: eventId } : {}),
+        },
+      },
+    );
+
+    return {
+      success: true,
+      message: updated.modifiedCount
+        ? 'Browser purchase recorded'
+        : 'Already recorded',
+    } as ResponsePayload;
+  }
+
+  /**
+   * Website orders reach Meta through the browser only: the storefront stashes
+   * the purchase payload in sessionStorage and pushes it when the buyer lands
+   * on the thank-you page. A closed tab or dropped connection loses that event
+   * permanently. This job sends a server-side Purchase for exactly those
+   * orders — never for one the beacon confirmed — so browser and server can
+   * not both report the same sale.
+   */
+  private scheduleWebsitePurchaseGapFill(): void {
+    if (this.isGapFillDisabled()) {
+      this.logger.warn(
+        'Website purchase gap-fill is disabled by META_GAP_FILL_DISABLED.',
+      );
+      return;
+    }
+
+    const run = () => {
+      this.fillMissingWebsitePurchases().catch((error) => {
+        this.logger.error(
+          'Website purchase gap-fill job failed:',
+          error?.message || error,
+        );
+      });
+    };
+
+    setTimeout(run, 20000);
+    schedule.scheduleJob('*/5 * * * *', run);
+  }
+
+  /**
+   * Kill switch for the gap-fill job. Pausing the GTM beacon tag alone is NOT a
+   * rollback — with no beacons arriving, every new order looks unreported and the
+   * job would send for all of them. Set META_GAP_FILL_DISABLED=true and restart
+   * to stop server-side Purchases without touching code.
+   */
+  private isGapFillDisabled(): boolean {
+    return String(process.env.META_GAP_FILL_DISABLED || '') === 'true';
+  }
+
+  private async fillMissingWebsitePurchases(): Promise<void> {
+    if (this.isGapFillDisabled()) return;
+    if (this.websitePurchaseGapFillRunning) return;
+    this.websitePurchaseGapFillRunning = true;
+    try {
+      const now = Date.now();
+      // Orders placed before the beacon snippet went live have no beacon for a
+      // harmless reason, and Stape almost certainly already reported them. Only
+      // orders newer than the first beacon we ever received are safe to judge,
+      // so this job arms itself and stays idle until the snippet is deployed.
+      // Cached after the first hit: browserPurchaseFiredAt carries no index, and
+      // this sorted lookup would otherwise scan and sort a growing slice of the
+      // orders collection every five minutes on a live site.
+      if (!this.beaconLiveSince) {
+        const firstBeacon: any = await this.orderModel
+          .findOne({ browserPurchaseFiredAt: { $exists: true } })
+          .select('browserPurchaseFiredAt')
+          .sort({ browserPurchaseFiredAt: 1 })
+          .lean();
+        if (!firstBeacon?.browserPurchaseFiredAt) return;
+        this.beaconLiveSince = new Date(firstBeacon.browserPurchaseFiredAt);
+      }
+      const beaconLiveSince = this.beaconLiveSince;
+
+      const candidates: any[] = await this.orderModel
+        .find({
+          orderFrom: 'Website',
+          createdAt: {
+            $gte: new Date(
+              Math.max(
+                now - META_EVENT_MAX_AGE_MS,
+                beaconLiveSince.getTime(),
+              ),
+            ),
+            $lte: new Date(now - WEBSITE_PURCHASE_GRACE_MS),
+          },
+          browserPurchaseFiredAt: { $exists: false },
+          $or: [
+            { metaPurchaseStatus: { $exists: false } },
+            {
+              metaPurchaseStatus: 'failed',
+              metaPurchaseAttemptCount: { $lt: 3 },
+            },
+          ],
+        })
+        .sort({ createdAt: 1 })
+        .limit(50);
+
+      if (!candidates.length) return;
+      this.logger.log(
+        `Website purchase gap-fill: ${candidates.length} order(s) without a browser Purchase.`,
+      );
+      for (const order of candidates) {
+        await this.sendWebsiteOrderToMeta(order);
+      }
+    } finally {
+      this.websitePurchaseGapFillRunning = false;
+    }
+  }
+
+  /**
+   * Sends one server-side Purchase for a website order whose browser event was
+   * lost. Uses the fbc/fbp captured with the order POST plus the request IP and
+   * user agent, so Meta can attribute it at ad level exactly like a browser
+   * event would have been.
+   */
+  private async sendWebsiteOrderToMeta(order: any): Promise<void> {
+    const eventId = `order_${order.orderId}`;
+    const staleSendingBefore = new Date(Date.now() - 10 * 60 * 1000);
+    const claimedOrder: any = await this.orderModel.findOneAndUpdate(
+      {
+        _id: order._id,
+        browserPurchaseFiredAt: { $exists: false },
+        $or: [
+          { metaPurchaseStatus: { $exists: false } },
+          { metaPurchaseStatus: 'failed' },
+          {
+            metaPurchaseStatus: 'sending',
+            metaPurchaseLastAttemptAt: { $lt: staleSendingBefore },
+          },
+        ],
+      },
+      {
+        $set: {
+          metaPurchaseStatus: 'sending',
+          metaPurchaseEventId: eventId,
+          metaPurchaseLastAttemptAt: new Date(),
+        },
+        $inc: { metaPurchaseAttemptCount: 1 },
+        $unset: { metaPurchaseError: 1 },
+      },
+      { new: true },
+    );
+
+    if (!claimedOrder) return;
+
+    try {
+      const analytics = await this.getMetaAnalyticsSettings();
+      const touch =
+        claimedOrder.attribution?.lastTouch ||
+        claimedOrder.attribution?.firstTouch ||
+        {};
+      const userData = this.buildMetaUserDataFromOrder(claimedOrder);
+      userData.client_ip_address =
+        claimedOrder.attribution?.clientIpAddress || undefined;
+      userData.client_user_agent =
+        claimedOrder.attribution?.clientUserAgent || undefined;
+      if (touch.fbc) userData.fbc = touch.fbc;
+      if (touch.fbp) userData.fbp = touch.fbp;
+      // A stored fbclid is still usable when the _fbc cookie itself was missed.
+      if (!userData.fbc && touch.fbclid) {
+        const clickedAt = touch.capturedAt
+          ? new Date(touch.capturedAt).getTime()
+          : new Date(claimedOrder.createdAt || Date.now()).getTime();
+        userData.fbc = `fb.1.${clickedAt}.${touch.fbclid}`;
+      }
+
+      const trackableItems = (claimedOrder.orderedItems || []).filter(
+        (item: any) => item?._id,
+      );
+      const contents = trackableItems.map((item: any) => ({
+        id: String(item._id),
+        quantity: Math.max(1, Number(item.quantity) || 1),
+        item_price: Number(item.unitPrice ?? item.salePrice ?? 0),
+      }));
+
+      const payload: any = {
+        event_name: 'Purchase',
+        event_time: this.metaEventTime(claimedOrder.createdAt),
+        action_source: 'website',
+        event_id: eventId,
+        event_source_url: touch.landingPage || 'https://amolbooks.com/',
+        custom_data: {
+          currency: 'BDT',
+          value: Number(claimedOrder.grandTotal || 0),
+          content_type: 'product',
+          content_ids: contents.map((item: any) => item.id),
+          contents,
+          order_id: String(claimedOrder.orderId),
+        },
+        user_data: userData,
+      };
+
+      const result = await this.postMetaPurchase(analytics, payload);
+      if (!result || Number(result.events_received) < 1) {
+        throw new Error('Meta did not acknowledge the gap-fill Purchase event');
+      }
+
+      await this.orderModel.updateOne(
+        { _id: claimedOrder._id, metaPurchaseEventId: eventId },
+        {
+          $set: {
+            metaPurchaseStatus: 'sent',
+            metaPurchaseSentAt: new Date(),
+            metaPurchaseDeliveryChannel: 'website_gap_fill',
+          },
+          $unset: { metaPurchaseError: 1 },
+        },
+      );
+      this.logger.log(
+        `Gap-fill Purchase sent for website order ${claimedOrder.orderId}`,
+      );
+    } catch (error) {
+      const message = String(error?.message || error).slice(0, 500);
+      await this.orderModel.updateOne(
+        { _id: claimedOrder._id, metaPurchaseEventId: eventId },
+        { $set: { metaPurchaseStatus: 'failed', metaPurchaseError: message } },
+      );
+      this.logger.warn(
+        `Gap-fill Purchase failed for website order ${claimedOrder.orderId}: ${message}`,
+      );
+    }
+  }
+
+  private metaHash(value: string): string {
+    return crypto
+      .createHash('sha256')
+      .update(String(value).trim().toLowerCase())
+      .digest('hex');
+  }
+
+  private normalizedBdPhone(phoneNo: any): string {
+    const digits = String(phoneNo || '').replace(/\D/g, '');
+    if (digits.length < 3) return '';
+    return digits.startsWith('88') ? digits : `88${digits}`;
+  }
+
+  /**
+   * Clamps an order's timestamp into the window Meta accepts, so a purchase
+   * entered days after the fact is still ingested instead of rejected.
+   */
+  private metaEventTime(createdAt: any): number {
+    const now = Date.now();
+    const raw = new Date(createdAt || now).getTime();
+    const usable = Number.isFinite(raw) ? raw : now;
+    const floor = now - META_EVENT_MAX_AGE_MS;
+    return Math.floor(Math.min(Math.max(usable, floor), now) / 1000);
+  }
+
+  private buildMetaUserDataFromOrder(order: any): any {
+    const userData: any = {};
+    const phone = this.normalizedBdPhone(order.phoneNo);
+    const nameParts = String(order.name || '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+
+    if (order.attribution?.anonymousId) {
+      userData.external_id = String(order.attribution.anonymousId);
+    } else if (order.user) {
+      userData.external_id = `user_${String(order.user)}`;
+    } else if (phone) {
+      userData.external_id = `customer_${this.metaHash(phone)}`;
+    }
+    if (phone) userData.ph = this.metaHash(phone);
+    if (order.email) userData.em = this.metaHash(order.email);
+    if (nameParts[0]) userData.fn = this.metaHash(nameParts[0]);
+    if (nameParts.length > 1) {
+      userData.ln = this.metaHash(nameParts.slice(1).join(''));
+    }
+    if (order.city) userData.ct = this.metaHash(order.city);
+    userData.country = this.metaHash('bd');
+    return userData;
+  }
+
+  private async getMetaAnalyticsSettings(): Promise<any> {
+    const fSetting = await this.settingModel.findOne().select('analytics');
+    const analytics: any = fSetting?.analytics;
+    if (!analytics?.facebookPixelId || !analytics?.facebookPixelAccessToken) {
+      throw new Error('Meta Pixel ID or access token is not configured');
+    }
+    return analytics;
+  }
+
+  private async postMetaPurchase(analytics: any, payload: any): Promise<any> {
+    const requestData =
+      analytics.isEnablePixelTestEvent && analytics.facebookPixelTestEventId
+        ? {
+            data: [payload],
+            test_event_code: analytics.facebookPixelTestEventId,
+          }
+        : { data: [payload] };
+
+    let result: any = null;
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      result = await this.analyticsService.trackFbConversionEventClient(
+        analytics.facebookPixelId,
+        analytics.facebookPixelAccessToken,
+        requestData,
+      );
+      if (result && Number(result.events_received) >= 1) break;
+      if (attempt < 3) {
+        await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+      }
+    }
+    return result;
+  }
+
+  /**
+   * True when this manual order looks like a re-entry of a purchase Meta has
+   * already been told about — same phone, same total, inside a day. Guards the
+   * case where a customer chats on WhatsApp and also completes checkout on the
+   * site, which would otherwise report one sale twice under two order IDs.
+   */
+  private async isDuplicateMetaPurchase(order: any): Promise<boolean> {
+    const phone = this.normalizedBdPhone(order.phoneNo);
+    if (!phone) return false;
+    const digits = phone.replace(/^88/, '');
+    const since = new Date(
+      new Date(order.createdAt || Date.now()).getTime() - 24 * 60 * 60 * 1000,
+    );
+
+    const twin = await this.orderModel
+      .findOne({
+        _id: { $ne: order._id },
+        phoneNo: { $regex: `${digits}$` },
+        grandTotal: order.grandTotal,
+        createdAt: { $gte: since },
+        $or: [
+          { metaPurchaseStatus: 'sent' },
+          { browserPurchaseFiredAt: { $exists: true } },
+        ],
+      })
+      .select('orderId')
+      .lean();
+
+    if (twin) {
+      this.logger.warn(
+        `Order ${order.orderId} skipped for Meta: same phone and total as already-reported order ${
+          (twin as any).orderId
+        }`,
+      );
+    }
+    return !!twin;
+  }
+
+  private normalizeManualOrderSource(
+    value: any,
+    fallback: ManualOrderSource = 'other',
+  ): ManualOrderSource {
     const allowed: ManualOrderSource[] = [
       'whatsapp',
       'whatsapp_ad',
@@ -1776,7 +2186,7 @@ export class OrderService {
       'walk_in',
       'other',
     ];
-    return allowed.includes(value) ? value : 'other';
+    return allowed.includes(value) ? value : fallback;
   }
 
   private manualOrderLabel(source: ManualOrderSource): string {
@@ -2126,6 +2536,11 @@ export class OrderService {
         landingPage: text(input.landingPage),
         referrer: text(input.referrer),
         fbclid: text(input.fbclid, 300),
+        // Meta click/browser cookies, forwarded by the storefront snippet.
+        // These are what make a server-side Purchase attributable at ad level,
+        // so they must survive normalization.
+        fbc: text(input.fbc, 300),
+        fbp: text(input.fbp, 300),
         capturedAt: input.capturedAt ? new Date(input.capturedAt) : undefined,
       };
     };
@@ -2133,6 +2548,8 @@ export class OrderService {
       anonymousId: text(value.anonymousId, 120),
       firstTouch: touch(value.firstTouch),
       lastTouch: touch(value.lastTouch),
+      clientUserAgent: text(value.clientUserAgent, 500),
+      clientIpAddress: text(value.clientIpAddress, 60),
     };
   }
 
@@ -2300,22 +2717,24 @@ export class OrderService {
   async addOrderByUser(
     addOrderDto: AddOrderDto,
     user: User,
+    req?: any,
   ): Promise<ResponsePayload> {
     // Add user ID on order dto
     if (user) {
       addOrderDto.user = user._id;
     }
-    return this.addOrder(addOrderDto);
+    return this.addOrder(addOrderDto, req);
   }
 
   async addOrderByAnonymous(
     addOrderDto: AddOrderDto,
+    req?: any,
   ): Promise<ResponsePayload> {
     // Add user ID on order dto
     // if (user) {
     //   addOrderDto.user = user._id;
     // }
-    return this.addOrder(addOrderDto);
+    return this.addOrder(addOrderDto, req);
   }
 
   async updateDate(): Promise<ResponsePayload> {

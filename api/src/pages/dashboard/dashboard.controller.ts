@@ -16,6 +16,7 @@ import {
 } from "@nestjs/common";
 import { DashboardService } from './dashboard.service';
 import { DecisionDashboardService } from './decision-dashboard.service';
+import { MetaTrackingHealthService } from './meta-tracking-health.service';
 import { AdminRolesGuard } from '../../guards/admin-roles.guard';
 import { AdminRoles } from '../../enum/admin-roles.enum';
 import { AdminMetaRoles } from '../../decorator/admin-roles.decorator';
@@ -30,7 +31,23 @@ export class DashboardController {
   constructor(
     private dashboardService: DashboardService,
     private decisionDashboardService: DecisionDashboardService,
+    private metaTrackingHealthService: MetaTrackingHealthService,
   ) {}
+
+  /**
+   * Per-day view of whether Meta actually received a Purchase for each order,
+   * and by which path. Meta's own coverage stats cannot show lost events.
+   */
+  @Version(VERSION_NEUTRAL)
+  @Get('meta-tracking-health')
+  @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @UseGuards(AdminRolesGuard)
+  @UseGuards(AdminJwtAuthGuard)
+  async getMetaTrackingHealth(
+    @Query('days') days: string,
+  ): Promise<ResponsePayload> {
+    return await this.metaTrackingHealthService.getMetaTrackingHealth(days);
+  }
 
   /**
    * GET
