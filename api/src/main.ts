@@ -232,7 +232,19 @@ async function bootstrap() {
     if(window.location.pathname.indexOf('order-success')!==-1){
       loadGtm();
     }else{
-      window.addEventListener('load',function(){setTimeout(loadGtm,10000);});
+      // Deferred until after first paint, but no longer on a 10s timer. That
+      // timer meant the single DOM-Ready page_view landed on whichever route
+      // the visitor had already navigated to, not the page they arrived on —
+      // and a visitor who left inside 10s was never counted at all. Load at
+      // window load, or at the first interaction if that happens sooner.
+      var started=false;
+      var start=function(){if(started)return;started=true;loadGtm();};
+      if(document.readyState==='complete'){start();}
+      else{window.addEventListener('load',start);}
+      var wake=['pointerdown','keydown','touchstart'];
+      for(var w=0;w<wake.length;w++){
+        window.addEventListener(wake[w],start,{once:true,passive:true});
+      }
     }
   })();`;
   const storefrontPendingPurchaseHelperMarker =
