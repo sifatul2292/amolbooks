@@ -146,18 +146,12 @@
         transactionId = ec.transaction_id;
       }
 
-      // Normalize event_id — overwrite unconditionally, never conditionally.
-      //
-      // Every consumer deduplicates on `order_<orderId>`: the storefront's own
-      // purchase_stape push (index.html), the Tagioo container (its
-      // "Tagioo - event_id" variable reads this event_id first), and the
-      // server-side CAPI Purchase in order.service.ts. Angular mints its own
-      // random id like "1786521197711_178652120545233", which matched neither
-      // of the old conditions and passed through untouched — so Meta received
-      // the browser and server events under different keys and could not
-      // collapse them into one sale.
-      if (transactionId) {
-        obj.event_id = 'order_' + transactionId;
+      // Normalize event_id
+      if (transactionId && obj.event_id && String(obj.event_id) === String(transactionId)) {
+        obj.event_id = 'purchase_' + transactionId;
+      }
+      if (transactionId && !obj.event_id) {
+        obj.event_id = 'purchase_' + transactionId;
       }
 
       // ── Duplicate purchase guard ───────────────────────────────────
