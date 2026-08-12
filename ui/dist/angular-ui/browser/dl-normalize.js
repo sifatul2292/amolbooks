@@ -240,15 +240,19 @@
   }
 
   // ── dataLayer.push patch ──────────────────────────────────────────────────
-  // GTM overwrites dataLayer.push when it initializes. We must wrap AFTER GTM.
-  // Strategy: patch now (catches any pre-GTM pushes), then re-patch on window
-  // load (wraps GTM's push so all Angular events are normalized before GTM
-  // processes them).
+  // GTM replaces window.dataLayer.push outright when it initializes, which
+  // silently discarded this normalizer. Re-patching on `window load` was a race
+  // and it lost on /checkout/order-success, where index.html starts GTM
+  // immediately instead of waiting for load — GTM's overwrite landed after the
+  // re-patch, so Angular's purchase event reached GTM unnormalized and kept its
+  // random event_id.
+  //
+  // An accessor removes the race entirely: any later assignment to
+  // dataLayer.push is wrapped instead of replacing us, so it does not matter
+  // whether GTM initializes before or after this file.
 
-  function installPatch() {
-    var _prevPush = window.dataLayer.push;
-    // Avoid double-wrapping if already patched
-    if (_prevPush && _prevPush._amolNormalized) return;
+  function wrapPush(rawPush) {
+    if (!rawPush || rawPush._amolNormalized) return rawPush;
 
     var patchedPush = function () {
       var args = Array.prototype.slice.call(arguments);
@@ -266,18 +270,35 @@
         }
       }
       if (filtered.length === 0) return window.dataLayer.length;
-      return _prevPush.apply(window.dataLayer, filtered);
+      return rawPush.apply(window.dataLayer, filtered);
     };
     patchedPush._amolNormalized = true;
-    window.dataLayer.push = patchedPush;
-    console.log('[amol-dl] dataLayer.push patched');
+    return patchedPush;
+  }
+
+  function installPatch() {
+    var current = wrapPush(window.dataLayer.push);
+    try {
+      Object.defineProperty(window.dataLayer, 'push', {
+        configurable: true,
+        enumerable: false,
+        get: function () { return current; },
+        set: function (next) { current = wrapPush(next); },
+      });
+      console.log('[amol-dl] dataLayer.push patched (assignment-guarded)');
+    } catch (e) {
+      // Older engine without configurable redefinition — fall back to the
+      // plain assignment plus the window-load re-patch below.
+      window.dataLayer.push = current;
+      console.log('[amol-dl] dataLayer.push patched');
+    }
   }
 
   // Patch now (pre-GTM, covers early pushes)
   installPatch();
 
-  // Re-patch after window load — GTM will have initialized by then,
-  // so we wrap GTM's push instead of the native array push.
+  // Safety net for the defineProperty fallback path only; a no-op once the
+  // accessor is installed, since the wrap survives on its own by then.
   window.addEventListener('load', function () {
     installPatch();
   });
