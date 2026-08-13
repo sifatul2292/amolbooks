@@ -37,6 +37,15 @@ export class AddIncompleteOrderDto {
   shippingAddress?: string;
 
   @IsOptional()
+  division?: any;
+
+  @IsOptional()
+  area?: any;
+
+  @IsOptional()
+  zone?: any;
+
+  @IsOptional()
   @IsString()
   paymentType?: string;
 
@@ -112,6 +121,15 @@ export class UpdateIncompleteOrderDto {
   @IsOptional()
   @IsString()
   shippingAddress?: string;
+
+  @IsOptional()
+  division?: any;
+
+  @IsOptional()
+  area?: any;
+
+  @IsOptional()
+  zone?: any;
 
   @IsOptional()
   @IsString()

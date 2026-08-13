@@ -2722,7 +2722,7 @@
         ? '<a href="tel:'+esc(phone)+'"><i class="fas fa-phone" style="font-size:10px;margin-right:4px"></i>'+esc(phone)+'</a>'
         : '—';
 
-      document.getElementById('modalAddress').textContent = order.shippingAddress||order.address||'—';
+      document.getElementById('modalAddress').textContent = rowAddress(order);
       var dc = Number(order.deliveryCharge||0);
       document.getElementById('modalShippingMethod').textContent = order.shippingMethod||order.deliveryZone||(dc<=60?'ঢাকার ভিতরে':'ঢাকার বাইরে');
 
@@ -2962,7 +2962,7 @@
           '<td><span class="order-no">'+esc(o.orderId||o._id.slice(-6))+'</span></td>',
           '<td>'+phoneCell(o.phoneNo)+'</td>',
           '<td style="font-weight:600">'+esc(o.name||'—')+'</td>',
-          '<td style="max-width:220px;word-break:break-word;line-height:1.5;font-size:12px">'+esc(o.shippingAddress||o.city||'—')+'</td>',
+          '<td style="max-width:220px;word-break:break-word;line-height:1.5;font-size:12px">'+esc(rowAddress(o))+'</td>',
           '<td>'+fmtDate(o.createdAt||o.checkoutDate)+'</td>',
           '<td><strong style="color:var(--p);font-size:13.5px">৳'+Number(o.grandTotal||0).toLocaleString()+'</strong></td>',
           '<td>'+incompleteCourierCell(o)+'</td>',
@@ -2988,7 +2988,7 @@
         '<td><a href="'+ADMIN_URL+'/sales/order-details/'+o._id+'" target="_blank" class="order-no">#'+esc(o.orderId||o._id.slice(-6))+'</a></td>',
         '<td>'+phoneCell(o.phoneNo)+'</td>',
         '<td style="font-weight:600">'+esc(o.name||'—')+'</td>',
-        '<td><div style="max-width:200px;word-break:break-word;line-height:1.5;font-size:12px">'+esc(o.shippingAddress||'—')+'</div></td>',
+        '<td><div style="max-width:200px;word-break:break-word;line-height:1.5;font-size:12px">'+esc(rowAddress(o))+'</div></td>',
         '<td>'+fmtDate(o.createdAt||o.checkoutDate)+'</td>',
         '<td><strong style="color:var(--p);font-size:13.5px">৳'+Number(o.grandTotal||0).toLocaleString()+'</strong></td>',
         '<td>'+courierCell+'</td>',
@@ -3070,6 +3070,23 @@
       var quantity = Number(item.quantity || item.selectedQty || 1);
       return '<div class="product-line"><b>'+(index+1)+'.</b> '+esc(item.name || 'Unnamed product')+' <strong>×'+quantity+'</strong></div>';
     }).join('');
+  }
+
+  /* Row address: typed street first, then whatever location the customer had
+     picked. An abandoned checkout often has one but not the other. */
+  function rowAddress(order) {
+    var street = (order.shippingAddress || '').trim();
+    var place = [
+      order.area && (order.area.name || order.area),
+      order.zone && (order.zone.name || order.zone),
+      order.division && (order.division.name || order.division),
+      order.city,
+    ].filter(function(value){ return value && typeof value === 'string' && value.trim(); })
+     .map(function(value){ return value.trim(); });
+    var parts = (street ? [street] : []).concat(place);
+    return parts.filter(function(value, index){
+      return parts.findIndex(function(other){ return other.toLowerCase() === value.toLowerCase(); }) === index;
+    }).join(', ') || '—';
   }
 
   function labelAddress(order) {
@@ -3398,7 +3415,7 @@
         isIncompleteView ? '' : ((o.courierStatus&&o.courierStatus.status)||''),
         isIncompleteView ? '' : ((o.courierStatus&&o.courierStatus.deliveryCharge)!=null?o.courierStatus.deliveryCharge:''),
         o.grandTotal||0,
-        '"'+(o.shippingAddress||'').replace(/"/g,'""')+'"',
+        '"'+(rowAddress(o)==='—'?'':rowAddress(o)).replace(/"/g,'""')+'"',
       ].join(',');
     });
     var csv=[headers.join(',')].concat(rows).join('\n');

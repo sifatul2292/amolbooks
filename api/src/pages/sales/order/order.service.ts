@@ -4988,10 +4988,93 @@ export class OrderService {
   /**
    * Incomplete Order Methods
    */
+  // A single abandoned checkout fires several "add" calls: the compiled
+  // storefront posts on every debounced form change and only switches to the
+  // update route once the first response comes back with an _id. Every extra
+  // post used to create its own row holding whatever was typed at that instant
+  // (usually phone only, address still blank), so one customer produced several
+  // rows and the real address landed on whichever row won the race. Merge those
+  // posts into the newest still-open row for the same phone instead.
+  private static readonly INCOMPLETE_ORDER_MERGE_WINDOW_MS = 6 * 60 * 60 * 1000;
+
+  private static readonly INCOMPLETE_ORDER_MERGE_FIELDS = [
+    'orderId',
+    'name',
+    'phoneNo',
+    'email',
+    'city',
+    'shippingAddress',
+    'division',
+    'area',
+    'zone',
+    'paymentType',
+    'paymentStatus',
+    'grandTotal',
+    'subTotal',
+    'discount',
+    'deliveryCharge',
+    'orderedItems',
+    'note',
+    'checkoutDate',
+    'user',
+  ];
+
+  // Only fill in values that actually carry information. A later post must never
+  // blank out an address/name the customer already typed, and a 0 total from an
+  // empty-cart snapshot must never replace a real total.
+  private buildIncompleteOrderMergePatch(
+    addIncompleteOrderDto: AddIncompleteOrderDto,
+  ): Record<string, any> {
+    const dto = addIncompleteOrderDto as Record<string, any>;
+    return OrderService.INCOMPLETE_ORDER_MERGE_FIELDS.reduce((patch, field) => {
+      const incoming = dto?.[field];
+      if (incoming === undefined || incoming === null) return patch;
+      if (typeof incoming === 'string' && !incoming.trim()) return patch;
+      if (typeof incoming === 'number' && (!Number.isFinite(incoming) || incoming === 0))
+        return patch;
+      if (Array.isArray(incoming) && !incoming.length) return patch;
+      patch[field] = incoming;
+      return patch;
+    }, {} as Record<string, any>);
+  }
+
   async addIncompleteOrder(
     addIncompleteOrderDto: AddIncompleteOrderDto,
   ): Promise<ResponsePayload> {
     try {
+      const phoneNo = String(addIncompleteOrderDto?.phoneNo || '').trim();
+      if (phoneNo) {
+        const existing = await this.incompleteOrderModel
+          .findOne({
+            phoneNo,
+            status: { $ne: 'converted' },
+            createdAt: {
+              $gte: new Date(
+                Date.now() - OrderService.INCOMPLETE_ORDER_MERGE_WINDOW_MS,
+              ),
+            },
+          })
+          .sort({ createdAt: -1 })
+          .select({ _id: 1 });
+
+        if (existing) {
+          const patch = this.buildIncompleteOrderMergePatch(
+            addIncompleteOrderDto,
+          );
+          if (Object.keys(patch).length) {
+            await this.incompleteOrderModel.updateOne(
+              { _id: existing._id },
+              { $set: patch },
+            );
+          }
+          return {
+            success: true,
+            message: 'Incomplete order saved successfully',
+            data: { _id: existing._id },
+          } as ResponsePayload;
+        }
+      }
+
       const newData = new this.incompleteOrderModel(addIncompleteOrderDto);
       const saveData = await newData.save();
 
@@ -5227,6 +5310,9 @@ export class OrderService {
         'email',
         'city',
         'shippingAddress',
+        'division',
+        'area',
+        'zone',
         'paymentType',
         'paymentStatus',
         'deliveryCharge',
@@ -5250,6 +5336,9 @@ export class OrderService {
       'email',
       'city',
       'shippingAddress',
+      'division',
+      'area',
+      'zone',
       'paymentType',
       'paymentStatus',
       'deliveryCharge',
@@ -5272,9 +5361,24 @@ export class OrderService {
     try {
       const dto = updateIncompleteOrderDto as Record<string, any>;
       const updateData = editableFields.reduce((result, field) => {
-        if (Object.prototype.hasOwnProperty.call(dto || {}, field)) {
-          result[field] = dto[field];
+        if (!Object.prototype.hasOwnProperty.call(dto || {}, field)) {
+          return result;
         }
+        const value = dto[field];
+        // The storefront re-posts the whole form on every debounced change, so a
+        // snapshot taken before the customer finished typing would otherwise wipe
+        // fields that are already filled in. Admin edits (allowConverted) may
+        // still clear a field on purpose.
+        if (
+          !allowConverted &&
+          typeof value === 'string' &&
+          !value.trim() &&
+          field !== 'adminNote' &&
+          field !== 'note'
+        ) {
+          return result;
+        }
+        result[field] = value;
         return result;
       }, {} as Record<string, any>);
 

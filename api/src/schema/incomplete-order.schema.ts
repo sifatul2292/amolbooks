@@ -28,6 +28,21 @@ export const IncompleteOrderSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    // The checkout sends division/area/zone alongside the typed address. Mongoose
+    // used to drop them (not in the schema), so a row where the customer picked a
+    // location but had not typed the street yet showed no address at all.
+    division: {
+      type: Schema.Types.Mixed,
+      required: false,
+    },
+    area: {
+      type: Schema.Types.Mixed,
+      required: false,
+    },
+    zone: {
+      type: Schema.Types.Mixed,
+      required: false,
+    },
     paymentType: {
       type: String,
       required: false,
