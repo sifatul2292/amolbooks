@@ -43,10 +43,14 @@ export const STOREFRONT_ATTRIBUTION_SCRIPT = String.raw`(function (root) {
       if (referrer && new URL(referrer).hostname !== root.location.hostname) externalReferrer = referrer;
     } catch (_) {}
     var fbclid = param(search, ['fbclid']);
+    var gclid = param(search, ['gclid']);
+    var wbraid = param(search, ['wbraid']);
+    var gbraid = param(search, ['gbraid']);
     var fbc = cookie('_fbc');
     var fbp = cookie('_fbp');
     var source = param(search, ['utm_source']);
     if (!source && fbclid) source = 'facebook';
+    if (!source && (gclid || wbraid || gbraid)) source = 'google';
     if (!source && externalReferrer) {
       try { source = new URL(externalReferrer).hostname.replace(/^www\./, ''); } catch (_) {}
     }
@@ -62,10 +66,13 @@ export const STOREFRONT_ATTRIBUTION_SCRIPT = String.raw`(function (root) {
       landingPage: root.location.href.slice(0, 500),
       referrer: externalReferrer.slice(0, 500),
       fbclid: fbclid,
+      gclid: gclid,
+      wbraid: wbraid,
+      gbraid: gbraid,
       fbc: fbc,
       fbp: fbp,
       capturedAt: new Date().toISOString(),
-      hasCampaignSignal: !!(source || fbclid || externalReferrer)
+      hasCampaignSignal: !!(source || fbclid || gclid || wbraid || gbraid || externalReferrer)
     };
   }
 

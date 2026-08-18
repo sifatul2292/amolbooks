@@ -70,6 +70,23 @@ climbs from 17 toward the real ~46.
 
 ## Completed this session
 
+### Order-list UTM/source visibility
+
+- Added a durable `orderOrigin` value for new orders: `website`, `incomplete`,
+  or `admin`.
+- The custom order list now includes a **UTM / Source** column. Website orders
+  show the normalized last-touch source (Facebook, Instagram, Google, Direct,
+  or the captured referral/UTM source), plus medium and campaign when present.
+  Recovered abandoned checkouts show **Incomplete Order** and manually entered
+  orders show **Admin**.
+- Storefront attribution now recognizes Google Ads auto-tagging (`gclid`,
+  `wbraid`, and `gbraid`) even when `utm_source` is absent, and preserves those
+  identifiers on incomplete and completed orders.
+- Historical rows use `orderFrom` / `manualOrderSource` fallback inference, and
+  the CSV export now includes source, UTM medium, and UTM campaign.
+- Verified the inline page scripts and a clean Nest build. Repository lint still
+  exits because its configured TypeScript glob is globally ignored.
+
 ### Purchase still doubled and InitiateCheckout value was zero
 
 A later live test made both remaining paths explicit. Purchase `order_7017`

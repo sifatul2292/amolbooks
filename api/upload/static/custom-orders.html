@@ -365,6 +365,21 @@
     .phone-cell { white-space: nowrap; }
     .phone-link { font-weight: 600; font-size: 12px; color: #0284c7; text-decoration: none; }
     .phone-link:hover { text-decoration: underline; }
+    .source-cell { min-width: 112px; line-height: 1.25; }
+    .source-badge {
+      display: inline-flex; align-items: center; gap: 5px; max-width: 150px;
+      border-radius: 999px; padding: 4px 8px; font-size: 10.5px;
+      font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe;
+    }
+    .source-badge.source-incomplete { background:#fff7ed; color:#c2410c; border-color:#fed7aa; }
+    .source-badge.source-admin { background:#f1f5f9; color:#475569; border-color:#cbd5e1; }
+    .source-badge.source-facebook { background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe; }
+    .source-badge.source-google { background:#f0fdf4; color:#15803d; border-color:#bbf7d0; }
+    .source-detail {
+      display:block; max-width:150px; margin-top:3px; color:#64748b;
+      font-size:9.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
     .repeat-badge {
       display: inline-block; padding: 1px 6px; border-radius: 20px;
       font-size: 10px; font-weight: 800; color: #fff; margin-left: 4px;
@@ -844,14 +859,14 @@
       thead th:nth-child(13), thead th:nth-child(14),
       thead th:nth-child(15), thead th:nth-child(16),
       thead th:nth-child(17), thead th:nth-child(18),
-      thead th:nth-child(19),
+      thead th:nth-child(19), thead th:nth-child(20),
       tbody td:nth-child(5), tbody td:nth-child(6),
       tbody td:nth-child(8), tbody td:nth-child(9),
       tbody td:nth-child(10), tbody td:nth-child(11),
       tbody td:nth-child(13), tbody td:nth-child(14),
       tbody td:nth-child(15), tbody td:nth-child(16),
       tbody td:nth-child(17), tbody td:nth-child(18),
-      tbody td:nth-child(19) { display: none; }
+      tbody td:nth-child(19), tbody td:nth-child(20) { display: none; }
       tbody td:nth-child(2) { white-space: nowrap; }
       tbody td:nth-child(3) { max-width: 96px; overflow: hidden; text-overflow: ellipsis; }
       tbody td:nth-child(4) { max-width: 76px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1554,6 +1569,7 @@
                 <th>Pay Type</th>
                 <th>Pay Status</th>
                 <th>Status</th>
+                <th>UTM / Source</th>
                 <th>Order By</th>
                 <th>Invoice</th>
                 <th>Customer Note</th>
@@ -1562,7 +1578,7 @@
             </thead>
             <tbody id="ordersBody">
               <tr class="loading-row">
-                <td colspan="19"><div class="spinner"></div><div>Loading orders…</div></td>
+                <td colspan="20"><div class="spinner"></div><div>Loading orders…</div></td>
               </tr>
             </tbody>
           </table>
@@ -2225,6 +2241,7 @@
         courierLink:1, fraudChecker:1, admin:1, user:1, deliveryDate:1, orderedItems:1,
         division:1, area:1, zone:1,
         note:1, adminNote:1, city:1, status:1, email:1,
+        orderOrigin:1, orderFrom:1, manualOrderSource:1, attribution:1,
       },
     };
     if (isIncompleteView) {
@@ -2269,7 +2286,7 @@
     .catch(function(err){
       if (err.message === 'Unauthorized') return;
       document.getElementById('ordersBody').innerHTML =
-        '<tr class="empty-row"><td colspan="19"><i class="fas fa-exclamation-triangle" style="color:#ef4444;font-size:22px;display:block;margin-bottom:10px"></i>Failed to load orders<br><small style="color:#94a3b8">' + err.message + '</small></td></tr>';
+        '<tr class="empty-row"><td colspan="20"><i class="fas fa-exclamation-triangle" style="color:#ef4444;font-size:22px;display:block;margin-bottom:10px"></i>Failed to load orders<br><small style="color:#94a3b8">' + err.message + '</small></td></tr>';
       ['totalOrders','totalAmount'].forEach(function(id){ document.getElementById(id).textContent = '—'; });
       document.getElementById('paginationInfo').textContent = '';
     });
@@ -2928,10 +2945,68 @@
     return '<button class="btn-courier" onclick="sendIncompleteToCourier(\''+o._id+'\')"><i class="fas fa-truck"></i> Send</button>';
   }
 
+  function marketingSourceInfo(o) {
+    var attribution = (o && o.attribution) || {};
+    var touch = attribution.lastTouch || attribution.firstTouch || {};
+    var raw = String(touch.source || '').trim();
+    var lower = raw.toLowerCase();
+    var label = raw || 'Direct';
+    var kind = 'website';
+    if (lower === 'fb' || lower.indexOf('facebook') !== -1 || lower.indexOf('meta') !== -1) {
+      label = 'Facebook'; kind = 'facebook';
+    } else if (lower.indexOf('instagram') !== -1 || lower === 'ig') {
+      label = 'Instagram'; kind = 'facebook';
+    } else if (lower.indexOf('google') !== -1 || lower.indexOf('adwords') !== -1) {
+      label = 'Google'; kind = 'google';
+    } else if (lower === 'direct' || lower === '(direct)' || lower === 'none') {
+      label = 'Direct';
+    } else if (!raw) {
+      label = 'Website';
+    }
+    var details = [];
+    if (touch.medium && touch.medium !== 'none') details.push(String(touch.medium));
+    if (touch.campaign) details.push(String(touch.campaign));
+    return { label: label, kind: kind, detail: details.join(' · ') };
+  }
+
+  function orderSourceInfo(o) {
+    if (isIncompleteView) {
+      var incompleteMarketing = marketingSourceInfo(o);
+      var incompleteDetail = incompleteMarketing.label !== 'Website' && incompleteMarketing.label !== 'Direct'
+        ? 'From ' + incompleteMarketing.label + (incompleteMarketing.detail ? ' · ' + incompleteMarketing.detail : '')
+        : '';
+      return { label:'Incomplete Order', kind:'incomplete', detail:incompleteDetail };
+    }
+    var origin = String((o && o.orderOrigin) || '').toLowerCase();
+    var orderFrom = String((o && o.orderFrom) || '').toLowerCase();
+    var manualSource = String((o && o.manualOrderSource) || '').toLowerCase();
+    if (origin === 'incomplete' || (!origin && manualSource === 'phone')) {
+      var recoveredMarketing = marketingSourceInfo(o);
+      var recoveredDetail = recoveredMarketing.label !== 'Website' && recoveredMarketing.label !== 'Direct'
+        ? 'From ' + recoveredMarketing.label + (recoveredMarketing.detail ? ' · ' + recoveredMarketing.detail : '')
+        : '';
+      return { label:'Incomplete Order', kind:'incomplete', detail:recoveredDetail };
+    }
+    if (origin === 'admin' || (!origin && orderFrom && orderFrom !== 'website')) {
+      var adminDetail = manualSource ? manualSource.replace(/_/g, ' ') : '';
+      return { label:'Admin', kind:'admin', detail:adminDetail };
+    }
+    return marketingSourceInfo(o);
+  }
+
+  function sourceCell(o) {
+    var info = orderSourceInfo(o);
+    var title = info.detail ? info.label + ' — ' + info.detail : info.label;
+    return '<div class="source-cell" title="'+esc(title)+'">'
+      + '<span class="source-badge source-'+info.kind+'">'+esc(info.label)+'</span>'
+      + (info.detail ? '<span class="source-detail">'+esc(info.detail)+'</span>' : '')
+      + '</div>';
+  }
+
   function renderTable(orders, total) {
     var tbody=document.getElementById('ordersBody');
     if (!orders.length) {
-      tbody.innerHTML='<tr class="empty-row"><td colspan="19"><i class="fas fa-inbox" style="font-size:32px;color:#cbd5e1;display:block;margin-bottom:10px"></i>No orders found</td></tr>';
+      tbody.innerHTML='<tr class="empty-row"><td colspan="20"><i class="fas fa-inbox" style="font-size:32px;color:#cbd5e1;display:block;margin-bottom:10px"></i>No orders found</td></tr>';
       return;
     }
     var offset=state.page*state.pageSize;
@@ -2975,6 +3050,7 @@
           '<td>'+(o.status === 'converted'
             ? '<span class="badge" style="background:#cffafe;color:#0e7490;border:1px solid #a5f3fc">Converted</span>'
             : '<span class="badge badge-pending">'+esc(incompleteStatus)+'</span>')+'</td>',
+          '<td>'+sourceCell(o)+'</td>',
           '<td><small style="color:#64748b">'+(o.user?'User':'Guest')+'</small></td>',
           '<td><span style="color:#94a3b8;font-size:11px">—</span></td>',
           '<td><div class="note-cell">'+(o.note?'<span class="customer-note-text">'+esc(o.note)+'</span>':'<span style="color:#94a3b8;font-size:11px">—</span>')+'</div></td>',
@@ -2999,6 +3075,7 @@
         '<td>'+payTypeBadge(o.paymentType)+'</td>',
         '<td>'+payStatusBadge(o.paymentStatus)+'</td>',
         '<td>'+statusSelect(o.orderId,o._id,o.orderStatus)+'</td>',
+        '<td>'+sourceCell(o)+'</td>',
         '<td><small style="color:#64748b">'+orderBy+'</small></td>',
         '<td><a href="'+API+'/invoice/'+o._id+'.pdf" target="_blank" class="btn-action btn-invoice" title="Invoice"><i class="fas fa-file-invoice"></i></a></td>',
         '<td><div class="note-cell">'+(o.note?'<span class="customer-note-text">'+esc(o.note)+'</span>':'<span style="color:#94a3b8;font-size:11px">—</span>')+'</div></td>',
@@ -3408,8 +3485,14 @@
   /* ── Export CSV ── */
   window.exportToCSV = function () {
     if (!allOrders.length) { showToast('No orders to export.','error'); return; }
-    var headers=['SL','Order No','Phone','Name','Date','Payment Type','Payment Status','Order Status','Courier Status','Courier Charge','Grand Total','Shipping Address'];
+    var headers=['SL','Order No','Phone','Name','Date','Payment Type','Payment Status','Order Status','Courier Status','Courier Charge','Grand Total','Order Source','UTM Medium','UTM Campaign','Shipping Address'];
+    function csvValue(value) {
+      var text = value == null ? '' : String(value);
+      return /[",\r\n]/.test(text) ? '"'+text.replace(/"/g,'""')+'"' : text;
+    }
     var rows=allOrders.map(function(o,i){
+      var source = orderSourceInfo(o);
+      var touch = (o.attribution && (o.attribution.lastTouch || o.attribution.firstTouch)) || {};
       return [
         i+1, o.orderId||'', o.phoneNo||'', o.name||'',
         o.createdAt?new Date(o.createdAt).toLocaleString():'',
@@ -3418,8 +3501,11 @@
         isIncompleteView ? '' : ((o.courierStatus&&o.courierStatus.status)||''),
         isIncompleteView ? '' : ((o.courierStatus&&o.courierStatus.deliveryCharge)!=null?o.courierStatus.deliveryCharge:''),
         o.grandTotal||0,
-        '"'+(rowAddress(o)==='—'?'':rowAddress(o)).replace(/"/g,'""')+'"',
-      ].join(',');
+        source.label,
+        touch.medium||'',
+        touch.campaign||'',
+        rowAddress(o)==='—'?'':rowAddress(o),
+      ].map(csvValue).join(',');
     });
     var csv=[headers.join(',')].concat(rows).join('\n');
     var blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});

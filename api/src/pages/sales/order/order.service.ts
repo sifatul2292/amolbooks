@@ -233,6 +233,9 @@ export class OrderService {
     );
     mData.manualOrderSource = adminManualSource;
     mData.orderFrom = this.manualOrderLabel(adminManualSource);
+    mData.orderOrigin = addOrderDto.incompleteOrderId
+      ? 'incomplete'
+      : 'admin';
     mData.attribution = this.normalizeAttribution(
       convertedIncomplete?.attribution || addOrderDto.attribution,
     );
@@ -517,6 +520,7 @@ export class OrderService {
       const fraudCheckerData: any = null;
       const orderInput: any = { ...addOrderDto };
       orderInput.orderFrom = 'Website';
+      orderInput.orderOrigin = 'website';
       delete orderInput.manualOrderSource;
 
       // Meta requires the same IP + user agent that produced fbc/fbp. Take them
@@ -2654,6 +2658,9 @@ export class OrderService {
         landingPage: text(input.landingPage),
         referrer: text(input.referrer),
         fbclid: text(input.fbclid, 300),
+        gclid: text(input.gclid, 300),
+        wbraid: text(input.wbraid, 300),
+        gbraid: text(input.gbraid, 300),
         // Meta click/browser cookies, forwarded by the storefront snippet.
         // These are what make a server-side Purchase attributable at ad level,
         // so they must survive normalization.
@@ -3146,6 +3153,11 @@ export class OrderService {
           ...m,
           orderedItems: await this.attachCostSnapshots(m.orderedItems || []),
           attribution: this.normalizeAttribution(m.attribution),
+          orderOrigin:
+            m.orderOrigin ||
+            (String(m.orderFrom || '').toLowerCase() === 'website'
+              ? 'website'
+              : 'admin'),
           ...{
             slug: this.utilsService.transformToSlug(m.name),
           },
@@ -4475,6 +4487,7 @@ export class OrderService {
       zone: orderData?.zone,
       city: orderData?.city,
       orderFrom: orderData?.orderFrom || 'Website',
+      orderOrigin: orderData?.orderOrigin || 'website',
       manualOrderSource: orderData?.manualOrderSource,
       paymentType: orderData?.paymentType,
       country: orderData?.country,

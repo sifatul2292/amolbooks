@@ -95,6 +95,11 @@ export const OrderSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    orderOrigin: {
+      type: String,
+      enum: ['website', 'incomplete', 'admin'],
+      required: false,
+    },
     manualOrderSource: {
       type: String,
       enum: [
@@ -185,6 +190,9 @@ export const OrderSchema = new mongoose.Schema(
         landingPage: { type: String, required: false },
         referrer: { type: String, required: false },
         fbclid: { type: String, required: false },
+        gclid: { type: String, required: false },
+        wbraid: { type: String, required: false },
+        gbraid: { type: String, required: false },
         fbc: { type: String, required: false },
         fbp: { type: String, required: false },
         capturedAt: { type: Date, required: false },
@@ -201,6 +209,9 @@ export const OrderSchema = new mongoose.Schema(
         landingPage: { type: String, required: false },
         referrer: { type: String, required: false },
         fbclid: { type: String, required: false },
+        gclid: { type: String, required: false },
+        wbraid: { type: String, required: false },
+        gbraid: { type: String, required: false },
         fbc: { type: String, required: false },
         fbp: { type: String, required: false },
         capturedAt: { type: Date, required: false },

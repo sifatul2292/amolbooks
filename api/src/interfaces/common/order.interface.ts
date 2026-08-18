@@ -31,6 +31,7 @@ export interface Order {
   shippingAddress: string;
   paymentType: string;
   orderFrom?: string;
+  orderOrigin?: 'website' | 'incomplete' | 'admin';
   manualOrderSource?: string;
   manualOrderRequestId?: string;
   metaPurchaseStatus?: 'sending' | 'sent' | 'failed';
@@ -117,6 +118,9 @@ export interface OrderAttributionTouch {
   landingPage?: string;
   referrer?: string;
   fbclid?: string;
+  gclid?: string;
+  wbraid?: string;
+  gbraid?: string;
   fbc?: string;
   fbp?: string;
   capturedAt?: Date;
