@@ -196,6 +196,33 @@ async function bootstrap() {
     `var ec=obj.ecommerce||{},items=toItems(ec);${storefrontCartCheckoutMirrorMarker}var val=cartVal(items);`;
   const storefrontProductResponseCacheMarker =
     'if(Array.isArray(d.data))d.data.forEach(rememberTrackingProduct);';
+  const legacyStorefrontBeginCheckoutCode = `function pushBeginCheckout(){
+    if(_checkoutFired)return;
+    var items=getCartItems();
+    if(!items.length)return;
+    _checkoutFired=true;
+    var val=cartVal(items);
+    var dl=window.dataLayer;
+    dl.push({ecommerce:null});
+    dl.push({event:'begin_checkout_stape',ecommerce:{currency:'BDT',value:val,items:items},__stape:true});
+  }`;
+  const storefrontBeginCheckoutMarker = 'var _checkoutPriceRetryCount=0;';
+  const storefrontBeginCheckoutCode = `${storefrontBeginCheckoutMarker}
+  function pushBeginCheckout(){
+    if(_checkoutFired)return;
+    var items=getCartItems();
+    if(!items.length)return;
+    var val=cartVal(items);
+    if(!(val>0)){
+      if(_checkoutPriceRetryCount++<40)setTimeout(pushBeginCheckout,150);
+      return;
+    }
+    _checkoutPriceRetryCount=0;
+    _checkoutFired=true;
+    var dl=window.dataLayer;
+    dl.push({ecommerce:null});
+    dl.push({event:'begin_checkout_stape',ecommerce:{currency:'BDT',value:val,items:items},__stape:true});
+  }`;
   const legacyStorefrontSuccessfulResponseCode =
     'if(!d||!d.success)return;';
   const storefrontSuccessfulResponseCode = `${legacyStorefrontSuccessfulResponseCode}
@@ -291,6 +318,16 @@ async function bootstrap() {
   })();`;
   const storefrontPendingPurchaseHelperMarker =
     'window.__amolFlushPendingPurchase=function(){';
+  const legacyStorefrontPendingPurchasePushCode = `var payload=window.__amolEnsurePurchaseExternalId(JSON.parse(raw));
+      window.dataLayer=window.dataLayer||[];
+      window.dataLayer.push({ecommerce:null});
+      window.dataLayer.push(payload);
+      sessionStorage.removeItem('_pendingPurchase');`;
+  const storefrontServerAuthoritativePurchaseMarker =
+    'window.__amolPurchaseDeliveredServerSide=true;';
+  const storefrontPendingPurchaseClearCode = `var payload=window.__amolEnsurePurchaseExternalId(JSON.parse(raw));
+      ${storefrontServerAuthoritativePurchaseMarker}
+      sessionStorage.removeItem('_pendingPurchase');`;
   const storefrontPurchaseExternalIdHelperMarker =
     'window.__amolEnsurePurchaseExternalId=function(payload){';
   const storefrontPurchaseExternalIdHelper = `
@@ -396,6 +433,12 @@ ${storefrontPurchaseExternalIdHelper}
         storefrontSuccessfulResponseCode,
       );
     }
+    if (!patchedTrackingHtml.includes(storefrontBeginCheckoutMarker)) {
+      patchedTrackingHtml = patchedTrackingHtml.replace(
+        legacyStorefrontBeginCheckoutCode,
+        storefrontBeginCheckoutCode,
+      );
+    }
     patchedTrackingHtml = patchedTrackingHtml
       .replace(
         legacyStorefrontAddToCartPriceCode,
@@ -447,6 +490,14 @@ ${storefrontPurchaseExternalIdHelper}
           'var payload=JSON.parse(raw);',
           'var payload=window.__amolEnsurePurchaseExternalId(JSON.parse(raw));',
         );
+    }
+    if (
+      !patchedTrackingHtml.includes(storefrontServerAuthoritativePurchaseMarker)
+    ) {
+      patchedTrackingHtml = patchedTrackingHtml.replace(
+        legacyStorefrontPendingPurchasePushCode,
+        storefrontPendingPurchaseClearCode,
+      );
     }
     return patchedTrackingHtml;
   }

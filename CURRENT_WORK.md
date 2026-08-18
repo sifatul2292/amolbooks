@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-08-18. Branch: `main`. A stronger ecommerce deduplication patch is verified locally after Meta Test Events exposed two independent storefront pushes; awaiting deploy and one Tagioo variable update._
+_Last updated: 2026-08-18. Branch: `main`. Purchase-path consolidation and non-zero checkout tracking are verified locally after live Meta tests; awaiting deployment._
 
 ## Recently completed (git log, newest first)
 
@@ -69,6 +69,33 @@ VPS deploy of `33dd40b0` and live confirmation that the Steadfast In Review coun
 climbs from 17 toward the real ~46.
 
 ## Completed this session
+
+### Purchase still doubled and InitiateCheckout value was zero
+
+A later live test made both remaining paths explicit. Purchase `order_7017`
+arrived alongside a timestamp-ID Purchase at the same second: the API's direct
+Meta delivery was correct, but the thank-you page still sent an additional
+browser/Tagioo Purchase whose container-generated ID could not deduplicate.
+InitiateCheckout contained the right product ID but value `0`; checkout fired
+from localStorage before the guest product-details request populated prices,
+then `_checkoutFired` prevented the later priced event.
+
+- `api/src/main.ts`: the thank-you-page flush now clears its pending browser
+  Purchase without pushing `purchase_stape`. The API remains authoritative: it
+  sends the order to Tagioo server-side for the existing analytics pipeline and
+  directly to Meta as `order_<orderId>`. This removes the redundant random-ID
+  browser copy without weakening closed-tab reliability.
+- `api/src/main.ts`: InitiateCheckout now refuses to fire while its calculated
+  cart value is zero and retries briefly while product prices load. It marks
+  checkout as fired only after a positive value is available.
+- Both are runtime upgrades, so the API can replace the previously written
+  storefront tracking block on restart without editing compiled Angular files.
+
+**Verified:** Nest build, `git diff --check`, upgrade anchors against the live
+already-patched production HTML, generated JavaScript syntax, and a zero-price
+cart becoming a correctly valued ৳250 checkout all pass. The repo lint command
+still exits because ESLint ignores its entire configured glob. Deployment and
+a fresh Meta Test Events run remain pending.
 
 ### Meta ecommerce events still duplicated after the first guard
 
