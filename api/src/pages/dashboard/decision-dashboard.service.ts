@@ -499,6 +499,7 @@ export class DecisionDashboardService {
     const qualifyingOrderCount = Math.max(validOrders.length, 1);
     orders.forEach((order) => {
       const isLoss = LOSS_STATUSES.includes(Number(order.orderStatus));
+      const sourceLabel = this.orderSourceLabel(order);
       (order.orderedItems || []).forEach((item: any) => {
         const id = String(item._id || item.slug || item.name || 'unknown');
         if (!rows.has(id)) {
@@ -512,6 +513,7 @@ export class DecisionDashboardService {
             netSales: 0,
             cogs: 0,
             missingCost: false,
+            sourceUnits: {} as Record<string, number>,
             stock: this.optionalNumber(product?.stock),
           });
         }
@@ -523,6 +525,7 @@ export class DecisionDashboardService {
         if (isLoss) row.lossOrderIds.add(String(order._id));
         if (!isLoss) {
           row.units += quantity;
+          row.sourceUnits[sourceLabel] = (row.sourceUnits[sourceLabel] || 0) + quantity;
           row.netSales += itemRevenue;
           if (unitCost === undefined) row.missingCost = true;
           else row.cogs += unitCost * quantity;
@@ -561,6 +564,9 @@ export class DecisionDashboardService {
         name: row.name,
         units: row.units,
         orders: row.orderIds.size,
+        sourceMix: Object.entries(row.sourceUnits)
+          .map(([label, units]) => ({ label, units }))
+          .sort((a: any, b: any) => b.units - a.units || a.label.localeCompare(b.label)),
         netSales: this.money(row.netSales, 'actual'),
         contribution: row.missingCost
           ? this.money(null, 'unavailable', ['One or more product costs are unavailable.'])

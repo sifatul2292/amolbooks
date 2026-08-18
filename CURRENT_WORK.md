@@ -81,6 +81,9 @@ climbs from 17 toward the real ~46.
   profit-dashboard sales are classified as Admin.
 - Cancelled, refunded, and returned orders remain visible in placed-order and
   loss counts, but are excluded from source revenue and unit totals.
+- Product performance now includes a per-product **Source mix (units)** showing
+  Facebook, Google, Instagram, Website, Direct, Incomplete Order, Admin, custom
+  UTM sources, and the product's total valid units.
 - This is reporting-only: no Meta, Tagioo, GTM, GA4, or Purchase event path was
   changed.
 - Verified the Nest build, dashboard inline JavaScript syntax, source
