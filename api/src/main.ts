@@ -129,9 +129,9 @@ async function bootstrap() {
   const legacyStorefrontStapePushCode = `function _pushStape(obj){
     try{
       var s=stapeOf(obj);s.__stape=true;`;
-  const storefrontStapeDuplicateGuardMarker =
+  const legacyStorefrontStapeDuplicateGuardMarker =
     "var _lastStapeSignature='',_lastStapeAt=0;";
-  const storefrontStapePushCode = `${storefrontStapeDuplicateGuardMarker}
+  const legacyStorefrontStapeGuardCode = `${legacyStorefrontStapeDuplicateGuardMarker}
   function _pushStape(obj){
     try{
       var s=stapeOf(obj);s.__stape=true;
@@ -141,6 +141,25 @@ async function bootstrap() {
       if(signature&&signature===_lastStapeSignature&&now-_lastStapeAt<750)return;
       _lastStapeSignature=signature;
       _lastStapeAt=now;`;
+  const storefrontStapeDuplicateGuardMarker =
+    'window.__amolStapeDedupWindowMs=5000;';
+  const storefrontStapePushCode = `${storefrontStapeDuplicateGuardMarker}
+  function _pushStape(obj){
+    try{
+      var s=stapeOf(obj);s.__stape=true;
+      var sec=s.ecommerce||{},mirrorItems=sec.items||[];
+      var itemSignature=mirrorItems.map(function(item){return String(item.item_id||'')+':'+String(item.quantity||1);}).join(',');
+      var signature=String(s.event||'')+'|'+itemSignature+'|'+String(sec.transaction_id||'')+'|'+String(sec.value||'');
+      var now=Date.now();
+      var dedupCache=window.__amolStapeDedupCache=window.__amolStapeDedupCache||{};
+      if(signature&&dedupCache[signature]&&now-dedupCache[signature]<window.__amolStapeDedupWindowMs)return;
+      dedupCache[signature]=now;
+      Object.keys(dedupCache).forEach(function(key){if(now-dedupCache[key]>60000)delete dedupCache[key];});
+      if(!s.event_id){
+        s.event_id=sec.transaction_id
+          ?'order_'+String(sec.transaction_id)
+          :'amol_'+String(s.event||'event')+'_'+now+'_'+Math.random().toString(36).slice(2,8);
+      }`;
   const legacyStorefrontCartValueCode =
     'function cartVal(items){return items.reduce(function(s,i){return s+(i.price||0)*(i.quantity||1);},0);}';
   const storefrontFinalPriceMarker = 'function finalTrackingPrice(p){';
@@ -341,10 +360,17 @@ ${storefrontPurchaseExternalIdHelper}
 
     let patchedTrackingHtml = trackingHtml;
     if (!patchedTrackingHtml.includes(storefrontStapeDuplicateGuardMarker)) {
-      patchedTrackingHtml = patchedTrackingHtml.replace(
-        legacyStorefrontStapePushCode,
-        storefrontStapePushCode,
-      );
+      patchedTrackingHtml = patchedTrackingHtml.includes(
+        legacyStorefrontStapeDuplicateGuardMarker,
+      )
+        ? patchedTrackingHtml.replace(
+            legacyStorefrontStapeGuardCode,
+            storefrontStapePushCode,
+          )
+        : patchedTrackingHtml.replace(
+            legacyStorefrontStapePushCode,
+            storefrontStapePushCode,
+          );
     }
     if (!patchedTrackingHtml.includes(storefrontViewItemMirrorMarker)) {
       patchedTrackingHtml = patchedTrackingHtml.replace(

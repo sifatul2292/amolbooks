@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-08-18. Branch: `main`. Storefront lazy-asset recovery and duplicate ecommerce-event suppression are verified locally and awaiting deployment._
+_Last updated: 2026-08-18. Branch: `main`. A stronger ecommerce deduplication patch is verified locally after Meta Test Events exposed two independent storefront pushes; awaiting deploy and one Tagioo variable update._
 
 ## Recently completed (git log, newest first)
 
@@ -69,6 +69,33 @@ VPS deploy of `33dd40b0` and live confirmation that the Steadfast In Review coun
 climbs from 17 toward the real ~46.
 
 ## Completed this session
+
+### Meta ecommerce events still duplicated after the first guard
+
+The first 750 ms `_stape` guard deployed successfully, and the missing lazy
+assets now return JavaScript 200 responses. A clean Meta Test Events run still
+showed paired ViewContent/AddToCart events in the same second with consecutive
+auto-generated Event IDs. Inspection of the published Tagioo web container
+confirmed that each ecommerce trigger launches GA4, a Meta Pixel tag, and a
+Stape Data tag. Both Meta delivery paths use custom macro `42`, whose generated
+ID ends with `gtm.uniqueEventId`; two independent storefront pushes therefore
+get different IDs and cannot deduplicate.
+
+- `api/src/main.ts`: replace the narrow closure-local guard with a five-second,
+  page-global cache keyed by event, all item IDs/quantities, transaction and
+  value. It also gives every mirrored event a stable payload `event_id`, using
+  `order_<transaction_id>` for Purchase.
+- The runtime upgrader recognizes and replaces the already-written 750 ms
+  guard on the VPS, so restoring the original compiled index is unnecessary.
+- Tagioo still needs its shared Meta/Data Event ID variable changed to prefer
+  the incoming data-layer `event_id` and use the existing generator only as a
+  fallback. That is required for the browser/Tagioo Purchase to deduplicate
+  against the authoritative direct API Purchase.
+
+**Verified:** Nest build, `git diff --check`, both the original-index and
+already-deployed-guard upgrade paths, generated JavaScript syntax, and the
+five-second signature behavior all pass. The repo lint command still exits
+because ESLint ignores its entire configured glob. Deployment remains pending.
 
 ### Duplicate ecommerce mirrors and missing storefront lazy chunks
 
