@@ -43,8 +43,7 @@ fi
 # --- Compute changed tracked files between current HEAD and origin ------------
 CHANGED="$(git diff --name-only HEAD "origin/$BRANCH" || true)"
 if [ -z "$CHANGED" ]; then
-  echo "[safe-pull] already up to date with origin/$BRANCH. Nothing to do."
-  exit 0
+  echo "[safe-pull] no tracked code differences; checking required storefront assets."
 fi
 
 # Belt-and-braces: never let runtime uploads slip into the checkout set. The
@@ -80,6 +79,45 @@ fi
 if [ -n "$SAFE_CHANGED" ]; then
   # shellcheck disable=SC2086
   printf '%s\0' $SAFE_CHANGED | xargs -0 git checkout "origin/$BRANCH" --
+fi
+
+# A missing compiled entry bundle leaves the SPA as a blank page. These files
+# can be absent even when unchanged between HEAD and origin, so the diff above
+# will not necessarily restore them. Read the exact filenames referenced by the
+# deployed index and recover any tracked copy from origin before reporting a
+# successful deployment. dl-normalize.js is included because analytics loading
+# uses it before starting the GTM/Tagioo container.
+STOREFRONT_DIR="ui/dist/angular-ui/browser"
+STOREFRONT_INDEX="$STOREFRONT_DIR/index.html"
+if [ -f "$STOREFRONT_INDEX" ]; then
+  CORE_ASSETS="$(
+    {
+      grep -oE '(runtime|polyfills|main)\.[^"[:space:]]+\.js' "$STOREFRONT_INDEX" || true
+      grep -oE 'styles\.[^"[:space:]]+\.css' "$STOREFRONT_INDEX" || true
+      printf '%s\n' 'dl-normalize.js'
+    } | sort -u
+  )"
+  MISSING_CORE=""
+  while IFS= read -r ASSET; do
+    [ -n "$ASSET" ] || continue
+    ASSET_PATH="$STOREFRONT_DIR/$ASSET"
+    if [ ! -f "$ASSET_PATH" ]; then
+      if git cat-file -e "origin/$BRANCH:$ASSET_PATH" 2>/dev/null; then
+        echo "[safe-pull] restoring missing storefront asset: $ASSET"
+        git checkout "origin/$BRANCH" -- "$ASSET_PATH"
+      else
+        MISSING_CORE="${MISSING_CORE}${ASSET_PATH}\n"
+      fi
+    fi
+  done <<EOF
+$CORE_ASSETS
+EOF
+
+  if [ -n "$MISSING_CORE" ]; then
+    echo "[safe-pull] ERROR: storefront references unavailable core assets:"
+    printf '%b' "$MISSING_CORE" | sed 's/^/  /'
+    exit 1
+  fi
 fi
 
 echo "[safe-pull] done. Code updated; uploads untouched."

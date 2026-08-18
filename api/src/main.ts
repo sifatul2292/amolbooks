@@ -213,7 +213,10 @@ async function bootstrap() {
       var normalizer=document.createElement('script');
       normalizer.src='dl-normalize.js';
       normalizer.defer=true;
-      normalizer.onload=function(){
+      var containerStarted=false;
+      var loadContainer=function(){
+        if(containerStarted)return;
+        containerStarted=true;
         window.dataLayer.push({'gtm.start':new Date().getTime(),event:'gtm.js'});
         var s=document.createElement('script');
         s.async=true;
@@ -226,8 +229,13 @@ async function bootstrap() {
         s.onerror=function(){window.__amolGtmLoading=false;};
         document.head.appendChild(s);
       };
-      normalizer.onerror=function(){window.__amolGtmLoading=false;};
+      normalizer.onload=loadContainer;
+      // The normalizer improves the data model but must never become a single
+      // point of failure for GA4/Meta. A missing or blocked optional asset used
+      // to prevent the Tagioo container from loading at all.
+      normalizer.onerror=loadContainer;
       document.head.appendChild(normalizer);
+      setTimeout(loadContainer,1500);
     }
     if(window.location.pathname.indexOf('order-success')!==-1){
       loadGtm();

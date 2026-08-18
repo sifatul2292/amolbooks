@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-08-17. Branch: `main`. Incomplete-order address fix pushed (`991a080a`), awaiting VPS deploy. Authoritative Meta Purchase tracking is built locally and awaiting Tagioo verification + VPS/GTM deploy._
+_Last updated: 2026-08-18. Branch: `main`. GA4 loader recovery is built locally after production lost required storefront assets; awaiting commit/push + VPS deploy._
 
 ## Recently completed (git log, newest first)
 
@@ -69,6 +69,29 @@ VPS deploy of `33dd40b0` and live confirmation that the Steadfast In Review coun
 climbs from 17 toward the real ~46.
 
 ## Completed this session
+
+### GA4 blank-data recovery and storefront asset deploy guard
+
+**Production diagnosis.** GA4 measurement ID `G-5VZPVFL0X9` and the GA4 ecommerce
+tags are present in the published Tagioo web container, but the container never loaded.
+Production returned the SPA HTML fallback for `/dl-normalize.js` instead of JavaScript.
+The GTM bootstrap treated that optional normalizer failure as fatal, leaving `dataLayer`
+empty and sending no GA4 collection requests. This was the same missing-asset class that
+had already removed the referenced Angular `main.*.js` bundle and blanked the storefront.
+
+- `api/src/main.ts`: Tagioo now loads after normalizer success, error, or a 1.5-second
+  timeout, guarded so it loads exactly once. The optional normalizer can no longer disable
+  GA4 and Meta together.
+- `scripts/vps-safe-pull.sh`: even when source revisions have no differences, the deploy
+  now inspects `index.html`, restores missing tracked runtime/polyfills/main/style assets
+  plus `dl-normalize.js` from `origin/main`, and aborts if a referenced core asset cannot
+  be recovered.
+
+**Verified:** live Tagioo container contains `G-5VZPVFL0X9`; production
+`/dl-normalize.js` currently returns 404/HTML pending the manual VPS restore; Nest build,
+shell syntax, storefront core-asset validation, `git diff --check`, and a VM harness proving
+Tagioo loads exactly once on normalizer failure all pass. `npm run lint` still cannot run
+because the repository's ESLint configuration ignores its entire configured TypeScript glob.
 
 ### Incomplete Orders: empty Address column — root cause + fix (`991a080a`)
 
