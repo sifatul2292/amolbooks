@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-08-18. Branch: `main`. Purchase-path consolidation and non-zero checkout tracking are verified locally after live Meta tests; awaiting deployment._
+_Last updated: 2026-08-18. Branch: `main`. Profit-dashboard source reporting is implemented and verified locally; deployment is pending._
 
 ## Recently completed (git log, newest first)
 
@@ -69,6 +69,23 @@ VPS deploy of `33dd40b0` and live confirmation that the Steadfast In Review coun
 climbs from 17 toward the real ~46.
 
 ## Completed this session
+
+### Profit-dashboard order-source reporting
+
+- Added a dedicated **Order sources** panel to the Profit & Growth dashboard.
+  It shows placed orders, valid revenue, units, order/revenue share, delivery
+  rate, and loss rate for Facebook, Instagram, Google, Direct, Website,
+  Incomplete Order, Admin, and any captured custom UTM source.
+- Source classification uses the same `orderOrigin`, attribution, Google Ads
+  click-ID, and historical fallback rules as the custom order list. Manual
+  profit-dashboard sales are classified as Admin.
+- Cancelled, refunded, and returned orders remain visible in placed-order and
+  loss counts, but are excluded from source revenue and unit totals.
+- This is reporting-only: no Meta, Tagioo, GTM, GA4, or Purchase event path was
+  changed.
+- Verified the Nest build, dashboard inline JavaScript syntax, source
+  classification fixture, and `git diff --check`. Repository lint still exits
+  before linting because its configured TypeScript glob is globally ignored.
 
 ### Order-list UTM/source visibility
 

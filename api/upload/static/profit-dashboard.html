@@ -182,6 +182,23 @@
     .recommendation.improve-page, .recommendation.reduce-promotion { background: var(--color-warning-soft); color: var(--color-warning-strong); }
     .recommendation.bundle { background: var(--color-accent-soft); color: var(--color-accent-strong); }
 
+    .source-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2xs); margin-bottom: var(--space-sm); }
+    .source-summary-card { padding: var(--space-xs); border-radius: var(--radius-input); background: var(--color-paper-3); }
+    .source-summary-card span { display: block; color: var(--color-muted); font-size: var(--text-xs); }
+    .source-summary-card strong { display: block; margin-top: var(--space-2xs); font: 800 var(--text-lg)/1 var(--font-display); }
+    .source-table { min-width: 54rem; }
+    .source-identity { min-width: 13rem; }
+    .source-name { display: flex; align-items: center; gap: var(--space-2xs); font-weight: 800; }
+    .source-badge { display: inline-flex; width: 1.75rem; height: 1.75rem; align-items: center; justify-content: center; border-radius: var(--radius-pill); background: var(--color-paper-3); color: var(--color-ink-2); }
+    .source-badge.facebook { background: var(--color-info-soft); color: var(--color-info); }
+    .source-badge.google { background: var(--color-warning-soft); color: var(--color-warning-strong); }
+    .source-badge.instagram { background: var(--color-accent-soft); color: var(--color-accent-strong); }
+    .source-badge.admin { background: var(--color-paper-3); color: var(--color-ink-2); }
+    .source-badge.incomplete-order { background: var(--color-danger-soft); color: var(--color-danger-strong); }
+    .source-badge.website, .source-badge.direct { background: var(--color-success-soft); color: var(--color-success-strong); }
+    .source-bar { width: 100%; height: 0.25rem; margin-top: var(--space-2xs); overflow: hidden; border-radius: var(--radius-pill); background: var(--color-paper-3); }
+    .source-bar span { display: block; height: 100%; border-radius: inherit; background: var(--color-accent); }
+
     .quality-layout { display: grid; grid-template-columns: minmax(17rem, 0.6fr) minmax(0, 1.4fr); gap: var(--space-sm); }
     .status-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2xs); }
     .status-card { padding: var(--space-xs); border-radius: var(--radius-input); background: var(--color-paper-3); }
@@ -246,6 +263,7 @@
       .custom-range { margin-left: 0; }
       .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .coverage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .source-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     @media (max-width: 48rem) {
       .topbar { padding-inline: var(--space-xs); }
@@ -257,6 +275,7 @@
       .intro { align-items: start; flex-direction: column; gap: var(--space-xs); }
       .legend { margin-left: 0; }
       .summary-grid { grid-template-columns: minmax(0, 1fr); }
+      .source-summary { grid-template-columns: minmax(0, 1fr); }
       .metric { min-height: 8.25rem; }
       .panel-head { align-items: flex-start; flex-direction: column; }
       .panel-tools { width: 100%; margin-left: 0; }
@@ -373,6 +392,14 @@
         <section class="panel panel-gap">
           <header class="panel-head"><div class="panel-title"><h3>Performance trend</h3><p>Revenue and contribution over the selected period.</p></div><div class="panel-tools"><div class="segmented"><button class="segment active" type="button" data-granularity="daily" onclick="setGranularity('daily', this)">Daily</button><button class="segment" type="button" data-granularity="weekly" onclick="setGranularity('weekly', this)">Weekly</button></div></div></header>
           <div class="panel-body"><div class="chart-wrap" id="trendChart"><div class="chart-empty"><i class="fas fa-circle-notch fa-spin"></i></div></div><div class="heatmap" id="heatmap" aria-label="Compact revenue heatmap"></div></div>
+        </section>
+
+        <section class="panel panel-gap">
+          <header class="panel-head"><div class="panel-title"><h3>Order sources</h3><p>Placed orders by captured origin. Revenue and units exclude cancelled, refunded, and returned orders.</p></div><span class="status-pill" id="sourceCount">— orders</span></header>
+          <div class="panel-body">
+            <div class="source-summary" id="sourceSummary"></div>
+            <div class="table-wrap"><table class="source-table"><thead><tr><th>Source</th><th>Orders</th><th>Order share</th><th>Valid revenue</th><th>Revenue share</th><th>Delivered</th><th>Loss rate</th><th>Units</th></tr></thead><tbody id="sourceRows"><tr><td colspan="8"><div class="empty">Loading order sources…</div></td></tr></tbody></table></div>
+          </div>
         </section>
 
         <section class="panel panel-gap">
@@ -603,7 +630,7 @@
   }
 
   function renderAll() {
-    renderSummary(); renderOpportunities(); renderFunnel(); renderTrend(); renderProducts(); renderOrderQuality(); renderDataQuality();
+    renderSummary(); renderOpportunities(); renderFunnel(); renderTrend(); renderSources(); renderProducts(); renderOrderQuality(); renderDataQuality();
   }
 
   function metric(key, valueId, basisId, deltaId, isPercent, inverse) {
@@ -673,6 +700,27 @@
     document.getElementById('trendChart').innerHTML = '<svg class="trend-chart" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Revenue and contribution trend">' + grid + labels + '<polyline class="chart-line revenue" points="' + points('revenue') + '"></polyline><polyline class="chart-line expected" points="' + points('expectedContribution') + '"></polyline><polyline class="chart-line realized" points="' + points('realizedContribution') + '"></polyline></svg>';
   }
   function renderHeatmap(rows) { var recent = rows.slice(-42); var max = recent.reduce(function (value, row) { return Math.max(value, Number(row.revenue) || 0); }, 0) || 1; document.getElementById('heatmap').innerHTML = recent.map(function (row) { var ratio = (Number(row.revenue) || 0) / max; var level = ratio > 0.66 ? 3 : ratio > 0.33 ? 2 : ratio > 0 ? 1 : 0; return '<div class="heat-cell level-' + level + '" title="' + esc(row.date) + ': ৳' + fmt(row.revenue) + '"><span class="heat-date">' + esc(row.date.slice(5)) + '</span><span class="heat-value">৳' + fmt(row.revenue) + '</span></div>'; }).join(''); }
+
+  function sourceClass(value) { return String(value || 'other').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+  function sourceIcon(value) {
+    var key = sourceClass(value);
+    return ({ facebook: 'fab fa-facebook-f', instagram: 'fab fa-instagram', google: 'fab fa-google', admin: 'fas fa-user-shield', 'incomplete-order': 'fas fa-phone', website: 'fas fa-globe', direct: 'fas fa-arrow-pointer' })[key] || 'fas fa-link';
+  }
+  function renderSources() {
+    var data = dashboardData.sourcePerformance || {};
+    var rows = data.rows || [];
+    setText('sourceCount', fmt(data.totalOrders || 0) + ((data.totalOrders || 0) === 1 ? ' order' : ' orders'));
+    document.getElementById('sourceSummary').innerHTML = [
+      { label: 'Placed orders', value: fmt(data.totalOrders || 0) },
+      { label: 'Valid revenue', value: money(data.totalRevenue || 0, 'actual') },
+      { label: 'Valid units', value: fmt(data.totalUnits || 0) }
+    ].map(function (item) { return '<div class="source-summary-card"><span>' + esc(item.label) + '</span><strong>' + item.value + '</strong></div>'; }).join('');
+    document.getElementById('sourceRows').innerHTML = rows.length ? rows.map(function (row) {
+      var share = Math.max(0, Math.min(100, Number(row.orderShare) || 0));
+      var cls = sourceClass(row.label);
+      return '<tr><td class="source-identity"><div class="source-name"><span class="source-badge ' + cls + '"><i class="' + sourceIcon(row.label) + '"></i></span><span>' + esc(row.label) + '</span></div><div class="source-bar"><span style="width:' + share.toFixed(1) + '%"></span></div></td><td><strong>' + fmt(row.orders) + '</strong></td><td>' + pct(row.orderShare) + '</td><td>' + money(row.revenue, 'actual') + '</td><td>' + pct(row.revenueShare) + '</td><td>' + fmt(row.delivered) + ' (' + pct(row.deliveryRate) + ')</td><td>' + pct(row.lossRate) + '</td><td>' + fmt(row.units) + '</td></tr>';
+    }).join('') : '<tr><td colspan="8"><div class="empty">No orders in this range.</div></td></tr>';
+  }
 
   function recClass(value) { return String(value || '').toLowerCase().replace(/\s+/g, '-'); }
   function renderProducts() { var performance = dashboardData.productPerformance || {}; var rows = performance.rows || []; var totalProducts = performance.totalProducts == null ? rows.length : performance.totalProducts; var totalUnits = performance.totalUnits == null ? rows.reduce(function (sum, row) { return sum + (Number(row.units) || 0); }, 0) : performance.totalUnits; setText('productCount', fmt(totalProducts) + (totalProducts === 1 ? ' product' : ' products') + ' · ' + fmt(totalUnits) + ' units'); document.getElementById('productRows').innerHTML = rows.length ? rows.map(function (row) { var contribution = row.contribution.amount; return '<tr><td class="product-name">' + esc(row.name) + '</td><td>' + fmt(row.units) + '</td><td>' + money(row.netSales.amount, row.netSales.basis) + '</td><td class="' + (contribution < 0 ? 'money-negative' : 'money-positive') + '">' + money(contribution, row.contribution.basis) + '</td><td>' + pct(row.margin.value) + '</td><td>' + (row.views == null ? '—' : fmt(row.views)) + '</td><td>' + pct(row.conversion.value) + '</td><td>' + pct(row.cancellationRate) + '</td><td>' + (row.stockCoverageDays == null ? '—' : Math.round(row.stockCoverageDays) + 'd') + '</td><td><span class="recommendation ' + recClass(row.recommendation) + '">' + esc(row.recommendation) + '</span></td></tr>'; }).join('') : '<tr><td colspan="10"><div class="empty">No sold products in this range.</div></td></tr>'; }

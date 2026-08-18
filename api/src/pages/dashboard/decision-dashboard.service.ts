@@ -4,13 +4,12 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { firstValueFrom } from 'rxjs';
 import * as moment from 'moment-timezone';
 import { createHash } from 'crypto';
+import { google } from 'googleapis';
 import { OrderStatus } from '../../enum/order.enum';
 
 const DASHBOARD_TIME_ZONE = 'Asia/Dhaka';
@@ -49,7 +48,6 @@ export class DecisionDashboardService {
     @InjectModel('MetaAdSpend') private readonly metaSpendModel: Model<any>,
     @InjectModel('AnalyticsAction') private readonly analyticsActionModel: Model<any>,
     private readonly configService: ConfigService,
-    private readonly httpService: HttpService,
   ) {}
 
   async getDecisionAnalytics(startDate: string, endDate: string): Promise<any> {
@@ -85,7 +83,7 @@ export class DecisionDashboardService {
 
     const phones = Array.from(new Set(orders.map((order) => order.phoneNo).filter(Boolean)));
     const customerHistory = await this.getCustomerHistory(phones, selected.end);
-    const posthog = await this.getPosthogAnalytics(selected.start, selected.end);
+    const analytics = await this.getGa4Analytics(selected.start, selected.end);
 
     const current = this.buildPeriod(
       orders,
@@ -93,7 +91,7 @@ export class DecisionDashboardService {
       spendRows,
       productMap,
       selected.days,
-      posthog,
+      analytics,
       customerHistory,
     );
     const prior = this.buildPeriod(
@@ -124,6 +122,7 @@ export class DecisionDashboardService {
         comparison: this.buildComparison(current.summary, prior.summary),
         trend: current.trend,
         productPerformance: current.productPerformance,
+        sourcePerformance: current.sourcePerformance,
         orderQuality: current.orderQuality,
         funnel: current.funnel,
         opportunities: current.opportunities,
@@ -234,7 +233,7 @@ export class DecisionDashboardService {
     return this.orderModel
       .find({ createdAt: { $gte: start, $lte: end } })
       .select(
-        'orderId phoneNo city createdAt grandTotal deliveryCharge actualCourierCost packagingCost paymentFee refundAmount returnLoss orderStatus paymentType paymentStatus orderFrom attribution division area zone orderedItems',
+        'orderId phoneNo city createdAt grandTotal deliveryCharge actualCourierCost packagingCost paymentFee refundAmount returnLoss orderStatus paymentType paymentStatus orderFrom orderOrigin manualOrderSource attribution division area zone orderedItems',
       )
       .lean();
   }
@@ -282,7 +281,7 @@ export class DecisionDashboardService {
     spendRows: any[],
     productMap: Map<string, any>,
     days: number,
-    posthog: any,
+    analytics: any,
     customerHistory: Map<string, any>,
   ): any {
     const spend = spendRows.reduce((sum, row) => sum + this.number(row.spend), 0);
@@ -425,9 +424,10 @@ export class DecisionDashboardService {
     const productPerformance = this.buildProductPerformance(
       orders,
       productMap,
-      posthog.products || {},
+      analytics.products || {},
       days,
     );
+    const sourcePerformance = this.buildSourcePerformance(orders, manualSales);
     const orderQuality = this.buildOrderQuality(
       orders,
       manualSales,
@@ -440,7 +440,7 @@ export class DecisionDashboardService {
       orderContribution,
       customerHistory,
     );
-    const funnel = this.buildFunnel(posthog, validOrderCount, deliveredOrderCount);
+    const funnel = this.buildFunnel(analytics, validOrderCount, deliveredOrderCount);
     const opportunities = this.buildOpportunities(
       productPerformance.rows,
       orderQuality,
@@ -454,13 +454,14 @@ export class DecisionDashboardService {
       quality,
       orders.length,
       spendRows,
-      posthog,
+      analytics,
       days,
     );
 
     return {
       summary,
       productPerformance,
+      sourcePerformance,
       orderQuality,
       funnel,
       opportunities,
@@ -490,7 +491,7 @@ export class DecisionDashboardService {
   private buildProductPerformance(
     orders: any[],
     productMap: Map<string, any>,
-    posthogProducts: Record<string, any>,
+    analyticsProducts: Record<string, any>,
     days: number,
   ): any {
     const rows = new Map<string, any>();
@@ -530,7 +531,7 @@ export class DecisionDashboardService {
     });
 
     const result = Array.from(rows.values()).filter((row) => row.units > 0).map((row) => {
-      const analytics = posthogProducts[row.productId] || {};
+      const analytics = analyticsProducts[row.productId] || {};
       const contribution = row.netSales - row.cogs;
       const margin = row.netSales ? (contribution / row.netSales) * 100 : 0;
       const dailyUnits = row.units / Math.max(days, 1);
@@ -613,6 +614,124 @@ export class DecisionDashboardService {
       .filter((pair) => pair.orders >= 2)
       .sort((a, b) => b.orders - a.orders)
       .slice(0, 10);
+  }
+
+  private orderSourceLabel(order: any): string {
+    const origin = String(order.orderOrigin || '').toLowerCase();
+    const legacyOrderFrom = String(order.orderFrom || '').toLowerCase();
+    const manualSource = String(order.manualOrderSource || '').toLowerCase();
+
+    if (origin === 'incomplete' || (!origin && manualSource === 'phone')) {
+      return 'Incomplete Order';
+    }
+    if (origin === 'admin' || (!origin && legacyOrderFrom && legacyOrderFrom !== 'website')) {
+      return 'Admin';
+    }
+
+    const touch = order.attribution?.lastTouch || order.attribution?.firstTouch || {};
+    const source = String(touch.source || '').trim();
+    const normalized = source.toLowerCase();
+    if (
+      ['facebook', 'fb', 'meta', 'facebook.com', 'm.facebook.com', 'l.facebook.com'].includes(normalized) ||
+      normalized.includes('facebook') ||
+      touch.fbclid ||
+      touch.fbc
+    ) {
+      return 'Facebook';
+    }
+    if (
+      ['instagram', 'ig', 'instagram.com', 'l.instagram.com'].includes(normalized) ||
+      normalized.includes('instagram')
+    ) {
+      return 'Instagram';
+    }
+    if (
+      normalized === 'google' ||
+      normalized === 'google.com' ||
+      normalized.includes('google') ||
+      touch.gclid ||
+      touch.wbraid ||
+      touch.gbraid
+    ) {
+      return 'Google';
+    }
+    if (['direct', '(direct)', 'none', '(none)'].includes(normalized)) {
+      return 'Direct';
+    }
+    return source || 'Website';
+  }
+
+  private buildSourcePerformance(orders: any[], manualSales: any[]): any {
+    const sources = new Map<string, any>();
+    const rowFor = (label: string) => {
+      if (!sources.has(label)) {
+        sources.set(label, {
+          label,
+          orders: 0,
+          validOrders: 0,
+          delivered: 0,
+          losses: 0,
+          revenue: 0,
+          units: 0,
+        });
+      }
+      return sources.get(label);
+    };
+
+    orders.forEach((order) => {
+      const row = rowFor(this.orderSourceLabel(order));
+      const status = Number(order.orderStatus);
+      const isLoss = LOSS_STATUSES.includes(status);
+      row.orders++;
+      if (status === OrderStatus.DELIVERED) row.delivered++;
+      if (isLoss) {
+        row.losses++;
+        return;
+      }
+      row.validOrders++;
+      row.revenue += this.number(order.grandTotal);
+      row.units += (order.orderedItems || []).reduce(
+        (sum: number, item: any) => sum + Math.max(1, this.number(item.quantity, 1)),
+        0,
+      );
+    });
+
+    manualSales.forEach((sale) => {
+      const row = rowFor('Admin');
+      const count = Math.max(1, this.number(sale.orders, 1));
+      const isLoss = ['cancelled', 'refunded', 'returned'].includes(sale.outcome);
+      row.orders += count;
+      if (sale.outcome === 'delivered') row.delivered += count;
+      if (isLoss) {
+        row.losses += count;
+        return;
+      }
+      row.validOrders += count;
+      row.revenue += this.number(sale.revenue);
+      row.units += (sale.products || []).reduce(
+        (sum: number, item: any) => sum + Math.max(1, this.number(item.quantity, 1)),
+        0,
+      );
+    });
+
+    const rows = Array.from(sources.values());
+    const totalOrders = rows.reduce((sum, row) => sum + row.orders, 0);
+    const totalRevenue = rows.reduce((sum, row) => sum + row.revenue, 0);
+    const totalUnits = rows.reduce((sum, row) => sum + row.units, 0);
+    return {
+      totalOrders,
+      totalRevenue,
+      totalUnits,
+      rows: rows
+        .map((row) => ({
+          ...row,
+          orderShare: totalOrders ? (row.orders / totalOrders) * 100 : 0,
+          revenueShare: totalRevenue ? (row.revenue / totalRevenue) * 100 : 0,
+          deliveryRate: row.orders ? (row.delivered / row.orders) * 100 : 0,
+          lossRate: row.orders ? (row.losses / row.orders) * 100 : 0,
+        }))
+        .sort((a, b) => b.orders - a.orders || b.revenue - a.revenue),
+    };
   }
 
   private buildOrderQuality(
@@ -735,8 +854,8 @@ export class DecisionDashboardService {
         returnRate: statusCounts.placed ? (statusCounts.returned / statusCounts.placed) * 100 : 0,
       },
       bySource: segment(
-        (order) => order.attribution?.lastTouch?.source || order.orderFrom || 'Unknown',
-        (sale) => sale.source || 'WhatsApp / phone',
+        (order) => this.orderSourceLabel(order),
+        () => 'Admin',
       ),
       byPayment: segment(
         (order) => order.paymentType || 'Unknown',
@@ -820,13 +939,13 @@ export class DecisionDashboardService {
     };
   }
 
-  private buildFunnel(posthog: any, orders: number, delivered: number): any {
-    const source = posthog.funnel || {};
+  private buildFunnel(analytics: any, orders: number, delivered: number): any {
+    const source = analytics.funnel || {};
     const stages = [
-      { key: 'visitors', label: 'Visitors', value: source.$pageview ?? null },
-      { key: 'productViews', label: 'Product views', value: source.product_viewed ?? null },
+      { key: 'visitors', label: 'Visitors', value: source.page_view ?? null },
+      { key: 'productViews', label: 'Product views', value: source.view_item ?? null },
       { key: 'addToCart', label: 'Add to cart', value: source.add_to_cart ?? null },
-      { key: 'checkout', label: 'Checkout', value: source.checkout_initiated ?? null },
+      { key: 'checkout', label: 'Checkout', value: source.begin_checkout ?? null },
       { key: 'orders', label: 'Orders', value: orders },
       { key: 'delivered', label: 'Delivered', value: delivered },
     ];
@@ -849,8 +968,8 @@ export class DecisionDashboardService {
       }
     });
     return {
-      available: posthog.available,
-      reason: posthog.reason || null,
+      available: analytics.available,
+      reason: analytics.reason || null,
       stages,
       largestDrop,
     };
@@ -1039,7 +1158,7 @@ export class DecisionDashboardService {
     quality: any,
     orderCount: number,
     spendRows: any[],
-    posthog: any,
+    analytics: any,
     days: number,
   ): any {
     const costRecords = quality.totalItems + quality.manualSales;
@@ -1060,7 +1179,7 @@ export class DecisionDashboardService {
       operationalCoverage * 0.15 +
       attributionCoverage * 0.15 +
       spendCoverage * 0.1 +
-      (posthog.available ? 100 : 0) * 0.05;
+      (analytics.available ? 100 : 0) * 0.05;
     const warnings: string[] = [];
     if (quality.fallbackItems) warnings.push(`${quality.fallbackItems} line items use current catalog cost as an estimate.`);
     if (quality.missingItems) warnings.push(`${quality.missingItems} line items have no usable product cost.`);
@@ -1068,7 +1187,7 @@ export class DecisionDashboardService {
     if (courierCoverage < 100) warnings.push('Some orders use the customer delivery charge as a courier-cost estimate.');
     if (operationalCoverage < 100) warnings.push('Packaging or payment fees are missing on some orders.');
     if (spendCoverage < 100) warnings.push(`Advertising spend covers ${Math.round(spendCoverage)}% of selected days.`);
-    if (!posthog.available) warnings.push(posthog.reason || 'PostHog funnel data is unavailable.');
+    if (!analytics.available) warnings.push(analytics.reason || 'GA4 funnel data is unavailable.');
     return {
       score: Math.round(score),
       cogsCoverage: Math.round(cogsCoverage),
@@ -1078,7 +1197,7 @@ export class DecisionDashboardService {
       attributionCoverage: Math.round(attributionCoverage),
       adSpendAvailable: spendCoverage === 100,
       adSpendCoverage: Math.round(spendCoverage),
-      funnelAvailable: posthog.available,
+      funnelAvailable: analytics.available,
       warnings,
     };
   }
@@ -1187,48 +1306,78 @@ export class DecisionDashboardService {
     return null;
   }
 
-  private async getPosthogAnalytics(start: Date, end: Date): Promise<any> {
-    const personalKey = this.configService.get<string>('POSTHOG_PERSONAL_API_KEY');
-    const projectId = this.configService.get<string>('POSTHOG_PROJECT_ID');
-    if (!personalKey || !projectId) {
+  private async getGa4Analytics(start: Date, end: Date): Promise<any> {
+    const propertyId = this.configService.get<string>('GA4_PROPERTY_ID');
+    const clientEmail = this.configService.get<string>('GA4_CLIENT_EMAIL');
+    const rawPrivateKey = this.configService.get<string>('GA4_PRIVATE_KEY');
+    if (!propertyId || !clientEmail || !rawPrivateKey) {
       return {
         available: false,
-        reason: 'POSTHOG_PERSONAL_API_KEY or POSTHOG_PROJECT_ID is not configured.',
+        reason: 'GA4_PROPERTY_ID, GA4_CLIENT_EMAIL, or GA4_PRIVATE_KEY is not configured.',
         funnel: {},
         products: {},
       };
     }
-    const configuredHost = this.configService.get<string>('POSTHOG_QUERY_HOST');
-    const host = (configuredHost || 'https://us.posthog.com').replace(/\/$/, '');
-    const from = start.toISOString().replace('T', ' ').replace('Z', '');
-    const to = end.toISOString().replace('T', ' ').replace('Z', '');
-    const headers = { Authorization: `Bearer ${personalKey}`, 'Content-Type': 'application/json' };
-    const queryUrl = `${host}/api/projects/${encodeURIComponent(projectId)}/query/`;
-    const run = async (query: string) => {
-      const response = await firstValueFrom(
-        this.httpService.post(queryUrl, { query: { kind: 'HogQLQuery', query } }, { headers, timeout: 15000 }),
-      );
-      return response.data?.results || [];
-    };
+    const startDate = start.toISOString().slice(0, 10);
+    const endDate = end.toISOString().slice(0, 10);
+    const funnelEvents = ['page_view', 'view_item', 'add_to_cart', 'begin_checkout'];
+    const productEvents = ['view_item', 'add_to_cart'];
     try {
-      const [funnelRows, productRows] = await Promise.all([
-        run(`SELECT event, uniq(distinct_id) FROM events WHERE timestamp >= toDateTime('${from}') AND timestamp <= toDateTime('${to}') AND event IN ('$pageview','product_viewed','add_to_cart','checkout_initiated','purchase_completed') GROUP BY event`),
-        run(`SELECT toString(properties.product_id), countIf(event = 'product_viewed'), countIf(event = 'add_to_cart') FROM events WHERE timestamp >= toDateTime('${from}') AND timestamp <= toDateTime('${to}') AND event IN ('product_viewed','add_to_cart') AND properties.product_id IS NOT NULL GROUP BY toString(properties.product_id)`),
+      const auth = new google.auth.JWT({
+        email: clientEmail,
+        key: rawPrivateKey.replace(/\\n/g, '\n'),
+        scopes: ['https://www.googleapis.com/auth/analytics.readonly'],
+      });
+      const analyticsData = google.analyticsdata({ version: 'v1beta', auth });
+      const property = `properties/${propertyId}`;
+      const [funnelReport, productReport] = await Promise.all([
+        analyticsData.properties.runReport({
+          property,
+          requestBody: {
+            dateRanges: [{ startDate, endDate }],
+            dimensions: [{ name: 'eventName' }],
+            metrics: [{ name: 'totalUsers' }],
+            dimensionFilter: {
+              filter: { fieldName: 'eventName', inListFilter: { values: funnelEvents } },
+            },
+          },
+        }),
+        analyticsData.properties.runReport({
+          property,
+          requestBody: {
+            dateRanges: [{ startDate, endDate }],
+            dimensions: [{ name: 'itemId' }, { name: 'eventName' }],
+            metrics: [{ name: 'eventCount' }],
+            dimensionFilter: {
+              filter: { fieldName: 'eventName', inListFilter: { values: productEvents } },
+            },
+          },
+        }),
       ]);
-      const funnel = funnelRows.reduce((map: any, row: any[]) => {
-        map[String(row[0])] = this.number(row[1]);
+
+      const funnel = (funnelReport.data.rows || []).reduce((map: any, row: any) => {
+        const event = row.dimensionValues?.[0]?.value;
+        map[event] = this.number(row.metricValues?.[0]?.value);
         return map;
       }, {});
-      const products = productRows.reduce((map: any, row: any[]) => {
-        map[String(row[0])] = { views: this.number(row[1]), carts: this.number(row[2]) };
+
+      const products = (productReport.data.rows || []).reduce((map: any, row: any) => {
+        const productId = row.dimensionValues?.[0]?.value;
+        const event = row.dimensionValues?.[1]?.value;
+        const count = this.number(row.metricValues?.[0]?.value);
+        if (!productId) return map;
+        if (!map[productId]) map[productId] = { views: 0, carts: 0 };
+        if (event === 'view_item') map[productId].views = count;
+        if (event === 'add_to_cart') map[productId].carts = count;
         return map;
       }, {});
+
       return { available: true, funnel, products };
     } catch (error) {
-      this.logger.warn(`PostHog decision query failed: ${error?.message || error}`);
+      this.logger.warn(`GA4 decision query failed: ${error?.message || error}`);
       return {
         available: false,
-        reason: 'PostHog query failed; verify the personal API key, project ID, and query host.',
+        reason: 'GA4 query failed; verify the property ID and service account credentials.',
         funnel: {},
         products: {},
       };
