@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-08-18. Branch: `main`. GA4 loader recovery is built locally after production lost required storefront assets; awaiting commit/push + VPS deploy._
+_Last updated: 2026-08-18. Branch: `main`. Storefront lazy-asset recovery and duplicate ecommerce-event suppression are verified locally and awaiting deployment._
 
 ## Recently completed (git log, newest first)
 
@@ -69,6 +69,30 @@ VPS deploy of `33dd40b0` and live confirmation that the Steadfast In Review coun
 climbs from 17 toward the real ~46.
 
 ## Completed this session
+
+### Duplicate ecommerce mirrors and missing storefront lazy chunks
+
+Production's GTM container is now loading (`window.__amolGtmReady === true`) and
+the data layer contains `view_item`, proving the analytics bootstrap is active.
+However, one product view produced two `view_item_stape` events, and Angular
+failed to load tracked lazy chunk `142.12b2a24faab58a18.js`. Several other
+tracked storefront scripts were also absent. The missing chunk can break route
+rendering independently of analytics, while the duplicate mirror can report two
+GA4 ViewItem/Meta ViewContent events for one product view.
+
+- `api/src/main.ts`: the runtime index patch now suppresses identical `_stape`
+  mirrors generated within 750 ms. Its signature includes event, first item,
+  transaction and value, so a different product/action is not discarded.
+- `scripts/vps-safe-pull.sh`: deployment now restores every missing file tracked
+  under the compiled storefront directory, not only runtime/main/polyfills and
+  `dl-normalize.js`. Existing compiled files and all runtime uploads remain
+  untouched. Core index references are still validated after recovery.
+
+**Verified:** Nest build, shell syntax, `git diff --check`, runtime patch anchor
+matching/JavaScript syntax, duplicate-signature behavior, and recovery of a
+deliberately removed lazy chunk in an isolated git worktree all pass. The repo's
+lint command still exits because ESLint ignores its entire configured glob.
+Production deployment remains pending.
 
 ### GA4 blank-data recovery and storefront asset deploy guard
 

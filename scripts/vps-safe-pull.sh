@@ -81,14 +81,24 @@ if [ -n "$SAFE_CHANGED" ]; then
   printf '%s\0' $SAFE_CHANGED | xargs -0 git checkout "origin/$BRANCH" --
 fi
 
-# A missing compiled entry bundle leaves the SPA as a blank page. These files
-# can be absent even when unchanged between HEAD and origin, so the diff above
-# will not necessarily restore them. Read the exact filenames referenced by the
-# deployed index and recover any tracked copy from origin before reporting a
-# successful deployment. dl-normalize.js is included because analytics loading
-# uses it before starting the GTM/Tagioo container.
+# Missing compiled storefront files can break the SPA even when those files did
+# not change between HEAD and origin, so the revision diff above will not
+# necessarily restore them. Recover every missing tracked storefront asset from
+# origin. Existing files are left untouched, and runtime uploads live outside
+# this directory.
 STOREFRONT_DIR="ui/dist/angular-ui/browser"
 STOREFRONT_INDEX="$STOREFRONT_DIR/index.html"
+git ls-tree -r --name-only "origin/$BRANCH" "$STOREFRONT_DIR" |
+  while IFS= read -r TRACKED_ASSET_PATH; do
+    [ -n "$TRACKED_ASSET_PATH" ] || continue
+    if [ ! -e "$TRACKED_ASSET_PATH" ]; then
+      echo "[safe-pull] restoring missing tracked storefront asset: ${TRACKED_ASSET_PATH#"$STOREFRONT_DIR/"}"
+      git checkout "origin/$BRANCH" -- "$TRACKED_ASSET_PATH"
+    fi
+  done
+
+# Validate the entry files referenced by index.html after recovery. This also
+# catches an invalid deployment where index.html points to an untracked bundle.
 if [ -f "$STOREFRONT_INDEX" ]; then
   CORE_ASSETS="$(
     {

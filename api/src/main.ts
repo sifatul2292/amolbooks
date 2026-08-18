@@ -126,6 +126,21 @@ async function bootstrap() {
         if(items[0])items[0].price=finalViewValue;
       }
     }`;
+  const legacyStorefrontStapePushCode = `function _pushStape(obj){
+    try{
+      var s=stapeOf(obj);s.__stape=true;`;
+  const storefrontStapeDuplicateGuardMarker =
+    "var _lastStapeSignature='',_lastStapeAt=0;";
+  const storefrontStapePushCode = `${storefrontStapeDuplicateGuardMarker}
+  function _pushStape(obj){
+    try{
+      var s=stapeOf(obj);s.__stape=true;
+      var firstItem=((s.ecommerce||{}).items||[])[0]||{};
+      var signature=String(s.event||'')+'|'+String(firstItem.item_id||'')+'|'+String((s.ecommerce||{}).transaction_id||'')+'|'+String((s.ecommerce||{}).value||'');
+      var now=Date.now();
+      if(signature&&signature===_lastStapeSignature&&now-_lastStapeAt<750)return;
+      _lastStapeSignature=signature;
+      _lastStapeAt=now;`;
   const legacyStorefrontCartValueCode =
     'function cartVal(items){return items.reduce(function(s,i){return s+(i.price||0)*(i.quantity||1);},0);}';
   const storefrontFinalPriceMarker = 'function finalTrackingPrice(p){';
@@ -325,6 +340,12 @@ ${storefrontPurchaseExternalIdHelper}
       );
 
     let patchedTrackingHtml = trackingHtml;
+    if (!patchedTrackingHtml.includes(storefrontStapeDuplicateGuardMarker)) {
+      patchedTrackingHtml = patchedTrackingHtml.replace(
+        legacyStorefrontStapePushCode,
+        storefrontStapePushCode,
+      );
+    }
     if (!patchedTrackingHtml.includes(storefrontViewItemMirrorMarker)) {
       patchedTrackingHtml = patchedTrackingHtml.replace(
         legacyStorefrontViewItemMirrorCode,
