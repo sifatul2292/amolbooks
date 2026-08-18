@@ -2,10 +2,12 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-08-11. Branch: `main`. Meta Purchase tracking gap-fill built (uncommitted); awaiting GTM snippet publish + VPS deploy._
+_Last updated: 2026-08-17. Branch: `main`. Incomplete-order address fix pushed (`991a080a`), awaiting VPS deploy. Authoritative Meta Purchase tracking is built locally and awaiting Tagioo verification + VPS/GTM deploy._
 
 ## Recently completed (git log, newest first)
 
+- `991a080a` Incomplete orders: stop address landing on duplicate rows (pushed, not deployed)
+- `032a9b10` Load GTM at window load instead of 10 seconds after it
 - Ad-account picker for Meta spend sync (pending commit — see below)
 - `add8d737` Fix Meta OAuth callback swallowing errors behind zlib crash
 - `33dd40b0` Recover missed webhook transitions into Steadfast In Review
@@ -22,24 +24,36 @@ display-only, then margin/copy polish.
 
 ## In progress
 
-**Meta Purchase tracking gap-fill (built, uncommitted, not yet deployed).** Two manual
-steps are still outstanding:
+**Authoritative Meta Purchase tracking (built locally, not yet deployed).** The API now
+sends every new website/manual Purchase directly to Meta and requires Meta's
+`events_received` acknowledgement before marking it tracked. It also sends the same event
+through Tagioo for the existing server-container pipeline. Browser, Tagioo and direct CAPI
+all use `event_id = order_<orderId>`, so Meta can deduplicate them.
 
-1. Publish `gtm-snippets/meta-purchase-beacon.html` as a GTM Custom HTML tag on All Pages.
-   Until it is live, `attribution` never reaches the order and the gap-fill job stays idle
-   by design (it arms itself on the first beacon it ever receives).
-2. Deploy the api (`scripts/vps-safe-pull.sh`, then `npm install --legacy-peer-deps`,
-   `npm run build`, `pm2 restart amolbooks-api`).
+Before deployment, verify in Tagioo preview that the Meta Purchase tag forwards the incoming
+`event_id` unchanged. This is mandatory; without it, the browser/Tagioo copy cannot
+deduplicate against the direct API copy.
 
-Then watch the new **Meta tracking health** panel on the profit dashboard for two days.
-`browserFired` dropping to zero means the beacon broke — in that state the gap-fill job
-would start sending for orders Stape also reported, so fix the beacon before ignoring it.
+Deployment order:
 
-**Deploy the api first, publish the GTM tag second.** Gap-fill stays disarmed until the
-first beacon exists, so the api deploy alone changes nothing about Purchase sending — a
-clean checkpoint. **Rollback is `META_GAP_FILL_DISABLED=true` in `api/.env` + `pm2 restart`,
-NOT pausing the GTM tag.** Pausing the tag stops the beacons, which makes every new order
-look unreported and would have the job send for all of them.
+1. Verify/publish the Tagioo `event_id` mapping.
+2. Deploy the API with `scripts/vps-safe-pull.sh`, then `npm install --legacy-peer-deps`,
+   `npm run build`, and `pm2 restart amolbooks-api`.
+3. Publish/update `gtm-snippets/meta-purchase-beacon.html` on All Pages. The API-served
+   storefront attribution script already captures attribution and stamps the stable event
+   ID; this GTM tag adds browser-fired health telemetry.
+4. Test one website order, one incomplete-order phone conversion, and one WhatsApp order.
+   For each, confirm the same `order_<orderId>` in Tagioo and Meta Test Events and one
+   deduplicated Purchase in Meta.
+
+`META_GAP_FILL_DISABLED=true` + PM2 restart disables website direct sending/retries as an
+emergency rollback. It does not disable manual-order CAPI.
+
+The Meta tracking-health panel now treats only Meta-acknowledged API sends as reported;
+`browserFired` is diagnostic and no longer assumed to prove delivery to Meta. Incomplete
+orders store `_fbc`/`_fbp`/`fbclid` + IP/UA and carry them into phone-converted orders.
+Incomplete conversions are labelled `phone`, while ordinary admin orders still default to
+WhatsApp.
 
 After deploy, first thing to verify: click **Sync** on the profit dashboard and confirm ad
 spend still populates. `syncSpend` now also requests `actions,action_values` with
@@ -56,6 +70,45 @@ climbs from 17 toward the real ~46.
 
 ## Completed this session
 
+### Incomplete Orders: empty Address column — root cause + fix (`991a080a`)
+
+**Symptom.** The Address column on the Incomplete Orders page was `—` on almost every row.
+A few rows showed fragments (`138/`, `1`), and the same phone appeared several times at the
+same minute (the `5x` repeat badge).
+
+**Root cause.** The compiled checkout (`ui/dist/.../583.*.js`,
+`handleIncompleteOrderOnFormChange`) subscribes to `formData.valueChanges` with a 300ms
+debounce and POSTs `add-incomplete-order-by-*` on every change **until the first response
+returns an `_id`** (`isIncompleteOrderId`), only then switching to
+`update-incomplete-order-by-id`. Address is the last field a customer types, so the extra
+posts each created their own row holding phone only, and the address updates landed on
+whichever add-response happened to win the race. Second, smaller leak:
+`division`/`area`/`zone` were sent by checkout but absent from `IncompleteOrderSchema`, so
+mongoose dropped them — a row where the customer picked a location but had not typed the
+street showed nothing at all. Related to the earlier "Incomplete-checkout address capture
+regression" entry below, but a different mechanism (that one was a 401 on the update route).
+
+- `addIncompleteOrder` merges into the newest non-converted row for the same phone within
+  `INCOMPLETE_ORDER_MERGE_WINDOW_MS` (6h) and returns that `_id`, so every later update
+  funnels into one row instead of stacking duplicates.
+- `buildIncompleteOrderMergePatch` skips empty strings, empty arrays and `0` totals, and the
+  public update route (`allowConverted=false`) drops empty strings for the same reason — an
+  early snapshot can never blank an address the customer already typed. Admin edits may
+  still clear a field.
+- Added `division`/`area`/`zone` to `IncompleteOrderSchema`, both DTOs, and both
+  editable-field allowlists.
+- `custom-orders.html`: new `rowAddress()` builds street → area → zone → division → city
+  with dedupe; used by the list cell, the view modal, and the CSV export.
+
+**Verified:** `tsc --noEmit` clean, `node --check` on the page's script block clean,
+`rowAddress` cases → `"138/A Green Road, Dhanmondi, Dhaka"`, `"Mirpur, Dhaka"`,
+`"Chittagong"`, `"—"`, `"Dhaka"`. Not verified against live data — no DB access from this
+session.
+
+**Still open:** the ~432 pre-existing rows stay fragmented; the fix only applies to new
+checkouts. A one-off merge script (group by phone + day, keep the longest address, delete
+the rest) has NOT been written or run — it touches production Mongo, so back up first.
+
 ### Meta Ads reported 5 purchases against 12 units sold — root cause + fix
 
 **Root cause of lost website purchases.** `ui/dist/.../index.html:482` stashes the
@@ -68,9 +121,11 @@ was short. Purchase CAPI had been deliberately removed from the API
 (`gtm.service.ts:475`) to avoid duplicating Stape, leaving the browser as the single point
 of failure.
 
-**Approach — mutually exclusive senders, so Stape stays untouched.** The storefront reports
-which orders actually pushed a Purchase; the API sends only for the orders it did not. No
-dedup guessing, no dependence on Stape's Event ID config.
+**Current approach (supersedes the original gap-fill design).** The API sends every new
+Purchase directly to Meta and requires `events_received >= 1`. It also sends the event into
+Tagioo, while the browser keeps its existing Tagioo path. All copies use the stable
+`event_id = order_<orderId>` and therefore require Tagioo's Meta tag to forward `event_id`
+unchanged for deduplication.
 
 - `gtm-snippets/meta-purchase-beacon.html` (new GTM tag): splices `attribution` into the
   `/add-order-by-*` POST (`_fbc`/`_fbp` cookies, `fbclid`, first/last-touch UTMs, the
@@ -78,15 +133,16 @@ dedup guessing, no dependence on Stape's Event ID config.
   and `sendBeacon`s the order id to `POST /api/order/purchase-fired`.
 - `order.controller.ts` / `order.service.ts`: public `markBrowserPurchaseFired` sets
   `browserPurchaseFiredAt` + `browserPurchaseEventId` (idempotent).
-- `addOrder` now takes `req` and stamps `attribution.clientUserAgent` / `clientIpAddress`
-  server-side, since Meta needs the IP + UA that produced fbc/fbp.
-- `scheduleWebsitePurchaseGapFill` (every 5 min): for website orders older than 20 min with
-  no beacon and no Meta send, posts a CAPI Purchase with `action_source: 'website'`,
-  `event_source_url`, fbc/fbp/external_id/ph/em, `event_id = order_<orderId>`, and marks
-  `metaPurchaseDeliveryChannel: 'website_gap_fill'`. Falls back to building `fbc` from a
-  stored `fbclid` when the cookie was missed. **Self-arming:** it does nothing until the
-  first beacon exists, so pre-deployment orders (whose missing beacon proves nothing) are
-  never re-sent.
+- `addOrder` takes `req`, stamps `attribution.clientUserAgent` / `clientIpAddress`, and starts
+  authoritative Tagioo + direct Meta delivery immediately after the order is saved.
+- `scheduleWebsitePurchaseGapFill` is now a retry worker only: after 20 minutes it retries
+  website orders explicitly marked failed/stuck, up to three attempts. It never sweeps old
+  orders that have no tracking state.
+- The API-served storefront patch adds `event_id` to the browser Purchase before its
+  dataLayer push, so it matches the API copy even if the optional beacon tag is delayed.
+- Incomplete-order add/update requests now persist attribution. Conversion by staff copies
+  it into the real order and is forced to `manualOrderSource: phone`; ordinary admin orders
+  continue to default to WhatsApp.
 
 **Manual/WhatsApp order fixes.** The admin panel dist hardcodes `orderFrom:"admin"` and
 sends no `manualOrderSource`, so every manually typed order fell through to `'other'` →
@@ -100,10 +156,9 @@ the case where a WhatsApp buyer also self-places on the site.
 **Measurement, so this never needs a mongosh query again.**
 `meta-tracking-health.service.ts` + `GET /api/dashboard/meta-tracking-health` and a new
 **Meta tracking health** panel on `profit-dashboard.html`: per day, orders vs units,
-website vs manual, browser-fired / gap-filled / never-reported / manual-sent / failed,
-coverage %, the last 10 failures with their error text, and sample beacon `event_id`s
-(needed before browser and server events could ever be deduplicated instead of kept
-exclusive).
+website vs manual, browser-fired / website-API-sent / never-reported / manual-sent / failed,
+coverage %, the last 10 failures with their error text, and sample beacon `event_id`s.
+Only a direct Meta acknowledgement counts as reported; a browser push alone does not.
 
 **Reconciliation.** `meta-ads.service.ts` pulled `spend` only. It now also requests
 `actions,action_values` with `action_report_time=conversion` and
@@ -111,14 +166,16 @@ exclusive).
 per day and per campaign. Conversion-time reporting is what makes Meta's count comparable
 to our order records at all — the default credits a sale to the day of the click.
 
-**Verified:** `tsc --noEmit` and `nest build` pass; `git diff --check` clean. Snippet
+**Verified:** `nest build` passes; `git diff --check` clean. Attribution add/update harness
+passes with fbc/fbp/fbclid and stable browser `event_id` injection. Snippet
 exercised in a browser harness — attribution injected with fbc/fbp/campaign/fbclid,
 existing attribution preserved, `event_id` stamped, inner (Stape) push still receives the
 event, one beacon per order to the right URL as `application/x-www-form-urlencoded`,
 repeat pushes deduplicated, non-purchase pushes untouched. Dashboard panel rendered against
 fixture data (pill, 6 tiles, day rows, failure list). **Not verified live:** the API was
-deliberately not started locally — `.env` may point at production Mongo, and booting it
-would run the gap-fill job against real orders.
+deliberately not started locally — `.env` may point at production Mongo. The repository's
+`npm run lint` currently cannot run because no ESLint configuration exists, causing ESLint
+8 to treat the configured source glob as ignored.
 
 **Expectation check.** This closes the lost-browser-event bucket only. The rest of the
 12-vs-5 gap is units vs orders (Meta counts purchase events, not copies), Ads Manager
@@ -376,6 +433,11 @@ count even when tracking is perfect.
 
 ## Files most recently touched (why)
 
+- `api/src/pages/sales/order/order.service.ts` — incomplete-order add now merges by phone
+  instead of inserting duplicates; empty values never overwrite filled fields.
+- `api/src/schema/incomplete-order.schema.ts` / `api/src/dto/incomplete-order.dto.ts` —
+  persist `division`/`area`/`zone` from checkout.
+- `api/upload/static/custom-orders.html` — `rowAddress()` for the list, modal and CSV.
 - `api/src/pages/dashboard/decision-dashboard.service.ts` — versioned decision analytics, trusted profit calculations, recommendations, cohorts, and experiment baselines.
 - `api/src/pages/dashboard/schema/analytics-action.schema.ts` — persistent acted-on recommendations.
 - `api/upload/static/profit-dashboard.html` / `profit-dashboard-tokens.css` — responsive decision cockpit and named visual tokens.
@@ -400,6 +462,9 @@ count even when tracking is perfect.
 
 ## Known bugs / incomplete / TODOs
 
+- Incomplete orders created before `991a080a` are still split across duplicate rows with the
+  address on whichever row won the race. Needs a one-off merge script (group by phone + day,
+  keep longest address, delete the rest) run against production Mongo after a backup.
 - Historical orders created before this change need a reviewed COGS/courier/fee backfill to become fully actual; missing historical COGS makes contribution unavailable meanwhile.
 - PostHog funnel stages remain unavailable until the personal API key and project ID are configured in production.
 - No committed test coverage; `npm test` is scaffolding only.
@@ -416,6 +481,12 @@ count even when tracking is perfect.
 3. Add a minimal smoke test / health endpoint check for the free-gift + recent-buyers flows.
 
 ## Commands already run this session
+
+- `cd api && npx tsc --noEmit` after the incomplete-order duplicate/address fix → passed.
+- `node --check` on the `custom-orders.html` script block containing `rowAddress` → passed.
+- `rowAddress()` extracted and run against 5 fixtures (street+area+division, location only,
+  whitespace-only address, empty order, duplicate city/street) → expected output.
+- `git push origin main` → `032a9b10..991a080a`.
 
 - Incomplete-order public/admin update allowlist smoke test: storefront address persisted, privileged/immutable fields were rejected, converted records were protected, and authenticated admin fields remained available → passed.
 - `api/upload/static/custom-orders.html` inline scripts and the injected incomplete-order editor script syntax checks → passed.

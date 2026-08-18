@@ -12,10 +12,9 @@ const MAX_DAYS = 90;
  * Answers one question the Meta Events Manager cannot: for every order we took,
  * did Meta actually receive a Purchase, and through which path?
  *
- * Website orders reach Meta from the browser only, so a lost browser event is
- * invisible in Meta's own coverage stats — those measure the quality of events
- * that arrived, never the ones that never fired. Reading it from our own order
- * records is the only way to see the hole.
+ * Website orders are sent authoritatively by the API and mirrored by the
+ * browser with the same event ID. Reading the delivery state from our own order
+ * records shows failures that Meta's received-event diagnostics cannot.
  */
 @Injectable()
 export class MetaTrackingHealthService {
@@ -33,12 +32,10 @@ export class MetaTrackingHealthService {
     const since = new Date(Date.now() - dayCount * 24 * 60 * 60 * 1000);
 
     const isWebsite = { $eq: ['$orderFrom', 'Website'] };
-    const purchaseReported = {
-      $or: [
-        { $ne: ['$browserPurchaseFiredAt', null] },
-        { $eq: ['$metaPurchaseStatus', 'sent'] },
-      ],
-    };
+    // Only Meta's own events_received acknowledgement counts as reported.
+    // A browser dataLayer push is useful telemetry, but it is not proof that
+    // Tagioo's Meta tag completed successfully.
+    const purchaseReported = { $eq: ['$metaPurchaseStatus', 'sent'] };
 
     const rows: any[] = await this.orderModel.aggregate([
       { $match: { createdAt: { $gte: since } } },
@@ -64,6 +61,9 @@ export class MetaTrackingHealthService {
           isWebsite,
           reported: purchaseReported,
           browserFired: { $ne: ['$browserPurchaseFiredAt', null] },
+          serverSent: {
+            $and: [isWebsite, { $eq: ['$metaPurchaseStatus', 'sent'] }],
+          },
           gapFilled: {
             $eq: ['$metaPurchaseDeliveryChannel', 'website_gap_fill'],
           },
@@ -84,10 +84,16 @@ export class MetaTrackingHealthService {
           websiteOrders: { $sum: { $cond: ['$isWebsite', 1, 0] } },
           manualOrders: { $sum: { $cond: ['$isWebsite', 0, 1] } },
           browserFired: { $sum: { $cond: ['$browserFired', 1, 0] } },
+          serverSent: { $sum: { $cond: ['$serverSent', 1, 0] } },
           gapFilled: { $sum: { $cond: ['$gapFilled', 1, 0] } },
           manualSent: { $sum: { $cond: ['$manualSent', 1, 0] } },
           failed: { $sum: { $cond: ['$failed', 1, 0] } },
           reported: { $sum: { $cond: ['$reported', 1, 0] } },
+          websiteReported: {
+            $sum: {
+              $cond: [{ $and: ['$isWebsite', '$reported'] }, 1, 0],
+            },
+          },
         },
       },
       { $sort: { _id: -1 } },
@@ -100,16 +106,12 @@ export class MetaTrackingHealthService {
       websiteOrders: row.websiteOrders,
       manualOrders: row.manualOrders,
       browserFired: row.browserFired,
+      serverSent: row.serverSent,
       gapFilled: row.gapFilled,
       manualSent: row.manualSent,
       failed: row.failed,
       reported: row.reported,
-      // Website orders Meta was never told about. Before the gap-fill job
-      // existed this was silent revenue Meta could not attribute.
-      untrackedWebsite: Math.max(
-        0,
-        row.websiteOrders - row.browserFired - row.gapFilled,
-      ),
+      untrackedWebsite: Math.max(0, row.websiteOrders - row.websiteReported),
       coverage: row.orders
         ? Math.round((row.reported / row.orders) * 1000) / 10
         : 0,
@@ -122,6 +124,7 @@ export class MetaTrackingHealthService {
         websiteOrders: sum.websiteOrders + day.websiteOrders,
         manualOrders: sum.manualOrders + day.manualOrders,
         browserFired: sum.browserFired + day.browserFired,
+        serverSent: sum.serverSent + day.serverSent,
         gapFilled: sum.gapFilled + day.gapFilled,
         manualSent: sum.manualSent + day.manualSent,
         failed: sum.failed + day.failed,
@@ -134,6 +137,7 @@ export class MetaTrackingHealthService {
         websiteOrders: 0,
         manualOrders: 0,
         browserFired: 0,
+        serverSent: 0,
         gapFilled: 0,
         manualSent: 0,
         failed: 0,
@@ -151,9 +155,8 @@ export class MetaTrackingHealthService {
       .limit(10)
       .lean();
 
-    // Which event_id format Stape settles on is visible here once beacons start
-    // arriving — needed before browser and server events can be deduplicated
-    // against each other rather than kept mutually exclusive.
+    // Browser and API samples must both use order_<orderId>; this makes any
+    // Tagioo event-ID mapping regression visible without a database query.
     const beaconSamples: any[] = await this.orderModel
       .find({ browserPurchaseEventId: { $exists: true, $ne: null } })
       .select('orderId browserPurchaseEventId browserPurchaseFiredAt')

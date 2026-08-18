@@ -580,7 +580,7 @@
     var cards = [
       { label: 'Orders (' + fmt(data.rangeDays) + 'd)', value: fmt(totals.orders) + ' · ' + fmt(totals.units) + ' units' },
       { label: 'Browser fired', value: fmt(totals.browserFired) },
-      { label: 'Gap-filled by API', value: fmt(totals.gapFilled) },
+      { label: 'Website API sent', value: fmt(totals.serverSent) },
       { label: 'Never reported', value: fmt(totals.untrackedWebsite) },
       { label: 'Manual sent', value: fmt(totals.manualSent) },
       { label: 'Failed', value: fmt(totals.failed) }
@@ -590,9 +590,9 @@
     }).join('');
 
     document.getElementById('trackingTable').innerHTML = days.length
-      ? '<table class="mini-table"><thead><tr><th>Date</th><th>Orders</th><th>Units</th><th>Website</th><th>Browser fired</th><th>Gap-filled</th><th>Never reported</th><th>Manual sent</th><th>Failed</th><th>Reported</th></tr></thead><tbody>'
+      ? '<table class="mini-table"><thead><tr><th>Date</th><th>Orders</th><th>Units</th><th>Website</th><th>Browser fired</th><th>API sent</th><th>Never reported</th><th>Manual sent</th><th>Failed</th><th>Reported</th></tr></thead><tbody>'
         + days.map(function (row) {
-            return '<tr><td>' + esc(row.date) + '</td><td>' + fmt(row.orders) + '</td><td>' + fmt(row.units) + '</td><td>' + fmt(row.websiteOrders) + '</td><td>' + fmt(row.browserFired) + '</td><td>' + fmt(row.gapFilled) + '</td><td class="' + (row.untrackedWebsite > 0 ? 'money-negative' : '') + '">' + fmt(row.untrackedWebsite) + '</td><td>' + fmt(row.manualSent) + '</td><td>' + fmt(row.failed) + '</td><td>' + pct(row.coverage) + '</td></tr>';
+            return '<tr><td>' + esc(row.date) + '</td><td>' + fmt(row.orders) + '</td><td>' + fmt(row.units) + '</td><td>' + fmt(row.websiteOrders) + '</td><td>' + fmt(row.browserFired) + '</td><td>' + fmt(row.serverSent) + '</td><td class="' + (row.untrackedWebsite > 0 ? 'money-negative' : '') + '">' + fmt(row.untrackedWebsite) + '</td><td>' + fmt(row.manualSent) + '</td><td>' + fmt(row.failed) + '</td><td>' + pct(row.coverage) + '</td></tr>';
           }).join('')
         + '</tbody></table>'
       : '<div class="empty">No orders in this window.</div>';

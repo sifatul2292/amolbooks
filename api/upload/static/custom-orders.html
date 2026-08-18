@@ -3312,7 +3312,10 @@
       grandTotal: Number(order.grandTotal || 0),
       note: order.note || '',
       adminNote: order.adminNote || '',
+      manualOrderSource: 'phone',
+      orderFrom: 'Phone',
     };
+    if (order.attribution) payload.attribution = order.attribution;
     // Only send user when it is a real id; empty string fails ObjectId cast.
     if (userId) payload.user = userId;
     return payload;

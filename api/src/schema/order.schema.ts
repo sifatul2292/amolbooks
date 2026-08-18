@@ -143,7 +143,12 @@ export const OrderSchema = new mongoose.Schema(
     },
     metaPurchaseDeliveryChannel: {
       type: String,
-      enum: ['tagioo', 'direct_meta_fallback', 'website_gap_fill'],
+      enum: [
+        'tagioo',
+        'direct_meta',
+        'direct_meta_fallback',
+        'website_gap_fill',
+      ],
       required: false,
     },
     // Set by the storefront purchase beacon the moment the browser actually

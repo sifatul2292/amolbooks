@@ -1,5 +1,5 @@
-import * as mongoose from 'mongoose';
-import { Schema } from 'mongoose';
+import * as mongoose from "mongoose";
+import { Schema } from "mongoose";
 
 export const IncompleteOrderSchema = new mongoose.Schema(
   {
@@ -97,12 +97,52 @@ export const IncompleteOrderSchema = new mongoose.Schema(
     },
     user: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: false,
+    },
+    // Preserve the ad click/browser identity while checkout is still incomplete.
+    // If staff later converts this row by phone, the resulting Purchase can use
+    // the original visit rather than looking like an unrelated manual order.
+    attribution: {
+      anonymousId: { type: String, required: false },
+      firstTouch: {
+        source: { type: String, required: false },
+        medium: { type: String, required: false },
+        campaign: { type: String, required: false },
+        campaignId: { type: String, required: false },
+        adSet: { type: String, required: false },
+        adSetId: { type: String, required: false },
+        ad: { type: String, required: false },
+        adId: { type: String, required: false },
+        landingPage: { type: String, required: false },
+        referrer: { type: String, required: false },
+        fbclid: { type: String, required: false },
+        fbc: { type: String, required: false },
+        fbp: { type: String, required: false },
+        capturedAt: { type: Date, required: false },
+      },
+      lastTouch: {
+        source: { type: String, required: false },
+        medium: { type: String, required: false },
+        campaign: { type: String, required: false },
+        campaignId: { type: String, required: false },
+        adSet: { type: String, required: false },
+        adSetId: { type: String, required: false },
+        ad: { type: String, required: false },
+        adId: { type: String, required: false },
+        landingPage: { type: String, required: false },
+        referrer: { type: String, required: false },
+        fbclid: { type: String, required: false },
+        fbc: { type: String, required: false },
+        fbp: { type: String, required: false },
+        capturedAt: { type: Date, required: false },
+      },
+      clientUserAgent: { type: String, required: false },
+      clientIpAddress: { type: String, required: false },
     },
   },
   {
     versionKey: false,
     timestamps: true,
-  },
+  }
 );

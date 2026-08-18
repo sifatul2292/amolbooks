@@ -69,9 +69,8 @@ export class OrderController {
 
   /**
    * Public beacon from the storefront purchase snippet. Fired the instant the
-   * browser pushes purchase_stape to the dataLayer, so the API knows which
-   * orders Stape actually received a Purchase for. Orders without this are the
-   * ones the gap-fill job sends server-side.
+   * browser pushes purchase_stape to the dataLayer. This is delivery telemetry;
+   * the API independently sends every Purchase using the same event ID.
    */
   @Version(VERSION_NEUTRAL)
   @Post('/purchase-fired')
@@ -432,8 +431,12 @@ export class OrderController {
   @UsePipes(ValidationPipe)
   async addIncompleteOrderByUser(
     @Body() addIncompleteOrderDto: AddIncompleteOrderDto,
+    @Req() req: Request,
   ): Promise<ResponsePayload> {
-    return await this.orderService.addIncompleteOrder(addIncompleteOrderDto);
+    return await this.orderService.addIncompleteOrder(
+      addIncompleteOrderDto,
+      req,
+    );
   }
 
   @Version(VERSION_NEUTRAL)
@@ -441,8 +444,12 @@ export class OrderController {
   @UsePipes(ValidationPipe)
   async addIncompleteOrderByAnonymous(
     @Body() addIncompleteOrderDto: AddIncompleteOrderDto,
+    @Req() req: Request,
   ): Promise<ResponsePayload> {
-    return await this.orderService.addIncompleteOrder(addIncompleteOrderDto);
+    return await this.orderService.addIncompleteOrder(
+      addIncompleteOrderDto,
+      req,
+    );
   }
 
   @Version(VERSION_NEUTRAL)
@@ -471,8 +478,13 @@ export class OrderController {
   async updateIncompleteOrderById(
     @Param('id', MongoIdValidationPipe) id: string,
     @Body() updateIncompleteOrderDto: UpdateIncompleteOrderDto,
+    @Req() req: Request,
   ): Promise<ResponsePayload> {
-    return await this.orderService.updateIncompleteOrderById(id, updateIncompleteOrderDto);
+    return await this.orderService.updateIncompleteOrderById(
+      id,
+      updateIncompleteOrderDto,
+      req,
+    );
   }
 
   @Version(VERSION_NEUTRAL)

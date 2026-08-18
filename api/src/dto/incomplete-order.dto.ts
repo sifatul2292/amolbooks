@@ -7,9 +7,9 @@ import {
   IsOptional,
   IsString,
   ValidateNested,
-} from 'class-validator';
-import { Type } from 'class-transformer';
-import { PaginationDto } from './pagination.dto';
+} from "class-validator";
+import { Type } from "class-transformer";
+import { PaginationDto } from "./pagination.dto";
 
 export class AddIncompleteOrderDto {
   @IsOptional()
@@ -99,6 +99,10 @@ export class AddIncompleteOrderDto {
   @IsOptional()
   @IsString()
   user?: string;
+
+  @IsOptional()
+  @IsObject()
+  attribution?: any;
 }
 
 export class UpdateIncompleteOrderDto {
@@ -181,6 +185,10 @@ export class UpdateIncompleteOrderDto {
   @IsOptional()
   @IsArray()
   orderedItems?: any[];
+
+  @IsOptional()
+  @IsObject()
+  attribution?: any;
 }
 
 export class FilterIncompleteOrderDto {

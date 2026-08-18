@@ -28,6 +28,13 @@ export const STOREFRONT_ATTRIBUTION_SCRIPT = String.raw`(function (root) {
     return '';
   }
 
+  function cookie(name) {
+    try {
+      var match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.*+?^\${}()|[\]\\])/g, '\\$1') + '=([^;]*)'));
+      return match ? decodeURIComponent(match[1]) : '';
+    } catch (_) { return ''; }
+  }
+
   function currentTouch() {
     var search = new URLSearchParams(root.location.search || '');
     var referrer = document.referrer || '';
@@ -36,6 +43,8 @@ export const STOREFRONT_ATTRIBUTION_SCRIPT = String.raw`(function (root) {
       if (referrer && new URL(referrer).hostname !== root.location.hostname) externalReferrer = referrer;
     } catch (_) {}
     var fbclid = param(search, ['fbclid']);
+    var fbc = cookie('_fbc');
+    var fbp = cookie('_fbp');
     var source = param(search, ['utm_source']);
     if (!source && fbclid) source = 'facebook';
     if (!source && externalReferrer) {
@@ -53,6 +62,8 @@ export const STOREFRONT_ATTRIBUTION_SCRIPT = String.raw`(function (root) {
       landingPage: root.location.href.slice(0, 500),
       referrer: externalReferrer.slice(0, 500),
       fbclid: fbclid,
+      fbc: fbc,
+      fbp: fbp,
       capturedAt: new Date().toISOString(),
       hasCampaignSignal: !!(source || fbclid || externalReferrer)
     };
@@ -71,6 +82,11 @@ export const STOREFRONT_ATTRIBUTION_SCRIPT = String.raw`(function (root) {
     var touch = currentTouch();
     if (!saved.firstTouch) saved.firstTouch = cleanTouch(touch);
     if (!saved.lastTouch || touch.hasCampaignSignal) saved.lastTouch = cleanTouch(touch);
+    ['firstTouch', 'lastTouch'].forEach(function (key) {
+      if (!saved[key]) return;
+      if (touch.fbc) saved[key].fbc = touch.fbc;
+      if (touch.fbp) saved[key].fbp = touch.fbp;
+    });
     saved.anonymousId = anonymousId();
     root.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
     return saved;
@@ -107,7 +123,7 @@ export const STOREFRONT_ATTRIBUTION_SCRIPT = String.raw`(function (root) {
       if (!payload.user_data.customer_id) payload.user_data.customer_id = trackingId;
       return JSON.stringify(payload);
     }
-    if (/\/api\/(?:v\d+\/)?order\/(?:add-order-by-(?:user|anonymous)|add)(?:\?|$)/.test(path)) {
+    if (/\/api\/(?:v\d+\/)?order\/(?:add-order-by-(?:user|anonymous)|add|add-incomplete-order-by-(?:user|anonymous)|update-incomplete-order-by-id\/[^?]+)(?:\?|$)/.test(path)) {
       payload.attribution = attribution();
       return JSON.stringify(payload);
     }

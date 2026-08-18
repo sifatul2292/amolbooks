@@ -254,6 +254,8 @@ async function bootstrap() {
   const storefrontPurchaseExternalIdHelper = `
   window.__amolEnsurePurchaseExternalId=function(payload){
     if(!payload||typeof payload!=='object')return payload;
+    var transactionId=payload.ecommerce&&payload.ecommerce.transaction_id;
+    if(transactionId&&!payload.event_id)payload.event_id='order_'+String(transactionId);
     payload.user_data=payload.user_data||{};
     if(payload.user_data.customer_id)return payload;
     try{

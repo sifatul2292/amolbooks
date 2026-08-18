@@ -1,14 +1,11 @@
 <!--
   Meta purchase beacon + order attribution capture.
 
-  WHY: the storefront sends its Purchase to Stape from the browser only. It
-  stashes the payload in sessionStorage after the order POST and pushes it when
-  the buyer lands on the thank-you page (see index.html `_pendingPurchase`). A
-  closed tab, a dropped mobile connection, or blocked storage loses that event
-  for good, and Meta's own coverage stats cannot show it — they measure the
-  quality of events that arrived, never the ones that never fired.
+  WHY: the storefront still mirrors Purchase through the browser/Tagioo path,
+  while the API sends an authoritative CAPI copy. This tag records whether the
+  browser path fired and makes sure it carries the API's stable deduplication ID.
 
-  This tag does two things so the API can close that hole:
+  This tag does two things:
 
     1. ATTRIBUTION — splices `attribution` into the /add-order-by-* POST body:
        the `_fbc`/`_fbp` cookies, `fbclid`, first-touch and last-touch UTM
@@ -17,15 +14,12 @@
        a server-side Purchase be attributed at ad level exactly like a browser
        event would have been.
 
-    2. BEACON — when the browser really does push `purchase_stape`, reports the
-       order id to `POST /order/purchase-fired`. Orders with no beacon are the
-       ones the API's gap-fill job sends server-side. Because the API only ever
-       sends for orders the beacon did NOT confirm, browser and server can never
-       both report the same sale — no dedup guessing, no Stape config changes.
+    2. BEACON — when the browser pushes `purchase_stape`, reports the order id
+       to `POST /order/purchase-fired` for delivery-health reporting.
 
-       The push also gets a stable `event_id` (`order_<orderId>`) stamped in. If
-       the Stape Meta tag reads an event ID from the event data it becomes a
-       genuine dedup key; if it ignores it, nothing changes.
+       The push gets the same stable `event_id` (`order_<orderId>`) used by the
+       API's authoritative server Purchase. The Tagioo Meta tag must forward it;
+       Meta then deduplicates the browser and server copies into one Purchase.
 
   SAFETY:
     - Every hook is wrapped in try/catch and never blocks an order or a push.

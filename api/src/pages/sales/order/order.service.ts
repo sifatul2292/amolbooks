@@ -60,9 +60,9 @@ const ObjectId = Types.ObjectId;
 const RECENT_BUYERS_TTL_MS = 120000; // 2 min
 const recentBuyersCache = new Map<string, { at: number; data: any[] }>();
 
-// A browser Purchase reaches Stape within seconds of the order POST. An order
-// still missing its beacon after this grace period never fired one, so the API
-// owns it. Long enough to absorb a slow thank-you page or a delayed beacon.
+// Failed/stuck website deliveries are retried after this grace period. The
+// immediate API sender owns every new website order; the browser copy uses the
+// same event ID and is deduplicated by Meta.
 const WEBSITE_PURCHASE_GRACE_MS = 20 * 60 * 1000;
 // Meta rejects CAPI events with an event_time older than 7 days. Stay a day
 // clear of the edge so a late-entered order is still accepted.
@@ -100,7 +100,6 @@ export class OrderService {
   private steadfastMissingChargeSyncRunning = false;
   private steadfastMissingChargeSyncCompletedAt = 0;
   private websitePurchaseGapFillRunning = false;
-  private beaconLiveSince: Date | null = null;
 
   constructor(
     @InjectModel('Admin') private readonly adminModel: Model<Admin>,
@@ -185,9 +184,7 @@ export class OrderService {
     }
     let user;
     let mData;
-    const adminData = await this.adminModel
-      .findById(admin._id)
-      .maxTimeMS(5000);
+    const adminData = await this.adminModel.findById(admin._id).maxTimeMS(5000);
     // this.logger.error(addOrderDto);
     // Increment Order Id Unique
     const incOrder = await this.uniqueIdModel.findOneAndUpdate(
@@ -218,16 +215,27 @@ export class OrderService {
       mData = { ...addOrderDto, ...dataExtra, ...adminData };
     }
 
-    // The admin panel ships as compiled dist and sends no manualOrderSource, so
-    // an unset value used to fall through to 'other' — the least attributable
-    // action_source Meta accepts. WhatsApp is what these orders actually are.
+    const convertedIncomplete: any =
+      addOrderDto.incompleteOrderId &&
+      ObjectId.isValid(addOrderDto.incompleteOrderId)
+        ? await this.incompleteOrderModel
+            .findById(addOrderDto.incompleteOrderId)
+            .select('attribution')
+            .lean()
+        : null;
+
+    // A row created from Incomplete Orders was recovered by a phone call. The
+    // remaining admin-entry flow defaults to WhatsApp because the compiled form
+    // has no source selector.
     const adminManualSource = this.normalizeManualOrderSource(
-      addOrderDto.manualOrderSource,
+      addOrderDto.incompleteOrderId ? 'phone' : addOrderDto.manualOrderSource,
       'whatsapp',
     );
     mData.manualOrderSource = adminManualSource;
-    mData.orderFrom =
-      mData.orderFrom || this.manualOrderLabel(adminManualSource);
+    mData.orderFrom = this.manualOrderLabel(adminManualSource);
+    mData.attribution = this.normalizeAttribution(
+      convertedIncomplete?.attribution || addOrderDto.attribution,
+    );
     mData = this.normalizeAdminOrderData(mData);
     mData.orderedItems = await this.attachCostSnapshots(mData.orderedItems);
 
@@ -256,12 +264,14 @@ export class OrderService {
 
       // Nothing after save may hold the admin response open. Conversion
       // marking and sales counters are durable follow-up work.
-      this.processAdminOrderBookkeeping(saveData, addOrderDto).catch((error) => {
-        this.logger.error(
-          `Admin bookkeeping failed for order ${saveData.orderId}:`,
-          error,
-        );
-      });
+      this.processAdminOrderBookkeeping(saveData, addOrderDto).catch(
+        (error) => {
+          this.logger.error(
+            `Admin bookkeeping failed for order ${saveData.orderId}:`,
+            error,
+          );
+        },
+      );
 
       // Meta delivery is intentionally independent from stock, invoice, fraud,
       // SMS, and email work. A failure in any of those tasks must never prevent
@@ -322,7 +332,7 @@ export class OrderService {
 
     // Sales-counter increment only. Stock deduction remains in
     // decreaseProductStock, preserving its existing single source of truth.
-    for (const item of (addOrderDto['orderedItems'] || [])) {
+    for (const item of addOrderDto['orderedItems'] || []) {
       try {
         if (!item?._id || !ObjectId.isValid(item._id)) continue;
         const quantity = Number(item.quantity) || 0;
@@ -375,9 +385,7 @@ export class OrderService {
     return {
       success: sent,
       message: sent
-        ? result?.metaPurchaseDeliveryChannel === 'tagioo'
-          ? 'Manual Purchase accepted by Tagioo'
-          : 'Manual Purchase sent through direct Meta fallback'
+        ? 'Manual Purchase acknowledged by Meta'
         : result?.metaPurchaseError || 'Manual Purchase was not sent to Meta',
       data: result,
     } as ResponsePayload;
@@ -390,7 +398,9 @@ export class OrderService {
     if (!admin || !admin._id) {
       throw new BadRequestException('Admin authentication failed');
     }
-    const normalizedRequestId = String(requestId || '').trim().slice(0, 120);
+    const normalizedRequestId = String(requestId || '')
+      .trim()
+      .slice(0, 120);
     if (!/^ai_[A-Za-z0-9_-]+$/.test(normalizedRequestId)) {
       throw new BadRequestException('Invalid manual order request ID');
     }
@@ -601,6 +611,16 @@ export class OrderService {
         );
       });
 
+      // The API is the authoritative Purchase sender. The browser still emits
+      // the same event through Tagioo, using order_<orderId>; Meta deduplicates
+      // the pair while this path covers closed tabs, blockers and lost redirects.
+      this.sendWebsiteOrderToMeta(saveData).catch((error) => {
+        this.logger.error(
+          `Website-order CAPI task failed for order ${saveData.orderId}:`,
+          error,
+        );
+      });
+
       return response;
     } catch (error) {
       console.log(error);
@@ -703,13 +723,15 @@ export class OrderService {
       // Check from database if SMS has already been sent to prevent duplicate SMS
       if (saveData['paymentType'] === 'cash_on_delivery') {
         // Check database to see if SMS was already sent (prevents race condition)
-        const orderCheck: any = await this.orderModel.findById(saveData._id).select('orderSmsSent');
+        const orderCheck: any = await this.orderModel
+          .findById(saveData._id)
+          .select('orderSmsSent');
         if (!orderCheck?.orderSmsSent) {
           const message = `অর্ডারটি কনফার্ম হয়েছে, ৩ দিনের মধ্যে ডেলিভারি করা হবে, amolbooks.com`;
           // const message = `আপনার অর্ডারটি alambook.com-এ সফলভাবে সম্পন্ন হয়েছে। আপনার অর্ডার আইডি (${saveData.orderId}) যেকোনো প্রয়োজনে আমাদের সাথে যোগাযোগ করুন 01754896763`;
           // const message = `Thank you for your purchase from alambook.com. Your order (${saveData.orderId}) has been placed successfully. Please wait for a confirmation Call.`;
           this.bulkSmsService.sentSingleSms(saveData.phoneNo, message);
-          
+
           // Mark SMS as sent to prevent duplicate (atomic update)
           await this.orderModel.updateOne(
             { _id: saveData._id },
@@ -728,7 +750,6 @@ export class OrderService {
           this.emailService.sendEmail(saveData.email, 'Alambook', html);
         }
       }
-
     } catch (error) {
       this.logger.error(
         `Error processing background tasks for order ${saveData.orderId}:`,
@@ -781,9 +802,8 @@ export class OrderService {
       payload.consignment_id == null
         ? null
         : String(payload.consignment_id).trim();
-    const invoice = payload.invoice == null
-      ? null
-      : String(payload.invoice).trim();
+    const invoice =
+      payload.invoice == null ? null : String(payload.invoice).trim();
     const [byConsignment, byInvoice] = await Promise.all([
       consignmentId
         ? this.orderModel.findOne({
@@ -1082,8 +1102,7 @@ export class OrderService {
               }
             }
             if (statusChanged) {
-              const trackingMessage =
-                'Live status reconciled with Steadfast.';
+              const trackingMessage = 'Live status reconciled with Steadfast.';
               const updatedAt = syncedAt.toISOString();
               const eventKey = crypto
                 .createHash('sha256')
@@ -1160,7 +1179,9 @@ export class OrderService {
     const currentCount = await this.orderModel.countDocuments(inReviewQuery);
     void this.syncSteadfastMissingCharges().catch((error) => {
       this.logger.warn(
-        `Steadfast missing-charge background batch failed: ${error?.message || error}`,
+        `Steadfast missing-charge background batch failed: ${
+          error?.message || error
+        }`,
       );
     });
     const moved = results.filter((result) => result.moved);
@@ -1585,6 +1606,7 @@ export class OrderService {
     }
 
     let tagiooError = '';
+    let tagiooAccepted = false;
     try {
       const hash = (value: string) =>
         crypto
@@ -1616,6 +1638,19 @@ export class OrderService {
       const tagiooUserData: any = {
         address: { country_code: 'BD' },
       };
+      const attributionTouch =
+        claimedOrder.attribution?.lastTouch ||
+        claimedOrder.attribution?.firstTouch ||
+        {};
+      const attributionFbc =
+        attributionTouch.fbc ||
+        (attributionTouch.fbclid
+          ? `fb.1.${new Date(
+              attributionTouch.capturedAt ||
+                claimedOrder.createdAt ||
+                Date.now(),
+            ).getTime()}.${attributionTouch.fbclid}`
+          : undefined);
       let externalId = `manual_${String(claimedOrder._id)}`;
       if (claimedOrder.user) {
         externalId = `user_${String(claimedOrder.user)}`;
@@ -1645,6 +1680,16 @@ export class OrderService {
       }
       if (claimedOrder.city) {
         tagiooUserData.address.sha256_city = hash(claimedOrder.city);
+      }
+      if (attributionFbc) tagiooUserData.fbc = attributionFbc;
+      if (attributionTouch.fbp) tagiooUserData.fbp = attributionTouch.fbp;
+      if (claimedOrder.attribution?.clientIpAddress) {
+        tagiooUserData.client_ip_address =
+          claimedOrder.attribution.clientIpAddress;
+      }
+      if (claimedOrder.attribution?.clientUserAgent) {
+        tagiooUserData.client_user_agent =
+          claimedOrder.attribution.clientUserAgent;
       }
 
       try {
@@ -1680,35 +1725,29 @@ export class OrderService {
           throw new Error('Tagioo did not accept the server event');
         }
 
+        tagiooAccepted = true;
         await this.orderModel.updateOne(
           { _id: saveData._id, metaPurchaseEventId: eventId },
           {
             $set: {
-              metaPurchaseStatus: 'sent',
-              metaPurchaseSentAt: new Date(),
-              metaPurchaseDeliveryChannel: 'tagioo',
               tagiooPurchaseEventId: eventId,
             },
-            $unset: { metaPurchaseError: 1, tagiooPurchaseError: 1 },
+            $unset: { tagiooPurchaseError: 1 },
           },
         );
         this.logger.log(
           `Manual-order Purchase accepted by Tagioo for order ${saveData.orderId}`,
         );
-        return;
       } catch (error) {
         tagiooError = String(error?.message || error).slice(0, 500);
         this.logger.warn(
-          `Tagioo Purchase failed for order ${saveData.orderId}; using direct Meta fallback: ${tagiooError}`,
+          `Tagioo Purchase failed for order ${saveData.orderId}; continuing with authoritative direct Meta delivery: ${tagiooError}`,
         );
       }
 
       const fSetting = await this.settingModel.findOne().select('analytics');
       const analytics: any = fSetting?.analytics;
-      if (
-        !analytics?.facebookPixelId ||
-        !analytics?.facebookPixelAccessToken
-      ) {
+      if (!analytics?.facebookPixelId || !analytics?.facebookPixelAccessToken) {
         throw new Error('Meta Pixel ID or access token is not configured');
       }
 
@@ -1722,6 +1761,14 @@ export class OrderService {
       }
       if (claimedOrder.city) userData.ct = hash(claimedOrder.city);
       userData.country = hash('bd');
+      if (attributionFbc) userData.fbc = attributionFbc;
+      if (attributionTouch.fbp) userData.fbp = attributionTouch.fbp;
+      if (claimedOrder.attribution?.clientIpAddress) {
+        userData.client_ip_address = claimedOrder.attribution.clientIpAddress;
+      }
+      if (claimedOrder.attribution?.clientUserAgent) {
+        userData.client_user_agent = claimedOrder.attribution.clientUserAgent;
+      }
       if (!userData.ph && !userData.em) {
         throw new Error('Manual order has no phone or email for Meta matching');
       }
@@ -1742,8 +1789,7 @@ export class OrderService {
         user_data: userData,
       };
       const requestData =
-        analytics.isEnablePixelTestEvent &&
-        analytics.facebookPixelTestEventId
+        analytics.isEnablePixelTestEvent && analytics.facebookPixelTestEventId
           ? {
               data: [payload],
               test_event_code: analytics.facebookPixelTestEventId,
@@ -1774,14 +1820,16 @@ export class OrderService {
           $set: {
             metaPurchaseStatus: 'sent',
             metaPurchaseSentAt: new Date(),
-            metaPurchaseDeliveryChannel: 'direct_meta_fallback',
-            tagiooPurchaseError: tagiooError,
+            metaPurchaseDeliveryChannel: 'direct_meta',
+            ...(tagiooAccepted
+              ? { tagiooPurchaseEventId: eventId }
+              : { tagiooPurchaseError: tagiooError }),
           },
           $unset: { metaPurchaseError: 1 },
         },
       );
       this.logger.log(
-        `Manual-order Purchase sent through direct Meta fallback for order ${saveData.orderId}`,
+        `Manual-order Purchase acknowledged by Meta for order ${saveData.orderId}`,
       );
     } catch (error) {
       const message = String(error?.message || error).slice(0, 500);
@@ -1802,7 +1850,7 @@ export class OrderService {
   }
 
   /**
-   * Records that the storefront actually pushed purchase_stape for this order.
+   * Records that the storefront pushed purchase_stape for this order.
    * Public and deliberately forgiving: a beacon is best-effort telemetry and
    * must never surface an error to the buyer's browser.
    */
@@ -1838,12 +1886,8 @@ export class OrderService {
   }
 
   /**
-   * Website orders reach Meta through the browser only: the storefront stashes
-   * the purchase payload in sessionStorage and pushes it when the buyer lands
-   * on the thank-you page. A closed tab or dropped connection loses that event
-   * permanently. This job sends a server-side Purchase for exactly those
-   * orders — never for one the beacon confirmed — so browser and server can
-   * not both report the same sale.
+   * Retries website Purchases whose immediate API delivery failed or got stuck.
+   * Browser and server use the same event ID, so a late browser copy is safe.
    */
   private scheduleWebsitePurchaseGapFill(): void {
     if (this.isGapFillDisabled()) {
@@ -1867,10 +1911,7 @@ export class OrderService {
   }
 
   /**
-   * Kill switch for the gap-fill job. Pausing the GTM beacon tag alone is NOT a
-   * rollback — with no beacons arriving, every new order looks unreported and the
-   * job would send for all of them. Set META_GAP_FILL_DISABLED=true and restart
-   * to stop server-side Purchases without touching code.
+   * Kill switch for both scheduled website retries and operational rollback.
    */
   private isGapFillDisabled(): boolean {
     return String(process.env.META_GAP_FILL_DISABLED || '') === 'true';
@@ -1882,42 +1923,24 @@ export class OrderService {
     this.websitePurchaseGapFillRunning = true;
     try {
       const now = Date.now();
-      // Orders placed before the beacon snippet went live have no beacon for a
-      // harmless reason, and Stape almost certainly already reported them. Only
-      // orders newer than the first beacon we ever received are safe to judge,
-      // so this job arms itself and stays idle until the snippet is deployed.
-      // Cached after the first hit: browserPurchaseFiredAt carries no index, and
-      // this sorted lookup would otherwise scan and sort a growing slice of the
-      // orders collection every five minutes on a live site.
-      if (!this.beaconLiveSince) {
-        const firstBeacon: any = await this.orderModel
-          .findOne({ browserPurchaseFiredAt: { $exists: true } })
-          .select('browserPurchaseFiredAt')
-          .sort({ browserPurchaseFiredAt: 1 })
-          .lean();
-        if (!firstBeacon?.browserPurchaseFiredAt) return;
-        this.beaconLiveSince = new Date(firstBeacon.browserPurchaseFiredAt);
-      }
-      const beaconLiveSince = this.beaconLiveSince;
-
       const candidates: any[] = await this.orderModel
         .find({
           orderFrom: 'Website',
           createdAt: {
-            $gte: new Date(
-              Math.max(
-                now - META_EVENT_MAX_AGE_MS,
-                beaconLiveSince.getTime(),
-              ),
-            ),
+            $gte: new Date(now - META_EVENT_MAX_AGE_MS),
             $lte: new Date(now - WEBSITE_PURCHASE_GRACE_MS),
           },
-          browserPurchaseFiredAt: { $exists: false },
           $or: [
-            { metaPurchaseStatus: { $exists: false } },
             {
               metaPurchaseStatus: 'failed',
               metaPurchaseAttemptCount: { $lt: 3 },
+            },
+            {
+              metaPurchaseStatus: 'sending',
+              metaPurchaseAttemptCount: { $lt: 3 },
+              metaPurchaseLastAttemptAt: {
+                $lt: new Date(now - 10 * 60 * 1000),
+              },
             },
           ],
         })
@@ -1926,7 +1949,7 @@ export class OrderService {
 
       if (!candidates.length) return;
       this.logger.log(
-        `Website purchase gap-fill: ${candidates.length} order(s) without a browser Purchase.`,
+        `Website Purchase retry: ${candidates.length} failed/stuck order(s).`,
       );
       for (const order of candidates) {
         await this.sendWebsiteOrderToMeta(order);
@@ -1937,18 +1960,16 @@ export class OrderService {
   }
 
   /**
-   * Sends one server-side Purchase for a website order whose browser event was
-   * lost. Uses the fbc/fbp captured with the order POST plus the request IP and
-   * user agent, so Meta can attribute it at ad level exactly like a browser
-   * event would have been.
+   * Sends the authoritative server-side Purchase for a website order. Browser
+   * and Tagioo copies use the same event ID and Meta deduplicates them.
    */
   private async sendWebsiteOrderToMeta(order: any): Promise<void> {
+    if (this.isGapFillDisabled()) return;
     const eventId = `order_${order.orderId}`;
     const staleSendingBefore = new Date(Date.now() - 10 * 60 * 1000);
     const claimedOrder: any = await this.orderModel.findOneAndUpdate(
       {
         _id: order._id,
-        browserPurchaseFiredAt: { $exists: false },
         $or: [
           { metaPurchaseStatus: { $exists: false } },
           { metaPurchaseStatus: 'failed' },
@@ -1972,8 +1993,9 @@ export class OrderService {
 
     if (!claimedOrder) return;
 
+    let tagiooError = '';
+    let tagiooAccepted = false;
     try {
-      const analytics = await this.getMetaAnalyticsSettings();
       const touch =
         claimedOrder.attribution?.lastTouch ||
         claimedOrder.attribution?.firstTouch ||
@@ -2002,17 +2024,95 @@ export class OrderService {
         item_price: Number(item.unitPrice ?? item.salePrice ?? 0),
       }));
 
+      const contentIds = contents.map((item: any) => item.id);
+      const eventTime = this.metaEventTime(claimedOrder.createdAt);
+      const eventSourceUrl = touch.landingPage || 'https://amolbooks.com/';
+
+      try {
+        const tagiooUserData: any = {
+          address: { country_code: 'BD' },
+        };
+        if (userData.external_id) tagiooUserData.user_id = userData.external_id;
+        if (userData.ph) tagiooUserData.sha256_phone_number = userData.ph;
+        if (userData.em) tagiooUserData.sha256_email_address = userData.em;
+        if (userData.fn) tagiooUserData.address.sha256_first_name = userData.fn;
+        if (userData.ln) tagiooUserData.address.sha256_last_name = userData.ln;
+        if (userData.ct) tagiooUserData.address.sha256_city = userData.ct;
+        if (userData.fbc) tagiooUserData.fbc = userData.fbc;
+        if (userData.fbp) tagiooUserData.fbp = userData.fbp;
+        if (userData.client_ip_address) {
+          tagiooUserData.client_ip_address = userData.client_ip_address;
+        }
+        if (userData.client_user_agent) {
+          tagiooUserData.client_user_agent = userData.client_user_agent;
+        }
+
+        const tagiooResult =
+          await this.analyticsService.trackServerContainerEvent('purchase', {
+            client_id:
+              claimedOrder.attribution?.anonymousId ||
+              `website.${String(claimedOrder._id)}`,
+            event_id: eventId,
+            event_time: eventTime,
+            transaction_id: String(claimedOrder.orderId),
+            order_id: String(claimedOrder.orderId),
+            currency: 'BDT',
+            value: Number(claimedOrder.grandTotal || 0),
+            content_type: 'product',
+            content_ids: contentIds,
+            contents,
+            meta_content_ids: contentIds,
+            meta_contents: contents,
+            items: trackableItems.map((item: any) => ({
+              item_id: String(item._id),
+              item_name: String(item.name || item._id),
+              price: Number(item.unitPrice ?? item.salePrice ?? 0),
+              quantity: Math.max(1, Number(item.quantity) || 1),
+            })),
+            user_data: tagiooUserData,
+            action_source: 'website',
+            page_hostname: 'amolbooks.com',
+            page_location: eventSourceUrl,
+            page_path: '/',
+            order_source: 'website',
+          });
+
+        if (!tagiooResult?.accepted) {
+          throw new Error('Tagioo did not accept the server event');
+        }
+
+        tagiooAccepted = true;
+        await this.orderModel.updateOne(
+          { _id: claimedOrder._id, metaPurchaseEventId: eventId },
+          {
+            $set: {
+              tagiooPurchaseEventId: eventId,
+            },
+            $unset: { tagiooPurchaseError: 1 },
+          },
+        );
+        this.logger.log(
+          `Website-order Purchase accepted by Tagioo for order ${claimedOrder.orderId}`,
+        );
+      } catch (error) {
+        tagiooError = String(error?.message || error).slice(0, 500);
+        this.logger.warn(
+          `Tagioo Purchase failed for website order ${claimedOrder.orderId}; continuing with authoritative direct Meta delivery: ${tagiooError}`,
+        );
+      }
+
+      const analytics = await this.getMetaAnalyticsSettings();
       const payload: any = {
         event_name: 'Purchase',
-        event_time: this.metaEventTime(claimedOrder.createdAt),
+        event_time: eventTime,
         action_source: 'website',
         event_id: eventId,
-        event_source_url: touch.landingPage || 'https://amolbooks.com/',
+        event_source_url: eventSourceUrl,
         custom_data: {
           currency: 'BDT',
           value: Number(claimedOrder.grandTotal || 0),
           content_type: 'product',
-          content_ids: contents.map((item: any) => item.id),
+          content_ids: contentIds,
           contents,
           order_id: String(claimedOrder.orderId),
         },
@@ -2021,7 +2121,7 @@ export class OrderService {
 
       const result = await this.postMetaPurchase(analytics, payload);
       if (!result || Number(result.events_received) < 1) {
-        throw new Error('Meta did not acknowledge the gap-fill Purchase event');
+        throw new Error('Meta did not acknowledge the website Purchase event');
       }
 
       await this.orderModel.updateOne(
@@ -2030,19 +2130,28 @@ export class OrderService {
           $set: {
             metaPurchaseStatus: 'sent',
             metaPurchaseSentAt: new Date(),
-            metaPurchaseDeliveryChannel: 'website_gap_fill',
+            metaPurchaseDeliveryChannel: 'direct_meta',
+            ...(tagiooAccepted
+              ? { tagiooPurchaseEventId: eventId }
+              : { tagiooPurchaseError: tagiooError }),
           },
           $unset: { metaPurchaseError: 1 },
         },
       );
       this.logger.log(
-        `Gap-fill Purchase sent for website order ${claimedOrder.orderId}`,
+        `Website-order Purchase acknowledged by Meta for order ${claimedOrder.orderId}`,
       );
     } catch (error) {
       const message = String(error?.message || error).slice(0, 500);
       await this.orderModel.updateOne(
         { _id: claimedOrder._id, metaPurchaseEventId: eventId },
-        { $set: { metaPurchaseStatus: 'failed', metaPurchaseError: message } },
+        {
+          $set: {
+            metaPurchaseStatus: 'failed',
+            metaPurchaseError: message,
+            ...(tagiooError ? { tagiooPurchaseError: tagiooError } : {}),
+          },
+        },
       );
       this.logger.warn(
         `Gap-fill Purchase failed for website order ${claimedOrder.orderId}: ${message}`,
@@ -2164,7 +2273,9 @@ export class OrderService {
 
     if (twin) {
       this.logger.warn(
-        `Order ${order.orderId} skipped for Meta: same phone and total as already-reported order ${
+        `Order ${
+          order.orderId
+        } skipped for Meta: same phone and total as already-reported order ${
           (twin as any).orderId
         }`,
       );
@@ -2276,7 +2387,9 @@ export class OrderService {
   }
 
   private normalizeAdminOrderData(orderData: any): any {
-    const orderedItems = this.normalizeOrderItems(orderData?.orderedItems || []);
+    const orderedItems = this.normalizeOrderItems(
+      orderData?.orderedItems || [],
+    );
 
     if (!orderedItems.length) {
       throw new BadRequestException('Please select product on cart');
@@ -2291,7 +2404,10 @@ export class OrderService {
       (sum, item) => sum + item.salePrice * item.quantity,
       0,
     );
-    const subTotal = this.toFiniteNumber(orderData?.subTotal, subTotalFromItems);
+    const subTotal = this.toFiniteNumber(
+      orderData?.subTotal,
+      subTotalFromItems,
+    );
     const discount = this.toFiniteNumber(
       orderData?.discount,
       Math.max(subTotal - saleTotalFromItems, 0),
@@ -2376,15 +2492,15 @@ export class OrderService {
           await this.stockMovementModel.insertMany(movements);
         } catch (err) {
           this.logger.warn(
-            `Failed to log stock movements for order ${orderId}: ${err?.message || err}`,
+            `Failed to log stock movements for order ${orderId}: ${
+              err?.message || err
+            }`,
           );
         }
       }
       return true;
     } catch (err) {
-      this.logger.warn(
-        `decreaseProductStock failed: ${err?.message || err}`,
-      );
+      this.logger.warn(`decreaseProductStock failed: ${err?.message || err}`);
       return false;
     }
   }
@@ -2506,7 +2622,9 @@ export class OrderService {
     if (!Array.isArray(product?.products)) return undefined;
     let complete = true;
     const packageCost = product.products.reduce((sum: number, entry: any) => {
-      const itemCost = this.optionalNonNegativeNumber(entry?.product?.costPrice);
+      const itemCost = this.optionalNonNegativeNumber(
+        entry?.product?.costPrice,
+      );
       if (itemCost === undefined) {
         complete = false;
         return sum;
@@ -2559,7 +2677,9 @@ export class OrderService {
 
     if (!productId) {
       this.logger.warn(
-        `Skipping incomplete order item without product id: ${JSON.stringify(item)}`,
+        `Skipping incomplete order item without product id: ${JSON.stringify(
+          item,
+        )}`,
       );
       return null;
     }
@@ -2705,10 +2825,7 @@ export class OrderService {
       phoneNo: saveData.phoneNo,
       createdAt: { $lte: createdAt },
     };
-    if (
-      exceptIncompleteOrderId &&
-      ObjectId.isValid(exceptIncompleteOrderId)
-    ) {
+    if (exceptIncompleteOrderId && ObjectId.isValid(exceptIncompleteOrderId)) {
       match._id = { $ne: new ObjectId(exceptIncompleteOrderId) };
     }
     await this.incompleteOrderModel.deleteMany(match);
@@ -2798,7 +2915,11 @@ export class OrderService {
   async getRecentBuyersByProduct(slug: string): Promise<ResponsePayload> {
     try {
       if (!slug) {
-        return { success: true, message: 'No slug', data: [] } as ResponsePayload;
+        return {
+          success: true,
+          message: 'No slug',
+          data: [],
+        } as ResponsePayload;
       }
 
       // Serve from cache when fresh — protects DB under high pageview volume.
@@ -2821,10 +2942,7 @@ export class OrderService {
 
       const data = (orders || [])
         .map((o: any) => {
-          const firstName = (o?.name || '')
-            .toString()
-            .trim()
-            .split(/\s+/)[0];
+          const firstName = (o?.name || '').toString().trim().split(/\s+/)[0];
           if (!firstName) return null;
           return { firstName, purchasedAt: o?.createdAt ?? null };
         })
@@ -2974,12 +3092,12 @@ export class OrderService {
         postCode: fOrderData?.postCode,
         trackingId: fOrderData?.courierData
           ? fOrderData.courierData.providerName === 'Pathao Courier'
-            ? fOrderData.courierData.consignmentId ??
+            ? (fOrderData.courierData.consignmentId ??
               fOrderData.courierData.trackingId ??
-              null
-            : fOrderData.courierData.consignmentId ??
+              null)
+            : (fOrderData.courierData.consignmentId ??
               fOrderData.courierData.trackingId ??
-              null
+              null)
           : null,
         providerName: fOrderData?.courierData?.providerName ?? null,
       };
@@ -3022,16 +3140,18 @@ export class OrderService {
     if (deleteMany) {
       await this.orderModel.deleteMany({});
     }
-    const mData = await Promise.all(addOrdersDto.map(async (m: any) => {
-      return {
-        ...m,
-        orderedItems: await this.attachCostSnapshots(m.orderedItems || []),
-        attribution: this.normalizeAttribution(m.attribution),
-        ...{
-          slug: this.utilsService.transformToSlug(m.name),
-        },
-      };
-    }));
+    const mData = await Promise.all(
+      addOrdersDto.map(async (m: any) => {
+        return {
+          ...m,
+          orderedItems: await this.attachCostSnapshots(m.orderedItems || []),
+          attribution: this.normalizeAttribution(m.attribution),
+          ...{
+            slug: this.utilsService.transformToSlug(m.name),
+          },
+        };
+      }),
+    );
     try {
       const saveData = await this.orderModel.insertMany(mData);
       return {
@@ -3384,9 +3504,13 @@ export class OrderService {
       throw new NotFoundException('No Data found!');
     }
     try {
-      await this.orderModel.findByIdAndUpdate(id, {
-        $set: updateOrderDto,
-      }, { strict: false });
+      await this.orderModel.findByIdAndUpdate(
+        id,
+        {
+          $set: updateOrderDto,
+        },
+        { strict: false },
+      );
 
       // Setting Data
       const fSetting: any = await this.settingModel
@@ -3498,10 +3622,15 @@ export class OrderService {
     try {
       const fSetting = await this.settingModel.findOne();
       const courierMethods = fSetting?.courierMethods ?? [];
-      const courierMethod = courierMethods.find((f: any) => f.status === 'active');
+      const courierMethod = courierMethods.find(
+        (f: any) => f.status === 'active',
+      );
       await this.addSingleOrderToCourier({ orderStatus: 8, courierMethod, id });
       await this.orderModel.findByIdAndUpdate(id, { $set: { orderStatus: 2 } });
-      return { success: true, message: 'Order sent to courier successfully' } as ResponsePayload;
+      return {
+        success: true,
+        message: 'Order sent to courier successfully',
+      } as ResponsePayload;
     } catch (err) {
       throw new InternalServerErrorException(err.message);
     }
@@ -3543,7 +3672,10 @@ export class OrderService {
           const getFullAddress = () => {
             const parts: string[] = [];
             if (fOrder?.division?.name) parts.push(fOrder.division.name);
-            const area = typeof fOrder?.area === 'object' ? fOrder?.area?.name : fOrder?.area;
+            const area =
+              typeof fOrder?.area === 'object'
+                ? fOrder?.area?.name
+                : fOrder?.area;
             if (area) parts.push(area);
             if (fOrder?.zone?.name) parts.push(fOrder.zone.name);
             if (fOrder?.shippingAddress) parts.push(fOrder.shippingAddress);
@@ -3565,7 +3697,9 @@ export class OrderService {
             recipient_address: getFullAddress(),
             cod_amount: cashOnDeliveryAmount(),
             item_description:
-              fOrder?.orderedItems?.map((i: any) => `${i.name} x${i.quantity || 1}`).join(', ') || '',
+              fOrder?.orderedItems
+                ?.map((i: any) => `${i.name} x${i.quantity || 1}`)
+                .join(', ') || '',
             note: fOrder?.deliveryNote
               ? `${fOrder.deliveryNote} (${
                   courierMethod?.specialInstruction || ''
@@ -3594,8 +3728,7 @@ export class OrderService {
               $set: {
                 courierData: orderCourierData,
                 courierStatus: {
-                  status:
-                    courierResponse?.consignment?.status || 'in_review',
+                  status: courierResponse?.consignment?.status || 'in_review',
                   notificationType: 'order_created',
                   trackingMessage: 'Order is waiting for courier review.',
                   updatedAt:
@@ -3743,7 +3876,10 @@ export class OrderService {
             const getFullAddress = () => {
               const parts: string[] = [];
               if (fOrder?.division?.name) parts.push(fOrder.division.name);
-              const area = typeof fOrder?.area === 'object' ? fOrder?.area?.name : fOrder?.area;
+              const area =
+                typeof fOrder?.area === 'object'
+                  ? fOrder?.area?.name
+                  : fOrder?.area;
               if (area) parts.push(area);
               if (fOrder?.zone?.name) parts.push(fOrder.zone.name);
               if (fOrder?.shippingAddress) parts.push(fOrder.shippingAddress);
@@ -3764,7 +3900,9 @@ export class OrderService {
               recipient_address: getFullAddress(),
               cod_amount: cashOnDeliveryAmount(),
               item_description:
-                fOrder?.orderedItems?.map((i: any) => `${i.name} x${i.quantity || 1}`).join(', ') || '',
+                fOrder?.orderedItems
+                  ?.map((i: any) => `${i.name} x${i.quantity || 1}`)
+                  .join(', ') || '',
               note: fOrder?.deliveryNote
                 ? `${fOrder.deliveryNote} (${
                     courierMethod?.specialInstruction || ''
@@ -3791,8 +3929,7 @@ export class OrderService {
                 $set: {
                   courierData: orderCourierData,
                   courierStatus: {
-                    status:
-                      courierResponse?.consignment?.status || 'in_review',
+                    status: courierResponse?.consignment?.status || 'in_review',
                     notificationType: 'order_created',
                     trackingMessage: 'Order is waiting for courier review.',
                     updatedAt:
@@ -4023,7 +4160,9 @@ export class OrderService {
         OrderStatus.RETURN,
       ].includes(orderStatus);
       const shouldRestock =
-        isRestockStatus && data.stockDecremented === true && !data.stockRestocked;
+        isRestockStatus &&
+        data.stockDecremented === true &&
+        !data.stockRestocked;
 
       const mData: any = {
         courierLink: updateOrderStatusDto.courierLink,
@@ -4173,9 +4312,7 @@ export class OrderService {
             (t2) => t2._id === t1.product,
           );
           const productFromSpecialPackages = specialPackages.find(
-            (t2) =>
-              String(t2._id) ===
-              String(t1.specialPackage || t1.product),
+            (t2) => String(t2._id) === String(t1.specialPackage || t1.product),
           );
           return {
             ...t1,
@@ -4392,7 +4529,12 @@ export class OrderService {
       const cfg = JSON.parse(
         JSON.stringify(await this.orderOfferModel.findOne({})),
       );
-      if (!cfg || !cfg.giftEnabled || !cfg.giftProduct || !cfg.giftProduct._id) {
+      if (
+        !cfg ||
+        !cfg.giftEnabled ||
+        !cfg.giftProduct ||
+        !cfg.giftProduct._id
+      ) {
         return null;
       }
 
@@ -4400,25 +4542,29 @@ export class OrderService {
       // Hard guard: a malformed gift id would throw on order .save() and fail
       // the customer's checkout. Never let gift config break an order.
       if (!Types.ObjectId.isValid(giftId)) {
-        this.logger.error('evaluateGiftLine: invalid giftProduct._id ' + giftId);
+        this.logger.error(
+          'evaluateGiftLine: invalid giftProduct._id ' + giftId,
+        );
         return null;
       }
 
       const giftEligibleSubTotal = finalData.reduce((acc, t) => {
         if (String(t.product?._id) === giftId) return acc; // exclude gift's own price
         return (
-          acc + this.utilsService.transform(t.product, 'salePrice', t.selectedQty)
+          acc +
+          this.utilsService.transform(t.product, 'salePrice', t.selectedQty)
         );
       }, 0);
 
       let eligible = false;
-      if (cfg.giftMinAmount && giftEligibleSubTotal >= Number(cfg.giftMinAmount)) {
+      if (
+        cfg.giftMinAmount &&
+        giftEligibleSubTotal >= Number(cfg.giftMinAmount)
+      ) {
         eligible = true;
       }
       if (!eligible && cfg.giftBuyXProductSlug && cfg.giftBuyXQty) {
-        const match = products.find(
-          (p) => p.slug === cfg.giftBuyXProductSlug,
-        );
+        const match = products.find((p) => p.slug === cfg.giftBuyXProductSlug);
         if (match && Number(match.quantity) >= Number(cfg.giftBuyXQty)) {
           eligible = true;
         }
@@ -5017,6 +5163,7 @@ export class OrderService {
     'note',
     'checkoutDate',
     'user',
+    'attribution',
   ];
 
   // Only fill in values that actually carry information. A later post must never
@@ -5026,22 +5173,39 @@ export class OrderService {
     addIncompleteOrderDto: AddIncompleteOrderDto,
   ): Record<string, any> {
     const dto = addIncompleteOrderDto as Record<string, any>;
-    return OrderService.INCOMPLETE_ORDER_MERGE_FIELDS.reduce((patch, field) => {
-      const incoming = dto?.[field];
-      if (incoming === undefined || incoming === null) return patch;
-      if (typeof incoming === 'string' && !incoming.trim()) return patch;
-      if (typeof incoming === 'number' && (!Number.isFinite(incoming) || incoming === 0))
+    return OrderService.INCOMPLETE_ORDER_MERGE_FIELDS.reduce(
+      (patch, field) => {
+        const incoming = dto?.[field];
+        if (incoming === undefined || incoming === null) return patch;
+        if (typeof incoming === 'string' && !incoming.trim()) return patch;
+        if (
+          typeof incoming === 'number' &&
+          (!Number.isFinite(incoming) || incoming === 0)
+        )
+          return patch;
+        if (Array.isArray(incoming) && !incoming.length) return patch;
+        patch[field] = incoming;
         return patch;
-      if (Array.isArray(incoming) && !incoming.length) return patch;
-      patch[field] = incoming;
-      return patch;
-    }, {} as Record<string, any>);
+      },
+      {} as Record<string, any>,
+    );
   }
 
   async addIncompleteOrder(
     addIncompleteOrderDto: AddIncompleteOrderDto,
+    req?: any,
   ): Promise<ResponsePayload> {
     try {
+      const incompleteInput: any = { ...addIncompleteOrderDto };
+      incompleteInput.attribution = this.normalizeAttribution({
+        ...(incompleteInput.attribution || {}),
+        clientUserAgent:
+          incompleteInput.attribution?.clientUserAgent ||
+          req?.headers?.['user-agent'],
+        clientIpAddress:
+          incompleteInput.attribution?.clientIpAddress ||
+          (req ? this.utilsService.getClientIp(req) : undefined),
+      });
       const phoneNo = String(addIncompleteOrderDto?.phoneNo || '').trim();
       if (phoneNo) {
         const existing = await this.incompleteOrderModel
@@ -5058,9 +5222,7 @@ export class OrderService {
           .select({ _id: 1 });
 
         if (existing) {
-          const patch = this.buildIncompleteOrderMergePatch(
-            addIncompleteOrderDto,
-          );
+          const patch = this.buildIncompleteOrderMergePatch(incompleteInput);
           if (Object.keys(patch).length) {
             await this.incompleteOrderModel.updateOne(
               { _id: existing._id },
@@ -5075,7 +5237,7 @@ export class OrderService {
         }
       }
 
-      const newData = new this.incompleteOrderModel(addIncompleteOrderDto);
+      const newData = new this.incompleteOrderModel(incompleteInput);
       const saveData = await newData.save();
 
       // Auto-run fraud check the moment an abandoned checkout arrives, so the
@@ -5253,9 +5415,8 @@ export class OrderService {
     });
 
     try {
-      const [result] = await this.incompleteOrderModel.aggregate(
-        aggregateStages,
-      );
+      const [result] =
+        await this.incompleteOrderModel.aggregate(aggregateStages);
       const data = result?.data || [];
       const count = result?.count?.[0]?.count || 0;
       const calculation = {
@@ -5296,14 +5457,27 @@ export class OrderService {
   async updateIncompleteOrderById(
     id: string,
     updateIncompleteOrderDto: UpdateIncompleteOrderDto,
+    req?: any,
   ): Promise<ResponsePayload> {
     // The compiled checkout creates an incomplete order as soon as a phone
     // number is valid, then uses this route to add the address and later form
     // changes. Keep this public for that storefront flow, but never accept
     // admin-only fields here.
+    const incompleteInput: any = { ...updateIncompleteOrderDto };
+    if (incompleteInput.attribution || req) {
+      incompleteInput.attribution = this.normalizeAttribution({
+        ...(incompleteInput.attribution || {}),
+        clientUserAgent:
+          incompleteInput.attribution?.clientUserAgent ||
+          req?.headers?.['user-agent'],
+        clientIpAddress:
+          incompleteInput.attribution?.clientIpAddress ||
+          (req ? this.utilsService.getClientIp(req) : undefined),
+      });
+    }
     return this.updateIncompleteOrderFields(
       id,
-      updateIncompleteOrderDto,
+      incompleteInput,
       [
         'name',
         'phoneNo',
@@ -5321,6 +5495,7 @@ export class OrderService {
         'grandTotal',
         'orderedItems',
         'note',
+        'attribution',
       ],
       false,
     );
@@ -5360,27 +5535,30 @@ export class OrderService {
   ): Promise<ResponsePayload> {
     try {
       const dto = updateIncompleteOrderDto as Record<string, any>;
-      const updateData = editableFields.reduce((result, field) => {
-        if (!Object.prototype.hasOwnProperty.call(dto || {}, field)) {
+      const updateData = editableFields.reduce(
+        (result, field) => {
+          if (!Object.prototype.hasOwnProperty.call(dto || {}, field)) {
+            return result;
+          }
+          const value = dto[field];
+          // The storefront re-posts the whole form on every debounced change, so a
+          // snapshot taken before the customer finished typing would otherwise wipe
+          // fields that are already filled in. Admin edits (allowConverted) may
+          // still clear a field on purpose.
+          if (
+            !allowConverted &&
+            typeof value === 'string' &&
+            !value.trim() &&
+            field !== 'adminNote' &&
+            field !== 'note'
+          ) {
+            return result;
+          }
+          result[field] = value;
           return result;
-        }
-        const value = dto[field];
-        // The storefront re-posts the whole form on every debounced change, so a
-        // snapshot taken before the customer finished typing would otherwise wipe
-        // fields that are already filled in. Admin edits (allowConverted) may
-        // still clear a field on purpose.
-        if (
-          !allowConverted &&
-          typeof value === 'string' &&
-          !value.trim() &&
-          field !== 'adminNote' &&
-          field !== 'note'
-        ) {
-          return result;
-        }
-        result[field] = value;
-        return result;
-      }, {} as Record<string, any>);
+        },
+        {} as Record<string, any>,
+      );
 
       const match = allowConverted
         ? { _id: id }

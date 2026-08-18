@@ -40,9 +40,7 @@ export interface Order {
   metaPurchaseSentAt?: Date;
   metaPurchaseError?: string;
   metaPurchaseDeliveryChannel?:
-    | 'tagioo'
-    | 'direct_meta_fallback'
-    | 'website_gap_fill';
+    'tagioo' | 'direct_meta' | 'direct_meta_fallback' | 'website_gap_fill';
   tagiooPurchaseEventId?: string;
   tagiooPurchaseError?: string;
   browserPurchaseFiredAt?: Date;
