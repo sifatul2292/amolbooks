@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-08-19. Branch: `main`. Meta Purchase production-delivery correction is implemented and verified locally; deployment is pending._
+_Last updated: 2026-08-19. Branch: `main`. The web GTM Purchase trigger restoration and stable Event ID mapping are implemented and being verified locally; deployment is pending._
 
 ## Recently completed (git log, newest first)
 
@@ -75,6 +75,26 @@ VPS deploy of `33dd40b0` and live confirmation that the Steadfast In Review coun
 climbs from 17 toward the real ~46.
 
 ## Completed this session
+
+### Web GTM Purchase event restoration
+
+Tag Assistant confirmed that a completed checkout did not produce the
+`purchase_stape` data-layer event. The storefront runtime had intentionally
+cleared `_pendingPurchase` without pushing it while the API was made the
+authoritative Meta sender. That also prevented the web container's GA4 Purchase
+tag from running, so GA4 could show the thank-you page without a Purchase event.
+
+- Restored the `purchase_stape` push after GTM is ready, with the stable
+  `event_id = order_<orderId>` already present on the payload.
+- Added a runtime-upgrade marker so an API restart replaces the currently
+  deployed clear-only block without editing compiled Angular bundles.
+- Prepared `GTM-NNZV54QJ_purchase-event-id-fix.json` from the supplied web GTM
+  export. It adds `dlv - event_id` and maps both the browser Meta Purchase tag
+  and the Data Tag Purchase request to that stable ID instead of Stape's
+  generated `Unique Event ID`.
+- The GTM container fix must be imported and published before deploying the API
+  restoration. That order prevents the old random-ID browser Purchase from
+  becoming a duplicate of the Tagioo server Purchase.
 
 ### Profit-dashboard order-source reporting
 

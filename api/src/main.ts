@@ -328,6 +328,14 @@ async function bootstrap() {
   const storefrontPendingPurchaseClearCode = `var payload=window.__amolEnsurePurchaseExternalId(JSON.parse(raw));
       ${storefrontServerAuthoritativePurchaseMarker}
       sessionStorage.removeItem('_pendingPurchase');`;
+  const storefrontStablePurchaseEventMarker =
+    'window.__amolPurchaseUsesStableEventId=true;';
+  const storefrontPendingPurchasePushCode = `var payload=window.__amolEnsurePurchaseExternalId(JSON.parse(raw));
+      ${storefrontStablePurchaseEventMarker}
+      window.dataLayer=window.dataLayer||[];
+      window.dataLayer.push({ecommerce:null});
+      window.dataLayer.push(payload);
+      sessionStorage.removeItem('_pendingPurchase');`;
   const storefrontPurchaseExternalIdHelperMarker =
     'window.__amolEnsurePurchaseExternalId=function(payload){';
   const storefrontPurchaseExternalIdHelper = `
@@ -359,11 +367,7 @@ ${storefrontPurchaseExternalIdHelper}
     try{raw=sessionStorage.getItem('_pendingPurchase');}catch(e){return false;}
     if(!raw)return true;
     try{
-      var payload=window.__amolEnsurePurchaseExternalId(JSON.parse(raw));
-      window.dataLayer=window.dataLayer||[];
-      window.dataLayer.push({ecommerce:null});
-      window.dataLayer.push(payload);
-      sessionStorage.removeItem('_pendingPurchase');
+      ${storefrontPendingPurchasePushCode}
       return true;
     }catch(e){return false;}
   };
@@ -491,13 +495,16 @@ ${storefrontPurchaseExternalIdHelper}
           'var payload=window.__amolEnsurePurchaseExternalId(JSON.parse(raw));',
         );
     }
-    if (
-      !patchedTrackingHtml.includes(storefrontServerAuthoritativePurchaseMarker)
-    ) {
-      patchedTrackingHtml = patchedTrackingHtml.replace(
-        legacyStorefrontPendingPurchasePushCode,
-        storefrontPendingPurchaseClearCode,
-      );
+    if (!patchedTrackingHtml.includes(storefrontStablePurchaseEventMarker)) {
+      patchedTrackingHtml = patchedTrackingHtml
+        .replace(
+          storefrontPendingPurchaseClearCode,
+          storefrontPendingPurchasePushCode,
+        )
+        .replace(
+          legacyStorefrontPendingPurchasePushCode,
+          storefrontPendingPurchasePushCode,
+        );
     }
     return patchedTrackingHtml;
   }
