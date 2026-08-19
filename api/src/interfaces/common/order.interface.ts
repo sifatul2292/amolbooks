@@ -80,6 +80,8 @@ export interface Order {
   stockRestocked?: boolean;
   attribution?: {
     anonymousId?: string;
+    gaClientId?: string;
+    gaSessionId?: string;
     firstTouch?: OrderAttributionTouch;
     lastTouch?: OrderAttributionTouch;
     clientUserAgent?: string;

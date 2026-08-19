@@ -76,6 +76,35 @@ climbs from 17 toward the real ~46.
 
 ## Completed this session
 
+### GA4 purchase delivery hardening
+
+The browser `purchase_stape` restoration works when the thank-you page and GTM
+finish normally, but the authoritative API purchase was claimed by Tagioo's
+Data Client and only routed to Meta. That left GA4 with no fallback when the
+browser event was blocked, interrupted, or delayed.
+
+- Storefront attribution now preserves the GA4 client ID and current session ID
+  from the first-party Analytics cookies on each website/incomplete checkout.
+- Website-order server purchases now carry the GA4 client ID, session ID,
+  engagement time, stable transaction ID, ecommerce items, and the existing
+  `order_<orderId>` event ID through Tagioo.
+- Added `gtm-snippets/GTM-PZPN8VW3_ga4-purchase-fallback.json`. Its server-GTM
+  trigger forwards Data Client purchases to the existing GA4 tag, with the
+  measurement ID configured explicitly, only when `order_source` is `website`;
+  Admin and Incomplete Order sales cannot inflate GA4 website ecommerce.
+- The browser purchase remains the attribution-rich primary event. The server
+  copy is a delivery fallback with the same `transaction_id`, which GA4 uses to
+  deduplicate repeated purchase events in a web stream.
+
+Deployment still requires importing/publishing the corrected server-container
+JSON and deploying/restarting the API. Verify one fresh website checkout in
+both web and server GTM Preview before judging GA4 Realtime.
+
+Validation: `npm run build` passes. Storefront runtime checks confirmed GA4
+client/session extraction for both current GS2 and legacy GS1 cookie formats.
+The repository lint script cannot currently run because its configured source
+glob is entirely ignored by the existing ESLint configuration.
+
 ### Web GTM Purchase event restoration
 
 Tag Assistant confirmed that a completed checkout did not produce the

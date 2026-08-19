@@ -1,0 +1,200 @@
+{
+  "exportFormatVersion": 2,
+  "exportTime": "2026-08-18 16:10:14",
+  "containerVersion": {
+    "path": "accounts/6314405405/containers/230742020/versions/0",
+    "accountId": "6314405405",
+    "containerId": "230742020",
+    "containerVersionId": "0",
+    "container": {
+      "path": "accounts/6314405405/containers/230742020",
+      "accountId": "6314405405",
+      "containerId": "230742020",
+      "name": "AmolBooks Server Stape",
+      "publicId": "GTM-PZPN8VW3",
+      "usageContext": [
+        "SERVER"
+      ],
+      "fingerprint": "1758741553368",
+      "tagManagerUrl": "https://tagmanager.google.com/#/container/accounts/6314405405/containers/230742020/workspaces?apiLink=container",
+      "features": {
+        "supportUserPermissions": true,
+        "supportEnvironments": true,
+        "supportWorkspaces": true,
+        "supportGtagConfigs": false,
+        "supportBuiltInVariables": true,
+        "supportClients": true,
+        "supportFolders": true,
+        "supportTags": true,
+        "supportTemplates": true,
+        "supportTriggers": true,
+        "supportVariables": true,
+        "supportVersions": true,
+        "supportZones": true,
+        "supportTransformations": true
+      },
+      "tagIds": [
+        "GTM-PZPN8VW3"
+      ],
+      "taggingServerUrls": [
+        "https://server.amolbooks.com"
+      ]
+    },
+    "fingerprint": "1787069413667",
+    "tagManagerUrl": "https://tagmanager.google.com/#/versions/accounts/6314405405/containers/230742020/versions/0?apiLink=version",
+    "builtInVariable": [
+      {
+        "accountId": "6314405405",
+        "containerId": "230742020",
+        "type": "EVENT_NAME",
+        "name": "Event Name"
+      },
+      {
+        "accountId": "6314405405",
+        "containerId": "230742020",
+        "type": "CLIENT_NAME",
+        "name": "Client Name"
+      }
+    ],
+    "folder": [
+      {
+        "accountId": "6314405405",
+        "containerId": "230742020",
+        "folderId": "4",
+        "name": "[Stape] Event Data",
+        "fingerprint": "1758741526879"
+      },
+      {
+        "accountId": "6314405405",
+        "containerId": "230742020",
+        "folderId": "31",
+        "name": "[Stape] GA4",
+        "fingerprint": "1758741526993"
+      }
+    ],
+    "tag": [
+      {
+        "accountId": "6314405405",
+        "containerId": "230742020",
+        "tagId": "47",
+        "name": "[Stape] GA4 - Base",
+        "type": "sgtmgaaw",
+        "parameter": [
+          {
+            "type": "BOOLEAN",
+            "key": "redactVisitorIp",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "epToIncludeDropdown",
+            "value": "all"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "upToIncludeDropdown",
+            "value": "all"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "measurementId",
+            "value": "G-5VZPVFL0X9"
+          }
+        ],
+        "fingerprint": "1758741526994",
+        "firingTriggerId": [
+          "30",
+          "44"
+        ],
+        "parentFolderId": "31",
+        "tagFiringOption": "ONCE_PER_EVENT",
+        "monitoringMetadata": {
+          "type": "MAP"
+        },
+        "consentSettings": {
+          "consentStatus": "NOT_SET"
+        }
+      }
+    ],
+    "trigger": [
+      {
+        "accountId": "6314405405",
+        "containerId": "230742020",
+        "triggerId": "44",
+        "name": "dc - website purchase (GA4 fallback)",
+        "type": "CUSTOM_EVENT",
+        "customEventFilter": [
+          {
+            "type": "EQUALS",
+            "parameter": [
+              {
+                "type": "TEMPLATE",
+                "key": "arg0",
+                "value": "{{_event}}"
+              },
+              {
+                "type": "TEMPLATE",
+                "key": "arg1",
+                "value": "purchase"
+              }
+            ]
+          }
+        ],
+        "filter": [
+          {
+            "type": "CONTAINS",
+            "parameter": [
+              {
+                "type": "TEMPLATE",
+                "key": "arg0",
+                "value": "{{Client Name}}"
+              },
+              {
+                "type": "TEMPLATE",
+                "key": "arg1",
+                "value": "Data Client"
+              }
+            ]
+          },
+          {
+            "type": "EQUALS",
+            "parameter": [
+              {
+                "type": "TEMPLATE",
+                "key": "arg0",
+                "value": "{{ed - order_source}}"
+              },
+              {
+                "type": "TEMPLATE",
+                "key": "arg1",
+                "value": "website"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "variable": [
+      {
+        "accountId": "6314405405",
+        "containerId": "230742020",
+        "variableId": "80",
+        "name": "ed - order_source",
+        "type": "ed",
+        "parameter": [
+          {
+            "type": "BOOLEAN",
+            "key": "setDefaultValue",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "keyPath",
+            "value": "order_source"
+          }
+        ],
+        "parentFolderId": "4"
+      }
+    ]
+  }
+}

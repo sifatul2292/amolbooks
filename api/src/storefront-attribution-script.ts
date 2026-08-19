@@ -37,6 +37,22 @@ export const STOREFRONT_ATTRIBUTION_SCRIPT = String.raw`(function (root) {
     } catch (_) { return ''; }
   }
 
+  function gaClientId() {
+    var value = cookie('_ga');
+    if (!value) return '';
+    var parts = value.split('.');
+    return parts.length >= 2 ? parts.slice(-2).join('.').slice(0, 120) : '';
+  }
+
+  function gaSessionId() {
+    var value = cookie('_ga_5VZPVFL0X9');
+    if (!value) return '';
+    var named = value.match(/(?:^|[.$])s(\d+)(?:[.$]|$)/);
+    if (named && named[1]) return named[1];
+    var parts = value.split('.');
+    return parts.length >= 3 && /^\d+$/.test(parts[2]) ? parts[2] : '';
+  }
+
   function currentTouch() {
     var search = new URLSearchParams(root.location.search || '');
     var referrer = document.referrer || '';
@@ -97,6 +113,10 @@ export const STOREFRONT_ATTRIBUTION_SCRIPT = String.raw`(function (root) {
       if (touch.fbp) saved[key].fbp = touch.fbp;
     });
     saved.anonymousId = anonymousId();
+    var analyticsClientId = gaClientId();
+    var analyticsSessionId = gaSessionId();
+    if (analyticsClientId) saved.gaClientId = analyticsClientId;
+    if (analyticsSessionId) saved.gaSessionId = analyticsSessionId;
     root.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
     return saved;
   }

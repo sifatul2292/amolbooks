@@ -178,6 +178,8 @@ export const OrderSchema = new mongoose.Schema(
     },
     attribution: {
       anonymousId: { type: String, required: false },
+      gaClientId: { type: String, required: false },
+      gaSessionId: { type: String, required: false },
       firstTouch: {
         source: { type: String, required: false },
         medium: { type: String, required: false },

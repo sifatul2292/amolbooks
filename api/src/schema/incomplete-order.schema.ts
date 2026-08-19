@@ -105,6 +105,8 @@ export const IncompleteOrderSchema = new mongoose.Schema(
     // the original visit rather than looking like an unrelated manual order.
     attribution: {
       anonymousId: { type: String, required: false },
+      gaClientId: { type: String, required: false },
+      gaSessionId: { type: String, required: false },
       firstTouch: {
         source: { type: String, required: false },
         medium: { type: String, required: false },

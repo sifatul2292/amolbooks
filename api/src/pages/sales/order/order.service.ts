@@ -2069,8 +2069,13 @@ export class OrderService {
         const tagiooResult =
           await this.analyticsService.trackServerContainerEvent('purchase', {
             client_id:
+              claimedOrder.attribution?.gaClientId ||
               claimedOrder.attribution?.anonymousId ||
               `website.${String(claimedOrder._id)}`,
+            session_id:
+              claimedOrder.attribution?.gaSessionId ||
+              String(Math.max(1, eventTime)),
+            engagement_time_msec: 1,
             event_id: eventId,
             event_time: eventTime,
             transaction_id: String(claimedOrder.orderId),
@@ -2704,6 +2709,8 @@ export class OrderService {
     };
     return {
       anonymousId: text(value.anonymousId, 120),
+      gaClientId: text(value.gaClientId, 120),
+      gaSessionId: text(value.gaSessionId, 120),
       firstTouch: touch(value.firstTouch),
       lastTouch: touch(value.lastTouch),
       clientUserAgent: text(value.clientUserAgent, 500),

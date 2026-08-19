@@ -4,6 +4,22 @@ Frontend ships as compiled Angular (`ui/dist`), no source. So all on-page UI is
 delivered via **GTM Custom-HTML tags** in container **GTM-NNZV54QJ** (server-side
 via Stape, `load.server.amolbooks.com`). The data comes from the NestJS API.
 
+## GA4 website-purchase fallback
+
+`GTM-PZPN8VW3_ga4-purchase-fallback.json` is a minimal corrected
+server-container import for Tagioo. It intentionally excludes the container's
+Meta token and unrelated configuration. Import it into server container
+`GTM-PZPN8VW3`, merge the workspace, overwrite the conflicting GA4 tag, preview
+the three-item diff, and publish only after confirming it.
+
+The added trigger runs the existing `[Stape] GA4 - Base` tag, with the GA4
+measurement ID set explicitly, only when a `purchase` is claimed by the Data
+Client and `order_source` is `website`.
+Admin and incomplete-order conversions therefore remain outside GA4 website
+ecommerce. The API supplies the client/session, engagement, and stable
+transaction fields. If the browser purchase also arrives, GA4 uses the
+identical `transaction_id` to deduplicate the purchase.
+
 Each `.html` file = one GTM Custom-HTML tag. Paste the file contents (including the
 `<script>` tags) into a new Custom-HTML tag.
 
