@@ -1751,6 +1751,24 @@ export class OrderService {
 
       const fSetting = await this.settingModel.findOne().select('analytics');
       const analytics: any = fSetting?.analytics;
+      if (tagiooAccepted && analytics?.IsManageFbPixelByTagManager) {
+        await this.orderModel.updateOne(
+          { _id: saveData._id, metaPurchaseEventId: eventId },
+          {
+            $set: {
+              metaPurchaseStatus: 'sent',
+              metaPurchaseSentAt: new Date(),
+              metaPurchaseDeliveryChannel: 'tagioo',
+              tagiooPurchaseEventId: eventId,
+            },
+            $unset: { metaPurchaseError: 1, tagiooPurchaseError: 1 },
+          },
+        );
+        this.logger.log(
+          `Manual-order Purchase delivered through GTM-managed Tagioo for order ${saveData.orderId}`,
+        );
+        return;
+      }
       if (!analytics?.facebookPixelId || !analytics?.facebookPixelAccessToken) {
         throw new Error('Meta Pixel ID or access token is not configured');
       }
@@ -1792,13 +1810,10 @@ export class OrderService {
         },
         user_data: userData,
       };
-      const requestData =
-        analytics.isEnablePixelTestEvent && analytics.facebookPixelTestEventId
-          ? {
-              data: [payload],
-              test_event_code: analytics.facebookPixelTestEventId,
-            }
-          : { data: [payload] };
+      // Orders created by real customers/admins are production conversions.
+      // A saved Test Events code must never divert these automatic Purchases
+      // into Meta's test stream.
+      const requestData = { data: [payload] };
 
       let result: any = null;
       for (let attempt = 1; attempt <= 3; attempt += 1) {
@@ -2105,7 +2120,29 @@ export class OrderService {
         );
       }
 
-      const analytics = await this.getMetaAnalyticsSettings();
+      const fSetting = await this.settingModel.findOne().select('analytics');
+      const analytics: any = fSetting?.analytics;
+      if (tagiooAccepted && analytics?.IsManageFbPixelByTagManager) {
+        await this.orderModel.updateOne(
+          { _id: claimedOrder._id, metaPurchaseEventId: eventId },
+          {
+            $set: {
+              metaPurchaseStatus: 'sent',
+              metaPurchaseSentAt: new Date(),
+              metaPurchaseDeliveryChannel: 'tagioo',
+              tagiooPurchaseEventId: eventId,
+            },
+            $unset: { metaPurchaseError: 1, tagiooPurchaseError: 1 },
+          },
+        );
+        this.logger.log(
+          `Website-order Purchase delivered through GTM-managed Tagioo for order ${claimedOrder.orderId}`,
+        );
+        return;
+      }
+      if (!analytics?.facebookPixelId || !analytics?.facebookPixelAccessToken) {
+        throw new Error('Meta Pixel ID or access token is not configured');
+      }
       const payload: any = {
         event_name: 'Purchase',
         event_time: eventTime,
@@ -2224,13 +2261,9 @@ export class OrderService {
   }
 
   private async postMetaPurchase(analytics: any, payload: any): Promise<any> {
-    const requestData =
-      analytics.isEnablePixelTestEvent && analytics.facebookPixelTestEventId
-        ? {
-            data: [payload],
-            test_event_code: analytics.facebookPixelTestEventId,
-          }
-        : { data: [payload] };
+    // This helper is only used for automatic real-order delivery. Test Events
+    // must use an explicit diagnostic path, never a persisted global switch.
+    const requestData = { data: [payload] };
 
     let result: any = null;
     for (let attempt = 1; attempt <= 3; attempt += 1) {

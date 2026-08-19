@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-08-18. Branch: `main`. Profit-dashboard source reporting is implemented and verified locally; deployment is pending._
+_Last updated: 2026-08-19. Branch: `main`. Meta Purchase production-delivery correction is implemented and verified locally; deployment is pending._
 
 ## Recently completed (git log, newest first)
 
@@ -24,11 +24,19 @@ display-only, then margin/copy polish.
 
 ## In progress
 
-**Authoritative Meta Purchase tracking (built locally, not yet deployed).** The API now
-sends every new website/manual Purchase directly to Meta and requires Meta's
-`events_received` acknowledgement before marking it tracked. It also sends the same event
-through Tagioo for the existing server-container pipeline. Browser, Tagioo and direct CAPI
-all use `event_id = order_<orderId>`, so Meta can deduplicate them.
+**Authoritative Meta Purchase tracking correction (built locally, not yet deployed).** The
+live settings have `IsManageFbPixelByTagManager=true` and intentionally blank direct Meta
+Pixel/token fields. The API was nevertheless requiring direct-CAPI acknowledgement after
+Tagioo accepted each Purchase, so valid GTM-managed orders were marked failed and retried.
+Website and manual orders now treat a successful Tagioo handoff as authoritative in this
+mode. Direct CAPI remains available when explicit server-side credentials are configured.
+
+The existing browser Meta Pixel also sends a resilient Purchase companion from the pending
+thank-you-page payload. It uses the same `event_id = order_<orderId>` as Tagioo, allowing
+Meta to deduplicate Pixel and CAPI rather than count twice. This does not expose or add a
+CAPI token to the storefront. Automatic real-order direct CAPI no longer inherits a saved
+Meta Test Events code; test delivery must be explicit so production Purchases cannot be
+diverted into the test stream.
 
 Before deployment, verify in Tagioo preview that the Meta Purchase tag forwards the incoming
 `event_id` unchanged. This is mandatory; without it, the browser/Tagioo copy cannot
@@ -39,12 +47,10 @@ Deployment order:
 1. Verify/publish the Tagioo `event_id` mapping.
 2. Deploy the API with `scripts/vps-safe-pull.sh`, then `npm install --legacy-peer-deps`,
    `npm run build`, and `pm2 restart amolbooks-api`.
-3. Publish/update `gtm-snippets/meta-purchase-beacon.html` on All Pages. The API-served
-   storefront attribution script already captures attribution and stamps the stable event
-   ID; this GTM tag adds browser-fired health telemetry.
-4. Test one website order, one incomplete-order phone conversion, and one WhatsApp order.
-   For each, confirm the same `order_<orderId>` in Tagioo and Meta Test Events and one
-   deduplicated Purchase in Meta.
+3. Test one real website order without a Meta Test Events code in the request. Confirm the
+   Browser and Server copies share `order_<orderId>` and Meta reports one deduplicated
+   Purchase.
+4. Test one incomplete-order phone conversion and one WhatsApp order through Tagioo.
 
 `META_GAP_FILL_DISABLED=true` + PM2 restart disables website direct sending/retries as an
 emergency rollback. It does not disable manual-order CAPI.

@@ -5,6 +5,8 @@ export const STOREFRONT_ATTRIBUTION_SCRIPT = String.raw`(function (root) {
 
   var STORAGE_KEY = 'amol_attribution_v1';
   var ANON_KEY = 'amol_analytics_anonymous_id';
+  var META_PIXEL_ID = '1294682478263474';
+  var metaFallbackStarted = {};
 
   function safeParse(value, fallback) {
     try { return JSON.parse(value); } catch (_) { return fallback; }
@@ -110,7 +112,64 @@ export const STOREFRONT_ATTRIBUTION_SCRIPT = String.raw`(function (root) {
         payload.user_data.customer_id = anonymousId();
         root.sessionStorage.setItem('_pendingPurchase', JSON.stringify(payload));
       }
+      sendMetaPurchaseFallback(payload);
     } catch (_) {}
+  }
+
+  function sendMetaPurchaseFallback(payload) {
+    var ecommerce = payload && payload.ecommerce || {};
+    var transactionId = String(ecommerce.transaction_id || '').trim();
+    if (!transactionId) return;
+
+    var eventId = payload.event_id || ('order_' + transactionId);
+    var sentKey = 'amol_meta_purchase_' + eventId;
+    if (metaFallbackStarted[eventId]) return;
+    try {
+      if (root.sessionStorage.getItem(sentKey)) return;
+    } catch (_) {}
+    metaFallbackStarted[eventId] = true;
+
+    var items = Array.isArray(ecommerce.items) ? ecommerce.items : [];
+    var contentIds = [];
+    var contents = [];
+    for (var i = 0; i < items.length; i++) {
+      var id = String(items[i].item_id || items[i].id || '').trim();
+      if (!id) continue;
+      var quantity = Math.max(1, Number(items[i].quantity) || 1);
+      var price = Number(items[i].price || items[i].item_price || 0);
+      contentIds.push(id);
+      contents.push({ id: id, quantity: quantity, item_price: price });
+    }
+
+    var params = {
+      currency: ecommerce.currency || 'BDT',
+      value: Number(ecommerce.value || 0),
+      content_type: 'product',
+      content_ids: contentIds,
+      contents: contents,
+      order_id: transactionId
+    };
+    var attempts = 0;
+    var completed = false;
+    var deliver = function () {
+      if (completed) return;
+      attempts += 1;
+      if (typeof root.fbq === 'function') {
+        try {
+          // This uses the existing browser Pixel as a resilient companion to
+          // Tagioo CAPI. The identical eventID lets Meta deduplicate both.
+          root.fbq('trackSingle', META_PIXEL_ID, 'Purchase', params, { eventID: eventId });
+          completed = true;
+          try { root.sessionStorage.setItem(sentKey, '1'); } catch (_) {}
+          return;
+        } catch (_) {}
+      }
+      if (attempts < 40) root.setTimeout(deliver, 500);
+      else delete metaFallbackStarted[eventId];
+    };
+
+    root.setTimeout(deliver, 0);
+    root.addEventListener('amol-gtm-ready', deliver, { once: true });
   }
 
   function isJsonBody(body) {
@@ -147,7 +206,14 @@ export const STOREFRONT_ATTRIBUTION_SCRIPT = String.raw`(function (root) {
       if (init && init.body) {
         init = Object.assign({}, init, { body: enrich(url, init.body) });
       }
-      return originalFetch.call(this, input, init);
+      var request = originalFetch.call(this, input, init);
+      if (/\/api\/(?:v\d+\/)?order\/(?:add-order-by-(?:user|anonymous)|add)(?:\?|$)/.test(String(url || ''))) {
+        request.then(
+          function () { root.setTimeout(enrichPendingPurchase, 0); },
+          function () {}
+        );
+      }
+      return request;
     };
   }
 
@@ -159,6 +225,9 @@ export const STOREFRONT_ATTRIBUTION_SCRIPT = String.raw`(function (root) {
       return originalOpen.apply(this, arguments);
     };
     root.XMLHttpRequest.prototype.send = function (body) {
+      if (/\/api\/(?:v\d+\/)?order\/(?:add-order-by-(?:user|anonymous)|add)(?:\?|$)/.test(String(this.__amolRequestUrl || ''))) {
+        this.addEventListener('loadend', function () { root.setTimeout(enrichPendingPurchase, 0); }, { once: true });
+      }
       return originalSend.call(this, enrich(this.__amolRequestUrl, body));
     };
   }
