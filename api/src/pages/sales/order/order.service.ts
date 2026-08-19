@@ -1617,10 +1617,7 @@ export class OrderService {
           .createHash('sha256')
           .update(String(value).trim().toLowerCase())
           .digest('hex');
-      const phoneDigits = String(claimedOrder.phoneNo || '').replace(/\D/g, '');
-      const normalizedPhone = phoneDigits.startsWith('88')
-        ? phoneDigits
-        : `88${phoneDigits}`;
+      const normalizedPhone = this.normalizedBdPhone(claimedOrder.phoneNo);
       const nameParts = String(claimedOrder.name || '')
         .trim()
         .split(/\s+/)
@@ -1639,6 +1636,12 @@ export class OrderService {
       // window Meta ingests instead of being rejected outright.
       const eventTimeSeconds = this.metaEventTime(claimedOrder.createdAt);
       const contentIds = contents.map((item: any) => item.id);
+      const city = this.metaLocationName(
+        claimedOrder.city ||
+          claimedOrder.area?.name ||
+          claimedOrder.zone?.name,
+      );
+      const region = this.metaLocationName(claimedOrder.division?.name);
       const tagiooUserData: any = {
         address: { country_code: 'BD' },
       };
@@ -1682,9 +1685,8 @@ export class OrderService {
           nameParts.slice(1).join(''),
         );
       }
-      if (claimedOrder.city) {
-        tagiooUserData.address.sha256_city = hash(claimedOrder.city);
-      }
+      if (city) tagiooUserData.address.sha256_city = hash(city);
+      if (region) tagiooUserData.address.sha256_region = hash(region);
       if (attributionFbc) tagiooUserData.fbc = attributionFbc;
       if (attributionTouch.fbp) tagiooUserData.fbp = attributionTouch.fbp;
       if (claimedOrder.attribution?.clientIpAddress) {
@@ -1718,6 +1720,14 @@ export class OrderService {
               quantity: Math.max(1, Number(item.quantity) || 1),
             })),
             user_data: tagiooUserData,
+            user_id: tagiooUserData.user_id,
+            phone_number: tagiooUserData.sha256_phone_number,
+            email_address: tagiooUserData.sha256_email_address,
+            first_name: tagiooUserData.address.sha256_first_name,
+            last_name: tagiooUserData.address.sha256_last_name,
+            city: tagiooUserData.address.sha256_city,
+            region: tagiooUserData.address.sha256_region,
+            country: hash('bd'),
             action_source: this.metaActionSource(manualOrderSource),
             page_hostname: 'amolbooks.com',
             page_location: 'https://amolbooks.com/',
@@ -1781,7 +1791,8 @@ export class OrderService {
       if (nameParts.length > 1) {
         userData.ln = hash(nameParts.slice(1).join(''));
       }
-      if (claimedOrder.city) userData.ct = hash(claimedOrder.city);
+      if (city) userData.ct = hash(city);
+      if (region) userData.st = hash(region);
       userData.country = hash('bd');
       if (attributionFbc) userData.fbc = attributionFbc;
       if (attributionTouch.fbp) userData.fbp = attributionTouch.fbp;
@@ -2057,6 +2068,7 @@ export class OrderService {
         if (userData.fn) tagiooUserData.address.sha256_first_name = userData.fn;
         if (userData.ln) tagiooUserData.address.sha256_last_name = userData.ln;
         if (userData.ct) tagiooUserData.address.sha256_city = userData.ct;
+        if (userData.st) tagiooUserData.address.sha256_region = userData.st;
         if (userData.fbc) tagiooUserData.fbc = userData.fbc;
         if (userData.fbp) tagiooUserData.fbp = userData.fbp;
         if (userData.client_ip_address) {
@@ -2094,6 +2106,14 @@ export class OrderService {
               quantity: Math.max(1, Number(item.quantity) || 1),
             })),
             user_data: tagiooUserData,
+            user_id: tagiooUserData.user_id,
+            phone_number: tagiooUserData.sha256_phone_number,
+            email_address: tagiooUserData.sha256_email_address,
+            first_name: tagiooUserData.address.sha256_first_name,
+            last_name: tagiooUserData.address.sha256_last_name,
+            city: tagiooUserData.address.sha256_city,
+            region: tagiooUserData.address.sha256_region,
+            country: userData.country,
             action_source: 'website',
             page_hostname: 'amolbooks.com',
             page_location: eventSourceUrl,
@@ -2212,9 +2232,28 @@ export class OrderService {
       .digest('hex');
   }
 
+  /**
+   * Checkout location labels often contain both English and Bangla (for
+   * example, "Dhaka >> ঢাকা"). Meta matches the English portion more
+   * consistently, while a Bangla-only label remains valid and is preserved.
+   */
+  private metaLocationName(value: any): string {
+    const raw = String(value?.name || value || '').trim();
+    if (!raw) return '';
+    const parts = raw
+      .split(/\s*(?:>>|>|\||—|–)\s*/)
+      .map((part) => part.trim())
+      .filter(Boolean);
+    const english = parts.find((part) => /[A-Za-z]/.test(part));
+    return english || parts[0] || raw;
+  }
+
   private normalizedBdPhone(phoneNo: any): string {
     const digits = String(phoneNo || '').replace(/\D/g, '');
     if (digits.length < 3) return '';
+    if (digits.startsWith('880')) return digits;
+    if (digits.length === 10 && digits.startsWith('1')) return `880${digits}`;
+    if (digits.length === 11 && digits.startsWith('0')) return `88${digits}`;
     return digits.startsWith('88') ? digits : `88${digits}`;
   }
 
@@ -2251,7 +2290,12 @@ export class OrderService {
     if (nameParts.length > 1) {
       userData.ln = this.metaHash(nameParts.slice(1).join(''));
     }
-    if (order.city) userData.ct = this.metaHash(order.city);
+    const city = this.metaLocationName(
+      order.city || order.area?.name || order.zone?.name,
+    );
+    const region = this.metaLocationName(order.division?.name);
+    if (city) userData.ct = this.metaHash(city);
+    if (region) userData.st = this.metaHash(region);
     userData.country = this.metaHash('bd');
     return userData;
   }

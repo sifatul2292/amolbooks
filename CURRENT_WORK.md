@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-08-19. Branch: `main`. The web GTM Purchase trigger restoration and stable Event ID mapping are implemented and being verified locally; deployment is pending._
+_Last updated: 2026-08-20. Branch: `main`. Meta Purchase EMQ coverage is corrected locally; GTM/API publication is pending._
 
 ## Recently completed (git log, newest first)
 
@@ -75,6 +75,47 @@ VPS deploy of `33dd40b0` and live confirmation that the Steadfast In Review coun
 climbs from 17 toward the real ~46.
 
 ## Completed this session
+
+### Meta Purchase Event Match Quality correction
+
+Meta's Purchase customer-information report showed IP, user agent, and `fbp` at
+100%, while phone/name/country/external ID appeared on only ~21% of submissions.
+Test Events identified the cause: every order produced a rich authoritative API
+Purchase plus a weaker Web Data Tag server Purchase. Meta deduplicated the pair,
+but the weak copy still diluted parameter-coverage reporting.
+
+- The focused Web GTM import now pauses `[Stape] DT - purchase`; the browser
+  Pixel Purchase, GA4 Purchase, and authoritative API-to-Tagioo Purchase remain.
+- Website and manual API Purchases now expose the available hashed phone, email,
+  name, city, region, and country fields at the top-level event model as well as
+  in `user_data`, matching the existing Server GTM Event Data variables.
+- City falls back to the stored area/zone and region to the stored division;
+  bilingual checkout labels prefer their English portion for matching.
+- Bangladesh phone normalization now handles both `01...` and `1...` inputs as
+  the same `8801...` E.164 value before hashing.
+- Email remains optional and `fbc` remains limited to Meta-click traffic; neither
+  is fabricated merely to improve a coverage percentage.
+
+### Meta Purchase duplicate Event ID correction
+
+Meta Test Events showed one real order twice at the same second and value: the
+authoritative API copy used `order_7084`, while the browser/Data Tag copy used a
+generated timestamp-like Event ID. Inspection of the supplied Web GTM export
+confirmed that `[Stape] Meta - Purchase` and `[Stape] DT - purchase` both
+discarded the storefront's stable `event_id` in favor of `{{Unique Event ID}}`.
+
+- Added `gtm-snippets/GTM-NNZV54QJ_purchase-event-id-fix.json`, a minimal Web
+  GTM merge import containing only the two Purchase tags, their existing trigger,
+  and a new `dlv - event_id` Data Layer variable.
+- The initial correction mapped both Purchase tags to `{{dlv - event_id}}`,
+  matching the API's `order_<orderId>` ID. The later EMQ correction above keeps
+  that mapping on the browser Meta tag and pauses the redundant Data Tag copy.
+- No event names, values, Pixel IDs, tokens, or non-Purchase tags were changed.
+  The corrections take effect only after importing, previewing, and publishing
+  the Web GTM container.
+- Corrected the focused import after GTM rejected the first draft as an unknown
+  `cvt_KFNBV` entity. The file now bundles the exact Facebook Pixel by Stape and
+  Data Tag custom-template definitions from the supplied Web-container export.
 
 ### GA4 purchase delivery hardening
 

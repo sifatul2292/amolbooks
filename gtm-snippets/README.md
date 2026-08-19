@@ -4,6 +4,24 @@ Frontend ships as compiled Angular (`ui/dist`), no source. So all on-page UI is
 delivered via **GTM Custom-HTML tags** in container **GTM-NNZV54QJ** (server-side
 via Stape, `load.server.amolbooks.com`). The data comes from the NestJS API.
 
+## Meta Purchase Event ID deduplication
+
+`GTM-NNZV54QJ_purchase-event-id-fix.json` is a focused Web GTM merge import. It
+adds the Data Layer variable `dlv - event_id`, maps `[Stape] Meta - Purchase` to
+that stable value, and pauses `[Stape] DT - purchase`. The API already sends the
+authoritative server Purchase with richer customer matching data, so the DT tag
+was producing a second, weaker server copy that diluted Meta's customer-data
+coverage even though Meta successfully deduplicated it.
+The file also bundles the exact Facebook Pixel by Stape and Data Tag custom
+templates required by those two tags, so it can be imported into a workspace
+where GTM validates custom-template dependencies during import.
+
+Import it into Web container `GTM-NNZV54QJ`, choose **Merge**, then choose
+**Overwrite** for the two conflicting Purchase tags. Preview the workspace and
+confirm the browser Meta Purchase tag shows `{{dlv - event_id}}` instead of
+`{{Unique Event ID}}` and `[Stape] DT - purchase` is paused; then publish. Keep
+the GA4 Purchase tag enabled. Do not import this file into the server container.
+
 ## GA4 website-purchase fallback
 
 `GTM-PZPN8VW3_ga4-purchase-fallback.json` is a minimal corrected
