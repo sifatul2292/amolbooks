@@ -78,18 +78,17 @@ climbs from 17 toward the real ~46.
 
 ### Product page number-of-pages label
 
-- Added `gtm-snippets/lever8-product-pages.html` to replace the product weight
-  heading with `Number of Pages: N` on product pages.
-- The widget reads the structured `totalPages` value first and falls back to a
-  page count in the product description. If neither source is valid, it leaves
-  the existing weight untouched.
-- The snippet is SPA-safe, restores changed text during route transitions, and
-  shares the existing cached product API request when other Amolbooks widgets
-  are present.
-- Production `API_BASE` remains `https://apisub.amolbooks.com/api`.
-- Verified the live product exposes `totalPages: 256`, the marked DOM heading is
-  `.product-title h4`, the rendered label is `Number of Pages: 256`, and the Nest
-  build passes. Repository lint remains blocked by its all-files-ignored config.
+- The API-injected storefront runtime now replaces the product weight heading
+  with `Number of Pages: N`; no GTM tag or compiled Angular edit is required.
+- It reads the structured `totalPages` value first and falls back to a page count
+  in the product description. If neither source is valid, the existing weight
+  remains visible.
+- The display-only behavior is SPA-safe and does not read or write the data
+  layer, Meta Pixel, GA4, purchase events, cart, checkout, or order state.
+- Verified the live product exposes `totalPages: 256` and the marked DOM heading
+  is `.product-title h4`. Structured-field and description-fallback runtime
+  checks pass, as does the Nest build. Repository lint remains blocked by its
+  all-files-ignored config. Deployment requires the normal API build/restart.
 
 ### Meta Purchase Event Match Quality correction
 
