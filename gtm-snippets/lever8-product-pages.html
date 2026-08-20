@@ -1,0 +1,137 @@
+<!--
+  Lever 8: Replace the product-page weight heading with the number of pages.
+  Uses Product.totalPages first, then falls back to a page count found in the
+  description. If neither source has a valid count, the existing weight stays.
+-->
+<script>
+(function () {
+  'use strict';
+
+  window.__abGet = window.__abGet || (function () {
+    var store = {};
+    return function (url, ttl, cb) {
+      var now = Date.now(), e = store[url];
+      if (e && e.done && (now - e.at < ttl)) { cb(e.err, e.data); return; }
+      if (e && e.waiters) { e.waiters.push(cb); return; }
+      store[url] = { waiters: [cb], at: now, done: false };
+      var x = new XMLHttpRequest();
+      x.open('GET', url, true);
+      x.onreadystatechange = function () {
+        if (x.readyState !== 4) return;
+        var err = null, data = null;
+        if (x.status >= 200 && x.status < 300) { try { data = JSON.parse(x.responseText); } catch (e2) { err = e2; } }
+        else err = new Error('HTTP ' + x.status);
+        var entry = store[url], ws = (entry && entry.waiters) || [];
+        store[url] = { done: true, at: err ? 0 : Date.now(), err: err, data: data };
+        ws.forEach(function (w) { try { w(err, data); } catch (e3) {} });
+      };
+      x.send();
+    };
+  })();
+
+  var API_BASE = 'https://apisub.amolbooks.com/api';
+  var MARKER = 'data-ab-product-pages';
+  var lastPath = '';
+  var observer = null;
+
+  function isProductPage() {
+    return location.pathname.indexOf('/product-details/') !== -1 ||
+           location.pathname.indexOf('/product-detail/') !== -1;
+  }
+
+  function lastSegment() {
+    var parts = location.pathname.split('/').filter(Boolean);
+    return parts.length ? decodeURIComponent(parts[parts.length - 1]) : '';
+  }
+
+  function latinDigits(value) {
+    var bn = '০১২৩৪৫৬৭৮৯';
+    return String(value || '').replace(/[০-৯]/g, function (digit) {
+      return String(bn.indexOf(digit));
+    });
+  }
+
+  function positivePages(value) {
+    var pages = Number(latinDigits(value).replace(/[^0-9]/g, ''));
+    return isFinite(pages) && pages > 0 ? Math.round(pages) : 0;
+  }
+
+  function pagesFromDescription(html) {
+    if (!html) return 0;
+    var box = document.createElement('div');
+    box.innerHTML = String(html);
+    var text = (box.textContent || box.innerText || '').replace(/\s+/g, ' ');
+    var match = text.match(/(?:number\s+of\s+pages?|total\s+pages?|pages?)\s*[:：\-–—]?\s*([0-9০-৯]+)/i) ||
+                text.match(/([0-9০-৯]+)\s*(?:পৃষ্ঠা|pages?)/i);
+    return match ? positivePages(match[1]) : 0;
+  }
+
+  function getPages(product) {
+    return positivePages(product && product.totalPages) ||
+           pagesFromDescription(product && product.description);
+  }
+
+  function findWeightHeading() {
+    var headings = document.querySelectorAll('.product-title h4');
+    for (var i = 0; i < headings.length; i++) {
+      var text = (headings[i].textContent || '').trim();
+      if (/^\d+(?:\.\d+)?\s*(?:grams?|gram|gm|g|kg)$/i.test(text)) return headings[i];
+    }
+    return null;
+  }
+
+  function restorePrevious() {
+    var heading = document.querySelector('[' + MARKER + ']');
+    if (!heading) return;
+    var original = heading.getAttribute(MARKER);
+    if (original !== null) heading.textContent = original;
+    heading.removeAttribute(MARKER);
+  }
+
+  function replaceWeight(pages) {
+    var heading = findWeightHeading();
+    if (!heading) return false;
+    if (!heading.hasAttribute(MARKER)) heading.setAttribute(MARKER, heading.textContent || '');
+    heading.textContent = 'Number of Pages: ' + pages;
+    return true;
+  }
+
+  function watchForHeading(pages) {
+    if (replaceWeight(pages)) return;
+    if (observer) observer.disconnect();
+    observer = new MutationObserver(function () {
+      if (replaceWeight(pages) && observer) {
+        observer.disconnect();
+        observer = null;
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    setTimeout(function () {
+      if (observer) { observer.disconnect(); observer = null; }
+    }, 30000);
+  }
+
+  function boot() {
+    if (!isProductPage()) return;
+    var slug = lastSegment();
+    if (!slug) return;
+    window.__abGet(API_BASE + '/product/get-by-slug/' + encodeURIComponent(slug), 60000, function (err, res) {
+      if (err || !res || !res.data) return;
+      var pages = getPages(res.data);
+      if (pages) watchForHeading(pages);
+    });
+  }
+
+  function maybeBoot() {
+    if (location.pathname === lastPath) return;
+    lastPath = location.pathname;
+    if (observer) { observer.disconnect(); observer = null; }
+    restorePrevious();
+    boot();
+  }
+
+  maybeBoot();
+  window.addEventListener('popstate', maybeBoot);
+  setInterval(maybeBoot, 1000);
+})();
+</script>
