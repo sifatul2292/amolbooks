@@ -6,9 +6,17 @@ import { SeoPageService } from '../pages/seo-page/seo-page.service';
 const BOT_UA_REGEX =
   /facebookexternalhit|facebot|Twitterbot|LinkedInBot|Googlebot|bingbot|Slurp|DuckDuckBot|YandexBot|redditbot|WhatsApp|TelegramBot|Discordbot|Slackbot|vkShare|W3C_Validator|pinterest|Applebot/i;
 
-const DEFAULT_IMAGE = 'https://amolbooks.com/assets/images/logo.png';
+const DEFAULT_IMAGE =
+  'https://www.amolbooks.com/assets/images/logo/logo.png';
 const SHOP_NAME = 'Amolbooks';
-const SITE_URL = 'https://amolbooks.com';
+const SITE_URL = 'https://www.amolbooks.com';
+
+function normalizeMetaText(value: string, maxLength = 300): string {
+  const normalized = (value || '').replace(/\s+/g, ' ').trim();
+  return normalized.length > maxLength
+    ? `${normalized.slice(0, maxLength - 1).trimEnd()}…`
+    : normalized;
+}
 
 function escapeHtml(str: string): string {
   return (str || '')
@@ -28,8 +36,8 @@ function buildOgHtml(opts: {
   type?: string;
   price?: string;
 }): string {
-  const title = escapeHtml(opts.title);
-  const description = escapeHtml(opts.description);
+  const title = escapeHtml(normalizeMetaText(opts.title, 120));
+  const description = escapeHtml(normalizeMetaText(opts.description));
   const keywords = escapeHtml(opts.keywords || '');
   const image = escapeHtml(opts.image || DEFAULT_IMAGE);
   const url = escapeHtml(opts.url);
@@ -114,6 +122,8 @@ export class SeoBotMiddleware implements NestMiddleware {
             title: p.seoTitle || p.name || SHOP_NAME,
             description: p.seoDescription || `${p.name || ''} — ${SHOP_NAME}`,
             keywords: p.seoKeywords,
+            // Product image URLs on apisub are public and return their real MIME
+            // type. Rewriting them to the storefront turns them into index.html.
             image: p.images && p.images.length ? p.images[0] : undefined,
             url: `${SITE_URL}/product-details/${p.slug}`,
             type: 'product',

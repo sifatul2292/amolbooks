@@ -1,0 +1,33 @@
+# Product social-preview routing for the www.amolbooks.com nginx virtual host.
+#
+# 1. Put the `map` block in nginx's `http` context (for example in a file under
+#    /etc/nginx/conf.d/).
+# 2. Put both `location` blocks in the www.amolbooks.com `server` block, before
+#    its generic `location /` SPA fallback.
+# 3. Validate with `nginx -t` before reloading nginx.
+
+# http context
+map $http_user_agent $amol_social_preview_bot {
+    default 0;
+    ~*(facebookexternalhit|facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Discordbot|Slackbot|redditbot|pinterest) 1;
+}
+
+# www.amolbooks.com server context
+location ~ ^/product-details/([^/]+)/?$ {
+    set $amol_product_og_slug $1;
+    error_page 418 = @amol_product_social_preview;
+
+    if ($amol_social_preview_bot) {
+        return 418;
+    }
+
+    try_files $uri $uri/ /index.html;
+}
+
+location @amol_product_social_preview {
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_pass http://127.0.0.1:3000/api/product/og/$amol_product_og_slug;
+}

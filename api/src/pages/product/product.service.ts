@@ -1078,28 +1078,38 @@ export class ProductService {
           .replace(/"/g, '&quot;')
           .replace(/'/g, '&#x27;');
 
+      const normalizeMetaText = (value: string, maxLength = 300) => {
+        const normalized = (value || '').replace(/\s+/g, ' ').trim();
+        return normalized.length > maxLength
+          ? `${normalized.slice(0, maxLength - 1).trimEnd()}…`
+          : normalized;
+      };
+
       const shopName = 'Amolbooks';
-      const title = data ? escapeHtml((data as any).seoTitle || (data as any).name || shopName) : shopName;
+      const title = data
+        ? escapeHtml(
+            normalizeMetaText(
+              (data as any).seoTitle || (data as any).name || shopName,
+              120,
+            ),
+          )
+        : shopName;
       const description = data
-        ? escapeHtml((data as any).seoDescription || `${(data as any).name || ''} — ${shopName}`)
+        ? escapeHtml(
+            normalizeMetaText(
+              (data as any).seoDescription ||
+                `${(data as any).name || ''} — ${shopName}`,
+            ),
+          )
         : shopName;
       const keywords = data ? escapeHtml((data as any).seoKeywords || '') : '';
       const images = data ? (data as any).images : null;
-      // Serve images through amolbooks.com (not apisub) so Facebook can access them
-      const normalizeImageUrl = (url: string): string => {
-        if (!url) return '';
-        // Rewrite apisub upload URLs → amolbooks.com/uploads/ proxy path
-        return url.replace(
-          /https?:\/\/apisub\.amolbooks\.com\/api\/upload\//,
-          'https://amolbooks.com/uploads/',
-        );
-      };
       const rawImage = images && images.length ? images[0] : '';
       const image = rawImage
-        ? normalizeImageUrl(rawImage)
-        : 'https://amolbooks.com/assets/images/logo.png';
+        ? rawImage
+        : 'https://www.amolbooks.com/assets/images/logo/logo.png';
       const productSlug = data ? (data as any).slug : slug;
-      const url = `https://amolbooks.com/product-details/${productSlug}`;
+      const url = `https://www.amolbooks.com/product-details/${productSlug}`;
       const price = data && (data as any).salePrice ? `${(data as any).salePrice}` : '';
 
       const html = `<!DOCTYPE html>

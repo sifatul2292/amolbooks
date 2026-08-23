@@ -2,7 +2,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-08-20. Branch: `main`. Meta Purchase EMQ coverage is corrected locally; GTM/API publication is pending._
+_Last updated: 2026-08-23. Branch: `main`. Meta Purchase EMQ coverage is corrected locally; GTM/API publication is pending._
 
 ## Recently completed (git log, newest first)
 
@@ -75,6 +75,22 @@ VPS deploy of `33dd40b0` and live confirmation that the Steadfast In Review coun
 climbs from 17 toward the real ~46.
 
 ## Completed this session
+
+### Product Facebook/Open Graph preview correction
+
+- Confirmed the saved product SEO title and description are already returned by
+  `GET /api/product/og/:slug`; the live `www` storefront was bypassing that
+  endpoint and serving Angular's homepage metadata to Facebook instead.
+- Added `scripts/nginx-product-social-seo.conf.example`, which routes social
+  crawler requests for `/product-details/:slug` to the product OG endpoint while
+  leaving normal visitors on the Angular SPA.
+- Product OG URLs now use the canonical live `www.amolbooks.com` host, collapse
+  whitespace/limit oversized metadata, and retain valid public `apisub` product
+  image URLs. The former `/uploads/` rewrite returned storefront HTML instead of
+  an image and caused Facebook's invalid-content-type warning.
+- Deployment requires the API build/restart plus installing the nginx map and
+  locations, validating with `nginx -t`, and reloading nginx. Facebook must then
+  scrape the product URL again to clear its cached homepage preview.
 
 ### Product page number-of-pages label
 
