@@ -23,6 +23,9 @@
   readability gains do not force the COD/footer outside the 50 × 75 mm page.
 - Single-product labels now stack the COD/footer immediately after the larger
   product description instead of stretching an empty product area between them.
+- Added a 10 mm top-of-form compensation for the measured thermal-printer feed
+  offset, preventing the brand header from starting on the preceding sticker
+  while retaining the existing readable text and dynamic product fitting.
 
 Living status doc. Update after meaningful progress.
 
