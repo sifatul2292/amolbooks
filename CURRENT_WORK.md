@@ -8,6 +8,10 @@
   footer spacing so the complete shipment stays on one physical sticker.
 - Added explicit inside-break protection to prevent a courier label from being
   divided between adjacent stickers.
+- Rebalanced the physical-print layout after a real sticker test: reduced the
+  barcode and QR blocks, removed excess internal vertical padding, protected the
+  COD box from product-text overlap, and added an automatic dense mode for
+  orders containing five or more books or unusually long combined titles.
 
 Living status doc. Update after meaningful progress.
 
