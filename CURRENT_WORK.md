@@ -1,8 +1,17 @@
 # CURRENT_WORK
 
+## Courier label pagination fix (2026-08-25)
+
+- Corrected the custom order-list courier print template from 2 × 4 inches to the
+  actual 50 × 75 mm sticker media used by the thermal printer.
+- Compacted the header, barcode, QR/order metadata, recipient, product, COD, and
+  footer spacing so the complete shipment stays on one physical sticker.
+- Added explicit inside-break protection to prevent a courier label from being
+  divided between adjacent stickers.
+
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-08-23. Branch: `main`. Meta Purchase EMQ coverage is corrected locally; GTM/API publication is pending._
+_Last updated: 2026-08-25. Branch: `main`. Meta Purchase EMQ coverage is corrected locally; GTM/API publication is pending._
 
 ## Recently completed (git log, newest first)
 
