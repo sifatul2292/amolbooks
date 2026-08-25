@@ -12,6 +12,9 @@
   barcode and QR blocks, removed excess internal vertical padding, protected the
   COD box from product-text overlap, and added an automatic dense mode for
   orders containing five or more books or unusually long combined titles.
+- Increased the compact and ultra-dense product-description fonts after a
+  nine-line physical print showed that the reserved product area had ample room
+  but the previous type was too small for reliable Bengali-title readability.
 
 Living status doc. Update after meaningful progress.
 
