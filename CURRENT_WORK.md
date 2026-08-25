@@ -23,9 +23,10 @@
   readability gains do not force the COD/footer outside the 50 × 75 mm page.
 - Single-product labels now stack the COD/footer immediately after the larger
   product description instead of stretching an empty product area between them.
-- Added a 10 mm top-of-form compensation for the measured thermal-printer feed
-  offset, preventing the brand header from starting on the preceding sticker
-  while retaining the existing readable text and dynamic product fitting.
+- Removed the temporary 10 mm top-of-form compensation after the printer began
+  advancing about four 75 mm stickers per order. That pattern matches a 297 mm
+  A4 driver page, so physical alignment must use a 50 × 75 mm custom paper size
+  and gap-sensor calibration rather than adding whitespace inside the label.
 
 Living status doc. Update after meaningful progress.
 
