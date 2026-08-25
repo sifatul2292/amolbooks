@@ -23,10 +23,13 @@
   readability gains do not force the COD/footer outside the 50 × 75 mm page.
 - Single-product labels now stack the COD/footer immediately after the larger
   product description instead of stretching an empty product area between them.
-- Removed the temporary 10 mm top-of-form compensation after the printer began
-  advancing about four 75 mm stickers per order. That pattern matches a 297 mm
-  A4 driver page, so physical alignment must use a 50 × 75 mm custom paper size
-  and gap-sensor calibration rather than adding whitespace inside the label.
+- Removed the nonessential Amol Books branding header and replaced it with an
+  unprinted 10 mm feed-alignment band. A misaligned printer can consume that
+  band across the preceding die-cut edge while the barcode and all operational
+  order details begin on the intended sticker.
+- Removed forced after-page breaks so consecutive fixed-height labels paginate
+  naturally; a five-label mixed-density batch still produces exactly five
+  50 × 75 mm pages without inserted blank document pages.
 
 Living status doc. Update after meaningful progress.
 
