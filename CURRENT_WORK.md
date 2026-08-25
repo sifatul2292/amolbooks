@@ -15,6 +15,14 @@
 - Increased the compact and ultra-dense product-description fonts after a
   nine-line physical print showed that the reserved product area had ample room
   but the previous type was too small for reliable Bengali-title readability.
+- Replaced fixed product sizing with item-count tiers plus a measured overflow
+  fitter: single-item labels print largest, short lists remain spacious, and
+  long lists shrink only as much as their actual rendered height requires.
+- Enlarged the consignment ID and recipient details, added separation between
+  name/phone/address rows, and retained a compact dense-label variant so those
+  readability gains do not force the COD/footer outside the 50 × 75 mm page.
+- Single-product labels now stack the COD/footer immediately after the larger
+  product description instead of stretching an empty product area between them.
 
 Living status doc. Update after meaningful progress.
 
