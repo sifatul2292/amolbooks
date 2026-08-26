@@ -1,5 +1,24 @@
 # CURRENT_WORK
 
+## Profit dashboard actual-cost bridge (2026-08-26)
+
+- Added a visible profit calculation for both valid placed orders and delivered
+  orders: revenue minus product cost, courier, packaging, payment/refund/return
+  costs, and Meta advertising spend.
+- New orders continue to use the `costPriceAtOrder` historical snapshot. Older
+  orders without that snapshot now fall back to the product edit page's current
+  `costPrice` and are clearly marked estimated instead of making profit entirely
+  unavailable.
+- Expanded the campaign view with each Meta campaign's spend, Meta-attributed
+  purchases and purchase value, captured store orders, delivered orders, cost
+  per delivered order, and estimated store contribution after ad spend.
+- Successful Meta syncs now save explicit zero-spend days, so a day Meta confirms
+  as zero is no longer mistaken for a missing/un-synced day.
+- `npm run build` passes and the dashboard's embedded JavaScript parses cleanly.
+  Repository lint remains blocked by the existing all-files-ignored ESLint
+  configuration.
+- Changes are local and not yet deployed.
+
 ## Courier label pagination fix (2026-08-25)
 
 - Corrected the custom order-list courier print template from 2 × 4 inches to the

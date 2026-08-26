@@ -76,7 +76,7 @@ export class DecisionDashboardService {
     const products = productIds.length
       ? await this.productModel
           .find({ _id: { $in: productIds } })
-          .select('_id name stock quantity totalSold')
+          .select('_id name stock quantity totalSold costPrice')
           .lean()
       : [];
     const productMap = new Map(products.map((product: any) => [String(product._id), product]));
@@ -309,7 +309,7 @@ export class DecisionDashboardService {
 
     const orderContribution = new Map<string, any>();
     orders.forEach((order) => {
-      const cogs = this.orderCogs(order);
+      const cogs = this.orderCogs(order, productMap);
       quality.snapshotItems += cogs.snapshotItems;
       quality.fallbackItems += cogs.fallbackItems;
       quality.missingItems += cogs.missingItems;
@@ -339,6 +339,14 @@ export class DecisionDashboardService {
       orderContribution.set(String(order._id), {
         amount,
         cogs,
+        costs: {
+          product: cogs.amount,
+          delivery: courier,
+          packaging: this.number(order.packagingCost),
+          payment: this.number(order.paymentFee),
+          losses:
+            this.number(order.refundAmount) + this.number(order.returnLoss),
+        },
         basis:
           cogs.fallbackItems || cogs.missingItems || !this.hasNumber(order.actualCourierCost) ||
           !this.hasNumber(order.packagingCost) || !this.hasNumber(order.paymentFee)
@@ -386,6 +394,18 @@ export class DecisionDashboardService {
       quality.fallbackItems || quality.missingItems || costCompleteness < 1 || !hasSpendCoverage
         ? 'estimated'
         : 'actual';
+
+    const profitBridge = this.buildProfitBridge(
+      validOrders,
+      deliveredOrders,
+      validManual,
+      deliveredManual,
+      orderContribution,
+      spend,
+      realizedAdAllocation,
+      profitUnavailable,
+      profitBasis,
+    );
 
     const summary = {
       expectedContribution: this.money(
@@ -467,10 +487,159 @@ export class DecisionDashboardService {
       opportunities,
       trend,
       dataQuality,
+      profitBridge,
     };
   }
 
-  private orderCogs(order: any): CostResult {
+  private buildProfitBridge(
+    validOrders: any[],
+    deliveredOrders: any[],
+    validManual: any[],
+    deliveredManual: any[],
+    orderContribution: Map<string, any>,
+    spend: number,
+    realizedAdAllocation: number,
+    profitUnavailable: boolean,
+    profitBasis: MoneyBasis,
+  ): any {
+    const buildCohort = (
+      orders: any[],
+      manualSales: any[],
+      adCost: number,
+      adBasis: MoneyBasis,
+    ) => {
+      const costs = orders.reduce(
+        (totals, order) => {
+          const contribution = orderContribution.get(String(order._id));
+          const row = contribution?.costs || {};
+          totals.product += this.number(row.product);
+          totals.delivery += this.number(row.delivery);
+          totals.packaging += this.number(row.packaging);
+          totals.payment += this.number(row.payment);
+          totals.losses += this.number(row.losses);
+          totals.fallbackItems += this.number(contribution?.cogs?.fallbackItems);
+          totals.missingItems += this.number(contribution?.cogs?.missingItems);
+          if (!this.hasNumber(order.actualCourierCost)) totals.estimatedDelivery++;
+          if (!this.hasNumber(order.packagingCost)) totals.estimatedPackaging++;
+          if (!this.hasNumber(order.paymentFee)) totals.estimatedPayment++;
+          return totals;
+        },
+        {
+          product: 0,
+          delivery: 0,
+          packaging: 0,
+          payment: 0,
+          losses: 0,
+          fallbackItems: 0,
+          missingItems: 0,
+          estimatedDelivery: 0,
+          estimatedPackaging: 0,
+          estimatedPayment: 0,
+        },
+      );
+      manualSales.forEach((sale) => {
+        if (this.hasNumber(sale.cost)) costs.product += this.number(sale.cost);
+        else costs.missingItems++;
+        costs.delivery += this.hasNumber(sale.actualCourierCost)
+          ? this.number(sale.actualCourierCost)
+          : this.number(sale.deliveryCharge);
+        costs.packaging += this.number(sale.packagingCost);
+        costs.payment += this.number(sale.paymentFee);
+        costs.losses +=
+          this.number(sale.refundAmount) + this.number(sale.returnLoss);
+        if (!this.hasNumber(sale.actualCourierCost)) costs.estimatedDelivery++;
+        if (!this.hasNumber(sale.packagingCost)) costs.estimatedPackaging++;
+        if (!this.hasNumber(sale.paymentFee)) costs.estimatedPayment++;
+      });
+
+      const revenue =
+        orders.reduce(
+          (sum, order) => sum + this.number(order.grandTotal),
+          0,
+        ) +
+        manualSales.reduce(
+          (sum, sale) => sum + this.number(sale.revenue),
+          0,
+        );
+      const beforeAds =
+        revenue -
+        costs.product -
+        costs.delivery -
+        costs.packaging -
+        costs.payment -
+        costs.losses;
+      const productBasis: MoneyBasis = costs.missingItems
+        ? 'unavailable'
+        : costs.fallbackItems
+          ? 'estimated'
+          : 'actual';
+
+      return {
+        revenue: this.money(revenue, 'actual'),
+        productCost: this.money(
+          costs.missingItems ? null : costs.product,
+          productBasis,
+          costs.fallbackItems
+            ? ['Some older orders use the current Cost Price from the product edit page.']
+            : costs.missingItems
+              ? ['One or more products have no Cost Price.']
+              : [],
+        ),
+        deliveryCost: this.money(
+          costs.delivery,
+          costs.estimatedDelivery ? 'estimated' : 'actual',
+          costs.estimatedDelivery
+            ? ['Customer delivery charge is used where actual courier cost is missing.']
+            : [],
+        ),
+        packagingCost: this.money(
+          costs.packaging,
+          costs.estimatedPackaging ? 'estimated' : 'actual',
+          costs.estimatedPackaging
+            ? ['Missing packaging entries are currently treated as zero.']
+            : [],
+        ),
+        paymentAndLossCost: this.money(
+          costs.payment + costs.losses,
+          costs.estimatedPayment ? 'estimated' : 'actual',
+          costs.estimatedPayment
+            ? ['Missing payment fees are currently treated as zero.']
+            : [],
+        ),
+        contributionBeforeAds: this.money(
+          costs.missingItems ? null : beforeAds,
+          productBasis === 'actual' &&
+          !costs.estimatedDelivery &&
+          !costs.estimatedPackaging &&
+          !costs.estimatedPayment
+            ? 'actual'
+            : costs.missingItems
+              ? 'unavailable'
+              : 'estimated',
+        ),
+        adSpend: this.money(adCost, adBasis),
+        profit: this.money(
+          profitUnavailable ? null : beforeAds - adCost,
+          profitUnavailable ? 'unavailable' : adBasis === 'allocated' ? 'allocated' : profitBasis,
+        ),
+      };
+    };
+
+    return {
+      expected: buildCohort(validOrders, validManual, spend, 'actual'),
+      realized: buildCohort(
+        deliveredOrders,
+        deliveredManual,
+        realizedAdAllocation,
+        realizedAdAllocation > 0 ? 'allocated' : 'actual',
+      ),
+    };
+  }
+
+  private orderCogs(
+    order: any,
+    productMap: Map<string, any>,
+  ): CostResult {
     return (order.orderedItems || []).reduce(
       (result: CostResult, item: any) => {
         const quantity = Math.max(1, this.number(item.quantity, 1));
@@ -480,7 +649,15 @@ export class DecisionDashboardService {
           result.amount += snapshot * quantity;
           result.snapshotItems++;
         } else {
-          result.missingItems++;
+          const catalogCost = this.optionalNumber(
+            productMap.get(String(item?._id || ''))?.costPrice,
+          );
+          if (catalogCost !== undefined) {
+            result.amount += catalogCost * quantity;
+            result.fallbackItems++;
+          } else {
+            result.missingItems++;
+          }
         }
         return result;
       },
@@ -520,7 +697,9 @@ export class DecisionDashboardService {
         const row = rows.get(id);
         const quantity = Math.max(1, this.number(item.quantity, 1));
         const itemRevenue = this.number(item.salePrice ?? item.unitPrice) * quantity;
-        const unitCost = this.optionalNumber(item.costPriceAtOrder);
+        const snapshotCost = this.optionalNumber(item.costPriceAtOrder);
+        const catalogCost = this.optionalNumber(productMap.get(String(item._id))?.costPrice);
+        const unitCost = snapshotCost ?? catalogCost;
         row.orderIds.add(String(order._id));
         if (isLoss) row.lossOrderIds.add(String(order._id));
         if (!isLoss) {
@@ -528,7 +707,10 @@ export class DecisionDashboardService {
           row.sourceUnits[sourceLabel] = (row.sourceUnits[sourceLabel] || 0) + quantity;
           row.netSales += itemRevenue;
           if (unitCost === undefined) row.missingCost = true;
-          else row.cogs += unitCost * quantity;
+          else {
+            row.cogs += unitCost * quantity;
+            if (snapshotCost === undefined) row.estimatedCost = true;
+          }
         }
       });
     });
@@ -570,8 +752,22 @@ export class DecisionDashboardService {
         netSales: this.money(row.netSales, 'actual'),
         contribution: row.missingCost
           ? this.money(null, 'unavailable', ['One or more product costs are unavailable.'])
-          : this.money(contribution, 'actual'),
-        margin: { value: row.missingCost ? null : margin, unit: 'percent', basis: row.missingCost ? 'unavailable' : 'actual' },
+          : this.money(
+              contribution,
+              row.estimatedCost ? 'estimated' : 'actual',
+              row.estimatedCost
+                ? ['Current product cost is used because the order has no historical cost snapshot.']
+                : [],
+            ),
+        margin: {
+          value: row.missingCost ? null : margin,
+          unit: 'percent',
+          basis: row.missingCost
+            ? 'unavailable'
+            : row.estimatedCost
+              ? 'estimated'
+              : 'actual',
+        },
         views: analytics.views ?? null,
         addToCarts: analytics.carts ?? null,
         conversion: conversion === null
@@ -816,16 +1012,35 @@ export class DecisionDashboardService {
     spendRows.forEach((day) => {
       (day.breakdown || []).forEach((row: any) => {
         const key = row.campaignId || row.campaignName || 'unknown';
-        if (!campaignSpend.has(key)) campaignSpend.set(key, { campaignId: row.campaignId || '', campaignName: row.campaignName || 'Unknown campaign', spend: 0 });
-        campaignSpend.get(key).spend += this.number(row.spend);
+        if (!campaignSpend.has(key)) {
+          campaignSpend.set(key, {
+            campaignId: row.campaignId || '',
+            campaignName: row.campaignName || 'Unknown campaign',
+            spend: 0,
+            metaPurchases: 0,
+            metaPurchaseValue: 0,
+          });
+        }
+        const campaign = campaignSpend.get(key);
+        campaign.spend += this.number(row.spend);
+        campaign.metaPurchases += this.number(row.purchases);
+        campaign.metaPurchaseValue += this.number(row.purchaseValue);
       });
     });
     const campaignOrders = new Map<string, any>();
+    const campaignKey = (value: any) => String(value || '').trim().toLowerCase();
     orders.forEach((order) => {
       const touch = order.attribution?.lastTouch || {};
-      const key = touch.campaignId || touch.campaign || '';
+      const key = campaignKey(touch.campaignId || touch.campaign);
       if (!key) return;
-      if (!campaignOrders.has(key)) campaignOrders.set(key, { orders: 0, delivered: 0, revenue: 0, contribution: 0 });
+      if (!campaignOrders.has(key)) {
+        campaignOrders.set(key, {
+          orders: 0,
+          delivered: 0,
+          revenue: 0,
+          contribution: 0,
+        });
+      }
       const row = campaignOrders.get(key);
       row.orders++;
       row.revenue += this.number(order.grandTotal);
@@ -833,7 +1048,11 @@ export class DecisionDashboardService {
       if (Number(order.orderStatus) === OrderStatus.DELIVERED) row.delivered++;
     });
     const campaigns = Array.from(campaignSpend.entries()).map(([key, spendRow]) => {
-      const outcome = campaignOrders.get(key) || { orders: 0, delivered: 0, revenue: 0, contribution: 0 };
+      const outcome =
+        campaignOrders.get(campaignKey(spendRow.campaignId)) ||
+        campaignOrders.get(campaignKey(spendRow.campaignName)) ||
+        campaignOrders.get(campaignKey(key)) ||
+        { orders: 0, delivered: 0, revenue: 0, contribution: 0 };
       return {
         ...spendRow,
         ...outcome,
@@ -842,6 +1061,7 @@ export class DecisionDashboardService {
         attributedContributionAfterAds: outcome.contribution - spendRow.spend,
         moneyBasis: {
           spend: 'actual',
+          metaPurchaseValue: 'actual',
           revenue: 'actual',
           contribution: 'estimated',
           costPerOrder: outcome.orders ? 'allocated' : 'unavailable',

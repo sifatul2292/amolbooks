@@ -235,6 +235,13 @@ export class MetaAdsService {
       });
     });
 
+    // A valid Meta response can omit dates that had zero spend. Persist an
+    // explicit zero row for those dates so the dashboard can distinguish
+    // "Meta confirmed zero" from "this date was never synced".
+    this.datesBetween(since, until).forEach((date) => {
+      if (!byDate.has(date)) byDate.set(date, []);
+    });
+
     let synced = 0;
     for (const [date, breakdown] of byDate.entries()) {
       const spend = breakdown.reduce((sum, row) => sum + row.spend, 0);
@@ -387,6 +394,26 @@ export class MetaAdsService {
 
   private today(): string {
     return new Date().toISOString().slice(0, 10);
+  }
+
+  private datesBetween(since: string, until: string): string[] {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(since) || !/^\d{4}-\d{2}-\d{2}$/.test(until)) {
+      return [];
+    }
+    const start = new Date(`${since}T00:00:00.000Z`);
+    const end = new Date(`${until}T00:00:00.000Z`);
+    if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end < start) {
+      return [];
+    }
+    const dates: string[] = [];
+    for (
+      let cursor = start;
+      cursor <= end && dates.length <= 366;
+      cursor = new Date(cursor.getTime() + 86400000)
+    ) {
+      dates.push(cursor.toISOString().slice(0, 10));
+    }
+    return dates;
   }
 
   private daysAgo(n: number): string {
