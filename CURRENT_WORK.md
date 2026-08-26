@@ -18,6 +18,13 @@
   decision-analytics API response. The dashboard now also shows an explicit
   backend-version warning instead of empty values if that response field is ever
   absent again.
+- Delivered outcomes now use the authoritative Steadfast `courierStatus.status`
+  shown in Custom Orders as well as the legacy numeric order status. Courier cost
+  likewise prefers Steadfast's reported delivery charge.
+- Orders without an entered packaging cost now use ৳2.50 per order, and COD
+  orders without an explicit payment fee deduct 1% of order value.
+- A one-day Performance Trend now renders labeled revenue/profit/spend summary
+  cards; multi-day views retain the line chart with an explicit series legend.
 - `npm run build` passes and the dashboard's embedded JavaScript parses cleanly.
   Repository lint remains blocked by the existing all-files-ignored ESLint
   configuration.

@@ -13,6 +13,8 @@ import { google } from 'googleapis';
 import { OrderStatus } from '../../enum/order.enum';
 
 const DASHBOARD_TIME_ZONE = 'Asia/Dhaka';
+const DEFAULT_PACKAGING_COST = 2.5;
+const COD_FEE_RATE = 0.01;
 const LOSS_STATUSES = [
   OrderStatus.CANCEL,
   OrderStatus.REFUND,
@@ -234,7 +236,7 @@ export class DecisionDashboardService {
     return this.orderModel
       .find({ createdAt: { $gte: start, $lte: end } })
       .select(
-        'orderId phoneNo city createdAt grandTotal deliveryCharge actualCourierCost packagingCost paymentFee refundAmount returnLoss orderStatus paymentType paymentStatus orderFrom orderOrigin manualOrderSource attribution division area zone orderedItems',
+        'orderId phoneNo city createdAt grandTotal deliveryCharge actualCourierCost packagingCost paymentFee refundAmount returnLoss orderStatus paymentType paymentStatus orderFrom orderOrigin manualOrderSource attribution division area zone orderedItems courierStatus',
       )
       .lean();
   }
@@ -286,9 +288,16 @@ export class DecisionDashboardService {
     customerHistory: Map<string, any>,
   ): any {
     const spend = spendRows.reduce((sum, row) => sum + this.number(row.spend), 0);
-    const validOrders = orders.filter((order) => !LOSS_STATUSES.includes(Number(order.orderStatus)));
-    const deliveredOrders = orders.filter((order) => Number(order.orderStatus) === OrderStatus.DELIVERED);
-    const activeOrders = orders.filter((order) => ACTIVE_STATUSES.includes(Number(order.orderStatus)));
+    const validOrders = orders.filter((order) => !this.isLossOrder(order));
+    const deliveredOrders = orders.filter(
+      (order) => this.isDeliveredOrder(order) && !this.isLossOrder(order),
+    );
+    const activeOrders = orders.filter(
+      (order) =>
+        !this.isDeliveredOrder(order) &&
+        !this.isLossOrder(order) &&
+        ACTIVE_STATUSES.includes(Number(order.orderStatus)),
+    );
     const validManual = manualSales.filter((sale) => !['cancelled', 'refunded', 'returned'].includes(sale.outcome));
     const deliveredManual = manualSales.filter((sale) => sale.outcome === 'delivered');
 
@@ -315,26 +324,25 @@ export class DecisionDashboardService {
       quality.fallbackItems += cogs.fallbackItems;
       quality.missingItems += cogs.missingItems;
       quality.totalItems += cogs.totalItems;
-      if (this.hasNumber(order.actualCourierCost)) quality.actualCourierOrders++;
+      if (this.hasActualCourierCost(order)) quality.actualCourierOrders++;
       if (
-        this.hasNumber(order.actualCourierCost) &&
-        this.hasNumber(order.packagingCost) &&
-        this.hasNumber(order.paymentFee)
+        this.hasActualCourierCost(order) &&
+        this.hasNumber(order.packagingCost)
       ) {
         quality.completeOperationalOrders++;
       }
       if (order.attribution?.lastTouch?.source || order.attribution?.firstTouch?.source) {
         quality.attributionOrders++;
       }
-      const courier = this.hasNumber(order.actualCourierCost)
-        ? this.number(order.actualCourierCost)
-        : this.number(order.deliveryCharge);
+      const courier = this.orderCourierCost(order);
+      const packaging = this.orderPackagingCost(order);
+      const paymentFee = this.orderPaymentFee(order);
       const amount =
         this.number(order.grandTotal) -
         cogs.amount -
         courier -
-        this.number(order.packagingCost) -
-        this.number(order.paymentFee) -
+        packaging -
+        paymentFee -
         this.number(order.refundAmount) -
         this.number(order.returnLoss);
       orderContribution.set(String(order._id), {
@@ -343,14 +351,17 @@ export class DecisionDashboardService {
         costs: {
           product: cogs.amount,
           delivery: courier,
-          packaging: this.number(order.packagingCost),
-          payment: this.number(order.paymentFee),
+          packaging,
+          payment: paymentFee,
           losses:
             this.number(order.refundAmount) + this.number(order.returnLoss),
+          deliveryEstimated: !this.hasActualCourierCost(order),
+          packagingEstimated: !this.hasNumber(order.packagingCost),
+          paymentEstimated: false,
         },
         basis:
-          cogs.fallbackItems || cogs.missingItems || !this.hasNumber(order.actualCourierCost) ||
-          !this.hasNumber(order.packagingCost) || !this.hasNumber(order.paymentFee)
+          cogs.fallbackItems || cogs.missingItems || !this.hasActualCourierCost(order) ||
+          !this.hasNumber(order.packagingCost)
             ? 'estimated'
             : 'actual',
       });
@@ -359,11 +370,9 @@ export class DecisionDashboardService {
     const manualContribution = (sale: any) =>
       this.number(sale.revenue) -
       this.number(sale.cost) -
-      (this.hasNumber(sale.actualCourierCost)
-        ? this.number(sale.actualCourierCost)
-        : this.number(sale.deliveryCharge)) -
-      this.number(sale.packagingCost) -
-      this.number(sale.paymentFee) -
+      this.manualCourierCost(sale) -
+      this.manualPackagingCost(sale) -
+      this.manualPaymentFee(sale) -
       this.number(sale.refundAmount) -
       this.number(sale.returnLoss);
 
@@ -520,9 +529,9 @@ export class DecisionDashboardService {
           totals.losses += this.number(row.losses);
           totals.fallbackItems += this.number(contribution?.cogs?.fallbackItems);
           totals.missingItems += this.number(contribution?.cogs?.missingItems);
-          if (!this.hasNumber(order.actualCourierCost)) totals.estimatedDelivery++;
-          if (!this.hasNumber(order.packagingCost)) totals.estimatedPackaging++;
-          if (!this.hasNumber(order.paymentFee)) totals.estimatedPayment++;
+          if (row.deliveryEstimated) totals.estimatedDelivery++;
+          if (row.packagingEstimated) totals.estimatedPackaging++;
+          if (row.paymentEstimated) totals.estimatedPayment++;
           return totals;
         },
         {
@@ -541,16 +550,13 @@ export class DecisionDashboardService {
       manualSales.forEach((sale) => {
         if (this.hasNumber(sale.cost)) costs.product += this.number(sale.cost);
         else costs.missingItems++;
-        costs.delivery += this.hasNumber(sale.actualCourierCost)
-          ? this.number(sale.actualCourierCost)
-          : this.number(sale.deliveryCharge);
-        costs.packaging += this.number(sale.packagingCost);
-        costs.payment += this.number(sale.paymentFee);
+        costs.delivery += this.manualCourierCost(sale);
+        costs.packaging += this.manualPackagingCost(sale);
+        costs.payment += this.manualPaymentFee(sale);
         costs.losses +=
           this.number(sale.refundAmount) + this.number(sale.returnLoss);
         if (!this.hasNumber(sale.actualCourierCost)) costs.estimatedDelivery++;
         if (!this.hasNumber(sale.packagingCost)) costs.estimatedPackaging++;
-        if (!this.hasNumber(sale.paymentFee)) costs.estimatedPayment++;
       });
 
       const revenue =
@@ -597,15 +603,13 @@ export class DecisionDashboardService {
           costs.packaging,
           costs.estimatedPackaging ? 'estimated' : 'actual',
           costs.estimatedPackaging
-            ? ['Missing packaging entries are currently treated as zero.']
+            ? [`Missing packaging entries use the ৳${DEFAULT_PACKAGING_COST} per-order estimate.`]
             : [],
         ),
         paymentAndLossCost: this.money(
           costs.payment + costs.losses,
           costs.estimatedPayment ? 'estimated' : 'actual',
-          costs.estimatedPayment
-            ? ['Missing payment fees are currently treated as zero.']
-            : [],
+          [],
         ),
         contributionBeforeAds: this.money(
           costs.missingItems ? null : beforeAds,
@@ -673,10 +677,10 @@ export class DecisionDashboardService {
     days: number,
   ): any {
     const rows = new Map<string, any>();
-    const validOrders = orders.filter((order) => !LOSS_STATUSES.includes(Number(order.orderStatus)));
+    const validOrders = orders.filter((order) => !this.isLossOrder(order));
     const qualifyingOrderCount = Math.max(validOrders.length, 1);
     orders.forEach((order) => {
-      const isLoss = LOSS_STATUSES.includes(Number(order.orderStatus));
+      const isLoss = this.isLossOrder(order);
       const sourceLabel = this.orderSourceLabel(order);
       (order.orderedItems || []).forEach((item: any) => {
         const id = String(item._id || item.slug || item.name || 'unknown');
@@ -883,10 +887,9 @@ export class DecisionDashboardService {
 
     orders.forEach((order) => {
       const row = rowFor(this.orderSourceLabel(order));
-      const status = Number(order.orderStatus);
-      const isLoss = LOSS_STATUSES.includes(status);
+      const isLoss = this.isLossOrder(order);
       row.orders++;
-      if (status === OrderStatus.DELIVERED) row.delivered++;
+      if (this.isDeliveredOrder(order)) row.delivered++;
       if (isLoss) {
         row.losses++;
         return;
@@ -955,10 +958,10 @@ export class DecisionDashboardService {
     };
     orders.forEach((order) => {
       const status = Number(order.orderStatus);
-      if (ACTIVE_STATUSES.includes(status)) statusCounts.active++;
+      if (!this.isDeliveredOrder(order) && !this.isLossOrder(order) && ACTIVE_STATUSES.includes(status)) statusCounts.active++;
       if ([OrderStatus.CONFIRM, OrderStatus.PROCESSING, OrderStatus.SHIPPING, OrderStatus.Courier].includes(status)) statusCounts.confirmed++;
-      if (status === OrderStatus.DELIVERED) statusCounts.delivered++;
-      if (status === OrderStatus.CANCEL) statusCounts.cancelled++;
+      if (this.isDeliveredOrder(order)) statusCounts.delivered++;
+      if (status === OrderStatus.CANCEL || this.courierStatus(order) === 'cancelled') statusCounts.cancelled++;
       if (status === OrderStatus.REFUND) statusCounts.refunded++;
       if (status === OrderStatus.RETURN) statusCounts.returned++;
     });
@@ -983,8 +986,8 @@ export class DecisionDashboardService {
         const row = map.get(key);
         row.orders++;
         row.revenue += this.number(order.grandTotal);
-        if (Number(order.orderStatus) === OrderStatus.DELIVERED) row.delivered++;
-        if (LOSS_STATUSES.includes(Number(order.orderStatus))) row.losses++;
+        if (this.isDeliveredOrder(order)) row.delivered++;
+        if (this.isLossOrder(order)) row.losses++;
       });
       if (manualKeyFn) {
         manualSales.forEach((sale) => {
@@ -1046,7 +1049,7 @@ export class DecisionDashboardService {
       row.orders++;
       row.revenue += this.number(order.grandTotal);
       row.contribution += orderContribution.get(String(order._id))?.amount || 0;
-      if (Number(order.orderStatus) === OrderStatus.DELIVERED) row.delivered++;
+      if (this.isDeliveredOrder(order)) row.delivered++;
     });
     const campaigns = Array.from(campaignSpend.entries()).map(([key, spendRow]) => {
       const outcome =
@@ -1110,7 +1113,7 @@ export class DecisionDashboardService {
     contribution: Map<string, any>,
     customerHistory: Map<string, any>,
   ): any {
-    const validOrders = orders.filter((order) => !LOSS_STATUSES.includes(Number(order.orderStatus)));
+    const validOrders = orders.filter((order) => !this.isLossOrder(order));
     const customers = new Map<string, any>();
     validOrders.forEach((order) => {
       const phone = String(order.phoneNo || '');
@@ -1318,13 +1321,13 @@ export class DecisionDashboardService {
     orders.forEach((order) => {
       const date = moment(order.createdAt).tz(DASHBOARD_TIME_ZONE).format('YYYY-MM-DD');
       const row = get(date);
-      if (!LOSS_STATUSES.includes(Number(order.orderStatus))) {
+      if (!this.isLossOrder(order)) {
         row.revenue += this.number(order.grandTotal);
         row.orders++;
         row.expectedContributionBeforeAds += contribution.get(String(order._id))?.amount || 0;
         if (contribution.get(String(order._id))?.cogs?.missingItems) row.profitUnavailable = true;
       }
-      if (Number(order.orderStatus) === OrderStatus.DELIVERED) {
+      if (this.isDeliveredOrder(order)) {
         row.deliveredOrders++;
         row.realizedRevenue += this.number(order.grandTotal);
         row.realizedContributionBeforeAds += contribution.get(String(order._id))?.amount || 0;
@@ -1335,11 +1338,9 @@ export class DecisionDashboardService {
       const manualContribution =
         this.number(sale.revenue) -
         this.number(sale.cost) -
-        (this.hasNumber(sale.actualCourierCost)
-          ? this.number(sale.actualCourierCost)
-          : this.number(sale.deliveryCharge)) -
-        this.number(sale.packagingCost) -
-        this.number(sale.paymentFee) -
+        this.manualCourierCost(sale) -
+        this.manualPackagingCost(sale) -
+        this.manualPaymentFee(sale) -
         this.number(sale.refundAmount) -
         this.number(sale.returnLoss);
       if (!['cancelled', 'refunded', 'returned'].includes(sale.outcome)) {
@@ -1412,7 +1413,7 @@ export class DecisionDashboardService {
     if (quality.missingItems) warnings.push(`${quality.missingItems} line items have no usable product cost.`);
     if (quality.manualMissingCosts) warnings.push(`${quality.manualMissingCosts} phone or WhatsApp entries have no product cost.`);
     if (courierCoverage < 100) warnings.push('Some orders use the customer delivery charge as a courier-cost estimate.');
-    if (operationalCoverage < 100) warnings.push('Packaging or payment fees are missing on some orders.');
+    if (operationalCoverage < 100) warnings.push(`Some orders use the ৳${DEFAULT_PACKAGING_COST} packaging estimate.`);
     if (spendCoverage < 100) warnings.push(`Advertising spend covers ${Math.round(spendCoverage)}% of selected days.`);
     if (!analytics.available) warnings.push(analytics.reason || 'GA4 funnel data is unavailable.');
     return {
@@ -1435,7 +1436,7 @@ export class DecisionDashboardService {
     if (quality.missingItems) missing.push('COGS is unavailable for some line items.');
     if (quality.manualMissingCosts) missing.push('Product cost is unavailable for some phone or WhatsApp entries.');
     if (quality.actualCourierOrders < orders) missing.push('Actual courier cost is missing for some orders.');
-    if (quality.completeOperationalOrders < orders) missing.push('Packaging or payment fees are missing for some orders.');
+    if (quality.completeOperationalOrders < orders) missing.push(`Packaging uses the ৳${DEFAULT_PACKAGING_COST} per-order estimate where no value is saved.`);
     if (!hasSpend) missing.push('Advertising spend is unavailable.');
     return missing;
   }
@@ -1623,6 +1624,80 @@ export class DecisionDashboardService {
   private number(value: any, fallback = 0): number {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  private courierStatus(order: any): string {
+    return String(order?.courierStatus?.status || '').trim().toLowerCase();
+  }
+
+  private isDeliveredOrder(order: any): boolean {
+    return (
+      Number(order?.orderStatus) === OrderStatus.DELIVERED ||
+      this.courierStatus(order) === 'delivered'
+    );
+  }
+
+  private isLossOrder(order: any): boolean {
+    return (
+      LOSS_STATUSES.includes(Number(order?.orderStatus)) ||
+      this.courierStatus(order) === 'cancelled'
+    );
+  }
+
+  private hasActualCourierCost(order: any): boolean {
+    return (
+      this.hasNumber(order?.actualCourierCost) ||
+      this.hasNumber(order?.courierStatus?.deliveryCharge)
+    );
+  }
+
+  private orderCourierCost(order: any): number {
+    if (this.hasNumber(order?.actualCourierCost)) {
+      return this.number(order.actualCourierCost);
+    }
+    if (this.hasNumber(order?.courierStatus?.deliveryCharge)) {
+      return this.number(order.courierStatus.deliveryCharge);
+    }
+    return this.number(order?.deliveryCharge);
+  }
+
+  private orderPackagingCost(order: any): number {
+    return this.hasNumber(order?.packagingCost)
+      ? this.number(order.packagingCost)
+      : DEFAULT_PACKAGING_COST;
+  }
+
+  private isCodOrder(order: any): boolean {
+    const paymentType = String(order?.paymentType || '')
+      .toLowerCase()
+      .replace(/[^a-z]/g, '');
+    return paymentType === 'cod' || paymentType === 'cashondelivery';
+  }
+
+  private orderPaymentFee(order: any): number {
+    if (this.hasNumber(order?.paymentFee)) return this.number(order.paymentFee);
+    return this.isCodOrder(order)
+      ? this.number(order?.grandTotal) * COD_FEE_RATE
+      : 0;
+  }
+
+  private manualCourierCost(sale: any): number {
+    return this.hasNumber(sale?.actualCourierCost)
+      ? this.number(sale.actualCourierCost)
+      : this.number(sale?.deliveryCharge);
+  }
+
+  private manualPackagingCost(sale: any): number {
+    return this.hasNumber(sale?.packagingCost)
+      ? this.number(sale.packagingCost)
+      : DEFAULT_PACKAGING_COST * Math.max(1, this.number(sale?.orders, 1));
+  }
+
+  private manualPaymentFee(sale: any): number {
+    if (this.hasNumber(sale?.paymentFee)) return this.number(sale.paymentFee);
+    return String(sale?.paymentStatus || '').toLowerCase() === 'paid'
+      ? 0
+      : this.number(sale?.revenue) * COD_FEE_RATE;
   }
 
   private optionalNumber(value: any): number | undefined {

@@ -157,7 +157,20 @@
     .chart-line.revenue { stroke: var(--color-info); }
     .chart-line.expected { stroke: var(--color-success); }
     .chart-line.realized { stroke: var(--color-accent); }
+    .chart-line.spend { stroke: var(--color-warning); }
     .chart-empty { display: grid; min-height: 16rem; place-items: center; color: var(--color-muted); text-align: center; }
+    .trend-key { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-bottom: var(--space-xs); color: var(--color-muted); font-size: var(--text-xs); }
+    .trend-key span { display: inline-flex; align-items: center; gap: var(--space-3xs); }
+    .trend-key i { width: 0.65rem; height: 0.2rem; border-radius: var(--radius-pill); background: var(--color-muted); }
+    .trend-key .revenue { background: var(--color-info); }
+    .trend-key .expected { background: var(--color-success); }
+    .trend-key .realized { background: var(--color-accent); }
+    .trend-key .spend { background: var(--color-warning); }
+    .single-day-trend { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-xs); min-height: 12rem; align-items: stretch; }
+    .single-day-card { display: flex; min-width: 0; flex-direction: column; justify-content: center; padding: var(--space-sm); border-radius: var(--radius-card); background: var(--color-paper-3); }
+    .single-day-card span { color: var(--color-muted); font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; }
+    .single-day-card strong { margin-top: var(--space-xs); overflow-wrap: anywhere; font: 800 var(--text-xl)/1 var(--font-display); }
+    .single-day-card small { margin-top: var(--space-2xs); color: var(--color-muted); font-size: var(--text-xs); }
 
     .heatmap { display: grid; grid-template-columns: repeat(auto-fit, minmax(2.75rem, 1fr)); gap: var(--space-3xs); }
     .heat-cell { min-height: 3.25rem; padding: var(--space-2xs); border-radius: var(--radius-xs); background: var(--color-paper-3); }
@@ -300,6 +313,7 @@
       .legend { margin-left: 0; }
       .summary-grid { grid-template-columns: minmax(0, 1fr); }
       .source-summary { grid-template-columns: minmax(0, 1fr); }
+      .single-day-trend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .metric { min-height: 8.25rem; }
       .panel-head { align-items: flex-start; flex-direction: column; }
       .panel-tools { width: 100%; margin-left: 0; }
@@ -419,8 +433,8 @@
         </div>
 
         <section class="panel panel-gap">
-          <header class="panel-head"><div class="panel-title"><h3>Performance trend</h3><p>Revenue and contribution over the selected period.</p></div><div class="panel-tools"><div class="segmented"><button class="segment active" type="button" data-granularity="daily" onclick="setGranularity('daily', this)">Daily</button><button class="segment" type="button" data-granularity="weekly" onclick="setGranularity('weekly', this)">Weekly</button></div></div></header>
-          <div class="panel-body"><div class="chart-wrap" id="trendChart"><div class="chart-empty"><i class="fas fa-circle-notch fa-spin"></i></div></div><div class="heatmap" id="heatmap" aria-label="Compact revenue heatmap"></div></div>
+          <header class="panel-head"><div class="panel-title"><h3>Performance trend</h3><p>Daily revenue, expected profit, delivered profit, and Meta advertising spend.</p></div><div class="panel-tools"><div class="segmented"><button class="segment active" type="button" data-granularity="daily" onclick="setGranularity('daily', this)">Daily</button><button class="segment" type="button" data-granularity="weekly" onclick="setGranularity('weekly', this)">Weekly</button></div></div></header>
+          <div class="panel-body"><div class="trend-key"><span><i class="revenue"></i>Revenue</span><span><i class="expected"></i>Expected profit</span><span><i class="realized"></i>Delivered profit</span><span><i class="spend"></i>Meta spend</span></div><div class="chart-wrap" id="trendChart"><div class="chart-empty"><i class="fas fa-circle-notch fa-spin"></i></div></div><div class="heatmap" id="heatmap" aria-label="Daily revenue heatmap"></div></div>
         </section>
 
         <section class="panel panel-gap">
@@ -743,10 +757,23 @@
   function aggregateWeekly(rows) { var groups = {}; rows.forEach(function (row) { var date = localDate(row.date); var day = date.getDay(); date.setDate(date.getDate() - day); var key = ymd(date); if (!groups[key]) groups[key] = { date: key, revenue: 0, expectedContribution: 0, realizedContribution: 0, adSpend: 0, orders: 0, hasExpected: false }; groups[key].revenue += Number(row.revenue) || 0; groups[key].orders += Number(row.orders) || 0; groups[key].adSpend += Number(row.adSpend) || 0; if (row.expectedContribution != null) { groups[key].expectedContribution += Number(row.expectedContribution) || 0; groups[key].hasExpected = true; } groups[key].realizedContribution += Number(row.realizedContribution) || 0; }); return Object.keys(groups).sort().map(function (key) { if (!groups[key].hasExpected) groups[key].expectedContribution = null; return groups[key]; }); }
   function renderTrend() {
     var rows = granularity === 'weekly' ? aggregateWeekly(trendData) : trendData.slice();
+    if (!rows.length) { document.getElementById('trendChart').innerHTML = '<div class="chart-empty">No order or advertising data exists for this period.</div>'; document.getElementById('heatmap').innerHTML = ''; return; }
+    if (rows.length === 1) {
+      var day = rows[0];
+      var singleCards = [
+        { label: 'Revenue', value: money(day.revenue, 'actual'), note: fmt(day.orders) + (Number(day.orders) === 1 ? ' order' : ' orders') },
+        { label: 'Expected profit', value: money(day.expectedContribution, day.moneyBasis && day.moneyBasis.expectedContribution), note: 'All valid orders' },
+        { label: 'Delivered profit', value: money(day.realizedContribution, day.moneyBasis && day.moneyBasis.realizedContribution), note: fmt(day.deliveredOrders) + ' delivered' },
+        { label: 'Meta spend', value: money(day.adSpend, day.moneyBasis && day.moneyBasis.adSpend), note: 'Advertising cost' },
+        { label: 'Date', value: esc(day.date), note: 'Choose a longer range for a line chart' }
+      ];
+      document.getElementById('trendChart').innerHTML = '<div class="single-day-trend">' + singleCards.map(function (card) { return '<div class="single-day-card"><span>' + esc(card.label) + '</span><strong>' + card.value + '</strong><small>' + esc(card.note) + '</small></div>'; }).join('') + '</div>';
+      document.getElementById('heatmap').innerHTML = '';
+      return;
+    }
     renderHeatmap(trendData);
-    if (!rows.length) { document.getElementById('trendChart').innerHTML = '<div class="chart-empty">No trend data for this period.</div>'; return; }
     var values = [];
-    rows.forEach(function (row) { ['revenue', 'expectedContribution', 'realizedContribution'].forEach(function (key) { if (row[key] != null) values.push(Number(row[key]) || 0); }); });
+    rows.forEach(function (row) { ['revenue', 'expectedContribution', 'realizedContribution', 'adSpend'].forEach(function (key) { if (row[key] != null) values.push(Number(row[key]) || 0); }); });
     var min = Math.min.apply(Math, values.concat([0])); var max = Math.max.apply(Math, values.concat([1])); var span = max - min || 1;
     var width = 900, height = 260, left = 58, right = 18, top = 16, bottom = 34; var innerW = width - left - right, innerH = height - top - bottom;
     function x(index) { return left + (rows.length === 1 ? innerW / 2 : index / (rows.length - 1) * innerW); }
@@ -754,7 +781,7 @@
     function points(key) { return rows.map(function (row, index) { return row[key] == null ? null : x(index).toFixed(1) + ',' + y(Number(row[key]) || 0).toFixed(1); }).filter(Boolean).join(' '); }
     var grid = ''; for (var i = 0; i <= 4; i++) { var gy = top + innerH * i / 4; var label = max - span * i / 4; grid += '<line class="chart-grid" x1="' + left + '" y1="' + gy + '" x2="' + (width - right) + '" y2="' + gy + '"></line><text class="chart-label" x="0" y="' + (gy + 4) + '">৳' + fmt(label) + '</text>'; }
     var labels = rows.map(function (row, index) { if (rows.length > 10 && index % Math.ceil(rows.length / 7) !== 0 && index !== rows.length - 1) return ''; return '<text class="chart-label" text-anchor="middle" x="' + x(index) + '" y="' + (height - 8) + '">' + esc(row.date.slice(5)) + '</text>'; }).join('');
-    document.getElementById('trendChart').innerHTML = '<svg class="trend-chart" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Revenue and contribution trend">' + grid + labels + '<polyline class="chart-line revenue" points="' + points('revenue') + '"></polyline><polyline class="chart-line expected" points="' + points('expectedContribution') + '"></polyline><polyline class="chart-line realized" points="' + points('realizedContribution') + '"></polyline></svg>';
+    document.getElementById('trendChart').innerHTML = '<svg class="trend-chart" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Revenue, profit, and advertising spend trend">' + grid + labels + '<polyline class="chart-line revenue" points="' + points('revenue') + '"></polyline><polyline class="chart-line expected" points="' + points('expectedContribution') + '"></polyline><polyline class="chart-line realized" points="' + points('realizedContribution') + '"></polyline><polyline class="chart-line spend" points="' + points('adSpend') + '"></polyline></svg>';
   }
   function renderHeatmap(rows) { var recent = rows.slice(-42); var max = recent.reduce(function (value, row) { return Math.max(value, Number(row.revenue) || 0); }, 0) || 1; document.getElementById('heatmap').innerHTML = recent.map(function (row) { var ratio = (Number(row.revenue) || 0) / max; var level = ratio > 0.66 ? 3 : ratio > 0.33 ? 2 : ratio > 0 ? 1 : 0; return '<div class="heat-cell level-' + level + '" title="' + esc(row.date) + ': ৳' + fmt(row.revenue) + '"><span class="heat-date">' + esc(row.date.slice(5)) + '</span><span class="heat-value">৳' + fmt(row.revenue) + '</span></div>'; }).join(''); }
 
