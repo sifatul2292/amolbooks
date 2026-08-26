@@ -14,6 +14,10 @@
   per delivered order, and estimated store contribution after ad spend.
 - Successful Meta syncs now save explicit zero-spend days, so a day Meta confirms
   as zero is no longer mistaken for a missing/un-synced day.
+- Fixed the profit bridge being calculated internally but omitted from the final
+  decision-analytics API response. The dashboard now also shows an explicit
+  backend-version warning instead of empty values if that response field is ever
+  absent again.
 - `npm run build` passes and the dashboard's embedded JavaScript parses cleanly.
   Repository lint remains blocked by the existing all-files-ignored ESLint
   configuration.

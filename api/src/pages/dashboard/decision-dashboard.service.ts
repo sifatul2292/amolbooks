@@ -119,6 +119,7 @@ export class DecisionDashboardService {
       },
       data: {
         summary: current.summary,
+        profitBridge: current.profitBridge,
         comparison: this.buildComparison(current.summary, prior.summary),
         trend: current.trend,
         productPerformance: current.productPerformance,

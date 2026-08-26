@@ -688,6 +688,10 @@
 
   function renderProfitBridge() {
     var bridge = dashboardData.profitBridge || {};
+    if (!bridge.expected || !bridge.realized) {
+      document.getElementById('profitBridge').innerHTML = '<div class="empty">Profit calculation data is unavailable. Rebuild and restart the API, then reload this page.</div>';
+      return;
+    }
     function step(label, metric, operator, result) {
       metric = metric || {};
       var value = metric.amount;
