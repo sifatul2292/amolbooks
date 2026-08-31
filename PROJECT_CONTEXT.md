@@ -121,12 +121,6 @@ STORE_ID/PASSWORD, Google OAuth, SMS token, Atlas fallback URI). Fragile — tre
   levers surface it on product/cart/checkout. Free notebook on qualifying carts.
 - **Incomplete Orders:** abandoned-cart page. "Converted" set ONLY by page Send/Add Order.
   Self-placed real orders get deleted, not marked converted.
-  The compiled checkout POSTs `add-incomplete-order-by-*` on every debounced form change
-  until the first response returns an `_id`, then switches to
-  `update-incomplete-order-by-id`. `addIncompleteOrder` therefore merges into the newest
-  non-converted row for the same phone within 6h instead of inserting — without that, one
-  customer produced several rows and the address (typed last) landed on whichever won the
-  race. The public update route also ignores empty strings for the same reason.
 - **Recent buyers:** `GET /api/order/recent-buyers/:slug` — public, first name + purchase
   time only (no phone/email/address). Feeds social-proof ticker.
 - **GTM levers** (`gtm-snippets/`): cart threshold, buy-2-notebook banner, urgency/countdown,

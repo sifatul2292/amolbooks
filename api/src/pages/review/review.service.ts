@@ -34,13 +34,6 @@ export class ReviewService {
     private utilsService: UtilsService,
   ) {}
 
-  private getReviewImages(reviewDto: AddReviewDto): string[] {
-    if (Array.isArray(reviewDto.images)) {
-      return reviewDto.images.filter(Boolean);
-    }
-    return reviewDto.image ? [reviewDto.image] : [];
-  }
-
   /**
    * addReview
    * insertManyReview
@@ -60,7 +53,6 @@ export class ReviewService {
 
       const mData = {
         ...addReviewDto,
-        images: this.getReviewImages(addReviewDto),
         ...{
           product: {
             _id: productData._id,
@@ -105,7 +97,7 @@ export class ReviewService {
           user: {
             _id: null,
             name: addReviewDto.name,
-            profileImg: addReviewDto.profileImg || addReviewDto.image || null,
+            profileImg: null,
           },
         },
       };

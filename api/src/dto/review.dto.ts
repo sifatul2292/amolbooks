@@ -49,14 +49,6 @@ export class AddReviewDto {
   name: string;
 
   @IsOptional()
-  @IsString()
-  profileImg: string;
-
-  @IsOptional()
-  @IsString()
-  image: string;
-
-  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   images: string[];
@@ -108,9 +100,13 @@ export class UpdateReviewDto {
   @IsOptional()
   product: any;
 
+
+
   @IsOptional()
   @IsString()
   userName: string;
+
+
 
   @IsOptional()
   @IsString()
@@ -122,6 +118,7 @@ export class UpdateReviewDto {
   review: string;
 
   @IsOptional()
+
   @IsNumber()
   rating: number;
 

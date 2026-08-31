@@ -902,105 +902,6 @@ let ProductService = ProductService_1 = class ProductService {
             throw new common_1.InternalServerErrorException(err.message);
         }
     }
-    async getCustomersAlsoBought(productSlug) {
-        try {
-            const currentProduct = await this.productModel
-                .findOne({ slug: productSlug, status: 'publish' })
-                .select('_id category')
-                .lean();
-            if (!currentProduct) {
-                return {
-                    success: true,
-                    message: 'Product not found',
-                    data: { source: 'none', products: [] },
-                };
-            }
-            const currentProductId = new ObjectId(currentProduct._id);
-            const coPurchaseRows = await this.orderModel.aggregate([
-                {
-                    $match: {
-                        orderStatus: {
-                            $nin: [order_enum_1.OrderStatus.CANCEL, order_enum_1.OrderStatus.REFUND, order_enum_1.OrderStatus.RETURN],
-                        },
-                        'orderedItems._id': currentProductId,
-                    },
-                },
-                { $unwind: '$orderedItems' },
-                { $match: { 'orderedItems._id': { $ne: currentProductId } } },
-                {
-                    $group: {
-                        _id: '$orderedItems._id',
-                        orderCount: { $sum: 1 },
-                        units: { $sum: { $ifNull: ['$orderedItems.quantity', 1] } },
-                    },
-                },
-                { $sort: { orderCount: -1, units: -1, _id: 1 } },
-                { $limit: 24 },
-            ]);
-            const rankedIds = coPurchaseRows
-                .map((row) => String(row._id || ''))
-                .filter((id) => ObjectId.isValid(id));
-            const productSelect = '_id name slug images salePrice afterDiscountPrice discountAmount discountType quantity author ratingCount ratingTotal';
-            const coPurchasedProducts = rankedIds.length
-                ? await this.productModel
-                    .find({
-                    _id: { $in: rankedIds.map((id) => new ObjectId(id)) },
-                    status: 'publish',
-                    quantity: { $gt: 0 },
-                })
-                    .select(productSelect)
-                    .lean()
-                : [];
-            const coPurchasedMap = new Map(coPurchasedProducts.map((product) => [String(product._id), product]));
-            const orderedProducts = rankedIds
-                .map((id) => coPurchasedMap.get(id))
-                .filter(Boolean)
-                .slice(0, 8);
-            if (orderedProducts.length >= 3) {
-                return {
-                    success: true,
-                    message: 'Success',
-                    data: {
-                        source: 'orders',
-                        products: this.normalizeProductImageFields(orderedProducts),
-                    },
-                };
-            }
-            const categoryIds = (currentProduct.category || [])
-                .map((category) => category === null || category === void 0 ? void 0 : category._id)
-                .filter((id) => id && ObjectId.isValid(String(id)))
-                .map((id) => new ObjectId(String(id)));
-            const excludedIds = [
-                currentProductId,
-                ...orderedProducts.map((product) => new ObjectId(product._id)),
-            ];
-            const fallbackProducts = categoryIds.length
-                ? await this.productModel
-                    .find({
-                    _id: { $nin: excludedIds },
-                    status: 'publish',
-                    quantity: { $gt: 0 },
-                    'category._id': { $in: categoryIds },
-                })
-                    .sort({ totalSold: -1, priority: -1, createdAt: -1 })
-                    .limit(Math.max(0, 8 - orderedProducts.length))
-                    .select(productSelect)
-                    .lean()
-                : [];
-            const products = [...orderedProducts, ...fallbackProducts].slice(0, 8);
-            return {
-                success: true,
-                message: 'Success',
-                data: {
-                    source: orderedProducts.length ? 'mixed' : 'related',
-                    products: this.normalizeProductImageFields(products),
-                },
-            };
-        }
-        catch (err) {
-            throw new common_1.InternalServerErrorException(err.message);
-        }
-    }
     async getProductByIds(getProductByIdsDto, select) {
         if (!getProductByIdsDto.ids || getProductByIdsDto.ids.length === 0) {
             return { success: true, message: 'Success', data: [] };
@@ -1208,39 +1109,7 @@ let ProductService = ProductService_1 = class ProductService {
         }
     }
     async findAllPublished() {
-        return this.productModel
-            .find({ status: 'publish' })
-            .select('slug name updatedAt category subCategory author publisher totalSold priority')
-            .sort({ totalSold: -1, priority: -1, updatedAt: -1 })
-            .lean()
-            .exec();
-    }
-    async findPublishedForSeoLanding(terms, limit = 24) {
-        const cleanTerms = terms.filter(Boolean).map((term) => new RegExp(term, 'i'));
-        const search = cleanTerms.length
-            ? {
-                $or: [
-                    { name: { $in: cleanTerms } },
-                    { nameEn: { $in: cleanTerms } },
-                    { seoTitle: { $in: cleanTerms } },
-                    { seoDescription: { $in: cleanTerms } },
-                    { 'category.name': { $in: cleanTerms } },
-                    { 'category.nameEn': { $in: cleanTerms } },
-                    { 'subCategory.name': { $in: cleanTerms } },
-                    { 'subCategory.nameEn': { $in: cleanTerms } },
-                    { 'author.name': { $in: cleanTerms } },
-                    { 'author.nameEn': { $in: cleanTerms } },
-                    { 'publisher.name': { $in: cleanTerms } },
-                ],
-            }
-            : {};
-        return this.productModel
-            .find(Object.assign({ status: 'publish', quantity: { $gt: 0 } }, search))
-            .select('name nameEn slug images salePrice afterDiscountPrice discountAmount discountType quantity author category publisher shortDescription description seoTitle seoDescription isbn sku totalSold updatedAt')
-            .sort({ totalSold: -1, priority: -1, updatedAt: -1 })
-            .limit(limit)
-            .lean()
-            .exec();
+        return this.productModel.find({}).select('slug title').exec();
     }
     async getMetaFeedXml() {
         const products = await this.productModel

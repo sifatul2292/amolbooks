@@ -22,10 +22,9 @@ const utils_service_1 = require("../../../shared/utils/utils.service");
 const error_code_enum_1 = require("../../../enum/error-code.enum");
 const ObjectId = mongoose_2.Types.ObjectId;
 let AuthorService = AuthorService_1 = class AuthorService {
-    constructor(authorModel, userModel, productModel, configService, utilsService) {
+    constructor(authorModel, userModel, configService, utilsService) {
         this.authorModel = authorModel;
         this.userModel = userModel;
-        this.productModel = productModel;
         this.configService = configService;
         this.utilsService = utilsService;
         this.logger = new common_1.Logger(AuthorService_1.name);
@@ -236,88 +235,37 @@ let AuthorService = AuthorService_1 = class AuthorService {
         }
     }
     async updateAuthorById(id, updateAuthorDto) {
-        var _a, _b, _c, _d, _e, _f, _g;
         try {
-            const { slug } = updateAuthorDto;
+            const { name, slug } = updateAuthorDto;
+            let finalSlug;
             const fData = await this.authorModel.findById(id);
-            if (!fData) {
-                throw new common_1.NotFoundException('Author not found');
-            }
-            const requestedSlug = typeof slug === 'string' && slug.trim() ? slug.trim() : fData.slug;
-            let finalSlug = requestedSlug;
-            if (fData.slug !== requestedSlug) {
-                const existingAuthor = await this.authorModel.findOne({
-                    slug: requestedSlug,
-                    _id: { $ne: id },
-                });
-                if (existingAuthor) {
-                    finalSlug = this.utilsService.transformToSlug(requestedSlug, true);
+            if (fData.slug !== slug) {
+                const fData = await this.authorModel.findOne({ slug: slug });
+                if (fData) {
+                    finalSlug = this.utilsService.transformToSlug(slug, true);
+                }
+                else {
+                    finalSlug = slug;
                 }
             }
-            const finalData = Object.assign(Object.assign({}, updateAuthorDto), { slug: finalSlug });
-            finalData.description = this.normalizeAuthorDescription((_d = (_c = (_b = (_a = finalData.description) !== null && _a !== void 0 ? _a : finalData.descriptionBn) !== null && _b !== void 0 ? _b : finalData.authorDescription) !== null && _c !== void 0 ? _c : finalData.bio) !== null && _d !== void 0 ? _d : finalData.about, fData.description);
-            finalData.descriptionEn = this.normalizeAuthorDescription((_g = (_f = (_e = finalData.descriptionEn) !== null && _e !== void 0 ? _e : finalData.authorDescriptionEn) !== null && _f !== void 0 ? _f : finalData.bioEn) !== null && _g !== void 0 ? _g : finalData.aboutEn, fData.descriptionEn);
-            delete finalData.ids;
-            await this.authorModel.findByIdAndUpdate(id, { $set: finalData }, { runValidators: true });
-            await this.syncAuthorSnapshotToProducts(id, finalData);
+            else {
+                finalSlug = slug;
+            }
+            const defaultData = {
+                slug: finalSlug,
+            };
+            const finalData = Object.assign(Object.assign({}, updateAuthorDto), defaultData);
+            await this.authorModel.findByIdAndUpdate(id, {
+                $set: finalData,
+            });
             return {
                 success: true,
                 message: 'Update Successfully',
             };
         }
         catch (err) {
-            if (err instanceof common_1.NotFoundException)
-                throw err;
-            throw new common_1.InternalServerErrorException(err.message);
+            throw new common_1.InternalServerErrorException();
         }
-    }
-    normalizeAuthorDescription(value, fallback) {
-        if (value === undefined || value === null)
-            return fallback || '';
-        if (typeof value === 'string') {
-            const trimmed = value.trim();
-            return trimmed || fallback || '';
-        }
-        if (Array.isArray(value)) {
-            const text = value
-                .map((entry) => this.normalizeAuthorDescription(entry))
-                .filter(Boolean)
-                .join('\n');
-            return text || fallback || '';
-        }
-        if (typeof value === 'object') {
-            for (const key of ['html', 'value', 'content', 'description', 'text']) {
-                const text = this.normalizeAuthorDescription(value[key]);
-                if (text)
-                    return text;
-            }
-            if (Array.isArray(value.ops)) {
-                const text = value.ops
-                    .map((op) => this.normalizeAuthorDescription(op === null || op === void 0 ? void 0 : op.insert))
-                    .filter(Boolean)
-                    .join('');
-                return text.trim() || fallback || '';
-            }
-        }
-        return String(value || '').trim() || fallback || '';
-    }
-    async syncAuthorSnapshotToProducts(id, author) {
-        const setData = {};
-        [
-            'name',
-            'nameEn',
-            'slug',
-            'image',
-            'description',
-            'descriptionEn',
-        ].forEach((field) => {
-            if (Object.prototype.hasOwnProperty.call(author, field)) {
-                setData[`author.$[elem].${field}`] = author[field];
-            }
-        });
-        if (!Object.keys(setData).length)
-            return;
-        await this.productModel.updateMany({ 'author._id': new ObjectId(id) }, { $set: setData }, { arrayFilters: [{ 'elem._id': new ObjectId(id) }] });
     }
     async updateMultipleAuthorById(ids, updateAuthorDto) {
         const mIds = ids.map((m) => new ObjectId(m));
@@ -442,9 +390,7 @@ AuthorService = AuthorService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)('Author')),
     __param(1, (0, mongoose_1.InjectModel)('User')),
-    __param(2, (0, mongoose_1.InjectModel)('Product')),
     __metadata("design:paramtypes", [mongoose_2.Model,
-        mongoose_2.Model,
         mongoose_2.Model,
         config_1.ConfigService,
         utils_service_1.UtilsService])

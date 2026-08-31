@@ -223,14 +223,6 @@ export class ProductController {
   }
 
   @Version(VERSION_NEUTRAL)
-  @Get('/customers-also-bought/:slug')
-  async getCustomersAlsoBought(
-    @Param('slug') slug: string,
-  ): Promise<ResponsePayload> {
-    return await this.productService.getCustomersAlsoBought(slug);
-  }
-
-  @Version(VERSION_NEUTRAL)
   @Get('/meta-feed')
   async getMetaFeed(@Res() res: Response): Promise<void> {
     const csv = await this.productService.getMetaFeed();

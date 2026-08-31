@@ -40,7 +40,6 @@
 
   var API_BASE = 'https://apisub.amolbooks.com/api';
   var ROW_ID = 'ab-checkout-gift';
-  var FREE_NOTEBOOK_IMAGE_URL = 'https://apisub.amolbooks.com/api/upload/images/amolbooks-notebook-8ddd.webp';
   var cfgCache = null;
 
   function onCheckout() {
@@ -104,17 +103,6 @@
     return false;
   }
 
-  function isPlaceholderImage(src) {
-    return /dummy-image|user-young|user_low|avatar|placeholder|no-image|free-notebook-a015/i.test(src || '');
-  }
-
-  function imageUrl(value) {
-    var image = String(value || '').trim();
-    if (!image || isPlaceholderImage(image)) return FREE_NOTEBOOK_IMAGE_URL;
-    if (image.indexOf('https://') === 0 || image.indexOf('http://') === 0) return image;
-    return 'https://apisub.amolbooks.com' + (image.charAt(0) === '/' ? '' : '/') + image;
-  }
-
   function styleOnce() {
     window.__abTheme();
     if (document.getElementById('ab-checkout-gift-style')) return;
@@ -154,12 +142,12 @@
 
   function render(cfg) {
     styleOnce();
-    var img = imageUrl(cfg.giftProduct && cfg.giftProduct.image);
+    var img = (cfg.giftProduct && cfg.giftProduct.image) || '';
     var nm = (cfg.giftProduct && cfg.giftProduct.name) || 'ফ্রি নোটবুক';
     var row = document.getElementById(ROW_ID);
     if (row) return;
     row = document.createElement('div'); row.id = ROW_ID;
-    row.innerHTML = '<img src="' + img + '" alt="' + nm + '">' +
+    row.innerHTML = (img ? '<img src="' + img + '">' : '') +
       '<div class="t"><div class="h">🎁 ফ্রি উপহার যোগ হয়েছে</div>' +
       '<div class="s">' + nm + ' — আপনার অর্ডারের সাথে ফ্রি পাচ্ছেন</div></div>' +
       '<span class="free">৳০ ফ্রি</span>';
@@ -180,7 +168,7 @@
       });
       return;
     }
-    var threshold = Number(cfgCache.giftMinAmount) || 499;
+    var threshold = Number(cfgCache.giftMinAmount) || 750;
     if (cartTotal() >= threshold || hasBuyXGift(cfgCache)) render(cfgCache); else clear();
   }
 

@@ -53,7 +53,6 @@ export declare class ProductService {
     getBoughtTogetherProducts(productSlug?: string): Promise<ResponsePayload>;
     setBoughtTogetherProducts(productIds: string[]): Promise<ResponsePayload>;
     getBoughtTogetherByProduct(productId: string): Promise<ResponsePayload>;
-    getCustomersAlsoBought(productSlug: string): Promise<ResponsePayload>;
     getProductByIds(getProductByIdsDto: GetProductByIdsDto, select: string): Promise<ResponsePayload>;
     updateProductById(id: string, updateProductDto: UpdateProductDto): Promise<ResponsePayload>;
     updateMultipleProductById(ids: string[], updateProductDto: UpdateProductDto): Promise<ResponsePayload>;
@@ -66,7 +65,6 @@ export declare class ProductService {
         limit: number;
     }): Promise<ResponsePayload>;
     findAllPublished(): Promise<Product[]>;
-    findPublishedForSeoLanding(terms: string[], limit?: number): Promise<Product[]>;
     getMetaFeedXml(): Promise<string>;
     getMetaFeed(): Promise<string>;
     private getStockSalesMetrics;

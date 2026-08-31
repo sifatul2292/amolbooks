@@ -87,9 +87,6 @@ let ProductController = ProductController_1 = class ProductController {
     async getBoughtTogetherByProduct(id) {
         return await this.productService.getBoughtTogetherByProduct(id);
     }
-    async getCustomersAlsoBought(slug) {
-        return await this.productService.getCustomersAlsoBought(slug);
-    }
     async getMetaFeed(res) {
         const csv = await this.productService.getMetaFeed();
         res.setHeader('Content-Type', 'text/csv');
@@ -277,14 +274,6 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], ProductController.prototype, "getBoughtTogetherByProduct", null);
-__decorate([
-    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
-    (0, common_1.Get)('/customers-also-bought/:slug'),
-    __param(0, (0, common_1.Param)('slug')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Promise)
-], ProductController.prototype, "getCustomersAlsoBought", null);
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Get)('/meta-feed'),

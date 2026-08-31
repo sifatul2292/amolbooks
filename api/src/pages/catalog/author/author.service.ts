@@ -11,7 +11,6 @@ import { Model, Types } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { UtilsService } from '../../../shared/utils/utils.service';
 import { Author } from '../../../interfaces/common/author.interface';
-import { Product } from '../../../interfaces/common/product.interface';
 import { ResponsePayload } from '../../../interfaces/core/response-payload.interface';
 import { ErrorCodes } from '../../../enum/error-code.enum';
 import {
@@ -32,7 +31,6 @@ export class AuthorService {
   constructor(
     @InjectModel('Author') private readonly authorModel: Model<Author>,
     @InjectModel('User') private readonly userModel: Model<User>,
-    @InjectModel('Product') private readonly productModel: Model<Product>,
     private configService: ConfigService,
     private utilsService: UtilsService,
   ) {}
@@ -290,118 +288,39 @@ export class AuthorService {
     updateAuthorDto: UpdateAuthorDto,
   ): Promise<ResponsePayload> {
     try {
-      const { slug } = updateAuthorDto;
+      const { name, slug } = updateAuthorDto;
 
+      let finalSlug;
       const fData = await this.authorModel.findById(id);
-      if (!fData) {
-        throw new NotFoundException('Author not found');
-      }
-
-      const requestedSlug =
-        typeof slug === 'string' && slug.trim() ? slug.trim() : fData.slug;
-      let finalSlug = requestedSlug;
 
       // Check Slug
-      if (fData.slug !== requestedSlug) {
-        const existingAuthor = await this.authorModel.findOne({
-          slug: requestedSlug,
-          _id: { $ne: id },
-        });
-        if (existingAuthor) {
-          finalSlug = this.utilsService.transformToSlug(requestedSlug, true);
+      if (fData.slug !== slug) {
+        const fData = await this.authorModel.findOne({ slug: slug });
+        if (fData) {
+          finalSlug = this.utilsService.transformToSlug(slug, true);
+        } else {
+          finalSlug = slug;
         }
+      } else {
+        finalSlug = slug;
       }
 
-      const finalData: Record<string, any> = { ...updateAuthorDto, slug: finalSlug };
-      finalData.description = this.normalizeAuthorDescription(
-        finalData.description ??
-          finalData.descriptionBn ??
-          finalData.authorDescription ??
-          finalData.bio ??
-          finalData.about,
-        fData.description,
-      );
-      finalData.descriptionEn = this.normalizeAuthorDescription(
-        finalData.descriptionEn ??
-          finalData.authorDescriptionEn ??
-          finalData.bioEn ??
-          finalData.aboutEn,
-        fData.descriptionEn,
-      );
-      delete finalData.ids;
+      const defaultData = {
+        slug: finalSlug,
+      };
 
-      await this.authorModel.findByIdAndUpdate(
-        id,
-        { $set: finalData },
-        { runValidators: true },
-      );
+      const finalData = { ...updateAuthorDto, ...defaultData };
 
-      await this.syncAuthorSnapshotToProducts(id, finalData);
-
+      await this.authorModel.findByIdAndUpdate(id, {
+        $set: finalData,
+      });
       return {
         success: true,
         message: 'Update Successfully',
       } as ResponsePayload;
     } catch (err) {
-      if (err instanceof NotFoundException) throw err;
-      throw new InternalServerErrorException(err.message);
+      throw new InternalServerErrorException();
     }
-  }
-
-  private normalizeAuthorDescription(value: any, fallback?: string): string {
-    if (value === undefined || value === null) return fallback || '';
-    if (typeof value === 'string') {
-      const trimmed = value.trim();
-      return trimmed || fallback || '';
-    }
-    if (Array.isArray(value)) {
-      const text = value
-        .map((entry) => this.normalizeAuthorDescription(entry))
-        .filter(Boolean)
-        .join('\n');
-      return text || fallback || '';
-    }
-    if (typeof value === 'object') {
-      for (const key of ['html', 'value', 'content', 'description', 'text']) {
-        const text = this.normalizeAuthorDescription(value[key]);
-        if (text) return text;
-      }
-      if (Array.isArray(value.ops)) {
-        const text = value.ops
-          .map((op) => this.normalizeAuthorDescription(op?.insert))
-          .filter(Boolean)
-          .join('');
-        return text.trim() || fallback || '';
-      }
-    }
-    return String(value || '').trim() || fallback || '';
-  }
-
-  private async syncAuthorSnapshotToProducts(
-    id: string,
-    author: Partial<UpdateAuthorDto>,
-  ): Promise<void> {
-    const setData = {};
-    [
-      'name',
-      'nameEn',
-      'slug',
-      'image',
-      'description',
-      'descriptionEn',
-    ].forEach((field) => {
-      if (Object.prototype.hasOwnProperty.call(author, field)) {
-        setData[`author.$[elem].${field}`] = author[field];
-      }
-    });
-
-    if (!Object.keys(setData).length) return;
-
-    await this.productModel.updateMany(
-      { 'author._id': new ObjectId(id) },
-      { $set: setData },
-      { arrayFilters: [{ 'elem._id': new ObjectId(id) }] },
-    );
   }
 
   async updateMultipleAuthorById(

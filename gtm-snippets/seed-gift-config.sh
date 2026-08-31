@@ -15,7 +15,7 @@ API_BASE="${API_BASE:-https://apisub.amolbooks.com/api}"
 # ---- Fill these (or pass as env vars) -------------------------------------
 NOTEBOOK_SLUG="${NOTEBOOK_SLUG:-REPLACE_notebook_slug}"   # slug of the notebook product
 BOOK_SLUG="${BOOK_SLUG:-REPLACE_this_book_slug}"          # the "500 শব্দে কুরআন" slug (buy-2 trigger)
-GIFT_MIN_AMOUNT="${GIFT_MIN_AMOUNT:-499}"                 # global threshold (Trigger A)
+GIFT_MIN_AMOUNT="${GIFT_MIN_AMOUNT:-750}"                 # global threshold (Trigger A)
 GIFT_BUY_X_QTY="${GIFT_BUY_X_QTY:-2}"                     # qty trigger (Trigger B)
 GIFT_LABEL="${GIFT_LABEL:-ফ্রি নোটবুক}"
 ADMIN_TOKEN="${ADMIN_TOKEN:?Set ADMIN_TOKEN env var (admin JWT)}"

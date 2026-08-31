@@ -2,7 +2,6 @@
   'use strict';
 
   var pendingImages = [];
-  var activeUploads = 0;
   var injected = false;
 
   // Map: reviewer name (lowercase) -> images[]
@@ -229,11 +228,10 @@
     strip.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid #e0e0e0;';
 
     images.forEach(function (url) {
-      var imageUrl = normalizeUploadUrl(url);
       var img = document.createElement('img');
-      img.src = imageUrl || url;
+      img.src = url;
       img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid #ddd;cursor:pointer;';
-      img.addEventListener('click', function () { openLightbox(imageUrl || url, images); });
+      img.addEventListener('click', function () { openLightbox(url, images); });
       strip.appendChild(img);
     });
 
@@ -315,7 +313,7 @@
       closeBtn.onclick = function () { lb.remove(); };
 
       var img = document.createElement('img');
-      img.src = normalizeUploadUrl(images[i]) || images[i];
+      img.src = images[i];
       img.style.cssText = 'max-width:90vw;max-height:80vh;object-fit:contain;border-radius:8px;';
 
       var nav = document.createElement('div');
@@ -354,56 +352,24 @@
     if (preview) preview.innerHTML = '';
     if (status) status.textContent = '';
     if (fileInput) fileInput.value = '';
-    updateReviewSubmitState();
-  }
-
-  function uploadEndpoint() {
-    var path = '/api/v2/upload/single-image';
-    if (window.location.hostname === 'localhost') return path;
-    return 'https://apisub.amolbooks.com' + path;
-  }
-
-  function normalizeUploadUrl(url) {
-    var value = String(url || '').trim();
-    if (!value) return '';
-    value = value.replace('/api/upload/images/', '/upload/images/');
-    if (value.indexOf('/upload/images/') === 0) {
-      return (window.location.hostname === 'localhost' ? window.location.origin : 'https://apisub.amolbooks.com') + value;
-    }
-    if (value.indexOf('upload/images/') === 0) {
-      return (window.location.hostname === 'localhost' ? window.location.origin : 'https://apisub.amolbooks.com') + '/' + value;
-    }
-    return value;
-  }
-
-  function updateReviewSubmitState() {
-    var container = document.getElementById('riu-container');
-    var dialog = container && container.closest('mat-mdc-dialog-container, mat-dialog-container, .cdk-overlay-pane');
-    if (!dialog) return;
-    dialog.querySelectorAll('button[type="submit"], button:not([type])').forEach(function (button) {
-      var label = (button.textContent || '').trim().toLowerCase();
-      if (label !== 'submit' && label !== 'জমা দিন') return;
-      button.disabled = activeUploads > 0;
-      button.style.opacity = activeUploads > 0 ? '0.65' : '';
-      button.style.cursor = activeUploads > 0 ? 'not-allowed' : '';
-    });
   }
 
   function uploadImage(file, callback) {
     var formData = new FormData();
     formData.append('image', file);
-    formData.append('convert', 'yes');
-    formData.append('width', '300');
-    formData.append('quality', '85');
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', uploadEndpoint());
+    xhr.open('POST', '/api/upload/single-image');
     xhr.onload = function () {
       if (xhr.status === 200 || xhr.status === 201) {
         try {
           var res = JSON.parse(xhr.responseText);
           if (res && (res.filename || res.url)) {
-            var url = normalizeUploadUrl(res.url);
-            if (!url && res.filename) url = normalizeUploadUrl('/upload/images/' + res.filename.replace(/\.[^.]+$/, '.webp'));
+            var url;
+            if (res.filename) {
+              url = 'https://apisub.amolbooks.com/api/upload/images/' + res.filename;
+            } else {
+              url = res.url.replace(/https?:\/\/[^/]+\/api\/upload\/images\//, 'https://apisub.amolbooks.com/api/upload/images/');
+            }
             callback(null, url);
           } else { callback(new Error('No URL')); }
         } catch (e) { callback(e); }
@@ -446,58 +412,37 @@
       status.textContent = 'আপলোড হচ্ছে...';
       var total = files.length;
       var done = 0;
-      activeUploads += total;
-      updateReviewSubmitState();
 
       for (var i = 0; i < files.length; i++) {
         (function (file) {
-          var preview = document.getElementById('riu-preview');
-          var wrapper = document.createElement('div');
-          var img = document.createElement('img');
-          var removeBtn = document.createElement('button');
-          var localPreviewUrl = URL.createObjectURL(file);
-          var uploadedUrl = '';
-          var removed = false;
-
-          wrapper.style.cssText = 'position:relative;';
-          img.src = localPreviewUrl;
-          img.alt = file.name || 'নির্বাচিত রিভিউ ছবি';
-          img.style.cssText = 'display:block;width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid #ddd;';
-          removeBtn.type = 'button';
-          removeBtn.textContent = '×';
-          removeBtn.setAttribute('aria-label', 'ছবিটি সরান');
-          removeBtn.style.cssText =
-            'position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#e53935;color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;';
-          removeBtn.addEventListener('click', function () {
-            removed = true;
-            if (uploadedUrl) {
-              var uploadedIndex = pendingImages.indexOf(uploadedUrl);
-              if (uploadedIndex !== -1) pendingImages.splice(uploadedIndex, 1);
-            }
-            URL.revokeObjectURL(localPreviewUrl);
-            wrapper.remove();
-            updateUploadStatus();
-          });
-          wrapper.appendChild(img);
-          wrapper.appendChild(removeBtn);
-          if (preview) preview.appendChild(wrapper);
-
           uploadImage(file, function (err, url) {
             done++;
-            activeUploads = Math.max(0, activeUploads - 1);
             if (!err && url) {
-              uploadedUrl = url;
-              if (!removed) {
-                pendingImages.push(url);
+              pendingImages.push(url);
+              var preview = document.getElementById('riu-preview');
+              if (preview) {
+                var wrapper = document.createElement('div');
+                wrapper.style.cssText = 'position:relative;';
+                var img = document.createElement('img');
                 img.src = url;
+                img.style.cssText = 'width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid #ddd;';
+                var removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.textContent = '×';
+                removeBtn.style.cssText =
+                  'position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#e53935;color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;';
+                removeBtn.addEventListener('click', function () {
+                  var idx = pendingImages.indexOf(url);
+                  if (idx !== -1) pendingImages.splice(idx, 1);
+                  wrapper.remove();
+                  updateUploadStatus();
+                });
+                wrapper.appendChild(img);
+                wrapper.appendChild(removeBtn);
+                preview.appendChild(wrapper);
               }
-              URL.revokeObjectURL(localPreviewUrl);
-            } else {
-              URL.revokeObjectURL(localPreviewUrl);
-              if (!removed) wrapper.remove();
             }
             if (done === total) updateUploadStatus();
-            updateReviewSubmitState();
           });
         })(files[i]);
       }
@@ -506,11 +451,7 @@
     function updateUploadStatus() {
       var status = document.getElementById('riu-status');
       if (status) {
-        if (activeUploads > 0) {
-          status.textContent = 'আপলোড হচ্ছে...';
-        } else {
-          status.textContent = pendingImages.length > 0 ? pendingImages.length + 'টি ছবি প্রস্তুত' : '';
-        }
+        status.textContent = pendingImages.length > 0 ? pendingImages.length + 'টি ছবি প্রস্তুত' : '';
       }
     }
   }

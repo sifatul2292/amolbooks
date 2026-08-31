@@ -30,7 +30,6 @@ const crypto = require("crypto");
 const analytics_service_1 = require("../../../shared/analytics/analytics.service");
 const special_package_price_util_1 = require("../../../shared/utils/special-package-price.util");
 const ObjectId = mongoose_2.Types.ObjectId;
-const FREE_NOTEBOOK_MIN_AMOUNT = 499;
 const RECENT_BUYERS_TTL_MS = 120000;
 const recentBuyersCache = new Map();
 const WEBSITE_PURCHASE_GRACE_MS = 20 * 60 * 1000;
@@ -3383,20 +3382,7 @@ let OrderService = OrderService_1 = class OrderService {
     }
     async evaluateGiftLine(products, finalData) {
         try {
-            const cfg = JSON.parse(JSON.stringify(await this.orderOfferModel.findOne({}))) ||
-                {
-                    giftEnabled: true,
-                    giftMinAmount: FREE_NOTEBOOK_MIN_AMOUNT,
-                    giftProduct: {
-                        _id: '6a3c1d665676acb52a082df5',
-                        name: 'Amol Notebook',
-                        slug: 'Amol Notebook',
-                        image: 'https://apisub.amolbooks.com/api/upload/images/amolbooks-notebook-8ddd.webp',
-                    },
-                    giftBuyXProductSlug: '500 shobder kuraner 75%',
-                    giftBuyXQty: 2,
-                    giftLabel: 'ফ্রি নোটবুক',
-                };
+            const cfg = JSON.parse(JSON.stringify(await this.orderOfferModel.findOne({})));
             if (!cfg ||
                 !cfg.giftEnabled ||
                 !cfg.giftProduct ||
@@ -3416,7 +3402,8 @@ let OrderService = OrderService_1 = class OrderService {
                     this.utilsService.transform(t.product, 'salePrice', t.selectedQty));
             }, 0);
             let eligible = false;
-            if (giftEligibleSubTotal >= FREE_NOTEBOOK_MIN_AMOUNT) {
+            if (cfg.giftMinAmount &&
+                giftEligibleSubTotal >= Number(cfg.giftMinAmount)) {
                 eligible = true;
             }
             if (!eligible && cfg.giftBuyXProductSlug && cfg.giftBuyXQty) {

@@ -1,7 +1,7 @@
 <!--
   Lever 1: Free-gift OFFER CARD on the product detail page.
   Green/yellow theme to match the site CTA mockup. Shows notebook photo +
-  "buy 2 -> free" (only on the configured book) + "৳499+ -> free" (all books).
+  "buy 2 -> free" (only on the configured book) + "৳750+ -> free" (all books).
   Reads config from GET /api/order-offer/get (image, threshold, qty, slug).
 -->
 <script>
@@ -158,7 +158,7 @@
   function cardInner(cfg, isThisBook) {
     var img = (cfg.giftProduct && cfg.giftProduct.image) || '';
     var imgHtml = img ? '<img class="ab-nb" src="' + img + '" alt="free notebook">' : '';
-    var threshold = Number(cfg.giftMinAmount) || 499;
+    var threshold = Number(cfg.giftMinAmount) || 750;
     var qtyN = Number(cfg.giftBuyXQty) || 2;
     var total = cartTotal();
     var earnedGift = total >= threshold || hasBuyXGift(cfg);
