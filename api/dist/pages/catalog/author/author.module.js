@@ -13,6 +13,7 @@ const author_controller_1 = require("./author.controller");
 const mongoose_1 = require("@nestjs/mongoose");
 const author_schema_1 = require("../../../schema/author.schema");
 const user_schema_1 = require("../../../schema/user.schema");
+const product_schema_1 = require("../../../schema/product.schema");
 let AuthorModule = class AuthorModule {
 };
 AuthorModule = __decorate([
@@ -21,6 +22,7 @@ AuthorModule = __decorate([
             mongoose_1.MongooseModule.forFeature([
                 { name: 'Author', schema: author_schema_1.AuthorSchema },
                 { name: 'User', schema: user_schema_1.UserSchema },
+                { name: 'Product', schema: product_schema_1.ProductSchema },
             ]),
         ],
         providers: [author_service_1.AuthorService],

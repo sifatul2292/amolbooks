@@ -23,7 +23,10 @@ export declare const ProductSchema: mongoose.Schema<any, mongoose.Model<any, any
         _id?: mongoose.Types.ObjectId;
         name?: string;
         slug?: string;
+        description?: string;
         nameEn?: string;
+        image?: string;
+        descriptionEn?: string;
     }[];
     tags: {
         _id: mongoose.Types.ObjectId;

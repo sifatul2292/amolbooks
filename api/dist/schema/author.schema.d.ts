@@ -14,7 +14,7 @@ export declare const AuthorSchema: mongoose.Schema<any, mongoose.Model<any, any,
     image?: string;
     priority?: number;
     address?: string;
+    descriptionEn?: string;
     birthDate?: Date;
     addressEn?: string;
-    descriptionEn?: string;
 }>;

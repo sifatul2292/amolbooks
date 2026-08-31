@@ -11,6 +11,7 @@ import { Model, Types } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { UtilsService } from '../../../shared/utils/utils.service';
 import { Author } from '../../../interfaces/common/author.interface';
+import { Product } from '../../../interfaces/common/product.interface';
 import { ResponsePayload } from '../../../interfaces/core/response-payload.interface';
 import { ErrorCodes } from '../../../enum/error-code.enum';
 import {
@@ -31,6 +32,7 @@ export class AuthorService {
   constructor(
     @InjectModel('Author') private readonly authorModel: Model<Author>,
     @InjectModel('User') private readonly userModel: Model<User>,
+    @InjectModel('Product') private readonly productModel: Model<Product>,
     private configService: ConfigService,
     private utilsService: UtilsService,
   ) {}
@@ -318,6 +320,9 @@ export class AuthorService {
         { $set: finalData },
         { runValidators: true },
       );
+
+      await this.syncAuthorSnapshotToProducts(id, finalData);
+
       return {
         success: true,
         message: 'Update Successfully',
@@ -326,6 +331,33 @@ export class AuthorService {
       if (err instanceof NotFoundException) throw err;
       throw new InternalServerErrorException(err.message);
     }
+  }
+
+  private async syncAuthorSnapshotToProducts(
+    id: string,
+    author: Partial<UpdateAuthorDto>,
+  ): Promise<void> {
+    const setData = {};
+    [
+      'name',
+      'nameEn',
+      'slug',
+      'image',
+      'description',
+      'descriptionEn',
+    ].forEach((field) => {
+      if (Object.prototype.hasOwnProperty.call(author, field)) {
+        setData[`author.$[elem].${field}`] = author[field];
+      }
+    });
+
+    if (!Object.keys(setData).length) return;
+
+    await this.productModel.updateMany(
+      { 'author._id': new ObjectId(id) },
+      { $set: setData },
+      { arrayFilters: [{ 'elem._id': new ObjectId(id) }] },
+    );
   }
 
   async updateMultipleAuthorById(

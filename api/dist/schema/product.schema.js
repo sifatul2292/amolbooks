@@ -277,6 +277,18 @@ exports.ProductSchema = new mongoose.Schema({
                 type: String,
                 required: false,
             },
+            image: {
+                type: String,
+                required: false,
+            },
+            description: {
+                type: String,
+                required: false,
+            },
+            descriptionEn: {
+                type: String,
+                required: false,
+            },
             slug: {
                 type: String,
                 required: false,

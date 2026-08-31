@@ -22,9 +22,10 @@ const utils_service_1 = require("../../../shared/utils/utils.service");
 const error_code_enum_1 = require("../../../enum/error-code.enum");
 const ObjectId = mongoose_2.Types.ObjectId;
 let AuthorService = AuthorService_1 = class AuthorService {
-    constructor(authorModel, userModel, configService, utilsService) {
+    constructor(authorModel, userModel, productModel, configService, utilsService) {
         this.authorModel = authorModel;
         this.userModel = userModel;
+        this.productModel = productModel;
         this.configService = configService;
         this.utilsService = utilsService;
         this.logger = new common_1.Logger(AuthorService_1.name);
@@ -255,6 +256,7 @@ let AuthorService = AuthorService_1 = class AuthorService {
             const finalData = Object.assign(Object.assign({}, updateAuthorDto), { slug: finalSlug });
             delete finalData.ids;
             await this.authorModel.findByIdAndUpdate(id, { $set: finalData }, { runValidators: true });
+            await this.syncAuthorSnapshotToProducts(id, finalData);
             return {
                 success: true,
                 message: 'Update Successfully',
@@ -265,6 +267,24 @@ let AuthorService = AuthorService_1 = class AuthorService {
                 throw err;
             throw new common_1.InternalServerErrorException(err.message);
         }
+    }
+    async syncAuthorSnapshotToProducts(id, author) {
+        const setData = {};
+        [
+            'name',
+            'nameEn',
+            'slug',
+            'image',
+            'description',
+            'descriptionEn',
+        ].forEach((field) => {
+            if (Object.prototype.hasOwnProperty.call(author, field)) {
+                setData[`author.$[elem].${field}`] = author[field];
+            }
+        });
+        if (!Object.keys(setData).length)
+            return;
+        await this.productModel.updateMany({ 'author._id': new ObjectId(id) }, { $set: setData }, { arrayFilters: [{ 'elem._id': new ObjectId(id) }] });
     }
     async updateMultipleAuthorById(ids, updateAuthorDto) {
         const mIds = ids.map((m) => new ObjectId(m));
@@ -389,7 +409,9 @@ AuthorService = AuthorService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)('Author')),
     __param(1, (0, mongoose_1.InjectModel)('User')),
+    __param(2, (0, mongoose_1.InjectModel)('Product')),
     __metadata("design:paramtypes", [mongoose_2.Model,
+        mongoose_2.Model,
         mongoose_2.Model,
         config_1.ConfigService,
         utils_service_1.UtilsService])
