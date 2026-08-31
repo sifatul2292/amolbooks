@@ -2,6 +2,19 @@
 
 ## Free notebook cart offer cleanup (2026-08-31)
 
+- Added site-wide Add to Cart tracking for non-product-page cart buttons.
+  Native homepage/list card buttons, injected recommendation buttons, cart
+  suggestion buttons, and product-section buttons now push both the product-page
+  `AddToCart` shape and the GA4-style `add_to_cart` `dataLayer` shape, with
+  one shared `event_id` and lightweight duplicate suppression.
+- Fixed the product-page “বিষয়ভিত্তিক জনপ্রিয় বই” section for production.
+  It was calling the local-only `/library` catalogue proxy on the live API,
+  which returned 404; it now loads books through the live
+  `POST /api/product/get-all` endpoint.
+- Fixed the checkout free-notebook gift row so it always renders the real
+  notebook cover. If the live offer/product config has no image or still points
+  to a generic avatar/placeholder, the checkout and GTM fallback now use the
+  published `amolbooks-notebook-8ddd.webp` cover instead.
 - Changed the free-notebook threshold to ৳499 across the backend gift
   evaluator, public offer response, storefront cart/checkout widget, and GTM
   snippet fallbacks so the display and order creation agree.

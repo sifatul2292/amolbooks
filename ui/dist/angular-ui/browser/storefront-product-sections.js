@@ -64,7 +64,10 @@
   var addedCartModalLoading = false;
   var stickySearchTimer = null;
   var stickySearchRequestVersion = 0;
+  var addToCartTrackingLastKey = '';
+  var addToCartTrackingLastAt = 0;
   var CART_OFFER_FALLBACK_THRESHOLD = 499;
+  var FREE_NOTEBOOK_IMAGE_URL = 'https://apisub.amolbooks.com/api/upload/images/amolbooks-notebook-8ddd.webp';
   var NOTEBOOK_PAGE_COUNT = 72;
   /* Some older product payloads only carry an author id. Keep this published
      profile image as a rendering fallback while the author lookup hydrates. */
@@ -3572,7 +3575,17 @@
   function normalizeCartOfferConfig(config) {
     if (!config) return null;
     config.giftMinAmount = CART_OFFER_FALLBACK_THRESHOLD;
+    if (config.giftProduct) {
+      var giftImage = config.giftProduct.image || (Array.isArray(config.giftProduct.images) && config.giftProduct.images[0]) || '';
+      if (!giftImage || isPlaceholderImage(giftImage)) {
+        config.giftProduct.image = FREE_NOTEBOOK_IMAGE_URL;
+      }
+    }
     return config;
+  }
+
+  function isPlaceholderImage(src) {
+    return /dummy-image|user-young|user_low|avatar|placeholder|no-image|free-notebook-a015/i.test(src || '');
   }
 
   function imageUrl(value, fallback) {
@@ -3580,6 +3593,12 @@
     if (!image) return fallback || '/assets/images/avatar/user_low.png';
     if (image.indexOf('https://') === 0 || image.indexOf('http://') === 0) return image;
     return 'https://apisub.amolbooks.com' + (image.charAt(0) === '/' ? '' : '/') + image;
+  }
+
+  function notebookCoverUrl(notebook) {
+    var cover = notebook && (notebook.image || Array.isArray(notebook.images) && notebook.images[0]) || '';
+    if (!cover || isPlaceholderImage(cover)) return FREE_NOTEBOOK_IMAGE_URL;
+    return imageUrl(cover, FREE_NOTEBOOK_IMAGE_URL);
   }
 
   function finalPrice(product) {
@@ -3604,6 +3623,14 @@
     return '৳' + Math.round(Number(value) || 0).toLocaleString('en-US');
   }
 
+  function numericPrice(value) {
+    var normalized = String(value || '').replace(/[০-৯]/g, function (digit) {
+      return String(digit.charCodeAt(0) - 0x09e6);
+    }).replace(/,/g, '');
+    var match = normalized.match(/(d+(?:.d+)?)/);
+    return match ? Number(match[1]) || 0 : 0;
+  }
+
   function firstName(value) {
     if (Array.isArray(value)) return value.map(firstName).filter(Boolean).join(', ');
     if (value && typeof value === 'object') return value.name || value.title || '';
@@ -3613,6 +3640,95 @@
   function firstCategoryName(product) {
     var categories = Array.isArray(product && product.category) ? product.category : [];
     return firstName(categories[0] || product && product.category || product && product.subCategory);
+  }
+
+  function pushAddToCartTracking(product, quantity) {
+    var item = product || {};
+    var qty = Math.max(1, Number(quantity) || 1);
+    var itemId = String(item._id || item.item_id || item.slug || '').trim();
+    var itemName = String(item.name || item.item_name || '').trim();
+    if (!itemId && !itemName) return;
+    var price = Number(item.price);
+    if (!(price >= 0)) price = finalPrice(item);
+    var key = itemId + '|' + itemName + '|' + String(qty);
+    var now = Date.now();
+    if (key === addToCartTrackingLastKey && now - addToCartTrackingLastAt < 1800) return;
+    addToCartTrackingLastKey = key;
+    addToCartTrackingLastAt = now;
+    var dataLayer = window.dataLayer = window.dataLayer || [];
+    var trackingItem = {
+      item_id: itemId,
+      item_name: itemName,
+      price: price,
+      quantity: qty,
+    };
+    var category = firstCategoryName(item);
+    if (category) trackingItem.item_category = category;
+    var eventId = 'amol_add_to_cart_' + now + '_' + Math.random().toString(36).slice(2, 8);
+    dataLayer.push({
+      event: 'AddToCart',
+      event_id: eventId,
+      page_url: window.location.href,
+      ecommerce: {
+        add: {
+          products: [{
+            id: itemId,
+            name: itemName,
+            category: category || '',
+            price: price,
+            currency: 'BDT',
+            quantity: qty,
+          }],
+        },
+      },
+    });
+    dataLayer.push({ ecommerce: null });
+    dataLayer.push({
+      event: 'add_to_cart',
+      event_id: eventId,
+      ecommerce: {
+        currency: 'BDT',
+        value: price * qty,
+        items: [trackingItem],
+      },
+    });
+  }
+
+  function pushAddToCartTrackingByProductId(productId, quantity, fallback) {
+    var id = String(productId || '').trim();
+    if (!id) return;
+    fetchProductsByIds([id]).then(function (products) {
+      pushAddToCartTracking(products[0] || Object.assign({ _id: id }, fallback || {}), quantity);
+    });
+  }
+
+  function nativeAddToCartMeta(button) {
+    var card = button && button.closest && button.closest('app-product-card-one, app-product-card-two, .product-card, .card, .swiper-slide, article, li');
+    if (!card) return null;
+    var link = card.querySelector('a[href*="/product-details/"], a[href*="/product-detail/"]');
+    var href = String(link && link.getAttribute('href') || '');
+    var slug = '';
+    if (href) {
+      var parts = href.split('?')[0].split('/').filter(Boolean);
+      try { slug = decodeURIComponent(parts[parts.length - 1] || ''); } catch (_) { slug = parts[parts.length - 1] || ''; }
+    }
+    var title = card.querySelector('.title h1, .product-name, h3, h2, h1');
+    var price = card.querySelector('.new-price, .price, .ab-product-current-price, .ab-library-price');
+    return {
+      slug: slug,
+      name: title && (title.textContent || '').replace(/s+/g, ' ').trim() || '',
+      price: numericPrice(price && price.textContent || ''),
+    };
+  }
+
+  function nativeAddToCartButton(target) {
+    if (!target || !target.closest) return null;
+    var button = target.closest('.add-to-cart-overlay, button, a');
+    if (!button || button.closest('app-product-details, #ab-added-cart-modal, #ab-cart-page, #ab-cart-offer-suggestions, #' + CATEGORY_LIBRARY_ID)) return null;
+    if (button.matches && button.matches('.ab-add-cart-button, .ab-native-cart-add, [data-ab-cart-sticky-checkout], [data-ab-added-cart-go], [data-ab-added-cart-close]')) return null;
+    var text = (button.textContent || '').replace(/s+/g, ' ').trim();
+    if (!/adds*tos*cart|কার্টে যোগ|কার্টে যুক্ত|ক্রয় তালিকায় যুক্ত|ক্রয় তালিকায় যুক্ত/i.test(text)) return null;
+    return button;
   }
 
   function languageCode(value) {
@@ -4401,10 +4517,10 @@
       area.appendChild(row);
     }
     var notebookName = notebook.name || cartOfferConfig && cartOfferConfig.giftProduct && cartOfferConfig.giftProduct.name || 'ফ্রি নোটবুক';
-    var notebookCover = notebook.image || Array.isArray(notebook.images) && notebook.images[0] || '';
+    var notebookCover = notebookCoverUrl(notebook);
     var image = row.querySelector('.cart-img img');
-    if (image && notebookCover) {
-      image.setAttribute('src', imageUrl(notebookCover));
+    if (image) {
+      image.setAttribute('src', notebookCover);
       image.setAttribute('alt', notebookName);
     }
     updateNodeText(row.querySelector('.cart-text-info h3'), notebookName);
@@ -4455,6 +4571,7 @@
         body: JSON.stringify({ product: productId, selectedQty: 1, cartType: 0 }),
       }, RECOMMENDATION_API_BASE).then(function (result) {
         if (!result || result.success === false) return;
+        pushAddToCartTrackingByProductId(productId, 1);
         window.dispatchEvent(new CustomEvent('ab-cart-updated', { detail: { product: productId } }));
         window.dispatchEvent(new CustomEvent('amol-cart-added', { detail: { product: productId } }));
         pulseStickyCart();
@@ -4481,6 +4598,7 @@
       items[index].selectedQty = Math.max(1, Number(items[index].selectedQty) || 1) + 1;
     }
     localStorage.setItem(key, JSON.stringify(items));
+    pushAddToCartTrackingByProductId(productId, 1);
     window.dispatchEvent(new Event('storage'));
     window.dispatchEvent(new CustomEvent('ab-cart-updated', { detail: { product: productId } }));
     window.dispatchEvent(new CustomEvent('amol-cart-added', { detail: { product: productId } }));
@@ -4770,6 +4888,22 @@
       }).join('') + '</div></section>';
   }
 
+  function fetchCategoryLibraryProducts() {
+    return fetchJson('/product/get-all', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filter: { status: 'publish', quantity: { $gt: 0 } },
+        pagination: { pageSize: 180, currentPage: 0 },
+        sort: { totalSold: -1, priority: -1 },
+        select: {
+          _id: 1, name: 1, slug: 1, images: 1, salePrice: 1, afterDiscountPrice: 1,
+          discountAmount: 1, discountType: 1, totalSold: 1, author: 1, category: 1,
+        },
+      }),
+    }, CATALOG_API_BASE);
+  }
+
   function repairProductActionLabels() {
     var area = document.querySelector('app-product-details .product-action-btn');
     if (!area) return;
@@ -5003,10 +5137,10 @@
         if (gift.parentNode !== placement.parent || gift.nextSibling !== placement.before) {
           placement.parent.insertBefore(gift, placement.before);
         }
-        var cover = notebook.image || Array.isArray(notebook.images) && notebook.images[0] || '';
+        var cover = notebookCoverUrl(notebook);
         var pages = String(NOTEBOOK_PAGE_COUNT).replace(/\d/g, function (digit) { return String.fromCharCode(0x09e6 + Number(digit)); });
         gift.innerHTML =
-          (cover ? '<img src="' + escapeHtml(imageUrl(cover)) + '" alt="' + escapeHtml(notebook.name || 'ফ্রি নোটবুক') + '">' : '') +
+          '<img src="' + escapeHtml(cover) + '" alt="' + escapeHtml(notebook.name || 'ফ্রি নোটবুক') + '">' +
           '<div><h3>' + escapeHtml(notebook.name || 'Amol Notebook') + '</h3><p>ফ্রি উপহার · ' + escapeHtml(pages) + ' পৃষ্ঠা</p></div><strong>' + money(0) + '</strong>';
         checkoutGiftRenderKey = renderKey;
       });
@@ -5225,9 +5359,9 @@
     }
     warmCartOfferNotebook();
     var notebook = cartOfferNotebook || {};
-    var notebookCover = notebook.image || Array.isArray(notebook.images) && notebook.images[0] || '';
+    var notebookCover = notebookCoverUrl(notebook);
     var notebookPages = String(NOTEBOOK_PAGE_COUNT).replace(/\d/g, function (digit) { return String.fromCharCode(0x09e6 + Number(digit)); });
-    var notebookImage = notebookCover ? '<a class="ab-cart-offer-notebook-link" href="/product-details/' + encodeURIComponent(notebook.slug || cartOfferConfig.giftProduct && cartOfferConfig.giftProduct.slug || '') + '" aria-label="' + escapeHtml((notebook.name || 'ফ্রি নোটবুক') + ' দেখুন') + '"><img class="ab-cart-offer-notebook" src="' + escapeHtml(imageUrl(notebookCover)) + '" alt="' + escapeHtml(notebook.name || 'ফ্রি নোটবুক') + '"></a>' : '<span class="ab-cart-offer-icon" aria-hidden="true">🎁</span>';
+    var notebookImage = '<a class="ab-cart-offer-notebook-link" href="/product-details/' + encodeURIComponent(notebook.slug || cartOfferConfig.giftProduct && cartOfferConfig.giftProduct.slug || '') + '" aria-label="' + escapeHtml((notebook.name || 'ফ্রি নোটবুক') + ' দেখুন') + '"><img class="ab-cart-offer-notebook" src="' + escapeHtml(notebookCover) + '" alt="' + escapeHtml(notebook.name || 'ফ্রি নোটবুক') + '"></a>';
     var earned = remaining === 0;
     var progressMarkup = notebookImage + '<p>' +
       (earned ? '<strong>অভিনন্দন!</strong> আপনার অর্ডারের সঙ্গে <strong>' + escapeHtml(notebookPages) + ' পৃষ্ঠার ফ্রি নোটবুক</strong> উপহার হিসেবে যুক্ত হয়েছে।' : 'আর মাত্র <strong>' + money(remaining) + '</strong> টাকার বই যোগ করুন — পেয়ে যান <strong>' + escapeHtml(notebookPages) + ' পৃষ্ঠার ফ্রি নোটবুক</strong>!') +
@@ -5436,7 +5570,7 @@
     nativeSection.classList.add('ab-category-library-source');
     var requestVersion = categoryLibraryVersion;
     var requestSlug = library.getAttribute('data-product-slug');
-    fetchJson('/library', null, CATALOG_API_BASE).then(function (result) {
+    fetchCategoryLibraryProducts().then(function (result) {
       var activeLibrary = document.getElementById(CATEGORY_LIBRARY_ID);
       if (!activeLibrary || requestVersion !== categoryLibraryVersion || activeLibrary.getAttribute('data-product-slug') !== requestSlug) return;
       var products = result && Array.isArray(result.data) ? result.data : [];
@@ -5719,6 +5853,13 @@
   }, true);
 
   document.addEventListener('click', function (event) {
+    var nativeTrackedButton = nativeAddToCartButton(event.target);
+    if (nativeTrackedButton) {
+      window.setTimeout(function () {
+        pushAddToCartTracking(nativeAddToCartMeta(nativeTrackedButton), 1);
+      }, 0);
+    }
+
     var stickyCatalogue = event.target && event.target.closest && event.target.closest('.ab-sticky-catalogue');
     if (stickyCatalogue) {
       event.preventDefault();

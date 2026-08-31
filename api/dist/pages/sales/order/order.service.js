@@ -3391,7 +3391,7 @@ let OrderService = OrderService_1 = class OrderService {
                         _id: '6a3c1d665676acb52a082df5',
                         name: 'Amol Notebook',
                         slug: 'Amol Notebook',
-                        image: 'https://apisub.amolbooks.com/api/upload/images/free-notebook-a015.webp',
+                        image: 'https://apisub.amolbooks.com/api/upload/images/amolbooks-notebook-8ddd.webp',
                     },
                     giftBuyXProductSlug: '500 shobder kuraner 75%',
                     giftBuyXQty: 2,
