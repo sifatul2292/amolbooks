@@ -6,6 +6,10 @@
   Cart now writes/reads the compiled Angular cart key (`ALAMBOOKS_USER_CART_1`)
   and migrates stale `Amolbooks_USER_CART_1` entries into it, so the cart and
   checkout no longer show empty after the popup reports items.
+- Hardened that cart fix after production showed mixed storefront bundles:
+  guest-cart writes now mirror both `Amolbooks_USER_CART_1` and
+  `ALAMBOOKS_USER_CART_1`, and reads merge both keys before cart/checkout
+  rendering.
 - Fixed product review images. Admin-added reviews now preserve reviewer
   `profileImg` plus review attachment URLs, and the storefront review section
   retries legacy `/api/upload/images/...` review-photo URLs as static

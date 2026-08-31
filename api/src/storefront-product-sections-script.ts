@@ -3846,40 +3846,60 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     return Number.isFinite(date.getTime()) ? String(date.getFullYear()) : '';
   }
 
-  function cartStorageKey() {
-    /* The compiled storefront reads ALAMBOOKS_USER_CART_1. A prior bridge
-       wrote Amolbooks_USER_CART_1, splitting the popup from cart/checkout.
-       Merge that stale key into the native cart key, then remove it. */
-    var storefrontKey = 'ALAMBOOKS_USER_CART_1';
-    var legacyKey = 'Amolbooks_USER_CART_1';
-    var legacyItems = [];
-    var storefrontItems = [];
-    try { legacyItems = JSON.parse(localStorage.getItem(legacyKey) || '[]') || []; } catch (_) { legacyItems = []; }
-    if (!Array.isArray(legacyItems) || !legacyItems.length) return storefrontKey;
-    try { storefrontItems = JSON.parse(localStorage.getItem(storefrontKey) || '[]') || []; } catch (_) { storefrontItems = []; }
-    if (!Array.isArray(storefrontItems)) storefrontItems = [];
-    legacyItems.forEach(function (legacyItem) {
-      if (!legacyItem) return;
-      var legacyProduct = String(legacyItem.product || '');
-      var legacyPackage = String(legacyItem.specialPackage || '');
-      var match = storefrontItems.find(function (item) {
-        return item && String(item.product || '') === legacyProduct &&
-          String(item.specialPackage || '') === legacyPackage &&
-          String(item.selectedVariation || '') === String(legacyItem.selectedVariation || '');
+  function cartStorageKeys() {
+    return ['Amolbooks_USER_CART_1', 'ALAMBOOKS_USER_CART_1'];
+  }
+
+  function readCartStorageItems(key) {
+    var items = [];
+    try { items = JSON.parse(localStorage.getItem(key) || '[]') || []; } catch (_) { items = []; }
+    return Array.isArray(items) ? items : [];
+  }
+
+  function mergeCartStorageItems() {
+    var merged = [];
+    cartStorageKeys().forEach(function (key) {
+      readCartStorageItems(key).forEach(function (item) {
+        if (!item) return;
+        var product = String(item.product || '');
+        var specialPackage = String(item.specialPackage || '');
+        var variation = String(item.selectedVariation || '');
+        var match = merged.find(function (candidate) {
+          return candidate && String(candidate.product || '') === product &&
+            String(candidate.specialPackage || '') === specialPackage &&
+            String(candidate.selectedVariation || '') === variation;
+        });
+        if (!match) merged.push(item);
+        else match.selectedQty = Math.max(Number(match.selectedQty) || 1, Number(item.selectedQty) || 1);
       });
-      if (!match) storefrontItems.push(legacyItem);
-      else match.selectedQty = Math.max(Number(match.selectedQty) || 1, Number(legacyItem.selectedQty) || 1);
     });
-    var mergedCart = JSON.stringify(storefrontItems);
-    localStorage.setItem(storefrontKey, mergedCart);
+    return merged;
+  }
+
+  function writeCartStorageItems(items) {
+    var payload = JSON.stringify(Array.isArray(items) ? items : []);
+    cartStorageKeys().forEach(function (key) {
+      localStorage.setItem(key, payload);
+    });
+  }
+
+  function cartStorageKey() {
+    /* Live bundles have shipped with both brands in this key. Keep both keys
+       mirrored so popup, cart page, and checkout read the same guest cart. */
+    var storefrontKey = cartStorageKeys()[0];
+    var mergedItems = mergeCartStorageItems();
+    if (!mergedItems.length) return storefrontKey;
+    var mergedCart = JSON.stringify(mergedItems);
+    writeCartStorageItems(mergedItems);
     if (!cartMigrationScheduled) {
       cartMigrationScheduled = true;
       var finishMigration = function () {
         /* Angular persists its in-memory cart while unloading. Write the
            merged snapshot after that teardown too, so it cannot overwrite the
            recovered products before the next page reads them. */
-        localStorage.setItem(storefrontKey, mergedCart);
-        localStorage.removeItem(legacyKey);
+        cartStorageKeys().forEach(function (key) {
+          localStorage.setItem(key, mergedCart);
+        });
       };
       window.addEventListener('beforeunload', finishMigration);
       window.addEventListener('pagehide', finishMigration);
@@ -3897,13 +3917,12 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
 
   function guestCartItems() {
     if (Array.isArray(authenticatedCartItemsOverride)) return authenticatedCartItemsOverride.slice();
-    var items = [];
-    try { items = JSON.parse(localStorage.getItem(cartStorageKey()) || '[]') || []; } catch (_) { items = []; }
-    return Array.isArray(items) ? items : [];
+    cartStorageKey();
+    return mergeCartStorageItems();
   }
 
   function setGuestCartItems(items) {
-    localStorage.setItem(cartStorageKey(), JSON.stringify(items));
+    writeCartStorageItems(items);
     window.dispatchEvent(new Event('storage'));
     window.dispatchEvent(new CustomEvent('ab-cart-updated'));
   }
@@ -3945,7 +3964,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     var authorization = cartAuthorization();
     if (!authorization || authenticatedCartMergePending || authenticatedCartMergeFinished) return Promise.resolve();
     var guestItems = [];
-    try { guestItems = JSON.parse(localStorage.getItem(cartStorageKey()) || '[]') || []; } catch (_) { guestItems = []; }
+    guestItems = guestCartItems();
     guestItems = Array.isArray(guestItems) ? guestItems.filter(function (item) { return cartEntryKey(item); }) : [];
     if (!guestItems.length) {
       authenticatedCartMergeFinished = true;
@@ -3967,7 +3986,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       }, RECOMMENDATION_API_BASE);
     }).then(function (result) {
       if (!result || result.success === false) return;
-      localStorage.removeItem(cartStorageKey());
+      writeCartStorageItems([]);
       authenticatedCartMergeFinished = true;
       return syncAuthenticatedCartUi();
     }).finally(function () {
@@ -4694,16 +4713,14 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
 
   function addGuestProductToCart(productId, button) {
     if (!productId) return;
-    var key = cartStorageKey();
-    var items = [];
-    try { items = JSON.parse(localStorage.getItem(key) || '[]') || []; } catch (_) { items = []; }
+    var items = guestCartItems();
     var index = items.findIndex(function (item) { return item && item.product === productId && !item.selectedVariation; });
     if (index === -1) {
       items.push({ product: productId, selectedQty: 1, cartType: 0 });
     } else {
       items[index].selectedQty = Math.max(1, Number(items[index].selectedQty) || 1) + 1;
     }
-    localStorage.setItem(key, JSON.stringify(items));
+    writeCartStorageItems(items);
     pushAddToCartTrackingByProductId(productId, 1);
     window.dispatchEvent(new Event('storage'));
     window.dispatchEvent(new CustomEvent('ab-cart-updated', { detail: { product: productId } }));
