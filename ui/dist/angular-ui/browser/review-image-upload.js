@@ -2,6 +2,7 @@
   'use strict';
 
   var pendingImages = [];
+  var activeUploads = 0;
   var injected = false;
 
   // Map: reviewer name (lowercase) -> images[]
@@ -228,10 +229,11 @@
     strip.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid #e0e0e0;';
 
     images.forEach(function (url) {
+      var imageUrl = normalizeUploadUrl(url);
       var img = document.createElement('img');
-      img.src = url;
+      img.src = imageUrl || url;
       img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid #ddd;cursor:pointer;';
-      img.addEventListener('click', function () { openLightbox(url, images); });
+      img.addEventListener('click', function () { openLightbox(imageUrl || url, images); });
       strip.appendChild(img);
     });
 
@@ -313,7 +315,7 @@
       closeBtn.onclick = function () { lb.remove(); };
 
       var img = document.createElement('img');
-      img.src = images[i];
+      img.src = normalizeUploadUrl(images[i]) || images[i];
       img.style.cssText = 'max-width:90vw;max-height:80vh;object-fit:contain;border-radius:8px;';
 
       var nav = document.createElement('div');
@@ -352,25 +354,56 @@
     if (preview) preview.innerHTML = '';
     if (status) status.textContent = '';
     if (fileInput) fileInput.value = '';
+    updateReviewSubmitState();
+  }
+
+  function uploadEndpoint() {
+    var path = '/api/v2/upload/single-image';
+    if (window.location.hostname === 'localhost') return path;
+    return 'https://apisub.amolbooks.com' + path;
+  }
+
+  function normalizeUploadUrl(url) {
+    var value = String(url || '').trim();
+    if (!value) return '';
+    value = value.replace('/api/upload/images/', '/upload/images/');
+    if (value.indexOf('/upload/images/') === 0) {
+      return (window.location.hostname === 'localhost' ? window.location.origin : 'https://apisub.amolbooks.com') + value;
+    }
+    if (value.indexOf('upload/images/') === 0) {
+      return (window.location.hostname === 'localhost' ? window.location.origin : 'https://apisub.amolbooks.com') + '/' + value;
+    }
+    return value;
+  }
+
+  function updateReviewSubmitState() {
+    var container = document.getElementById('riu-container');
+    var dialog = container && container.closest('mat-mdc-dialog-container, mat-dialog-container, .cdk-overlay-pane');
+    if (!dialog) return;
+    dialog.querySelectorAll('button[type="submit"], button:not([type])').forEach(function (button) {
+      var label = (button.textContent || '').trim().toLowerCase();
+      if (label !== 'submit' && label !== 'জমা দিন') return;
+      button.disabled = activeUploads > 0;
+      button.style.opacity = activeUploads > 0 ? '0.65' : '';
+      button.style.cursor = activeUploads > 0 ? 'not-allowed' : '';
+    });
   }
 
   function uploadImage(file, callback) {
     var formData = new FormData();
     formData.append('image', file);
+    formData.append('convert', 'yes');
+    formData.append('width', '300');
+    formData.append('quality', '85');
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', '/api/upload/single-image');
+    xhr.open('POST', uploadEndpoint());
     xhr.onload = function () {
       if (xhr.status === 200 || xhr.status === 201) {
         try {
           var res = JSON.parse(xhr.responseText);
           if (res && (res.filename || res.url)) {
-            var uploadBase = window.location.hostname === 'localhost'
-              ? window.location.origin
-              : 'https://apisub.amolbooks.com';
-            var url = res.url || (uploadBase + '/api/upload/images/' + res.filename);
-            if (url.indexOf('http://') !== 0 && url.indexOf('https://') !== 0) {
-              url = uploadBase + (url.charAt(0) === '/' ? '' : '/') + url;
-            }
+            var url = normalizeUploadUrl(res.url);
+            if (!url && res.filename) url = normalizeUploadUrl('/upload/images/' + res.filename.replace(/\.[^.]+$/, '.webp'));
             callback(null, url);
           } else { callback(new Error('No URL')); }
         } catch (e) { callback(e); }
@@ -413,6 +446,8 @@
       status.textContent = 'আপলোড হচ্ছে...';
       var total = files.length;
       var done = 0;
+      activeUploads += total;
+      updateReviewSubmitState();
 
       for (var i = 0; i < files.length; i++) {
         (function (file) {
@@ -449,6 +484,7 @@
 
           uploadImage(file, function (err, url) {
             done++;
+            activeUploads = Math.max(0, activeUploads - 1);
             if (!err && url) {
               uploadedUrl = url;
               if (!removed) {
@@ -461,6 +497,7 @@
               if (!removed) wrapper.remove();
             }
             if (done === total) updateUploadStatus();
+            updateReviewSubmitState();
           });
         })(files[i]);
       }
@@ -469,7 +506,11 @@
     function updateUploadStatus() {
       var status = document.getElementById('riu-status');
       if (status) {
-        status.textContent = pendingImages.length > 0 ? pendingImages.length + 'টি ছবি প্রস্তুত' : '';
+        if (activeUploads > 0) {
+          status.textContent = 'আপলোড হচ্ছে...';
+        } else {
+          status.textContent = pendingImages.length > 0 ? pendingImages.length + 'টি ছবি প্রস্তুত' : '';
+        }
       }
     }
   }

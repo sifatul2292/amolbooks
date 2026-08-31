@@ -10,6 +10,7 @@ export interface Review {
     rating: number;
     status: boolean;
     isReview: boolean;
+    images?: string[];
     reply: string;
     replyDate: string;
 }

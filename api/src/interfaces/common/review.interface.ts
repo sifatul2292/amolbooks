@@ -1,7 +1,6 @@
 import { Product } from './product.interface';
 import { User } from '../user/user.interface';
 
-
 export interface Review {
   _id?: string;
   user?: string | User;
@@ -12,6 +11,7 @@ export interface Review {
   rating: number;
   status: boolean;
   isReview: boolean;
+  images?: string[];
   reply: string;
   replyDate: string;
 }

@@ -30,6 +30,12 @@ let ReviewService = ReviewService_1 = class ReviewService {
         this.utilsService = utilsService;
         this.logger = new common_1.Logger(ReviewService_1.name);
     }
+    getReviewImages(reviewDto) {
+        if (Array.isArray(reviewDto.images)) {
+            return reviewDto.images.filter(Boolean);
+        }
+        return reviewDto.image ? [reviewDto.image] : [];
+    }
     async addReview(user, addReviewDto) {
         try {
             const productData = await this.productModel
@@ -38,7 +44,7 @@ let ReviewService = ReviewService_1 = class ReviewService {
             const userData = await this.userModel
                 .findById({ _id: user._id })
                 .select('name profileImg');
-            const mData = Object.assign(Object.assign({}, addReviewDto), {
+            const mData = Object.assign(Object.assign(Object.assign({}, addReviewDto), { images: this.getReviewImages(addReviewDto) }), {
                 product: {
                     _id: productData._id,
                     name: productData.name,
@@ -77,7 +83,7 @@ let ReviewService = ReviewService_1 = class ReviewService {
                 user: {
                     _id: null,
                     name: addReviewDto.name,
-                    profileImg: null,
+                    profileImg: addReviewDto.profileImg || addReviewDto.image || null,
                 },
             });
             const newData = new this.reviewModel(mData);

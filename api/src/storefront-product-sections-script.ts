@@ -60,6 +60,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   var cartRecentRequestVersion = 0;
   var checkoutGiftRenderKey = '';
   var checkoutGiftPendingKey = '';
+  var checkoutNavigationStarted = false;
   var addedCartModalProducts = null;
   var addedCartModalLoading = false;
   var stickySearchTimer = null;
@@ -1555,7 +1556,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         display: block;
       }
 
-      #ab-cart-sticky-checkout button {
+      #ab-cart-sticky-checkout a {
         display: block;
         width: 100%;
         min-height: 3.25rem;
@@ -1564,7 +1565,11 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         background: #4495f8;
         color: #fff;
         font: 800 1.12rem/1.15 var(--ab-product-heading-bold);
+        line-height: 3.25rem;
         text-align: center;
+        text-decoration: none;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
       }
 
       #ab-added-cart-modal {
@@ -4243,6 +4248,22 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     if (!cartPageOpen()) window.location.assign('/cart');
   }
 
+  function goToCheckout() {
+    if (checkoutNavigationStarted || location.pathname.indexOf('/checkout') === 0) return;
+    checkoutNavigationStarted = true;
+    window.location.href = '/checkout';
+  }
+
+  function handleCartCheckoutTap(event) {
+    var target = event.target && event.target.closest && event.target.closest('[data-ab-cart-sticky-checkout], .cart-area-bottom button, .cart-area-bottom a');
+    if (!target || !cartPageOpen()) return;
+    var text = (target.textContent || '').replace(/\\s+/g, ' ').trim();
+    if (!target.hasAttribute('data-ab-cart-sticky-checkout') && !/অর্ডার (?:করতে এগিয়ে যান|প্রদান করুন)|checkout/i.test(text)) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    goToCheckout();
+  }
+
   function productIsInCart() {
     if (!currentProduct || !currentProduct._id) return mainCartClickedSlug === currentSlug;
     return guestCartItems().some(function (item) {
@@ -4291,7 +4312,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       bar = document.createElement('div');
       bar.id = 'ab-cart-sticky-checkout';
       bar.setAttribute('aria-label', 'অর্ডার সম্পন্ন করুন');
-      bar.innerHTML = '<button type="button" data-ab-cart-sticky-checkout="true">অর্ডার করতে এগিয়ে যান →</button>';
+      bar.innerHTML = '<a href="/checkout" data-ab-cart-sticky-checkout="true">অর্ডার করতে এগিয়ে যান →</a>';
       document.body.appendChild(bar);
     }
     bar.hidden = !cartPageOpen();
@@ -5695,6 +5716,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     var heading = overview.querySelector(':scope > .section-title h3');
     if (heading) heading.textContent = 'রিভিউ ও রেটিং';
     repairReviewImages(overview);
+    observeReviewImageSrcChanges();
     window.setTimeout(function () { repairReviewImages(overview); }, 300);
   }
 
@@ -5705,7 +5727,9 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   function normalizeReviewImageSrc(src) {
     var value = String(src || '').trim();
     if (!value || isPlaceholderReviewImage(value)) return value;
-    if (/^https?:\\/\\//i.test(value)) return value;
+    if (/^https?:\\/\\//i.test(value)) {
+      return getReviewImageFallback(value);
+    }
     if (value.indexOf('/api/upload/images/') === 0) {
       return 'https://apisub.amolbooks.com' + value;
     }
@@ -5713,12 +5737,21 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       return 'https://apisub.amolbooks.com/' + value;
     }
     if (value.indexOf('/upload/images/') === 0) {
-      return 'https://apisub.amolbooks.com/api' + value;
+      return 'https://apisub.amolbooks.com' + value;
     }
     if (value.indexOf('upload/images/') === 0) {
-      return 'https://apisub.amolbooks.com/api/' + value;
+      return 'https://apisub.amolbooks.com/' + value;
     }
     return value;
+  }
+
+  function getReviewImageFallback(src) {
+    var value = String(src || '').trim();
+    if (!value) return '';
+    return value
+      .replace('https://apisub.amolbooks.com/api/upload/images/', 'https://apisub.amolbooks.com/upload/images/')
+      .replace('http://apisub.amolbooks.com/api/upload/images/', 'https://apisub.amolbooks.com/upload/images/')
+      .replace('/api/upload/images/', '/upload/images/');
   }
 
   function markReviewImageBroken(img) {
@@ -5753,9 +5786,31 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       if (!img.getAttribute('data-ab-review-image-watch')) {
         img.setAttribute('data-ab-review-image-watch', 'true');
         img.addEventListener('error', function () {
+          var fallbackSrc = getReviewImageFallback(img.getAttribute('src') || img.src);
+          if (fallbackSrc && fallbackSrc !== img.src && fallbackSrc !== img.getAttribute('src')) {
+            img.src = fallbackSrc;
+            return;
+          }
           markReviewImageBroken(img);
         });
       }
+    });
+  }
+
+  function observeReviewImageSrcChanges() {
+    if (window.__abReviewImageObserver) return;
+    window.__abReviewImageObserver = new MutationObserver(function (mutations) {
+      for (var i = 0; i < mutations.length; i++) {
+        var target = mutations[i].target;
+        if (target && target.closest && target.closest('app-product-details .ab-review-section')) {
+          repairReviewImages(target.closest('app-product-details .ab-review-section'));
+        }
+      }
+    });
+    window.__abReviewImageObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['src'],
+      subtree: true
     });
   }
 
@@ -5957,6 +6012,9 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     }
   }, true);
 
+  document.addEventListener('touchend', handleCartCheckoutTap, true);
+  document.addEventListener('pointerup', handleCartCheckoutTap, true);
+
   document.addEventListener('click', function (event) {
     var nativeAddAllButton = nativeAddAllToCartButton(event.target);
     if (nativeAddAllButton) return;
@@ -6002,8 +6060,8 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     var cartStickyCheckout = event.target && event.target.closest && event.target.closest('[data-ab-cart-sticky-checkout]');
     if (cartStickyCheckout) {
       event.preventDefault();
-      event.stopPropagation();
-      window.location.assign('/checkout');
+      event.stopImmediatePropagation();
+      goToCheckout();
       return;
     }
 
@@ -6016,11 +6074,11 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     }
 
     var checkoutLink = event.target && event.target.closest && event.target.closest('.cart-area-bottom button, .cart-area-bottom a');
-    var checkoutText = checkoutLink && (checkoutLink.textContent || '').replace(/\s+/g, ' ').trim();
+    var checkoutText = checkoutLink && (checkoutLink.textContent || '').replace(/\\s+/g, ' ').trim();
     if (cartPageOpen() && checkoutLink && /অর্ডার (?:করতে এগিয়ে যান|প্রদান করুন)|checkout/i.test(checkoutText)) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      window.location.assign('/checkout');
+      goToCheckout();
       return;
     }
 

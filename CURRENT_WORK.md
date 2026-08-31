@@ -2,6 +2,18 @@
 
 ## Free notebook cart offer cleanup (2026-08-31)
 
+- Fixed product review images. Admin-added reviews now preserve reviewer
+  `profileImg` plus review attachment URLs, and the storefront review section
+  retries legacy `/api/upload/images/...` review-photo URLs as static
+  `/upload/images/...` assets before hiding true placeholders.
+- Fixed review-dialog photo uploads. The injected uploader now posts to the
+  versioned image endpoint, requests WebP conversion at 300px width, uses the
+  live API host outside localhost, normalizes saved URLs to static
+  `/upload/images/...`, and disables Submit while upload is still running.
+- Fixed the mobile cart checkout CTA. The sticky "অর্ডার করতে এগিয়ে যান"
+  control is now a real `/checkout` link with early touch/pointer handlers and
+  shared navigation guard, so the first tap routes to checkout instead of
+  waiting for repeated clicks.
 - Added site-wide Add to Cart tracking for non-product-page cart buttons.
   Native homepage/list card buttons, injected recommendation buttons, cart
   suggestion buttons, and product-section buttons now push both the product-page

@@ -14,6 +14,7 @@ export declare class ReviewService {
     private utilsService;
     private logger;
     constructor(reviewModel: Model<Review>, productModel: Model<Product>, userModel: Model<User>, configService: ConfigService, utilsService: UtilsService);
+    private getReviewImages;
     addReview(user: User, addReviewDto: AddReviewDto): Promise<ResponsePayload>;
     addReviewByAdmin(addReviewDto: AddReviewDto): Promise<ResponsePayload>;
     getReviewByUserId(user: User): Promise<ResponsePayload>;
