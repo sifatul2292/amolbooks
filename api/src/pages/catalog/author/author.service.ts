@@ -312,7 +312,22 @@ export class AuthorService {
         }
       }
 
-      const finalData = { ...updateAuthorDto, slug: finalSlug };
+      const finalData: Record<string, any> = { ...updateAuthorDto, slug: finalSlug };
+      finalData.description = this.normalizeAuthorDescription(
+        finalData.description ??
+          finalData.descriptionBn ??
+          finalData.authorDescription ??
+          finalData.bio ??
+          finalData.about,
+        fData.description,
+      );
+      finalData.descriptionEn = this.normalizeAuthorDescription(
+        finalData.descriptionEn ??
+          finalData.authorDescriptionEn ??
+          finalData.bioEn ??
+          finalData.aboutEn,
+        fData.descriptionEn,
+      );
       delete finalData.ids;
 
       await this.authorModel.findByIdAndUpdate(
@@ -331,6 +346,35 @@ export class AuthorService {
       if (err instanceof NotFoundException) throw err;
       throw new InternalServerErrorException(err.message);
     }
+  }
+
+  private normalizeAuthorDescription(value: any, fallback?: string): string {
+    if (value === undefined || value === null) return fallback || '';
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      return trimmed || fallback || '';
+    }
+    if (Array.isArray(value)) {
+      const text = value
+        .map((entry) => this.normalizeAuthorDescription(entry))
+        .filter(Boolean)
+        .join('\n');
+      return text || fallback || '';
+    }
+    if (typeof value === 'object') {
+      for (const key of ['html', 'value', 'content', 'description', 'text']) {
+        const text = this.normalizeAuthorDescription(value[key]);
+        if (text) return text;
+      }
+      if (Array.isArray(value.ops)) {
+        const text = value.ops
+          .map((op) => this.normalizeAuthorDescription(op?.insert))
+          .filter(Boolean)
+          .join('');
+        return text.trim() || fallback || '';
+      }
+    }
+    return String(value || '').trim() || fallback || '';
   }
 
   private async syncAuthorSnapshotToProducts(

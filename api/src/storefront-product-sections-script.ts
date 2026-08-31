@@ -3721,6 +3721,12 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
 
   function pushAddToCartTracking(product, quantity) {
     var item = Object.assign({}, product || {}, { quantity: quantity });
+    if (!item._id && item.slug) {
+      fetchJson('/product/get-by-slug/' + encodeURIComponent(item.slug), null, CATALOG_API_BASE).then(function (result) {
+        pushAddToCartTrackingGroup([Object.assign({}, item, result && result.data || {})]);
+      });
+      return;
+    }
     pushAddToCartTrackingGroup([item]);
   }
 
@@ -5935,16 +5941,18 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   document.addEventListener('click', function (event) {
     var nativeAddAllButton = nativeAddAllToCartButton(event.target);
     if (nativeAddAllButton) {
+      var nativeAddAllMetas = nativeAddAllToCartMetas(nativeAddAllButton);
       window.setTimeout(function () {
-        pushAddToCartTrackingGroup(nativeAddAllToCartMetas(nativeAddAllButton));
+        pushAddToCartTrackingGroup(nativeAddAllMetas);
       }, 0);
       return;
     }
 
     var nativeTrackedButton = nativeAddToCartButton(event.target);
     if (nativeTrackedButton) {
+      var nativeTrackedMeta = nativeAddToCartMeta(nativeTrackedButton);
       window.setTimeout(function () {
-        pushAddToCartTracking(nativeAddToCartMeta(nativeTrackedButton), 1);
+        pushAddToCartTracking(nativeTrackedMeta, 1);
       }, 0);
     }
   }, true);

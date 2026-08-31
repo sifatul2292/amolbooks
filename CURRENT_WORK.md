@@ -17,6 +17,13 @@
   snapshots now allow image and description fields, and saving an author updates
   those embedded author snapshots on related products so the storefront “লেখক
   পরিচিতি” section receives the saved biography after reload.
+- Hardened that author save path so rich-editor payloads are normalized to
+  strings, common biography aliases are accepted, and an empty editor payload
+  cannot wipe an existing description.
+- Tightened storefront card Add to Cart tracking by capturing card metadata in
+  the document capture phase before Angular mutates the page, then enriching
+  slug-only card events through the catalogue API before pushing `AddToCart` and
+  `add_to_cart`.
 - Fixed the product-page “বিষয়ভিত্তিক জনপ্রিয় বই” section for production.
   It was calling the local-only `/library` catalogue proxy on the live API,
   which returned 404; it now loads books through the live

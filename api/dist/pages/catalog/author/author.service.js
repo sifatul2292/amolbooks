@@ -236,6 +236,7 @@ let AuthorService = AuthorService_1 = class AuthorService {
         }
     }
     async updateAuthorById(id, updateAuthorDto) {
+        var _a, _b, _c, _d, _e, _f, _g;
         try {
             const { slug } = updateAuthorDto;
             const fData = await this.authorModel.findById(id);
@@ -254,6 +255,8 @@ let AuthorService = AuthorService_1 = class AuthorService {
                 }
             }
             const finalData = Object.assign(Object.assign({}, updateAuthorDto), { slug: finalSlug });
+            finalData.description = this.normalizeAuthorDescription((_d = (_c = (_b = (_a = finalData.description) !== null && _a !== void 0 ? _a : finalData.descriptionBn) !== null && _b !== void 0 ? _b : finalData.authorDescription) !== null && _c !== void 0 ? _c : finalData.bio) !== null && _d !== void 0 ? _d : finalData.about, fData.description);
+            finalData.descriptionEn = this.normalizeAuthorDescription((_g = (_f = (_e = finalData.descriptionEn) !== null && _e !== void 0 ? _e : finalData.authorDescriptionEn) !== null && _f !== void 0 ? _f : finalData.bioEn) !== null && _g !== void 0 ? _g : finalData.aboutEn, fData.descriptionEn);
             delete finalData.ids;
             await this.authorModel.findByIdAndUpdate(id, { $set: finalData }, { runValidators: true });
             await this.syncAuthorSnapshotToProducts(id, finalData);
@@ -267,6 +270,36 @@ let AuthorService = AuthorService_1 = class AuthorService {
                 throw err;
             throw new common_1.InternalServerErrorException(err.message);
         }
+    }
+    normalizeAuthorDescription(value, fallback) {
+        if (value === undefined || value === null)
+            return fallback || '';
+        if (typeof value === 'string') {
+            const trimmed = value.trim();
+            return trimmed || fallback || '';
+        }
+        if (Array.isArray(value)) {
+            const text = value
+                .map((entry) => this.normalizeAuthorDescription(entry))
+                .filter(Boolean)
+                .join('\n');
+            return text || fallback || '';
+        }
+        if (typeof value === 'object') {
+            for (const key of ['html', 'value', 'content', 'description', 'text']) {
+                const text = this.normalizeAuthorDescription(value[key]);
+                if (text)
+                    return text;
+            }
+            if (Array.isArray(value.ops)) {
+                const text = value.ops
+                    .map((op) => this.normalizeAuthorDescription(op === null || op === void 0 ? void 0 : op.insert))
+                    .filter(Boolean)
+                    .join('');
+                return text.trim() || fallback || '';
+            }
+        }
+        return String(value || '').trim() || fallback || '';
     }
     async syncAuthorSnapshotToProducts(id, author) {
         const setData = {};

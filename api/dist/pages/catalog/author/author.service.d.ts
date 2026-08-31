@@ -21,6 +21,7 @@ export declare class AuthorService {
     getAuthorById(id: string, select: string): Promise<ResponsePayload>;
     getAuthorBySlug(slug: string, select: string): Promise<ResponsePayload>;
     updateAuthorById(id: string, updateAuthorDto: UpdateAuthorDto): Promise<ResponsePayload>;
+    private normalizeAuthorDescription;
     private syncAuthorSnapshotToProducts;
     updateMultipleAuthorById(ids: string[], updateAuthorDto: UpdateAuthorDto): Promise<ResponsePayload>;
     deleteAuthorById(id: string, checkUsage: boolean): Promise<ResponsePayload>;
