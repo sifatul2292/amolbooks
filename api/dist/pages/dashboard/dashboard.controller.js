@@ -17,15 +17,20 @@ exports.DashboardController = void 0;
 const common_1 = require("@nestjs/common");
 const dashboard_service_1 = require("./dashboard.service");
 const decision_dashboard_service_1 = require("./decision-dashboard.service");
+const meta_tracking_health_service_1 = require("./meta-tracking-health.service");
 const admin_roles_guard_1 = require("../../guards/admin-roles.guard");
 const admin_roles_enum_1 = require("../../enum/admin-roles.enum");
 const admin_roles_decorator_1 = require("../../decorator/admin-roles.decorator");
 const admin_jwt_auth_guard_1 = require("../../guards/admin-jwt-auth.guard");
 let DashboardController = DashboardController_1 = class DashboardController {
-    constructor(dashboardService, decisionDashboardService) {
+    constructor(dashboardService, decisionDashboardService, metaTrackingHealthService) {
         this.dashboardService = dashboardService;
         this.decisionDashboardService = decisionDashboardService;
+        this.metaTrackingHealthService = metaTrackingHealthService;
         this.logger = new common_1.Logger(DashboardController_1.name);
+    }
+    async getMetaTrackingHealth(days) {
+        return await this.metaTrackingHealthService.getMetaTrackingHealth(days);
     }
     async getAdminDashboard(searchString) {
         const filterOrderDto = {
@@ -78,6 +83,17 @@ let DashboardController = DashboardController_1 = class DashboardController {
         return await this.dashboardService.deleteManualSale(id);
     }
 };
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Get)('meta-tracking-health'),
+    (0, admin_roles_decorator_1.AdminMetaRoles)(admin_roles_enum_1.AdminRoles.SUPER_ADMIN, admin_roles_enum_1.AdminRoles.ADMIN),
+    (0, common_1.UseGuards)(admin_roles_guard_1.AdminRolesGuard),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __param(0, (0, common_1.Query)('days')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], DashboardController.prototype, "getMetaTrackingHealth", null);
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Get)('/admin-dashboard'),
@@ -219,7 +235,8 @@ __decorate([
 DashboardController = DashboardController_1 = __decorate([
     (0, common_1.Controller)('dashboard'),
     __metadata("design:paramtypes", [dashboard_service_1.DashboardService,
-        decision_dashboard_service_1.DecisionDashboardService])
+        decision_dashboard_service_1.DecisionDashboardService,
+        meta_tracking_health_service_1.MetaTrackingHealthService])
 ], DashboardController);
 exports.DashboardController = DashboardController;
 //# sourceMappingURL=dashboard.controller.js.map

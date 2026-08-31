@@ -1,3 +1,4 @@
+import { Request } from 'express';
 import { AddOrderDto, FilterAndPaginationOrderDto, GenerateInvoicesDto, OptionOrderDto, UpdateOrderDto, UpdateOrderStatusDto } from '../../../dto/order.dto';
 import { AddIncompleteOrderDto, DeleteMultipleIncompleteOrderDto, FilterAndPaginationIncompleteOrderDto, UpdateIncompleteOrderDto } from '../../../dto/incomplete-order.dto';
 import { ResponsePayload } from '../../../interfaces/core/response-payload.interface';
@@ -8,6 +9,20 @@ export declare class OrderController {
     private orderService;
     private logger;
     constructor(orderService: OrderService);
+    receiveSteadfastWebhook(authorization: string, body: any): Promise<{
+        status: string;
+        message: string;
+    }>;
+    markBrowserPurchaseFired(body: {
+        orderId?: string;
+        transaction_id?: string;
+        eventId?: string;
+    }): Promise<ResponsePayload>;
+    backfillSteadfastStatus(body: {
+        limit?: number;
+        retryFailed?: boolean;
+    }): Promise<ResponsePayload>;
+    syncSteadfastInReview(): Promise<ResponsePayload>;
     addOrder(addOrderDto: AddOrderDto, admin: Admin): Promise<ResponsePayload>;
     trackManualOrderMeta(id: string, body: {
         manualOrderSource?: string;
@@ -20,8 +35,8 @@ export declare class OrderController {
     }): Promise<ResponsePayload>;
     getRecentBuyersByProduct(slug: string): Promise<ResponsePayload>;
     getRepeatCustomers(): Promise<ResponsePayload>;
-    addOrderByUser(addOrderDto: AddOrderDto, user: User): Promise<ResponsePayload>;
-    addOrderByAnonymous(addOrderDto: AddOrderDto): Promise<ResponsePayload>;
+    addOrderByUser(addOrderDto: AddOrderDto, user: User, req: Request): Promise<ResponsePayload>;
+    addOrderByAnonymous(addOrderDto: AddOrderDto, req: Request): Promise<ResponsePayload>;
     insertManyOrder(body: {
         data: AddOrderDto[];
         option: OptionOrderDto;
@@ -42,10 +57,11 @@ export declare class OrderController {
     deleteMultipleOrderById(data: {
         ids: string[];
     }, checkUsage: boolean): Promise<ResponsePayload>;
-    addIncompleteOrderByUser(addIncompleteOrderDto: AddIncompleteOrderDto): Promise<ResponsePayload>;
-    addIncompleteOrderByAnonymous(addIncompleteOrderDto: AddIncompleteOrderDto): Promise<ResponsePayload>;
+    addIncompleteOrderByUser(addIncompleteOrderDto: AddIncompleteOrderDto, req: Request): Promise<ResponsePayload>;
+    addIncompleteOrderByAnonymous(addIncompleteOrderDto: AddIncompleteOrderDto, req: Request): Promise<ResponsePayload>;
     getAllIncompleteOrders(filterDto: FilterAndPaginationIncompleteOrderDto, searchString: string): Promise<ResponsePayload>;
     getIncompleteOrderById(id: string): Promise<ResponsePayload>;
-    updateIncompleteOrderById(id: string, updateIncompleteOrderDto: UpdateIncompleteOrderDto): Promise<ResponsePayload>;
+    updateIncompleteOrderById(id: string, updateIncompleteOrderDto: UpdateIncompleteOrderDto, req: Request): Promise<ResponsePayload>;
+    updateIncompleteOrderByAdmin(id: string, updateIncompleteOrderDto: UpdateIncompleteOrderDto): Promise<ResponsePayload>;
     deleteMultipleIncompleteOrderById(deleteDto: DeleteMultipleIncompleteOrderDto): Promise<ResponsePayload>;
 }

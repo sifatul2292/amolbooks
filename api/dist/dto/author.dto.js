@@ -29,15 +29,40 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], AddAuthorDto.prototype, "bannerImage", void 0);
+], AddAuthorDto.prototype, "nameEn", void 0);
 __decorate([
-    (0, class_validator_1.IsNotEmpty)(),
-    __metadata("design:type", Object)
-], AddAuthorDto.prototype, "startDateTime", void 0);
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], AddAuthorDto.prototype, "image", void 0);
 __decorate([
-    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], AddAuthorDto.prototype, "address", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], AddAuthorDto.prototype, "addressEn", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], AddAuthorDto.prototype, "description", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], AddAuthorDto.prototype, "descriptionEn", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Object)
-], AddAuthorDto.prototype, "endDateTime", void 0);
+], AddAuthorDto.prototype, "birthDate", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], AddAuthorDto.prototype, "priority", void 0);
 exports.AddAuthorDto = AddAuthorDto;
 class FilterAuthorDto {
 }
@@ -73,7 +98,7 @@ exports.OptionAuthorDto = OptionAuthorDto;
 class UpdateAuthorDto {
 }
 __decorate([
-    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateAuthorDto.prototype, "name", void 0);
@@ -83,23 +108,43 @@ __decorate([
     __metadata("design:type", String)
 ], UpdateAuthorDto.prototype, "slug", void 0);
 __decorate([
-    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], UpdateAuthorDto.prototype, "authorCode", void 0);
+], UpdateAuthorDto.prototype, "nameEn", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], UpdateAuthorDto.prototype, "bannerImage", void 0);
+], UpdateAuthorDto.prototype, "image", void 0);
 __decorate([
-    (0, class_validator_1.IsNotEmpty)(),
-    __metadata("design:type", Object)
-], UpdateAuthorDto.prototype, "startDateTime", void 0);
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateAuthorDto.prototype, "address", void 0);
 __decorate([
-    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateAuthorDto.prototype, "addressEn", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateAuthorDto.prototype, "description", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateAuthorDto.prototype, "descriptionEn", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Object)
-], UpdateAuthorDto.prototype, "endDateTime", void 0);
+], UpdateAuthorDto.prototype, "birthDate", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], UpdateAuthorDto.prototype, "priority", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsArray)(),

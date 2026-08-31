@@ -1,4 +1,4 @@
-import { User } from '../user/user.interface';
+import { User } from "../user/user.interface";
 export interface IncompleteOrder {
     _id?: string;
     orderId?: string;
@@ -21,6 +21,7 @@ export interface IncompleteOrder {
     fraudChecker?: any;
     orderedItems?: any[];
     user?: string | User;
+    attribution?: any;
     createdAt?: Date;
     updatedAt?: Date;
 }

@@ -21,6 +21,7 @@ const config_1 = require("@nestjs/config");
 const utils_service_1 = require("../../../shared/utils/utils.service");
 const error_code_enum_1 = require("../../../enum/error-code.enum");
 const ObjectId = mongoose_2.Types.ObjectId;
+const FREE_NOTEBOOK_MIN_AMOUNT = 499;
 let OrderOfferService = OrderOfferService_1 = class OrderOfferService {
     constructor(orderOfferModel, orderModel, userModel, configService, utilsService) {
         this.orderOfferModel = orderOfferModel;
@@ -71,7 +72,10 @@ let OrderOfferService = OrderOfferService_1 = class OrderOfferService {
     }
     async getOrderOffer(select) {
         try {
-            const data = await this.orderOfferModel.findOne({}).select(select);
+            const data = JSON.parse(JSON.stringify(await this.orderOfferModel.findOne({}).select(select)));
+            if (data && data.giftMinAmount) {
+                data.giftMinAmount = FREE_NOTEBOOK_MIN_AMOUNT;
+            }
             return {
                 success: true,
                 message: 'Success',
@@ -88,6 +92,9 @@ let OrderOfferService = OrderOfferService_1 = class OrderOfferService {
                 .findOne({})
                 .select(select);
             const orderOfferData = JSON.parse(JSON.stringify(fOrderOfferData));
+            if (orderOfferData && orderOfferData.giftMinAmount) {
+                orderOfferData.giftMinAmount = FREE_NOTEBOOK_MIN_AMOUNT;
+            }
             let finalData;
             if (orderOfferData) {
                 const orderCount = await this.orderModel.countDocuments({

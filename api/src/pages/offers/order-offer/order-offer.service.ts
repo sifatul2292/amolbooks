@@ -16,6 +16,7 @@ import { OrderOffer } from '../../../interfaces/common/order-offer.interface';
 import { AddOrderOfferDto } from '../../../dto/order-offer.dto';
 
 const ObjectId = Types.ObjectId;
+const FREE_NOTEBOOK_MIN_AMOUNT = 499;
 
 @Injectable()
 export class OrderOfferService {
@@ -84,7 +85,12 @@ export class OrderOfferService {
 
   async getOrderOffer(select: string): Promise<ResponsePayload> {
     try {
-      const data = await this.orderOfferModel.findOne({}).select(select);
+      const data = JSON.parse(
+        JSON.stringify(await this.orderOfferModel.findOne({}).select(select)),
+      );
+      if (data && data.giftMinAmount) {
+        data.giftMinAmount = FREE_NOTEBOOK_MIN_AMOUNT;
+      }
       return {
         success: true,
         message: 'Success',
@@ -105,6 +111,9 @@ export class OrderOfferService {
         .select(select);
 
       const orderOfferData = JSON.parse(JSON.stringify(fOrderOfferData));
+      if (orderOfferData && orderOfferData.giftMinAmount) {
+        orderOfferData.giftMinAmount = FREE_NOTEBOOK_MIN_AMOUNT;
+      }
       let finalData: any;
 
       if (orderOfferData) {

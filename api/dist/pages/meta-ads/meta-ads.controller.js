@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var MetaAdsController_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MetaAdsController = void 0;
 const common_1 = require("@nestjs/common");
@@ -19,9 +20,10 @@ const admin_roles_enum_1 = require("../../enum/admin-roles.enum");
 const admin_jwt_auth_guard_1 = require("../../guards/admin-jwt-auth.guard");
 const admin_roles_guard_1 = require("../../guards/admin-roles.guard");
 const meta_ads_service_1 = require("./meta-ads.service");
-let MetaAdsController = class MetaAdsController {
+let MetaAdsController = MetaAdsController_1 = class MetaAdsController {
     constructor(metaAdsService) {
         this.metaAdsService = metaAdsService;
+        this.logger = new common_1.Logger(MetaAdsController_1.name);
     }
     getAuthUrl() {
         const url = this.metaAdsService.getAuthUrl();
@@ -31,10 +33,14 @@ let MetaAdsController = class MetaAdsController {
     }
     async callback(code, res) {
         try {
+            if (!code)
+                throw new Error('Meta did not return an authorization code.');
             await this.metaAdsService.handleCallback(code);
             return res.redirect('https://apisub.amolbooks.com/upload/static/profit-dashboard.html?meta=connected');
         }
         catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            this.logger.error(`Meta OAuth callback failed: ${message}`);
             return res.redirect('https://apisub.amolbooks.com/upload/static/profit-dashboard.html?meta=error');
         }
     }
@@ -211,7 +217,7 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], MetaAdsController.prototype, "deleteExpense", null);
-MetaAdsController = __decorate([
+MetaAdsController = MetaAdsController_1 = __decorate([
     (0, common_1.Controller)('meta-ads'),
     __metadata("design:paramtypes", [meta_ads_service_1.MetaAdsService])
 ], MetaAdsController);

@@ -350,6 +350,7 @@ let CourierService = CourierService_1 = class CourierService {
                             'Api-Key': apiKey,
                             'Secret-Key': secretKey,
                         },
+                        timeout: 10000,
                     });
                     const res = await (0, rxjs_1.firstValueFrom)(response);
                     return res.data;

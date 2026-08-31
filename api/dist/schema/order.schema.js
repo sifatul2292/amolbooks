@@ -96,6 +96,11 @@ exports.OrderSchema = new mongoose.Schema({
         type: String,
         required: false,
     },
+    orderOrigin: {
+        type: String,
+        enum: ['website', 'incomplete', 'admin'],
+        required: false,
+    },
     manualOrderSource: {
         type: String,
         enum: [
@@ -144,7 +149,20 @@ exports.OrderSchema = new mongoose.Schema({
     },
     metaPurchaseDeliveryChannel: {
         type: String,
-        enum: ['tagioo', 'direct_meta_fallback'],
+        enum: [
+            'tagioo',
+            'direct_meta',
+            'direct_meta_fallback',
+            'website_gap_fill',
+        ],
+        required: false,
+    },
+    browserPurchaseFiredAt: {
+        type: Date,
+        required: false,
+    },
+    browserPurchaseEventId: {
+        type: String,
         required: false,
     },
     tagiooPurchaseEventId: {
@@ -157,6 +175,8 @@ exports.OrderSchema = new mongoose.Schema({
     },
     attribution: {
         anonymousId: { type: String, required: false },
+        gaClientId: { type: String, required: false },
+        gaSessionId: { type: String, required: false },
         firstTouch: {
             source: { type: String, required: false },
             medium: { type: String, required: false },
@@ -169,6 +189,11 @@ exports.OrderSchema = new mongoose.Schema({
             landingPage: { type: String, required: false },
             referrer: { type: String, required: false },
             fbclid: { type: String, required: false },
+            gclid: { type: String, required: false },
+            wbraid: { type: String, required: false },
+            gbraid: { type: String, required: false },
+            fbc: { type: String, required: false },
+            fbp: { type: String, required: false },
             capturedAt: { type: Date, required: false },
         },
         lastTouch: {
@@ -183,9 +208,42 @@ exports.OrderSchema = new mongoose.Schema({
             landingPage: { type: String, required: false },
             referrer: { type: String, required: false },
             fbclid: { type: String, required: false },
+            gclid: { type: String, required: false },
+            wbraid: { type: String, required: false },
+            gbraid: { type: String, required: false },
+            fbc: { type: String, required: false },
+            fbp: { type: String, required: false },
             capturedAt: { type: Date, required: false },
         },
+        clientUserAgent: { type: String, required: false },
+        clientIpAddress: { type: String, required: false },
     },
+    courierStatus: {
+        status: { type: String, required: false },
+        notificationType: { type: String, required: false },
+        trackingMessage: { type: String, required: false },
+        codAmount: { type: Number, required: false },
+        deliveryCharge: { type: Number, required: false },
+        updatedAt: { type: String, required: false },
+        receivedAt: { type: Date, required: false },
+        lastSyncedAt: { type: Date, required: false },
+        lastSyncError: { type: String, required: false },
+        chargeLookupAttemptedAt: { type: Date, required: false },
+        chargeLookupError: { type: String, required: false },
+        backfillAttemptedAt: { type: Date, required: false },
+        backfillError: { type: String, required: false },
+    },
+    courierStatusHistory: [
+        {
+            _id: false,
+            eventKey: { type: String, required: true },
+            notificationType: { type: String, required: true },
+            status: { type: String, required: false },
+            trackingMessage: { type: String, required: false },
+            updatedAt: { type: String, required: false },
+            receivedAt: { type: Date, required: true },
+        },
+    ],
     paymentStatus: {
         type: String,
         required: true,

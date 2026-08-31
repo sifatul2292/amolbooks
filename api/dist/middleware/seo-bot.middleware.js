@@ -14,9 +14,21 @@ const common_1 = require("@nestjs/common");
 const product_service_1 = require("../pages/product/product.service");
 const seo_page_service_1 = require("../pages/seo-page/seo-page.service");
 const BOT_UA_REGEX = /facebookexternalhit|facebot|Twitterbot|LinkedInBot|Googlebot|bingbot|Slurp|DuckDuckBot|YandexBot|redditbot|WhatsApp|TelegramBot|Discordbot|Slackbot|vkShare|W3C_Validator|pinterest|Applebot/i;
-const DEFAULT_IMAGE = 'https://amolbooks.com/assets/images/logo.png';
+const DEFAULT_IMAGE = 'https://www.amolbooks.com/assets/images/logo/logo.png';
 const SHOP_NAME = 'Amolbooks';
-const SITE_URL = 'https://amolbooks.com';
+const SITE_URL = 'https://www.amolbooks.com';
+function normalizeMetaText(value, maxLength = 300) {
+    const normalized = stripHtml(value || '').replace(/\s+/g, ' ').trim();
+    return normalized.length > maxLength
+        ? `${normalized.slice(0, maxLength - 1).trimEnd()}…`
+        : normalized;
+}
+function stripHtml(value) {
+    return String(value || '')
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
 function escapeHtml(str) {
     return (str || '')
         .replace(/&/g, '&amp;')
@@ -25,9 +37,45 @@ function escapeHtml(str) {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#x27;');
 }
+function safeJsonLd(data) {
+    return JSON.stringify(data).replace(/</g, '\\u003c');
+}
+function absoluteImageUrl(image) {
+    if (!image)
+        return DEFAULT_IMAGE;
+    if (/^https?:\/\//i.test(image))
+        return image;
+    return `${SITE_URL}${image.startsWith('/') ? '' : '/'}${image}`;
+}
+function firstCatalogName(value) {
+    var _a, _b;
+    if (Array.isArray(value))
+        return ((_a = value[0]) === null || _a === void 0 ? void 0 : _a.name) || ((_b = value[0]) === null || _b === void 0 ? void 0 : _b.nameEn) || '';
+    return (value === null || value === void 0 ? void 0 : value.name) || (value === null || value === void 0 ? void 0 : value.nameEn) || '';
+}
+function firstCatalogSlug(value) {
+    var _a;
+    if (Array.isArray(value))
+        return ((_a = value[0]) === null || _a === void 0 ? void 0 : _a.slug) || '';
+    return (value === null || value === void 0 ? void 0 : value.slug) || '';
+}
+function finalPrice(product) {
+    const explicit = Number(product === null || product === void 0 ? void 0 : product.afterDiscountPrice);
+    if ((product === null || product === void 0 ? void 0 : product.afterDiscountPrice) != null && isFinite(explicit) && explicit > 0) {
+        return Math.floor(explicit);
+    }
+    const sale = Number((product === null || product === void 0 ? void 0 : product.salePrice) || 0);
+    const discount = Number((product === null || product === void 0 ? void 0 : product.discountAmount) || 0);
+    const type = Number((product === null || product === void 0 ? void 0 : product.discountType) || 0);
+    if (type === 1 && discount > 0)
+        return Math.max(0, Math.floor(sale - sale * discount / 100));
+    if (type === 2 && discount > 0)
+        return Math.max(0, Math.floor(sale - discount));
+    return Math.max(0, Math.floor(sale));
+}
 function buildOgHtml(opts) {
-    const title = escapeHtml(opts.title);
-    const description = escapeHtml(opts.description);
+    const title = escapeHtml(normalizeMetaText(opts.title, 120));
+    const description = escapeHtml(normalizeMetaText(opts.description));
     const keywords = escapeHtml(opts.keywords || '');
     const image = escapeHtml(opts.image || DEFAULT_IMAGE);
     const url = escapeHtml(opts.url);
@@ -59,11 +107,10 @@ function buildOgHtml(opts) {
   <meta name="twitter:image" content="${image}">
 
   <link rel="canonical" href="${url}">
+  ${(opts.jsonLd || []).map((item) => `<script type="application/ld+json">${safeJsonLd(item)}</script>`).join('\n  ')}
 </head>
 <body>
-  <h1>${title}</h1>
-  <p>${description}</p>
-  <a href="${url}">Visit ${SHOP_NAME}</a>
+  ${opts.bodyHtml || `<h1>${title}</h1><p>${description}</p><a href="${url}">Visit ${SHOP_NAME}</a>`}
 </body>
 </html>`;
 }
@@ -92,17 +139,92 @@ let SeoBotMiddleware = class SeoBotMiddleware {
             const slugMatch = req.path.match(/^\/product-details\/([^/?#]+)/);
             if (slugMatch) {
                 const slug = decodeURIComponent(slugMatch[1]);
-                const result = await this.productService.getProductBySlug(slug, 'name slug images salePrice seoTitle seoDescription seoKeywords');
+                const result = await this.productService.getProductBySlug(slug, 'name nameEn slug images sku isbn salePrice afterDiscountPrice discountAmount discountType quantity seoTitle seoDescription seoKeywords shortDescription description author category publisher');
                 if (result.success && result.data) {
                     const p = result.data;
+                    const author = firstCatalogName(p.author);
+                    const category = firstCatalogName(p.category);
+                    const categorySlug = firstCatalogSlug(p.category);
+                    const publisher = firstCatalogName(p.publisher) || 'Amolbooks';
+                    const price = finalPrice(p);
+                    const titleParts = [p.seoTitle || p.name || SHOP_NAME];
+                    if (author && !titleParts[0].includes(author))
+                        titleParts.push(author);
+                    const productTitle = titleParts.join(' - ');
+                    const description = normalizeMetaText(p.seoDescription ||
+                        p.shortDescription ||
+                        p.description ||
+                        `${p.name || 'ইসলামিক বই'}${author ? ` - ${author}` : ''}${category ? `, ${category}` : ''}। Amolbooks থেকে অনলাইনে অর্ডার করুন।`, 300);
+                    const productUrl = `${SITE_URL}/product-details/${p.slug}`;
+                    const image = absoluteImageUrl(p.images && p.images.length ? p.images[0] : undefined);
+                    const productJsonLd = {
+                        '@context': 'https://schema.org',
+                        '@type': 'Product',
+                        name: p.name || p.seoTitle || SHOP_NAME,
+                        image: p.images && p.images.length ? p.images.map(absoluteImageUrl) : [DEFAULT_IMAGE],
+                        description,
+                        sku: p.sku || p._id || p.slug,
+                        brand: { '@type': 'Brand', name: publisher },
+                        offers: {
+                            '@type': 'Offer',
+                            url: productUrl,
+                            priceCurrency: 'BDT',
+                            price: price || p.salePrice || 0,
+                            availability: Number(p.quantity || 0) > 0
+                                ? 'https://schema.org/InStock'
+                                : 'https://schema.org/OutOfStock',
+                            itemCondition: 'https://schema.org/NewCondition',
+                        },
+                    };
+                    if (p.isbn)
+                        productJsonLd.isbn = p.isbn;
+                    if (author)
+                        productJsonLd.author = { '@type': 'Person', name: author };
+                    const breadcrumbItems = [
+                        { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+                    ];
+                    if (category) {
+                        breadcrumbItems.push({
+                            '@type': 'ListItem',
+                            position: 2,
+                            name: category,
+                            item: `${SITE_URL}/product-list?categories=${encodeURIComponent(categorySlug || category)}`,
+                        });
+                    }
+                    breadcrumbItems.push({
+                        '@type': 'ListItem',
+                        position: breadcrumbItems.length + 1,
+                        name: p.name || productTitle,
+                        item: productUrl,
+                    });
+                    const breadcrumbJsonLd = {
+                        '@context': 'https://schema.org',
+                        '@type': 'BreadcrumbList',
+                        itemListElement: breadcrumbItems,
+                    };
+                    const bodyHtml = `
+  <main>
+    <article>
+      <h1>${escapeHtml(p.name || productTitle)}</h1>
+      <img src="${escapeHtml(image)}" alt="${escapeHtml(p.name || productTitle)} বইয়ের কভার">
+      <p>${escapeHtml(description)}</p>
+      ${author ? `<p>লেখক: ${escapeHtml(author)}</p>` : ''}
+      ${category ? `<p>ক্যাটাগরি: ${escapeHtml(category)}</p>` : ''}
+      ${price ? `<p>মূল্য: ৳${escapeHtml(String(price))}</p>` : ''}
+      <p>${Number(p.quantity || 0) > 0 ? 'স্টকে আছে' : 'স্টক শেষ'}</p>
+      <a href="${escapeHtml(productUrl)}">Amolbooks এ বইটি দেখুন</a>
+    </article>
+  </main>`;
                     const html = buildOgHtml({
-                        title: p.seoTitle || p.name || SHOP_NAME,
-                        description: p.seoDescription || `${p.name || ''} — ${SHOP_NAME}`,
+                        title: productTitle,
+                        description,
                         keywords: p.seoKeywords,
-                        image: p.images && p.images.length ? p.images[0] : undefined,
-                        url: `${SITE_URL}/product-details/${p.slug}`,
+                        image,
+                        url: productUrl,
                         type: 'product',
-                        price: p.salePrice ? String(p.salePrice) : undefined,
+                        price: price ? String(price) : undefined,
+                        jsonLd: [productJsonLd, breadcrumbJsonLd],
+                        bodyHtml,
                     });
                     res.setHeader('Content-Type', 'text/html; charset=utf-8');
                     res.setHeader('Cache-Control', 'public, max-age=300');

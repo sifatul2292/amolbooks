@@ -288,38 +288,43 @@ export class AuthorService {
     updateAuthorDto: UpdateAuthorDto,
   ): Promise<ResponsePayload> {
     try {
-      const { name, slug } = updateAuthorDto;
+      const { slug } = updateAuthorDto;
 
-      let finalSlug;
       const fData = await this.authorModel.findById(id);
-
-      // Check Slug
-      if (fData.slug !== slug) {
-        const fData = await this.authorModel.findOne({ slug: slug });
-        if (fData) {
-          finalSlug = this.utilsService.transformToSlug(slug, true);
-        } else {
-          finalSlug = slug;
-        }
-      } else {
-        finalSlug = slug;
+      if (!fData) {
+        throw new NotFoundException('Author not found');
       }
 
-      const defaultData = {
-        slug: finalSlug,
-      };
+      const requestedSlug =
+        typeof slug === 'string' && slug.trim() ? slug.trim() : fData.slug;
+      let finalSlug = requestedSlug;
 
-      const finalData = { ...updateAuthorDto, ...defaultData };
+      // Check Slug
+      if (fData.slug !== requestedSlug) {
+        const existingAuthor = await this.authorModel.findOne({
+          slug: requestedSlug,
+          _id: { $ne: id },
+        });
+        if (existingAuthor) {
+          finalSlug = this.utilsService.transformToSlug(requestedSlug, true);
+        }
+      }
 
-      await this.authorModel.findByIdAndUpdate(id, {
-        $set: finalData,
-      });
+      const finalData = { ...updateAuthorDto, slug: finalSlug };
+      delete finalData.ids;
+
+      await this.authorModel.findByIdAndUpdate(
+        id,
+        { $set: finalData },
+        { runValidators: true },
+      );
       return {
         success: true,
         message: 'Update Successfully',
       } as ResponsePayload;
     } catch (err) {
-      throw new InternalServerErrorException();
+      if (err instanceof NotFoundException) throw err;
+      throw new InternalServerErrorException(err.message);
     }
   }
 

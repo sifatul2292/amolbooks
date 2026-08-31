@@ -34,6 +34,22 @@ let OrderController = OrderController_1 = class OrderController {
         this.orderService = orderService;
         this.logger = new common_1.Logger(OrderController_1.name);
     }
+    async receiveSteadfastWebhook(authorization, body) {
+        await this.orderService.receiveSteadfastWebhook(authorization, body);
+        return {
+            status: 'success',
+            message: 'Webhook received successfully.',
+        };
+    }
+    async markBrowserPurchaseFired(body) {
+        return await this.orderService.markBrowserPurchaseFired(body);
+    }
+    async backfillSteadfastStatus(body) {
+        return await this.orderService.backfillSteadfastStatus(body);
+    }
+    async syncSteadfastInReview() {
+        return await this.orderService.syncSteadfastInReview();
+    }
     async addOrder(addOrderDto, admin) {
         return await this.orderService.addOrderAdmin(admin, addOrderDto);
     }
@@ -58,11 +74,11 @@ let OrderController = OrderController_1 = class OrderController {
     async getRepeatCustomers() {
         return await this.orderService.getRepeatCustomers();
     }
-    async addOrderByUser(addOrderDto, user) {
-        return await this.orderService.addOrderByUser(addOrderDto, user);
+    async addOrderByUser(addOrderDto, user, req) {
+        return await this.orderService.addOrderByUser(addOrderDto, user, req);
     }
-    async addOrderByAnonymous(addOrderDto) {
-        return await this.orderService.addOrderByAnonymous(addOrderDto);
+    async addOrderByAnonymous(addOrderDto, req) {
+        return await this.orderService.addOrderByAnonymous(addOrderDto, req);
     }
     async insertManyOrder(body) {
         return await this.orderService.insertManyOrder(body.data, body.option);
@@ -109,11 +125,11 @@ let OrderController = OrderController_1 = class OrderController {
     async deleteMultipleOrderById(data, checkUsage) {
         return await this.orderService.deleteMultipleOrderById(data.ids, Boolean(checkUsage));
     }
-    async addIncompleteOrderByUser(addIncompleteOrderDto) {
-        return await this.orderService.addIncompleteOrder(addIncompleteOrderDto);
+    async addIncompleteOrderByUser(addIncompleteOrderDto, req) {
+        return await this.orderService.addIncompleteOrder(addIncompleteOrderDto, req);
     }
-    async addIncompleteOrderByAnonymous(addIncompleteOrderDto) {
-        return await this.orderService.addIncompleteOrder(addIncompleteOrderDto);
+    async addIncompleteOrderByAnonymous(addIncompleteOrderDto, req) {
+        return await this.orderService.addIncompleteOrder(addIncompleteOrderDto, req);
     }
     async getAllIncompleteOrders(filterDto, searchString) {
         return await this.orderService.getAllIncompleteOrders(filterDto, searchString);
@@ -121,13 +137,53 @@ let OrderController = OrderController_1 = class OrderController {
     async getIncompleteOrderById(id) {
         return await this.orderService.getIncompleteOrderById(id);
     }
-    async updateIncompleteOrderById(id, updateIncompleteOrderDto) {
-        return await this.orderService.updateIncompleteOrderById(id, updateIncompleteOrderDto);
+    async updateIncompleteOrderById(id, updateIncompleteOrderDto, req) {
+        return await this.orderService.updateIncompleteOrderById(id, updateIncompleteOrderDto, req);
+    }
+    async updateIncompleteOrderByAdmin(id, updateIncompleteOrderDto) {
+        return await this.orderService.updateIncompleteOrderByAdmin(id, updateIncompleteOrderDto);
     }
     async deleteMultipleIncompleteOrderById(deleteDto) {
         return await this.orderService.deleteMultipleIncompleteOrderById(deleteDto.ids);
     }
 };
+__decorate([
+    (0, common_1.Post)('/courier-webhook/steadfast'),
+    (0, common_1.HttpCode)(200),
+    __param(0, (0, common_1.Headers)('authorization')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "receiveSteadfastWebhook", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Post)('/purchase-fired'),
+    (0, common_1.HttpCode)(200),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "markBrowserPurchaseFired", null);
+__decorate([
+    (0, common_1.Post)('/backfill-steadfast-status'),
+    (0, admin_roles_decorator_1.AdminMetaRoles)(admin_roles_enum_1.AdminRoles.SUPER_ADMIN, admin_roles_enum_1.AdminRoles.ADMIN),
+    (0, common_1.UseGuards)(admin_roles_guard_1.AdminRolesGuard),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "backfillSteadfastStatus", null);
+__decorate([
+    (0, common_1.Post)('/sync-steadfast-in-review'),
+    (0, admin_roles_decorator_1.AdminMetaRoles)(admin_roles_enum_1.AdminRoles.SUPER_ADMIN, admin_roles_enum_1.AdminRoles.ADMIN),
+    (0, common_1.UseGuards)(admin_roles_guard_1.AdminRolesGuard),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "syncSteadfastInReview", null);
 __decorate([
     (0, common_1.Post)('/add'),
     (0, common_1.UsePipes)(common_1.ValidationPipe),
@@ -206,16 +262,18 @@ __decorate([
     (0, common_1.UseGuards)(user_jwt_auth_guard_1.UserJwtAuthGuard),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, get_token_user_decorator_1.GetTokenUser)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [order_dto_1.AddOrderDto, Object]),
+    __metadata("design:paramtypes", [order_dto_1.AddOrderDto, Object, Object]),
     __metadata("design:returntype", Promise)
 ], OrderController.prototype, "addOrderByUser", null);
 __decorate([
     (0, common_1.Post)('/add-order-by-anonymous'),
     (0, common_1.UsePipes)(common_1.ValidationPipe),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [order_dto_1.AddOrderDto]),
+    __metadata("design:paramtypes", [order_dto_1.AddOrderDto, Object]),
     __metadata("design:returntype", Promise)
 ], OrderController.prototype, "addOrderByAnonymous", null);
 __decorate([
@@ -383,8 +441,9 @@ __decorate([
     (0, common_1.Post)('/add-incomplete-order-by-user'),
     (0, common_1.UsePipes)(common_1.ValidationPipe),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [incomplete_order_dto_1.AddIncompleteOrderDto]),
+    __metadata("design:paramtypes", [incomplete_order_dto_1.AddIncompleteOrderDto, Object]),
     __metadata("design:returntype", Promise)
 ], OrderController.prototype, "addIncompleteOrderByUser", null);
 __decorate([
@@ -392,8 +451,9 @@ __decorate([
     (0, common_1.Post)('/add-incomplete-order-by-anonymous'),
     (0, common_1.UsePipes)(common_1.ValidationPipe),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [incomplete_order_dto_1.AddIncompleteOrderDto]),
+    __metadata("design:paramtypes", [incomplete_order_dto_1.AddIncompleteOrderDto, Object]),
     __metadata("design:returntype", Promise)
 ], OrderController.prototype, "addIncompleteOrderByAnonymous", null);
 __decorate([
@@ -420,13 +480,24 @@ __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Put)('/update-incomplete-order-by-id/:id'),
     (0, common_1.UsePipes)(common_1.ValidationPipe),
+    __param(0, (0, common_1.Param)('id', mongo_id_validation_pipe_1.MongoIdValidationPipe)),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, incomplete_order_dto_1.UpdateIncompleteOrderDto, Object]),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "updateIncompleteOrderById", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Put)('/update-incomplete-order-admin/:id'),
+    (0, common_1.UsePipes)(common_1.ValidationPipe),
     (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
     __param(0, (0, common_1.Param)('id', mongo_id_validation_pipe_1.MongoIdValidationPipe)),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, incomplete_order_dto_1.UpdateIncompleteOrderDto]),
     __metadata("design:returntype", Promise)
-], OrderController.prototype, "updateIncompleteOrderById", null);
+], OrderController.prototype, "updateIncompleteOrderByAdmin", null);
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Post)('/delete-multiple-incomplete-orders'),

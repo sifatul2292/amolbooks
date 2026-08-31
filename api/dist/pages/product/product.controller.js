@@ -46,6 +46,9 @@ let ProductController = ProductController_1 = class ProductController {
     async getAllProducts(filterProductDto, searchString) {
         return this.productService.getAllProducts(filterProductDto, searchString);
     }
+    async getStockPublishers() {
+        return await this.productService.getStockPublishers();
+    }
     async getStockList(query) {
         return await this.productService.getStockList(query);
     }
@@ -83,6 +86,9 @@ let ProductController = ProductController_1 = class ProductController {
     }
     async getBoughtTogetherByProduct(id) {
         return await this.productService.getBoughtTogetherByProduct(id);
+    }
+    async getCustomersAlsoBought(slug) {
+        return await this.productService.getCustomersAlsoBought(slug);
     }
     async getMetaFeed(res) {
         const csv = await this.productService.getMetaFeed();
@@ -179,6 +185,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ProductController.prototype, "getAllProducts", null);
 __decorate([
+    (0, common_1.Get)('/stock-publishers'),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], ProductController.prototype, "getStockPublishers", null);
+__decorate([
     (0, common_1.Get)('/stock-list'),
     (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
     __param(0, (0, common_1.Query)()),
@@ -264,6 +277,14 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], ProductController.prototype, "getBoughtTogetherByProduct", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Get)('/customers-also-bought/:slug'),
+    __param(0, (0, common_1.Param)('slug')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], ProductController.prototype, "getCustomersAlsoBought", null);
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Get)('/meta-feed'),

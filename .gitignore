@@ -19,6 +19,7 @@ api/.env
 # Logs
 *.log
 npm-debug.log*
+tmp/
 
 # Editor
 .vscode/

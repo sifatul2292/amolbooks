@@ -364,11 +364,12 @@
         try {
           var res = JSON.parse(xhr.responseText);
           if (res && (res.filename || res.url)) {
-            var url;
-            if (res.filename) {
-              url = 'https://apisub.amolbooks.com/api/upload/images/' + res.filename;
-            } else {
-              url = res.url.replace(/https?:\/\/[^/]+\/api\/upload\/images\//, 'https://apisub.amolbooks.com/api/upload/images/');
+            var uploadBase = window.location.hostname === 'localhost'
+              ? window.location.origin
+              : 'https://apisub.amolbooks.com';
+            var url = res.url || (uploadBase + '/api/upload/images/' + res.filename);
+            if (url.indexOf('http://') !== 0 && url.indexOf('https://') !== 0) {
+              url = uploadBase + (url.charAt(0) === '/' ? '' : '/') + url;
             }
             callback(null, url);
           } else { callback(new Error('No URL')); }
@@ -415,32 +416,49 @@
 
       for (var i = 0; i < files.length; i++) {
         (function (file) {
+          var preview = document.getElementById('riu-preview');
+          var wrapper = document.createElement('div');
+          var img = document.createElement('img');
+          var removeBtn = document.createElement('button');
+          var localPreviewUrl = URL.createObjectURL(file);
+          var uploadedUrl = '';
+          var removed = false;
+
+          wrapper.style.cssText = 'position:relative;';
+          img.src = localPreviewUrl;
+          img.alt = file.name || 'নির্বাচিত রিভিউ ছবি';
+          img.style.cssText = 'display:block;width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid #ddd;';
+          removeBtn.type = 'button';
+          removeBtn.textContent = '×';
+          removeBtn.setAttribute('aria-label', 'ছবিটি সরান');
+          removeBtn.style.cssText =
+            'position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#e53935;color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;';
+          removeBtn.addEventListener('click', function () {
+            removed = true;
+            if (uploadedUrl) {
+              var uploadedIndex = pendingImages.indexOf(uploadedUrl);
+              if (uploadedIndex !== -1) pendingImages.splice(uploadedIndex, 1);
+            }
+            URL.revokeObjectURL(localPreviewUrl);
+            wrapper.remove();
+            updateUploadStatus();
+          });
+          wrapper.appendChild(img);
+          wrapper.appendChild(removeBtn);
+          if (preview) preview.appendChild(wrapper);
+
           uploadImage(file, function (err, url) {
             done++;
             if (!err && url) {
-              pendingImages.push(url);
-              var preview = document.getElementById('riu-preview');
-              if (preview) {
-                var wrapper = document.createElement('div');
-                wrapper.style.cssText = 'position:relative;';
-                var img = document.createElement('img');
+              uploadedUrl = url;
+              if (!removed) {
+                pendingImages.push(url);
                 img.src = url;
-                img.style.cssText = 'width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid #ddd;';
-                var removeBtn = document.createElement('button');
-                removeBtn.type = 'button';
-                removeBtn.textContent = '×';
-                removeBtn.style.cssText =
-                  'position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#e53935;color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;';
-                removeBtn.addEventListener('click', function () {
-                  var idx = pendingImages.indexOf(url);
-                  if (idx !== -1) pendingImages.splice(idx, 1);
-                  wrapper.remove();
-                  updateUploadStatus();
-                });
-                wrapper.appendChild(img);
-                wrapper.appendChild(removeBtn);
-                preview.appendChild(wrapper);
               }
+              URL.revokeObjectURL(localPreviewUrl);
+            } else {
+              URL.revokeObjectURL(localPreviewUrl);
+              if (!removed) wrapper.remove();
             }
             if (done === total) updateUploadStatus();
           });

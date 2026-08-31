@@ -54,6 +54,7 @@ export declare const COURIER_METHOD_SETTING: mongoose.Schema<any, mongoose.Model
 }>, {
     status?: string;
     password?: string;
+    website?: string;
     providerName?: string;
     apiKey?: string;
     secretKey?: string;
@@ -62,7 +63,6 @@ export declare const COURIER_METHOD_SETTING: mongoose.Schema<any, mongoose.Model
     address?: string;
     thana?: string;
     district?: string;
-    website?: string;
     facebook?: string;
     company_phone?: string;
     contact_name?: string;

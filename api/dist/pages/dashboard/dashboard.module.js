@@ -20,6 +20,7 @@ const axios_1 = require("@nestjs/axios");
 const decision_dashboard_service_1 = require("./decision-dashboard.service");
 const analytics_action_schema_1 = require("./schema/analytics-action.schema");
 const meta_ad_spend_schema_1 = require("../meta-ads/schema/meta-ad-spend.schema");
+const meta_tracking_health_service_1 = require("./meta-tracking-health.service");
 let DashboardModule = class DashboardModule {
 };
 DashboardModule = __decorate([
@@ -36,7 +37,11 @@ DashboardModule = __decorate([
                 { name: 'AnalyticsAction', schema: analytics_action_schema_1.AnalyticsActionSchema },
             ]),
         ],
-        providers: [dashboard_service_1.DashboardService, decision_dashboard_service_1.DecisionDashboardService],
+        providers: [
+            dashboard_service_1.DashboardService,
+            decision_dashboard_service_1.DecisionDashboardService,
+            meta_tracking_health_service_1.MetaTrackingHealthService,
+        ],
         controllers: [dashboard_controller_1.DashboardController],
     })
 ], DashboardModule);

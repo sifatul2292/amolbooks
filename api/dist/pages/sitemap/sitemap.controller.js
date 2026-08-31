@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SitemapController = void 0;
 const common_1 = require("@nestjs/common");
 const sitemap_service_1 = require("./sitemap.service");
+const sitemap_service_2 = require("./sitemap.service");
 let SitemapController = class SitemapController {
     constructor(sitemapService) {
         this.sitemapService = sitemapService;
@@ -22,7 +23,21 @@ let SitemapController = class SitemapController {
     async getSitemap(res) {
         const sitemap = await this.sitemapService.generateSitemapXml();
         res.setHeader('Content-Type', 'application/xml');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
         res.status(200).send(sitemap);
+    }
+    getRobots(res) {
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        res.status(200).send(this.sitemapService.generateRobotsTxt());
+    }
+    async getSeoLandingPage(_params, res) {
+        const html = await this.sitemapService.generateSeoLandingPageHtml(res.req.path);
+        if (!html)
+            return res.status(404).send('Not found');
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Cache-Control', 'public, max-age=300');
+        res.status(200).send(html);
     }
     async getFbFeed(res) {
         const feed = await this.sitemapService.generateFbFeedXml();
@@ -39,6 +54,23 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], SitemapController.prototype, "getSitemap", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Get)('robots.txt'),
+    __param(0, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], SitemapController.prototype, "getRobots", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Get)(sitemap_service_2.SEO_LANDING_PAGES.map((page) => page.path.replace(/^\//, ''))),
+    __param(0, (0, common_1.Param)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], SitemapController.prototype, "getSeoLandingPage", null);
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Get)('fb-feed.xml'),

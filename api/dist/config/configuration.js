@@ -6,7 +6,9 @@ exports.default = () => ({
     hostname: `http://localhost:${process.env.PORT || 3000}`,
     port: parseInt(process.env.PORT, 10) || 3000,
     mongoCluster: process.env.PRODUCTION_BUILD === 'true'
-        ? `mongodb://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@127.0.0.1:${process.env.DB_PORT}/${process.env.DB_NAME}?authSource=${process.env.AUTH_SOURCE}`
+        ? process.env.DB_USERNAME && process.env.DB_PASSWORD
+            ? `mongodb://${encodeURIComponent(process.env.DB_USERNAME)}:${encodeURIComponent(process.env.DB_PASSWORD)}@127.0.0.1:${process.env.DB_PORT}/${process.env.DB_NAME}?authSource=${process.env.AUTH_SOURCE}`
+            : `mongodb://127.0.0.1:${process.env.DB_PORT}/${process.env.DB_NAME}`
         : `mongodb+srv://rejakazi02:tsVvjOhOIqgbsa23@test-softlab-project.wesh3ba.mongodb.net/alambooks?retryWrites=true&w=majority`,
     userJwtSecret: process.env.JWT_PRIVATE_KEY_USER,
     adminJwtSecret: process.env.JWT_PRIVATE_KEY_ADMIN,
@@ -45,5 +47,6 @@ exports.default = () => ({
     accountGmail: 'softlabit.drive@gmail.com',
     fraudspyApiKey: process.env.FRAUDSPY_API_KEY || 'fs_live_4b3b_7dc0067d-8ed2-4322-915e-37b419008ae9_110e494edd31cc0f',
     greenwebsmsToken: process.env.GREENWEBSMS_TOKEN,
+    steadfastWebhookToken: process.env.STEADFAST_WEBHOOK_TOKEN,
 });
 //# sourceMappingURL=configuration.js.map

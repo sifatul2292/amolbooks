@@ -33,8 +33,12 @@ export declare const MetaAdSpendSchema: Schema<any, import("mongoose").Model<any
     currency: string;
     source: "manual" | "api";
     spend: number;
+    purchases: number;
+    purchaseValue: number;
     breakdown: {
         spend: number;
+        purchases: number;
+        purchaseValue: number;
         campaignId?: string;
         adSetId?: string;
         adId?: string;

@@ -18,15 +18,12 @@ const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const config_1 = require("@nestjs/config");
-const axios_1 = require("@nestjs/axios");
-const rxjs_1 = require("rxjs");
 const https = require("https");
 let MetaAdsService = MetaAdsService_1 = class MetaAdsService {
-    constructor(spendModel, tokenModel, configService, httpService) {
+    constructor(spendModel, tokenModel, configService) {
         this.spendModel = spendModel;
         this.tokenModel = tokenModel;
         this.configService = configService;
-        this.httpService = httpService;
         this.logger = new common_1.Logger(MetaAdsService_1.name);
     }
     getAuthUrl() {
@@ -37,29 +34,45 @@ let MetaAdsService = MetaAdsService_1 = class MetaAdsService {
         const scope = 'ads_read';
         return `https://www.facebook.com/v20.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_type=code`;
     }
+    async graphGetJson(url) {
+        const { body } = await this.httpsGet(url);
+        let parsed;
+        try {
+            parsed = JSON.parse(body);
+        }
+        catch (_a) {
+            throw new Error(`Meta returned an unparseable response: ${body.slice(0, 200)}`);
+        }
+        if (parsed === null || parsed === void 0 ? void 0 : parsed.error) {
+            throw new Error(parsed.error.message || 'Meta Graph API returned an error.');
+        }
+        return parsed;
+    }
     async handleCallback(code) {
-        var _a, _b, _c;
+        var _a, _b;
         const appId = process.env.META_APP_ID;
         const appSecret = process.env.META_APP_SECRET;
         const redirectUri = process.env.META_REDIRECT_URI;
-        const tokenRes = await (0, rxjs_1.firstValueFrom)(this.httpService.get('https://graph.facebook.com/v20.0/oauth/access_token', {
-            params: { client_id: appId, client_secret: appSecret, redirect_uri: redirectUri, code },
-        }));
-        const shortToken = tokenRes.data.access_token;
-        const longRes = await (0, rxjs_1.firstValueFrom)(this.httpService.get('https://graph.facebook.com/v20.0/oauth/access_token', {
-            params: {
-                grant_type: 'fb_exchange_token',
-                client_id: appId,
-                client_secret: appSecret,
-                fb_exchange_token: shortToken,
-            },
-        }));
-        const longToken = longRes.data.access_token;
-        const expiresIn = longRes.data.expires_in || 5184000;
-        const meRes = await (0, rxjs_1.firstValueFrom)(this.httpService.get('https://graph.facebook.com/v20.0/me/adaccounts', {
-            params: { access_token: longToken, fields: 'id,name' },
-        }));
-        const adAccountId = ((_c = (_b = (_a = meRes.data) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b[0]) === null || _c === void 0 ? void 0 : _c.id) || null;
+        const tokenQs = new URLSearchParams({
+            client_id: appId,
+            client_secret: appSecret,
+            redirect_uri: redirectUri,
+            code,
+        });
+        const tokenData = await this.graphGetJson(`https://graph.facebook.com/v20.0/oauth/access_token?${tokenQs.toString()}`);
+        const shortToken = tokenData.access_token;
+        const longQs = new URLSearchParams({
+            grant_type: 'fb_exchange_token',
+            client_id: appId,
+            client_secret: appSecret,
+            fb_exchange_token: shortToken,
+        });
+        const longData = await this.graphGetJson(`https://graph.facebook.com/v20.0/oauth/access_token?${longQs.toString()}`);
+        const longToken = longData.access_token;
+        const expiresIn = longData.expires_in || 5184000;
+        const meQs = new URLSearchParams({ access_token: longToken, fields: 'id,name' });
+        const meData = await this.graphGetJson(`https://graph.facebook.com/v20.0/me/adaccounts?${meQs.toString()}`);
+        const adAccountId = ((_b = (_a = meData === null || meData === void 0 ? void 0 : meData.data) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.id) || null;
         await this.tokenModel.findOneAndUpdate({}, {
             accessToken: longToken,
             adAccountId,
@@ -93,6 +106,14 @@ let MetaAdsService = MetaAdsService_1 = class MetaAdsService {
             req.setTimeout(30000, () => { req.destroy(new Error('Request timeout (30s)')); });
         });
     }
+    pickPurchaseAction(actions) {
+        if (!Array.isArray(actions))
+            return 0;
+        const byType = (type) => actions.find((action) => (action === null || action === void 0 ? void 0 : action.action_type) === type);
+        const match = byType('offsite_conversion.fb_pixel_purchase') || byType('purchase');
+        const value = parseFloat(match === null || match === void 0 ? void 0 : match.value);
+        return Number.isFinite(value) ? value : 0;
+    }
     async syncSpend(startDate, endDate) {
         var _a, _b;
         const token = await this.tokenModel.findOne().lean();
@@ -105,10 +126,12 @@ let MetaAdsService = MetaAdsService_1 = class MetaAdsService {
         const until = endDate || this.daysAgo(1);
         const qs = new URLSearchParams({
             access_token: token.accessToken,
-            fields: 'spend,date_start,campaign_id,campaign_name,adset_id,adset_name,ad_id,ad_name',
+            fields: 'spend,date_start,campaign_id,campaign_name,adset_id,adset_name,ad_id,ad_name,actions,action_values',
             level: 'ad',
             time_increment: '1',
             time_range: JSON.stringify({ since, until }),
+            action_report_time: 'conversion',
+            action_attribution_windows: JSON.stringify(['7d_click', '1d_view']),
             limit: '500',
         });
         const fullUrl = `https://graph.facebook.com/v20.0/${token.adAccountId}/insights?${qs.toString()}`;
@@ -188,12 +211,28 @@ let MetaAdsService = MetaAdsService_1 = class MetaAdsService {
                 adId: row.ad_id || '',
                 adName: row.ad_name || '',
                 spend,
+                purchases: this.pickPurchaseAction(row.actions),
+                purchaseValue: this.pickPurchaseAction(row.action_values),
             });
+        });
+        this.datesBetween(since, until).forEach((date) => {
+            if (!byDate.has(date))
+                byDate.set(date, []);
         });
         let synced = 0;
         for (const [date, breakdown] of byDate.entries()) {
             const spend = breakdown.reduce((sum, row) => sum + row.spend, 0);
-            await this.spendModel.findOneAndUpdate({ date }, { date, spend, source: 'api', currency: 'BDT', breakdown }, { upsert: true, new: true });
+            const purchases = breakdown.reduce((sum, row) => sum + (row.purchases || 0), 0);
+            const purchaseValue = breakdown.reduce((sum, row) => sum + (row.purchaseValue || 0), 0);
+            await this.spendModel.findOneAndUpdate({ date }, {
+                date,
+                spend,
+                purchases,
+                purchaseValue,
+                source: 'api',
+                currency: 'BDT',
+                breakdown,
+            }, { upsert: true, new: true });
             synced++;
         }
         await this.tokenModel.findOneAndUpdate({}, { lastSync: new Date() });
@@ -205,6 +244,8 @@ let MetaAdsService = MetaAdsService_1 = class MetaAdsService {
             .sort({ date: 1 })
             .lean();
         const total = records.reduce((s, r) => s + (r.spend || 0), 0);
+        const totalPurchases = records.reduce((s, r) => s + (r.purchases || 0), 0);
+        const totalPurchaseValue = records.reduce((s, r) => s + (r.purchaseValue || 0), 0);
         const campaignMap = new Map();
         records.forEach((record) => {
             (record.breakdown || []).forEach((row) => {
@@ -214,13 +255,27 @@ let MetaAdsService = MetaAdsService_1 = class MetaAdsService {
                         campaignId: row.campaignId || '',
                         campaignName: row.campaignName || 'Unlabelled campaign',
                         spend: 0,
+                        purchases: 0,
+                        purchaseValue: 0,
                     });
                 }
-                campaignMap.get(key).spend += row.spend || 0;
+                const campaign = campaignMap.get(key);
+                campaign.spend += row.spend || 0;
+                campaign.purchases += row.purchases || 0;
+                campaign.purchaseValue += row.purchaseValue || 0;
             });
         });
         const campaigns = Array.from(campaignMap.values()).sort((a, b) => b.spend - a.spend);
-        return { success: true, data: { daily: records, total, campaigns } };
+        return {
+            success: true,
+            data: {
+                daily: records,
+                total,
+                totalPurchases,
+                totalPurchaseValue,
+                campaigns,
+            },
+        };
     }
     async saveManualSpend(date, spend) {
         const record = await this.spendModel.findOneAndUpdate({ date }, { date, spend, source: 'manual', currency: 'BDT', breakdown: [] }, { upsert: true, new: true });
@@ -287,6 +342,21 @@ let MetaAdsService = MetaAdsService_1 = class MetaAdsService {
     today() {
         return new Date().toISOString().slice(0, 10);
     }
+    datesBetween(since, until) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(since) || !/^\d{4}-\d{2}-\d{2}$/.test(until)) {
+            return [];
+        }
+        const start = new Date(`${since}T00:00:00.000Z`);
+        const end = new Date(`${until}T00:00:00.000Z`);
+        if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end < start) {
+            return [];
+        }
+        const dates = [];
+        for (let cursor = start; cursor <= end && dates.length <= 366; cursor = new Date(cursor.getTime() + 86400000)) {
+            dates.push(cursor.toISOString().slice(0, 10));
+        }
+        return dates;
+    }
     daysAgo(n) {
         const d = new Date();
         d.setDate(d.getDate() - n);
@@ -299,8 +369,7 @@ MetaAdsService = MetaAdsService_1 = __decorate([
     __param(1, (0, mongoose_1.InjectModel)('MetaToken')),
     __metadata("design:paramtypes", [mongoose_2.Model,
         mongoose_2.Model,
-        config_1.ConfigService,
-        axios_1.HttpService])
+        config_1.ConfigService])
 ], MetaAdsService);
 exports.MetaAdsService = MetaAdsService;
 //# sourceMappingURL=meta-ads.service.js.map

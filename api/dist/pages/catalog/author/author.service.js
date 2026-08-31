@@ -236,35 +236,34 @@ let AuthorService = AuthorService_1 = class AuthorService {
     }
     async updateAuthorById(id, updateAuthorDto) {
         try {
-            const { name, slug } = updateAuthorDto;
-            let finalSlug;
+            const { slug } = updateAuthorDto;
             const fData = await this.authorModel.findById(id);
-            if (fData.slug !== slug) {
-                const fData = await this.authorModel.findOne({ slug: slug });
-                if (fData) {
-                    finalSlug = this.utilsService.transformToSlug(slug, true);
-                }
-                else {
-                    finalSlug = slug;
+            if (!fData) {
+                throw new common_1.NotFoundException('Author not found');
+            }
+            const requestedSlug = typeof slug === 'string' && slug.trim() ? slug.trim() : fData.slug;
+            let finalSlug = requestedSlug;
+            if (fData.slug !== requestedSlug) {
+                const existingAuthor = await this.authorModel.findOne({
+                    slug: requestedSlug,
+                    _id: { $ne: id },
+                });
+                if (existingAuthor) {
+                    finalSlug = this.utilsService.transformToSlug(requestedSlug, true);
                 }
             }
-            else {
-                finalSlug = slug;
-            }
-            const defaultData = {
-                slug: finalSlug,
-            };
-            const finalData = Object.assign(Object.assign({}, updateAuthorDto), defaultData);
-            await this.authorModel.findByIdAndUpdate(id, {
-                $set: finalData,
-            });
+            const finalData = Object.assign(Object.assign({}, updateAuthorDto), { slug: finalSlug });
+            delete finalData.ids;
+            await this.authorModel.findByIdAndUpdate(id, { $set: finalData }, { runValidators: true });
             return {
                 success: true,
                 message: 'Update Successfully',
             };
         }
         catch (err) {
-            throw new common_1.InternalServerErrorException();
+            if (err instanceof common_1.NotFoundException)
+                throw err;
+            throw new common_1.InternalServerErrorException(err.message);
         }
     }
     async updateMultipleAuthorById(ids, updateAuthorDto) {

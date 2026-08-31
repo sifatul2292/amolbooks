@@ -1,11 +1,14 @@
 import { DashboardService } from './dashboard.service';
 import { DecisionDashboardService } from './decision-dashboard.service';
+import { MetaTrackingHealthService } from './meta-tracking-health.service';
 import { ResponsePayload } from '../../interfaces/core/response-payload.interface';
 export declare class DashboardController {
     private dashboardService;
     private decisionDashboardService;
+    private metaTrackingHealthService;
     private logger;
-    constructor(dashboardService: DashboardService, decisionDashboardService: DecisionDashboardService);
+    constructor(dashboardService: DashboardService, decisionDashboardService: DecisionDashboardService, metaTrackingHealthService: MetaTrackingHealthService);
+    getMetaTrackingHealth(days: string): Promise<ResponsePayload>;
     getAdminDashboard(searchString: string): Promise<ResponsePayload>;
     getOrderDashboard(): Promise<ResponsePayload>;
     getSalesData(period: string): Promise<any>;

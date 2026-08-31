@@ -1,4 +1,4 @@
-import { PaginationDto } from './pagination.dto';
+import { PaginationDto } from "./pagination.dto";
 export declare class AddIncompleteOrderDto {
     orderId?: string;
     name?: string;
@@ -6,6 +6,9 @@ export declare class AddIncompleteOrderDto {
     email?: string;
     city?: string;
     shippingAddress?: string;
+    division?: any;
+    area?: any;
+    zone?: any;
     paymentType?: string;
     paymentStatus?: string;
     orderStatus?: number;
@@ -20,6 +23,7 @@ export declare class AddIncompleteOrderDto {
     fraudChecker?: any;
     orderedItems?: any[];
     user?: string;
+    attribution?: any;
 }
 export declare class UpdateIncompleteOrderDto {
     name?: string;
@@ -27,6 +31,9 @@ export declare class UpdateIncompleteOrderDto {
     email?: string;
     city?: string;
     shippingAddress?: string;
+    division?: any;
+    area?: any;
+    zone?: any;
     paymentType?: string;
     paymentStatus?: string;
     orderStatus?: number;
@@ -40,6 +47,7 @@ export declare class UpdateIncompleteOrderDto {
     adminNote?: string;
     fraudChecker?: any;
     orderedItems?: any[];
+    attribution?: any;
 }
 export declare class FilterIncompleteOrderDto {
     name?: string;

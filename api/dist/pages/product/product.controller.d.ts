@@ -15,6 +15,7 @@ export declare class ProductController {
         option: OptionProductDto;
     }): Promise<ResponsePayload>;
     getAllProducts(filterProductDto: FilterAndPaginationProductDto, searchString: string): Promise<ResponsePayload>;
+    getStockPublishers(): Promise<ResponsePayload>;
     getStockList(query: Record<string, any>): Promise<ResponsePayload>;
     getUrgentStock(query: Record<string, any>): Promise<ResponsePayload>;
     updateStock(id: string, body: UpdateStockDto, req: Request): Promise<ResponsePayload>;
@@ -30,6 +31,7 @@ export declare class ProductController {
         productIds: string[];
     }): Promise<ResponsePayload>;
     getBoughtTogetherByProduct(id: string): Promise<ResponsePayload>;
+    getCustomersAlsoBought(slug: string): Promise<ResponsePayload>;
     getMetaFeed(res: Response): Promise<void>;
     getProductById(id: string, select: any): Promise<ResponsePayload>;
     getProductBySlug(slug: string, select: string): Promise<ResponsePayload>;

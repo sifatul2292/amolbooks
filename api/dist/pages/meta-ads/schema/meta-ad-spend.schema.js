@@ -5,6 +5,8 @@ const mongoose_1 = require("mongoose");
 exports.MetaAdSpendSchema = new mongoose_1.Schema({
     date: { type: String, required: true },
     spend: { type: Number, required: true, default: 0 },
+    purchases: { type: Number, default: 0 },
+    purchaseValue: { type: Number, default: 0 },
     source: { type: String, enum: ['manual', 'api'], default: 'manual' },
     currency: { type: String, default: 'BDT' },
     breakdown: {
@@ -16,6 +18,8 @@ exports.MetaAdSpendSchema = new mongoose_1.Schema({
                 adId: String,
                 adName: String,
                 spend: { type: Number, default: 0 },
+                purchases: { type: Number, default: 0 },
+                purchaseValue: { type: Number, default: 0 },
             }],
         default: [],
     },

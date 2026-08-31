@@ -47,6 +47,18 @@ __decorate([
 ], AddIncompleteOrderDto.prototype, "shippingAddress", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], AddIncompleteOrderDto.prototype, "division", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], AddIncompleteOrderDto.prototype, "area", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], AddIncompleteOrderDto.prototype, "zone", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], AddIncompleteOrderDto.prototype, "paymentType", void 0);
@@ -114,6 +126,11 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], AddIncompleteOrderDto.prototype, "user", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsObject)(),
+    __metadata("design:type", Object)
+], AddIncompleteOrderDto.prototype, "attribution", void 0);
 exports.AddIncompleteOrderDto = AddIncompleteOrderDto;
 class UpdateIncompleteOrderDto {
 }
@@ -142,6 +159,18 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateIncompleteOrderDto.prototype, "shippingAddress", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], UpdateIncompleteOrderDto.prototype, "division", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], UpdateIncompleteOrderDto.prototype, "area", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], UpdateIncompleteOrderDto.prototype, "zone", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
@@ -206,6 +235,11 @@ __decorate([
     (0, class_validator_1.IsArray)(),
     __metadata("design:type", Array)
 ], UpdateIncompleteOrderDto.prototype, "orderedItems", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsObject)(),
+    __metadata("design:type", Object)
+], UpdateIncompleteOrderDto.prototype, "attribution", void 0);
 exports.UpdateIncompleteOrderDto = UpdateIncompleteOrderDto;
 class FilterIncompleteOrderDto {
 }

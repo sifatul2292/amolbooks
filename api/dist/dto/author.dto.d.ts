@@ -2,9 +2,14 @@ import { PaginationDto } from './pagination.dto';
 export declare class AddAuthorDto {
     name: string;
     slug: string;
-    bannerImage: string;
-    startDateTime: any;
-    endDateTime: any;
+    nameEn?: string;
+    image?: string;
+    address?: string;
+    addressEn?: string;
+    description?: string;
+    descriptionEn?: string;
+    birthDate?: Date | string;
+    priority?: number | string;
 }
 export declare class FilterAuthorDto {
     name: string;
@@ -16,12 +21,16 @@ export declare class OptionAuthorDto {
     deleteMany: boolean;
 }
 export declare class UpdateAuthorDto {
-    name: string;
-    slug: string;
-    authorCode: string;
-    bannerImage: string;
-    startDateTime: any;
-    endDateTime: any;
+    name?: string;
+    slug?: string;
+    nameEn?: string;
+    image?: string;
+    address?: string;
+    addressEn?: string;
+    description?: string;
+    descriptionEn?: string;
+    birthDate?: Date | string;
+    priority?: number | string;
     ids: string[];
 }
 export declare class FilterAndPaginationAuthorDto {

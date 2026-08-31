@@ -38,5 +38,6 @@ declare const _default: () => {
     accountGmail: string;
     fraudspyApiKey: string;
     greenwebsmsToken: string;
+    steadfastWebhookToken: string;
 };
 export default _default;

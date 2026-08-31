@@ -6,7 +6,9 @@ export default () => ({
   port: parseInt(process.env.PORT, 10) || 3000,
   mongoCluster:
     process.env.PRODUCTION_BUILD === 'true'
-      ? `mongodb://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@127.0.0.1:${process.env.DB_PORT}/${process.env.DB_NAME}?authSource=${process.env.AUTH_SOURCE}`
+      ? process.env.DB_USERNAME && process.env.DB_PASSWORD
+        ? `mongodb://${encodeURIComponent(process.env.DB_USERNAME)}:${encodeURIComponent(process.env.DB_PASSWORD)}@127.0.0.1:${process.env.DB_PORT}/${process.env.DB_NAME}?authSource=${process.env.AUTH_SOURCE}`
+        : `mongodb://127.0.0.1:${process.env.DB_PORT}/${process.env.DB_NAME}`
       : `mongodb+srv://rejakazi02:tsVvjOhOIqgbsa23@test-softlab-project.wesh3ba.mongodb.net/alambooks?retryWrites=true&w=majority`,
   // mongoCluster: `mongodb://localhost:${process.env.DB_PORT}/${process.env.DB_NAME}`,
   // mongoCluster: `mongodb+srv://softlabit:M5LiBL43wpMtrEy9@test-softlab.ptacstn.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`,

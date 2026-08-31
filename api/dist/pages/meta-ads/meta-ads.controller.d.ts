@@ -1,6 +1,7 @@
 import { MetaAdsService } from './meta-ads.service';
 export declare class MetaAdsController {
     private readonly metaAdsService;
+    private readonly logger;
     constructor(metaAdsService: MetaAdsService);
     getAuthUrl(): {
         success: boolean;

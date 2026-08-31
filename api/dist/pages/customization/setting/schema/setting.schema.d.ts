@@ -24,6 +24,7 @@ export declare const SettingSchema: mongoose.Schema<any, mongoose.Model<any, any
     courierMethods: mongoose.Types.DocumentArray<{
         status?: string;
         password?: string;
+        website?: string;
         providerName?: string;
         apiKey?: string;
         secretKey?: string;
@@ -32,7 +33,6 @@ export declare const SettingSchema: mongoose.Schema<any, mongoose.Model<any, any
         address?: string;
         thana?: string;
         district?: string;
-        website?: string;
         facebook?: string;
         company_phone?: string;
         contact_name?: string;

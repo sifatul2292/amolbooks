@@ -32,12 +32,12 @@ export declare const ManualSaleSchema: Schema<any, import("mongoose").Model<any,
     products: any[];
     note: string;
     date: string;
+    orders: number;
     source: "whatsapp" | "phone" | "other";
     campaign: string;
-    paymentStatus: "partial" | "unpaid" | "paid";
     deliveryCharge: number;
+    paymentStatus: "partial" | "unpaid" | "paid";
     revenue: number;
-    orders: number;
     customerPhone: string;
     outcome: "active" | "delivered" | "cancelled" | "refunded" | "returned";
     actualCourierCost?: number;

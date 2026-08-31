@@ -25,13 +25,33 @@ export class AddAuthorDto {
 
   @IsOptional()
   @IsString()
-  bannerImage: string;
+  nameEn?: string;
 
-  @IsNotEmpty()
-  startDateTime: any;
+  @IsOptional()
+  @IsString()
+  image?: string;
 
-  @IsNotEmpty()
-  endDateTime: any;
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @IsOptional()
+  @IsString()
+  addressEn?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  descriptionEn?: string;
+
+  @IsOptional()
+  birthDate?: Date | string;
+
+  @IsOptional()
+  priority?: number | string;
 }
 
 export class FilterAuthorDto {
@@ -59,27 +79,43 @@ export class OptionAuthorDto {
 }
 
 export class UpdateAuthorDto {
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  name: string;
+  name?: string;
 
   @IsOptional()
   @IsString()
-  slug: string;
-
-  @IsNotEmpty()
-  @IsString()
-  authorCode: string;
+  slug?: string;
 
   @IsOptional()
   @IsString()
-  bannerImage: string;
+  nameEn?: string;
 
-  @IsNotEmpty()
-  startDateTime: any;
+  @IsOptional()
+  @IsString()
+  image?: string;
 
-  @IsNotEmpty()
-  endDateTime: any;
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @IsOptional()
+  @IsString()
+  addressEn?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  descriptionEn?: string;
+
+  @IsOptional()
+  birthDate?: Date | string;
+
+  @IsOptional()
+  priority?: number | string;
 
   @IsOptional()
   @IsArray()

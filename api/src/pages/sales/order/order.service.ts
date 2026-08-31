@@ -53,6 +53,7 @@ import { AnalyticsService } from '../../../shared/analytics/analytics.service';
 import { StockMovement } from '../../../interfaces/common/stock-movement.interface';
 import { withCalculatedSpecialPackageSubtotal } from '../../../shared/utils/special-package-price.util';
 const ObjectId = Types.ObjectId;
+const FREE_NOTEBOOK_MIN_AMOUNT = 499;
 
 // Process-level TTL cache for the public recent-buyers feed. Caps DB load on a
 // high-traffic live site to ~1 query per product slug per RECENT_BUYERS_TTL_MS,
@@ -4608,8 +4609,8 @@ export class OrderService {
    *
    * Trigger A deliberately excludes the gift product's own price from the
    * qualifying subtotal — otherwise a customer could add the ৳150 notebook
-   * itself to push their cart just over ৳750 and "earn" a discount on a
-   * purchase that was never really ৳750 of other books. Mutates `products`
+   * itself to push their cart just over ৳499 and "earn" a discount on a
+   * purchase that was never really ৳499 of other books. Mutates `products`
    * in place if the gift product is already a cart line (customer added it
    * themselves, e.g. via the checkout-page auto-add widget), re-pricing it
    * to 0 instead of charging it and instead of skipping the discount — the
@@ -4623,9 +4624,22 @@ export class OrderService {
     finalData: any[],
   ): Promise<any | null> {
     try {
-      const cfg = JSON.parse(
-        JSON.stringify(await this.orderOfferModel.findOne({})),
-      );
+      const cfg =
+        JSON.parse(JSON.stringify(await this.orderOfferModel.findOne({}))) ||
+        {
+          giftEnabled: true,
+          giftMinAmount: FREE_NOTEBOOK_MIN_AMOUNT,
+          giftProduct: {
+            _id: '6a3c1d665676acb52a082df5',
+            name: 'Amol Notebook',
+            slug: 'Amol Notebook',
+            image:
+              'https://apisub.amolbooks.com/api/upload/images/free-notebook-a015.webp',
+          },
+          giftBuyXProductSlug: '500 shobder kuraner 75%',
+          giftBuyXQty: 2,
+          giftLabel: 'ফ্রি নোটবুক',
+        };
       if (
         !cfg ||
         !cfg.giftEnabled ||
@@ -4655,8 +4669,7 @@ export class OrderService {
 
       let eligible = false;
       if (
-        cfg.giftMinAmount &&
-        giftEligibleSubTotal >= Number(cfg.giftMinAmount)
+        giftEligibleSubTotal >= FREE_NOTEBOOK_MIN_AMOUNT
       ) {
         eligible = true;
       }

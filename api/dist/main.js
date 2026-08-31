@@ -10,11 +10,15 @@ const express = require("express");
 const helmet = require("helmet");
 const compression = require("compression");
 const crypto_1 = require("crypto");
+const https_1 = require("https");
 const redirect_url_middleware_1 = require("./middleware/redirect-url.middleware");
 const storefront_price_script_1 = require("./storefront-price-script");
 const storefront_special_package_script_1 = require("./storefront-special-package-script");
 const admin_incomplete_order_editor_script_1 = require("./admin-incomplete-order-editor-script");
 const storefront_attribution_script_1 = require("./storefront-attribution-script");
+const storefront_product_sections_script_1 = require("./storefront-product-sections-script");
+const sitemap_service_1 = require("./pages/sitemap/sitemap.service");
+const SEO_BOT_UA_REGEX = /facebookexternalhit|facebot|Twitterbot|LinkedInBot|Googlebot|bingbot|Slurp|DuckDuckBot|YandexBot|redditbot|WhatsApp|TelegramBot|Discordbot|Slackbot|vkShare|W3C_Validator|pinterest|Applebot/i;
 async function bootstrap() {
     const logger = new common_1.Logger('Bootstrap');
     const app = await core_1.NestFactory.create(app_module_1.AppModule, { cors: true });
@@ -49,6 +53,7 @@ async function bootstrap() {
         credentials: true,
     });
     let redirectMiddlewareRef = null;
+    let sitemapServiceRef = null;
     app.use((req, res, next) => {
         if (!redirectMiddlewareRef)
             return next();
@@ -58,7 +63,11 @@ async function bootstrap() {
     app.use('/upload', express.static((0, path_1.join)(__dirname, '..', 'upload')));
     const storefrontIndexPath = (0, path_1.join)(__dirname, '..', '..', 'ui', 'dist', 'angular-ui', 'browser', 'index.html');
     const storefrontPriceScriptFileName = 'storefront-price-english-digits.js';
-    const storefrontPriceScriptTag = `<script src="/${storefrontPriceScriptFileName}?v=20260714-3" defer></script>`;
+    const storefrontPriceScriptVersion = (0, crypto_1.createHash)('sha256')
+        .update(storefront_price_script_1.STOREFRONT_PRICE_SCRIPT)
+        .digest('hex')
+        .slice(0, 12);
+    const storefrontPriceScriptTag = `<script src="/${storefrontPriceScriptFileName}?v=${storefrontPriceScriptVersion}" defer></script>`;
     const storefrontSpecialPackageScriptFileName = 'storefront-special-package.js';
     const storefrontSpecialPackageScriptVersion = (0, crypto_1.createHash)('sha256')
         .update(storefront_special_package_script_1.STOREFRONT_SPECIAL_PACKAGE_SCRIPT)
@@ -71,8 +80,18 @@ async function bootstrap() {
         .digest('hex')
         .slice(0, 12);
     const storefrontAttributionScriptTag = `<script src="/${storefrontAttributionScriptFileName}?v=${storefrontAttributionScriptVersion}" defer></script>`;
+    const storefrontProductSectionsScriptFileName = 'storefront-product-sections.js';
+    const storefrontProductSectionsScriptPath = (0, path_1.join)(__dirname, '..', '..', 'ui', 'dist', 'angular-ui', 'browser', storefrontProductSectionsScriptFileName);
+    const storefrontProductSectionsScriptVersion = (0, crypto_1.createHash)('sha256')
+        .update(storefront_product_sections_script_1.STOREFRONT_PRODUCT_SECTIONS_SCRIPT)
+        .digest('hex')
+        .slice(0, 12);
+    const storefrontProductSectionsScriptTag = `<script src="/${storefrontProductSectionsScriptFileName}?v=${storefrontProductSectionsScriptVersion}" defer></script>`;
     const storefrontGtmLoaderUrl = 'https://server.amolbooks.com/tagioo-loader/gtm.js?id=GTM-NNZV54QJ';
     const storefrontGtmNoscriptUrl = 'https://server.amolbooks.com/tagioo-loader/ns.html?id=GTM-NNZV54QJ';
+    const storefrontLocalAnalyticsGuardMarker = 'window.__amolAnalyticsDisabled=';
+    const storefrontLocalAnalyticsGuard = `<script>${storefrontLocalAnalyticsGuardMarker}['localhost','127.0.0.1','::1'].indexOf(window.location.hostname)!==-1;</script>`;
+    const storefrontGtmLocalhostGuardMarker = '/* amol-local-analytics-guard */';
     const legacyStapeGtmLoaderUrlPattern = /https:\/\/load\.server\.amolbooks\.com\/2kpblypwe\.js\?8=[^'"\s<]+/g;
     const legacyStapeGtmNoscriptUrlPattern = /https:\/\/load\.server\.amolbooks\.com\/ns\.html\?id=GTM-NNZV54QJ/g;
     const legacyStorefrontViewItemMirrorCode = 'var ec=obj.ecommerce||{},items=toItems(ec),val=cartVal(items);';
@@ -85,6 +104,38 @@ async function bootstrap() {
         if(items[0])items[0].price=finalViewValue;
       }
     }`;
+    const legacyStorefrontStapePushCode = `function _pushStape(obj){
+    try{
+      var s=stapeOf(obj);s.__stape=true;`;
+    const legacyStorefrontStapeDuplicateGuardMarker = "var _lastStapeSignature='',_lastStapeAt=0;";
+    const legacyStorefrontStapeGuardCode = `${legacyStorefrontStapeDuplicateGuardMarker}
+  function _pushStape(obj){
+    try{
+      var s=stapeOf(obj);s.__stape=true;
+      var firstItem=((s.ecommerce||{}).items||[])[0]||{};
+      var signature=String(s.event||'')+'|'+String(firstItem.item_id||'')+'|'+String((s.ecommerce||{}).transaction_id||'')+'|'+String((s.ecommerce||{}).value||'');
+      var now=Date.now();
+      if(signature&&signature===_lastStapeSignature&&now-_lastStapeAt<750)return;
+      _lastStapeSignature=signature;
+      _lastStapeAt=now;`;
+    const storefrontStapeDuplicateGuardMarker = 'window.__amolStapeDedupWindowMs=5000;';
+    const storefrontStapePushCode = `${storefrontStapeDuplicateGuardMarker}
+  function _pushStape(obj){
+    try{
+      var s=stapeOf(obj);s.__stape=true;
+      var sec=s.ecommerce||{},mirrorItems=sec.items||[];
+      var itemSignature=mirrorItems.map(function(item){return String(item.item_id||'')+':'+String(item.quantity||1);}).join(',');
+      var signature=String(s.event||'')+'|'+itemSignature+'|'+String(sec.transaction_id||'')+'|'+String(sec.value||'');
+      var now=Date.now();
+      var dedupCache=window.__amolStapeDedupCache=window.__amolStapeDedupCache||{};
+      if(signature&&dedupCache[signature]&&now-dedupCache[signature]<window.__amolStapeDedupWindowMs)return;
+      dedupCache[signature]=now;
+      Object.keys(dedupCache).forEach(function(key){if(now-dedupCache[key]>60000)delete dedupCache[key];});
+      if(!s.event_id){
+        s.event_id=sec.transaction_id
+          ?'order_'+String(sec.transaction_id)
+          :'amol_'+String(s.event||'event')+'_'+now+'_'+Math.random().toString(36).slice(2,8);
+      }`;
     const legacyStorefrontCartValueCode = 'function cartVal(items){return items.reduce(function(s,i){return s+(i.price||0)*(i.quantity||1);},0);}';
     const storefrontFinalPriceMarker = 'function finalTrackingPrice(p){';
     const storefrontFinalPriceHelpers = `${legacyStorefrontCartValueCode}
@@ -117,6 +168,33 @@ async function bootstrap() {
     const storefrontCartCheckoutMirrorMarker = "if(obj.event==='add_to_cart'||obj.event==='begin_checkout')items=applyTrackingPrices(items);";
     const storefrontCartCheckoutMirrorCode = `var ec=obj.ecommerce||{},items=toItems(ec);${storefrontCartCheckoutMirrorMarker}var val=cartVal(items);`;
     const storefrontProductResponseCacheMarker = 'if(Array.isArray(d.data))d.data.forEach(rememberTrackingProduct);';
+    const legacyStorefrontBeginCheckoutCode = `function pushBeginCheckout(){
+    if(_checkoutFired)return;
+    var items=getCartItems();
+    if(!items.length)return;
+    _checkoutFired=true;
+    var val=cartVal(items);
+    var dl=window.dataLayer;
+    dl.push({ecommerce:null});
+    dl.push({event:'begin_checkout_stape',ecommerce:{currency:'BDT',value:val,items:items},__stape:true});
+  }`;
+    const storefrontBeginCheckoutMarker = 'var _checkoutPriceRetryCount=0;';
+    const storefrontBeginCheckoutCode = `${storefrontBeginCheckoutMarker}
+  function pushBeginCheckout(){
+    if(_checkoutFired)return;
+    var items=getCartItems();
+    if(!items.length)return;
+    var val=cartVal(items);
+    if(!(val>0)){
+      if(_checkoutPriceRetryCount++<40)setTimeout(pushBeginCheckout,150);
+      return;
+    }
+    _checkoutPriceRetryCount=0;
+    _checkoutFired=true;
+    var dl=window.dataLayer;
+    dl.push({ecommerce:null});
+    dl.push({event:'begin_checkout_stape',ecommerce:{currency:'BDT',value:val,items:items},__stape:true});
+  }`;
     const legacyStorefrontSuccessfulResponseCode = 'if(!d||!d.success)return;';
     const storefrontSuccessfulResponseCode = `${legacyStorefrontSuccessfulResponseCode}
         ${storefrontProductResponseCacheMarker}
@@ -149,6 +227,8 @@ async function bootstrap() {
   }, 10000); });`;
     const storefrontGtmBootstrapMarker = 'window.__amolGtmBootstrapScheduled=true;';
     const storefrontGtmBootstrapCode = `(function(){
+    if(window.__amolAnalyticsDisabled)return;
+    ${storefrontGtmLocalhostGuardMarker}
     if(window.__amolGtmBootstrapScheduled)return;
     ${storefrontGtmBootstrapMarker}
     function loadGtm(){
@@ -158,7 +238,10 @@ async function bootstrap() {
       var normalizer=document.createElement('script');
       normalizer.src='dl-normalize.js';
       normalizer.defer=true;
-      normalizer.onload=function(){
+      var containerStarted=false;
+      var loadContainer=function(){
+        if(containerStarted)return;
+        containerStarted=true;
         window.dataLayer.push({'gtm.start':new Date().getTime(),event:'gtm.js'});
         var s=document.createElement('script');
         s.async=true;
@@ -171,20 +254,55 @@ async function bootstrap() {
         s.onerror=function(){window.__amolGtmLoading=false;};
         document.head.appendChild(s);
       };
-      normalizer.onerror=function(){window.__amolGtmLoading=false;};
+      normalizer.onload=loadContainer;
+      // The normalizer improves the data model but must never become a single
+      // point of failure for GA4/Meta. A missing or blocked optional asset used
+      // to prevent the Tagioo container from loading at all.
+      normalizer.onerror=loadContainer;
       document.head.appendChild(normalizer);
+      setTimeout(loadContainer,1500);
     }
     if(window.location.pathname.indexOf('order-success')!==-1){
       loadGtm();
     }else{
-      window.addEventListener('load',function(){setTimeout(loadGtm,10000);});
+      // Deferred until after first paint, but no longer on a 10s timer. That
+      // timer meant the single DOM-Ready page_view landed on whichever route
+      // the visitor had already navigated to, not the page they arrived on —
+      // and a visitor who left inside 10s was never counted at all. Load at
+      // window load, or at the first interaction if that happens sooner.
+      var started=false;
+      var start=function(){if(started)return;started=true;loadGtm();};
+      if(document.readyState==='complete'){start();}
+      else{window.addEventListener('load',start);}
+      var wake=['pointerdown','keydown','touchstart'];
+      for(var w=0;w<wake.length;w++){
+        window.addEventListener(wake[w],start,{once:true,passive:true});
+      }
     }
   })();`;
     const storefrontPendingPurchaseHelperMarker = 'window.__amolFlushPendingPurchase=function(){';
+    const legacyStorefrontPendingPurchasePushCode = `var payload=window.__amolEnsurePurchaseExternalId(JSON.parse(raw));
+      window.dataLayer=window.dataLayer||[];
+      window.dataLayer.push({ecommerce:null});
+      window.dataLayer.push(payload);
+      sessionStorage.removeItem('_pendingPurchase');`;
+    const storefrontServerAuthoritativePurchaseMarker = 'window.__amolPurchaseDeliveredServerSide=true;';
+    const storefrontPendingPurchaseClearCode = `var payload=window.__amolEnsurePurchaseExternalId(JSON.parse(raw));
+      ${storefrontServerAuthoritativePurchaseMarker}
+      sessionStorage.removeItem('_pendingPurchase');`;
+    const storefrontStablePurchaseEventMarker = 'window.__amolPurchaseUsesStableEventId=true;';
+    const storefrontPendingPurchasePushCode = `var payload=window.__amolEnsurePurchaseExternalId(JSON.parse(raw));
+      ${storefrontStablePurchaseEventMarker}
+      window.dataLayer=window.dataLayer||[];
+      window.dataLayer.push({ecommerce:null});
+      window.dataLayer.push(payload);
+      sessionStorage.removeItem('_pendingPurchase');`;
     const storefrontPurchaseExternalIdHelperMarker = 'window.__amolEnsurePurchaseExternalId=function(payload){';
     const storefrontPurchaseExternalIdHelper = `
   window.__amolEnsurePurchaseExternalId=function(payload){
     if(!payload||typeof payload!=='object')return payload;
+    var transactionId=payload.ecommerce&&payload.ecommerce.transaction_id;
+    if(transactionId&&!payload.event_id)payload.event_id='order_'+String(transactionId);
     payload.user_data=payload.user_data||{};
     if(payload.user_data.customer_id)return payload;
     try{
@@ -209,11 +327,7 @@ ${storefrontPurchaseExternalIdHelper}
     try{raw=sessionStorage.getItem('_pendingPurchase');}catch(e){return false;}
     if(!raw)return true;
     try{
-      var payload=window.__amolEnsurePurchaseExternalId(JSON.parse(raw));
-      window.dataLayer=window.dataLayer||[];
-      window.dataLayer.push({ecommerce:null});
-      window.dataLayer.push(payload);
-      sessionStorage.removeItem('_pendingPurchase');
+      ${storefrontPendingPurchasePushCode}
       return true;
     }catch(e){return false;}
   };
@@ -227,13 +341,35 @@ ${storefrontPurchaseExternalIdHelper}
     const legacyStorefrontPriceScriptTagPattern = /\s*<script src="\/storefront-price-english-digits\.js(?:\?v=[^"]*)?" defer><\/script>/g;
     const legacyStorefrontSpecialPackageScriptTagPattern = /\s*<script src="\/storefront-special-package\.js(?:\?v=[^"]*)?" defer><\/script>/g;
     const legacyStorefrontAttributionScriptTagPattern = /\s*<script src="\/storefront-attribution\.js(?:\?v=[^"]*)?" defer><\/script>/g;
+    const legacyStorefrontProductSectionsScriptTagPattern = /\s*<script src="\/storefront-product-sections\.js(?:\?v=[^"]*)?" defer><\/script>/g;
+    const storefrontMainBundleTagPattern = /<script src="(main\.[^"?]+\.js)(?:\?v=[^"]*)?" type="module"><\/script>/;
     const staticAssetPattern = /\.(js|css|map|json|xml|txt|ico|svg|png|jpg|jpeg|gif|webp|woff2?|ttf|eot)$/i;
+    function isLocalStorefrontHost(hostname) {
+        return ['localhost', '127.0.0.1', '::1'].includes(String(hostname || '').toLowerCase());
+    }
     function replaceStorefrontTrackingLoader(indexHtml) {
         const trackingHtml = indexHtml
             .replace(legacyStapeGtmLoaderUrlPattern, storefrontGtmLoaderUrl)
             .replace(legacyStapeGtmNoscriptUrlPattern, storefrontGtmNoscriptUrl)
             .replace('<!-- GTM/Stape loads after first paint. -->', '<!-- GTM/Tagioo loads after first paint. -->');
         let patchedTrackingHtml = trackingHtml;
+        if (!patchedTrackingHtml.includes(storefrontLocalAnalyticsGuardMarker)) {
+            patchedTrackingHtml = patchedTrackingHtml.replace('<head>', `<head>${storefrontLocalAnalyticsGuard}`);
+        }
+        if (!patchedTrackingHtml.includes(storefrontGtmLocalhostGuardMarker)) {
+            patchedTrackingHtml = patchedTrackingHtml.replace('(function(){\n    if(window.__amolGtmBootstrapScheduled)return;', `(function(){\n    if(window.__amolAnalyticsDisabled)return;\n    ${storefrontGtmLocalhostGuardMarker}\n    if(window.__amolGtmBootstrapScheduled)return;`);
+        }
+        if (!patchedTrackingHtml.includes('amol-google-ads-localhost-guard')) {
+            patchedTrackingHtml = patchedTrackingHtml.replace("window.addEventListener('load', function () {\n    setTimeout(function () {\n      var s = document.createElement('script');\n      s.async = true;\n      s.src = 'https://www.googletagmanager.com/gtag/js?id=AW-18176858056';", "window.addEventListener('load', function () {\n    if (window.__amolAnalyticsDisabled) return;\n    /* amol-google-ads-localhost-guard */\n    setTimeout(function () {\n      var s = document.createElement('script');\n      s.async = true;\n      s.src = 'https://www.googletagmanager.com/gtag/js?id=AW-18176858056';");
+        }
+        if (!patchedTrackingHtml.includes('amol-posthog-localhost-guard')) {
+            patchedTrackingHtml = patchedTrackingHtml.replace("<!-- PostHog Analytics loads after first paint. -->\n  <script>\n  window.addEventListener('load', function () { setTimeout(function () {", "<!-- PostHog Analytics loads after first paint. -->\n  <script>\n  window.addEventListener('load', function () {\n    if (window.__amolAnalyticsDisabled) return;\n    /* amol-posthog-localhost-guard */\n    setTimeout(function () {");
+        }
+        if (!patchedTrackingHtml.includes(storefrontStapeDuplicateGuardMarker)) {
+            patchedTrackingHtml = patchedTrackingHtml.includes(legacyStorefrontStapeDuplicateGuardMarker)
+                ? patchedTrackingHtml.replace(legacyStorefrontStapeGuardCode, storefrontStapePushCode)
+                : patchedTrackingHtml.replace(legacyStorefrontStapePushCode, storefrontStapePushCode);
+        }
         if (!patchedTrackingHtml.includes(storefrontViewItemMirrorMarker)) {
             patchedTrackingHtml = patchedTrackingHtml.replace(legacyStorefrontViewItemMirrorCode, storefrontViewItemMirrorCode);
         }
@@ -245,6 +381,9 @@ ${storefrontPurchaseExternalIdHelper}
         }
         if (!patchedTrackingHtml.includes(storefrontProductResponseCacheMarker)) {
             patchedTrackingHtml = patchedTrackingHtml.replace(legacyStorefrontSuccessfulResponseCode, storefrontSuccessfulResponseCode);
+        }
+        if (!patchedTrackingHtml.includes(storefrontBeginCheckoutMarker)) {
+            patchedTrackingHtml = patchedTrackingHtml.replace(legacyStorefrontBeginCheckoutCode, storefrontBeginCheckoutCode);
         }
         patchedTrackingHtml = patchedTrackingHtml
             .replace(legacyStorefrontAddToCartPriceCode, storefrontAddToCartPriceCode)
@@ -266,7 +405,26 @@ ${storefrontPurchaseExternalIdHelper}
                 storefrontPendingPurchaseHelperMarker)
                 .replace('var payload=JSON.parse(raw);', 'var payload=window.__amolEnsurePurchaseExternalId(JSON.parse(raw));');
         }
+        if (!patchedTrackingHtml.includes(storefrontStablePurchaseEventMarker)) {
+            patchedTrackingHtml = patchedTrackingHtml
+                .replace(storefrontPendingPurchaseClearCode, storefrontPendingPurchasePushCode)
+                .replace(legacyStorefrontPendingPurchasePushCode, storefrontPendingPurchasePushCode);
+        }
         return patchedTrackingHtml;
+    }
+    function versionStorefrontMainBundle(indexHtml) {
+        return indexHtml.replace(storefrontMainBundleTagPattern, (tag, fileName) => {
+            try {
+                const version = (0, crypto_1.createHash)('sha256')
+                    .update((0, fs_1.readFileSync)((0, path_1.join)(__dirname, '..', '..', 'ui', 'dist', 'angular-ui', 'browser', fileName)))
+                    .digest('hex')
+                    .slice(0, 12);
+                return tag.replace(fileName, `${fileName}?v=${version}`);
+            }
+            catch (_error) {
+                return tag;
+            }
+        });
     }
     function installStaticStorefrontPatch() {
         try {
@@ -276,12 +434,14 @@ ${storefrontPurchaseExternalIdHelper}
             (0, fs_1.writeFileSync)(storefrontSpecialPackageScriptPath, storefront_special_package_script_1.STOREFRONT_SPECIAL_PACKAGE_SCRIPT, 'utf8');
             const storefrontAttributionScriptPath = (0, path_1.join)(__dirname, '..', '..', 'ui', 'dist', 'angular-ui', 'browser', storefrontAttributionScriptFileName);
             (0, fs_1.writeFileSync)(storefrontAttributionScriptPath, storefront_attribution_script_1.STOREFRONT_ATTRIBUTION_SCRIPT, 'utf8');
+            (0, fs_1.writeFileSync)(storefrontProductSectionsScriptPath, storefront_product_sections_script_1.STOREFRONT_PRODUCT_SECTIONS_SCRIPT, 'utf8');
             const indexHtml = (0, fs_1.readFileSync)(storefrontIndexPath, 'utf8');
             const cleanedHtml = replaceStorefrontTrackingLoader(indexHtml)
                 .replace(legacyStorefrontPriceScriptTagPattern, '')
                 .replace(legacyStorefrontSpecialPackageScriptTagPattern, '')
-                .replace(legacyStorefrontAttributionScriptTagPattern, '');
-            const storefrontPatchScriptTags = storefrontAttributionScriptTag + storefrontPriceScriptTag + storefrontSpecialPackageScriptTag;
+                .replace(legacyStorefrontAttributionScriptTagPattern, '')
+                .replace(legacyStorefrontProductSectionsScriptTagPattern, '');
+            const storefrontPatchScriptTags = storefrontAttributionScriptTag + storefrontPriceScriptTag + storefrontSpecialPackageScriptTag + storefrontProductSectionsScriptTag;
             const patchedHtml = cleanedHtml.includes('</body>')
                 ? cleanedHtml.replace('</body>', `${storefrontPatchScriptTags}</body>`)
                 : `${cleanedHtml}${storefrontPatchScriptTags}`;
@@ -294,19 +454,23 @@ ${storefrontPurchaseExternalIdHelper}
             logger.warn(`Static storefront patch skipped: ${error.message}`);
         }
     }
-    function sendStorefrontIndex(res) {
+    function sendStorefrontIndex(req, res) {
         try {
             const indexHtml = (0, fs_1.readFileSync)(storefrontIndexPath, 'utf8');
             const cleanedHtml = replaceStorefrontTrackingLoader(indexHtml)
                 .replace(legacyStorefrontPriceScriptTagPattern, '')
                 .replace(legacyStorefrontSpecialPackageScriptTagPattern, '')
-                .replace(legacyStorefrontAttributionScriptTagPattern, '');
-            const storefrontPatchScriptTags = storefrontAttributionScriptTag + storefrontPriceScriptTag + storefrontSpecialPackageScriptTag;
-            const html = cleanedHtml.includes('</body>')
+                .replace(legacyStorefrontAttributionScriptTagPattern, '')
+                .replace(legacyStorefrontProductSectionsScriptTagPattern, '');
+            const storefrontPatchScriptTags = storefrontAttributionScriptTag + storefrontPriceScriptTag + storefrontSpecialPackageScriptTag + storefrontProductSectionsScriptTag;
+            const html = versionStorefrontMainBundle(cleanedHtml.includes('</body>')
                 ? cleanedHtml.replace('</body>', `${storefrontPatchScriptTags}</body>`)
-                : `${cleanedHtml}${storefrontPatchScriptTags}`;
+                : `${cleanedHtml}${storefrontPatchScriptTags}`);
+            const responseHtml = isLocalStorefrontHost(req.hostname)
+                ? html.replace(`<noscript><iframe src="${storefrontGtmNoscriptUrl}" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>`, '')
+                : html;
             res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-            res.type('html').send(html);
+            res.type('html').send(responseHtml);
         }
         catch (error) {
             res.sendFile(storefrontIndexPath);
@@ -314,6 +478,28 @@ ${storefrontPurchaseExternalIdHelper}
     }
     installStaticStorefrontPatch();
     const httpAdapter = app.getHttpAdapter().getInstance();
+    httpAdapter.get('/robots.txt', (_req, res, next) => {
+        if (!sitemapServiceRef)
+            return next();
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        res.type('text/plain').send(sitemapServiceRef.generateRobotsTxt());
+    });
+    httpAdapter.get('/sitemap.xml', async (_req, res, next) => {
+        if (!sitemapServiceRef)
+            return next();
+        const sitemap = await sitemapServiceRef.generateSitemapXml();
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        res.type('application/xml').send(sitemap);
+    });
+    httpAdapter.get(sitemap_service_1.SEO_LANDING_PAGES.map((page) => page.path), async (req, res, next) => {
+        if (!sitemapServiceRef)
+            return next();
+        const html = await sitemapServiceRef.generateSeoLandingPageHtml(req.path);
+        if (!html)
+            return next();
+        res.setHeader('Cache-Control', 'public, max-age=300');
+        res.type('html').send(html);
+    });
     httpAdapter.get(`/${storefrontAttributionScriptFileName}`, (_req, res) => {
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         res.type('application/javascript').send(storefront_attribution_script_1.STOREFRONT_ATTRIBUTION_SCRIPT);
@@ -328,6 +514,19 @@ ${storefrontPurchaseExternalIdHelper}
             .type('application/javascript')
             .send(storefront_special_package_script_1.STOREFRONT_SPECIAL_PACKAGE_SCRIPT);
     });
+    httpAdapter.get(`/${storefrontProductSectionsScriptFileName}`, (_req, res) => {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        try {
+            res
+                .type('application/javascript')
+                .send((0, fs_1.readFileSync)(storefrontProductSectionsScriptPath, 'utf8'));
+        }
+        catch (_error) {
+            res
+                .type('application/javascript')
+                .send(storefront_product_sections_script_1.STOREFRONT_PRODUCT_SECTIONS_SCRIPT);
+        }
+    });
     httpAdapter.get(`/${adminIncompleteOrderEditorScriptFileName}`, (_req, res) => {
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         res
@@ -337,32 +536,97 @@ ${storefrontPurchaseExternalIdHelper}
     httpAdapter.use((req, res, next) => {
         const accept = String(req.headers.accept || '');
         const path = req.path || '';
+        const userAgent = String(req.headers['user-agent'] || '');
+        const isSeoLandingPath = sitemap_service_1.SEO_LANDING_PAGES.some((page) => page.path === path);
         if (req.method !== 'GET' ||
             !accept.includes('text/html') ||
+            SEO_BOT_UA_REGEX.test(userAgent) ||
+            isSeoLandingPath ||
             path.startsWith('/api') ||
             path.startsWith('/upload') ||
             path.startsWith('/invoice') ||
             path === '/storefront-price-english-digits.js' ||
             path === '/storefront-special-package.js' ||
+            path === '/storefront-product-sections.js' ||
             path === '/storefront-attribution.js' ||
             path === '/incomplete-order-editor.js' ||
             staticAssetPattern.test(path)) {
             return next();
         }
-        return sendStorefrontIndex(res);
+        return sendStorefrontIndex(req, res);
     });
     app.enableVersioning({
         type: common_1.VersioningType.URI,
     });
     app.use((0, express_1.json)({ limit: '50mb' }));
     app.use((0, express_1.urlencoded)({ extended: true, limit: '50mb' }));
+    app.use('/api/product/get-by-slug', (req, res, next) => {
+        if (!isLocalStorefrontHost(req.hostname) || !['GET', 'HEAD'].includes(req.method))
+            return next();
+        const remoteRequest = (0, https_1.request)(`https://apisub.amolbooks.com/api/product/get-by-slug${req.url}`, {
+            method: req.method,
+            headers: {
+                Accept: 'application/json',
+            },
+        }, (remoteResponse) => {
+            const chunks = [];
+            remoteResponse.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+            remoteResponse.on('end', () => {
+                res.status(remoteResponse.statusCode || 502);
+                res.type(String(remoteResponse.headers['content-type'] || 'application/json'));
+                res.send(Buffer.concat(chunks));
+            });
+        });
+        remoteRequest.on('error', (error) => {
+            logger.warn(`Published storefront product proxy failed: ${error.message}`);
+            return next();
+        });
+        remoteRequest.end();
+    });
+    app.use('/storefront-catalog', (req, res, next) => {
+        const isLibraryRequest = req.method === 'GET' && req.path === '/library';
+        if (!isLibraryRequest && !/^\/(?:product|author)(?:\/|$)/.test(req.url || ''))
+            return next();
+        const requestBody = isLibraryRequest
+            ? JSON.stringify({
+                filter: { status: 'publish', quantity: { $gt: 0 } },
+                pagination: { pageSize: 180, currentPage: 0 },
+                sort: { totalSold: -1, priority: -1 },
+                select: {
+                    _id: 1, name: 1, slug: 1, images: 1, salePrice: 1, afterDiscountPrice: 1,
+                    discountAmount: 1, discountType: 1, totalSold: 1, author: 1, category: 1,
+                },
+            })
+            : ['GET', 'HEAD'].includes(req.method) ? '' : JSON.stringify(req.body || {});
+        const remotePath = isLibraryRequest ? '/product/get-all' : req.url;
+        const remoteRequest = (0, https_1.request)(`https://apisub.amolbooks.com/api${remotePath}`, {
+            method: isLibraryRequest ? 'POST' : req.method,
+            headers: Object.assign({ 'Content-Type': 'application/json', Accept: 'application/json' }, (requestBody ? { 'Content-Length': Buffer.byteLength(requestBody) } : {})),
+        }, (remoteResponse) => {
+            const chunks = [];
+            remoteResponse.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+            remoteResponse.on('end', () => {
+                res.status(remoteResponse.statusCode || 502);
+                res.type(String(remoteResponse.headers['content-type'] || 'application/json'));
+                res.send(Buffer.concat(chunks));
+            });
+        });
+        remoteRequest.on('error', (error) => {
+            logger.warn(`Published storefront catalogue proxy failed: ${error.message}`);
+            return res.status(502).json({ success: false, message: 'Published catalogue unavailable' });
+        });
+        if (requestBody)
+            remoteRequest.write(requestBody);
+        remoteRequest.end();
+    });
     app.setGlobalPrefix('api');
     const port = process.env.PORT || 3000;
     await app.init();
     redirectMiddlewareRef = app.get(redirect_url_middleware_1.RedirectUrlMiddleware);
-    httpAdapter.use((_req, res) => {
+    sitemapServiceRef = app.get(sitemap_service_1.SitemapService);
+    httpAdapter.use((req, res) => {
         if (!res.headersSent) {
-            sendStorefrontIndex(res);
+            sendStorefrontIndex(req, res);
         }
     });
     await app.listen(port);

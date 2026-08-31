@@ -11,6 +11,15 @@ export declare const OrderSchema: mongoose.Schema<any, mongoose.Model<any, any, 
     orderId: string;
     phoneNo: string;
     shippingAddress: string;
+    courierStatusHistory: {
+        notificationType: string;
+        receivedAt: Date;
+        eventKey: string;
+        _id?: unknown;
+        status?: string;
+        updatedAt?: string;
+        trackingMessage?: string;
+    }[];
     paymentStatus: string;
     orderedItems: mongoose.Types.DocumentArray<{
         salePrice: number;
@@ -86,6 +95,7 @@ export declare const OrderSchema: mongoose.Schema<any, mongoose.Model<any, any, 
     };
     paymentType?: string;
     orderFrom?: string;
+    orderOrigin?: "admin" | "website" | "incomplete";
     manualOrderSource?: "facebook" | "email" | "whatsapp" | "whatsapp_ad" | "phone" | "instagram" | "walk_in" | "other";
     manualOrderRequestId?: string;
     metaPurchaseStatus?: "sending" | "sent" | "failed";
@@ -94,11 +104,15 @@ export declare const OrderSchema: mongoose.Schema<any, mongoose.Model<any, any, 
     metaPurchaseAttemptCount?: number;
     metaPurchaseSentAt?: Date;
     metaPurchaseError?: string;
-    metaPurchaseDeliveryChannel?: "tagioo" | "direct_meta_fallback";
+    metaPurchaseDeliveryChannel?: "tagioo" | "direct_meta" | "direct_meta_fallback" | "website_gap_fill";
+    browserPurchaseFiredAt?: Date;
+    browserPurchaseEventId?: string;
     tagiooPurchaseEventId?: string;
     tagiooPurchaseError?: string;
     attribution?: {
         anonymousId?: string;
+        gaClientId?: string;
+        gaSessionId?: string;
         firstTouch?: {
             source?: string;
             medium?: string;
@@ -111,6 +125,11 @@ export declare const OrderSchema: mongoose.Schema<any, mongoose.Model<any, any, 
             landingPage?: string;
             referrer?: string;
             fbclid?: string;
+            gclid?: string;
+            wbraid?: string;
+            gbraid?: string;
+            fbc?: string;
+            fbp?: string;
             capturedAt?: Date;
         };
         lastTouch?: {
@@ -125,11 +144,33 @@ export declare const OrderSchema: mongoose.Schema<any, mongoose.Model<any, any, 
             landingPage?: string;
             referrer?: string;
             fbclid?: string;
+            gclid?: string;
+            wbraid?: string;
+            gbraid?: string;
+            fbc?: string;
+            fbp?: string;
             capturedAt?: Date;
         };
+        clientUserAgent?: string;
+        clientIpAddress?: string;
     };
-    courierLink?: string;
+    courierStatus?: {
+        status?: string;
+        updatedAt?: string;
+        notificationType?: string;
+        trackingMessage?: string;
+        codAmount?: number;
+        deliveryCharge?: number;
+        receivedAt?: Date;
+        lastSyncedAt?: Date;
+        lastSyncError?: string;
+        chargeLookupAttemptedAt?: Date;
+        chargeLookupError?: string;
+        backfillAttemptedAt?: Date;
+        backfillError?: string;
+    };
     deliveryCharge?: number;
+    courierLink?: string;
     actualCourierCost?: number;
     packagingCost?: number;
     paymentFee?: number;

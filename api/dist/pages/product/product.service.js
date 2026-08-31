@@ -761,24 +761,28 @@ let ProductService = ProductService_1 = class ProductService {
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#x27;');
+            const normalizeMetaText = (value, maxLength = 300) => {
+                const normalized = (value || '').replace(/\s+/g, ' ').trim();
+                return normalized.length > maxLength
+                    ? `${normalized.slice(0, maxLength - 1).trimEnd()}…`
+                    : normalized;
+            };
             const shopName = 'Amolbooks';
-            const title = data ? escapeHtml(data.seoTitle || data.name || shopName) : shopName;
+            const title = data
+                ? escapeHtml(normalizeMetaText(data.seoTitle || data.name || shopName, 120))
+                : shopName;
             const description = data
-                ? escapeHtml(data.seoDescription || `${data.name || ''} — ${shopName}`)
+                ? escapeHtml(normalizeMetaText(data.seoDescription ||
+                    `${data.name || ''} — ${shopName}`))
                 : shopName;
             const keywords = data ? escapeHtml(data.seoKeywords || '') : '';
             const images = data ? data.images : null;
-            const normalizeImageUrl = (url) => {
-                if (!url)
-                    return '';
-                return url.replace(/https?:\/\/apisub\.amolbooks\.com\/api\/upload\//, 'https://amolbooks.com/uploads/');
-            };
             const rawImage = images && images.length ? images[0] : '';
             const image = rawImage
-                ? normalizeImageUrl(rawImage)
-                : 'https://amolbooks.com/assets/images/logo.png';
+                ? rawImage
+                : 'https://www.amolbooks.com/assets/images/logo/logo.png';
             const productSlug = data ? data.slug : slug;
-            const url = `https://amolbooks.com/product-details/${productSlug}`;
+            const url = `https://www.amolbooks.com/product-details/${productSlug}`;
             const price = data && data.salePrice ? `${data.salePrice}` : '';
             const html = `<!DOCTYPE html>
 <html lang="bn">
@@ -893,6 +897,105 @@ let ProductService = ProductService_1 = class ProductService {
             const mGlobalIds = globalIds.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
             const products = await this.productModel.find({ _id: { $in: mGlobalIds, $ne: new ObjectId(productId) } }).select(BT_SELECT);
             return { success: true, message: 'Success', data: { source: 'global', productIds: globalIds, products } };
+        }
+        catch (err) {
+            throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
+    async getCustomersAlsoBought(productSlug) {
+        try {
+            const currentProduct = await this.productModel
+                .findOne({ slug: productSlug, status: 'publish' })
+                .select('_id category')
+                .lean();
+            if (!currentProduct) {
+                return {
+                    success: true,
+                    message: 'Product not found',
+                    data: { source: 'none', products: [] },
+                };
+            }
+            const currentProductId = new ObjectId(currentProduct._id);
+            const coPurchaseRows = await this.orderModel.aggregate([
+                {
+                    $match: {
+                        orderStatus: {
+                            $nin: [order_enum_1.OrderStatus.CANCEL, order_enum_1.OrderStatus.REFUND, order_enum_1.OrderStatus.RETURN],
+                        },
+                        'orderedItems._id': currentProductId,
+                    },
+                },
+                { $unwind: '$orderedItems' },
+                { $match: { 'orderedItems._id': { $ne: currentProductId } } },
+                {
+                    $group: {
+                        _id: '$orderedItems._id',
+                        orderCount: { $sum: 1 },
+                        units: { $sum: { $ifNull: ['$orderedItems.quantity', 1] } },
+                    },
+                },
+                { $sort: { orderCount: -1, units: -1, _id: 1 } },
+                { $limit: 24 },
+            ]);
+            const rankedIds = coPurchaseRows
+                .map((row) => String(row._id || ''))
+                .filter((id) => ObjectId.isValid(id));
+            const productSelect = '_id name slug images salePrice afterDiscountPrice discountAmount discountType quantity author ratingCount ratingTotal';
+            const coPurchasedProducts = rankedIds.length
+                ? await this.productModel
+                    .find({
+                    _id: { $in: rankedIds.map((id) => new ObjectId(id)) },
+                    status: 'publish',
+                    quantity: { $gt: 0 },
+                })
+                    .select(productSelect)
+                    .lean()
+                : [];
+            const coPurchasedMap = new Map(coPurchasedProducts.map((product) => [String(product._id), product]));
+            const orderedProducts = rankedIds
+                .map((id) => coPurchasedMap.get(id))
+                .filter(Boolean)
+                .slice(0, 8);
+            if (orderedProducts.length >= 3) {
+                return {
+                    success: true,
+                    message: 'Success',
+                    data: {
+                        source: 'orders',
+                        products: this.normalizeProductImageFields(orderedProducts),
+                    },
+                };
+            }
+            const categoryIds = (currentProduct.category || [])
+                .map((category) => category === null || category === void 0 ? void 0 : category._id)
+                .filter((id) => id && ObjectId.isValid(String(id)))
+                .map((id) => new ObjectId(String(id)));
+            const excludedIds = [
+                currentProductId,
+                ...orderedProducts.map((product) => new ObjectId(product._id)),
+            ];
+            const fallbackProducts = categoryIds.length
+                ? await this.productModel
+                    .find({
+                    _id: { $nin: excludedIds },
+                    status: 'publish',
+                    quantity: { $gt: 0 },
+                    'category._id': { $in: categoryIds },
+                })
+                    .sort({ totalSold: -1, priority: -1, createdAt: -1 })
+                    .limit(Math.max(0, 8 - orderedProducts.length))
+                    .select(productSelect)
+                    .lean()
+                : [];
+            const products = [...orderedProducts, ...fallbackProducts].slice(0, 8);
+            return {
+                success: true,
+                message: 'Success',
+                data: {
+                    source: orderedProducts.length ? 'mixed' : 'related',
+                    products: this.normalizeProductImageFields(products),
+                },
+            };
         }
         catch (err) {
             throw new common_1.InternalServerErrorException(err.message);
@@ -1105,7 +1208,39 @@ let ProductService = ProductService_1 = class ProductService {
         }
     }
     async findAllPublished() {
-        return this.productModel.find({}).select('slug title').exec();
+        return this.productModel
+            .find({ status: 'publish' })
+            .select('slug name updatedAt category subCategory author publisher totalSold priority')
+            .sort({ totalSold: -1, priority: -1, updatedAt: -1 })
+            .lean()
+            .exec();
+    }
+    async findPublishedForSeoLanding(terms, limit = 24) {
+        const cleanTerms = terms.filter(Boolean).map((term) => new RegExp(term, 'i'));
+        const search = cleanTerms.length
+            ? {
+                $or: [
+                    { name: { $in: cleanTerms } },
+                    { nameEn: { $in: cleanTerms } },
+                    { seoTitle: { $in: cleanTerms } },
+                    { seoDescription: { $in: cleanTerms } },
+                    { 'category.name': { $in: cleanTerms } },
+                    { 'category.nameEn': { $in: cleanTerms } },
+                    { 'subCategory.name': { $in: cleanTerms } },
+                    { 'subCategory.nameEn': { $in: cleanTerms } },
+                    { 'author.name': { $in: cleanTerms } },
+                    { 'author.nameEn': { $in: cleanTerms } },
+                    { 'publisher.name': { $in: cleanTerms } },
+                ],
+            }
+            : {};
+        return this.productModel
+            .find(Object.assign({ status: 'publish', quantity: { $gt: 0 } }, search))
+            .select('name nameEn slug images salePrice afterDiscountPrice discountAmount discountType quantity author category publisher shortDescription description seoTitle seoDescription isbn sku totalSold updatedAt')
+            .sort({ totalSold: -1, priority: -1, updatedAt: -1 })
+            .limit(limit)
+            .lean()
+            .exec();
     }
     async getMetaFeedXml() {
         const products = await this.productModel
@@ -1299,13 +1434,25 @@ ${items.join('\n')}
             const page = Math.max(1, parseInt(query === null || query === void 0 ? void 0 : query.page, 10) || 1);
             const limit = Math.min(200, Math.max(1, parseInt(query === null || query === void 0 ? void 0 : query.limit, 10) || 50));
             const q = ((query === null || query === void 0 ? void 0 : query.q) || '').trim();
+            const publisherId = String((query === null || query === void 0 ? void 0 : query.publisherId) || '').trim();
             const lowOnly = String(query === null || query === void 0 ? void 0 : query.lowOnly) === 'true';
             const outOnly = String(query === null || query === void 0 ? void 0 : query.outOnly) === 'true';
             const includeSalesMetrics = String(query === null || query === void 0 ? void 0 : query.includeSalesMetrics) !== 'false';
             const filter = {};
             if (q) {
                 const rx = this.utilsService.createRegexFromString(q);
-                filter.$or = [{ name: rx }, { nameEn: rx }, { sku: rx }];
+                filter.$or = [
+                    { name: rx },
+                    { nameEn: rx },
+                    { sku: rx },
+                    { 'publisher.name': rx },
+                ];
+            }
+            if (publisherId) {
+                if (!ObjectId.isValid(publisherId)) {
+                    throw new common_1.BadRequestException('Invalid publisher');
+                }
+                filter['publisher._id'] = new ObjectId(publisherId);
             }
             if (outOnly) {
                 filter.stock = { $ne: null, $lte: 0 };
@@ -1319,7 +1466,7 @@ ${items.join('\n')}
             const total = await this.productModel.countDocuments(filter);
             const data = await this.productModel
                 .find(filter)
-                .select('name nameEn sku images salePrice stock lowStockThreshold totalSold')
+                .select('name nameEn sku images salePrice stock lowStockThreshold totalSold publisher')
                 .sort({ totalSold: -1, name: 1, _id: 1 })
                 .skip((page - 1) * limit)
                 .limit(limit)
@@ -1346,13 +1493,50 @@ ${items.join('\n')}
             throw new common_1.InternalServerErrorException(err.message);
         }
     }
+    async getStockPublishers() {
+        try {
+            const data = await this.productModel.aggregate([
+                {
+                    $match: {
+                        'publisher._id': { $ne: null },
+                        'publisher.name': { $type: 'string', $ne: '' },
+                    },
+                },
+                {
+                    $group: {
+                        _id: '$publisher._id',
+                        name: { $first: '$publisher.name' },
+                        productCount: { $sum: 1 },
+                    },
+                },
+                { $sort: { name: 1 } },
+            ]);
+            return {
+                success: true,
+                message: 'Success',
+                data,
+                count: data.length,
+            };
+        }
+        catch (err) {
+            throw new common_1.InternalServerErrorException(err.message);
+        }
+    }
     async getUrgentStock(query) {
         try {
             const requestedDays = parseInt(query === null || query === void 0 ? void 0 : query.days, 10);
+            const publisherId = String((query === null || query === void 0 ? void 0 : query.publisherId) || '').trim();
             const urgentDays = Math.min(90, Math.max(1, Number.isFinite(requestedDays) ? requestedDays : 14));
+            const filter = { stock: { $ne: null } };
+            if (publisherId) {
+                if (!ObjectId.isValid(publisherId)) {
+                    throw new common_1.BadRequestException('Invalid publisher');
+                }
+                filter['publisher._id'] = new ObjectId(publisherId);
+            }
             const products = await this.productModel
-                .find({ stock: { $ne: null } })
-                .select('name nameEn sku images salePrice stock')
+                .find(filter)
+                .select('name nameEn sku images salePrice stock publisher')
                 .lean();
             const productIds = products.map((product) => new ObjectId(product._id));
             const salesMetrics = await this.getStockSalesMetrics(productIds);

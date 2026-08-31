@@ -10,11 +10,27 @@ export interface Order {
     email: string;
     city: string;
     courierData: any;
+    courierStatus?: {
+        status?: string;
+        notificationType?: string;
+        trackingMessage?: string;
+        codAmount?: number;
+        deliveryCharge?: number;
+        updatedAt?: string;
+        receivedAt?: Date;
+        lastSyncedAt?: Date;
+        lastSyncError?: string;
+        chargeLookupAttemptedAt?: Date;
+        chargeLookupError?: string;
+        backfillAttemptedAt?: Date;
+        backfillError?: string;
+    };
     deliveryNote: any;
     courierLink: string;
     shippingAddress: string;
     paymentType: string;
     orderFrom?: string;
+    orderOrigin?: 'website' | 'incomplete' | 'admin';
     manualOrderSource?: string;
     manualOrderRequestId?: string;
     metaPurchaseStatus?: 'sending' | 'sent' | 'failed';
@@ -23,9 +39,11 @@ export interface Order {
     metaPurchaseAttemptCount?: number;
     metaPurchaseSentAt?: Date;
     metaPurchaseError?: string;
-    metaPurchaseDeliveryChannel?: 'tagioo' | 'direct_meta_fallback';
+    metaPurchaseDeliveryChannel?: 'tagioo' | 'direct_meta' | 'direct_meta_fallback' | 'website_gap_fill';
     tagiooPurchaseEventId?: string;
     tagiooPurchaseError?: string;
+    browserPurchaseFiredAt?: Date;
+    browserPurchaseEventId?: string;
     orderedItems: OrderedItem[];
     subTotal: number;
     area?: Area;
@@ -60,8 +78,12 @@ export interface Order {
     stockRestocked?: boolean;
     attribution?: {
         anonymousId?: string;
+        gaClientId?: string;
+        gaSessionId?: string;
         firstTouch?: OrderAttributionTouch;
         lastTouch?: OrderAttributionTouch;
+        clientUserAgent?: string;
+        clientIpAddress?: string;
     };
     createdAt?: Date;
     updatedAt?: Date;
@@ -94,6 +116,11 @@ export interface OrderAttributionTouch {
     landingPage?: string;
     referrer?: string;
     fbclid?: string;
+    gclid?: string;
+    wbraid?: string;
+    gbraid?: string;
+    fbc?: string;
+    fbp?: string;
     capturedAt?: Date;
 }
 export interface OrderTimeline {

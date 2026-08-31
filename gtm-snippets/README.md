@@ -76,7 +76,7 @@ API host, change this line in every snippet before pasting.
   (`order.controller.ts`, `order.service.ts`)
 - Free-gift engine in `order.service.ts` `newOrderMake` → `evaluateGiftLine()`.
   Attaches a zero-price gift line (`orderType:'gift'`, `isGift:true`) when eligible.
-  The ৳750 rule uses the payable/sale-price subtotal, matching the cart popup.
+  The ৳499 rule uses the payable/sale-price subtotal, matching the cart popup.
   Does **not** change subtotal/discount/grandTotal.
 - Gift config fields added to the single `OrderOffer` doc
   (`order-offer.schema.ts`, `order-offer.dto.ts`) and the gift flag on
@@ -91,7 +91,7 @@ Set the config on the OrderOffer doc via the existing admin `POST /api/order-off
 ```jsonc
 {
   "giftEnabled": true,
-  "giftMinAmount": 750,                      // Trigger A: cart subtotal >= 750 (all products)
+  "giftMinAmount": 499,                      // Trigger A: cart subtotal >= 499 (all products)
   "giftBuyXProductSlug": "<this-book-slug>", // Trigger B: buy 2 of this book
   "giftBuyXQty": 2,
   "giftLabel": "ফ্রি নোটবুক",
@@ -106,7 +106,7 @@ Set the config on the OrderOffer doc via the existing admin `POST /api/order-off
 
 Public read used by the widgets: `GET /api/order-offer/get` (returns the same doc).
 Because the widget threshold is read from this config, the on-page promise always
-matches real fulfillment — no customer hits ৳750 and gets nothing.
+matches real fulfillment — no customer hits ৳499 and gets nothing.
 
 ## Truthfulness guards (built in)
 - Urgency rows render only when the value is real (future end date / low stock / sold>0).

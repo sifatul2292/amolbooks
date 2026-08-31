@@ -30,8 +30,11 @@ const crypto = require("crypto");
 const analytics_service_1 = require("../../../shared/analytics/analytics.service");
 const special_package_price_util_1 = require("../../../shared/utils/special-package-price.util");
 const ObjectId = mongoose_2.Types.ObjectId;
+const FREE_NOTEBOOK_MIN_AMOUNT = 499;
 const RECENT_BUYERS_TTL_MS = 120000;
 const recentBuyersCache = new Map();
+const WEBSITE_PURCHASE_GRACE_MS = 20 * 60 * 1000;
+const META_EVENT_MAX_AGE_MS = 6 * 24 * 60 * 60 * 1000;
 let OrderService = OrderService_1 = class OrderService {
     constructor(adminModel, orderModel, incompleteOrderModel, productModel, specialPackageModel, uniqueIdModel, cartModel, userModel, settingModel, couponModel, courierService, shopInformationModel, orderOfferModel, stockMovementModel, configService, utilsService, bulkSmsService, emailService, analyticsService) {
         this.adminModel = adminModel;
@@ -54,8 +57,36 @@ let OrderService = OrderService_1 = class OrderService {
         this.emailService = emailService;
         this.analyticsService = analyticsService;
         this.logger = new common_1.Logger(OrderService_1.name);
+        this.steadfastBackfillRunning = false;
+        this.steadfastInReviewSyncRunning = false;
+        this.steadfastInReviewSyncCompletedAt = 0;
+        this.steadfastInReviewSyncResult = null;
+        this.steadfastMissingChargeSyncRunning = false;
+        this.steadfastMissingChargeSyncCompletedAt = 0;
+        this.websitePurchaseGapFillRunning = false;
         this.checkAndUpdateCourierStatus();
         this.scheduleManualMetaPurchaseRetries();
+        this.scheduleWebsitePurchaseGapFill();
+    }
+    getSteadfastDeliveryCharge(payload) {
+        var _a, _b, _c, _d;
+        const candidates = [
+            payload === null || payload === void 0 ? void 0 : payload.delivery_charge,
+            payload === null || payload === void 0 ? void 0 : payload.delivery_fee,
+            (_a = payload === null || payload === void 0 ? void 0 : payload.consignment) === null || _a === void 0 ? void 0 : _a.delivery_charge,
+            (_b = payload === null || payload === void 0 ? void 0 : payload.consignment) === null || _b === void 0 ? void 0 : _b.delivery_fee,
+            (_c = payload === null || payload === void 0 ? void 0 : payload.data) === null || _c === void 0 ? void 0 : _c.delivery_charge,
+            (_d = payload === null || payload === void 0 ? void 0 : payload.data) === null || _d === void 0 ? void 0 : _d.delivery_fee,
+        ];
+        for (const candidate of candidates) {
+            if (candidate === null || candidate === undefined || candidate === '') {
+                continue;
+            }
+            const charge = Number(candidate);
+            if (Number.isFinite(charge) && charge >= 0)
+                return charge;
+        }
+        return undefined;
     }
     async addOrderAdmin(admin, addOrderDto) {
         if (!admin || !admin._id) {
@@ -79,9 +110,7 @@ let OrderService = OrderService_1 = class OrderService {
         }
         let user;
         let mData;
-        const adminData = await this.adminModel
-            .findById(admin._id)
-            .maxTimeMS(5000);
+        const adminData = await this.adminModel.findById(admin._id).maxTimeMS(5000);
         const incOrder = await this.uniqueIdModel.findOneAndUpdate({}, { $inc: { orderId: 1 } }, { new: true, upsert: true, maxTimeMS: 5000 });
         const orderIdUnique = this.utilsService.padLeadingZeros(incOrder.orderId);
         const dataExtra = {
@@ -103,10 +132,20 @@ let OrderService = OrderService_1 = class OrderService {
         else {
             mData = Object.assign(Object.assign(Object.assign({}, addOrderDto), dataExtra), adminData);
         }
-        const adminManualSource = this.normalizeManualOrderSource(addOrderDto.manualOrderSource);
+        const convertedIncomplete = addOrderDto.incompleteOrderId &&
+            ObjectId.isValid(addOrderDto.incompleteOrderId)
+            ? await this.incompleteOrderModel
+                .findById(addOrderDto.incompleteOrderId)
+                .select('attribution')
+                .lean()
+            : null;
+        const adminManualSource = this.normalizeManualOrderSource(addOrderDto.incompleteOrderId ? 'phone' : addOrderDto.manualOrderSource, 'whatsapp');
         mData.manualOrderSource = adminManualSource;
-        mData.orderFrom =
-            mData.orderFrom || this.manualOrderLabel(adminManualSource);
+        mData.orderFrom = this.manualOrderLabel(adminManualSource);
+        mData.orderOrigin = addOrderDto.incompleteOrderId
+            ? 'incomplete'
+            : 'admin';
+        mData.attribution = this.normalizeAttribution((convertedIncomplete === null || convertedIncomplete === void 0 ? void 0 : convertedIncomplete.attribution) || addOrderDto.attribution);
         mData = this.normalizeAdminOrderData(mData);
         mData.orderedItems = await this.attachCostSnapshots(mData.orderedItems);
         const newData = new this.orderModel(mData);
@@ -160,7 +199,7 @@ let OrderService = OrderService_1 = class OrderService {
                 this.logger.warn(`Order ${saveData.orderId} was created, but incomplete order conversion marking failed:`, (error === null || error === void 0 ? void 0 : error.message) || error);
             }
         }
-        for (const item of (addOrderDto['orderedItems'] || [])) {
+        for (const item of addOrderDto['orderedItems'] || []) {
             try {
                 if (!(item === null || item === void 0 ? void 0 : item._id) || !ObjectId.isValid(item._id))
                     continue;
@@ -199,9 +238,7 @@ let OrderService = OrderService_1 = class OrderService {
         return {
             success: sent,
             message: sent
-                ? (result === null || result === void 0 ? void 0 : result.metaPurchaseDeliveryChannel) === 'tagioo'
-                    ? 'Manual Purchase accepted by Tagioo'
-                    : 'Manual Purchase sent through direct Meta fallback'
+                ? 'Manual Purchase acknowledged by Meta'
                 : (result === null || result === void 0 ? void 0 : result.metaPurchaseError) || 'Manual Purchase was not sent to Meta',
             data: result,
         };
@@ -210,7 +247,9 @@ let OrderService = OrderService_1 = class OrderService {
         if (!admin || !admin._id) {
             throw new common_1.BadRequestException('Admin authentication failed');
         }
-        const normalizedRequestId = String(requestId || '').trim().slice(0, 120);
+        const normalizedRequestId = String(requestId || '')
+            .trim()
+            .slice(0, 120);
         if (!/^ai_[A-Za-z0-9_-]+$/.test(normalizedRequestId)) {
             throw new common_1.BadRequestException('Invalid manual order request ID');
         }
@@ -284,13 +323,20 @@ let OrderService = OrderService_1 = class OrderService {
             subTotal, discount: Math.max(0, subTotal - saleTotal), deliveryCharge, grandTotal: saleTotal + deliveryCharge, paymentStatus: addOrderDto.paymentStatus || 'unpaid', orderStatus: order_enum_1.OrderStatus.PENDING, manualOrderSource: 'whatsapp', orderFrom: 'WhatsApp' });
         return this.addOrderAdmin(admin, manualOrderDto);
     }
-    async addOrder(addOrderDto) {
+    async addOrder(addOrderDto, req) {
+        var _a, _b, _c;
         try {
             let newOrderMake;
             const fraudCheckerData = null;
             const orderInput = Object.assign({}, addOrderDto);
             orderInput.orderFrom = 'Website';
+            orderInput.orderOrigin = 'website';
             delete orderInput.manualOrderSource;
+            if (req) {
+                orderInput.attribution = Object.assign(Object.assign({}, (orderInput.attribution || {})), { clientUserAgent: ((_a = orderInput.attribution) === null || _a === void 0 ? void 0 : _a.clientUserAgent) ||
+                        ((_b = req.headers) === null || _b === void 0 ? void 0 : _b['user-agent']), clientIpAddress: ((_c = orderInput.attribution) === null || _c === void 0 ? void 0 : _c.clientIpAddress) ||
+                        this.utilsService.getClientIp(req) });
+            }
             newOrderMake = await this.newOrderMake(orderInput);
             const incOrder = await this.uniqueIdModel.findOneAndUpdate({}, { $inc: { orderId: 1 } }, { new: true, upsert: true });
             const orderIdUnique = this.utilsService.padLeadingZeros(incOrder.orderId);
@@ -315,6 +361,9 @@ let OrderService = OrderService_1 = class OrderService {
             };
             this.processOrderBackgroundTasks(saveData, orderInput).catch((error) => {
                 this.logger.error(`Error in background order processing for order ${saveData.orderId}:`, error);
+            });
+            this.sendWebsiteOrderToMeta(saveData).catch((error) => {
+                this.logger.error(`Website-order CAPI task failed for order ${saveData.orderId}:`, error);
             });
             return response;
         }
@@ -369,7 +418,9 @@ let OrderService = OrderService_1 = class OrderService {
             await this.utilsService.generateInvoicePdf(saveData);
             const pdfLink = `https://api.alambook.com/invoice/invoice-${saveData.orderId}.pdf`;
             if (saveData['paymentType'] === 'cash_on_delivery') {
-                const orderCheck = await this.orderModel.findById(saveData._id).select('orderSmsSent');
+                const orderCheck = await this.orderModel
+                    .findById(saveData._id)
+                    .select('orderSmsSent');
                 if (!(orderCheck === null || orderCheck === void 0 ? void 0 : orderCheck.orderSmsSent)) {
                     const message = `অর্ডারটি কনফার্ম হয়েছে, ৩ দিনের মধ্যে ডেলিভারি করা হবে, amolbooks.com`;
                     this.bulkSmsService.sentSingleSms(saveData.phoneNo, message);
@@ -390,8 +441,607 @@ let OrderService = OrderService_1 = class OrderService {
             this.logger.error(`Error processing background tasks for order ${saveData.orderId}:`, error);
         }
     }
+    async receiveSteadfastWebhook(authorization, payload) {
+        var _a, _b, _c, _d, _e;
+        const configuredToken = this.configService.get('steadfastWebhookToken');
+        if (!configuredToken) {
+            this.logger.error('STEADFAST_WEBHOOK_TOKEN is not configured');
+            throw new common_1.ServiceUnavailableException('Webhook is not configured.');
+        }
+        const suppliedToken = String(authorization || '').replace(/^Bearer\s+/i, '');
+        const expectedHash = crypto
+            .createHash('sha256')
+            .update(configuredToken)
+            .digest();
+        const suppliedHash = crypto
+            .createHash('sha256')
+            .update(suppliedToken)
+            .digest();
+        if (!suppliedToken || !crypto.timingSafeEqual(expectedHash, suppliedHash)) {
+            throw new common_1.UnauthorizedException('Invalid webhook token.');
+        }
+        if (!payload ||
+            !['delivery_status', 'tracking_update'].includes(payload.notification_type) ||
+            (payload.consignment_id == null && !payload.invoice)) {
+            throw new common_1.BadRequestException('Invalid Steadfast webhook payload.');
+        }
+        const consignmentId = payload.consignment_id == null
+            ? null
+            : String(payload.consignment_id).trim();
+        const invoice = payload.invoice == null ? null : String(payload.invoice).trim();
+        const [byConsignment, byInvoice] = await Promise.all([
+            consignmentId
+                ? this.orderModel.findOne({
+                    'courierData.providerName': 'Steadfast Courier',
+                    'courierData.consignmentId': consignmentId,
+                })
+                : null,
+            invoice ? this.orderModel.findOne({ orderId: invoice }) : null,
+        ]);
+        if (byConsignment &&
+            byInvoice &&
+            String(byConsignment._id) !== String(byInvoice._id)) {
+            throw new common_1.BadRequestException('Consignment ID and invoice identify different orders.');
+        }
+        const order = byConsignment || byInvoice;
+        if (!order) {
+            throw new common_1.NotFoundException('Invalid consignment ID or invoice.');
+        }
+        if (((_a = order.courierData) === null || _a === void 0 ? void 0 : _a.providerName) &&
+            order.courierData.providerName !== 'Steadfast Courier') {
+            throw new common_1.BadRequestException('Order does not use Steadfast Courier.');
+        }
+        if (consignmentId &&
+            ((_b = order.courierData) === null || _b === void 0 ? void 0 : _b.consignmentId) &&
+            String(order.courierData.consignmentId) !== consignmentId) {
+            throw new common_1.BadRequestException('Consignment ID does not match invoice.');
+        }
+        if (invoice && String(order.orderId) !== invoice) {
+            throw new common_1.BadRequestException('Invoice does not match consignment ID.');
+        }
+        const notificationType = payload.notification_type;
+        const rawStatus = notificationType === 'delivery_status' && payload.status
+            ? String(payload.status).trim().toLowerCase()
+            : undefined;
+        const updatedAt = payload.updated_at
+            ? String(payload.updated_at).trim()
+            : new Date().toISOString();
+        const trackingMessage = payload.tracking_message
+            ? String(payload.tracking_message).trim()
+            : undefined;
+        const codAmount = payload.cod_amount === null || payload.cod_amount === undefined
+            ? undefined
+            : Number(payload.cod_amount);
+        const deliveryCharge = this.getSteadfastDeliveryCharge(payload);
+        const eventKey = crypto
+            .createHash('sha256')
+            .update(JSON.stringify({
+            notificationType,
+            consignmentId,
+            invoice,
+            rawStatus,
+            trackingMessage,
+            codAmount: Number.isFinite(codAmount) ? codAmount : undefined,
+            deliveryCharge,
+            updatedAt,
+        }))
+            .digest('hex');
+        const existingHistory = order.courierStatusHistory || [];
+        if (existingHistory.some((event) => event.eventKey === eventKey)) {
+            return;
+        }
+        const receivedAt = new Date();
+        const historyEvent = {
+            eventKey,
+            notificationType,
+            status: rawStatus,
+            trackingMessage,
+            updatedAt,
+            receivedAt,
+        };
+        const currentUpdatedAt = (_c = order.courierStatus) === null || _c === void 0 ? void 0 : _c.updatedAt;
+        const incomingTimestamp = Date.parse(updatedAt.replace(' ', 'T'));
+        const currentTimestamp = currentUpdatedAt
+            ? Date.parse(String(currentUpdatedAt).replace(' ', 'T'))
+            : NaN;
+        const isCurrentEvent = !currentUpdatedAt ||
+            (Number.isFinite(incomingTimestamp) && Number.isFinite(currentTimestamp)
+                ? incomingTimestamp >= currentTimestamp
+                : updatedAt >= currentUpdatedAt);
+        const update = {
+            $push: {
+                courierStatusHistory: {
+                    $each: [historyEvent],
+                    $slice: -20,
+                },
+            },
+        };
+        if (isCurrentEvent) {
+            const currentStatus = (_d = order.courierStatus) === null || _d === void 0 ? void 0 : _d.status;
+            update.$set = {
+                'courierStatus.status': rawStatus || currentStatus || 'in_review',
+                'courierStatus.notificationType': notificationType,
+                'courierStatus.trackingMessage': trackingMessage ||
+                    ((_e = order.courierStatus) === null || _e === void 0 ? void 0 : _e.trackingMessage) ||
+                    '',
+                'courierStatus.updatedAt': updatedAt,
+                'courierStatus.receivedAt': receivedAt,
+            };
+            if (Number.isFinite(codAmount)) {
+                update.$set['courierStatus.codAmount'] = codAmount;
+            }
+            if (deliveryCharge !== undefined) {
+                update.$set['courierStatus.deliveryCharge'] = deliveryCharge;
+                update.$unset = Object.assign(Object.assign({}, (update.$unset || {})), { 'courierStatus.chargeLookupError': 1 });
+            }
+        }
+        await this.orderModel.updateOne({
+            _id: order._id,
+            'courierStatusHistory.eventKey': { $ne: eventKey },
+        }, update);
+    }
+    async backfillSteadfastStatus(body) {
+        if (this.steadfastBackfillRunning) {
+            throw new common_1.ConflictException('Another Steadfast backfill batch is already running.');
+        }
+        this.steadfastBackfillRunning = true;
+        try {
+            return await this.runSteadfastStatusBackfillBatch(body);
+        }
+        finally {
+            this.steadfastBackfillRunning = false;
+        }
+    }
+    async syncSteadfastInReview() {
+        if (this.steadfastInReviewSyncRunning) {
+            throw new common_1.ConflictException('A Steadfast In Review sync is already running.');
+        }
+        if (this.steadfastInReviewSyncResult &&
+            Date.now() - this.steadfastInReviewSyncCompletedAt < 45000) {
+            return Object.assign(Object.assign({}, this.steadfastInReviewSyncResult), { data: Object.assign(Object.assign({}, this.steadfastInReviewSyncResult.data), { cached: true }) });
+        }
+        this.steadfastInReviewSyncRunning = true;
+        try {
+            const result = await this.runSteadfastInReviewSync();
+            this.steadfastInReviewSyncResult = result;
+            this.steadfastInReviewSyncCompletedAt = Date.now();
+            return result;
+        }
+        finally {
+            this.steadfastInReviewSyncRunning = false;
+        }
+    }
+    async runSteadfastInReviewSync() {
+        const setting = await this.settingModel
+            .findOne()
+            .select('courierMethods -_id');
+        const courierMethod = ((setting === null || setting === void 0 ? void 0 : setting.courierMethods) || []).find((courier) => courier.status === 'active' &&
+            courier.providerName === 'Steadfast Courier');
+        if (!(courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.apiKey) || !(courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.secretKey)) {
+            throw new common_1.BadRequestException('Active Steadfast API credentials are not configured.');
+        }
+        const inReviewQuery = {
+            'courierData.providerName': 'Steadfast Courier',
+            'courierData.consignmentId': { $exists: true, $nin: [null, ''] },
+            'courierStatus.status': 'in_review',
+        };
+        const syncCandidatesQuery = {
+            'courierData.providerName': 'Steadfast Courier',
+            'courierData.consignmentId': { $exists: true, $nin: [null, ''] },
+            'courierStatus.status': {
+                $nin: ['delivered', 'partial_delivered', 'cancelled'],
+            },
+        };
+        const inReviewOrders = await this.orderModel
+            .find(syncCandidatesQuery)
+            .sort({ 'courierStatus.lastSyncedAt': 1, createdAt: 1 })
+            .limit(50)
+            .select('orderId courierData courierStatus');
+        const orders = inReviewOrders;
+        const courierApiConfig = {
+            providerName: courierMethod.providerName,
+            apiKey: courierMethod.apiKey,
+            secretKey: courierMethod.secretKey,
+            merchantCode: courierMethod.merchantCode,
+            pickMerchantThana: courierMethod.thana,
+            pickMerchantDistrict: courierMethod.district,
+            pickMerchantAddress: courierMethod.address,
+            pickMerchantName: courierMethod.merchant_name,
+            pickupMerchantPhone: courierMethod.contact_number,
+        };
+        const results = [];
+        for (let index = 0; index < orders.length; index += 8) {
+            const chunk = orders.slice(index, index + 8);
+            const chunkResults = await Promise.all(chunk.map(async (order) => {
+                var _a, _b, _c, _d, _e;
+                const syncedAt = new Date();
+                try {
+                    const response = await this.courierService.getOrderStatusFormCourier(courierApiConfig, order.courierData.consignmentId, order.orderId);
+                    if ((response === null || response === void 0 ? void 0 : response.status) !== 200 ||
+                        typeof (response === null || response === void 0 ? void 0 : response.delivery_status) !== 'string') {
+                        throw new Error((response === null || response === void 0 ? void 0 : response.details) ||
+                            (response === null || response === void 0 ? void 0 : response.message) ||
+                            'Steadfast returned no delivery status.');
+                    }
+                    const status = response.delivery_status.trim().toLowerCase();
+                    const previousStatus = String(((_a = order.courierStatus) === null || _a === void 0 ? void 0 : _a.status) || '').toLowerCase();
+                    const statusChanged = status !== previousStatus;
+                    const moved = previousStatus === 'in_review' && status !== 'in_review';
+                    const entered = previousStatus !== 'in_review' && status === 'in_review';
+                    const deliveryCharge = this.getSteadfastDeliveryCharge(response);
+                    const needsCharge = ((_b = order.courierStatus) === null || _b === void 0 ? void 0 : _b.deliveryCharge) === null ||
+                        ((_c = order.courierStatus) === null || _c === void 0 ? void 0 : _c.deliveryCharge) === undefined;
+                    const update = {
+                        $set: { 'courierStatus.lastSyncedAt': syncedAt },
+                        $unset: { 'courierStatus.lastSyncError': 1 },
+                    };
+                    if (needsCharge) {
+                        update.$set['courierStatus.chargeLookupAttemptedAt'] = syncedAt;
+                        if (deliveryCharge !== undefined) {
+                            update.$set['courierStatus.deliveryCharge'] = deliveryCharge;
+                            update.$unset['courierStatus.chargeLookupError'] = 1;
+                        }
+                        else {
+                            update.$set['courierStatus.chargeLookupError'] =
+                                'Steadfast status response did not include delivery charge.';
+                        }
+                    }
+                    if (statusChanged) {
+                        const trackingMessage = 'Live status reconciled with Steadfast.';
+                        const updatedAt = syncedAt.toISOString();
+                        const eventKey = crypto
+                            .createHash('sha256')
+                            .update(`live_in_review_sync:${order.courierData.consignmentId}:${status}:${updatedAt}`)
+                            .digest('hex');
+                        update.$set = Object.assign(Object.assign({}, update.$set), { 'courierStatus.status': status, 'courierStatus.notificationType': 'live_in_review_sync', 'courierStatus.trackingMessage': trackingMessage, 'courierStatus.updatedAt': updatedAt, 'courierStatus.receivedAt': syncedAt });
+                        update.$push = {
+                            courierStatusHistory: {
+                                $each: [
+                                    {
+                                        eventKey,
+                                        notificationType: 'live_in_review_sync',
+                                        status,
+                                        trackingMessage,
+                                        updatedAt,
+                                        receivedAt: syncedAt,
+                                    },
+                                ],
+                                $slice: -20,
+                            },
+                        };
+                    }
+                    await this.orderModel.updateOne({ _id: order._id }, update);
+                    return {
+                        id: String(order._id),
+                        orderId: order.orderId,
+                        success: true,
+                        status,
+                        moved,
+                        entered,
+                        chargeUpdated: needsCharge && deliveryCharge !== undefined,
+                    };
+                }
+                catch (error) {
+                    const message = String((error === null || error === void 0 ? void 0 : error.message) || 'Steadfast status lookup failed.').slice(0, 300);
+                    await this.orderModel.updateOne({ _id: order._id }, {
+                        $set: Object.assign({ 'courierStatus.lastSyncedAt': syncedAt, 'courierStatus.lastSyncError': message }, (((_d = order.courierStatus) === null || _d === void 0 ? void 0 : _d.deliveryCharge) === null ||
+                            ((_e = order.courierStatus) === null || _e === void 0 ? void 0 : _e.deliveryCharge) === undefined
+                            ? {
+                                'courierStatus.chargeLookupAttemptedAt': syncedAt,
+                                'courierStatus.chargeLookupError': message,
+                            }
+                            : {})),
+                    });
+                    return {
+                        id: String(order._id),
+                        orderId: order.orderId,
+                        success: false,
+                        error: message,
+                    };
+                }
+            }));
+            results.push(...chunkResults);
+        }
+        const currentCount = await this.orderModel.countDocuments(inReviewQuery);
+        void this.syncSteadfastMissingCharges().catch((error) => {
+            this.logger.warn(`Steadfast missing-charge background batch failed: ${(error === null || error === void 0 ? void 0 : error.message) || error}`);
+        });
+        const moved = results.filter((result) => result.moved);
+        const entered = results.filter((result) => result.entered);
+        const chargesUpdated = results.filter((result) => result.chargeUpdated).length;
+        const failed = results.filter((result) => !result.success);
+        return {
+            success: true,
+            message: 'Steadfast In Review queue synchronized.',
+            data: {
+                checked: results.length,
+                moved: moved.length,
+                entered: entered.length,
+                chargesUpdated,
+                failed: failed.length,
+                currentCount,
+                movedOrderIds: moved.map((result) => result.id),
+                enteredOrderIds: entered.map((result) => result.id),
+                failures: failed.slice(0, 10),
+            },
+        };
+    }
+    async syncSteadfastMissingCharges() {
+        if (this.steadfastMissingChargeSyncRunning ||
+            Date.now() - this.steadfastMissingChargeSyncCompletedAt < 5 * 60 * 1000) {
+            return;
+        }
+        this.steadfastMissingChargeSyncRunning = true;
+        try {
+            const setting = await this.settingModel
+                .findOne()
+                .select('courierMethods -_id');
+            const courierMethod = ((setting === null || setting === void 0 ? void 0 : setting.courierMethods) || []).find((courier) => courier.status === 'active' &&
+                courier.providerName === 'Steadfast Courier');
+            if (!(courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.apiKey) || !(courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.secretKey))
+                return;
+            const retryChargeBefore = new Date(Date.now() - 6 * 60 * 60 * 1000);
+            const findMissingChargeOrders = async (statuses, limit, excludedIds = []) => this.orderModel
+                .find({
+                'courierData.providerName': 'Steadfast Courier',
+                'courierData.consignmentId': {
+                    $exists: true,
+                    $nin: [null, ''],
+                },
+                'courierStatus.status': { $in: statuses },
+                $and: [
+                    {
+                        $or: [
+                            { 'courierStatus.deliveryCharge': { $exists: false } },
+                            { 'courierStatus.deliveryCharge': null },
+                        ],
+                    },
+                    {
+                        $or: [
+                            {
+                                'courierStatus.chargeLookupAttemptedAt': {
+                                    $exists: false,
+                                },
+                            },
+                            {
+                                'courierStatus.chargeLookupAttemptedAt': {
+                                    $lt: retryChargeBefore,
+                                },
+                            },
+                        ],
+                    },
+                ],
+                _id: { $nin: excludedIds },
+            })
+                .sort({ 'courierStatus.chargeLookupAttemptedAt': 1, createdAt: -1 })
+                .limit(limit)
+                .select('orderId courierData courierStatus');
+            const deliveredOrders = await findMissingChargeOrders([
+                'delivered',
+                'partial_delivered',
+                'delivered_approval_pending',
+                'partial_delivered_approval_pending',
+            ], 20);
+            const otherOrders = await findMissingChargeOrders([
+                'pending',
+                'hold',
+                'cancelled',
+                'cancelled_approval_pending',
+                'unknown',
+                'unknown_approval_pending',
+            ], 20 - deliveredOrders.length, deliveredOrders.map((order) => order._id));
+            const orders = [...deliveredOrders, ...otherOrders];
+            const courierApiConfig = {
+                providerName: courierMethod.providerName,
+                apiKey: courierMethod.apiKey,
+                secretKey: courierMethod.secretKey,
+                merchantCode: courierMethod.merchantCode,
+                pickMerchantThana: courierMethod.thana,
+                pickMerchantDistrict: courierMethod.district,
+                pickMerchantAddress: courierMethod.address,
+                pickMerchantName: courierMethod.merchant_name,
+                pickupMerchantPhone: courierMethod.contact_number,
+            };
+            for (let index = 0; index < orders.length; index += 5) {
+                await Promise.all(orders.slice(index, index + 5).map(async (order) => {
+                    const attemptedAt = new Date();
+                    try {
+                        const response = await this.courierService.getOrderStatusFormCourier(courierApiConfig, order.courierData.consignmentId, order.orderId);
+                        if ((response === null || response === void 0 ? void 0 : response.status) !== 200) {
+                            throw new Error((response === null || response === void 0 ? void 0 : response.details) ||
+                                (response === null || response === void 0 ? void 0 : response.message) ||
+                                'Steadfast status lookup failed.');
+                        }
+                        const deliveryCharge = this.getSteadfastDeliveryCharge(response);
+                        await this.orderModel.updateOne({ _id: order._id }, deliveryCharge === undefined
+                            ? {
+                                $set: {
+                                    'courierStatus.chargeLookupAttemptedAt': attemptedAt,
+                                    'courierStatus.chargeLookupError': 'Steadfast status response did not include delivery charge.',
+                                },
+                            }
+                            : {
+                                $set: {
+                                    'courierStatus.deliveryCharge': deliveryCharge,
+                                    'courierStatus.chargeLookupAttemptedAt': attemptedAt,
+                                },
+                                $unset: { 'courierStatus.chargeLookupError': 1 },
+                            });
+                    }
+                    catch (error) {
+                        const message = String((error === null || error === void 0 ? void 0 : error.message) || 'Steadfast charge lookup failed.').slice(0, 300);
+                        await this.orderModel.updateOne({ _id: order._id }, {
+                            $set: {
+                                'courierStatus.chargeLookupAttemptedAt': attemptedAt,
+                                'courierStatus.chargeLookupError': message,
+                            },
+                        });
+                    }
+                }));
+            }
+        }
+        finally {
+            this.steadfastMissingChargeSyncRunning = false;
+            this.steadfastMissingChargeSyncCompletedAt = Date.now();
+        }
+    }
+    async runSteadfastStatusBackfillBatch(body) {
+        const requestedLimit = Number(body === null || body === void 0 ? void 0 : body.limit) || 15;
+        const limit = Math.min(Math.max(Math.floor(requestedLimit), 1), 25);
+        const retryFailed = (body === null || body === void 0 ? void 0 : body.retryFailed) === true;
+        const setting = await this.settingModel
+            .findOne()
+            .select('courierMethods -_id');
+        const courierMethod = ((setting === null || setting === void 0 ? void 0 : setting.courierMethods) || []).find((courier) => courier.status === 'active' &&
+            courier.providerName === 'Steadfast Courier');
+        if (!(courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.apiKey) || !(courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.secretKey)) {
+            throw new common_1.BadRequestException('Active Steadfast API credentials are not configured.');
+        }
+        const missingStatusQuery = () => ({
+            'courierData.providerName': 'Steadfast Courier',
+            'courierData.consignmentId': { $exists: true, $nin: [null, ''] },
+            $or: [
+                { 'courierStatus.status': { $exists: false } },
+                { 'courierStatus.status': null },
+                { 'courierStatus.status': '' },
+            ],
+        });
+        const candidateQuery = {
+            $and: [
+                missingStatusQuery(),
+                retryFailed
+                    ? { 'courierStatus.backfillAttemptedAt': { $exists: true } }
+                    : { 'courierStatus.backfillAttemptedAt': { $exists: false } },
+            ],
+        };
+        const orders = await this.orderModel
+            .find(candidateQuery)
+            .sort(retryFailed
+            ? { 'courierStatus.backfillAttemptedAt': 1 }
+            : { createdAt: 1 })
+            .limit(limit)
+            .select('orderId courierData courierStatus');
+        const courierApiConfig = {
+            providerName: courierMethod.providerName,
+            apiKey: courierMethod.apiKey,
+            secretKey: courierMethod.secretKey,
+            merchantCode: courierMethod.merchantCode,
+            pickMerchantThana: courierMethod.thana,
+            pickMerchantDistrict: courierMethod.district,
+            pickMerchantAddress: courierMethod.address,
+            pickMerchantName: courierMethod.merchant_name,
+            pickupMerchantPhone: courierMethod.contact_number,
+        };
+        const results = [];
+        for (let index = 0; index < orders.length; index += 3) {
+            const chunk = orders.slice(index, index + 3);
+            const chunkResults = await Promise.all(chunk.map(async (order) => {
+                const attemptedAt = new Date();
+                try {
+                    const response = await this.courierService.getOrderStatusFormCourier(courierApiConfig, order.courierData.consignmentId, order.orderId);
+                    if ((response === null || response === void 0 ? void 0 : response.status) !== 200 ||
+                        typeof (response === null || response === void 0 ? void 0 : response.delivery_status) !== 'string') {
+                        throw new Error((response === null || response === void 0 ? void 0 : response.details) ||
+                            (response === null || response === void 0 ? void 0 : response.message) ||
+                            'Steadfast returned no delivery status.');
+                    }
+                    const status = response.delivery_status.trim().toLowerCase();
+                    const deliveryCharge = this.getSteadfastDeliveryCharge(response);
+                    const eventKey = crypto
+                        .createHash('sha256')
+                        .update(`historical_backfill:${order.courierData.consignmentId}:${status}`)
+                        .digest('hex');
+                    const statusSet = {
+                        'courierStatus.status': status,
+                        'courierStatus.notificationType': 'historical_backfill',
+                        'courierStatus.trackingMessage': 'Historical status retrieved from Steadfast.',
+                        'courierStatus.updatedAt': attemptedAt.toISOString(),
+                        'courierStatus.receivedAt': attemptedAt,
+                        'courierStatus.backfillAttemptedAt': attemptedAt,
+                        'courierStatus.chargeLookupAttemptedAt': attemptedAt,
+                    };
+                    const statusUnset = {
+                        'courierStatus.backfillError': 1,
+                    };
+                    if (deliveryCharge !== undefined) {
+                        statusSet['courierStatus.deliveryCharge'] = deliveryCharge;
+                        statusUnset['courierStatus.chargeLookupError'] = 1;
+                    }
+                    else {
+                        statusSet['courierStatus.chargeLookupError'] =
+                            'Steadfast status response did not include delivery charge.';
+                    }
+                    await this.orderModel.updateOne({ _id: order._id }, {
+                        $set: statusSet,
+                        $unset: statusUnset,
+                        $push: {
+                            courierStatusHistory: {
+                                $each: [
+                                    {
+                                        eventKey,
+                                        notificationType: 'historical_backfill',
+                                        status,
+                                        trackingMessage: 'Historical status retrieved from Steadfast.',
+                                        updatedAt: attemptedAt.toISOString(),
+                                        receivedAt: attemptedAt,
+                                    },
+                                ],
+                                $slice: -20,
+                            },
+                        },
+                    });
+                    return { orderId: order.orderId, success: true };
+                }
+                catch (error) {
+                    const message = String((error === null || error === void 0 ? void 0 : error.message) || 'Steadfast status lookup failed.').slice(0, 300);
+                    await this.orderModel.updateOne({ _id: order._id }, {
+                        $set: {
+                            'courierStatus.backfillAttemptedAt': attemptedAt,
+                            'courierStatus.backfillError': message,
+                        },
+                    });
+                    return {
+                        orderId: order.orderId,
+                        success: false,
+                        error: message,
+                    };
+                }
+            }));
+            results.push(...chunkResults);
+        }
+        const [remaining, failedTotal] = await Promise.all([
+            this.orderModel.countDocuments({
+                $and: [
+                    missingStatusQuery(),
+                    { 'courierStatus.backfillAttemptedAt': { $exists: false } },
+                ],
+            }),
+            this.orderModel.countDocuments({
+                $and: [
+                    missingStatusQuery(),
+                    { 'courierStatus.backfillAttemptedAt': { $exists: true } },
+                ],
+            }),
+        ]);
+        const updated = results.filter((result) => result.success).length;
+        const failed = results.length - updated;
+        return {
+            success: true,
+            message: 'Steadfast historical status batch completed.',
+            data: {
+                checked: results.length,
+                updated,
+                failed,
+                remaining,
+                failedTotal,
+                failures: results.filter((result) => !result.success).slice(0, 10),
+            },
+        };
+    }
     async sendManualOrderToMeta(saveData, manualOrderSource) {
-        var _a;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+        if (await this.isDuplicateMetaPurchase(saveData))
+            return;
         const eventId = `order_${saveData.orderId}`;
         const staleSendingBefore = new Date(Date.now() - 10 * 60 * 1000);
         const claimedOrder = await this.orderModel.findOneAndUpdate({
@@ -419,15 +1069,13 @@ let OrderService = OrderService_1 = class OrderService {
             return;
         }
         let tagiooError = '';
+        let tagiooAccepted = false;
         try {
             const hash = (value) => crypto
                 .createHash('sha256')
                 .update(String(value).trim().toLowerCase())
                 .digest('hex');
-            const phoneDigits = String(claimedOrder.phoneNo || '').replace(/\D/g, '');
-            const normalizedPhone = phoneDigits.startsWith('88')
-                ? phoneDigits
-                : `88${phoneDigits}`;
+            const normalizedPhone = this.normalizedBdPhone(claimedOrder.phoneNo);
             const nameParts = String(claimedOrder.name || '')
                 .trim()
                 .split(/\s+/)
@@ -441,16 +1089,29 @@ let OrderService = OrderService_1 = class OrderService {
                     item_price: Number((_b = (_a = item.unitPrice) !== null && _a !== void 0 ? _a : item.salePrice) !== null && _b !== void 0 ? _b : 0),
                 });
             });
-            const eventTimestamp = new Date(claimedOrder.createdAt || Date.now()).getTime();
+            const eventTimeSeconds = this.metaEventTime(claimedOrder.createdAt);
             const contentIds = contents.map((item) => item.id);
+            const city = this.metaLocationName(claimedOrder.city ||
+                ((_a = claimedOrder.area) === null || _a === void 0 ? void 0 : _a.name) ||
+                ((_b = claimedOrder.zone) === null || _b === void 0 ? void 0 : _b.name));
+            const region = this.metaLocationName((_c = claimedOrder.division) === null || _c === void 0 ? void 0 : _c.name);
             const tagiooUserData = {
                 address: { country_code: 'BD' },
             };
+            const attributionTouch = ((_d = claimedOrder.attribution) === null || _d === void 0 ? void 0 : _d.lastTouch) ||
+                ((_e = claimedOrder.attribution) === null || _e === void 0 ? void 0 : _e.firstTouch) ||
+                {};
+            const attributionFbc = attributionTouch.fbc ||
+                (attributionTouch.fbclid
+                    ? `fb.1.${new Date(attributionTouch.capturedAt ||
+                        claimedOrder.createdAt ||
+                        Date.now()).getTime()}.${attributionTouch.fbclid}`
+                    : undefined);
             let externalId = `manual_${String(claimedOrder._id)}`;
             if (claimedOrder.user) {
                 externalId = `user_${String(claimedOrder.user)}`;
             }
-            else if ((_a = claimedOrder.attribution) === null || _a === void 0 ? void 0 : _a.anonymousId) {
+            else if ((_f = claimedOrder.attribution) === null || _f === void 0 ? void 0 : _f.anonymousId) {
                 externalId = String(claimedOrder.attribution.anonymousId);
             }
             else if (normalizedPhone.length > 2) {
@@ -472,14 +1133,27 @@ let OrderService = OrderService_1 = class OrderService {
             if (nameParts.length > 1) {
                 tagiooUserData.address.sha256_last_name = hash(nameParts.slice(1).join(''));
             }
-            if (claimedOrder.city) {
-                tagiooUserData.address.sha256_city = hash(claimedOrder.city);
+            if (city)
+                tagiooUserData.address.sha256_city = hash(city);
+            if (region)
+                tagiooUserData.address.sha256_region = hash(region);
+            if (attributionFbc)
+                tagiooUserData.fbc = attributionFbc;
+            if (attributionTouch.fbp)
+                tagiooUserData.fbp = attributionTouch.fbp;
+            if ((_g = claimedOrder.attribution) === null || _g === void 0 ? void 0 : _g.clientIpAddress) {
+                tagiooUserData.client_ip_address =
+                    claimedOrder.attribution.clientIpAddress;
+            }
+            if ((_h = claimedOrder.attribution) === null || _h === void 0 ? void 0 : _h.clientUserAgent) {
+                tagiooUserData.client_user_agent =
+                    claimedOrder.attribution.clientUserAgent;
             }
             try {
                 const tagiooResult = await this.analyticsService.trackServerContainerEvent('purchase', {
                     client_id: `admin.${String(claimedOrder._id)}`,
                     event_id: eventId,
-                    event_time: Math.floor(eventTimestamp / 1000),
+                    event_time: eventTimeSeconds,
                     transaction_id: String(claimedOrder.orderId),
                     order_id: String(claimedOrder.orderId),
                     currency: 'BDT',
@@ -499,6 +1173,14 @@ let OrderService = OrderService_1 = class OrderService {
                         });
                     }),
                     user_data: tagiooUserData,
+                    user_id: tagiooUserData.user_id,
+                    phone_number: tagiooUserData.sha256_phone_number,
+                    email_address: tagiooUserData.sha256_email_address,
+                    first_name: tagiooUserData.address.sha256_first_name,
+                    last_name: tagiooUserData.address.sha256_last_name,
+                    city: tagiooUserData.address.sha256_city,
+                    region: tagiooUserData.address.sha256_region,
+                    country: hash('bd'),
                     action_source: this.metaActionSource(manualOrderSource),
                     page_hostname: 'amolbooks.com',
                     page_location: 'https://amolbooks.com/',
@@ -508,6 +1190,22 @@ let OrderService = OrderService_1 = class OrderService {
                 if (!(tagiooResult === null || tagiooResult === void 0 ? void 0 : tagiooResult.accepted)) {
                     throw new Error('Tagioo did not accept the server event');
                 }
+                tagiooAccepted = true;
+                await this.orderModel.updateOne({ _id: saveData._id, metaPurchaseEventId: eventId }, {
+                    $set: {
+                        tagiooPurchaseEventId: eventId,
+                    },
+                    $unset: { tagiooPurchaseError: 1 },
+                });
+                this.logger.log(`Manual-order Purchase accepted by Tagioo for order ${saveData.orderId}`);
+            }
+            catch (error) {
+                tagiooError = String((error === null || error === void 0 ? void 0 : error.message) || error).slice(0, 500);
+                this.logger.warn(`Tagioo Purchase failed for order ${saveData.orderId}; continuing with authoritative direct Meta delivery: ${tagiooError}`);
+            }
+            const fSetting = await this.settingModel.findOne().select('analytics');
+            const analytics = fSetting === null || fSetting === void 0 ? void 0 : fSetting.analytics;
+            if (tagiooAccepted && (analytics === null || analytics === void 0 ? void 0 : analytics.IsManageFbPixelByTagManager)) {
                 await this.orderModel.updateOne({ _id: saveData._id, metaPurchaseEventId: eventId }, {
                     $set: {
                         metaPurchaseStatus: 'sent',
@@ -517,17 +1215,10 @@ let OrderService = OrderService_1 = class OrderService {
                     },
                     $unset: { metaPurchaseError: 1, tagiooPurchaseError: 1 },
                 });
-                this.logger.log(`Manual-order Purchase accepted by Tagioo for order ${saveData.orderId}`);
+                this.logger.log(`Manual-order Purchase delivered through GTM-managed Tagioo for order ${saveData.orderId}`);
                 return;
             }
-            catch (error) {
-                tagiooError = String((error === null || error === void 0 ? void 0 : error.message) || error).slice(0, 500);
-                this.logger.warn(`Tagioo Purchase failed for order ${saveData.orderId}; using direct Meta fallback: ${tagiooError}`);
-            }
-            const fSetting = await this.settingModel.findOne().select('analytics');
-            const analytics = fSetting === null || fSetting === void 0 ? void 0 : fSetting.analytics;
-            if (!(analytics === null || analytics === void 0 ? void 0 : analytics.facebookPixelId) ||
-                !(analytics === null || analytics === void 0 ? void 0 : analytics.facebookPixelAccessToken)) {
+            if (!(analytics === null || analytics === void 0 ? void 0 : analytics.facebookPixelId) || !(analytics === null || analytics === void 0 ? void 0 : analytics.facebookPixelAccessToken)) {
                 throw new Error('Meta Pixel ID or access token is not configured');
             }
             const userData = {};
@@ -541,15 +1232,27 @@ let OrderService = OrderService_1 = class OrderService {
             if (nameParts.length > 1) {
                 userData.ln = hash(nameParts.slice(1).join(''));
             }
-            if (claimedOrder.city)
-                userData.ct = hash(claimedOrder.city);
+            if (city)
+                userData.ct = hash(city);
+            if (region)
+                userData.st = hash(region);
             userData.country = hash('bd');
+            if (attributionFbc)
+                userData.fbc = attributionFbc;
+            if (attributionTouch.fbp)
+                userData.fbp = attributionTouch.fbp;
+            if ((_j = claimedOrder.attribution) === null || _j === void 0 ? void 0 : _j.clientIpAddress) {
+                userData.client_ip_address = claimedOrder.attribution.clientIpAddress;
+            }
+            if ((_k = claimedOrder.attribution) === null || _k === void 0 ? void 0 : _k.clientUserAgent) {
+                userData.client_user_agent = claimedOrder.attribution.clientUserAgent;
+            }
             if (!userData.ph && !userData.em) {
                 throw new Error('Manual order has no phone or email for Meta matching');
             }
             const payload = {
                 event_name: 'Purchase',
-                event_time: Math.floor(eventTimestamp / 1000),
+                event_time: eventTimeSeconds,
                 action_source: this.metaActionSource(manualOrderSource),
                 event_id: eventId,
                 custom_data: {
@@ -562,13 +1265,7 @@ let OrderService = OrderService_1 = class OrderService {
                 },
                 user_data: userData,
             };
-            const requestData = analytics.isEnablePixelTestEvent &&
-                analytics.facebookPixelTestEventId
-                ? {
-                    data: [payload],
-                    test_event_code: analytics.facebookPixelTestEventId,
-                }
-                : { data: [payload] };
+            const requestData = { data: [payload] };
             let result = null;
             for (let attempt = 1; attempt <= 3; attempt += 1) {
                 result = await this.analyticsService.trackFbConversionEventClient(analytics.facebookPixelId, analytics.facebookPixelAccessToken, requestData);
@@ -582,15 +1279,12 @@ let OrderService = OrderService_1 = class OrderService {
                 throw new Error('Meta did not acknowledge the Purchase event after 3 attempts');
             }
             await this.orderModel.updateOne({ _id: saveData._id, metaPurchaseEventId: eventId }, {
-                $set: {
-                    metaPurchaseStatus: 'sent',
-                    metaPurchaseSentAt: new Date(),
-                    metaPurchaseDeliveryChannel: 'direct_meta_fallback',
-                    tagiooPurchaseError: tagiooError,
-                },
+                $set: Object.assign({ metaPurchaseStatus: 'sent', metaPurchaseSentAt: new Date(), metaPurchaseDeliveryChannel: 'direct_meta' }, (tagiooAccepted
+                    ? { tagiooPurchaseEventId: eventId }
+                    : { tagiooPurchaseError: tagiooError })),
                 $unset: { metaPurchaseError: 1 },
             });
-            this.logger.log(`Manual-order Purchase sent through direct Meta fallback for order ${saveData.orderId}`);
+            this.logger.log(`Manual-order Purchase acknowledged by Meta for order ${saveData.orderId}`);
         }
         catch (error) {
             const message = String((error === null || error === void 0 ? void 0 : error.message) || error).slice(0, 500);
@@ -600,7 +1294,399 @@ let OrderService = OrderService_1 = class OrderService {
             this.logger.warn(`Manual-order CAPI Purchase failed for order ${saveData.orderId}: ${message}`);
         }
     }
-    normalizeManualOrderSource(value) {
+    async markBrowserPurchaseFired(body) {
+        const orderId = String((body === null || body === void 0 ? void 0 : body.orderId) || (body === null || body === void 0 ? void 0 : body.transaction_id) || '').trim();
+        if (!orderId || orderId.length > 40) {
+            return { success: false, message: 'Missing order id' };
+        }
+        const eventId = String((body === null || body === void 0 ? void 0 : body.eventId) || '')
+            .trim()
+            .slice(0, 120);
+        const updated = await this.orderModel.updateOne({ orderId, browserPurchaseFiredAt: { $exists: false } }, {
+            $set: Object.assign({ browserPurchaseFiredAt: new Date() }, (eventId ? { browserPurchaseEventId: eventId } : {})),
+        });
+        return {
+            success: true,
+            message: updated.modifiedCount
+                ? 'Browser purchase recorded'
+                : 'Already recorded',
+        };
+    }
+    scheduleWebsitePurchaseGapFill() {
+        if (this.isGapFillDisabled()) {
+            this.logger.warn('Website purchase gap-fill is disabled by META_GAP_FILL_DISABLED.');
+            return;
+        }
+        const run = () => {
+            this.fillMissingWebsitePurchases().catch((error) => {
+                this.logger.error('Website purchase gap-fill job failed:', (error === null || error === void 0 ? void 0 : error.message) || error);
+            });
+        };
+        setTimeout(run, 20000);
+        schedule.scheduleJob('*/5 * * * *', run);
+    }
+    isGapFillDisabled() {
+        return String(process.env.META_GAP_FILL_DISABLED || '') === 'true';
+    }
+    async fillMissingWebsitePurchases() {
+        if (this.isGapFillDisabled())
+            return;
+        if (this.websitePurchaseGapFillRunning)
+            return;
+        this.websitePurchaseGapFillRunning = true;
+        try {
+            const now = Date.now();
+            const candidates = await this.orderModel
+                .find({
+                orderFrom: 'Website',
+                createdAt: {
+                    $gte: new Date(now - META_EVENT_MAX_AGE_MS),
+                    $lte: new Date(now - WEBSITE_PURCHASE_GRACE_MS),
+                },
+                $or: [
+                    {
+                        metaPurchaseStatus: 'failed',
+                        metaPurchaseAttemptCount: { $lt: 3 },
+                    },
+                    {
+                        metaPurchaseStatus: 'sending',
+                        metaPurchaseAttemptCount: { $lt: 3 },
+                        metaPurchaseLastAttemptAt: {
+                            $lt: new Date(now - 10 * 60 * 1000),
+                        },
+                    },
+                ],
+            })
+                .sort({ createdAt: 1 })
+                .limit(50);
+            if (!candidates.length)
+                return;
+            this.logger.log(`Website Purchase retry: ${candidates.length} failed/stuck order(s).`);
+            for (const order of candidates) {
+                await this.sendWebsiteOrderToMeta(order);
+            }
+        }
+        finally {
+            this.websitePurchaseGapFillRunning = false;
+        }
+    }
+    async sendWebsiteOrderToMeta(order) {
+        var _a, _b, _c, _d, _e, _f, _g;
+        if (this.isGapFillDisabled())
+            return;
+        const eventId = `order_${order.orderId}`;
+        const staleSendingBefore = new Date(Date.now() - 10 * 60 * 1000);
+        const claimedOrder = await this.orderModel.findOneAndUpdate({
+            _id: order._id,
+            $or: [
+                { metaPurchaseStatus: { $exists: false } },
+                { metaPurchaseStatus: 'failed' },
+                {
+                    metaPurchaseStatus: 'sending',
+                    metaPurchaseLastAttemptAt: { $lt: staleSendingBefore },
+                },
+            ],
+        }, {
+            $set: {
+                metaPurchaseStatus: 'sending',
+                metaPurchaseEventId: eventId,
+                metaPurchaseLastAttemptAt: new Date(),
+            },
+            $inc: { metaPurchaseAttemptCount: 1 },
+            $unset: { metaPurchaseError: 1 },
+        }, { new: true });
+        if (!claimedOrder)
+            return;
+        let tagiooError = '';
+        let tagiooAccepted = false;
+        try {
+            const touch = ((_a = claimedOrder.attribution) === null || _a === void 0 ? void 0 : _a.lastTouch) ||
+                ((_b = claimedOrder.attribution) === null || _b === void 0 ? void 0 : _b.firstTouch) ||
+                {};
+            const userData = this.buildMetaUserDataFromOrder(claimedOrder);
+            userData.client_ip_address =
+                ((_c = claimedOrder.attribution) === null || _c === void 0 ? void 0 : _c.clientIpAddress) || undefined;
+            userData.client_user_agent =
+                ((_d = claimedOrder.attribution) === null || _d === void 0 ? void 0 : _d.clientUserAgent) || undefined;
+            if (touch.fbc)
+                userData.fbc = touch.fbc;
+            if (touch.fbp)
+                userData.fbp = touch.fbp;
+            if (!userData.fbc && touch.fbclid) {
+                const clickedAt = touch.capturedAt
+                    ? new Date(touch.capturedAt).getTime()
+                    : new Date(claimedOrder.createdAt || Date.now()).getTime();
+                userData.fbc = `fb.1.${clickedAt}.${touch.fbclid}`;
+            }
+            const trackableItems = (claimedOrder.orderedItems || []).filter((item) => item === null || item === void 0 ? void 0 : item._id);
+            const contents = trackableItems.map((item) => {
+                var _a, _b;
+                return ({
+                    id: String(item._id),
+                    quantity: Math.max(1, Number(item.quantity) || 1),
+                    item_price: Number((_b = (_a = item.unitPrice) !== null && _a !== void 0 ? _a : item.salePrice) !== null && _b !== void 0 ? _b : 0),
+                });
+            });
+            const contentIds = contents.map((item) => item.id);
+            const eventTime = this.metaEventTime(claimedOrder.createdAt);
+            const eventSourceUrl = touch.landingPage || 'https://amolbooks.com/';
+            try {
+                const tagiooUserData = {
+                    address: { country_code: 'BD' },
+                };
+                if (userData.external_id)
+                    tagiooUserData.user_id = userData.external_id;
+                if (userData.ph)
+                    tagiooUserData.sha256_phone_number = userData.ph;
+                if (userData.em)
+                    tagiooUserData.sha256_email_address = userData.em;
+                if (userData.fn)
+                    tagiooUserData.address.sha256_first_name = userData.fn;
+                if (userData.ln)
+                    tagiooUserData.address.sha256_last_name = userData.ln;
+                if (userData.ct)
+                    tagiooUserData.address.sha256_city = userData.ct;
+                if (userData.st)
+                    tagiooUserData.address.sha256_region = userData.st;
+                if (userData.fbc)
+                    tagiooUserData.fbc = userData.fbc;
+                if (userData.fbp)
+                    tagiooUserData.fbp = userData.fbp;
+                if (userData.client_ip_address) {
+                    tagiooUserData.client_ip_address = userData.client_ip_address;
+                }
+                if (userData.client_user_agent) {
+                    tagiooUserData.client_user_agent = userData.client_user_agent;
+                }
+                const tagiooResult = await this.analyticsService.trackServerContainerEvent('purchase', {
+                    client_id: ((_e = claimedOrder.attribution) === null || _e === void 0 ? void 0 : _e.gaClientId) ||
+                        ((_f = claimedOrder.attribution) === null || _f === void 0 ? void 0 : _f.anonymousId) ||
+                        `website.${String(claimedOrder._id)}`,
+                    session_id: ((_g = claimedOrder.attribution) === null || _g === void 0 ? void 0 : _g.gaSessionId) ||
+                        String(Math.max(1, eventTime)),
+                    engagement_time_msec: 1,
+                    event_id: eventId,
+                    event_time: eventTime,
+                    transaction_id: String(claimedOrder.orderId),
+                    order_id: String(claimedOrder.orderId),
+                    currency: 'BDT',
+                    value: Number(claimedOrder.grandTotal || 0),
+                    content_type: 'product',
+                    content_ids: contentIds,
+                    contents,
+                    meta_content_ids: contentIds,
+                    meta_contents: contents,
+                    items: trackableItems.map((item) => {
+                        var _a, _b;
+                        return ({
+                            item_id: String(item._id),
+                            item_name: String(item.name || item._id),
+                            price: Number((_b = (_a = item.unitPrice) !== null && _a !== void 0 ? _a : item.salePrice) !== null && _b !== void 0 ? _b : 0),
+                            quantity: Math.max(1, Number(item.quantity) || 1),
+                        });
+                    }),
+                    user_data: tagiooUserData,
+                    user_id: tagiooUserData.user_id,
+                    phone_number: tagiooUserData.sha256_phone_number,
+                    email_address: tagiooUserData.sha256_email_address,
+                    first_name: tagiooUserData.address.sha256_first_name,
+                    last_name: tagiooUserData.address.sha256_last_name,
+                    city: tagiooUserData.address.sha256_city,
+                    region: tagiooUserData.address.sha256_region,
+                    country: userData.country,
+                    action_source: 'website',
+                    page_hostname: 'amolbooks.com',
+                    page_location: eventSourceUrl,
+                    page_path: '/',
+                    order_source: 'website',
+                });
+                if (!(tagiooResult === null || tagiooResult === void 0 ? void 0 : tagiooResult.accepted)) {
+                    throw new Error('Tagioo did not accept the server event');
+                }
+                tagiooAccepted = true;
+                await this.orderModel.updateOne({ _id: claimedOrder._id, metaPurchaseEventId: eventId }, {
+                    $set: {
+                        tagiooPurchaseEventId: eventId,
+                    },
+                    $unset: { tagiooPurchaseError: 1 },
+                });
+                this.logger.log(`Website-order Purchase accepted by Tagioo for order ${claimedOrder.orderId}`);
+            }
+            catch (error) {
+                tagiooError = String((error === null || error === void 0 ? void 0 : error.message) || error).slice(0, 500);
+                this.logger.warn(`Tagioo Purchase failed for website order ${claimedOrder.orderId}; continuing with authoritative direct Meta delivery: ${tagiooError}`);
+            }
+            const fSetting = await this.settingModel.findOne().select('analytics');
+            const analytics = fSetting === null || fSetting === void 0 ? void 0 : fSetting.analytics;
+            if (tagiooAccepted && (analytics === null || analytics === void 0 ? void 0 : analytics.IsManageFbPixelByTagManager)) {
+                await this.orderModel.updateOne({ _id: claimedOrder._id, metaPurchaseEventId: eventId }, {
+                    $set: {
+                        metaPurchaseStatus: 'sent',
+                        metaPurchaseSentAt: new Date(),
+                        metaPurchaseDeliveryChannel: 'tagioo',
+                        tagiooPurchaseEventId: eventId,
+                    },
+                    $unset: { metaPurchaseError: 1, tagiooPurchaseError: 1 },
+                });
+                this.logger.log(`Website-order Purchase delivered through GTM-managed Tagioo for order ${claimedOrder.orderId}`);
+                return;
+            }
+            if (!(analytics === null || analytics === void 0 ? void 0 : analytics.facebookPixelId) || !(analytics === null || analytics === void 0 ? void 0 : analytics.facebookPixelAccessToken)) {
+                throw new Error('Meta Pixel ID or access token is not configured');
+            }
+            const payload = {
+                event_name: 'Purchase',
+                event_time: eventTime,
+                action_source: 'website',
+                event_id: eventId,
+                event_source_url: eventSourceUrl,
+                custom_data: {
+                    currency: 'BDT',
+                    value: Number(claimedOrder.grandTotal || 0),
+                    content_type: 'product',
+                    content_ids: contentIds,
+                    contents,
+                    order_id: String(claimedOrder.orderId),
+                },
+                user_data: userData,
+            };
+            const result = await this.postMetaPurchase(analytics, payload);
+            if (!result || Number(result.events_received) < 1) {
+                throw new Error('Meta did not acknowledge the website Purchase event');
+            }
+            await this.orderModel.updateOne({ _id: claimedOrder._id, metaPurchaseEventId: eventId }, {
+                $set: Object.assign({ metaPurchaseStatus: 'sent', metaPurchaseSentAt: new Date(), metaPurchaseDeliveryChannel: 'direct_meta' }, (tagiooAccepted
+                    ? { tagiooPurchaseEventId: eventId }
+                    : { tagiooPurchaseError: tagiooError })),
+                $unset: { metaPurchaseError: 1 },
+            });
+            this.logger.log(`Website-order Purchase acknowledged by Meta for order ${claimedOrder.orderId}`);
+        }
+        catch (error) {
+            const message = String((error === null || error === void 0 ? void 0 : error.message) || error).slice(0, 500);
+            await this.orderModel.updateOne({ _id: claimedOrder._id, metaPurchaseEventId: eventId }, {
+                $set: Object.assign({ metaPurchaseStatus: 'failed', metaPurchaseError: message }, (tagiooError ? { tagiooPurchaseError: tagiooError } : {})),
+            });
+            this.logger.warn(`Gap-fill Purchase failed for website order ${claimedOrder.orderId}: ${message}`);
+        }
+    }
+    metaHash(value) {
+        return crypto
+            .createHash('sha256')
+            .update(String(value).trim().toLowerCase())
+            .digest('hex');
+    }
+    metaLocationName(value) {
+        const raw = String((value === null || value === void 0 ? void 0 : value.name) || value || '').trim();
+        if (!raw)
+            return '';
+        const parts = raw
+            .split(/\s*(?:>>|>|\||—|–)\s*/)
+            .map((part) => part.trim())
+            .filter(Boolean);
+        const english = parts.find((part) => /[A-Za-z]/.test(part));
+        return english || parts[0] || raw;
+    }
+    normalizedBdPhone(phoneNo) {
+        const digits = String(phoneNo || '').replace(/\D/g, '');
+        if (digits.length < 3)
+            return '';
+        if (digits.startsWith('880'))
+            return digits;
+        if (digits.length === 10 && digits.startsWith('1'))
+            return `880${digits}`;
+        if (digits.length === 11 && digits.startsWith('0'))
+            return `88${digits}`;
+        return digits.startsWith('88') ? digits : `88${digits}`;
+    }
+    metaEventTime(createdAt) {
+        const now = Date.now();
+        const raw = new Date(createdAt || now).getTime();
+        const usable = Number.isFinite(raw) ? raw : now;
+        const floor = now - META_EVENT_MAX_AGE_MS;
+        return Math.floor(Math.min(Math.max(usable, floor), now) / 1000);
+    }
+    buildMetaUserDataFromOrder(order) {
+        var _a, _b, _c, _d;
+        const userData = {};
+        const phone = this.normalizedBdPhone(order.phoneNo);
+        const nameParts = String(order.name || '')
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean);
+        if ((_a = order.attribution) === null || _a === void 0 ? void 0 : _a.anonymousId) {
+            userData.external_id = String(order.attribution.anonymousId);
+        }
+        else if (order.user) {
+            userData.external_id = `user_${String(order.user)}`;
+        }
+        else if (phone) {
+            userData.external_id = `customer_${this.metaHash(phone)}`;
+        }
+        if (phone)
+            userData.ph = this.metaHash(phone);
+        if (order.email)
+            userData.em = this.metaHash(order.email);
+        if (nameParts[0])
+            userData.fn = this.metaHash(nameParts[0]);
+        if (nameParts.length > 1) {
+            userData.ln = this.metaHash(nameParts.slice(1).join(''));
+        }
+        const city = this.metaLocationName(order.city || ((_b = order.area) === null || _b === void 0 ? void 0 : _b.name) || ((_c = order.zone) === null || _c === void 0 ? void 0 : _c.name));
+        const region = this.metaLocationName((_d = order.division) === null || _d === void 0 ? void 0 : _d.name);
+        if (city)
+            userData.ct = this.metaHash(city);
+        if (region)
+            userData.st = this.metaHash(region);
+        userData.country = this.metaHash('bd');
+        return userData;
+    }
+    async getMetaAnalyticsSettings() {
+        const fSetting = await this.settingModel.findOne().select('analytics');
+        const analytics = fSetting === null || fSetting === void 0 ? void 0 : fSetting.analytics;
+        if (!(analytics === null || analytics === void 0 ? void 0 : analytics.facebookPixelId) || !(analytics === null || analytics === void 0 ? void 0 : analytics.facebookPixelAccessToken)) {
+            throw new Error('Meta Pixel ID or access token is not configured');
+        }
+        return analytics;
+    }
+    async postMetaPurchase(analytics, payload) {
+        const requestData = { data: [payload] };
+        let result = null;
+        for (let attempt = 1; attempt <= 3; attempt += 1) {
+            result = await this.analyticsService.trackFbConversionEventClient(analytics.facebookPixelId, analytics.facebookPixelAccessToken, requestData);
+            if (result && Number(result.events_received) >= 1)
+                break;
+            if (attempt < 3) {
+                await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+            }
+        }
+        return result;
+    }
+    async isDuplicateMetaPurchase(order) {
+        const phone = this.normalizedBdPhone(order.phoneNo);
+        if (!phone)
+            return false;
+        const digits = phone.replace(/^88/, '');
+        const since = new Date(new Date(order.createdAt || Date.now()).getTime() - 24 * 60 * 60 * 1000);
+        const twin = await this.orderModel
+            .findOne({
+            _id: { $ne: order._id },
+            phoneNo: { $regex: `${digits}$` },
+            grandTotal: order.grandTotal,
+            createdAt: { $gte: since },
+            $or: [
+                { metaPurchaseStatus: 'sent' },
+                { browserPurchaseFiredAt: { $exists: true } },
+            ],
+        })
+            .select('orderId')
+            .lean();
+        if (twin) {
+            this.logger.warn(`Order ${order.orderId} skipped for Meta: same phone and total as already-reported order ${twin.orderId}`);
+        }
+        return !!twin;
+    }
+    normalizeManualOrderSource(value, fallback = 'other') {
         const allowed = [
             'whatsapp',
             'whatsapp_ad',
@@ -611,7 +1697,7 @@ let OrderService = OrderService_1 = class OrderService {
             'walk_in',
             'other',
         ];
-        return allowed.includes(value) ? value : 'other';
+        return allowed.includes(value) ? value : fallback;
     }
     manualOrderLabel(source) {
         const labels = {
@@ -887,13 +1973,22 @@ let OrderService = OrderService_1 = class OrderService {
                 landingPage: text(input.landingPage),
                 referrer: text(input.referrer),
                 fbclid: text(input.fbclid, 300),
+                gclid: text(input.gclid, 300),
+                wbraid: text(input.wbraid, 300),
+                gbraid: text(input.gbraid, 300),
+                fbc: text(input.fbc, 300),
+                fbp: text(input.fbp, 300),
                 capturedAt: input.capturedAt ? new Date(input.capturedAt) : undefined,
             };
         };
         return {
             anonymousId: text(value.anonymousId, 120),
+            gaClientId: text(value.gaClientId, 120),
+            gaSessionId: text(value.gaSessionId, 120),
             firstTouch: touch(value.firstTouch),
             lastTouch: touch(value.lastTouch),
+            clientUserAgent: text(value.clientUserAgent, 500),
+            clientIpAddress: text(value.clientIpAddress, 60),
         };
     }
     normalizeOrderItem(item) {
@@ -1002,20 +2097,19 @@ let OrderService = OrderService_1 = class OrderService {
             phoneNo: saveData.phoneNo,
             createdAt: { $lte: createdAt },
         };
-        if (exceptIncompleteOrderId &&
-            ObjectId.isValid(exceptIncompleteOrderId)) {
+        if (exceptIncompleteOrderId && ObjectId.isValid(exceptIncompleteOrderId)) {
             match._id = { $ne: new ObjectId(exceptIncompleteOrderId) };
         }
         await this.incompleteOrderModel.deleteMany(match);
     }
-    async addOrderByUser(addOrderDto, user) {
+    async addOrderByUser(addOrderDto, user, req) {
         if (user) {
             addOrderDto.user = user._id;
         }
-        return this.addOrder(addOrderDto);
+        return this.addOrder(addOrderDto, req);
     }
-    async addOrderByAnonymous(addOrderDto) {
-        return this.addOrder(addOrderDto);
+    async addOrderByAnonymous(addOrderDto, req) {
+        return this.addOrder(addOrderDto, req);
     }
     async updateDate() {
         try {
@@ -1068,7 +2162,11 @@ let OrderService = OrderService_1 = class OrderService {
     async getRecentBuyersByProduct(slug) {
         try {
             if (!slug) {
-                return { success: true, message: 'No slug', data: [] };
+                return {
+                    success: true,
+                    message: 'No slug',
+                    data: [],
+                };
             }
             const cached = recentBuyersCache.get(slug);
             if (cached && Date.now() - cached.at < RECENT_BUYERS_TTL_MS) {
@@ -1088,10 +2186,7 @@ let OrderService = OrderService_1 = class OrderService {
             const data = (orders || [])
                 .map((o) => {
                 var _a;
-                const firstName = ((o === null || o === void 0 ? void 0 : o.name) || '')
-                    .toString()
-                    .trim()
-                    .split(/\s+/)[0];
+                const firstName = ((o === null || o === void 0 ? void 0 : o.name) || '').toString().trim().split(/\s+/)[0];
                 if (!firstName)
                     return null;
                 return { firstName, purchasedAt: (_a = o === null || o === void 0 ? void 0 : o.createdAt) !== null && _a !== void 0 ? _a : null };
@@ -1222,8 +2317,8 @@ let OrderService = OrderService_1 = class OrderService {
                 postCode: fOrderData === null || fOrderData === void 0 ? void 0 : fOrderData.postCode,
                 trackingId: (fOrderData === null || fOrderData === void 0 ? void 0 : fOrderData.courierData)
                     ? fOrderData.courierData.providerName === 'Pathao Courier'
-                        ? (_b = (_a = fOrderData.courierData.consignmentId) !== null && _a !== void 0 ? _a : fOrderData.courierData.trackingId) !== null && _b !== void 0 ? _b : null
-                        : (_d = (_c = fOrderData.courierData.consignmentId) !== null && _c !== void 0 ? _c : fOrderData.courierData.trackingId) !== null && _d !== void 0 ? _d : null
+                        ? ((_b = (_a = fOrderData.courierData.consignmentId) !== null && _a !== void 0 ? _a : fOrderData.courierData.trackingId) !== null && _b !== void 0 ? _b : null)
+                        : ((_d = (_c = fOrderData.courierData.consignmentId) !== null && _c !== void 0 ? _c : fOrderData.courierData.trackingId) !== null && _d !== void 0 ? _d : null)
                     : null,
                 providerName: (_f = (_e = fOrderData === null || fOrderData === void 0 ? void 0 : fOrderData.courierData) === null || _e === void 0 ? void 0 : _e.providerName) !== null && _f !== void 0 ? _f : null,
             };
@@ -1261,7 +2356,10 @@ let OrderService = OrderService_1 = class OrderService {
             await this.orderModel.deleteMany({});
         }
         const mData = await Promise.all(addOrdersDto.map(async (m) => {
-            return Object.assign(Object.assign(Object.assign({}, m), { orderedItems: await this.attachCostSnapshots(m.orderedItems || []), attribution: this.normalizeAttribution(m.attribution) }), {
+            return Object.assign(Object.assign(Object.assign({}, m), { orderedItems: await this.attachCostSnapshots(m.orderedItems || []), attribution: this.normalizeAttribution(m.attribution), orderOrigin: m.orderOrigin ||
+                    (String(m.orderFrom || '').toLowerCase() === 'website'
+                        ? 'website'
+                        : 'admin') }), {
                 slug: this.utilsService.transformToSlug(m.name),
             });
         }));
@@ -1616,14 +2714,17 @@ let OrderService = OrderService_1 = class OrderService {
             const courierMethod = courierMethods.find((f) => f.status === 'active');
             await this.addSingleOrderToCourier({ orderStatus: 8, courierMethod, id });
             await this.orderModel.findByIdAndUpdate(id, { $set: { orderStatus: 2 } });
-            return { success: true, message: 'Order sent to courier successfully' };
+            return {
+                success: true,
+                message: 'Order sent to courier successfully',
+            };
         }
         catch (err) {
             throw new common_1.InternalServerErrorException(err.message);
         }
     }
     async addSingleOrderToCourier(data) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s;
         const { orderStatus, courierMethod, id } = data;
         if (orderStatus === 8 && courierMethod) {
             const courierApiConfig = {
@@ -1652,7 +2753,9 @@ let OrderService = OrderService_1 = class OrderService {
                         const parts = [];
                         if ((_a = fOrder === null || fOrder === void 0 ? void 0 : fOrder.division) === null || _a === void 0 ? void 0 : _a.name)
                             parts.push(fOrder.division.name);
-                        const area = typeof (fOrder === null || fOrder === void 0 ? void 0 : fOrder.area) === 'object' ? (_b = fOrder === null || fOrder === void 0 ? void 0 : fOrder.area) === null || _b === void 0 ? void 0 : _b.name : fOrder === null || fOrder === void 0 ? void 0 : fOrder.area;
+                        const area = typeof (fOrder === null || fOrder === void 0 ? void 0 : fOrder.area) === 'object'
+                            ? (_b = fOrder === null || fOrder === void 0 ? void 0 : fOrder.area) === null || _b === void 0 ? void 0 : _b.name
+                            : fOrder === null || fOrder === void 0 ? void 0 : fOrder.area;
                         if (area)
                             parts.push(area);
                         if ((_c = fOrder === null || fOrder === void 0 ? void 0 : fOrder.zone) === null || _c === void 0 ? void 0 : _c.name)
@@ -1693,13 +2796,20 @@ let OrderService = OrderService_1 = class OrderService {
                         await this.orderModel.findByIdAndUpdate(id, {
                             $set: {
                                 courierData: orderCourierData,
+                                courierStatus: Object.assign({ status: ((_f = courierResponse === null || courierResponse === void 0 ? void 0 : courierResponse.consignment) === null || _f === void 0 ? void 0 : _f.status) || 'in_review', notificationType: 'order_created', trackingMessage: 'Order is waiting for courier review.', updatedAt: ((_g = courierResponse === null || courierResponse === void 0 ? void 0 : courierResponse.consignment) === null || _g === void 0 ? void 0 : _g.updated_at) ||
+                                        new Date().toISOString(), receivedAt: new Date() }, (this.getSteadfastDeliveryCharge(courierResponse) !==
+                                    undefined
+                                    ? {
+                                        deliveryCharge: this.getSteadfastDeliveryCharge(courierResponse),
+                                    }
+                                    : {})),
                             },
                         });
                     }
                 }
             }
             if ((courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.providerName) === 'Pathao Courier') {
-                if ((fOrder === null || fOrder === void 0 ? void 0 : fOrder.courierData) && ((_f = fOrder === null || fOrder === void 0 ? void 0 : fOrder.courierData) === null || _f === void 0 ? void 0 : _f.consignmentId)) {
+                if ((fOrder === null || fOrder === void 0 ? void 0 : fOrder.courierData) && ((_h = fOrder === null || fOrder === void 0 ? void 0 : fOrder.courierData) === null || _h === void 0 ? void 0 : _h.consignmentId)) {
                 }
                 else {
                     console.log('fOrder', fOrder);
@@ -1708,8 +2818,8 @@ let OrderService = OrderService_1 = class OrderService {
                     if (courierResponse.code === 200) {
                         const orderCourierData = {
                             providerName: courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.providerName,
-                            consignmentId: (_g = courierResponse === null || courierResponse === void 0 ? void 0 : courierResponse.data) === null || _g === void 0 ? void 0 : _g.consignment_id,
-                            trackingId: (_h = courierResponse === null || courierResponse === void 0 ? void 0 : courierResponse.data) === null || _h === void 0 ? void 0 : _h.merchant_order_id,
+                            consignmentId: (_j = courierResponse === null || courierResponse === void 0 ? void 0 : courierResponse.data) === null || _j === void 0 ? void 0 : _j.consignment_id,
+                            trackingId: (_k = courierResponse === null || courierResponse === void 0 ? void 0 : courierResponse.data) === null || _k === void 0 ? void 0 : _k.merchant_order_id,
                             createdAt: this.utilsService.getDateString(new Date()),
                         };
                         await this.orderModel.findByIdAndUpdate(id, {
@@ -1721,7 +2831,7 @@ let OrderService = OrderService_1 = class OrderService {
                 }
             }
             if ((courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.providerName) === 'Paperfly Courier') {
-                if ((fOrder === null || fOrder === void 0 ? void 0 : fOrder.courierData) && ((_j = fOrder === null || fOrder === void 0 ? void 0 : fOrder.courierData) === null || _j === void 0 ? void 0 : _j.consignmentId)) {
+                if ((fOrder === null || fOrder === void 0 ? void 0 : fOrder.courierData) && ((_l = fOrder === null || fOrder === void 0 ? void 0 : fOrder.courierData) === null || _l === void 0 ? void 0 : _l.consignmentId)) {
                 }
                 else {
                     const getFullAddress = () => {
@@ -1742,8 +2852,8 @@ let OrderService = OrderService_1 = class OrderService {
                         custname: fOrder.name,
                         custPhone: fOrder.phoneNo,
                         custaddress: getFullAddress(),
-                        customerThana: (_l = (_k = fOrder.area) === null || _k === void 0 ? void 0 : _k.name) !== null && _l !== void 0 ? _l : 'Mirpur',
-                        customerDistrict: (_m = fOrder.division) === null || _m === void 0 ? void 0 : _m.name,
+                        customerThana: (_o = (_m = fOrder.area) === null || _m === void 0 ? void 0 : _m.name) !== null && _o !== void 0 ? _o : 'Mirpur',
+                        customerDistrict: (_p = fOrder.division) === null || _p === void 0 ? void 0 : _p.name,
                         productSizeWeight: 'standard',
                         productBrief: this.getOrderItemProductNames(fOrder === null || fOrder === void 0 ? void 0 : fOrder.orderedItems) ||
                             'No description',
@@ -1756,14 +2866,14 @@ let OrderService = OrderService_1 = class OrderService {
                         pickMerchantAddress: courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.address,
                         pickMerchantName: courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.merchant_name,
                         pickupMerchantPhone: courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.contact_number,
-                        special_instruction: (_o = courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.specialInstruction) !== null && _o !== void 0 ? _o : '',
+                        special_instruction: (_q = courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.specialInstruction) !== null && _q !== void 0 ? _q : '',
                     };
                     const courierResponse = await this.courierService.createOrderWithProvider(courierApiConfig, payload);
                     if (courierResponse.response_code === 200) {
                         const orderCourierData = {
                             providerName: 'Paperfly Courier',
-                            trackingId: (_p = courierResponse === null || courierResponse === void 0 ? void 0 : courierResponse.success) === null || _p === void 0 ? void 0 : _p.tracking_number,
-                            consignmentId: (_q = courierResponse === null || courierResponse === void 0 ? void 0 : courierResponse.success) === null || _q === void 0 ? void 0 : _q.tracking_number,
+                            trackingId: (_r = courierResponse === null || courierResponse === void 0 ? void 0 : courierResponse.success) === null || _r === void 0 ? void 0 : _r.tracking_number,
+                            consignmentId: (_s = courierResponse === null || courierResponse === void 0 ? void 0 : courierResponse.success) === null || _s === void 0 ? void 0 : _s.tracking_number,
                             createdAt: this.utilsService.getDateString(new Date()),
                         };
                         await this.orderModel.findByIdAndUpdate(id, {
@@ -1783,7 +2893,7 @@ let OrderService = OrderService_1 = class OrderService {
             .join(',');
     }
     async addMultipleOrderToCourier(data) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s;
         const { orderStatus, courierMethod, mIds } = data;
         if (orderStatus === 8 && courierMethod) {
             const courierApiConfig = {
@@ -1812,7 +2922,9 @@ let OrderService = OrderService_1 = class OrderService {
                             const parts = [];
                             if ((_a = fOrder === null || fOrder === void 0 ? void 0 : fOrder.division) === null || _a === void 0 ? void 0 : _a.name)
                                 parts.push(fOrder.division.name);
-                            const area = typeof (fOrder === null || fOrder === void 0 ? void 0 : fOrder.area) === 'object' ? (_b = fOrder === null || fOrder === void 0 ? void 0 : fOrder.area) === null || _b === void 0 ? void 0 : _b.name : fOrder === null || fOrder === void 0 ? void 0 : fOrder.area;
+                            const area = typeof (fOrder === null || fOrder === void 0 ? void 0 : fOrder.area) === 'object'
+                                ? (_b = fOrder === null || fOrder === void 0 ? void 0 : fOrder.area) === null || _b === void 0 ? void 0 : _b.name
+                                : fOrder === null || fOrder === void 0 ? void 0 : fOrder.area;
                             if (area)
                                 parts.push(area);
                             if ((_c = fOrder === null || fOrder === void 0 ? void 0 : fOrder.zone) === null || _c === void 0 ? void 0 : _c.name)
@@ -1852,21 +2964,28 @@ let OrderService = OrderService_1 = class OrderService {
                             await this.orderModel.findByIdAndUpdate(id, {
                                 $set: {
                                     courierData: orderCourierData,
+                                    courierStatus: Object.assign({ status: ((_f = courierResponse === null || courierResponse === void 0 ? void 0 : courierResponse.consignment) === null || _f === void 0 ? void 0 : _f.status) || 'in_review', notificationType: 'order_created', trackingMessage: 'Order is waiting for courier review.', updatedAt: ((_g = courierResponse === null || courierResponse === void 0 ? void 0 : courierResponse.consignment) === null || _g === void 0 ? void 0 : _g.updated_at) ||
+                                            new Date().toISOString(), receivedAt: new Date() }, (this.getSteadfastDeliveryCharge(courierResponse) !==
+                                        undefined
+                                        ? {
+                                            deliveryCharge: this.getSteadfastDeliveryCharge(courierResponse),
+                                        }
+                                        : {})),
                                 },
                             });
                         }
                     }
                 }
                 if ((courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.providerName) === 'Pathao Courier') {
-                    if ((fOrder === null || fOrder === void 0 ? void 0 : fOrder.courierData) && ((_f = fOrder === null || fOrder === void 0 ? void 0 : fOrder.courierData) === null || _f === void 0 ? void 0 : _f.consignmentId)) {
+                    if ((fOrder === null || fOrder === void 0 ? void 0 : fOrder.courierData) && ((_h = fOrder === null || fOrder === void 0 ? void 0 : fOrder.courierData) === null || _h === void 0 ? void 0 : _h.consignmentId)) {
                     }
                     else {
                         const courierResponse = await this.courierService.createOrderWithProvider(courierApiConfig, fOrder);
                         if (courierResponse.code === 200) {
                             const orderCourierData = {
                                 providerName: courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.providerName,
-                                consignmentId: (_g = courierResponse === null || courierResponse === void 0 ? void 0 : courierResponse.data) === null || _g === void 0 ? void 0 : _g.consignment_id,
-                                trackingId: (_h = courierResponse === null || courierResponse === void 0 ? void 0 : courierResponse.data) === null || _h === void 0 ? void 0 : _h.merchant_order_id,
+                                consignmentId: (_j = courierResponse === null || courierResponse === void 0 ? void 0 : courierResponse.data) === null || _j === void 0 ? void 0 : _j.consignment_id,
+                                trackingId: (_k = courierResponse === null || courierResponse === void 0 ? void 0 : courierResponse.data) === null || _k === void 0 ? void 0 : _k.merchant_order_id,
                                 createdAt: this.utilsService.getDateString(new Date()),
                             };
                             await this.orderModel.findByIdAndUpdate(id, {
@@ -1878,7 +2997,7 @@ let OrderService = OrderService_1 = class OrderService {
                     }
                 }
                 if ((courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.providerName) === 'Paperfly Courier') {
-                    if ((fOrder === null || fOrder === void 0 ? void 0 : fOrder.courierData) && ((_j = fOrder === null || fOrder === void 0 ? void 0 : fOrder.courierData) === null || _j === void 0 ? void 0 : _j.consignmentId)) {
+                    if ((fOrder === null || fOrder === void 0 ? void 0 : fOrder.courierData) && ((_l = fOrder === null || fOrder === void 0 ? void 0 : fOrder.courierData) === null || _l === void 0 ? void 0 : _l.consignmentId)) {
                     }
                     else {
                         const getFullAddress = () => {
@@ -1899,8 +3018,8 @@ let OrderService = OrderService_1 = class OrderService {
                             custname: fOrder.name,
                             custPhone: fOrder.phoneNo,
                             custaddress: getFullAddress(),
-                            customerThana: (_l = (_k = fOrder.area) === null || _k === void 0 ? void 0 : _k.name) !== null && _l !== void 0 ? _l : 'Mirpur',
-                            customerDistrict: (_m = fOrder.division) === null || _m === void 0 ? void 0 : _m.name,
+                            customerThana: (_o = (_m = fOrder.area) === null || _m === void 0 ? void 0 : _m.name) !== null && _o !== void 0 ? _o : 'Mirpur',
+                            customerDistrict: (_p = fOrder.division) === null || _p === void 0 ? void 0 : _p.name,
                             productSizeWeight: 'standard',
                             productBrief: this.getOrderItemProductNames(fOrder === null || fOrder === void 0 ? void 0 : fOrder.orderedItems) ||
                                 'No description',
@@ -1913,14 +3032,14 @@ let OrderService = OrderService_1 = class OrderService {
                             pickMerchantAddress: courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.address,
                             pickMerchantName: courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.merchant_name,
                             pickupMerchantPhone: courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.contact_number,
-                            special_instruction: (_o = courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.specialInstruction) !== null && _o !== void 0 ? _o : '',
+                            special_instruction: (_q = courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.specialInstruction) !== null && _q !== void 0 ? _q : '',
                         };
                         const courierResponse = await this.courierService.createOrderWithProvider(courierApiConfig, payload);
                         if (courierResponse.response_code === 200) {
                             const orderCourierData = {
                                 providerName: 'Paperfly Courier',
-                                trackingId: (_p = courierResponse === null || courierResponse === void 0 ? void 0 : courierResponse.success) === null || _p === void 0 ? void 0 : _p.tracking_number,
-                                consignmentId: (_q = courierResponse === null || courierResponse === void 0 ? void 0 : courierResponse.success) === null || _q === void 0 ? void 0 : _q.tracking_number,
+                                trackingId: (_r = courierResponse === null || courierResponse === void 0 ? void 0 : courierResponse.success) === null || _r === void 0 ? void 0 : _r.tracking_number,
+                                consignmentId: (_s = courierResponse === null || courierResponse === void 0 ? void 0 : courierResponse.success) === null || _s === void 0 ? void 0 : _s.tracking_number,
                                 createdAt: this.utilsService.getDateString(new Date()),
                             };
                             await this.orderModel.findByIdAndUpdate(id, {
@@ -2046,7 +3165,9 @@ let OrderService = OrderService_1 = class OrderService {
                 order_enum_1.OrderStatus.REFUND,
                 order_enum_1.OrderStatus.RETURN,
             ].includes(orderStatus);
-            const shouldRestock = isRestockStatus && data.stockDecremented === true && !data.stockRestocked;
+            const shouldRestock = isRestockStatus &&
+                data.stockDecremented === true &&
+                !data.stockRestocked;
             const mData = {
                 courierLink: updateOrderStatusDto.courierLink,
                 orderStatus: orderStatus,
@@ -2135,8 +3256,7 @@ let OrderService = OrderService_1 = class OrderService {
             if ((fProducts && fProducts.length) || specialPackages) {
                 cartItems = orderData.cartData.map((t1) => {
                     const productFromFProducts = fProducts.find((t2) => t2._id === t1.product);
-                    const productFromSpecialPackages = specialPackages.find((t2) => String(t2._id) ===
-                        String(t1.specialPackage || t1.product));
+                    const productFromSpecialPackages = specialPackages.find((t2) => String(t2._id) === String(t1.specialPackage || t1.product));
                     return Object.assign(Object.assign({}, t1), { product: Object.assign({}, productFromFProducts), specialPackage: Object.assign({}, productFromSpecialPackages) });
                 });
             }
@@ -2236,6 +3356,7 @@ let OrderService = OrderService_1 = class OrderService {
             zone: orderData === null || orderData === void 0 ? void 0 : orderData.zone,
             city: orderData === null || orderData === void 0 ? void 0 : orderData.city,
             orderFrom: (orderData === null || orderData === void 0 ? void 0 : orderData.orderFrom) || 'Website',
+            orderOrigin: (orderData === null || orderData === void 0 ? void 0 : orderData.orderOrigin) || 'website',
             manualOrderSource: orderData === null || orderData === void 0 ? void 0 : orderData.manualOrderSource,
             paymentType: orderData === null || orderData === void 0 ? void 0 : orderData.paymentType,
             country: orderData === null || orderData === void 0 ? void 0 : orderData.country,
@@ -2262,8 +3383,24 @@ let OrderService = OrderService_1 = class OrderService {
     }
     async evaluateGiftLine(products, finalData) {
         try {
-            const cfg = JSON.parse(JSON.stringify(await this.orderOfferModel.findOne({})));
-            if (!cfg || !cfg.giftEnabled || !cfg.giftProduct || !cfg.giftProduct._id) {
+            const cfg = JSON.parse(JSON.stringify(await this.orderOfferModel.findOne({}))) ||
+                {
+                    giftEnabled: true,
+                    giftMinAmount: FREE_NOTEBOOK_MIN_AMOUNT,
+                    giftProduct: {
+                        _id: '6a3c1d665676acb52a082df5',
+                        name: 'Amol Notebook',
+                        slug: 'Amol Notebook',
+                        image: 'https://apisub.amolbooks.com/api/upload/images/free-notebook-a015.webp',
+                    },
+                    giftBuyXProductSlug: '500 shobder kuraner 75%',
+                    giftBuyXQty: 2,
+                    giftLabel: 'ফ্রি নোটবুক',
+                };
+            if (!cfg ||
+                !cfg.giftEnabled ||
+                !cfg.giftProduct ||
+                !cfg.giftProduct._id) {
                 return null;
             }
             const giftId = String(cfg.giftProduct._id);
@@ -2275,10 +3412,11 @@ let OrderService = OrderService_1 = class OrderService {
                 var _a;
                 if (String((_a = t.product) === null || _a === void 0 ? void 0 : _a._id) === giftId)
                     return acc;
-                return (acc + this.utilsService.transform(t.product, 'salePrice', t.selectedQty));
+                return (acc +
+                    this.utilsService.transform(t.product, 'salePrice', t.selectedQty));
             }, 0);
             let eligible = false;
-            if (cfg.giftMinAmount && giftEligibleSubTotal >= Number(cfg.giftMinAmount)) {
+            if (giftEligibleSubTotal >= FREE_NOTEBOOK_MIN_AMOUNT) {
                 eligible = true;
             }
             if (!eligible && cfg.giftBuyXProductSlug && cfg.giftBuyXQty) {
@@ -2494,16 +3632,12 @@ let OrderService = OrderService_1 = class OrderService {
             console.log('No orders found for the last 3 days with courierData.');
             return;
         }
-        const courierMethodArray = [];
+        let courierMethods = [];
         try {
             const fSetting = await this.settingModel
                 .findOne()
                 .select('courierMethods -_id');
-            const fCourierMethods = (_a = fSetting === null || fSetting === void 0 ? void 0 : fSetting.courierMethods) !== null && _a !== void 0 ? _a : [];
-            const activeCourier = fCourierMethods.find((c) => c.status === 'active');
-            if (activeCourier) {
-                courierMethodArray.push({ courier: activeCourier });
-            }
+            courierMethods = ((_a = fSetting === null || fSetting === void 0 ? void 0 : fSetting.courierMethods) !== null && _a !== void 0 ? _a : []).filter((courier) => courier.status === 'active');
         }
         catch (err) {
             console.error(`Failed to fetch courier setting`, err);
@@ -2513,10 +3647,10 @@ let OrderService = OrderService_1 = class OrderService {
             const batch = orders.slice(i, i + BATCH_SIZE);
             const batchPromises = batch.map(async (order) => {
                 var _a;
-                const matchedCourier = courierMethodArray;
+                const matchedCourier = courierMethods.find((courier) => { var _a; return courier.providerName === ((_a = order.courierData) === null || _a === void 0 ? void 0 : _a.providerName); });
                 if (matchedCourier) {
                     try {
-                        await this.getAndUpdateOrderStatusFromCourier(order, matchedCourier.courier);
+                        await this.getAndUpdateOrderStatusFromCourier(order, matchedCourier);
                     }
                     catch (err) {
                         console.error(`Failed to update order ${order._id}`, ((_a = err === null || err === void 0 ? void 0 : err.response) === null || _a === void 0 ? void 0 : _a.data) || err.message);
@@ -2529,7 +3663,7 @@ let OrderService = OrderService_1 = class OrderService {
         console.log('🎉 All courier status updates complete.');
     }
     async getAndUpdateOrderStatusFromCourier(order, courierMethod) {
-        var _a, _b;
+        var _a, _b, _c, _d, _e;
         let orderStatus;
         const courierApiConfig = {
             providerName: courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.providerName,
@@ -2549,18 +3683,34 @@ let OrderService = OrderService_1 = class OrderService {
             switch (courierResponse && (courierMethod === null || courierMethod === void 0 ? void 0 : courierMethod.providerName)) {
                 case 'Steadfast Courier':
                     if (courierResponse.status === 200) {
-                        switch (courierResponse.delivery_status) {
-                            case 'delivered':
-                                orderStatus = 'delivered';
-                                break;
-                            case 'cancelled':
-                                orderStatus = 'cancelled';
-                                break;
+                        const receivedAt = new Date();
+                        const deliveryCharge = this.getSteadfastDeliveryCharge(courierResponse);
+                        const statusSet = {
+                            'courierStatus.status': String(courierResponse.delivery_status || 'unknown').toLowerCase(),
+                            'courierStatus.notificationType': 'status_poll',
+                            'courierStatus.trackingMessage': ((_a = order.courierStatus) === null || _a === void 0 ? void 0 : _a.trackingMessage) || '',
+                            'courierStatus.updatedAt': receivedAt.toISOString(),
+                            'courierStatus.receivedAt': receivedAt,
+                            'courierStatus.lastSyncedAt': receivedAt,
+                        };
+                        const statusUnset = {
+                            'courierStatus.lastSyncError': 1,
+                        };
+                        if (((_b = order.courierStatus) === null || _b === void 0 ? void 0 : _b.deliveryCharge) === null ||
+                            ((_c = order.courierStatus) === null || _c === void 0 ? void 0 : _c.deliveryCharge) === undefined) {
+                            statusSet['courierStatus.chargeLookupAttemptedAt'] = receivedAt;
+                            if (deliveryCharge !== undefined) {
+                                statusSet['courierStatus.deliveryCharge'] = deliveryCharge;
+                                statusUnset['courierStatus.chargeLookupError'] = 1;
+                            }
+                            else {
+                                statusSet['courierStatus.chargeLookupError'] =
+                                    'Steadfast status response did not include delivery charge.';
+                            }
                         }
                         await this.orderModel.findByIdAndUpdate(order.id, {
-                            $set: {
-                                orderStatus: orderStatus,
-                            },
+                            $set: statusSet,
+                            $unset: statusUnset,
                         });
                     }
                     break;
@@ -2596,7 +3746,7 @@ let OrderService = OrderService_1 = class OrderService {
                     break;
                 case 'Paperfly Courier':
                     if (courierResponse.response_code === 200 &&
-                        ((_b = (_a = courierResponse.success) === null || _a === void 0 ? void 0 : _a.trackingStatus) === null || _b === void 0 ? void 0 : _b.length) > 0) {
+                        ((_e = (_d = courierResponse.success) === null || _d === void 0 ? void 0 : _d.trackingStatus) === null || _e === void 0 ? void 0 : _e.length) > 0) {
                         const statusObj = courierResponse.success.trackingStatus[0];
                         const statusKeys = [
                             'Pick',
@@ -2660,9 +3810,55 @@ let OrderService = OrderService_1 = class OrderService {
             }
         }
     }
-    async addIncompleteOrder(addIncompleteOrderDto) {
+    buildIncompleteOrderMergePatch(addIncompleteOrderDto) {
+        const dto = addIncompleteOrderDto;
+        return OrderService_1.INCOMPLETE_ORDER_MERGE_FIELDS.reduce((patch, field) => {
+            const incoming = dto === null || dto === void 0 ? void 0 : dto[field];
+            if (incoming === undefined || incoming === null)
+                return patch;
+            if (typeof incoming === 'string' && !incoming.trim())
+                return patch;
+            if (typeof incoming === 'number' &&
+                (!Number.isFinite(incoming) || incoming === 0))
+                return patch;
+            if (Array.isArray(incoming) && !incoming.length)
+                return patch;
+            patch[field] = incoming;
+            return patch;
+        }, {});
+    }
+    async addIncompleteOrder(addIncompleteOrderDto, req) {
+        var _a, _b, _c;
         try {
-            const newData = new this.incompleteOrderModel(addIncompleteOrderDto);
+            const incompleteInput = Object.assign({}, addIncompleteOrderDto);
+            incompleteInput.attribution = this.normalizeAttribution(Object.assign(Object.assign({}, (incompleteInput.attribution || {})), { clientUserAgent: ((_a = incompleteInput.attribution) === null || _a === void 0 ? void 0 : _a.clientUserAgent) ||
+                    ((_b = req === null || req === void 0 ? void 0 : req.headers) === null || _b === void 0 ? void 0 : _b['user-agent']), clientIpAddress: ((_c = incompleteInput.attribution) === null || _c === void 0 ? void 0 : _c.clientIpAddress) ||
+                    (req ? this.utilsService.getClientIp(req) : undefined) }));
+            const phoneNo = String((addIncompleteOrderDto === null || addIncompleteOrderDto === void 0 ? void 0 : addIncompleteOrderDto.phoneNo) || '').trim();
+            if (phoneNo) {
+                const existing = await this.incompleteOrderModel
+                    .findOne({
+                    phoneNo,
+                    status: { $ne: 'converted' },
+                    createdAt: {
+                        $gte: new Date(Date.now() - OrderService_1.INCOMPLETE_ORDER_MERGE_WINDOW_MS),
+                    },
+                })
+                    .sort({ createdAt: -1 })
+                    .select({ _id: 1 });
+                if (existing) {
+                    const patch = this.buildIncompleteOrderMergePatch(incompleteInput);
+                    if (Object.keys(patch).length) {
+                        await this.incompleteOrderModel.updateOne({ _id: existing._id }, { $set: patch });
+                    }
+                    return {
+                        success: true,
+                        message: 'Incomplete order saved successfully',
+                        data: { _id: existing._id },
+                    };
+                }
+            }
+            const newData = new this.incompleteOrderModel(incompleteInput);
             const saveData = await newData.save();
             if (saveData.phoneNo) {
                 this.runIncompleteOrderFraudCheck(String(saveData._id), saveData.phoneNo).catch((error) => {
@@ -2834,33 +4030,78 @@ let OrderService = OrderService_1 = class OrderService {
             throw new common_1.InternalServerErrorException(err.message);
         }
     }
-    async updateIncompleteOrderById(id, updateIncompleteOrderDto) {
+    async updateIncompleteOrderById(id, updateIncompleteOrderDto, req) {
+        var _a, _b, _c;
+        const incompleteInput = Object.assign({}, updateIncompleteOrderDto);
+        if (incompleteInput.attribution || req) {
+            incompleteInput.attribution = this.normalizeAttribution(Object.assign(Object.assign({}, (incompleteInput.attribution || {})), { clientUserAgent: ((_a = incompleteInput.attribution) === null || _a === void 0 ? void 0 : _a.clientUserAgent) ||
+                    ((_b = req === null || req === void 0 ? void 0 : req.headers) === null || _b === void 0 ? void 0 : _b['user-agent']), clientIpAddress: ((_c = incompleteInput.attribution) === null || _c === void 0 ? void 0 : _c.clientIpAddress) ||
+                    (req ? this.utilsService.getClientIp(req) : undefined) }));
+        }
+        return this.updateIncompleteOrderFields(id, incompleteInput, [
+            'name',
+            'phoneNo',
+            'email',
+            'city',
+            'shippingAddress',
+            'division',
+            'area',
+            'zone',
+            'paymentType',
+            'paymentStatus',
+            'deliveryCharge',
+            'subTotal',
+            'discount',
+            'grandTotal',
+            'orderedItems',
+            'note',
+            'attribution',
+        ], false);
+    }
+    async updateIncompleteOrderByAdmin(id, updateIncompleteOrderDto) {
+        return this.updateIncompleteOrderFields(id, updateIncompleteOrderDto, [
+            'name',
+            'phoneNo',
+            'email',
+            'city',
+            'shippingAddress',
+            'division',
+            'area',
+            'zone',
+            'paymentType',
+            'paymentStatus',
+            'deliveryCharge',
+            'subTotal',
+            'discount',
+            'grandTotal',
+            'orderedItems',
+            'note',
+            'adminNote',
+            'fraudChecker',
+        ]);
+    }
+    async updateIncompleteOrderFields(id, updateIncompleteOrderDto, editableFields, allowConverted = true) {
         try {
-            const editableFields = [
-                'name',
-                'phoneNo',
-                'email',
-                'city',
-                'shippingAddress',
-                'paymentType',
-                'paymentStatus',
-                'deliveryCharge',
-                'subTotal',
-                'discount',
-                'grandTotal',
-                'orderedItems',
-                'note',
-                'adminNote',
-                'fraudChecker',
-            ];
             const dto = updateIncompleteOrderDto;
             const updateData = editableFields.reduce((result, field) => {
-                if (Object.prototype.hasOwnProperty.call(dto || {}, field)) {
-                    result[field] = dto[field];
+                if (!Object.prototype.hasOwnProperty.call(dto || {}, field)) {
+                    return result;
                 }
+                const value = dto[field];
+                if (!allowConverted &&
+                    typeof value === 'string' &&
+                    !value.trim() &&
+                    field !== 'adminNote' &&
+                    field !== 'note') {
+                    return result;
+                }
+                result[field] = value;
                 return result;
             }, {});
-            const data = await this.incompleteOrderModel.findByIdAndUpdate(id, { $set: updateData }, { new: true, runValidators: true });
+            const match = allowConverted
+                ? { _id: id }
+                : { _id: id, status: { $ne: 'converted' } };
+            const data = await this.incompleteOrderModel.findOneAndUpdate(match, { $set: updateData }, { new: true, runValidators: true });
             if (!data) {
                 throw new common_1.NotFoundException('Incomplete order not found');
             }
@@ -2891,6 +4132,29 @@ let OrderService = OrderService_1 = class OrderService {
         }
     }
 };
+OrderService.INCOMPLETE_ORDER_MERGE_WINDOW_MS = 6 * 60 * 60 * 1000;
+OrderService.INCOMPLETE_ORDER_MERGE_FIELDS = [
+    'orderId',
+    'name',
+    'phoneNo',
+    'email',
+    'city',
+    'shippingAddress',
+    'division',
+    'area',
+    'zone',
+    'paymentType',
+    'paymentStatus',
+    'grandTotal',
+    'subTotal',
+    'discount',
+    'deliveryCharge',
+    'orderedItems',
+    'note',
+    'checkoutDate',
+    'user',
+    'attribution',
+];
 OrderService = OrderService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)('Admin')),

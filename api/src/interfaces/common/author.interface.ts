@@ -4,7 +4,9 @@ export interface Author {
   nameEn?: string;
   slug?: string;
   address?: string;
+  addressEn?: string;
   description?: string;
+  descriptionEn?: string;
   image?: string;
   birthDate?: Date;
   priority?:number;
