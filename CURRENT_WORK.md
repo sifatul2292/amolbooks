@@ -2,6 +2,10 @@
 
 ## Free notebook cart offer cleanup (2026-08-31)
 
+- Fixed guest-cart storage key mismatch on the live storefront. Injected Add to
+  Cart now writes/reads the compiled Angular cart key (`ALAMBOOKS_USER_CART_1`)
+  and migrates stale `Amolbooks_USER_CART_1` entries into it, so the cart and
+  checkout no longer show empty after the popup reports items.
 - Fixed product review images. Admin-added reviews now preserve reviewer
   `profileImg` plus review attachment URLs, and the storefront review section
   retries legacy `/api/upload/images/...` review-photo URLs as static

@@ -3847,12 +3847,11 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   }
 
   function cartStorageKey() {
-    /* The compiled storefront loaded by this local build uses this exact
-       cased key. A prior bridge wrote uppercase ALAMBOOKS entries, splitting
-       the injected cart from the native cart and checkout. Merge that stale
-       key once into the native cart key, then remove it. */
-    var storefrontKey = 'Amolbooks_USER_CART_1';
-    var legacyKey = 'ALAMBOOKS_USER_CART_1';
+    /* The compiled storefront reads ALAMBOOKS_USER_CART_1. A prior bridge
+       wrote Amolbooks_USER_CART_1, splitting the popup from cart/checkout.
+       Merge that stale key into the native cart key, then remove it. */
+    var storefrontKey = 'ALAMBOOKS_USER_CART_1';
+    var legacyKey = 'Amolbooks_USER_CART_1';
     var legacyItems = [];
     var storefrontItems = [];
     try { legacyItems = JSON.parse(localStorage.getItem(legacyKey) || '[]') || []; } catch (_) { legacyItems = []; }
