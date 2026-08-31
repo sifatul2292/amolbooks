@@ -72,23 +72,42 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
 	.category-card img,.product-card img,.__shudhui-grid img{aspect-ratio:3/4}
 	</style>
 <style>.sale-price,.regular-price,.price,.price-wrapper *,.price-aria .new-price p,.price-aria .discount-amount p,.price-aria *{font-weight:500!important}@keyframes cartBounce{0%,100%{transform:scale(1) rotate(0deg)}20%{transform:scale(1.4) rotate(-14deg)}40%{transform:scale(1.4) rotate(14deg)}60%{transform:scale(1.2) rotate(-7deg)}80%{transform:scale(1.2) rotate(7deg)}}@keyframes cartLoop{0%,100%{transform:translateY(0) scale(1)}25%{transform:translateY(-7px) scale(1.15)}55%{transform:translateY(-3px) scale(1.08)}}.cart-icon-bounce{animation:cartBounce 0.6s ease!important;display:inline-block!important}.cart-icon-loop{animation:cartLoop 0.85s ease infinite!important;display:inline-block!important}#amol-cart-toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(30px);background:#129245;color:#fff;border-radius:14px;padding:16px 20px 14px;max-width:92vw;min-width:280px;box-shadow:0 6px 24px rgba(0,0,0,0.35);z-index:99999;opacity:0;transition:opacity 0.3s ease,transform 0.3s ease;pointer-events:none;text-align:center;font-family:hind-siliguri,sans-serif}#amol-cart-toast.amol-show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}#amol-cart-toast .amol-ct-msg{font-size:14px;line-height:1.5;margin-bottom:12px}#amol-cart-toast .amol-ct-btn{background:#fff;color:#129245;border:none;border-radius:8px;padding:9px 22px;font-family:hind-siliguri,sans-serif;font-size:14px;font-weight:700;cursor:pointer;width:100%}#amol-cart-toast .amol-ct-btn:active{opacity:0.85}.footer-logo img{width:56px!important;height:69px!important;aspect-ratio:56/69}.ssl-verification img[src*="ssl.webp"]{width:210px!important;height:25px!important;aspect-ratio:42/5}.download-app-area img[src*="group-play-store"]{width:202px!important;height:52px!important;aspect-ratio:101/26}.all-notification img[src*="download.svg"]{width:24px!important;height:24px!important}.header-main-content .logo img{width:140px;max-width:140px;height:auto;aspect-ratio:140/179}</style>
-  <!-- GTM/Stape loads after first paint. -->
+  <!-- GTM/Tagioo loads after first paint. -->
   <script>
-  window.addEventListener('load', function () { setTimeout(function () {
-    function loadGtm() {
-      window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
-      var s = document.createElement('script');
-      s.async = true;
-      s.src = 'https://load.server.amolbooks.com/2kpblypwe.js?8=DBNNPjgvXSUrLSZMWDM6TRNKQlddRBQFWBYdFgAAHwQOBF4aAw8%3D';
-      document.head.appendChild(s);
+  (function(){
+    if(window.__amolGtmBootstrapScheduled)return;
+    window.__amolGtmBootstrapScheduled=true;
+    function loadGtm(){
+      if(window.__amolGtmLoading||window.__amolGtmReady)return;
+      window.__amolGtmLoading=true;
+      window.dataLayer=window.dataLayer||[];
+      var normalizer=document.createElement('script');
+      normalizer.src='dl-normalize.js';
+      normalizer.defer=true;
+      var containerStarted=false;
+      var loadContainer=function(){
+        if(containerStarted)return;
+        containerStarted=true;
+        window.dataLayer.push({'gtm.start':new Date().getTime(),event:'gtm.js'});
+        var s=document.createElement('script');
+        s.async=true;
+        s.src='https://server.amolbooks.com/tagioo-loader/gtm.js?id=GTM-NNZV54QJ';
+        s.onload=function(){
+          window.__amolGtmReady=true;
+          window.__amolGtmLoading=false;
+          window.dispatchEvent(new CustomEvent('amol-gtm-ready'));
+        };
+        s.onerror=function(){window.__amolGtmLoading=false;};
+        document.head.appendChild(s);
+      };
+      normalizer.onload=loadContainer;
+      normalizer.onerror=loadContainer;
+      document.head.appendChild(normalizer);
+      setTimeout(loadContainer,1500);
     }
-    var normalizer = document.createElement('script');
-    normalizer.src = 'dl-normalize.js';
-    normalizer.defer = true;
-    normalizer.onload = loadGtm;
-    document.head.appendChild(normalizer);
-  }, 10000); });
+    if(document.readyState==='complete')loadGtm();
+    else window.addEventListener('load',loadGtm);
+  })();
   </script>
   <!-- PostHog Analytics loads after first paint. -->
   <script>
@@ -189,7 +208,7 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
 
 <body>
   <!-- Google Tag Manager (noscript) -->
-  <noscript><iframe src="https://load.server.amolbooks.com/ns.html?id=GTM-NNZV54QJ" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <noscript><iframe src="https://server.amolbooks.com/tagioo-loader/ns.html?id=GTM-NNZV54QJ" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
 	  <app-root></app-root>
   <!-- Facebook SDK removed from startup; chat markup is disabled below. -->

@@ -1,5 +1,12 @@
 # CURRENT_WORK
 
+## Post-revert GTM loader repair (2026-08-31)
+
+- Restored the storefront GTM loader after the broad August 31 revert exposed
+  the old dead Stape host (`load.server.amolbooks.com`). The static storefront
+  shell now loads `GTM-NNZV54QJ` from the working Tagioo endpoint
+  (`server.amolbooks.com/tagioo-loader`) without the old 10-second delay.
+
 ## Profit dashboard actual-cost bridge (2026-08-26)
 
 - Added a visible profit calculation for both valid placed orders and delivered
