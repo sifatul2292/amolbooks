@@ -7,6 +7,12 @@
   suggestion buttons, and product-section buttons now push both the product-page
   `AddToCart` shape and the GA4-style `add_to_cart` `dataLayer` shape, with
   one shared `event_id` and lightweight duplicate suppression.
+- Extended that tracking bridge to catch the compiled product-card hover
+  overlays whose card link is the wrapper element, and the native product-page
+  “Add All to Cart” bought-together button. The bought-together action now
+  emits one grouped add-to-cart event with all discoverable selected products,
+  while the main product-page Add to Cart remains owned by the storefront's
+  existing native event.
 - Fixed the product-page “বিষয়ভিত্তিক জনপ্রিয় বই” section for production.
   It was calling the local-only `/library` catalogue proxy on the live API,
   which returned 404; it now loads books through the live
