@@ -66,6 +66,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   var cartOfferSuggestionSeed = Math.floor(Math.random() * 100000);
   var cartNativeProductSignature = '';
   var cartNativeProducts = [];
+  var cartViewTrackingSent = false;
   var cartMigrationScheduled = false;
   var authenticatedCartMergePending = false;
   var authenticatedCartMergeFinished = false;
@@ -5470,6 +5471,38 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     });
   }
 
+  function pushCartViewTracking(items, products) {
+    if (!cartPageOpen() || cartViewTrackingSent || window.__amolCartViewTracked) return;
+    var byId = {};
+    (products || []).forEach(function (product) {
+      if (product && product._id) byId[String(product._id)] = product;
+    });
+    var trackingItems = (items || []).map(function (item) {
+      var productId = cartPageProductId(item);
+      var product = byId[productId];
+      if (!product) return null;
+      var quantity = Math.max(1, Number(item && item.selectedQty) || 1);
+      return {
+        item_id: productId,
+        item_name: product.name || product.nameEn || '',
+        price: finalPrice(product),
+        quantity: quantity,
+      };
+    }).filter(Boolean);
+    if (!trackingItems.length) return;
+    var value = trackingItems.reduce(function (total, item) {
+      return total + item.price * item.quantity;
+    }, 0);
+    cartViewTrackingSent = true;
+    window.__amolCartViewTracked = true;
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ ecommerce: null });
+    window.dataLayer.push({
+      event: 'view_cart',
+      ecommerce: { currency: 'BDT', value: value, items: trackingItems },
+    });
+  }
+
   function syncGuestCartUi() {
     var items = guestCartItems();
     updateStickyCartCount();
@@ -5622,6 +5655,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
 
   function syncNativeCartPage(items, products) {
     if (!cartPageOpen()) return;
+    pushCartViewTracking(items, products);
     var area = document.querySelector('app-cart-information .cart-area-main');
     if (!area && isLocalPreviewHost()) {
       var cartArea = document.querySelector('app-cart-information .cart-area');

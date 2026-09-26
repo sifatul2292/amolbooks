@@ -344,6 +344,31 @@ async function bootstrap() {
     "items2.push({item_id:id,item_name:p?p.name||'':'',price:p?p.salePrice||p.regularPrice||0:0,quantity:i.selectedQty||1});";
   const storefrontGuestCartPriceCode =
     "items2.push({item_id:id,item_name:p?p.name||'':'',price:p?finalTrackingPrice(p):0,quantity:i.selectedQty||1});";
+  const legacyStorefrontViewCartCode = `function pushViewCart(){
+    var now=Date.now();
+    if(now-_vcLast<2000)return;
+    var items=getCartItems();
+    if(!items.length)return;
+    _vcLast=now;
+    var val=cartVal(items);
+    var dl=window.dataLayer;
+    dl.push({ecommerce:null});
+    dl.push({event:'view_cart_stape',ecommerce:{currency:'BDT',value:val,items:items},__stape:true});
+  }`;
+  const storefrontViewCartCode = `function pushViewCart(){
+    if(window.__amolCartViewTracked)return;
+    var now=Date.now();
+    if(now-_vcLast<2000)return;
+    var items=getCartItems();
+    if(!items.length)return;
+    var val=cartVal(items);
+    if(!(val>0))return;
+    _vcLast=now;
+    window.__amolCartViewTracked=true;
+    var dl=window.dataLayer;
+    dl.push({ecommerce:null});
+    dl.push({event:'view_cart',ecommerce:{currency:'BDT',value:val,items:items}});
+  }`;
   const legacyStorefrontGtmBootstrapCode = `window.addEventListener('load', function () { setTimeout(function () {
     function loadGtm() {
       window.dataLayer = window.dataLayer || [];
@@ -622,7 +647,8 @@ ${storefrontPurchaseExternalIdHelper}
       .replace(
         legacyStorefrontGuestCartPriceCode,
         storefrontGuestCartPriceCode
-      );
+      )
+      .replace(legacyStorefrontViewCartCode, storefrontViewCartCode);
     if (!patchedTrackingHtml.includes(storefrontGtmBootstrapMarker)) {
       patchedTrackingHtml = patchedTrackingHtml.replace(
         legacyStorefrontGtmBootstrapCode,

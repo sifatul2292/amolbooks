@@ -2516,15 +2516,18 @@ body.ab-home-redesign app-home { display: none !important; }
   }
 
   function pushViewCart(){
+    if(window.__amolCartViewTracked)return;
     var now=Date.now();
     if(now-_vcLast<2000)return;
     var items=getCartItems();
     if(!items.length)return;
-    _vcLast=now;
     var val=cartVal(items);
+    if(!(val>0))return;
+    _vcLast=now;
+    window.__amolCartViewTracked=true;
     var dl=window.dataLayer;
     dl.push({ecommerce:null});
-    dl.push({event:'view_cart_stape',ecommerce:{currency:'BDT',value:val,items:items},__stape:true});
+    dl.push({event:'view_cart',ecommerce:{currency:'BDT',value:val,items:items}});
   }
 
   var _checkoutPriceRetryCount=0;
@@ -4829,4 +4832,4 @@ body.ab-home-redesign app-home { display: none !important; }
   tick();
 })();
 </script>
-<script src="/ab-widgets.js?v=18" defer></script><script src="/storefront-attribution.js?v=fb28bf2381a1" defer></script><script src="/storefront-price-english-digits.js?v=71a536f70807" defer></script><script src="/storefront-special-package.js?v=d8e6e766a7c1" defer></script><script src="/storefront-product-sections.js?v=6b1e435955c2" defer></script></body></html>
+<script src="/ab-widgets.js?v=18" defer></script><script src="/storefront-attribution.js?v=fb28bf2381a1" defer></script><script src="/storefront-price-english-digits.js?v=71a536f70807" defer></script><script src="/storefront-special-package.js?v=d8e6e766a7c1" defer></script><script src="/storefront-product-sections.js?v=18718e5e41db" defer></script></body></html>

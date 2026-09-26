@@ -20,6 +20,7 @@ assert.match(source, /if \(isLocalPreviewHost\(\)\) updateNativeCartCount\(store
 assert.match(source, /if \(!isProductPage\(\) && location\.pathname !== '\/'\) return;/, 'Homepage uses the shared added-to-cart modal');
 assert.match(source, /data-ab-popular-price[\s\S]*?productPriceHtml\(product\)/, 'Cart popular cards use the shared discounted-price renderer');
 assert.match(main, /obj\.event==='add_to_cart'&&!window\.__amolCartUiEventHandled/, 'Tracking mirror avoids duplicating injected cart UI feedback');
+assert.match(main, /event:'view_cart',ecommerce:\{currency:'BDT',value:val,items:items\}/, 'Legacy cart tracking emits the standard event for mirroring');
 const trackingStart = source.indexOf('  function pushProductPageAddToCartTracking(');
 const trackingHelper = source.slice(trackingStart, source.indexOf('\n  function ', trackingStart + 1));
 const trackingContext = {
@@ -41,6 +42,30 @@ trackingContext.window.dataLayer = [];
 trackingContext.isProductPage = () => false;
 trackingContext.pushProductPageAddToCartTracking('p1');
 assert.equal(trackingContext.window.dataLayer.length, 0, 'Homepage keeps its existing tracker without duplicates');
+const cartViewStart = source.indexOf('  function pushCartViewTracking(');
+const cartViewHelper = source.slice(cartViewStart, source.indexOf('\n  function ', cartViewStart + 1));
+const cartViewContext = {
+  cartPageOpen: () => true,
+  cartViewTrackingSent: false,
+  cartPageProductId: item => item.product,
+  finalPrice: product => product.afterDiscountPrice,
+  window: { dataLayer: [] },
+};
+vm.createContext(cartViewContext);
+vm.runInContext(cartViewHelper, cartViewContext);
+cartViewContext.pushCartViewTracking(
+  [{ product: 'p1', selectedQty: 2 }],
+  [{ _id: 'p1', name: 'Cart book', afterDiscountPrice: 310 }]
+);
+assert.equal(cartViewContext.window.dataLayer.length, 2);
+assert.equal(cartViewContext.window.dataLayer[1].event, 'view_cart');
+assert.equal(cartViewContext.window.dataLayer[1].ecommerce.value, 620);
+assert.equal(cartViewContext.window.dataLayer[1].ecommerce.items[0].quantity, 2);
+cartViewContext.pushCartViewTracking(
+  [{ product: 'p1', selectedQty: 2 }],
+  [{ _id: 'p1', name: 'Cart book', afterDiscountPrice: 310 }]
+);
+assert.equal(cartViewContext.window.dataLayer.length, 2, 'Cart view fires once per page load');
 const names = ['productIdIsInCart', 'productIsInCart', 'refreshProductCartState', 'boughtTogetherIsInCart', 'repairBoughtTogetherActionLabels', 'addBoughtTogetherToCart', 'cartPageProductId', 'repairProductActionLabels', 'updateStickyProductActions'];
 const helpers = names.map(name => {
   const start = source.indexOf('  function ' + name + '(');
