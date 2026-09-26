@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 @Injectable()
 export class AnalyticsService {
   private logger = new Logger(AnalyticsService.name);
+  private readonly trackingDisabled = process.env.AMOL_DISABLE_TRACKING === '1';
 
   constructor(private readonly httpService: HttpService) {}
 
@@ -17,6 +18,10 @@ export class AnalyticsService {
     eventName: string,
     eventData: Record<string, any>,
   ): Promise<any> {
+    if (this.trackingDisabled) {
+      return { accepted: false, status: null, disabled: true };
+    }
+
     const endpoint = 'https://server.amolbooks.com/data';
     // Match the Stape Data Tag "auto" transport already used by the web GTM
     // container. Tagioo accepts the SDK POST-body transport too, but its
@@ -51,6 +56,8 @@ export class AnalyticsService {
     fbPixelAccessToken: string,
     data: any,
   ) {
+    if (this.trackingDisabled) return null;
+
     const fbEndpoint = `https://graph.facebook.com/v22.0/${fbPixelId}/events`;
 
     try {

@@ -1,0 +1,55 @@
+<!-- All Pages. No API calls: cart and catalogue stay on the current host. -->
+<style>
+  app-cart-slide { display: none !important; }
+</style>
+<script>
+(function () {
+  if (window.__abCartPageNavigation) return;
+  window.__abCartPageNavigation = true;
+
+  function linkCart() {
+    var link = document.querySelector('app-header .menu-cart a');
+    if (link && link.getAttribute('href') !== '/cart') link.setAttribute('href', '/cart');
+    var catalogue = document.querySelector('app-header .bottom-nav li .fa-bars');
+    if (catalogue) {
+      catalogue = catalogue.closest('li');
+      catalogue.setAttribute('role', 'link');
+      catalogue.setAttribute('tabindex', '0');
+    }
+  }
+  linkCart();
+  new MutationObserver(linkCart).observe(document.documentElement, { childList: true, subtree: true });
+
+  // Capture before Angular and the other document-level navigation handlers.
+  function openNavigation(event) {
+    if (event.type === 'keydown' && event.key !== 'Enter') return;
+    var target = event.target;
+    if (!target || !target.closest) return;
+    var link = target.closest('app-header .menu-cart a');
+    var bottomItem = target.closest('app-header .bottom-nav li');
+    var catalogue = target.closest('.ab-sticky-catalogue') || (bottomItem && bottomItem.querySelector('.fa-bars'));
+    // Let the browser produce one click, bypassing the recursive fast-tap proxy.
+    if (event.type === 'pointerup' || event.type === 'touchend') {
+      if (catalogue) event.stopImmediatePropagation();
+      return;
+    }
+    if (!catalogue && !link && !(bottomItem && bottomItem.querySelector('.fa-shopping-bag'))) return;
+    event.stopImmediatePropagation();
+    if (link && (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)) return;
+    event.preventDefault();
+    if (catalogue) {
+      var categoryLink = document.querySelector('app-footer a[href="/category-list"]');
+      if (categoryLink) {
+        categoryLink.click();
+        return;
+      }
+    }
+    window.location.assign(catalogue ? '/category-list' : '/cart');
+  }
+  window.addEventListener('pointerup', openNavigation, true);
+  window.addEventListener('touchend', openNavigation, true);
+  window.addEventListener('click', openNavigation, true);
+  // The compiled header otherwise consumes Enter for its search suggestions.
+  window.addEventListener('keydown', openNavigation, true);
+})();
+</script>

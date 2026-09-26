@@ -61,7 +61,7 @@ export class EmailService {
       const toReceiver = email;
 
       const info = await transporter.sendMail({
-        from: `"Alambook" <${emailFrom}>`,
+        from: `"Amol Books" <${emailFrom}>`,
         replyTo: emailFrom,
         to: toReceiver, //receiver
         subject: subject, // Subject line

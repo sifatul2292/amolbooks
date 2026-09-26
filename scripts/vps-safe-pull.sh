@@ -14,8 +14,10 @@
 #
 set -euo pipefail
 
-BRANCH="main"
+BRANCH="${AMOL_DEPLOY_BRANCH:-main}"
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+DEPLOYED_REF="refs/amolbooks/deployed"
+SNAPSHOT_ROOT="${AMOL_SNAPSHOT_ROOT:-/home/amolbooks}"
 cd "$REPO_ROOT"
 
 # --- Hard guard: refuse to run anywhere near a destructive flag ---------------
@@ -28,74 +30,99 @@ echo "[safe-pull] repo: $REPO_ROOT"
 echo "[safe-pull] fetching origin/$BRANCH ..."
 git fetch origin "$BRANCH"
 
+TARGET="origin/$BRANCH"
+if git rev-parse --verify --quiet "$DEPLOYED_REF" >/dev/null; then
+  BASE="$DEPLOYED_REF"
+else
+  BASE="HEAD"
+fi
+
+UPDATES_FILE="$(mktemp)"
+DELETIONS_FILE="$(mktemp)"
+trap 'rm -f "$UPDATES_FILE" "$DELETIONS_FILE"' EXIT
+
+is_safe_path() {
+  case "$1" in
+    api/backup/db/*) return 1 ;;
+    api/upload/static/*.html|api/upload/static/profit-dashboard-tokens.css) return 0 ;;
+    api/upload/*) return 1 ;;
+    *) return 0 ;;
+  esac
+}
+
+while IFS=$'\t' read -r STATUS FILE_PATH; do
+  [ -n "$FILE_PATH" ] || continue
+  if ! is_safe_path "$FILE_PATH"; then
+    echo "[safe-pull] SKIPPING runtime data: $FILE_PATH"
+    continue
+  fi
+  case "$STATUS" in
+    D) printf '%s\n' "$FILE_PATH" >> "$DELETIONS_FILE" ;;
+    *) printf '%s\n' "$FILE_PATH" >> "$UPDATES_FILE" ;;
+  esac
+done < <(git diff --no-renames --name-status "$BASE" "$TARGET")
+
+echo "[safe-pull] baseline: $BASE ($(git rev-parse --short "$BASE"))"
+echo "[safe-pull] target:   $TARGET ($(git rev-parse --short "$TARGET"))"
+echo "[safe-pull] files to update:"
+sed 's/^/  /' "$UPDATES_FILE"
+echo "[safe-pull] files to remove:"
+sed 's/^/  /' "$DELETIONS_FILE"
+
+if [ "${1:-}" = "--dry-run" ]; then
+  echo "[safe-pull] dry-run: no files written and no snapshots pruned."
+  exit 0
+fi
+
 # --- Safety net: snapshot upload dirs before changing anything ----------------
 # Hardlink copy = near-instant, near-zero disk. Falls back to real copy.
 TS="$(date +%Y%m%d-%H%M%S)"
-SNAP_DIR="/home/amolbooks/upload-snapshots/$TS"
+SNAP_DIR="$SNAPSHOT_ROOT/upload-snapshots/$TS"
 if [ -d api/upload ]; then
   mkdir -p "$SNAP_DIR"
   cp -al api/upload "$SNAP_DIR/upload" 2>/dev/null || cp -a api/upload "$SNAP_DIR/upload"
   echo "[safe-pull] upload snapshot -> $SNAP_DIR"
   # keep only the 14 most recent snapshots
-  ls -1dt /home/amolbooks/upload-snapshots/*/ 2>/dev/null | tail -n +15 | xargs -r rm -rf
-fi
-
-# --- Compute changed tracked files between current HEAD and origin ------------
-CHANGED="$(git diff --name-only HEAD "origin/$BRANCH" || true)"
-if [ -z "$CHANGED" ]; then
-  echo "[safe-pull] no tracked code differences; checking required storefront assets."
-fi
-
-# Belt-and-braces: never let runtime uploads slip into the checkout set. The
-# tracked admin dashboard HTML files and the profit-dashboard token stylesheet
-# under api/upload/static are application assets, not user uploads, so they are
-# the only explicit exceptions.
-SAFE_CHANGED="$(printf '%s\n' "$CHANGED" | awk '
-  /^api\/backup\/db\// { next }
-  /^api\/upload\// && $0 !~ /^api\/upload\/static\/[^\/]+\.html$/ && $0 != "api/upload/static/profit-dashboard-tokens.css" { next }
-  { print }
-')"
-SKIPPED="$(printf '%s\n' "$CHANGED" | awk '
-  /^api\/backup\/db\// { print; next }
-  /^api\/upload\// && $0 !~ /^api\/upload\/static\/[^\/]+\.html$/ && $0 != "api/upload/static/profit-dashboard-tokens.css" { print }
-')"
-
-echo "[safe-pull] files to update:"
-printf '%s\n' "$SAFE_CHANGED" | sed 's/^/  /'
-if [ -n "$SKIPPED" ]; then
-  echo "[safe-pull] SKIPPING (runtime data, never overwritten by deploy):"
-  printf '%s\n' "$SKIPPED" | sed 's/^/  /'
-fi
-
-if [ "${1:-}" = "--dry-run" ]; then
-  echo "[safe-pull] dry-run: no files written."
-  exit 0
+  ls -1dt "$SNAPSHOT_ROOT"/upload-snapshots/*/ 2>/dev/null | tail -n +15 | xargs -r rm -rf
 fi
 
 # --- Write ONLY the safe changed tracked files --------------------------------
 # `git checkout <ref> -- <paths>` writes only the listed files. It cannot
 # delete untracked uploads. HEAD intentionally NOT moved, so any local VPS
 # edits to other tracked files are preserved.
-if [ -n "$SAFE_CHANGED" ]; then
-  # shellcheck disable=SC2086
-  printf '%s\0' $SAFE_CHANGED | xargs -0 git checkout "origin/$BRANCH" --
-fi
+while IFS= read -r FILE_PATH; do
+  [ -n "$FILE_PATH" ] || continue
+  git checkout "$TARGET" -- "$FILE_PATH"
+done < "$UPDATES_FILE"
 
-# Missing compiled storefront files can break the SPA even when those files did
-# not change between HEAD and origin, so the revision diff above will not
-# necessarily restore them. Recover every missing tracked storefront asset from
-# origin. Existing files are left untouched, and runtime uploads live outside
-# this directory.
+# Remove only exact application paths deleted by the target release. Runtime
+# upload and DB paths were filtered above. Save any existing file first.
+CODE_SNAP_DIR="$SNAPSHOT_ROOT/code-snapshots/$TS"
+while IFS= read -r FILE_PATH; do
+  [ -n "$FILE_PATH" ] || continue
+  if [ -e "$FILE_PATH" ]; then
+    mkdir -p "$CODE_SNAP_DIR/$(dirname "$FILE_PATH")"
+    cp -a "$FILE_PATH" "$CODE_SNAP_DIR/$FILE_PATH"
+    rm -f -- "$FILE_PATH"
+  fi
+done < "$DELETIONS_FILE"
+
+# A failed build can remove compiled files that did not change between releases,
+# so the revision diff above will not necessarily restore them during rollback.
+# Recover every missing tracked API/storefront build file from the target.
+# Existing files are left untouched, and runtime uploads live elsewhere.
 STOREFRONT_DIR="ui/dist/angular-ui/browser"
 STOREFRONT_INDEX="$STOREFRONT_DIR/index.html"
-git ls-tree -r --name-only "origin/$BRANCH" "$STOREFRONT_DIR" |
-  while IFS= read -r TRACKED_ASSET_PATH; do
-    [ -n "$TRACKED_ASSET_PATH" ] || continue
-    if [ ! -e "$TRACKED_ASSET_PATH" ]; then
-      echo "[safe-pull] restoring missing tracked storefront asset: ${TRACKED_ASSET_PATH#"$STOREFRONT_DIR/"}"
-      git checkout "origin/$BRANCH" -- "$TRACKED_ASSET_PATH"
-    fi
-  done
+for BUILD_DIR in api/dist "$STOREFRONT_DIR"; do
+  git ls-tree -r --name-only "$TARGET" "$BUILD_DIR" |
+    while IFS= read -r TRACKED_BUILD_PATH; do
+      [ -n "$TRACKED_BUILD_PATH" ] || continue
+      if [ ! -e "$TRACKED_BUILD_PATH" ]; then
+        echo "[safe-pull] restoring missing tracked build file: $TRACKED_BUILD_PATH"
+        git checkout "$TARGET" -- "$TRACKED_BUILD_PATH"
+      fi
+    done
+done
 
 # Validate the entry files referenced by index.html after recovery. This also
 # catches an invalid deployment where index.html points to an untracked bundle.
@@ -112,9 +139,9 @@ if [ -f "$STOREFRONT_INDEX" ]; then
     [ -n "$ASSET" ] || continue
     ASSET_PATH="$STOREFRONT_DIR/$ASSET"
     if [ ! -f "$ASSET_PATH" ]; then
-      if git cat-file -e "origin/$BRANCH:$ASSET_PATH" 2>/dev/null; then
+      if git cat-file -e "$TARGET:$ASSET_PATH" 2>/dev/null; then
         echo "[safe-pull] restoring missing storefront asset: $ASSET"
-        git checkout "origin/$BRANCH" -- "$ASSET_PATH"
+        git checkout "$TARGET" -- "$ASSET_PATH"
       else
         MISSING_CORE="${MISSING_CORE}${ASSET_PATH}\n"
       fi
@@ -129,6 +156,10 @@ EOF
     exit 1
   fi
 fi
+
+# Record the exact deployed target without moving HEAD or discarding VPS-local
+# edits. Future deploys and rollback commits diff from this release marker.
+git update-ref "$DEPLOYED_REF" "$(git rev-parse "$TARGET")"
 
 echo "[safe-pull] done. Code updated; uploads untouched."
 echo "[safe-pull] If api/ source/dist changed, restart the API:  pm2 restart all   (or your usual restart)."

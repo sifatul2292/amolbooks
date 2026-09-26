@@ -103,15 +103,17 @@ export class UploadController {
     @Body() body,
   ) {
     const isProduction = this.configService.get<boolean>('productionBuild');
+    const convert = body?.['convert'] ?? req.query?.['convert'];
 
     if (
-      body &&
-      body['convert'] &&
-      body['convert'].toString().toLowerCase() === 'yes'
+      convert &&
+      convert.toString().toLowerCase() === 'yes'
     ) {
-      const quality: number = body['quality'] ? Number(body['quality']) : 85;
-      const width: number = body['width'] ? Number(body['width']) : null;
-      const height: number = body['height'] ? Number(body['height']) : null;
+      const quality: number = Number(
+        body?.['quality'] ?? req.query?.['quality'] ?? 85,
+      );
+      const width: number = Number(body?.['width'] ?? req.query?.['width']) || null;
+      const height: number = Number(body?.['height'] ?? req.query?.['height']) || null;
 
       const dir = `upload/images`;
       const filename = path.parse(file.filename).name;
@@ -119,6 +121,7 @@ export class UploadController {
       const newPath = `${dir}/${newFilename}`;
 
       await sharp(file.path)
+        .rotate()
         .resize(width, height)
         .webp({ effort: 4, quality: quality })
         .toFile(path.join(dir, newFilename));
@@ -221,6 +224,7 @@ export class UploadController {
         const newPath = `${dir}/${newFilename}`;
 
         const conImage = await sharp(file.path)
+          .rotate()
           .resize(width, height)
           .webp({ effort: 4, quality: quality })
           .toFile(path.join(dir, newFilename));

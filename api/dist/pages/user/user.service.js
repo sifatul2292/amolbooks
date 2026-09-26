@@ -799,7 +799,7 @@ let UserService = UserService_1 = class UserService {
             const final = Object.assign(Object.assign({}, addAddressDto), { user: user._id });
             const newAddress = new this.addressModel(final);
             const address = await newAddress.save();
-            await this.userModel.findOneAndUpdate({ _id: user._id }, { $push: { addresses: address._id, division: address.division } });
+            await this.userModel.findOneAndUpdate({ _id: user._id }, { $push: { addresses: address._id } });
             return {
                 success: true,
                 message: 'Address added successfully',

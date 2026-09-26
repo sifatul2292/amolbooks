@@ -18,8 +18,12 @@ let AnalyticsService = AnalyticsService_1 = class AnalyticsService {
     constructor(httpService) {
         this.httpService = httpService;
         this.logger = new common_1.Logger(AnalyticsService_1.name);
+        this.trackingDisabled = process.env.AMOL_DISABLE_TRACKING === '1';
     }
     async trackServerContainerEvent(eventName, eventData) {
+        if (this.trackingDisabled) {
+            return { accepted: false, status: null, disabled: true };
+        }
         const endpoint = 'https://server.amolbooks.com/data';
         const encodedEventData = Buffer.from(JSON.stringify(eventData), 'utf8').toString('base64');
         const response = await (0, rxjs_1.firstValueFrom)(this.httpService.get(endpoint, {
@@ -33,6 +37,8 @@ let AnalyticsService = AnalyticsService_1 = class AnalyticsService {
     }
     async trackFbConversionEventClient(fbPixelId, fbPixelAccessToken, data) {
         var _a, _b, _c, _d, _e;
+        if (this.trackingDisabled)
+            return null;
         const fbEndpoint = `https://graph.facebook.com/v22.0/${fbPixelId}/events`;
         try {
             const response = await (0, rxjs_1.firstValueFrom)(this.httpService.post(fbEndpoint, data, {

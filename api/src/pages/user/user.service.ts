@@ -1012,7 +1012,7 @@ export class UserService {
       const address: any = await newAddress.save();
       await this.userModel.findOneAndUpdate(
         { _id: user._id },
-        { $push: { addresses: address._id, division: address.division } },
+        { $push: { addresses: address._id } },
       );
 
       return {

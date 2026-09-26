@@ -25,6 +25,7 @@ const admin_jwt_auth_guard_1 = require("../../guards/admin-jwt-auth.guard");
 const product_service_1 = require("./product.service");
 const product_dto_1 = require("../../dto/product.dto");
 const mongo_id_validation_pipe_1 = require("../../pipes/mongo-id-validation.pipe");
+const throttler_1 = require("@nestjs/throttler");
 const stock_dto_1 = require("../../dto/stock.dto");
 let ProductController = ProductController_1 = class ProductController {
     constructor(productService) {
@@ -174,6 +175,7 @@ __decorate([
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Post)('/get-all'),
+    (0, throttler_1.Throttle)(300, 60),
     (0, common_1.UsePipes)(common_1.ValidationPipe),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Query)('q')),

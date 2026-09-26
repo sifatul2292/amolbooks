@@ -1,11 +1,742 @@
 # CURRENT_WORK
 
+## Production release reconciliation (2026-09-26)
+
+- Preserved the complete pre-release working tree on `codex/prod-release-snapshot-20260926`, then replayed it onto the current `origin/main` on `codex/prod-release-20260926` so upstream fixes remain intact.
+- Resolved the storefront/API conflicts in favor of database-driven offer configuration, current upstream route removals, and the intended GTM/generated storefront enhancements. The free-notebook threshold remains ৳799 in the seed/configuration path rather than a second hardcoded order fallback.
+- Restored the generated product-section and special-package assets, fixed dynamic brand replacement under continuous DOM updates, and removed the deleted recommendations endpoint dependency.
+- Restricted preview catalogue proxies to non-production localhost/private-network/tunnel hosts, added exact method/path allowlists, and added category reads to the same-origin proxy so local catalogue navigation does not depend on remote CORS behavior. `PRODUCTION_BUILD=true` rejects the proxy even when a request forges `Host: localhost`.
+- Hardened `scripts/vps-safe-pull.sh` around an explicit deployed Git ref, exact added/modified/deleted path snapshots, runtime-data exclusions, dry-run inspection, recovery of every missing tracked API/storefront build file, and a tested rollback path. `scripts/backup-now.sh` now requires credentials through environment variables and transfers the database password in a temporary mode-600 `mongodump --config` file instead of command arguments or remote shell source.
+- Verification: API build passes; all focused storefront checks pass using the Codex bundled Node/Playwright runtime (`NODE_PATH=/Users/sifatulalamshohan/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules /Users/sifatulalamshohan/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node scripts/check-<name>.cjs`); the VPS deploy/rollback simulation passes, restores an unchanged compiled API file, and preserves uploaded files. The existing lint command remains blocked because the repository ESLint configuration ignores every file matched by its configured glob.
+
 ## Post-revert GTM loader repair (2026-08-31)
 
 - Restored the storefront GTM loader after the broad August 31 revert exposed
   the old dead Stape host (`load.server.amolbooks.com`). The static storefront
   shell now loads `GTM-NNZV54QJ` from the working Tagioo endpoint
   (`server.amolbooks.com/tagioo-loader`) without the old 10-second delay.
+
+## Email and Google account access (2026-09-11)
+
+- Restored the missing Google Identity Services library required by the compiled login and registration components, so their Gmail action can initialize instead of remaining an inert link.
+- Clarified that the standard username field accepts either a mobile number or an email address, and added keyboard/button semantics to the Gmail action.
+- Set Google-compatible referrer and popup isolation headers while preserving the remaining Helmet protections.
+
+## Authenticated checkout recovery (2026-09-10)
+
+- Suppressed the legacy add-to-cart toast while a guest cart is being attached to a newly logged-in account, so login no longer looks like a fresh add-to-cart action.
+- Made checkout explicitly load saved addresses for authenticated users, select the default address, populate every checkout field, and select the matching Dhaka/outside-Dhaka delivery option.
+- Kept authenticated saved-address delivery at the configured base rates (currently ৳60/৳75), matching guest checkout instead of applying an incorrect ৳100 weight tier.
+- Replaced the checkout patch's dependency on Angular's development-only `__ngContext__` with an early authorization bridge and authenticated address request, so production builds populate the saved street address as well as name and phone.
+- Made the local login cart reconcile the authenticated API cart to the guest cart once, removing stale account lines and correcting quantities before checkout. This keeps the account badge, checkout products, and weight-based delivery calculation on the same cart and prevents the temporary multi-product/৳100 state.
+- Prevented the legacy review-photo matcher from treating a saved-address customer name as a review card, and remove any already-injected review image from checkout without affecting product-page reviews.
+
+## Customer account mobile navigation (2026-09-10)
+
+- Replaced the oversized mobile account drawer with a compact account identity bar, four high-frequency quick actions, and an accessible bottom-sheet menu covering profile, orders, address, notifications, wishlist, reviews, transactions, and logout.
+- Preserved Angular's existing routes, address dialog, logout flow, profile data, and desktop sidebar; the enhancement is mobile-only and injected through `gtm-snippets/customer-account-mobile.html`.
+- Added 44px touch targets, visible keyboard focus, Escape/backdrop dismissal, current-section labels, responsive checks at 320/375/414/768px, and reduced-motion handling.
+- Fixed Address and Logout as real buttons instead of `href="#"` links, preventing the storefront tap handler from sending Address to the homepage. Strengthened native-sidebar hiding and avatar sizing so account imagery cannot stretch or misalign the compact header.
+- Repaired new-address persistence by pushing only the created address ID into the user's address list and validating the storefront's actual address fields.
+- Added a checkout saved-address selector that prefers the default address and fills the complete checkout form (name, phone, division, area, zone, street address, and address type); customers can switch addresses with one tap.
+- Centered the mobile account menu in the viewport and constrained its height with an independently scrolling action grid, keeping every native account action reachable on short screens.
+
+## Sales-focused homepage preview (2026-09-08)
+
+- Added a homepage-only curated catalogue preview through `gtm-snippets/homepage-redesign.html`; the compiled Angular storefront remains untouched.
+- Revised the preview to preserve the storefront's original header, white canvas, Hind Siliguri typography, red shelf accents, green prices, card proportions, and compact horizontal mobile shelves. Removed the custom hero and duplicate search.
+- Starts with “জনপ্রিয়তার শীর্ষে”, followed by bestseller combos and eight requested topic shelves. “আপনার প্রয়োজন অনুযায়ী” now appears after the first five shelves.
+- Added the diagonal “একটু পড়ে দেখুন” badge to product-link covers site-wide. Product cards also show orange stars and rating totals when stored ratings exist.
+- Excluded the product page's “পাঠকেরা একসাথে কিনে থাকেন” bundle from that cover badge so its compact multi-book layout stays readable.
+- Excluded only the cart's free-notebook progress card from that cover badge while preserving it on normal product cards.
+- Corrected the cart's “জনপ্রিয় কিছু বই দেখুন” cards to load each product's current catalogue pricing and show the discounted price, struck original price, and discount percentage.
+- Changed mobile homepage shelves from one horizontal row to two, showing twice as many books before readers scroll sideways. The tablet grid remains unchanged.
+- Expanded “আপনার প্রয়োজন অনুযায়ী” from 6 to 12 choices with Hadith, family, women, character, Islamic literature, and modern-fitna discovery links.
+- Added a compact “আপনার জন্য কোন বই (বিশেষ ছাড়)?” mini quiz after the first two shelves. Three accessible multiple-choice questions recommend either three catalogue books or one book immediately, using the already-loaded catalogue with no extra request. Expanded the topic choices to 12.
+- Reduced mobile product-card width to show more books per screen and tightened only the homepage desktop header's logo and action spacing.
+- Reused the existing injected `.ab-add-cart-button` cart bridge, added GA4-style list/select/successful-add measurement plus category events, and kept `?home=legacy` as a safe visual fallback. Removed the custom loading message: the existing homepage stays visible during the first catalogue request, while a small session cache makes repeat loads immediate. SPA request guards prevent a slow response from mounting on another route. Capture-phase, per-product intent queues cover keyboard activation and overlapping cart adds without counting failed writes.
+- Added portable Hallmark tokens and `scripts/check-homepage-redesign.cjs`; the rebuilt local API passes the focused check and renders without horizontal overflow at 320, 375, 414, 768, and 1440px.
+- Added horizontally scrollable popular-author and popular-publisher name strips between the requested homepage shelves. Each name opens its filtered catalogue; existing author and publisher list pages remain the “সব দেখুন” destinations.
+- Replaced the homepage’s legacy add-to-cart toast with the same product-aware confirmation modal used on product pages.
+- Added live suggestions beneath the native header search: focus shows popular books, Bangla and English queries update after a short debounce, and each result includes cover, author, and price. Enter, Escape, and Arrow Down remain keyboard-accessible.
+- Pinned “জীবন পাল্টে দেওয়ার মত ৪ টি বই”, “জীবন ও চরিত্র গঠন বান্ডেল”, and “পড়ো কালেকশন (১–৫)” to the front of the bestseller-combo shelf; automatic combo discovery fills the remaining slots.
+- Applied the compact desktop header layout across every storefront route and changed desktop homepage shelves from five to six columns so more, smaller book covers fit per row.
+- Added a site-wide branded “বিশেষ অফার” header ticker for the ৳799 free-notebook offer and ৳60/৳75 Dhaka/outside-Dhaka delivery charges, with an extra-wide non-collapsing break before the delivery information, edge fades, hover pause, and reduced-motion fallback.
+- Reduced the desktop header logo slightly and added balanced top/bottom spacing around it; removed category/publisher separator dots on product pages and restored the missing ৳75 outside-Dhaka delivery label.
+- Added a development-preview tracking kill switch: localhost and temporary `trycloudflare.com` pages block browser GTM/Google Ads, Meta Pixel, PostHog, Tagioo, tracking beacons, and `/api/gtag` calls; running the API with `AMOL_DISABLE_TRACKING=1` also disables server-side Tagioo, Meta CAPI, and PostHog delivery.
+- Hardened mobile ratings/reviews: preview photo uploads now use persistent published storage, Submit waits for uploads with a 90-second escape hatch, failed review submissions retain their image URLs and show a retry message, and missing review lists retry through the storefront's actual Bengali/English review control (maximum twice).
+- Fixed the product-page “বিষয়ভিত্তিক জনপ্রিয় বই” shelf on Cloudflare mobile previews by routing its catalogue load through the existing same-origin proxy and preserving the in-flight shelf across repeated SPA mount checks.
+- Corrected review-photo ownership by matching each image to the exact reviewer and full review text, auto-oriented new phone uploads before WebP conversion, tightened the review dialog for iPhone-sized screens, and added a Bengali approval confirmation after successful submission.
+- Fixed the remaining sideways review-photo regression: the legacy uploader bypasses the XHR send hook, and the tunnel targets an older production converter. The preview bridge now applies EXIF rotation locally, strips the orientation metadata into WebP, then sends that normalized image to persistent published storage; production v2 uploads also accept conversion parameters in the request URL.
+- Review photos now open in an accessible on-page lightbox instead of navigating Safari to the raw image URL in a separate tab; the overlay closes from its 44px button, backdrop, or Escape key.
+- Customer reviews now accept at most five photos across repeated picker selections; the storefront displays a Bengali limit message and the validated review DTO enforces the same maximum server-side. Review photos continue to be auto-oriented, resized to 300px wide, and converted to quality-85 WebP before persistent storage.
+- Replaced the product page's author-based related rail with “এই প্রকাশনীর অন্যান্য বই”, populated from the current product's publisher and excluding the current product by both ID and slug.
+
+## Mobile checkout duplicate item list (2026-09-08)
+
+- Remove the temporary local checkout fallback as soon as Angular renders its native product list, preventing two mobile “মোট আইটেম” sections after slower page loads.
+- Explicitly hide the desktop checkout product list below the desktop breakpoint.
+
+## Product detail rating and summary follow-up (2026-09-07)
+
+- Restored the native review rating layout by removing the recent compact/flat GTM overrides.
+- Long product summaries now start collapsed with accessible “আরও দেখুন” / “কম দেখুন” controls.
+
+## Storefront follow-up browser fixes (2026-09-07)
+
+- Unified product and sticky cart actions around actual persisted product IDs, including authenticated snapshots. Bought-together actions now use the selected products’ cart presence and navigate to the cart once ready, without adding quantities again. Failed adds and removed/zero-quantity lines do not claim success.
+- Removed the page-count line beneath the title, suppressed empty top rating rows, and condensed review summaries while preserving reader reviews and the Write a Review action.
+- Styled mobile cart summary actions as full-width outlined/green buttons and replaced the catalogue’s missing-font `menu` text with a hamburger icon.
+- Fixed intermittent localhost/LAN homepage shelves by routing only public catalogue list reads through the existing same-origin proxy before Angular starts. Direct browser requests intermittently returned nginx HTML 404 responses without CORS; proxy reads succeeded. Four real reloads consistently showed Super Deal, 13 tag sections, 17 category cards and 52 category product links, with no catalogue failures. Production routing is unchanged and unverified.
+- Focused checks: `node scripts/check-product-cart-state.cjs`, `node scripts/check-product-detail-polish.cjs`, and `node scripts/check-catalogue-requests.cjs` pass. Browser checks cover compact rated/unrated reviews, working review login action, cart button styling, hamburger menu, successful add and Go To Cart navigation. API build passes; lint remains blocked by the existing all-files-ignored configuration.
+
+
+## Product detail browser feedback (2026-09-07)
+
+- Added `gtm-snippets/product-detail-polish.html`, injected by the API on storefront responses: author/category/publisher now sit inline; the extra বিবরণ section is hidden; rating/review totals appear beside the stars; popup actions stack vertically.
+- Fixed the existing injected popup to prefer the Bengali product name, use `আরও বই কিনুন` / `অর্ডার সম্পন্ন করতে কার্টে যান`, and bypass the global header-menu handler so its close button works.
+- Catalogue requests use the same-origin `/storefront-catalog` proxy on localhost/LAN and `https://apisub.amolbooks.com/api` in production. Static production storefronts need the new All Pages GTM tag published alongside the updated generated storefront script.
+- Verified the 465px browser layout, hidden description, 8 Ratings / 8 Reviews, Bengali popup title, vertical actions, and close-button dismissal. Added `node scripts/check-product-detail-polish.cjs` for popup event isolation, correct count fields, local API routing, and duplicate prevention.
+- API build and focused checks pass. Lint remains blocked by the existing configuration that ignores all matching files. No compiled storefront files were manually edited; the running server generates its injected assets.
+
+
+## Cart continue-shopping action (2026-09-07)
+
+- Changed the first in-card cart action to `আরও কিনুন` and made it open the
+  homepage, while keeping the second in-card and sticky actions on checkout.
+- Narrowed checkout-label updates to the real order button so the two cart
+  actions no longer receive the same text.
+
+## Free notebook threshold (2026-09-07)
+
+- Raised the free-notebook qualifying subtotal from ৳499 to ৳799 across
+  backend order fulfillment, storefront fallbacks, GTM snippets, and setup docs.
+
+## Brand-name cleanup (2026-09-03)
+
+- Replaced legacy customer-facing branding with Amol Books/আমল বুকস across storefront rendering, emails, SMS, invoices, catalogue links, and backend URLs.
+- Preserved legacy storage keys, payment/SMS account IDs, database name, and existing email address because changing those identifiers would break customer carts or external integrations.
+- Added `scripts/check-branding.cjs` to verify runtime replacement while preserving functional legacy URL/email text.
+
+## Storefront favicon refresh (2026-09-03)
+
+- Replaced storefront favicon and Apple touch icon with the new Amol Books artwork.
+- Added standard 16px, 32px, ICO, Android 192px/512px icons and a web app manifest.
+
+## Homepage catalogue request protection (2026-09-03)
+
+- Cached identical product catalogue queries for 30 seconds, reducing repeated MongoDB work during reloads and fast browsing.
+- Raised only the public product-list endpoint limit from 120 to 300 requests per minute; write, authentication, and other API limits remain unchanged.
+
+## Sticky catalogue navigation (2026-09-03)
+
+- Reproduced the catalogue fast-tap loop: the injected handler clicks its own
+  intercepted bottom-nav item, preventing Angular's category drawer from opening.
+- Extended the GTM navigation snippet so bottom and sticky Catalogue controls
+  open the existing `/category-list` page directly. Cart routing is unchanged;
+  no compiled storefront files were manually edited.
+
+## Cart drawer disabled (2026-09-03)
+
+- Added `gtm-snippets/cart-page-navigation.html`: header cart links now open
+  `/cart`, and the old drawer (including its overlay) stays hidden, even after
+  automatic cart refreshes. Add to Cart and checkout behavior are unchanged.
+- API-served pages inject the same snippet without manual compiled UI edits.
+  Static/nginx production pages need the All Pages GTM tag published.
+- Verified desktop click/Enter, mobile tap, drawer/backdrop suppression, and
+  non-cart click isolation with `scripts/check-cart-navigation.cjs` (Playwright
+  from the bundled runtime). Build passes; lint is still blocked by the existing
+  all-files-ignored ESLint configuration.
+
+## Checkout page visual repair (2026-09-02)
+
+- Fixed the desktop cart page action area: the local cart mirror now recreates
+  the missing bottom summary/actions block, makes the checkout CTA a prominent
+  green primary button, and hides the competing popular-products shelf on
+  desktop while leaving mobile breakpoints untouched.
+- Redesigned the injected checkout layout as a compact workbench: desktop now
+  uses a wide content column with a sticky right-side summary, while mobile
+  stays single-column without horizontal overflow.
+- Restyled checkout item cards so cart products render as thumbnail rows
+  instead of full-width book-cover feed blocks.
+- Tightened checkout summary, promo-code, payment, delivery, and confirm-order
+  controls with the existing Amolbooks green token system.
+- Added a desktop fallback so the mobile item list is hidden only when a real
+  right-column item list exists; otherwise products remain visible in the main
+  checkout column.
+- Fixed mobile LAN testing at `192.168.*` addresses: the cart/checkout bridge
+  now treats private Wi-Fi IPs like local preview hosts, so phone testing uses
+  the same local cart storage, catalogue proxy, cart mirror, and checkout
+  mirror as `localhost`.
+- Smoothed the mobile cart controls: local preview cart remove/quantity updates
+  now bypass stale authenticated API state, trash icons render as real 44px
+  buttons, offer Add to Cart buttons have larger touch targets, and generated
+  cart rows no longer receive duplicate native author/discount text.
+- Moved mobile cart trash controls beneath the book details and ignored scroll
+  gestures in their fast-tap handler to prevent accidental product removal.
+- Matched cart item pricing to checkout: discounted books now show the current
+  price, struck original price, and discount percentage in the same styling.
+- Added the live discounted cart total to desktop and mobile checkout CTAs;
+  quantity and removal updates refresh the button amount immediately.
+- Added a cart-page fast-tap layer for mobile Safari/Chrome: `pointerup` and
+  `touchend` now claim Add to Cart, remove, and quantity controls immediately,
+  while suppressing the later duplicate synthetic click.
+- Hid checkout-page cart row action controls only: quantity steppers and trash
+  buttons no longer display in checkout, while cart-page controls remain
+  unchanged.
+- Added fast-tap handling for storefront menu/navigation controls and cart
+  checkout CTAs so mobile taps route on `pointerup`/`touchend` with duplicate
+  click suppression and a small swipe guard.
+- Reduced cart and checkout row loading waits in local/mobile preview by
+  caching lightweight product details for cart items, reusing those cached
+  rows across pages, de-duping repeated cart product lookups, and skipping the
+  authenticated merge wait before local checkout navigation.
+- Fixed checkout polish regressions: the free notebook row now falls back to
+  the real published notebook cover if the offer image is missing/broken, and
+  the compiled checkout summary's Discount row is hidden.
+- Rejected placeholder/avatar notebook images before rendering the cart or
+  checkout gift row, forcing the real Amol Notebook cover instead of the stock
+  profile image.
+- Corrected the notebook fallback image URL to the live
+  `amolbooks-notebook-8ddd.webp` asset, rebuilt the API, and restarted the
+  local server from `dist` for mobile testing.
+- Synced the generated storefront `storefront-product-sections.js` asset from
+  the TypeScript injection source for local preview.
+- Fixed the desktop checkout item-list regression where compiled `.cart-card`
+  styles overrode the row grid, causing book covers and text to stack
+  vertically in the wide layout; mobile remains on the existing breakpoint.
+
+## Free notebook cart offer cleanup (2026-08-31)
+
+- Changed the free-notebook threshold to ৳499 across the backend gift
+  evaluator, public offer response, storefront cart/checkout widget, and GTM
+  snippet fallbacks so the display and order creation agree.
+- Updated notebook offer copy to 72 pages and made the cart offer suggestions
+  re-filter against the live cart, excluding already-added products while
+  choosing in-stock ৳100-৳200 products for the three recommendation slots.
+- Fixed the offer-card Add to Cart path on local storefront previews so those
+  dynamic recommendations can be added from the cart-page widget.
+- Linked each offer-card product image and title to its product details page so
+  shoppers can inspect a suggested book before adding it.
+- Corrected those product links to use real product slugs from the suggestion
+  API and force normal navigation from the cart widget, avoiding blank
+  id-based product pages.
+- Added a local product-detail proxy for published catalogue slugs and forced
+  offer-card Add to Cart updates through the guest-cart renderer in local
+  previews, so recommendation links and buttons respond on the first click.
+- Fixed the added-to-cart modal summary so it includes the storefront guest cart
+  even when a stale login token is present, preventing the popup from showing
+  `0 Item(s)` after one product is added.
+- Added a clicked-product fallback in the added-to-cart popup so a cart write
+  race cannot show `0 Item(s)` or `৳0` immediately after Add to Cart.
+- Forced the mobile bottom-nav cart item to navigate to `/cart` on one tap for
+  both guest and logged-in customers.
+- Synced the added-to-cart popup against stored guest cart lines even when an
+  authenticated cart snapshot exists, and removed the popup recommendation
+  shelf for now.
+- Took over the product-detail Add to Cart click so one tap writes through the
+  storefront cart bridge instead of relying on the compiled Angular handler.
+- Forced local product-detail adds through the localStorage cart path so stale
+  auth tokens cannot block localhost cart testing.
+- Moved localhost cart storage to an injected-only key, keeping the cart alive
+  across product-page navigation when the compiled app resets its own cart key.
+- Mirrored localhost cart lines into `window.name` as a same-tab fallback when
+  the compiled app clears localStorage during page loads.
+- Mirrored the injected localhost cart back into the compiled checkout cart key
+  before checkout navigation so cart and checkout show the same products.
+- Added a one-time localhost checkout reload when the compiled checkout opens
+  with a stale cart snapshot.
+- Also posts localhost Add to Cart clicks into the authenticated cart when an
+  auth token is present, and waits for guest-to-account merge before checkout
+  navigation.
+- Read the saved storefront token directly as a fallback so the checkout merge
+  does not depend on catching an earlier Angular XHR header.
+- Added a localhost checkout cart mirror so checkout item cards and totals are
+  redrawn from the same cart source as the cart page.
+- The checkout mirror now creates the missing mobile checkout item block when
+  the compiled checkout renders only the summary.
+- Rebuilt the localhost cart page rows from the same injected cart source so
+  stale compiled cart rows cannot disagree with checkout.
+- Added a localhost cart shell fallback for the empty-cart render state, so the
+  mirrored cart rows and totals still appear when Angular initially thinks the
+  cart is empty.
+- Restyled the generated localhost cart rows to match the compiled cart card
+  layout and stopped rewriting/animating them on every poll, removing the
+  visible flicker.
+- Restyled the generated localhost checkout product rows so mobile checkout
+  cards use compact book thumbnails instead of full-width product images.
+- Reduced the free-notebook offer suggestions from three products to two and
+  verified offer-card Add to Cart updates the live cart and earned state.
+- Stopped the localhost checkout mirror from rewriting product rows on every
+  poll, removing the temporary checkout gift/summary flicker after load.
+- Reworked Buy Now so product detail clicks add the current product first, keep
+  existing cart items, suppress the add-to-cart popup, and then open checkout.
+- Stabilized the checkout summary patch so the initial zero-value summary stays
+  hidden until the real totals are ready, and the localhost checkout mirror no
+  longer repeatedly refetches/repaints the same summary rows.
+- Fixed cart-page empty-state reconciliation: removing the final item now clears
+  stale generated product rows, resets cached cart products, and refreshes the
+  recent-books/offer sections against an empty cart. The notebook-offer Add to
+  Cart buttons now use the same cart add path as other injected product buttons,
+  avoiding the previous local/auth split that made them intermittent.
+- Fixed the remaining notebook-offer Add to Cart race after an empty cart:
+  localhost cart-page reads now use the local cart snapshot even when a stale
+  auth token is present, and guest adds clear any temporary authenticated cart
+  override before refreshing the UI.
+- Fixed notebook-offer dynamic add rendering by caching the gift-card product
+  metadata before the buttons render and using that cache for the immediate cart
+  repaint, so Add to Cart no longer waits on a second product lookup.
+- Fixed native product-card overlay Add to Cart clicks by resolving the card
+  slug and routing it through the shared injected cart writer, with guest-cart
+  fallback when a stale auth token blocks the API write.
+- Fixed product-page “পাঠকেরা একসাথে কিনে থাকেন” Add All to Cart by reading the
+  checked section products, resolving their slugs through the catalogue proxy,
+  and adding them through the shared cart bridge. The shared JSON helper now
+  falls back to XMLHttpRequest when `fetch` is unavailable.
+- Restyled desktop checkout cart rows to follow the same compact mobile
+  item-card treatment, including the book thumbnail, Bengali title/price stack,
+  and row dividers.
+- Added desktop-only styling for the checkout cart row controls in the
+  right-column `summery-pc` item list, keeping the fix scoped to CSS.
+- Constrained the checkout right-column free-gift/offer block so product
+  suggestion images render as compact thumbnails instead of large banner-style
+  images inside the total cart section.
+
+## Desktop sticky action cleanup (2026-08-31)
+
+- Hid the injected mobile sticky product/cart action bars by default so their raw
+  Buy Now, Add to Cart, and Go To Cart buttons cannot appear at the bottom of
+  desktop pages. The existing mobile media query still turns them on for mobile.
+
+## Technical SEO foundation (2026-08-30)
+
+- Replaced the stale static-style sitemap response with backend-generated
+  canonical `https://www.amolbooks.com` URLs for homepage, core pages, SEO
+  landing pages, published products, product-list category filters, and blogs.
+- Added a first-class `robots.txt` response that allows the storefront, blocks
+  API/admin/private paths, and points Google at the canonical sitemap.
+- Upgraded bot-facing product pages with product-specific title/description,
+  canonical URL, Open Graph/Twitter tags, Product JSON-LD, Breadcrumb JSON-LD,
+  price, stock availability, author/category text, and visible fallback content.
+- Added server-rendered SEO landing pages for Islamic, Quran, Hadith, Dua,
+  Bengali Islamic, and Bangladesh bestseller book searches, each with product
+  grids and ItemList/Breadcrumb structured data.
+- Updated the compiled storefront shell metadata to Bengali language, a stronger
+  homepage title/description, canonical `www` URL, and removed the fake Google
+  verification placeholder.
+
+## Desktop product action buttons (2026-08-29)
+
+- Fixed the desktop product-page purchase row so Buy Now, Add to Cart, and
+  WhatsApp order sit in one aligned row with stable widths and no wrapped button
+  labels. The hidden legacy advance-payment button row is now removed from the
+  desktop grid so it does not reserve empty space.
+
+## Cart layout stabilization (2026-08-29)
+
+- Forced the cart route back into one centered desktop column, with the trust
+  panel stacked under the cart contents instead of floating beside it.
+- Hid the compiled related-products shelf on `/cart` so the footer follows the
+  cart cleanly and the page no longer looks like a mixed product feed.
+
+## Desktop cart refresh (2026-08-29)
+
+- Refined the desktop cart route with a wider modern two-column layout, tighter
+  cart rows, polished summary/actions, and a sticky right-side support panel
+  while leaving mobile cart behavior unchanged.
+- Removed stray pre-cart product feeds and the oversized native related-products
+  section from the cart route so the cart itself is the first desktop content.
+- Added a final desktop-only workbench override after the compiled tablet rules:
+  it restores the wide cart ledger, keeps checkout/support panels sticky on the
+  right, and aligns prices, quantities, totals, and checkout action as one
+  deliberate desktop flow.
+
+## Buy Now checkout flow (2026-08-29)
+
+- Product-page Buy Now now suppresses the added-to-cart modal/toast and redirects
+  straight to `/checkout`. Add to Cart still shows the added-to-cart popup.
+
+## Checkout free-notebook visibility (2026-08-29)
+
+- Made the earned free notebook visible inside the `/checkout` item list by
+  reusing the live `OrderOffer` config, cart items, and product pricing helpers
+  from the cart enhancement. The backend order creation path already appends the
+  notebook as a zero-priced `orderType: gift` item, so saved orders and order
+  lists receive the same gift line without adding it to the paid cart.
+- Added a fallback checkout placement that anchors the notebook under the
+  native “মোট আইটেম” list even when the compiled checkout uses different row
+  classes than the cart. Local order creation also falls back to the published
+  notebook offer when the local fixture DB has no `OrderOffer`, so dashboard
+  verification shows the gift line after placing an order.
+- Corrected checkout placement again after visual review: when compiled
+  checkout rows do not expose cart classes, the gift now anchors after the last
+  product image/price row instead of above the delivery form.
+- Removed the broad checkout fallback that placed the notebook above the form;
+  checkout now only renders the free notebook when it can anchor to the cart item
+  list itself.
+
+## Local development startup (2026-08-28)
+
+- Made the mobile sticky storefront search dynamic. Typing at least two
+  characters now debounces a published-catalogue product lookup and renders
+  matching books directly below the search field with cover, author, and price;
+  Enter/search still routes to the full product-list search page.
+- Reworked the cart page's desktop treatment without touching Angular source:
+  the native cart now gets a centered two-column layout, a clean bordered item
+  list, right-side sticky trust/summary column, stronger quantity/price
+  alignment, and desktop-specific spacing while preserving the mobile cart
+  layout. Corrected the first pass after screenshot review: the free-notebook
+  progress card now spans the top of the desktop grid instead of stretching into
+  a giant left column and squeezing cart items into the right rail.
+- Tightened the desktop cart layout again after review: the cart area now uses a
+  predictable 12-column grid, an 8-column cart list, a 4-column sticky right
+  panel, compact row covers, fixed price/quantity alignment, and constrained
+  related-product imagery so the page no longer turns into a tall oversized
+  product feed below the cart.
+- Changed the desktop cart page to follow the mobile composition instead of a
+  split desktop layout: offer card, cart items, totals/actions, trust panel,
+  product shelves, and sticky checkout remain in one centered column.
+- Centered the checkout progress stepper on desktop to match the mobile
+  treatment: the three Bengali steps now sit inside a contained centered band
+  with balanced spacing and no left-drift on wide screens.
+- Fixed the cart-added popup's recommended-product Add to Cart controls so they
+  render as proper full card buttons and continue updating the popup subtotal
+  and sticky cart count after a click. Added a mobile cart-page sticky checkout
+  bar that contains only “অর্ডার করতে এগিয়ে যান” and routes straight to
+  checkout, leaving Gift Order out of the sticky bottom area. The sticky product
+  header search now reads the real sticky input element value and also handles
+  mobile search-key events before routing to the product-list search URL.
+- Restored the product-page mobile sticky commerce header with catalogue,
+  search, and cart controls while keeping a separate bottom product action bar.
+  The sticky search now submits the actual typed value to the storefront product
+  list route instead of forwarding an undefined Angular value. After a product
+  is added to cart, the bottom Buy Now/Add to Cart pair collapses into one
+  full-width sticky “Go To Cart” button. Product-page add-to-cart feedback now
+  suppresses the old green toast and shows a Rokomari-style cart-added modal
+  with cart count/subtotal, Buy More and Go To Cart actions, and two relevant
+  product cards.
+- Fixed Add to Cart in the cart page's “জনপ্রিয় কিছু বই দেখুন” carousel on
+  localhost. Those native cards are backed by the published storefront
+  catalogue, so their injected slug buttons now resolve products through the
+  same catalogue proxy and, for local preview, write directly to the compiled
+  storefront's guest-cart key instead of posting published product ids into the
+  local fixture MongoDB cart API. The injected button also gets its own z-index
+  and pointer hit area so carousel card links do not steal taps.
+- Replaced the product-page mobile sticky catalogue/search/cart bar with a
+  bottom Buy Now / Add to Cart bar. Both buttons proxy the compiled
+  storefront's native product actions, so Buy Now keeps the existing checkout
+  path and Add to Cart keeps the native cart state/label behavior. The old
+  sticky search bridge now targets the real header search input/form more
+  defensively for any cached older bar markup, instead of trying to own search
+  behavior itself.
+
+- Disabled storefront analytics only on `localhost`, `127.0.0.1`, and `::1`.
+  The local HTML now prevents the GTM/Tagioo, Google Ads, and PostHog loaders
+  from running and omits the GTM no-script iframe; deployed hosts retain the
+  existing analytics behavior.
+
+- Fixed guest-cart synchronization for the local compiled storefront. Its
+  CartService reads `Amolbooks_USER_CART_1`, while the injected product/cart
+  bridge had written `ALAMBOOKS_USER_CART_1`. The bridge now merges the stale
+  uppercase entries into the native key, reloads cart/checkout once, and keeps
+  all future item, quantity, and removal updates on the checkout-visible cart.
+  The local server also content-versions the compiled `main.*.js` tag, so a
+  previous same-filename browser cache cannot keep the old CartService alive.
+
+- Moved the live item-count/subtotal calculation into the native cart card,
+  immediately after the product rows and before promo/order actions, so the
+  calculation reads as part of the cart contents rather than a detached block.
+- Tightened the cart's “আপনার দেখা বই” shelf with a contained surface,
+  consistent outer/inner spacing, smaller mobile covers, and more compact cards
+  and actions. The global add-to-cart checkout toast is now hidden and cleared
+  only on `/cart`; it remains available on product and catalogue pages.
+- Connected the cart offer suggestions to the live cart page. An Add to Cart
+  action now immediately reconciles the native cart-card list, item count,
+  quantities, remove controls, and paid subtotal without a reload. The live
+  `OrderOffer` threshold is recalculated from those paid items; when earned,
+  suggestions disappear, the progress card switches to its congratulations
+  state, and the configured notebook appears as a clearly labelled ৳0 gift row.
+  The gift remains a derived cart view (not a second persisted paid product),
+  leaving the server-side order offer engine as the source of truth at checkout.
+  The bridge is pinned to the compiled storefront's real versioned cart key,
+  preventing a pre-render badge race from writing offer products into a stale
+  legacy cart. It also suppresses stale Angular rows when the compiled view has
+  not yet reconciled that key, so item count, visible rows, and subtotal remain
+  one consistent snapshot.
+- Replaced the cart empty-state's hardcoded generic `dummy-image.jpg` avatar
+  with an embedded, accessible empty-cart illustration. Because the repair uses
+  a self-contained SVG data URL, it no longer depends on a missing or misleading
+  image asset and remains intact across Angular cart redraws.
+- Fixed the cart's “আপনার দেখা বই” shelf flicker at its ownership boundary.
+  The injected section now lives between Angular's stable route container and
+  footer instead of inside `app-cart`/`app-related-products`, whose redraws
+  repeatedly removed and recreated it. Repeated mounts are idempotent, duplicate
+  product requests are coalesced, stale responses are ignored, and the shelf is
+  removed cleanly when leaving `/cart`. Cart product metadata is reused while
+  the item signature is unchanged, and offer/row markup now mutates only when
+  its rendered value changes, breaking the observer-driven refresh loop.
+- Restored the full tracked Angular storefront `index.html` after a static patch
+  pass reduced it to script tags only, which caused every localhost route to
+  appear blank. The localhost root now serves the full application shell again
+  and `/cart` renders normally.
+- Kept `/cart` on the compiled storefront route (no injected second page), then
+  repaired that native route in place: the two cart calls-to-action now read
+  “আরও ক্রয় করুন” and “অর্ডার করতে এগিয়ে যান”; service rows use meaningful
+  COD, return, quality, exchange, and value icons; cart rows gain backend
+  author and calculated discount details; and the existing popular-products
+  carousel receives real Add to Cart controls using the same cart bridge as
+  product pages. A compact, backend-backed “আপনার দেখা বই” shelf now surfaces
+  recently viewed books in the cart without duplicating items already there.
+- Moved the free-notebook progress message out of checkout and into the cart.
+  It reads the live `OrderOffer` threshold and real cart prices, so its progress
+  and earned state match the server-side gift rule instead of promising a
+  hard-coded offer. Checkout now has a concise `ক্রয় তালিকা → তথ্য ও পেমেন্ট →
+  অর্ডার সম্পন্ন` flow marker with a link back to the cart, and its cash-on-
+  delivery method uses the real COD artwork instead of a placeholder portrait.
+- Anchored that notebook badge inside the native `app-cart-information` summary
+  after live review (rather than outside the cart block), and added three real,
+  in-stock Add to Cart suggestions immediately below it. The initial badge waits
+  for the rendered subtotal, preventing a brief incorrect “remaining” amount
+  while Angular is still drawing the cart.
+- Corrected the cart badge against the published `OrderOffer`: a ৳190 cart now
+  accurately says to add ৳560 more, never shows a premature congratulations
+  state, and uses the live notebook product record for its current cover. The
+  product record says 80 pages (not 72), so the customer-facing copy uses the
+  accurate ৮০-পৃষ্ঠার notebook description.
+- Refined the cart offer's earned state: only carts at or above the live ৳750
+  threshold show “অভিনন্দন!” and the notebook gift, with no add-more-product
+  recommendations. Below the threshold, the progress card still offers three
+  relevant books. The recently viewed shelf now follows the final book section
+  and uses deliberately compact cover dimensions so it reads as a secondary
+  discovery module.
+- Moved the recently viewed shelf out of Angular's frequently redrawn
+  `app-cart-information` component and into the stable gap before related
+  products. This prevents the remove/recreate cycle that made the shelf flicker
+  while the native cart refreshed.
+- Made the notebook cover an accessible link to its own product page and added
+  a “সব বই দেখুন” route from the offer. Cart-line enrichment now has a published
+  catalogue fallback when the compiled cart does not expose a product id, so it
+  can match the visible book title and show the author, percentage discount,
+  discounted price, and struck-through original price consistently.
+- Replaced the first cart-overlay pass with a stable cart route that preserves
+  the storefront header and mobile navigation. It now uses a clear cart-list /
+  checkout-summary layout, real quantity and remove controls, an honest
+  checkout-only delivery note, and no longer resets to a loading placeholder on
+  the product-page watcher. Corrected cart-key selection so an empty legacy key
+  cannot hide the active guest cart.
+- Removed that injected cart layer after live review showed that the compiled
+  storefront already provides the native `/cart` page underneath it. Sticky-cart
+  navigation now routes directly to that native page, eliminating the duplicate
+  page/overlay effect while retaining the storefront's header and navigation.
+- Added the requested mobile sticky commerce bar to product pages: catalog control,
+  search synchronized to the storefront search form, and a cart control with a
+  count badge and a brief add-to-cart guidance animation. Its cart action opens a
+  first-class local `/cart` view sharing the existing cart data, quantities,
+  removal actions, and checkout path; returning to a product page now reliably
+  removes the cart view.
+- Expanded the subject-library source from the small bestseller sample to the
+  available public/local product pool, prioritizing Hadith shelves and avoiding
+  duplicate display titles. The Shamayele Tirmiji product page now renders
+  “হাদিসের বই” alongside the other real backend-backed subjects.
+- Made Summary, Author, and Customers Bought Together headings visibly stronger
+  (800 weight and a larger responsive size) on desktop and mobile.
+- Product purchase controls now keep WhatsApp ordering after Buy Now and Add to
+  Cart, render Buy Now at an 800 weight, and route a second click on “Go to
+  Cart” straight to `/cart`. The Bought Together component is no longer
+  repeatedly reinserted on observer updates, and its Add All button has
+  property-specific hover transitions to prevent the visible flicker.
+- Pointed the injected category shelves and author lookups at the same
+  published catalogue used by the compiled storefront; the local development
+  database only includes fixture data, which had made shelves empty and author
+  images fall back to the placeholder. Added a direct author-image hydration
+  pass and forwarded sticky-search Enter events to the native Angular search
+  input and form.
+- Fixed local MongoDB URI construction when `DB_USERNAME`/`DB_PASSWORD` are blank,
+  allowing the local unauthenticated MongoDB service to start the NestJS server.
+- Updated injected product-section cart rows to use the storefront cart's native
+  visual treatment even when a live row has to be created before Angular refreshes.
+  Author images now accept the image field variants returned by the author API and
+  fall back safely only if the image fails to load.
+- Restored the local author image for "ড. খালিদ আবু শাদি" from its published
+  author record and made localhost author lookups use the local API. Verified
+  that the product page now renders the published author image.
+
+## Author biography persistence (2026-08-27)
+
+- Replaced the stale author add/update DTO fields, which were copied from an
+  unrelated campaign-style model, with the actual author fields used by the
+  compiled admin form and Mongo schema—including `description` and
+  `descriptionEn`. This prevents validation/whitelisting from silently removing
+  author biographies while returning a successful save response.
+- Made single-author updates safe for partial payloads: an omitted/blank slug
+  now preserves the existing slug, duplicate-slug checks exclude the author
+  being edited, bulk-only `ids` are not written into the document, and Mongoose
+  validators run on the update.
+- Verified against localhost with a temporary author: create, Bengali and
+  English rich-description update, fresh readback, and cleanup all succeeded;
+  both saved HTML descriptions were returned unchanged.
+
+## Standalone product information sections (2026-08-26)
+
+- Replaced the storefront product page's Summary/Description/Author/Review tab
+  presentation with separate vertical sections for summary, book details, author
+  information, recommendations, and reviews.
+- Author cards load the existing author API so names, photos, descriptions, and
+  author links remain driven by backend data. Missing biographies are left
+  blank rather than replaced with invented copy.
+- The existing Angular review component is promoted into its own section instead
+  of being reimplemented, preserving login, review submission, moderation,
+  ratings, and review-image behavior.
+- Added a product recommendation API backed by completed/non-returned order
+  co-purchases. The storefront says “Customers Also Bought” only when real order
+  evidence exists; sparse results are filled with popular related-category books
+  under an honest related-books heading.
+- The runtime layout was verified at 320, 375, 414, and 768 px: mobile uses two
+  book columns, tablet uses four, the old tab row is hidden, and there is no
+  horizontal page overflow.
+- Corrected the first visual pass after local review: localhost now reads the
+  same production product and author data as the compiled storefront, so real
+  product slugs render the enhancement. The section treatment now follows the
+  supplied Rokomari reference more closely—flat document sections, lighter
+  headings, a borderless author row, a horizontally scrollable mobile book
+  shelf, compact outline detail actions, and a flattened review summary.
+- Local previews fall back to published books from the product's real category
+  while the new co-purchase endpoint is not deployed. Production will use the
+  order-backed “Customers Also Bought” heading when that endpoint returns real
+  co-purchase evidence.
+- Reduced the injected product-page typography weight so summary, author, and
+  recommendation text sits closer to the storefront's normal font treatment.
+  The recommendation shelf is now titled “Customers Bought Together” and each
+  product card uses an Add to Cart button instead of a details link.
+- Further normalized the injected product-page font rendering: the standalone
+  sections now inherit the storefront's existing font family and keep body,
+  author, recommendation-card, price, and Add to Cart text at normal 400 weight
+  instead of the heavier Bengali font treatment seen in the mobile preview.
+- Replaced the tabbed product-specification table with a Rokomari-style
+  horizontal facts strip placed directly above “সারসংক্ষেপ”. It is backed by
+  product API fields for category/genre, page count, language, publisher,
+  author, ISBN/SKU, edition year, and country, with a horizontally scrollable
+  mobile treatment.
+- Polished that facts strip after mobile review: columns now use equal widths,
+  consistent side padding, fixed label/icon/value rows, centered content, and no
+  negative outer margin, so the rhythm is closer to Rokomari's specification
+  rail.
+- Removed the empty reserved icon slot from facts that do not have an icon
+  (Length, Language, Edition, Country), eliminating the visible blank gap above
+  their values while keeping icon-bearing facts aligned.
+- Replaced the Publication fact's placeholder/clover glyph with a simple inline
+  book SVG icon so the strip better matches the Rokomari product-spec reference.
+- Restored bold weight only for the standalone section titles requested in the
+  product page flow while keeping body/product-card text light. Review image
+  placeholders are now suppressed when the saved uploaded image URL is missing
+  or falls back to a dummy asset.
+- Fixed an escaping bug in the injected review-image URL matcher that caused the
+  product sections script to fail at runtime. The localhost product page now
+  mounts the standalone sections again, hides the old tab row, and shows the
+  requested headings at 700 weight.
+- Switched only those standalone section titles to the storefront's stronger
+  Bengali heading stack (`hind-siliguri` with Noto/system fallbacks) and bumped
+  their requested weight to 800, because the inherited body font rendered 700 as
+  visually too light.
+- Fixed stale injected CSS during local iteration: the product sections runtime
+  now updates the existing `ab-product-sections-style` tag instead of returning
+  early when an older style block is already present in the page.
+- Fixed the reason those recommendation changes appeared unchanged on
+  localhost: the running API kept the injected product-page script frozen in
+  memory. The script endpoint now reads the generated storefront asset from
+  disk on every uncached request, with the bundled source as a fallback, so
+  subsequent product-page styling edits become visible after a browser refresh
+  without another API restart.
+- Reworked the oversized desktop “Customers Bought Together” catalogue grid
+  into a single compact recommendation rail. The rail is now the default layout
+  rather than a desktop-only override, so the oversized four-column fallback
+  cannot reappear. Tablet and mobile retain the keyboard-focusable horizontal
+  shelf. Desktop now uses six fixed 9 rem tracks per row with much smaller
+  6.25 × 8.5 rem covers, borderless cards, two-line titles, single-line authors,
+  compact prices, and a 44 px Add to Cart action. The generated script's cache
+  key was also refreshed so an already-running localhost page requests this new
+  layout instead of reusing the previous four-column asset.
+- Corrected the over-compressed desktop follow-up seen in the full-page review:
+  the six cards now distribute evenly across the product content width, use a
+  restrained bordered-card treatment with 6.75 × 9 rem covers, and hide cards
+  after the sixth only on desktop. This removes the awkward two-card second row
+  while tablet and mobile retain the full horizontally scrollable result set.
+  Refreshed the generated script and cache key again for immediate local pickup.
+- Unified the injected desktop product sections with the storefront's existing
+  1300 px `.section-main` measure. Facts, summary, author, recommendations, and
+  reviews now share that centered maximum width; the summary body can use the
+  full measure instead of stopping at 72 characters. The specification rail
+  renders only facts backed by product data and redistributes the available
+  facts evenly, avoiding blank/placeholder columns. On wider layouts the author
+  portrait now spans beside the author's name and full biography, while narrow
+  layouts retain the safer stacked-description treatment. Refreshed the
+  generated script and cache key for local pickup.
+- Moved the storefront's existing interactive Bengali bought-together bundle
+  directly below the injected “Customers Bought Together” recommendation shelf.
+  The runtime relocates the live Angular section rather than copying it, so its
+  selected books, calculated total/savings, and Add All to Cart action remain
+  functional. A placeholder restores the section before rerenders and SPA route
+  changes, preventing the native component from being discarded with the
+  injected content. Corrected the relocation for the live product template,
+  whose bought-together component has no `.section-main` ancestor, by falling
+  back to moving the Angular component itself. Refreshed the generated script
+  and cache key for local pickup.
+- Repaired the product purchase-info icons by replacing the compiled template's
+  dummy profile images with the storefront's existing COD and happy-return SVGs.
+  Standalone Bengali section headings now use the bundled SolaimanLipi Bold face,
+  including “Customers Bought Together”, producing real bold rendering instead
+  of requesting unsupported Hind weight 800.
+- Removed the redundant injected “11 হাজার পাঠক...” shelf from the product page.
+  Replaced the native six-item category carousel with a two/four/six-column
+  “আরও জনপ্রিয় বই” catalogue grid backed by published, in-stock products. It
+  progressively loads twelve more real books near the scroll boundary, retains
+  a keyboard-accessible manual load action, prevents stale SPA requests from
+  crossing product routes, and restores the native component during cleanup.
+- Added a compact Add to Cart action and calculated red percentage-off badge to
+  every “আরও জনপ্রিয় বই” card. The desktop Description body now uses the full
+  shared 1300 px content measure instead of the previous 72-character column.
+  Author biographies remain fetched from the public author record, accept both
+  Bengali and English description fields, bypass stale response caches, and
+  show an honest empty state when the backend has no biography; the current
+  মোহাম্মাদ ফারিস record returns no description yet.
+- Standardized the product purchase controls without changing their Angular
+  behavior: the primary order action now reads “Buy Now”, while the cart action
+  reads “Add to Cart” before selection and “Go To Cart Page” once active. The
+  existing Buy Now toast suppression and WhatsApp-button locator now recognize
+  the English label as well.
+- Extended the existing cart confirmation toast to the injected recommendation
+  and catalogue card actions by emitting the same global cart-added event used
+  by native/API cart additions. Native logged-in additions remain covered by
+  the API event bridge, and guest additions remain covered by the cart-badge
+  observer, so the same checkout prompt is available across product surfaces.
+- Replaced the undifferentiated progressively expanding “আরও জনপ্রিয় বই” wall
+  with seven capped, backend-driven subject shelves. The current product’s real
+  category is prioritized, followed by available Quran, Hadith, Seerah,
+  self-development, dua, productivity, women, finance, etiquette, or creed
+  categories. Headings are derived from those actual categories, duplicate
+  multi-category books are suppressed, and mobile shows at most four books per
+  shelf while desktop shows up to six. Each shelf marks its highest-selling
+  visible book as “বেস্টসেলার” only when the backend reports recorded sales.
+- Made the injected recommendation and category-shelf Add to Cart actions update
+  the guest cart immediately: the bottom-nav count, cart drawer rows, quantities,
+  and total now synchronize from the stored cart without a page refresh. The
+  primary product action starts as “Add to Cart” and changes to “Go to Cart”
+  after it is clicked, and the product fact label “Length” now reads “Number of
+  Pages”.
+- Matched dynamically inserted cart lines to the native cart component by
+  cloning its real scoped row template, so live-added books now share the same
+  cover size, alignment, quantity controls, and price treatment. Added enough
+  vertical room between the wrapping “Number of Pages” label and its value on
+  mobile. Review-image uploads now preview the selected local file immediately,
+  retain the environment-correct uploaded URL, and replace the preview with the
+  saved image URL after upload instead of incorrectly pointing localhost files
+  at production and falling back to the avatar placeholder. The live cart bridge
+  now resolves the active versioned cart by matching Angular’s rendered cart
+  count, with the fullest valid cart as fallback, preventing stale counts when
+  several legacy storage keys coexist.
+- `npm run build` passes. `npm run lint` remains blocked by the existing
+  all-files-ignored ESLint configuration. Changes are local and not yet
+  deployed.
 
 ## Profit dashboard actual-cost bridge (2026-08-26)
 
@@ -70,7 +801,7 @@
 
 Living status doc. Update after meaningful progress.
 
-_Last updated: 2026-08-25. Branch: `main`. Meta Purchase EMQ coverage is corrected locally; GTM/API publication is pending._
+_Last updated: 2026-08-26. Branch: `main`. Product-page sections and Meta Purchase EMQ coverage are corrected locally; publication is pending._
 
 ## Recently completed (git log, newest first)
 
@@ -910,6 +1641,17 @@ count even when tracking is perfect.
 - Extended local price font/digit script to cart sidebar and checkout selectors; Nest watch compile → passed with 0 errors.
 - Hid checkout condition/terms block in the local injected script; Nest watch compile → passed with 0 errors.
 - Added API startup static storefront patch installer; `cd api && npm run build` → passed.
+- Storefront product-page repair: added a same-origin localhost catalogue proxy, including a reliable read-only library endpoint, so injected category shelves and author records use the published catalogue instead of fixture-only local data. Added a legacy profile-image fallback for the Khalid Abu Shadi author record. Verified the Moner Moto Salat category shelves populate and its author image resolves to the published profile image.
+- Sticky product-page search now mirrors text and Enter submission to the compiled header's real search control, preserving the storefront's native search flow.
+- `cd api && npm run build` after the storefront repair → passed. `npm run lint` remains blocked before linting because the configured glob is fully ignored.
+- Cart recently-viewed shelf: moved it outside Angular's `app-cart` host so cart redraws cannot remove and recreate it, eliminating the visible flicker. `cd api && npm run build` → passed.
+- Cart desktop layout: locked the recently-viewed shelf to one compact four-card row, normalized its card/image/text/button geometry, and suppressed the product-only sticky actions on the cart route. Mobile rules are unchanged. Verified at 1024/1440px with no horizontal overflow; API build passes, while lint remains blocked by the existing all-files-ignored ESLint configuration.
+- Cart desktop offer panel: rebuilt the free-notebook progress area and three suggested-book cards into a compact, aligned grid with restrained typography and proper cart buttons. Rules start at 768px; phone layout remains unchanged.
+- Cart popular-books shelf: restored the native “জনপ্রিয় কিছু বই দেখুন” carousel while keeping unrelated cart-route product sections suppressed.
+- Cart popular-books desktop actions: replaced raw browser buttons with full-width Amol-green Add to Cart controls, including hover, focus, active, and disabled states. Mobile styling remains unchanged.
+- Checkout cleanup: permanently hide the competing free-notebook offer widgets on the checkout route instead of repeatedly removing/recreating them, and constrain the Cash on Delivery icon to 40px.
+- Cart synchronization: corrected the injected cart key to Angular's real `Amolbooks_USER_CART_1`, one-time merges/removes the wrongly cased legacy cart, keeps the native bottom-navigation count aligned, and forces full cart/checkout route loads so every surface rebuilds from the same product list.
+- Cart gift offer add: cache gift-card product metadata before buttons render and use that cache for immediate cart-page repaint, so gift products add dynamically even from an empty local cart. Local cart reads now use the local cart snapshot to avoid stale authenticated responses.
 
 ## Do NOT touch / be careful
 

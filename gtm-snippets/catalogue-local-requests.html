@@ -1,0 +1,26 @@
+<!-- Local preview only: load before Angular so public catalogue reads use the existing proxy. -->
+<script>
+(function () {
+  'use strict';
+  var host = location.hostname;
+  var local = host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host === '::1' ||
+    /^10\./.test(host) || /^192\.168\./.test(host) || /^172\.(1[6-9]|2\d|3[0-1])\./.test(host);
+  if (!local || window.__abLocalCatalogueRequests || !window.XMLHttpRequest) return;
+  window.__abLocalCatalogueRequests = true;
+  var open = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function (method, url) {
+    var args = Array.prototype.slice.call(arguments);
+    try {
+      var target = new URL(url, location.href);
+      var verb = String(method).toUpperCase();
+      if (target.origin === 'https://apisub.amolbooks.com' &&
+          ((verb === 'POST' && target.pathname === '/api/product/get-all') ||
+           (verb === 'POST' && target.pathname === '/api/category/get-all/') ||
+           (verb === 'GET' && target.pathname === '/api/product/get-all-data'))) {
+        args[1] = location.origin + '/storefront-catalog' + target.pathname.slice(4) + target.search;
+      }
+    } catch (_error) {}
+    return open.apply(this, args);
+  };
+})();
+</script>

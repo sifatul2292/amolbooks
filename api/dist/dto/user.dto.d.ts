@@ -50,12 +50,24 @@ export declare class UpdateUserDto {
 export declare class AddAddressDto {
     user: string;
     phoneNo: string;
+    phone: string;
+    name: string;
+    division: Record<string, unknown>;
+    area: Record<string, unknown>;
+    zone: Record<string, unknown>;
+    setDefaultAddress: boolean;
     city: string;
     address: string;
     addressType: string;
 }
 export declare class UpdateAddressDto {
     phoneNo: string;
+    phone: string;
+    name: string;
+    division: Record<string, unknown>;
+    area: Record<string, unknown>;
+    zone: Record<string, unknown>;
+    setDefaultAddress: boolean;
     city: string;
     address: string;
     addressType: string;

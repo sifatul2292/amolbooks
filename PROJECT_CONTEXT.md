@@ -4,7 +4,7 @@ Source of truth for this repo. Repo-specific only — do not import assumptions 
 
 ## What this is
 
-Amolbooks (also branded Alambook) — a Bengali-language e-commerce bookstore. Sells
+Amol Books — a Bengali-language e-commerce bookstore. Sells
 books online with cart, checkout, orders, discounts, offers, blog, reviews, and an
 admin back office. Business runs on a VPS in production (`amolbooks.com`).
 

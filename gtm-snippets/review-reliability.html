@@ -1,0 +1,393 @@
+<!-- All Pages. Review upload bridge for previews plus capped stale-review recovery. -->
+<script>
+(function () {
+  if (window.__abReviewReliability) return;
+  window.__abReviewReliability = true;
+
+  var host = location.hostname.toLowerCase();
+  var preview = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(host) ||
+    /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host) ||
+    host.slice(-18) === '.trycloudflare.com';
+  var cachedImages = {};
+  var reviewRecords = {};
+  var activeUploads = 0;
+  var failedReviewSlug = '';
+  var repairTimer = 0;
+
+  function slug() {
+    var match = location.pathname.match(/^\/product-details\/([^/?#]+)/);
+    return match ? match[1] : '';
+  }
+  function requestPath(url) {
+    var link = document.createElement('a');
+    try { link.href = String(url); return link.pathname; } catch (_) { return ''; }
+  }
+  function responsePayload(xhr) {
+    try { return JSON.parse(xhr.responseText); } catch (_) { return null; }
+  }
+  function normalizeReviewPart(value) {
+    return String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
+  }
+  function reviewRecordKey(name, review) {
+    return normalizeReviewPart(name) + '\u001f' + normalizeReviewPart(review);
+  }
+  function cacheReviewRecords(list) {
+    var next = {};
+    for (var i = 0; i < list.length; i++) {
+      var record = list[i] || {};
+      var name = (record.user && record.user.name) || record.userName || record.name || '';
+      var key = reviewRecordKey(name, record.review);
+      if (normalizeReviewPart(name) && normalizeReviewPart(record.review)) {
+        if (!next[key]) next[key] = [];
+        next[key].push(Array.isArray(record.images) ? record.images.slice() : []);
+      }
+    }
+    reviewRecords = next;
+    scheduleReviewImageRepair();
+  }
+  function removeLegacyImageStrips(card) {
+    var strips = card.querySelectorAll('div[style]');
+    for (var i = 0; i < strips.length; i++) {
+      var style = strips[i].getAttribute('style') || '';
+      if (strips[i].querySelector('img') && /display\s*:\s*flex/i.test(style) && /border-top\s*:\s*1px/i.test(style)) {
+        strips[i].parentNode.removeChild(strips[i]);
+      }
+    }
+  }
+  function closeReviewLightbox() {
+    var lightbox = document.getElementById('arr-review-lightbox');
+    if (!lightbox) return;
+    document.removeEventListener('keydown', lightbox.__arrKeydown);
+    document.body.style.overflow = lightbox.getAttribute('data-arr-overflow') || '';
+    if (lightbox.parentNode) lightbox.parentNode.removeChild(lightbox);
+  }
+  function openReviewLightbox(url) {
+    closeReviewLightbox();
+    var lightbox = document.createElement('div');
+    var image = document.createElement('img');
+    var close = document.createElement('button');
+    lightbox.id = 'arr-review-lightbox';
+    lightbox.className = 'arr-review-lightbox';
+    lightbox.setAttribute('role', 'dialog');
+    lightbox.setAttribute('aria-modal', 'true');
+    lightbox.setAttribute('aria-label', 'রিভিউ ছবির বড় দৃশ্য');
+    lightbox.setAttribute('data-arr-overflow', document.body.style.overflow || '');
+    image.src = url;
+    image.alt = 'রিভিউ ছবি';
+    close.type = 'button';
+    close.className = 'arr-review-lightbox-close';
+    close.setAttribute('aria-label', 'ছবি বন্ধ করুন');
+    close.textContent = '×';
+    close.addEventListener('click', closeReviewLightbox);
+    lightbox.addEventListener('click', function (event) {
+      if (event.target === lightbox) closeReviewLightbox();
+    });
+    lightbox.__arrKeydown = function (event) {
+      if (event.key === 'Escape') closeReviewLightbox();
+    };
+    document.addEventListener('keydown', lightbox.__arrKeydown);
+    lightbox.appendChild(close);
+    lightbox.appendChild(image);
+    document.body.appendChild(lightbox);
+    document.body.style.overflow = 'hidden';
+    close.focus();
+  }
+  function renderReviewImages() {
+    repairTimer = 0;
+    window._riuMap = {};
+    window._riuInject = scheduleReviewImageRepair;
+    var cards = document.querySelectorAll('.user-review');
+    var positions = {};
+    for (var i = 0; i < cards.length; i++) {
+      var card = cards[i];
+      removeLegacyImageStrips(card);
+      card.setAttribute('data-riu-done', '1');
+      var review = card.querySelector('.user-review-data > p');
+      var target = card.querySelector('.review-product-img-main');
+      if (!review || !target) continue;
+      var names = card.querySelectorAll('.user-name span, .user-name a');
+      var images = null;
+      for (var n = 0; n < names.length && images === null; n++) {
+        var recordKey = reviewRecordKey(names[n].textContent, review.textContent);
+        var records = reviewRecords[recordKey];
+        var position = positions[recordKey] || 0;
+        if (records && position < records.length) {
+          images = records[position];
+          positions[recordKey] = position + 1;
+        }
+      }
+      if (images === null) continue;
+      var signature = images.join('\u001e');
+      if (target.getAttribute('data-arr-signature') === signature &&
+          target.querySelectorAll('.arr-review-image').length === images.length) continue;
+      target.textContent = '';
+      target.setAttribute('data-arr-signature', signature);
+      for (var j = 0; j < images.length; j++) {
+        var link = document.createElement('a');
+        var image = document.createElement('img');
+        link.className = 'arr-review-image';
+        link.href = images[j];
+        link.setAttribute('aria-label', 'রিভিউ ছবিটি বড় করে দেখুন');
+        link.addEventListener('click', function (event) {
+          event.preventDefault();
+          openReviewLightbox(this.href);
+        });
+        image.src = images[j];
+        image.alt = 'রিভিউ ছবি';
+        image.loading = 'lazy';
+        link.appendChild(image);
+        target.appendChild(link);
+      }
+    }
+  }
+  function scheduleReviewImageRepair() {
+    clearTimeout(repairTimer);
+    repairTimer = setTimeout(renderReviewImages, 60);
+  }
+  function markReviewDialog() {
+    var app = document.querySelector('app-rating-and-review');
+    if (!app) return;
+    var pane = app.closest ? app.closest('.cdk-overlay-pane') : null;
+    if (pane) pane.classList.add('arr-review-dialog');
+  }
+  function approvalToast() {
+    var old = document.getElementById('arr-review-approved');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    var toast = document.createElement('div');
+    toast.id = 'arr-review-approved';
+    toast.className = 'arr-review-toast';
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+    toast.textContent = 'আপনার রিভিউ অনুমোদনের জন্য পাঠানো হয়েছে।';
+    document.body.appendChild(toast);
+    setTimeout(function () { toast.classList.add('arr-review-toast-visible'); }, 20);
+    setTimeout(function () {
+      toast.classList.remove('arr-review-toast-visible');
+      setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 250);
+    }, 4500);
+  }
+  function reviewSubmit() {
+    return document.querySelector('app-rating-and-review form button[type="submit"]');
+  }
+  function updateSubmit() {
+    var button = reviewSubmit();
+    if (!button) return;
+    button.disabled = activeUploads > 0;
+    button.setAttribute('aria-busy', String(activeUploads > 0));
+  }
+  function uploadError() {
+    var status = document.getElementById('riu-status');
+    if (!status) return;
+    status.style.color = '#b42318';
+    status.textContent = 'ছবি আপলোড করা যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।';
+  }
+  function reviewError() {
+    var status = document.getElementById('riu-status');
+    var button = reviewSubmit();
+    if (!status && button && button.parentNode) {
+      status = document.createElement('div');
+      status.id = 'arr-review-status';
+      button.parentNode.insertBefore(status, button.nextSibling);
+    }
+    if (!status) return;
+    status.style.color = '#b42318';
+    status.textContent = 'রিভিউ জমা হয়নি। আবার চেষ্টা করুন—আপনার ছবিটি সংরক্ষিত আছে।';
+  }
+  function showReviewImageLimit() {
+    var status = document.getElementById('riu-status');
+    if (!status) return;
+    status.setAttribute('data-arr-limit', 'সর্বোচ্চ ৫টি ছবি যোগ করা যাবে।');
+    clearTimeout(window.__arrReviewLimitTimer);
+    window.__arrReviewLimitTimer = setTimeout(function () {
+      status.removeAttribute('data-arr-limit');
+    }, 6000);
+  }
+  function enforceReviewImageLimit(event) {
+    var input = event.target;
+    if (!input || !input.matches || !input.matches('#riu-file-input') || !input.files) return;
+    var available = 5 - document.querySelectorAll('#riu-preview > div').length;
+    if (input.files.length <= available) return;
+    showReviewImageLimit();
+    if (available > 0 && typeof DataTransfer === 'function') {
+      var limited = new DataTransfer();
+      for (var i = 0; i < available; i++) limited.items.add(input.files[i]);
+      input.files = limited.files;
+      return;
+    }
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    input.value = '';
+  }
+  document.addEventListener('change', enforceReviewImageLimit, true);
+
+  if (window.XMLHttpRequest) {
+    var nativeOpen = XMLHttpRequest.prototype.open;
+    var nativeSend = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.open = function (method, url) {
+      var path = requestPath(url);
+      this.__arrMethod = String(method || '').toUpperCase();
+      this.__arrPath = path;
+      this.__arrSlug = slug();
+      if (this.__arrMethod === 'POST' && /^\/api\/(?:v2\/)?upload\/single-image$/.test(path)) {
+        this.__arrUpload = true;
+        var args = Array.prototype.slice.call(arguments);
+        args[1] = preview
+          ? '/storefront-review-upload?convert=yes&width=300&quality=85'
+          : 'https://apisub.amolbooks.com/api/v2/upload/single-image?convert=yes&width=300&quality=85';
+        nativeOpen.apply(this, args);
+        this.__arrUploadStarted = true;
+        this.timeout = 90000;
+        activeUploads++;
+        updateSubmit();
+      } else {
+        nativeOpen.apply(this, arguments);
+      }
+      if (this.__arrMethod === 'POST' && /\/review\/get-all-review-by-query$/.test(path)) {
+        this.__arrReviewList = true;
+      }
+      var xhr = this;
+      this.addEventListener('loadend', function () {
+        if (xhr.__arrUploadStarted && !xhr.__arrUploadFinished) {
+          xhr.__arrUploadFinished = true;
+          activeUploads = Math.max(0, activeUploads - 1);
+          updateSubmit();
+          if (xhr.status < 200 || xhr.status >= 300) uploadError();
+        }
+        var sameReviewPage = xhr.__arrSlug === slug();
+        var payload = (xhr.__arrReviewList || xhr.__arrReviewKey) ? responsePayload(xhr) : null;
+        if (xhr.__arrReviewList && sameReviewPage) {
+          if (xhr.status < 200 || xhr.status >= 300 || !payload || payload.success === false || !Array.isArray(payload.data)) {
+            failedReviewSlug = xhr.__arrSlug;
+            retryMissingReviews();
+          } else {
+            if (failedReviewSlug === xhr.__arrSlug) failedReviewSlug = '';
+            cacheReviewRecords(payload.data);
+          }
+        }
+        if (xhr.__arrReviewKey && sameReviewPage && xhr.status >= 200 && xhr.status < 300 && payload && payload.success === true) {
+          delete cachedImages[xhr.__arrReviewKey];
+          approvalToast();
+        } else if (xhr.__arrReviewKey && sameReviewPage) {
+          reviewError();
+        }
+      });
+    };
+    XMLHttpRequest.prototype.send = function (body) {
+      if (this.__arrUpload && body instanceof FormData) {
+        if (!body.has('convert')) body.append('convert', 'yes');
+        if (!body.has('width')) body.append('width', '300');
+        if (!body.has('quality')) body.append('quality', '85');
+        if (!this.__arrUploadStarted) {
+          this.__arrUploadStarted = true;
+          this.timeout = 90000;
+          activeUploads++;
+          updateSubmit();
+        }
+      }
+      if (this.__arrMethod === 'POST' && this.__arrPath.indexOf('/review/add') !== -1 && typeof body === 'string') {
+        try {
+          var data = JSON.parse(body);
+          var key = this.__arrSlug;
+          if (data.images && data.images.length) cachedImages[key] = data.images.slice();
+          else if (cachedImages[key] && cachedImages[key].length) data.images = cachedImages[key].slice();
+          this.__arrReviewKey = key;
+          body = JSON.stringify(data);
+        } catch (_) {}
+      }
+      try {
+        return nativeSend.call(this, body);
+      } catch (error) {
+        if (this.__arrUploadStarted && !this.__arrUploadFinished) {
+          this.__arrUploadFinished = true;
+          activeUploads = Math.max(0, activeUploads - 1);
+          updateSubmit();
+          uploadError();
+        }
+        throw error;
+      }
+    };
+    new MutationObserver(function (mutations) {
+      updateSubmit();
+      markReviewDialog();
+      for (var i = 0; i < mutations.length; i++) {
+        if (mutations[i].addedNodes.length) { scheduleReviewImageRepair(); break; }
+      }
+    }).observe(document.documentElement, { childList: true, subtree: true });
+  }
+
+  var retrySlug = '';
+  var retries = 0;
+  var retryPending = false;
+  function retryMissingReviews() {
+    var key = slug();
+    if (key !== retrySlug) { retrySlug = key; retries = 0; retryPending = false; }
+    if (!key || retries >= 2 || retryPending || document.querySelector('.user-review')) return;
+    var counts = document.querySelector('.ab-rating-counts, app-product-details .product-rating');
+    var match = counts && counts.textContent.match(/([0-9০-৯]+)\s*(?:Reviews?|রিভিউ)/i);
+    var count = match && Number(match[1].replace(/[০-৯]/g, function (digit) { return '০১২৩৪৫৬৭৮৯'.indexOf(digit); }));
+    if (failedReviewSlug !== key && (!count || count < 1)) return;
+    var tabs = document.querySelectorAll('.product-menu button, [role="tab"], .mat-tab-label, .mat-mdc-tab');
+    var reviewTab = null;
+    var otherTab = null;
+    for (var i = 0; i < tabs.length; i++) {
+      if (!reviewTab && /review|রিভিউ/i.test(tabs[i].textContent || '')) reviewTab = tabs[i];
+      else if (!otherTab && !tabs[i].disabled && tabs[i].getAttribute('aria-disabled') !== 'true') otherTab = tabs[i];
+    }
+    if (!reviewTab) return;
+    retryPending = true;
+    retries++;
+    setTimeout(function () {
+      if (otherTab) otherTab.click();
+      setTimeout(function () { reviewTab.click(); retryPending = false; }, otherTab ? 450 : 0);
+    }, 500);
+  }
+  setInterval(retryMissingReviews, 2500);
+  markReviewDialog();
+  scheduleReviewImageRepair();
+})();
+</script>
+<style>
+  .arr-review-toast {
+    position: fixed; left: 50%; bottom: 24px; z-index: 100000;
+    max-width: calc(100vw - 32px); padding: 12px 18px; border-radius: 8px;
+    background: #087a34; color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,.22);
+    font: 500 16px/1.45 hind-siliguri, sans-serif; text-align: center;
+    opacity: 0; transform: translate(-50%, 12px); transition: opacity .2s, transform .2s;
+  }
+  .arr-review-toast.arr-review-toast-visible { opacity: 1; transform: translate(-50%, 0); }
+  .arr-review-image { display: block; min-width: 0; }
+  .arr-review-image img { display: block; width: 100%; height: 75px; object-fit: cover; image-orientation: from-image; border-radius: 6px; }
+  .arr-review-lightbox {
+    position: fixed; inset: 0; z-index: 100001; display: flex; align-items: center; justify-content: center;
+    padding: 56px 16px 24px; background: rgba(0,0,0,.88); box-sizing: border-box;
+  }
+  .arr-review-lightbox img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; }
+  .arr-review-lightbox-close {
+    position: absolute; top: max(12px, env(safe-area-inset-top)); right: 12px; width: 44px; height: 44px;
+    border: 0; border-radius: 50%; background: rgba(255,255,255,.16); color: #fff;
+    font: 400 34px/40px Arial, sans-serif; cursor: pointer;
+  }
+  #riu-status[data-arr-limit]::after { content: attr(data-arr-limit); display: block; color: #b42318; }
+
+  @media (max-width: 430px) {
+    .cdk-overlay-pane.arr-review-dialog { width: calc(100vw - 16px) !important; max-width: calc(100vw - 16px) !important; }
+    .arr-review-dialog mat-dialog-container,
+    .arr-review-dialog mat-mdc-dialog-container,
+    .arr-review-dialog .mat-mdc-dialog-container { max-height: calc(100dvh - 16px) !important; border-radius: 12px; overflow: auto; }
+    .arr-review-dialog app-rating-and-review > .container { padding: 12px !important; }
+    .arr-review-dialog app-rating-and-review .input-area { padding: 0 !important; margin: 0 !important; }
+    .arr-review-dialog app-rating-and-review .form { margin-top: 12px !important; }
+    .arr-review-dialog app-rating-and-review .rating-form-field { width: 100% !important; max-width: none !important; margin-left: 0 !important; }
+    .arr-review-dialog app-rating-and-review textarea { min-height: 96px; max-height: 24vh; }
+    .arr-review-dialog app-star-rating button,
+    .arr-review-dialog #riu-btn { min-width: 44px; min-height: 44px; }
+    .arr-review-dialog #riu-container { margin-top: 8px !important; }
+    .arr-review-dialog #riu-preview img { width: 64px !important; height: 64px !important; image-orientation: from-image; }
+    .arr-review-dialog app-rating-and-review .action {
+      position: sticky; bottom: 0; z-index: 2; display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px; width: 100%; margin-top: 12px !important; padding: 10px 0 0 !important; background: #fff;
+    }
+    .arr-review-dialog app-rating-and-review .action button { width: 100%; min-height: 44px; }
+    .arr-review-toast { bottom: 16px; width: calc(100vw - 32px); font-size: 15px; }
+  }
+</style>

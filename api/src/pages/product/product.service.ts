@@ -196,7 +196,7 @@ export class ProductService {
         description: 'Your product description will be here',
         availability: product?.quantity > 0 ? 'in stock' : 'out of stock',
         condition: 'new',
-        link: `https://alambook.com/product-details/${product.slug}`,
+        link: `https://www.amolbooks.com/product-details/${product.slug}`,
         image_link:
           product.images && product.images.length
             ? product.images[0]
@@ -213,7 +213,7 @@ export class ProductService {
             sku: variation.sku ?? variation._id,
             price: `${variation.regularPrice} BDT`,
             sale_price: `${variation.salePrice} BDT`,
-            link: `https://alambook.com/product-details/${product.slug}`,
+            link: `https://www.amolbooks.com/product-details/${product.slug}`,
             image_link:
               variation.image ??
               (product.images && product.images.length
@@ -256,7 +256,7 @@ export class ProductService {
           condition: 'new',
           price: `${m.salePrice} BDT`,
           sale_price: `${m.salePrice} BDT`,
-          link: `https://alambook.com/product-details/${m.slug}`,
+          link: `https://www.amolbooks.com/product-details/${m.slug}`,
           image_link:
             m.images && m.images.length
               ? m.images[0]
@@ -458,6 +458,12 @@ export class ProductService {
     filterProductDto: FilterAndPaginationProductDto,
     searchQuery?: string,
   ): Promise<ResponsePayload> {
+    const cacheKey = `getAllProducts:${searchQuery || ''}:${JSON.stringify(filterProductDto)}`;
+    const cachedResponse = await this.cacheManager.get<ResponsePayload>(cacheKey);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+
     const { filter } = filterProductDto;
     const { pagination } = filterProductDto;
     const { sort } = filterProductDto;
@@ -835,7 +841,7 @@ export class ProductService {
           this.logger.log('Cache Added');
         }
 
-        return {
+        const response = {
           ...{
             ...dataAggregates[0],
             data: this.normalizeProductImageFields(dataAggregates[0].data),
@@ -846,14 +852,18 @@ export class ProductService {
             filterGroup: allFilterGroups,
           },
         } as ResponsePayload;
+        await this.cacheManager.set(cacheKey, response, { ttl: 30 });
+        return response;
       } else {
-        return {
+        const response = {
           data: this.normalizeProductImageFields(dataAggregates),
           success: true,
           message: 'Success',
           count: dataAggregates.length,
           filterGroup: allFilterGroups,
         } as ResponsePayload;
+        await this.cacheManager.set(cacheKey, response, { ttl: 30 });
+        return response;
       }
     } catch (err) {
       // console.log('errr>>>>', err);
@@ -940,7 +950,7 @@ export class ProductService {
       // }
       // let fShopInfo;
       // if (!productById && !data) {
-      //   // const url = `https://www.alambook.com/product-details/${slug}`;
+      //   // const url = `https://www.amolbooks.com/product-details/${slug}`;
       //   fShopInfo = await this.redirectUrlModel.findOne({
       //     fromUrl: slug,
       //   });

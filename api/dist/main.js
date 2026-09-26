@@ -10,16 +10,22 @@ const express = require("express");
 const helmet = require("helmet");
 const compression = require("compression");
 const crypto_1 = require("crypto");
+const https_1 = require("https");
+const multer = require("multer");
+const sharp = require("sharp");
 const redirect_url_middleware_1 = require("./middleware/redirect-url.middleware");
 const storefront_price_script_1 = require("./storefront-price-script");
 const storefront_special_package_script_1 = require("./storefront-special-package-script");
 const admin_incomplete_order_editor_script_1 = require("./admin-incomplete-order-editor-script");
 const storefront_attribution_script_1 = require("./storefront-attribution-script");
+const storefront_product_sections_script_1 = require("./storefront-product-sections-script");
 async function bootstrap() {
     const logger = new common_1.Logger('Bootstrap');
     const app = await core_1.NestFactory.create(app_module_1.AppModule, { cors: true });
     app.use(helmet.default({
         crossOriginResourcePolicy: { policy: 'cross-origin' },
+        crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+        referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
         contentSecurityPolicy: false,
     }));
     app.use(compression());
@@ -35,9 +41,6 @@ async function bootstrap() {
             'http://localhost:3003',
             'http://localhost:3006',
             'http://localhost:3008',
-            'https://www.alambook.com',
-            'https://alambook.com',
-            'https://admin.alambook.com',
             'https://adminsub.amolbooks.com',
             'https://uisub.amolbooks.com',
             'https://apisub.amolbooks.com',
@@ -75,8 +78,83 @@ async function bootstrap() {
         .digest('hex')
         .slice(0, 12);
     const storefrontAttributionScriptTag = `<script src="/${storefrontAttributionScriptFileName}?v=${storefrontAttributionScriptVersion}" defer></script>`;
+    const storefrontProductSectionsScriptFileName = 'storefront-product-sections.js';
+    const storefrontProductSectionsScriptPath = (0, path_1.join)(__dirname, '..', '..', 'ui', 'dist', 'angular-ui', 'browser', storefrontProductSectionsScriptFileName);
+    const storefrontProductSectionsScriptVersion = (0, crypto_1.createHash)('sha256')
+        .update(storefront_product_sections_script_1.STOREFRONT_PRODUCT_SECTIONS_SCRIPT)
+        .digest('hex')
+        .slice(0, 12);
+    const storefrontProductSectionsScriptTag = `<script src="/${storefrontProductSectionsScriptFileName}?v=${storefrontProductSectionsScriptVersion}" defer></script>`;
     const storefrontGtmLoaderUrl = 'https://server.amolbooks.com/tagioo-loader/gtm.js?id=GTM-NNZV54QJ';
     const storefrontGtmNoscriptUrl = 'https://server.amolbooks.com/tagioo-loader/ns.html?id=GTM-NNZV54QJ';
+    const storefrontLocalAnalyticsGuardMarker = 'window.__amolAnalyticsDisabled=';
+    const storefrontAnalyticsBlockerMarker = 'w.__amolTrackingUrlBlocked=blocked;';
+    const storefrontLocalAnalyticsGuard = String.raw `<script>(function(w){
+    var h=String(w.location.hostname||'').toLowerCase();
+    ${storefrontLocalAnalyticsGuardMarker}['localhost','127.0.0.1','::1','[::1]'].indexOf(h)!==-1||h.slice(-18)==='.trycloudflare.com';
+    if(!w.__amolAnalyticsDisabled)return;
+    function blocked(value){
+      try{
+        var u=new URL(String(value||''),w.location.href),host=u.hostname.toLowerCase(),path=u.pathname;
+        if(u.origin===w.location.origin&&/^\/api\/(?:gtag|gtm)\//.test(path))return true;
+        return /(^|\.)(?:googletagmanager\.com|google-analytics\.com|googleadservices\.com|doubleclick\.net|facebook\.com|facebook\.net|posthog\.com)$/.test(host)||
+          host==='server.amolbooks.com'||host==='load.server.amolbooks.com'||host.indexOf('posthog')!==-1||/tagioo-loader/i.test(path);
+      }catch(_){return false;}
+    }
+    w.__amolTrackingUrlBlocked=blocked;
+    var noop=function(){};
+    w.gtag=noop;
+    var fbq=function(){};fbq.callMethod=noop;fbq.queue=[];fbq.loaded=true;fbq.version='2.0';w.fbq=w._fbq=fbq;
+    var posthog={__SV:1,init:noop,capture:noop,identify:noop,register:noop,reset:noop,opt_out_capturing:noop};
+    w.posthog=typeof Proxy==='function'?new Proxy(posthog,{get:function(target,key){return key in target?target[key]:noop;}}):posthog;
+    if(typeof w.fetch==='function'){
+      var fetch=w.fetch;
+      w.fetch=function(input,init){
+        var url=typeof input==='string'?input:input&&input.url;
+        if(!blocked(url))return fetch.call(this,input,init);
+        var response=typeof w.Response==='function'?new w.Response(null,{status:204}):{ok:true,status:204,json:function(){return Promise.resolve({});},text:function(){return Promise.resolve('');}};
+        return Promise.resolve(response);
+      };
+    }
+    if(w.navigator&&typeof w.navigator.sendBeacon==='function'){
+      var beacon=w.navigator.sendBeacon.bind(w.navigator);
+      w.navigator.sendBeacon=function(url,data){return blocked(url)?true:beacon(url,data);};
+    }
+    if(w.XMLHttpRequest&&w.XMLHttpRequest.prototype){
+      var open=w.XMLHttpRequest.prototype.open;
+      w.XMLHttpRequest.prototype.open=function(method,url){
+        if(!blocked(url))return open.apply(this,arguments);
+        var args=Array.prototype.slice.call(arguments);args[1]='data:application/json,%7B%7D';
+        return open.apply(this,args);
+      };
+    }
+    function neutralize(node){
+      if(!node||!node.tagName)return node;
+      var tag=node.tagName.toLowerCase(),url=node.src||node.href||'';
+      if(!blocked(url))return node;
+      if(tag==='script')node.src='data:text/javascript,void 0';
+      else if(tag==='iframe')node.src='about:blank';
+      else if(tag==='img')node.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+      else node.removeAttribute('href');
+      return node;
+    }
+    ['HTMLScriptElement','HTMLIFrameElement','HTMLImageElement'].forEach(function(name){
+      var type=w[name],descriptor=type&&Object.getOwnPropertyDescriptor(type.prototype,'src');
+      if(!descriptor||!descriptor.get||!descriptor.set)return;
+      Object.defineProperty(type.prototype,'src',{configurable:true,enumerable:descriptor.enumerable,get:descriptor.get,set:function(value){
+        return descriptor.set.call(this,blocked(value)?(name==='HTMLScriptElement'?'data:text/javascript,void 0':name==='HTMLIFrameElement'?'about:blank':'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='):value);
+      }});
+    });
+    var setAttribute=w.Element&&w.Element.prototype.setAttribute;
+    if(setAttribute)w.Element.prototype.setAttribute=function(name,value){
+      if((name==='src'||name==='href')&&blocked(value))return setAttribute.call(this,name,this.tagName==='SCRIPT'?'data:text/javascript,void%200':this.tagName==='IFRAME'?'about:blank':'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=');
+      return setAttribute.apply(this,arguments);
+    };
+    var append=w.Node&&w.Node.prototype.appendChild,insert=w.Node&&w.Node.prototype.insertBefore;
+    if(append)w.Node.prototype.appendChild=function(node){return append.call(this,neutralize(node));};
+    if(insert)w.Node.prototype.insertBefore=function(node,ref){return insert.call(this,neutralize(node),ref);};
+  })(window);</script>`;
+    const storefrontGtmLocalhostGuardMarker = '/* amol-local-analytics-guard */';
     const legacyStapeGtmLoaderUrlPattern = /https:\/\/load\.server\.amolbooks\.com\/2kpblypwe\.js\?8=[^'"\s<]+/g;
     const legacyStapeGtmNoscriptUrlPattern = /https:\/\/load\.server\.amolbooks\.com\/ns\.html\?id=GTM-NNZV54QJ/g;
     const legacyStorefrontViewItemMirrorCode = 'var ec=obj.ecommerce||{},items=toItems(ec),val=cartVal(items);';
@@ -324,13 +402,56 @@ ${storefrontPurchaseExternalIdHelper}
     const legacyStorefrontPriceScriptTagPattern = /\s*<script src="\/storefront-price-english-digits\.js(?:\?v=[^"]*)?" defer><\/script>/g;
     const legacyStorefrontSpecialPackageScriptTagPattern = /\s*<script src="\/storefront-special-package\.js(?:\?v=[^"]*)?" defer><\/script>/g;
     const legacyStorefrontAttributionScriptTagPattern = /\s*<script src="\/storefront-attribution\.js(?:\?v=[^"]*)?" defer><\/script>/g;
+    const legacyStorefrontProductSectionsScriptTagPattern = /\s*<script src="\/storefront-product-sections\.js(?:\?v=[^"]*)?" defer><\/script>/g;
     const staticAssetPattern = /\.(js|css|map|json|xml|txt|ico|svg|png|jpg|jpeg|gif|webp|woff2?|ttf|eot)$/i;
+    const storefrontSnippetFiles = [
+        'google-auth.html',
+        'customer-account-mobile.html',
+        'review-reliability.html',
+        'catalogue-local-requests.html',
+        'cart-page-navigation.html',
+        'product-detail-polish.html',
+        'homepage-redesign.html',
+    ];
+    const storefrontSnippetsPattern = /<!-- amol-storefront-snippets:start -->[\s\S]*?<!-- amol-storefront-snippets:end -->/g;
+    function isLocalStorefrontHost(hostname) {
+        if (process.env.PRODUCTION_BUILD === 'true')
+            return false;
+        const host = String(hostname || '').toLowerCase();
+        return (['localhost', '127.0.0.1', '::1', '[::1]'].includes(host) ||
+            /^(?:10\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.)/.test(host) ||
+            host.endsWith('.trycloudflare.com'));
+    }
+    function injectStorefrontSnippets(indexHtml) {
+        const snippets = storefrontSnippetFiles
+            .map((file) => (0, fs_1.readFileSync)((0, path_1.join)(__dirname, '..', '..', 'gtm-snippets', file), 'utf8'))
+            .join('');
+        const block = `<!-- amol-storefront-snippets:start -->${snippets}<!-- amol-storefront-snippets:end -->`;
+        const cleanedHtml = indexHtml.replace(storefrontSnippetsPattern, '');
+        return cleanedHtml.includes('</head>')
+            ? cleanedHtml.replace('</head>', `${block}</head>`)
+            : `${block}${cleanedHtml}`;
+    }
     function replaceStorefrontTrackingLoader(indexHtml) {
         const trackingHtml = indexHtml
             .replace(legacyStapeGtmLoaderUrlPattern, storefrontGtmLoaderUrl)
             .replace(legacyStapeGtmNoscriptUrlPattern, storefrontGtmNoscriptUrl)
             .replace('<!-- GTM/Stape loads after first paint. -->', '<!-- GTM/Tagioo loads after first paint. -->');
         let patchedTrackingHtml = trackingHtml;
+        if (!patchedTrackingHtml.includes(storefrontAnalyticsBlockerMarker)) {
+            patchedTrackingHtml = patchedTrackingHtml.includes(storefrontLocalAnalyticsGuardMarker)
+                ? patchedTrackingHtml.replace(/<script>window\.__amolAnalyticsDisabled=.*?<\/script>/, storefrontLocalAnalyticsGuard)
+                : patchedTrackingHtml.replace('<head>', `<head>${storefrontLocalAnalyticsGuard}`);
+        }
+        if (!patchedTrackingHtml.includes(storefrontGtmLocalhostGuardMarker)) {
+            patchedTrackingHtml = patchedTrackingHtml.replace('(function(){\n    if(window.__amolGtmBootstrapScheduled)return;', `(function(){\n    if(window.__amolAnalyticsDisabled)return;\n    ${storefrontGtmLocalhostGuardMarker}\n    if(window.__amolGtmBootstrapScheduled)return;`);
+        }
+        if (!patchedTrackingHtml.includes('amol-google-ads-localhost-guard')) {
+            patchedTrackingHtml = patchedTrackingHtml.replace("window.addEventListener('load', function () {\n    setTimeout(function () {\n      var s = document.createElement('script');\n      s.async = true;\n      s.src = 'https://www.googletagmanager.com/gtag/js?id=AW-18176858056';", "window.addEventListener('load', function () {\n    if (window.__amolAnalyticsDisabled) return;\n    /* amol-google-ads-localhost-guard */\n    setTimeout(function () {\n      var s = document.createElement('script');\n      s.async = true;\n      s.src = 'https://www.googletagmanager.com/gtag/js?id=AW-18176858056';");
+        }
+        if (!patchedTrackingHtml.includes('amol-posthog-localhost-guard')) {
+            patchedTrackingHtml = patchedTrackingHtml.replace("<!-- PostHog Analytics loads after first paint. -->\n  <script>\n  window.addEventListener('load', function () { setTimeout(function () {", "<!-- PostHog Analytics loads after first paint. -->\n  <script>\n  window.addEventListener('load', function () {\n    if (window.__amolAnalyticsDisabled) return;\n    /* amol-posthog-localhost-guard */\n    setTimeout(function () {");
+        }
         if (!patchedTrackingHtml.includes(storefrontStapeDuplicateGuardMarker)) {
             patchedTrackingHtml = patchedTrackingHtml.includes(legacyStorefrontStapeDuplicateGuardMarker)
                 ? patchedTrackingHtml.replace(legacyStorefrontStapeGuardCode, storefrontStapePushCode)
@@ -386,12 +507,17 @@ ${storefrontPurchaseExternalIdHelper}
             (0, fs_1.writeFileSync)(storefrontSpecialPackageScriptPath, storefront_special_package_script_1.STOREFRONT_SPECIAL_PACKAGE_SCRIPT, 'utf8');
             const storefrontAttributionScriptPath = (0, path_1.join)(__dirname, '..', '..', 'ui', 'dist', 'angular-ui', 'browser', storefrontAttributionScriptFileName);
             (0, fs_1.writeFileSync)(storefrontAttributionScriptPath, storefront_attribution_script_1.STOREFRONT_ATTRIBUTION_SCRIPT, 'utf8');
+            (0, fs_1.writeFileSync)(storefrontProductSectionsScriptPath, storefront_product_sections_script_1.STOREFRONT_PRODUCT_SECTIONS_SCRIPT, 'utf8');
             const indexHtml = (0, fs_1.readFileSync)(storefrontIndexPath, 'utf8');
-            const cleanedHtml = replaceStorefrontTrackingLoader(indexHtml)
+            const cleanedHtml = injectStorefrontSnippets(replaceStorefrontTrackingLoader(indexHtml)
                 .replace(legacyStorefrontPriceScriptTagPattern, '')
                 .replace(legacyStorefrontSpecialPackageScriptTagPattern, '')
-                .replace(legacyStorefrontAttributionScriptTagPattern, '');
-            const storefrontPatchScriptTags = storefrontAttributionScriptTag + storefrontPriceScriptTag + storefrontSpecialPackageScriptTag;
+                .replace(legacyStorefrontAttributionScriptTagPattern, '')
+                .replace(legacyStorefrontProductSectionsScriptTagPattern, ''));
+            const storefrontPatchScriptTags = storefrontAttributionScriptTag +
+                storefrontPriceScriptTag +
+                storefrontSpecialPackageScriptTag +
+                storefrontProductSectionsScriptTag;
             const patchedHtml = cleanedHtml.includes('</body>')
                 ? cleanedHtml.replace('</body>', `${storefrontPatchScriptTags}</body>`)
                 : `${cleanedHtml}${storefrontPatchScriptTags}`;
@@ -404,19 +530,26 @@ ${storefrontPurchaseExternalIdHelper}
             logger.warn(`Static storefront patch skipped: ${error.message}`);
         }
     }
-    function sendStorefrontIndex(res) {
+    function sendStorefrontIndex(req, res) {
         try {
             const indexHtml = (0, fs_1.readFileSync)(storefrontIndexPath, 'utf8');
-            const cleanedHtml = replaceStorefrontTrackingLoader(indexHtml)
+            const cleanedHtml = injectStorefrontSnippets(replaceStorefrontTrackingLoader(indexHtml)
                 .replace(legacyStorefrontPriceScriptTagPattern, '')
                 .replace(legacyStorefrontSpecialPackageScriptTagPattern, '')
-                .replace(legacyStorefrontAttributionScriptTagPattern, '');
-            const storefrontPatchScriptTags = storefrontAttributionScriptTag + storefrontPriceScriptTag + storefrontSpecialPackageScriptTag;
+                .replace(legacyStorefrontAttributionScriptTagPattern, '')
+                .replace(legacyStorefrontProductSectionsScriptTagPattern, ''));
+            const storefrontPatchScriptTags = storefrontAttributionScriptTag +
+                storefrontPriceScriptTag +
+                storefrontSpecialPackageScriptTag +
+                storefrontProductSectionsScriptTag;
             const html = cleanedHtml.includes('</body>')
                 ? cleanedHtml.replace('</body>', `${storefrontPatchScriptTags}</body>`)
                 : `${cleanedHtml}${storefrontPatchScriptTags}`;
+            const responseHtml = isLocalStorefrontHost(req.hostname)
+                ? html.replace(`<noscript><iframe src="${storefrontGtmNoscriptUrl}" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>`, '')
+                : html;
             res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-            res.type('html').send(html);
+            res.type('html').send(responseHtml);
         }
         catch (error) {
             res.sendFile(storefrontIndexPath);
@@ -438,6 +571,19 @@ ${storefrontPurchaseExternalIdHelper}
             .type('application/javascript')
             .send(storefront_special_package_script_1.STOREFRONT_SPECIAL_PACKAGE_SCRIPT);
     });
+    httpAdapter.get(`/${storefrontProductSectionsScriptFileName}`, (_req, res) => {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        try {
+            res
+                .type('application/javascript')
+                .send((0, fs_1.readFileSync)(storefrontProductSectionsScriptPath, 'utf8'));
+        }
+        catch (_error) {
+            res
+                .type('application/javascript')
+                .send(storefront_product_sections_script_1.STOREFRONT_PRODUCT_SECTIONS_SCRIPT);
+        }
+    });
     httpAdapter.get(`/${adminIncompleteOrderEditorScriptFileName}`, (_req, res) => {
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         res
@@ -455,24 +601,241 @@ ${storefrontPurchaseExternalIdHelper}
             path === '/storefront-price-english-digits.js' ||
             path === '/storefront-special-package.js' ||
             path === '/storefront-attribution.js' ||
+            path === '/storefront-product-sections.js' ||
             path === '/incomplete-order-editor.js' ||
             staticAssetPattern.test(path)) {
             return next();
         }
-        return sendStorefrontIndex(res);
+        return sendStorefrontIndex(req, res);
     });
     app.enableVersioning({
         type: common_1.VersioningType.URI,
     });
+    const parseReviewImage = multer({
+        storage: multer.memoryStorage(),
+        limits: { fileSize: 10 * 1000 * 1000, files: 1 },
+    }).single('image');
+    app.use('/storefront-review-upload', (req, res) => {
+        const maxUploadBytes = 12 * 1024 * 1024;
+        if (!isLocalStorefrontHost(req.hostname))
+            return res.sendStatus(404);
+        if (req.method !== 'POST') {
+            res.setHeader('Allow', 'POST');
+            return res.sendStatus(405);
+        }
+        try {
+            if (!req.headers.origin)
+                return res.sendStatus(403);
+            const origin = new URL(req.headers.origin);
+            if (origin.hostname.toLowerCase() !== req.hostname.toLowerCase()) {
+                return res.sendStatus(403);
+            }
+        }
+        catch (_error) {
+            return res.sendStatus(403);
+        }
+        const contentType = String(req.headers['content-type'] || '');
+        if (!contentType.toLowerCase().startsWith('multipart/form-data;')) {
+            return res
+                .status(415)
+                .json({ success: false, message: 'Multipart form data required' });
+        }
+        const contentLength = req.headers['content-length']
+            ? Number(req.headers['content-length'])
+            : null;
+        if (contentLength !== null &&
+            (!Number.isSafeInteger(contentLength) || contentLength < 0)) {
+            return res
+                .status(400)
+                .json({ success: false, message: 'Invalid content length' });
+        }
+        if (contentLength !== null && contentLength > maxUploadBytes) {
+            return res
+                .status(413)
+                .json({ success: false, message: 'Image upload is too large' });
+        }
+        parseReviewImage(req, res, async (uploadError) => {
+            if (uploadError) {
+                const status = uploadError.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+                return res
+                    .status(status)
+                    .json({ success: false, message: 'Invalid review image upload' });
+            }
+            if (!req.file) {
+                return res
+                    .status(400)
+                    .json({ success: false, message: 'Review image required' });
+            }
+            let normalizedImage;
+            try {
+                normalizedImage = await sharp(req.file.buffer)
+                    .rotate()
+                    .resize(300)
+                    .webp({ effort: 4, quality: 85 })
+                    .toBuffer();
+            }
+            catch (error) {
+                logger.warn(`Review image conversion failed: ${error.message}`);
+                return res
+                    .status(400)
+                    .json({ success: false, message: 'Invalid review image' });
+            }
+            const boundary = `----amol-review-${Date.now().toString(16)}`;
+            const multipartBody = Buffer.concat([
+                Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="image"; filename="review.webp"\r\nContent-Type: image/webp\r\n\r\n`),
+                normalizedImage,
+                Buffer.from(`\r\n--${boundary}--\r\n`),
+            ]);
+            let settled = false;
+            const remoteRequest = (0, https_1.request)('https://apisub.amolbooks.com/api/upload/single-image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': `multipart/form-data; boundary=${boundary}`,
+                    'Content-Length': multipartBody.length,
+                    Accept: 'application/json',
+                },
+            }, (remoteResponse) => {
+                if (settled)
+                    return remoteResponse.destroy();
+                res.status(remoteResponse.statusCode || 502);
+                ['content-type', 'content-length'].forEach((name) => {
+                    const value = remoteResponse.headers[name];
+                    if (value)
+                        res.setHeader(name, value);
+                });
+                remoteResponse.on('error', (error) => {
+                    logger.warn(`Review image response failed: ${error.message}`);
+                    fail(502, 'Image upload unavailable', error);
+                });
+                remoteResponse.on('end', () => {
+                    settled = true;
+                });
+                remoteResponse.pipe(res);
+            });
+            function fail(status, message, error) {
+                if (settled)
+                    return;
+                settled = true;
+                if (!remoteRequest.destroyed)
+                    remoteRequest.destroy();
+                if (res.writableEnded || res.destroyed)
+                    return;
+                if (!res.headersSent)
+                    res.status(status).json({ success: false, message });
+                else
+                    res.destroy(error);
+            }
+            remoteRequest.setTimeout(60000, () => {
+                logger.warn('Review image upload proxy timed out');
+                fail(504, 'Image upload timed out');
+            });
+            remoteRequest.on('error', (error) => {
+                logger.warn(`Review image upload proxy failed: ${error.message}`);
+                fail(502, 'Image upload unavailable', error);
+            });
+            res.on('close', () => {
+                if (!res.writableEnded)
+                    fail(499, 'Image upload interrupted');
+            });
+            remoteRequest.end(multipartBody);
+        });
+    });
     app.use((0, express_1.json)({ limit: '50mb' }));
     app.use((0, express_1.urlencoded)({ extended: true, limit: '50mb' }));
+    app.use('/api/product/get-by-slug', (req, res, next) => {
+        if (!isLocalStorefrontHost(req.hostname) ||
+            !['GET', 'HEAD'].includes(req.method))
+            return next();
+        const remoteRequest = (0, https_1.request)(`https://apisub.amolbooks.com/api/product/get-by-slug${req.url}`, {
+            method: req.method,
+            headers: {
+                Accept: 'application/json',
+            },
+        }, (remoteResponse) => {
+            const chunks = [];
+            remoteResponse.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+            remoteResponse.on('end', () => {
+                res.status(remoteResponse.statusCode || 502);
+                res.type(String(remoteResponse.headers['content-type'] || 'application/json'));
+                res.send(Buffer.concat(chunks));
+            });
+        });
+        remoteRequest.on('error', (error) => {
+            logger.warn(`Published storefront product proxy failed: ${error.message}`);
+            return next();
+        });
+        remoteRequest.end();
+    });
+    app.use('/storefront-catalog', (req, res, next) => {
+        if (!isLocalStorefrontHost(req.hostname))
+            return next();
+        const isLibraryRequest = req.method === 'GET' && req.path === '/library';
+        const allowedCatalogueRequest = isLibraryRequest ||
+            (req.method === 'POST' && req.path === '/product/get-all') ||
+            (req.method === 'GET' && req.path === '/product/get-all-data') ||
+            (req.method === 'GET' && req.path.startsWith('/product/get-by-slug/')) ||
+            (req.method === 'GET' && /^\/author\/[^/]+$/.test(req.path)) ||
+            (req.method === 'POST' && req.path === '/category/get-all/');
+        if (!allowedCatalogueRequest)
+            return res.sendStatus(404);
+        const requestBody = isLibraryRequest
+            ? JSON.stringify({
+                filter: { status: 'publish', quantity: { $gt: 0 } },
+                pagination: { pageSize: 180, currentPage: 0 },
+                sort: { totalSold: -1, priority: -1 },
+                select: {
+                    _id: 1,
+                    name: 1,
+                    slug: 1,
+                    images: 1,
+                    salePrice: 1,
+                    afterDiscountPrice: 1,
+                    discountAmount: 1,
+                    discountType: 1,
+                    totalSold: 1,
+                    author: 1,
+                    category: 1,
+                    publisher: 1,
+                    ratingCount: 1,
+                    ratingTotal: 1,
+                    reviewTotal: 1,
+                },
+            })
+            : ['GET', 'HEAD'].includes(req.method)
+                ? ''
+                : JSON.stringify(req.body || {});
+        const remotePath = isLibraryRequest ? '/product/get-all' : req.url;
+        const remoteRequest = (0, https_1.request)(`https://apisub.amolbooks.com/api${remotePath}`, {
+            method: isLibraryRequest ? 'POST' : req.method,
+            headers: Object.assign({ 'Content-Type': 'application/json', Accept: 'application/json' }, (requestBody
+                ? { 'Content-Length': Buffer.byteLength(requestBody) }
+                : {})),
+        }, (remoteResponse) => {
+            const chunks = [];
+            remoteResponse.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+            remoteResponse.on('end', () => {
+                res.status(remoteResponse.statusCode || 502);
+                res.type(String(remoteResponse.headers['content-type'] || 'application/json'));
+                res.send(Buffer.concat(chunks));
+            });
+        });
+        remoteRequest.on('error', (error) => {
+            logger.warn(`Published storefront catalogue proxy failed: ${error.message}`);
+            return res
+                .status(502)
+                .json({ success: false, message: 'Published catalogue unavailable' });
+        });
+        if (requestBody)
+            remoteRequest.write(requestBody);
+        remoteRequest.end();
+    });
     app.setGlobalPrefix('api');
     const port = process.env.PORT || 3000;
     await app.init();
     redirectMiddlewareRef = app.get(redirect_url_middleware_1.RedirectUrlMiddleware);
-    httpAdapter.use((_req, res) => {
+    httpAdapter.use((req, res) => {
         if (!res.headersSent) {
-            sendStorefrontIndex(res);
+            sendStorefrontIndex(req, res);
         }
     });
     await app.listen(port);

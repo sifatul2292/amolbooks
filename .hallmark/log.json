@@ -1,5 +1,26 @@
 [
   {
+    "date": "2026-09-10",
+    "macrostructure": "Account Hub",
+    "theme": "Existing Amol Books storefront",
+    "enrichment": "none",
+    "brief": "Replace the oversized customer account drawer with a compact mobile navigation hub and bottom sheet"
+  },
+  {
+    "date": "2026-09-08",
+    "macrostructure": "Catalogue + decision panel",
+    "theme": "Existing Amol Books storefront",
+    "enrichment": "real catalogue product artwork",
+    "brief": "Preview a minimal sales homepage using the current header, colors, cards, category shelves, and a three-answer recommendation quiz"
+  },
+  {
+    "date": "2026-09-02",
+    "macrostructure": "Workbench",
+    "theme": "Existing Amolbooks brand",
+    "enrichment": "existing product artwork",
+    "brief": "Redesign checkout into a compact form, cart, and summary workbench"
+  },
+  {
     "date": "2026-07-24",
     "macrostructure": "Split Studio",
     "theme": "Garden adapted to Amol brand",

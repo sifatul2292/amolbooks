@@ -19,6 +19,10 @@ let PosthogService = PosthogService_1 = class PosthogService {
         this.configService = configService;
         this.logger = new common_1.Logger(PosthogService_1.name);
         this.client = null;
+        if (process.env.AMOL_DISABLE_TRACKING === '1') {
+            this.logger.log('Tracking disabled by AMOL_DISABLE_TRACKING');
+            return;
+        }
         const apiKey = this.configService.get('POSTHOG_API_KEY');
         const host = this.configService.get('POSTHOG_HOST') || 'https://us.i.posthog.com';
         if (apiKey) {

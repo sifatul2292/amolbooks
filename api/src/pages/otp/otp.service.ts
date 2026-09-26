@@ -121,7 +121,7 @@ export class OtpService {
         const html = `
         <p>Your otp code is ${code} </p>
         `;
-        this.emailService.sendEmail(email, 'Alambook Otp', html);
+        this.emailService.sendEmail(email, 'Amol Books OTP', html);
         console.log('code ', code);
         return {
           success: true,
@@ -147,7 +147,7 @@ export class OtpService {
         const html = `
         <p>Your otp code is <strong>${code}</strong> </p>
         `;
-        this.emailService.sendEmail(email, 'Alambook Otp', html);
+        this.emailService.sendEmail(email, 'Amol Books OTP', html);
         console.log('code ', code);
 
         return {

@@ -415,7 +415,7 @@ let OrderService = OrderService_1 = class OrderService {
                 }
             }
             await this.utilsService.generateInvoicePdf(saveData);
-            const pdfLink = `https://api.alambook.com/invoice/invoice-${saveData.orderId}.pdf`;
+            const pdfLink = `https://apisub.amolbooks.com/invoice/invoice-${saveData.orderId}.pdf`;
             if (saveData['paymentType'] === 'cash_on_delivery') {
                 const orderCheck = await this.orderModel
                     .findById(saveData._id)
@@ -427,12 +427,12 @@ let OrderService = OrderService_1 = class OrderService {
                 }
                 if (saveData.email) {
                     const html = `
-      <p>Thank you for your purchase from alambook.com. Your order (${saveData.orderId}) has been placed successfully. Please wait for a confirmation Call. Track your order alambook.com/order-track/${saveData._id}
+      <p>Thank you for your purchase from Amol Books. Your order (${saveData.orderId}) has been placed successfully. Please wait for a confirmation call. Track your order at https://www.amolbooks.com/order-track/${saveData._id}
       </p>
       <iframe src="${pdfLink}" frameborder="0" width="100%" height="500px"></iframe>
       <a href="${pdfLink}">Download your invoice</a>
       `;
-                    this.emailService.sendEmail(saveData.email, 'Alambook', html);
+                    this.emailService.sendEmail(saveData.email, 'Amol Books', html);
                 }
             }
         }
@@ -1039,6 +1039,8 @@ let OrderService = OrderService_1 = class OrderService {
     }
     async sendManualOrderToMeta(saveData, manualOrderSource) {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+        if (process.env.AMOL_DISABLE_TRACKING === '1')
+            return;
         if (await this.isDuplicateMetaPurchase(saveData))
             return;
         const eventId = `order_${saveData.orderId}`;
@@ -1371,6 +1373,8 @@ let OrderService = OrderService_1 = class OrderService {
     }
     async sendWebsiteOrderToMeta(order) {
         var _a, _b, _c, _d, _e, _f, _g;
+        if (process.env.AMOL_DISABLE_TRACKING === '1')
+            return;
         if (this.isGapFillDisabled())
             return;
         const eventId = `order_${order.orderId}`;
@@ -3188,7 +3192,7 @@ let OrderService = OrderService_1 = class OrderService {
                 await this.restockProducts(id, data['orderedItems'], restockReason);
             }
             if (orderStatus === 2) {
-                const message = `আপনার অর্ডার আইডি ${data === null || data === void 0 ? void 0 : data.orderId} নিশ্চিত করা হয়েছে। ডেলিভারি সময়: ঢাকার ভিতরে ১–২ কার্যদিবস, ঢাকার বাইরে ৩–৬ কার্যদিবস। ধন্যবাদ আলম বুক এর সঙ্গে থাকার জন্য।`;
+                const message = `আপনার অর্ডার আইডি ${data === null || data === void 0 ? void 0 : data.orderId} নিশ্চিত করা হয়েছে। ডেলিভারি সময়: ঢাকার ভিতরে ১–২ কার্যদিবস, ঢাকার বাইরে ৩–৬ কার্যদিবস। আমল বুকসের সঙ্গে থাকার জন্য ধন্যবাদ।`;
                 this.bulkSmsService.sentSingleSms(data.phoneNo, message);
             }
             return {

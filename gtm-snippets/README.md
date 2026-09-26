@@ -45,6 +45,8 @@ Each `.html` file = one GTM Custom-HTML tag. Paste the file contents (including 
 
 | File | What it shows | Where |
 |------|---------------|-------|
+| `customer-account-mobile.html` | Compact mobile account navigation, safe native address actions, and saved-address checkout selection | All Pages |
+| `cart-page-navigation.html` | Cart buttons open `/cart`; Catalogue opens `/category-list`; disables the cart drawer | All Pages |
 | `lever2-urgency.html` | Countdown to discount end, low-stock "মাত্র N কপি বাকি", "N+ কপি বিক্রি হয়েছে" | Product page |
 | `lever3-sticky-cta.html` | Sticky bottom Order bar (mobile) + rotating ticker: real recent buyers + bonus-urgency line | Product page, mobile ≤768px |
 | `lever1-buy2-banner.html` | "২টি কিনুন — নোটবুক ফ্রি" banner | Only the configured book |
@@ -62,6 +64,15 @@ Each `.html` file = one GTM Custom-HTML tag. Paste the file contents (including 
 
 ## API base URL
 
+`cart-page-navigation.html` makes no API calls and uses the current host's
+`/cart` route. The API-served storefront injects it for local preview; for a
+static/nginx storefront, publish it as an All Pages Custom HTML tag.
+
+`customer-account-mobile.html` also makes no API calls. It delegates navigation,
+address editing, and logout to the storefront's existing Angular handlers, then
+uses the addresses already loaded by Angular to fill the checkout form. Publish it
+as an All Pages Custom HTML tag when nginx serves the storefront directly.
+
 Each snippet has at top:
 ```js
 var API_BASE = 'https://apisub.amolbooks.com/api';
@@ -76,7 +87,7 @@ API host, change this line in every snippet before pasting.
   (`order.controller.ts`, `order.service.ts`)
 - Free-gift engine in `order.service.ts` `newOrderMake` → `evaluateGiftLine()`.
   Attaches a zero-price gift line (`orderType:'gift'`, `isGift:true`) when eligible.
-  The ৳750 rule uses the payable/sale-price subtotal, matching the cart popup.
+  The ৳799 rule uses the payable/sale-price subtotal, matching the cart popup.
   Does **not** change subtotal/discount/grandTotal.
 - Gift config fields added to the single `OrderOffer` doc
   (`order-offer.schema.ts`, `order-offer.dto.ts`) and the gift flag on
@@ -91,7 +102,7 @@ Set the config on the OrderOffer doc via the existing admin `POST /api/order-off
 ```jsonc
 {
   "giftEnabled": true,
-  "giftMinAmount": 750,                      // Trigger A: cart subtotal >= 750 (all products)
+  "giftMinAmount": 799,                      // Trigger A: cart subtotal >= 799 (all products)
   "giftBuyXProductSlug": "<this-book-slug>", // Trigger B: buy 2 of this book
   "giftBuyXQty": 2,
   "giftLabel": "ফ্রি নোটবুক",
@@ -106,7 +117,7 @@ Set the config on the OrderOffer doc via the existing admin `POST /api/order-off
 
 Public read used by the widgets: `GET /api/order-offer/get` (returns the same doc).
 Because the widget threshold is read from this config, the on-page promise always
-matches real fulfillment — no customer hits ৳750 and gets nothing.
+matches real fulfillment — no customer hits ৳799 and gets nothing.
 
 ## Truthfulness guards (built in)
 - Urgency rows render only when the value is real (future end date / low stock / sold>0).
@@ -145,3 +156,11 @@ matches real fulfillment — no customer hits ৳750 and gets nothing.
 - Sticky-CTA proxy-clicks the real Angular "অর্ডার করুন" button (located by text);
   re-verify the selector after an Angular rebuild.
 - Analytics: sticky CTA pushes `ab_sticky_cta_click` to `dataLayer` for lift tracking.
+
+### Product detail polish
+
+Publish `product-detail-polish.html` as an All Pages Custom HTML tag for static storefront hosting. API-served pages inject it automatically. It compacts product metadata, hides the extra description, shows stored rating/review totals, and stacks the added-cart actions. Local/LAN catalogue calls use the current host proxy; production uses `https://apisub.amolbooks.com/api`. Popup naming, Bengali labels, and menu-event isolation are maintained in `api/src/storefront-product-sections-script.ts` and generated on API startup.
+
+`product-detail-polish.html` also hides the title page count and empty rating rows, condenses review summaries, styles mobile cart actions, and repairs the catalogue menu icon.
+
+`catalogue-local-requests.html` is a local/LAN preview bootstrap tag, injected before Angular by the API. It routes only public product-list XHR reads through `/storefront-catalog`; production and cart/order writes are unchanged. Do not rely on a late GTM trigger for these initial homepage requests.

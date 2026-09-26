@@ -50,6 +50,7 @@ export class AddReviewDto {
 
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(5)
   @IsString({ each: true })
   images: string[];
 }
