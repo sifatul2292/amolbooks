@@ -157,7 +157,7 @@ let UtilsService = UtilsService_1 = class UtilsService {
         doc
             .fontSize(10)
             .font('Helvetica')
-            .text('www.alambook.com', infoX, topPadding, { align: 'left' })
+            .text('www.amolbooks.com', infoX, topPadding, { align: 'left' })
             .text('62/A, Islamiya Market, Office Goli, Nilkhet, Dhaka, Bangladesh', infoX, topPadding + 15, { align: 'left' })
             .text('Telephone: +8801784-324117', infoX, topPadding + 30, {
             align: 'left',
@@ -272,7 +272,7 @@ let UtilsService = UtilsService_1 = class UtilsService {
         doc
             .fontSize(10)
             .font('Helvetica')
-            .text('Thank you for choosing Alambook', doc.page.margins.left, y + 200, {
+            .text('Thank you for choosing Amol Books', doc.page.margins.left, y + 200, {
             align: 'center',
         });
         doc.end();

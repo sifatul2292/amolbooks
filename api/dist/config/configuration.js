@@ -17,7 +17,7 @@ exports.default = () => ({
     STORE_ID: 'alambook0live2',
     STORE_PASSWORD: '65C9FA62BE068362152',
     cdnUrlBase: process.env.PRODUCTION_BUILD === 'true'
-        ? 'https://api.alambook.com'
+        ? 'https://apisub.amolbooks.com'
         : 'http://localhost:4001',
     gmail: 'contact.tee24@gmail.com',
     googleClientId1: '512308839711-28b3nld6pl4m4u5nbti96iqnc1nk00fp.apps.googleusercontent.com',

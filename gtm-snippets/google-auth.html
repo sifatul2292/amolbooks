@@ -1,0 +1,44 @@
+<script>
+(function () {
+  'use strict';
+
+  var EMAIL_PLACEHOLDER = 'আপনার মোবাইল নাম্বার/ইমেইল দিন';
+  function isAuthPage() {
+    return location.pathname === '/login' || location.pathname === '/registration';
+  }
+
+  function ensureGoogleIdentity() {
+    if (document.querySelector('script[data-amol-google-identity]')) return;
+    /* Google Identity Services is required by the compiled auth components. */
+    var script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.dataset.amolGoogleIdentity = 'true';
+    document.head.appendChild(script);
+  }
+
+  function clarifyEmailLogin() {
+    if (!isAuthPage()) return;
+    ensureGoogleIdentity();
+
+    var username = document.querySelector('input[formcontrolname="username"]');
+    if (username && username.getAttribute('placeholder') !== EMAIL_PLACEHOLDER) {
+      username.setAttribute('placeholder', EMAIL_PLACEHOLDER);
+      username.setAttribute('autocomplete', 'username');
+    }
+
+    var googleAction = document.querySelector('.social-area a');
+    if (!googleAction) return;
+    googleAction.setAttribute('role', 'button');
+    googleAction.setAttribute('tabindex', '0');
+    googleAction.setAttribute('aria-label', 'গুগল দিয়ে লগইন বা একাউন্ট খুলুন');
+  }
+
+  clarifyEmailLogin();
+  new MutationObserver(clarifyEmailLogin).observe(document.documentElement, {
+    childList: true,
+    subtree: true
+  });
+})();
+</script>

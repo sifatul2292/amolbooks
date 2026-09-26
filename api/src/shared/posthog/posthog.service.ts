@@ -12,6 +12,11 @@ export class PosthogService implements OnApplicationShutdown {
   private client: PostHog | null = null;
 
   constructor(private readonly configService: ConfigService) {
+    if (process.env.AMOL_DISABLE_TRACKING === '1') {
+      this.logger.log('Tracking disabled by AMOL_DISABLE_TRACKING');
+      return;
+    }
+
     const apiKey = this.configService.get<string>('POSTHOG_API_KEY');
     const host = this.configService.get<string>('POSTHOG_HOST') || 'https://us.i.posthog.com';
 

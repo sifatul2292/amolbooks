@@ -134,7 +134,7 @@ let ProductService = ProductService_1 = class ProductService {
                 description: 'Your product description will be here',
                 availability: (product === null || product === void 0 ? void 0 : product.quantity) > 0 ? 'in stock' : 'out of stock',
                 condition: 'new',
-                link: `https://alambook.com/product-details/${product.slug}`,
+                link: `https://www.amolbooks.com/product-details/${product.slug}`,
                 image_link: product.images && product.images.length
                     ? product.images[0]
                     : 'https://cdn.saleecom.com/upload/images/placeholder.png',
@@ -151,7 +151,7 @@ let ProductService = ProductService_1 = class ProductService {
                         sku: (_a = variation.sku) !== null && _a !== void 0 ? _a : variation._id,
                         price: `${variation.regularPrice} BDT`,
                         sale_price: `${variation.salePrice} BDT`,
-                        link: `https://alambook.com/product-details/${product.slug}`,
+                        link: `https://www.amolbooks.com/product-details/${product.slug}`,
                         image_link: (_b = variation.image) !== null && _b !== void 0 ? _b : (product.images && product.images.length
                             ? product.images[0]
                             : 'https://cdn.saleecom.com/upload/images/placeholder.png'),
@@ -189,7 +189,7 @@ let ProductService = ProductService_1 = class ProductService {
                     condition: 'new',
                     price: `${m.salePrice} BDT`,
                     sale_price: `${m.salePrice} BDT`,
-                    link: `https://alambook.com/product-details/${m.slug}`,
+                    link: `https://www.amolbooks.com/product-details/${m.slug}`,
                     image_link: m.images && m.images.length
                         ? m.images[0]
                         : 'https://cdn.saleecom.com/upload/images/placeholder.png',
@@ -336,6 +336,11 @@ let ProductService = ProductService_1 = class ProductService {
         }
     }
     async getAllProducts(filterProductDto, searchQuery) {
+        const cacheKey = `getAllProducts:${searchQuery || ''}:${JSON.stringify(filterProductDto)}`;
+        const cachedResponse = await this.cacheManager.get(cacheKey);
+        if (cachedResponse) {
+            return cachedResponse;
+        }
         const { filter } = filterProductDto;
         const { pagination } = filterProductDto;
         const { sort } = filterProductDto;
@@ -590,20 +595,24 @@ let ProductService = ProductService_1 = class ProductService {
                     await this.cacheManager.set(this.cacheProductCount, dataAggregates[0].count);
                     this.logger.log('Cache Added');
                 }
-                return Object.assign(Object.assign({}, Object.assign(Object.assign({}, dataAggregates[0]), { data: this.normalizeProductImageFields(dataAggregates[0].data) })), {
+                const response = Object.assign(Object.assign({}, Object.assign(Object.assign({}, dataAggregates[0]), { data: this.normalizeProductImageFields(dataAggregates[0].data) })), {
                     success: true,
                     message: 'Success',
                     filterGroup: allFilterGroups,
                 });
+                await this.cacheManager.set(cacheKey, response, { ttl: 30 });
+                return response;
             }
             else {
-                return {
+                const response = {
                     data: this.normalizeProductImageFields(dataAggregates),
                     success: true,
                     message: 'Success',
                     count: dataAggregates.length,
                     filterGroup: allFilterGroups,
                 };
+                await this.cacheManager.set(cacheKey, response, { ttl: 30 });
+                return response;
             }
         }
         catch (err) {

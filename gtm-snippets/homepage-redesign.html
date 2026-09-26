@@ -1,0 +1,682 @@
+<!-- Homepage only. Curated catalogue preview; keeps compiled Angular routes and cart logic intact. -->
+<style>
+/* Hallmark · macrostructure: Catalogue + decision panel · tone: native storefront · anchor hue: Amol red/green
+ * Existing header, typography, white canvas, card shape, and sale treatment preserved.
+ * audience: unsure book shoppers · use: 3-answer recommendation · tone: utilitarian
+ */
+:root {
+  --color-paper: #ffffff;
+  --color-paper-2: #fafafa;
+  --color-surface: #ffffff;
+  --color-ink: #202020;
+  --color-muted: #666666;
+  --color-rule: #f0f0f0;
+  --color-accent: #ea2929;
+  --color-accent-strong: #c41e1e;
+  --color-accent-ink: #ffffff;
+  --color-focus: #168747;
+  --color-offer: #df3030;
+  --color-price: #168747;
+  --color-control: #e5e5e5;
+  --color-selected: #eef8f2;
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.07);
+  --shadow-control: 0 3px 10px rgba(234, 41, 41, 0.22);
+  --font-display: "hind-siliguri", "Hind Siliguri", sans-serif;
+  --font-body: "hind-siliguri", "Hind Siliguri", sans-serif;
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-md: 1.25rem;
+  --text-lg: 1.5625rem;
+  --text-xl: 1.953rem;
+  --text-display: clamp(2.25rem, 5vw + 0.5rem, 4.75rem);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-short: 120ms;
+  --dur-medium: 200ms;
+  --rule-thin: 1px;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.25rem;
+}
+
+#ab-header-ticker {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  height: 2.15rem;
+  background: #075f3b;
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: clamp(0.78rem, 1.5vw, 0.9rem);
+  line-height: 1.25;
+  box-shadow: inset 0 -1px rgba(0, 0, 0, 0.12);
+}
+.ab-header-ticker-label {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding-inline: clamp(0.75rem, 2vw, 1.2rem);
+  background: var(--color-accent-strong);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0.25rem 0 0.75rem rgba(0, 0, 0, 0.15);
+}
+.ab-header-ticker-viewport {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 1rem, #000 calc(100% - 1rem), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 1rem, #000 calc(100% - 1rem), transparent);
+}
+.ab-header-ticker-track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  height: 100%;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  animation: ab-header-ticker-scroll 28s linear infinite;
+}
+.ab-header-ticker-track span {
+  flex: none;
+  padding-inline: 1.5rem 6rem;
+  white-space: nowrap;
+}
+#ab-header-ticker:hover .ab-header-ticker-track { animation-play-state: paused; }
+@keyframes ab-header-ticker-scroll {
+  to { transform: translateX(-50%); }
+}
+
+html.ab-home-redesign,
+body.ab-home-redesign { overflow-x: clip !important; }
+body.ab-home-redesign { background: var(--color-paper) !important; color: var(--color-ink); }
+body.ab-home-redesign app-home { display: none !important; }
+
+#ab-homepage-redesign {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-weight: 400;
+  overflow-x: clip;
+}
+#ab-homepage-redesign *,
+#ab-homepage-redesign *::before,
+#ab-homepage-redesign *::after { box-sizing: border-box; }
+#ab-homepage-redesign a { color: inherit; text-decoration: none; }
+.ab-home-shell { width: min(100%, 82rem); margin-inline: auto; padding-inline: clamp(var(--space-md), 4vw, var(--space-2xl)); }
+
+.ab-home-goal:focus-visible,
+.ab-home-card a:focus-visible,
+.ab-home-card button:focus-visible,
+.ab-home-name:focus-visible,
+.ab-home-all-link:focus-visible,
+.ab-home-trust a:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 3px; }
+
+.ab-home-goals { margin-block: var(--space-xl); padding-block: var(--space-lg); background: var(--color-paper-2); border-block: var(--rule-thin) solid var(--color-rule); }
+.ab-home-section-head { display: flex; justify-content: space-between; gap: var(--space-md); align-items: center; margin-bottom: var(--space-lg); }
+.ab-home-section-head h2 { position: relative; margin: 0 !important; padding-bottom: var(--space-sm); font-family: var(--font-display); font-size: var(--text-lg); font-weight: 500; line-height: 1.2; }
+.ab-home-section-head h2::after { content: ''; position: absolute; inset-inline-start: 0; inset-block-end: 0; width: 5rem; height: 3px; border-radius: 3px; background: var(--color-accent); }
+.ab-home-all-link { padding: var(--space-xs) var(--space-md); border-radius: var(--radius-sm); background: linear-gradient(135deg, var(--color-accent), var(--color-accent-strong)); color: #fff !important; font-size: var(--text-xs); font-weight: 500; white-space: nowrap; box-shadow: 0 3px 10px rgba(234, 41, 41, 0.22); }
+.ab-home-goal-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-sm); }
+.ab-home-goal { display: flex; justify-content: space-between; gap: var(--space-sm); align-items: center; min-height: 3.25rem; padding: var(--space-sm) var(--space-md); border: var(--rule-thin) solid #e5e5e5; border-radius: var(--radius-sm); background: #fff; }
+.ab-home-goal-index { display: none; }
+.ab-home-goal strong { font-size: var(--text-sm); font-weight: 500; }
+.ab-home-goal-arrow { color: var(--color-focus); }
+
+.ab-book-quiz { margin-block: var(--space-xl); padding-block: var(--space-xl); background: var(--color-paper-2); border-block: var(--rule-thin) solid var(--color-rule); }
+.ab-book-quiz-intro { margin-bottom: var(--space-lg); }
+.ab-book-quiz-intro h2 { margin: 0 0 var(--space-xs) !important; color: var(--color-ink); font-size: var(--text-lg); font-weight: 500; overflow-wrap: anywhere; min-width: 0; }
+.ab-book-quiz-intro p { margin: 0 !important; color: var(--color-muted); font-size: var(--text-sm); }
+.ab-book-quiz-form { display: grid; gap: var(--space-lg); }
+.ab-book-quiz fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.ab-book-quiz legend { margin-bottom: var(--space-sm); color: var(--color-ink); font-size: var(--text-base); font-weight: 500; }
+.ab-quiz-options { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.ab-quiz-option { position: relative; cursor: pointer; }
+.ab-quiz-option input { position: absolute; width: 1px; height: 1px; margin: 0; opacity: 0; }
+.ab-quiz-option span { display: inline-flex; align-items: center; min-height: 2.75rem; padding: var(--space-xs) var(--space-md); border: var(--rule-thin) solid var(--color-control); border-radius: var(--radius-lg); background: var(--color-surface); color: var(--color-ink); font-size: var(--text-sm); white-space: nowrap; }
+.ab-quiz-option input:checked + span { border-color: var(--color-focus); background: var(--color-focus); color: var(--color-accent-ink); }
+.ab-quiz-option input:focus-visible + span { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+.ab-book-quiz-submit { width: 100%; min-height: 2.75rem; border: 0; border-radius: var(--radius-sm); background: var(--color-accent); color: var(--color-accent-ink); font: 500 var(--text-sm)/1 var(--font-body); white-space: nowrap; box-shadow: var(--shadow-control); }
+.ab-book-quiz-results:empty { display: none; }
+.ab-book-quiz-results:not(:empty) { margin-top: var(--space-xl); padding-top: var(--space-lg); border-top: var(--rule-thin) solid var(--color-rule); }
+.ab-book-quiz-results h3 { margin: 0 0 var(--space-md) !important; color: var(--color-ink); font-size: var(--text-md); font-weight: 500; outline: 0; }
+.ab-book-quiz-results .ab-home-grid { grid-template-rows: none; }
+
+.ab-home-products { padding-block: var(--space-xl); background: #fff; }
+.ab-home-grid { display: grid; grid-template-rows: repeat(2, auto); grid-auto-flow: column; grid-auto-columns: min(44vw, 12rem); gap: var(--space-md); overflow-x: auto; padding: 2px 2px var(--space-md); scroll-snap-type: x proximity; scrollbar-width: thin; scrollbar-color: #df3030 #f4f4f4; }
+.ab-home-name-strip { padding-block: var(--space-xl); background: #fff; }
+.ab-home-name-list { display: grid; grid-auto-flow: column; grid-auto-columns: clamp(10rem, 22vw, 15rem); gap: var(--space-sm); overflow-x: auto; padding: 2px 2px var(--space-md); scroll-snap-type: x proximity; scrollbar-width: thin; scrollbar-color: #df3030 #f4f4f4; }
+.ab-home-name { display: flex; align-items: center; min-height: 4rem; padding: var(--space-sm) var(--space-md); border: var(--rule-thin) solid var(--color-rule); border-radius: var(--radius-md); background: #fff; box-shadow: var(--shadow-card); scroll-snap-align: start; }
+.ab-home-name strong { display: -webkit-box; overflow: hidden; font-size: var(--text-sm); font-weight: 500; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.ab-home-card { position: relative; min-width: 0; padding: var(--space-sm); border: var(--rule-thin) solid var(--color-rule); border-radius: var(--radius-md); background: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07); scroll-snap-align: start; }
+.ab-home-card-media { position: relative; aspect-ratio: 3 / 4; margin-bottom: var(--space-sm); overflow: hidden; background: #fff; }
+.ab-home-card-media img { width: 100%; height: 100%; object-fit: contain; transition: transform var(--dur-medium) var(--ease-out); }
+.ab-home-discount { position: absolute; inset-block-start: 0; inset-inline-start: 0; z-index: 1; padding: var(--space-xs); border-radius: 0 0 var(--radius-sm) 0; background: var(--color-offer); color: #fff; font-size: var(--text-xs); font-weight: 600; white-space: nowrap; }
+.ab-cover-badge-host { position: relative !important; overflow: hidden; }
+.ab-cover-peek-badge { position: absolute; right: -2.7rem; bottom: 1.3rem; z-index: 3; width: 10.5rem; padding: 0.28rem 0; transform: rotate(-45deg); background: #168747; color: #fff; font: 500 0.6875rem/1.2 var(--font-body); text-align: center; pointer-events: none; }
+.ab-card-rating { display: flex; align-items: center; gap: 0.25rem; margin: 0.35rem 0; color: #666; font-size: 0.75rem; line-height: 1; }
+.ab-card-stars { position: relative; display: inline-block; color: #ddd; font-size: 0.9rem; letter-spacing: -0.08rem; white-space: nowrap; }
+.ab-card-stars-fill { position: absolute; inset: 0 auto 0 0; overflow: hidden; color: #f59e0b; white-space: nowrap; }
+.ab-home-card h3 { display: -webkit-box; min-height: 2.8rem; margin: 0 0 var(--space-xs) !important; overflow: hidden; color: var(--color-ink); font-size: var(--text-sm); font-weight: 500; line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.ab-home-author { min-height: 1.25rem; margin: 0 0 var(--space-xs) !important; overflow: hidden; color: var(--color-muted); font-size: var(--text-xs); line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+.ab-home-price { display: flex; flex-wrap: wrap; gap: var(--space-xs); align-items: baseline; min-height: 1.5rem; margin: 0 !important; color: var(--color-price); font-size: var(--text-base); font-weight: 600; font-variant-numeric: tabular-nums; }
+.ab-home-price s { color: var(--color-muted); font-size: var(--text-sm); font-weight: 400; }
+.ab-home-card button { width: 100%; min-height: 2.5rem; margin-top: var(--space-sm); border: var(--rule-thin) solid var(--color-price); border-radius: var(--radius-sm); background: #fff; color: var(--color-price); font: 500 var(--text-xs)/1 var(--font-body); white-space: nowrap; transition: background-color var(--dur-medium) var(--ease-out), color var(--dur-medium) var(--ease-out), transform var(--dur-short) var(--ease-out); }
+.ab-home-card button:active { transform: translateY(1px); }
+.ab-home-card button:disabled { cursor: wait; opacity: 0.55; }
+
+.ab-home-trust { display: grid; grid-template-columns: minmax(0, 1fr); padding-block: var(--space-xl); }
+.ab-home-trust a { display: flex; align-items: center; justify-content: space-between; min-height: 3.25rem; padding-block: var(--space-sm); border-bottom: var(--rule-thin) solid var(--color-rule); font-weight: 600; }
+.ab-home-trust span { color: var(--color-accent); }
+#ab-homepage-redesign a:active { opacity: 0.72; }
+
+@media (hover: hover) and (pointer: fine) {
+  .ab-home-goal:hover strong,
+  .ab-home-all-link:hover { color: inherit; }
+  .ab-home-card:hover .ab-home-card-media img { transform: translateY(-2px); }
+  .ab-home-card button:hover { background: var(--color-price); color: #fff; }
+}
+@media (min-width: 40rem) {
+  .ab-book-quiz-form { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; }
+  .ab-book-quiz-submit { grid-column: 1 / -1; width: max-content; min-width: 10rem; }
+  .ab-home-goal-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ab-home-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: none; grid-auto-flow: row; grid-auto-columns: auto; overflow: visible; }
+  .ab-home-card { width: auto; }
+  .ab-home-trust { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-xl); }
+}
+@media (min-width: 75rem) {
+  .ab-home-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+@media (min-width: 67rem) {
+  app-header .header-main-content { gap: var(--space-lg) !important; padding-block: 0 !important; }
+  app-header .logo img { width: auto !important; max-width: 8rem !important; max-height: 5rem !important; margin-block: 0.5rem !important; object-fit: contain; }
+  app-header .header-right { gap: var(--space-sm) !important; }
+  app-header .header-right-top,
+  app-header .services { padding-top: 0 !important; }
+  app-header .header-right-top ul { gap: var(--space-lg) !important; }
+  app-header .header-right-top ul li a { gap: var(--space-2xs) !important; }
+}
+@media (max-width: 39.99rem) {
+  .ab-home-shell { padding-inline: var(--space-md); }
+  .ab-home-grid { grid-auto-columns: clamp(8.75rem, 38vw, 10rem); gap: var(--space-sm); }
+  .ab-home-card { padding: var(--space-xs); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ab-header-ticker-track { animation: none; }
+  .ab-header-ticker-viewport { overflow-x: auto; mask-image: none; -webkit-mask-image: none; }
+  #ab-homepage-redesign *,
+  #ab-homepage-redesign *::before,
+  #ab-homepage-redesign *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+}
+</style>
+<script>
+(function () {
+  'use strict';
+  if (window.__abHomepageRedesign) return;
+  window.__abHomepageRedesign = true;
+
+  var ROOT_ID = 'ab-homepage-redesign';
+  var mountedPath = '';
+  var loading = false;
+  var requestSerial = 0;
+  var failedRoute = '';
+  var productsById = {};
+  var productsBySlug = {};
+  var pendingCarts = {};
+  var cataloguePromise = null;
+  var coverDataRequested = false;
+  var localHost = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname) || /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(location.hostname);
+  var API_BASE = localHost ? location.origin + '/storefront-catalog' : 'https://apisub.amolbooks.com/api';
+  var goals = [
+    { label: 'কুরআন বুঝতে', match: 'কুরআন বিষয়ক আলোচনা', fallback: '/product-list?categories=' + encodeURIComponent('কুরআন বিষয়ক আলোচনা') },
+    { label: 'নামাজ সুন্দর করতে', match: 'দোয়া, দরূদ ও যিকর', fallback: '/product-list?categories=' + encodeURIComponent('দোয়া, দরূদ ও যিকর') },
+    { label: 'নিজেকে বদলাতে', match: 'আত্মশুদ্ধি ও অনুপ্রেরণা', fallback: '/product-list?categories=' + encodeURIComponent('আত্মশুদ্ধি ও অনুপ্রেরণা') },
+    { label: 'ব্যবসা শিখতে', match: 'প্রোডাক্টিভিটি', fallback: '/product-list?categories=' + encodeURIComponent('প্রোডাক্টিভিটি') },
+    { label: 'ইতিহাস জানতে', match: 'ইসলামি ইতিহাস ও ঐতিহ্য', fallback: '/product-list?categories=' + encodeURIComponent('ইসলামি ইতিহাস ও ঐতিহ্য') },
+    { label: 'নবিজি ﷺ-কে জানতে', match: 'সীরাতে রাসূল', fallback: '/product-list?categories=' + encodeURIComponent('সীরাতে রাসূল (সা.)') },
+    { label: 'হাদিস জানতে', match: 'আল হাদিস', fallback: '/product-list?categories=' + encodeURIComponent('আল হাদিস') },
+    { label: 'পরিবার সুন্দর করতে', match: 'বিয়ে ও সংসার', fallback: '/product-list?categories=' + encodeURIComponent('বিয়ে ও সংসার') },
+    { label: 'নারীদের জন্য', match: 'ইসলামে নারী', fallback: '/product-list?categories=' + encodeURIComponent('ইসলামে নারী') },
+    { label: 'আদব ও চরিত্র গড়তে', match: 'আদব, আখলাক', fallback: '/product-list?categories=' + encodeURIComponent('আদব, আখলাক') },
+    { label: 'ইসলামি সাহিত্য পড়তে', match: 'ইসলামী সাহিত্য', fallback: '/product-list?categories=' + encodeURIComponent('ইসলামী সাহিত্য') },
+    { label: 'ফিতনা থেকে বাঁচতে', match: 'আধুনিক ফিতনা', fallback: '/product-list?categories=' + encodeURIComponent('আধুনিক ফিতনা') }
+  ];
+  var shelves = [
+    { id: 'popular', title: 'জনপ্রিয়তার শীর্ষে' },
+    {
+      id: 'combo',
+      title: 'বেস্টসেলার বুক কম্বো',
+      words: ['কম্বো', 'সেট', 'প্যাকেজ', 'খণ্ড সেট', 'দুই খণ্ড', 'তিন খণ্ড', 'একত্রে'],
+      manualSlugs: ['Jibonpaltano4books', 'Jibon', 'Poro Collection']
+    },
+    { id: 'personal-growth', title: 'ব্যক্তিত্ব ও আত্মোন্নয়ন', categories: ['প্রোডাক্টিভিটি', 'আত্মশুদ্ধি ও অনুপ্রেরণা'] },
+    { id: 'business', title: 'অর্থ, ব্যবসা ও সম্পদ গঠন', categories: ['বিনিয়োগ ও অর্থনীতি', 'প্রোডাক্টিভিটি'] },
+    { id: 'quran', title: 'কুরআন ও তাফসির', categories: ['কুরআন শেখা', 'কুরআন বিষয়ক আলোচনা'] },
+    { id: 'hadith-seerah', title: 'হাদিস ও সীরাত', categories: ['আল হাদিস', 'সীরাতে রাসূল (সা.)'] },
+    { id: 'prayer', title: 'নামাজ, দুআ ও যিকির', categories: ['দোয়া, দরূদ ও যিকর', 'ইসলামি আমল ও আমলের সহায়িকা'] },
+    { id: 'character', title: 'আত্মশুদ্ধি, আদব ও আখলাক', categories: ['আত্মশুদ্ধি ও অনুপ্রেরণা', 'আদব, আখলাক'] },
+    { id: 'family', title: 'ইসলামি জীবন ও পরিবার', categories: ['ইসলামে নারী', 'বিয়ে ও সংসার', 'ইসলামী সাহিত্য'] },
+    { id: 'history', title: 'ইতিহাস, জীবনী ও মনীষী', categories: ['ইসলামি ইতিহাস ও ঐতিহ্য'] }
+  ];
+
+  function escapeHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>'"]/g, function (character) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character];
+    });
+  }
+  function ensureHeaderTicker() {
+    if (document.getElementById('ab-header-ticker')) return;
+    var header = document.querySelector('app-header > header');
+    if (!header) return;
+    var offerGap = '\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0•\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0';
+    var deliveryGap = '\u00a0\u00a0\u00a0\u00a0•\u00a0\u00a0\u00a0\u00a0';
+    var message = '৳৭৯৯+ অর্ডারে ৭২ পৃষ্ঠার নোটবুক ফ্রি' + offerGap + 'ঢাকায় ডেলিভারি ৳৬০' + deliveryGap + 'ঢাকার বাইরে ৳৭৫';
+    var ticker = document.createElement('div');
+    ticker.id = 'ab-header-ticker';
+    ticker.setAttribute('role', 'region');
+    ticker.setAttribute('aria-label', message);
+    ticker.innerHTML = '<span class="ab-header-ticker-label" aria-hidden="true">বিশেষ অফার</span><div class="ab-header-ticker-viewport"><div class="ab-header-ticker-track" aria-hidden="true"><span>' + message + '</span><span>' + message + '</span></div></div>';
+    header.insertBefore(ticker, header.firstChild);
+  }
+  function number(value) { return Math.max(0, Number(value) || 0); }
+  function finalPrice(product) {
+    var explicit = number(product && product.afterDiscountPrice);
+    if (explicit > 0) return explicit;
+    var sale = number(product && product.salePrice);
+    var discount = number(product && product.discountAmount);
+    if (Number(product && product.discountType) === 1) return Math.max(0, Math.floor(sale - sale * discount / 100));
+    if (Number(product && product.discountType) === 2) return Math.max(0, Math.floor(sale - discount));
+    return sale;
+  }
+  function discountPercent(product) {
+    var sale = number(product && product.salePrice);
+    var price = finalPrice(product);
+    return sale > price && sale ? Math.max(1, Math.min(99, Math.round((sale - price) * 100 / sale))) : 0;
+  }
+  function money(value) { return '৳' + Math.round(number(value)).toLocaleString('en-US'); }
+  function authorName(product) {
+    var author = product && product.author;
+    if (Array.isArray(author)) return author.map(function (item) { return item && (item.name || item.nameEn); }).filter(Boolean).join(', ');
+    return author && (author.name || author.nameEn) || '';
+  }
+  function uniqueEntities(products, field) {
+    var seen = {};
+    return products.reduce(function (entities, product) {
+      var values = Array.isArray(product && product[field]) ? product[field] : [product && product[field]];
+      values.forEach(function (entity) {
+        var key = String(entity && (entity._id || entity.slug || entity.name) || '');
+        if (!key || !entity.name || seen[key]) return;
+        seen[key] = true;
+        entities.push(entity);
+      });
+      return entities;
+    }, []).slice(0, 18);
+  }
+  function imageUrl(product) {
+    var image = product && Array.isArray(product.images) && product.images[0] || '';
+    if (/^https?:\/\//i.test(image)) return image;
+    if (!image) return '/assets/images/placeholder/test.png';
+    if (image.indexOf('/api/') === 0) return 'https://apisub.amolbooks.com' + image;
+    return 'https://apisub.amolbooks.com/api/' + String(image).replace(/^\/+/, '');
+  }
+  function productUrl(product) { return '/product-details/' + encodeURIComponent(product && product.slug || ''); }
+  function slugFromLink(link) {
+    var match = String(link.getAttribute('href') || '').match(/\/product-details\/([^?#]+)/);
+    if (!match) return '';
+    try { return decodeURIComponent(match[1]); } catch (error) { return match[1]; }
+  }
+  function ratingHtml(product) {
+    var count = number(product && product.ratingTotal);
+    if (!count) return '';
+    var average = Math.min(5, number(product.ratingCount) / count);
+    var width = Math.round(average * 20);
+    return '<div class="ab-card-rating" aria-label="' + escapeHtml(average.toFixed(1) + ' out of 5, ' + count + ' ratings') + '">' +
+      '<span class="ab-card-stars" aria-hidden="true">★★★★★<span class="ab-card-stars-fill" style="width:' + width + '%">★★★★★</span></span>' +
+      '<span>(' + count + ')</span></div>';
+  }
+  function indexProducts(products) {
+    productsBySlug = products.reduce(function (result, product) {
+      result[String(product.slug || '')] = product;
+      return result;
+    }, {});
+  }
+  function decorateCovers() {
+    document.querySelectorAll('a[href*="/product-details/"]').forEach(function (link) {
+      if (link.closest('.ab-sticky-search-item')) return;
+      var image = link.querySelector('img');
+      if (!image) return;
+      var host = image.closest('.product-image, .ab-home-card-media, .ab-library-image-wrap') || image.parentElement;
+      var boughtTogether = link.closest('app-bought-together, .bought-together-section');
+      var suppressBadge = boughtTogether || link.closest('#ab-cart-offer-progress');
+      if (host && suppressBadge) {
+        var badge = host.querySelector('.ab-cover-peek-badge');
+        if (badge) badge.remove();
+        host.classList.remove('ab-cover-badge-host');
+      } else if (host && !host.querySelector('.ab-cover-peek-badge')) {
+        host.classList.add('ab-cover-badge-host');
+        host.insertAdjacentHTML('beforeend', '<span class="ab-cover-peek-badge">একটু পড়ে দেখুন</span>');
+      }
+      var product = productsBySlug[slugFromLink(link)];
+      var card = link.closest('app-product-card-one, app-product-card-two, .ab-home-card, .ab-product-card, .ab-library-card');
+      if (!product || !card || card.querySelector('.ab-card-rating')) return;
+      var html = ratingHtml(product);
+      if (!html) return;
+      var price = card.querySelector('.price-aria, .ab-home-price, .ab-product-price, .ab-library-price');
+      if (price) price.insertAdjacentHTML('beforebegin', html);
+      else host.insertAdjacentHTML('afterend', html);
+    });
+  }
+  function categoryNames(product) {
+    return (Array.isArray(product && product.category) ? product.category : []).map(function (category) { return category && category.name || ''; });
+  }
+  function productsForShelf(products, shelf) {
+    if (shelf.id === 'popular') return products.slice().sort(function (a, b) { return number(b.totalSold) - number(a.totalSold); }).slice(0, 10);
+    var matches = products.filter(function (product) {
+      if (shelf.words) return shelf.words.some(function (word) { return String(product.name || '').indexOf(word) !== -1; });
+      var names = categoryNames(product);
+      return shelf.categories.some(function (category) { return names.indexOf(category) !== -1; });
+    });
+    if (!shelf.manualSlugs) return matches.slice(0, 10);
+    var manual = shelf.manualSlugs.map(function (slug) {
+      return products.find(function (product) { return product.slug === slug; });
+    }).filter(Boolean);
+    return manual.concat(matches.filter(function (product) {
+      return shelf.manualSlugs.indexOf(product.slug) === -1;
+    })).slice(0, 10);
+  }
+  function isCombo(product) {
+    return shelves[1].words.some(function (word) { return String(product.name || '').indexOf(word) !== -1; });
+  }
+  function recommendProducts(products, topic, reader, quantity) {
+    var matches = topic === 'সব' ? products.slice() : products.filter(function (product) {
+      return categoryNames(product).indexOf(topic) !== -1;
+    });
+    matches = matches.filter(function (product) { return !isCombo(product); })
+      .sort(function (a, b) { return number(b.totalSold) - number(a.totalSold); });
+    if (reader === 'regular' && matches.length > 3) matches = matches.slice(3).concat(matches.slice(0, 3));
+    return matches.slice(0, quantity === 'one' ? 1 : 3);
+  }
+  function recommendationTitle(count) {
+    if (!count) return 'এই বিষয়ে কোনো বই পাওয়া যায়নি';
+    return 'আপনার জন্য এই ' + (['', '১টি', '২টি', '৩টি'][count] || count + 'টি') + ' বই';
+  }
+  function quizHtml() {
+    return '<section class="ab-book-quiz" aria-labelledby="ab-book-quiz-title"><div class="ab-home-shell">' +
+      '<div class="ab-book-quiz-intro"><h2 id="ab-book-quiz-title">আপনার জন্য কোন বই (বিশেষ ছাড়)?</h2><p>৩টি উত্তর দিন, সঙ্গে সঙ্গে বই বেছে দিচ্ছি।</p></div>' +
+      '<form class="ab-book-quiz-form">' +
+        '<fieldset><legend>কী বিষয়ে পড়তে চান?</legend><div class="ab-quiz-options">' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="সব" checked><span>যেকোনো বিষয়</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="কুরআন শেখা"><span>কুরআন</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="আত্মশুদ্ধি ও অনুপ্রেরণা"><span>আত্মউন্নয়ন</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="সীরাতে রাসূল (সা.)"><span>সীরাত</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="বিনিয়োগ ও অর্থনীতি"><span>অর্থ ও ব্যবসা</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="ইসলামে নারী"><span>নারী ও পরিবার</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="আল হাদিস"><span>হাদিস</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="দোয়া, দরূদ ও যিকর"><span>নামাজ ও দুআ</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="ইসলামি ইতিহাস ও ঐতিহ্য"><span>ইতিহাস</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="আদব, আখলাক"><span>আদব ও চরিত্র</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="ইসলামী সাহিত্য"><span>ইসলামি সাহিত্য</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="বিয়ে ও সংসার"><span>বিয়ে ও সংসার</span></label>' +
+        '</div></fieldset>' +
+        '<fieldset><legend>আপনি কেমন পাঠক?</legend><div class="ab-quiz-options">' +
+          '<label class="ab-quiz-option"><input type="radio" name="reader" value="new" checked><span>নতুন পাঠক</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="reader" value="regular"><span>নিয়মিত পাঠক</span></label>' +
+        '</div></fieldset>' +
+        '<fieldset><legend>কী চান?</legend><div class="ab-quiz-options">' +
+          '<label class="ab-quiz-option"><input type="radio" name="quantity" value="three" checked><span>৩টি বই</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="quantity" value="one"><span>১ টি বই</span></label>' +
+        '</div></fieldset>' +
+        '<button class="ab-book-quiz-submit" type="submit">আপনার বই দেখুন</button>' +
+      '</form><div class="ab-book-quiz-results" aria-live="polite"></div>' +
+    '</div></section>';
+  }
+  function pushEvent(event, details) {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push(Object.assign({ event: event, homepage_version: 'curated_preview_v1' }, details || {}));
+  }
+  function pushEcommerce(event, listName, products) {
+    var items = products.map(function (product) {
+      return {
+        item_id: String(product._id),
+        item_name: product.name || '',
+        item_list_id: listName,
+        item_list_name: listName,
+        price: finalPrice(product),
+        quantity: 1
+      };
+    });
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ ecommerce: null });
+    window.dataLayer.push({
+      event: event,
+      homepage_version: 'curated_preview_v1',
+      ecommerce: {
+        currency: 'BDT',
+        value: items.reduce(function (total, item) { return total + item.price; }, 0),
+        item_list_id: listName,
+        item_list_name: listName,
+        items: items
+      }
+    });
+  }
+  function categoryUrl(match, fallback) {
+    var links = document.querySelectorAll('a[href*="/product-list"]');
+    for (var index = 0; index < links.length; index += 1) {
+      if (String(links[index].textContent || '').trim().indexOf(match) !== -1) return links[index].getAttribute('href') || fallback;
+    }
+    return fallback;
+  }
+  function productCard(product, listName) {
+    var price = finalPrice(product);
+    var regular = number(product && product.salePrice);
+    var discount = discountPercent(product);
+    return '<article class="ab-home-card" data-product-id="' + escapeHtml(product._id) + '" data-list-name="' + escapeHtml(listName) + '">' +
+      '<a href="' + escapeHtml(productUrl(product)) + '" aria-label="' + escapeHtml(product.name || 'বইটি দেখুন') + '">' +
+        '<div class="ab-home-card-media ab-cover-badge-host">' +
+          (discount ? '<span class="ab-home-discount">' + escapeHtml(discount) + '% ছাড়</span>' : '') +
+          '<span class="ab-cover-peek-badge">একটু পড়ে দেখুন</span>' +
+          '<img src="' + escapeHtml(imageUrl(product)) + '" alt="' + escapeHtml(product.name || 'বই') + '" width="320" height="426" loading="lazy" decoding="async">' +
+        '</div>' +
+        '<h3>' + escapeHtml(product.name || '') + '</h3>' +
+        '<p class="ab-home-author">' + escapeHtml(authorName(product)) + '</p>' +
+        ratingHtml(product) +
+        '<p class="ab-home-price"><span>' + escapeHtml(money(price)) + '</span>' + (regular > price ? '<s>' + escapeHtml(money(regular)) + '</s>' : '') + '</p>' +
+      '</a>' +
+      '<button class="ab-add-cart-button" type="button" data-product-id="' + escapeHtml(product._id) + '" data-ab-action-label="home">কার্টে যোগ করুন</button>' +
+    '</article>';
+  }
+  function sectionHtml(id, title, products, href) {
+    if (!products.length) return '';
+    return '<section class="ab-home-products" aria-labelledby="' + id + '"><div class="ab-home-shell">' +
+      '<div class="ab-home-section-head"><h2 id="' + id + '">' + escapeHtml(title) + '</h2><a class="ab-home-all-link" href="' + escapeHtml(href) + '">সব দেখুন</a></div>' +
+      '<div class="ab-home-grid">' + products.map(function (product) { return productCard(product, id); }).join('') + '</div>' +
+    '</div></section>';
+  }
+  function nameStripHtml(id, title, entities, field, allHref) {
+    if (!entities.length) return '';
+    return '<section class="ab-home-name-strip" aria-labelledby="' + id + '"><div class="ab-home-shell">' +
+      '<div class="ab-home-section-head"><h2 id="' + id + '">' + escapeHtml(title) + '</h2><a class="ab-home-all-link" href="' + escapeHtml(allHref) + '">সব দেখুন</a></div>' +
+      '<div class="ab-home-name-list">' + entities.map(function (entity) {
+        var href = '/product-list?' + field + '=' + encodeURIComponent(entity.slug || entity.name);
+        return '<a class="ab-home-name" href="' + escapeHtml(href) + '"><strong>' + escapeHtml(entity.name) + '</strong></a>';
+      }).join('') + '</div>' +
+    '</div></section>';
+  }
+  function fetchProducts() {
+    if (cataloguePromise) return cataloguePromise;
+    try {
+      var cached = JSON.parse(sessionStorage.getItem('ab-home-catalogue-v3') || 'null');
+      if (cached && Array.isArray(cached.data) && cached.data.length) {
+        cataloguePromise = Promise.resolve(cached);
+        return cataloguePromise;
+      }
+    } catch (error) { /* Fetch when storage is unavailable. */ }
+    var request = localHost ? fetch(API_BASE + '/library', { credentials: 'omit' }).then(function (response) {
+      if (!response.ok) throw new Error('Catalogue unavailable');
+      return response.json();
+    }) : fetch(API_BASE + '/product/get-all', {
+      method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filter: { status: 'publish', quantity: { $gt: 0 } },
+        pagination: { pageSize: 180, currentPage: 0 },
+        sort: { totalSold: -1, priority: -1 },
+        select: { _id: 1, name: 1, slug: 1, images: 1, salePrice: 1, afterDiscountPrice: 1, discountAmount: 1, discountType: 1, totalSold: 1, author: 1, publisher: 1, category: 1, ratingCount: 1, ratingTotal: 1, reviewTotal: 1 }
+      })
+    }).then(function (response) {
+      if (!response.ok) throw new Error('Catalogue unavailable');
+      return response.json();
+    });
+    cataloguePromise = request.then(function (result) {
+      try { sessionStorage.setItem('ab-home-catalogue-v3', JSON.stringify(result)); } catch (error) { /* Cache is optional. */ }
+      return result;
+    }).catch(function (error) {
+      cataloguePromise = null;
+      throw error;
+    });
+    return cataloguePromise;
+  }
+  function render(products) {
+    var nativeHome = document.querySelector('app-home');
+    if (!nativeHome || !nativeHome.parentNode || !products.length || location.pathname !== '/' || new URLSearchParams(location.search).get('home') === 'legacy' || document.getElementById(ROOT_ID)) return;
+    productsById = products.reduce(function (result, product) {
+      result[String(product._id)] = product;
+      return result;
+    }, {});
+    indexProducts(products);
+    var goalLinks = goals.map(function (goal, index) {
+      return '<a class="ab-home-goal" href="' + escapeHtml(categoryUrl(goal.match, goal.fallback)) + '" data-goal="' + escapeHtml(goal.label) + '"><span class="ab-home-goal-index">0' + (index + 1) + '</span><strong>' + escapeHtml(goal.label) + '</strong><span class="ab-home-goal-arrow" aria-hidden="true">→</span></a>';
+    }).join('');
+    var shelfData = shelves.map(function (shelf) {
+      return { shelf: shelf, products: productsForShelf(products, shelf) };
+    });
+    var authorsHtml = nameStripHtml('ab-home-authors', 'জনপ্রিয় লেখক', uniqueEntities(products, 'author'), 'author', '/author-list');
+    var publishersHtml = nameStripHtml('ab-home-publishers', 'জনপ্রিয় প্রকাশনী', uniqueEntities(products, 'publisher'), 'publisher', '/publisher-list');
+    var goalsHtml = '<section class="ab-home-goals" aria-labelledby="ab-home-goals-title"><div class="ab-home-shell"><div class="ab-home-section-head"><h2 id="ab-home-goals-title">আপনার প্রয়োজন অনুযায়ী</h2><a class="ab-home-all-link" href="/category-list">সব বিষয়</a></div><div class="ab-home-goal-grid">' + goalLinks + '</div></div></section>';
+    var root = document.createElement('div');
+    root.id = ROOT_ID;
+    root.innerHTML = shelfData.map(function (entry, index) {
+      var shelfHtml = sectionHtml('ab-home-' + entry.shelf.id, entry.shelf.title, entry.products, '/product-list');
+      return shelfHtml + (index === 1 ? quizHtml() : '') + (index === 4 ? goalsHtml : '') + (index === 6 ? authorsHtml : '') + (index === 8 ? publishersHtml : '');
+    }).join('') +
+      '<nav class="ab-home-shell ab-home-trust" aria-label="অর্ডার সহায়তা"><a href="/pages/how-to-order-website">কীভাবে অর্ডার করবেন <span aria-hidden="true">→</span></a><a href="/pages/delivery-policy">ডেলিভারি নীতি <span aria-hidden="true">→</span></a><a href="/pages/return-&-refund-policy">ফেরত ও পরিবর্তন <span aria-hidden="true">→</span></a></nav>';
+    nativeHome.parentNode.insertBefore(root, nativeHome);
+    document.documentElement.classList.add('ab-home-redesign');
+    document.body.classList.add('ab-home-redesign');
+    mountedPath = location.pathname;
+    decorateCovers();
+    root.addEventListener('click', function (event) {
+      var goal = event.target.closest('.ab-home-goal');
+      if (goal) pushEvent('ab_home_goal_click', { content_name: goal.getAttribute('data-goal') });
+      var card = event.target.closest('.ab-home-card');
+      if (card && event.target.closest('a')) {
+        var product = productsById[card.getAttribute('data-product-id')];
+        if (product) pushEcommerce('select_item', card.getAttribute('data-list-name'), [product]);
+      }
+    });
+    root.querySelector('.ab-book-quiz-form').addEventListener('submit', function (event) {
+      event.preventDefault();
+      var form = new FormData(event.currentTarget);
+      var topic = String(form.get('topic') || 'সব');
+      var reader = String(form.get('reader') || 'new');
+      var quantity = String(form.get('quantity') || 'three');
+      var recommendations = recommendProducts(products, topic, reader, quantity);
+      var results = root.querySelector('.ab-book-quiz-results');
+      results.innerHTML = '<h3 tabindex="-1">' + recommendationTitle(recommendations.length) + '</h3>' +
+        '<div class="ab-home-grid">' + recommendations.map(function (product) { return productCard(product, 'ab-home-quiz'); }).join('') + '</div>';
+      decorateCovers();
+      results.querySelector('h3').focus({ preventScroll: true });
+      results.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
+      pushEvent('ab_home_quiz_complete', { topic: topic, reader_type: reader, result_count: recommendations.length });
+    });
+    shelfData.forEach(function (entry) {
+      if (entry.products.length) pushEcommerce('view_item_list', 'ab-home-' + entry.shelf.id, entry.products);
+    });
+  }
+  function cleanup() {
+    requestSerial += 1;
+    var root = document.getElementById(ROOT_ID);
+    if (root) root.remove();
+    document.documentElement.classList.remove('ab-home-redesign');
+    if (document.body) document.body.classList.remove('ab-home-redesign');
+    mountedPath = '';
+    loading = false;
+    productsById = {};
+    pendingCarts = {};
+  }
+  function update() {
+    ensureHeaderTicker();
+    decorateCovers();
+    if (!coverDataRequested && document.querySelector('a[href*="/product-details/"]')) {
+      coverDataRequested = true;
+      fetchProducts().then(function (result) {
+        var products = result && Array.isArray(result.data) ? result.data : [];
+        indexProducts(products);
+        decorateCovers();
+      }).catch(function () { /* Badges work without rating data. */ });
+    }
+    var routeKey = location.pathname + location.search;
+    if (location.pathname !== '/' || new URLSearchParams(location.search).get('home') === 'legacy') {
+      failedRoute = '';
+      if (mountedPath || document.getElementById(ROOT_ID)) cleanup();
+      return;
+    }
+    if (failedRoute === routeKey || document.getElementById(ROOT_ID) || loading) return;
+    var nativeHome = document.querySelector('app-home');
+    if (!nativeHome || !nativeHome.parentNode) return;
+    loading = true;
+    var serial = ++requestSerial;
+    fetchProducts().then(function (result) {
+      if (serial !== requestSerial || location.pathname !== '/' || new URLSearchParams(location.search).get('home') === 'legacy') return;
+      var products = result && Array.isArray(result.data) ? result.data : [];
+      if (!products.length) throw new Error('Empty catalogue');
+      render(products);
+    }).catch(function () {
+      if (serial !== requestSerial) return;
+      failedRoute = routeKey;
+      cleanup();
+    }).finally(function () {
+      if (serial === requestSerial) loading = false;
+    });
+  }
+  window.addEventListener('click', function (event) {
+    var root = document.getElementById(ROOT_ID);
+    var add = event.target && event.target.closest && event.target.closest('.ab-add-cart-button');
+    var card = add && add.closest('.ab-home-card');
+    if (!root || !add || !card || !root.contains(add)) return;
+    var id = String(add.getAttribute('data-product-id') || '');
+    if (!id) return;
+    var queue = pendingCarts[id] || [];
+    queue = queue.filter(function (intent) { return Date.now() - intent.createdAt < 30000; });
+    queue.push({ listName: card.getAttribute('data-list-name'), createdAt: Date.now() });
+    pendingCarts[id] = queue;
+  }, true);
+  window.addEventListener('amol-cart-added', function (event) {
+    var id = String(event && event.detail && (event.detail.product || event.detail.productId || event.detail.product_id || event.detail._id) || '');
+    var queue = (pendingCarts[id] || []).filter(function (intent) { return Date.now() - intent.createdAt < 30000; });
+    var intent = queue.shift();
+    if (intent && location.pathname === '/') {
+      var product = productsById[id];
+      if (product) pushEcommerce('add_to_cart', intent.listName, [product]);
+    }
+    if (queue.length) pendingCarts[id] = queue;
+    else delete pendingCarts[id];
+  });
+  new MutationObserver(update).observe(document.documentElement, { childList: true, subtree: true });
+  window.addEventListener('popstate', update);
+  window.setInterval(update, 1000);
+  update();
+})();
+</script>

@@ -1,6 +1,6 @@
 (function (root) {
   'use strict';
-  if (!root || root.__amolAttributionInstalled) return;
+  if (!root || root.__amolAnalyticsDisabled || root.__amolAttributionInstalled) return;
   root.__amolAttributionInstalled = true;
 
   var STORAGE_KEY = 'amol_attribution_v1';

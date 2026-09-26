@@ -53,7 +53,7 @@ import { AnalyticsService } from '../../../shared/analytics/analytics.service';
 import { StockMovement } from '../../../interfaces/common/stock-movement.interface';
 import { withCalculatedSpecialPackageSubtotal } from '../../../shared/utils/special-package-price.util';
 const ObjectId = Types.ObjectId;
-const FREE_NOTEBOOK_MIN_AMOUNT = 499;
+const FREE_NOTEBOOK_MIN_AMOUNT = 799;
 
 // Process-level TTL cache for the public recent-buyers feed. Caps DB load on a
 // high-traffic live site to ~1 query per product slug per RECENT_BUYERS_TTL_MS,
@@ -722,7 +722,7 @@ export class OrderService {
 
       // 4) Generate Invoice PDF
       await this.utilsService.generateInvoicePdf(saveData);
-      const pdfLink = `https://api.alambook.com/invoice/invoice-${saveData.orderId}.pdf`;
+      const pdfLink = `https://apisub.amolbooks.com/invoice/invoice-${saveData.orderId}.pdf`;
 
       // 5) Send SMS and Email for Cash on Delivery
       // Check from database if SMS has already been sent to prevent duplicate SMS
@@ -733,8 +733,8 @@ export class OrderService {
           .select('orderSmsSent');
         if (!orderCheck?.orderSmsSent) {
           const message = `অর্ডারটি কনফার্ম হয়েছে, ৩ দিনের মধ্যে ডেলিভারি করা হবে, amolbooks.com`;
-          // const message = `আপনার অর্ডারটি alambook.com-এ সফলভাবে সম্পন্ন হয়েছে। আপনার অর্ডার আইডি (${saveData.orderId}) যেকোনো প্রয়োজনে আমাদের সাথে যোগাযোগ করুন 01754896763`;
-          // const message = `Thank you for your purchase from alambook.com. Your order (${saveData.orderId}) has been placed successfully. Please wait for a confirmation Call.`;
+          // const message = `আপনার অর্ডারটি amolbooks.com-এ সফলভাবে সম্পন্ন হয়েছে। আপনার অর্ডার আইডি (${saveData.orderId}) যেকোনো প্রয়োজনে আমাদের সাথে যোগাযোগ করুন 01754896763`;
+          // const message = `Thank you for your purchase from amolbooks.com. Your order (${saveData.orderId}) has been placed successfully. Please wait for a confirmation Call.`;
           this.bulkSmsService.sentSingleSms(saveData.phoneNo, message);
 
           // Mark SMS as sent to prevent duplicate (atomic update)
@@ -747,12 +747,12 @@ export class OrderService {
         // Sent Email
         if (saveData.email) {
           const html = `
-      <p>Thank you for your purchase from alambook.com. Your order (${saveData.orderId}) has been placed successfully. Please wait for a confirmation Call. Track your order alambook.com/order-track/${saveData._id}
+      <p>Thank you for your purchase from Amol Books. Your order (${saveData.orderId}) has been placed successfully. Please wait for a confirmation call. Track your order at https://www.amolbooks.com/order-track/${saveData._id}
       </p>
       <iframe src="${pdfLink}" frameborder="0" width="100%" height="500px"></iframe>
       <a href="${pdfLink}">Download your invoice</a>
       `;
-          this.emailService.sendEmail(saveData.email, 'Alambook', html);
+          this.emailService.sendEmail(saveData.email, 'Amol Books', html);
         }
       }
     } catch (error) {
@@ -1574,6 +1574,7 @@ export class OrderService {
     saveData: any,
     manualOrderSource: ManualOrderSource,
   ): Promise<void> {
+    if (process.env.AMOL_DISABLE_TRACKING === '1') return;
     if (await this.isDuplicateMetaPurchase(saveData)) return;
 
     const eventId = `order_${saveData.orderId}`;
@@ -1995,6 +1996,7 @@ export class OrderService {
    * and Tagioo copies use the same event ID and Meta deduplicates them.
    */
   private async sendWebsiteOrderToMeta(order: any): Promise<void> {
+    if (process.env.AMOL_DISABLE_TRACKING === '1') return;
     if (this.isGapFillDisabled()) return;
     const eventId = `order_${order.orderId}`;
     const staleSendingBefore = new Date(Date.now() - 10 * 60 * 1000);
@@ -4286,24 +4288,24 @@ export class OrderService {
       }
 
       if (orderStatus === 2) {
-        const message = `আপনার অর্ডার আইডি ${data?.orderId} নিশ্চিত করা হয়েছে। ডেলিভারি সময়: ঢাকার ভিতরে ১–২ কার্যদিবস, ঢাকার বাইরে ৩–৬ কার্যদিবস। ধন্যবাদ আলম বুক এর সঙ্গে থাকার জন্য।`;
-        //const message = `Your order No: ${data?.orderId} has been Shipped. Total Amount ${data?.grandTotal} Tk. Thanks from alambook.com`;
-        // const message = `Hi ${data.name} \nwe just conform your order from alambook.com. Your order is estimated to arrive in 1-2 business days.`;
+        const message = `আপনার অর্ডার আইডি ${data?.orderId} নিশ্চিত করা হয়েছে। ডেলিভারি সময়: ঢাকার ভিতরে ১–২ কার্যদিবস, ঢাকার বাইরে ৩–৬ কার্যদিবস। আমল বুকসের সঙ্গে থাকার জন্য ধন্যবাদ।`;
+        //const message = `Your order No: ${data?.orderId} has been Shipped. Total Amount ${data?.grandTotal} Tk. Thanks from amolbooks.com`;
+        // const message = `Hi ${data.name} \nwe just confirmed your order from amolbooks.com. Your order is estimated to arrive in 1-2 business days.`;
         // const message = `অভিনন্দন! ${updateOrderStatusDto.name} আপনি সফলভাবে অর্ডারটি সম্পূর্ণ করেছেন।`;
         this.bulkSmsService.sentSingleSms(data.phoneNo, message);
         // console.log('orderStatus', data.phoneNo);
       }
 
       // if (orderStatus === 5) {
-      //   const message = `Your order No: ${data?.orderId} has been Delivered. Total Amount ${data?.grandTotal} Tk. Thanks from alambook.com`;
+      //   const message = `Your order No: ${data?.orderId} has been Delivered. Total Amount ${data?.grandTotal} Tk. Thanks from amolbooks.com`;
       //   // const message = `অভিনন্দন! ${updateOrderStatusDto.name} আপনি সফলভাবে অর্ডারটি সম্পূর্ণ করেছেন।`;
       //   this.bulkSmsService.sentSingleSms(data.phoneNo, message);
       //   // console.log('orderStatus', data.phoneNo);
       // }
 
       // if (orderStatus === 4) {
-      //   //const message = `Your order No: ${data?.orderId} has been Shipped. Total Amount ${data?.grandTotal} Tk. Thanks from alambook.com`;
-      //   const message = `Hi ${data.name} \nwe just shipped your order from alambook.com. Your order is estimated to arrive in 1-2 business days.`;
+      //   //const message = `Your order No: ${data?.orderId} has been Shipped. Total Amount ${data?.grandTotal} Tk. Thanks from amolbooks.com`;
+      //   const message = `Hi ${data.name} \nwe just shipped your order from amolbooks.com. Your order is estimated to arrive in 1-2 business days.`;
       //   // const message = `অভিনন্দন! ${updateOrderStatusDto.name} আপনি সফলভাবে অর্ডারটি সম্পূর্ণ করেছেন।`;
       //   this.bulkSmsService.sentSingleSms(data.phoneNo, message);
       //   // console.log('orderStatus', data.phoneNo);
@@ -4609,8 +4611,8 @@ export class OrderService {
    *
    * Trigger A deliberately excludes the gift product's own price from the
    * qualifying subtotal — otherwise a customer could add the ৳150 notebook
-   * itself to push their cart just over ৳499 and "earn" a discount on a
-   * purchase that was never really ৳499 of other books. Mutates `products`
+   * itself to push their cart just over ৳799 and "earn" a discount on a
+   * purchase that was never really ৳799 of other books. Mutates `products`
    * in place if the gift product is already a cart line (customer added it
    * themselves, e.g. via the checkout-page auto-add widget), re-pricing it
    * to 0 instead of charging it and instead of skipping the discount — the
@@ -4634,7 +4636,7 @@ export class OrderService {
             name: 'Amol Notebook',
             slug: 'Amol Notebook',
             image:
-              'https://apisub.amolbooks.com/api/upload/images/free-notebook-a015.webp',
+              'https://apisub.amolbooks.com/api/upload/images/amolbooks-notebook-8ddd.webp',
           },
           giftBuyXProductSlug: '500 shobder kuraner 75%',
           giftBuyXQty: 2,

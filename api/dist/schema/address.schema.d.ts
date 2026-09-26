@@ -23,6 +23,6 @@ export declare const AddressSchema: mongoose.Schema<any, mongoose.Model<any, any
         _id?: mongoose.Types.ObjectId;
         name?: string;
     };
-    addressType?: string;
     setDefaultAddress?: boolean;
+    addressType?: string;
 }>;

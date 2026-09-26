@@ -15,6 +15,7 @@
   var STYLE_ID = 'ab-checkout-summary-style';
   var LABEL_CLASS = 'ab-actual-order-label';
   var VALUE_CLASS = 'ab-actual-order-value';
+  var startedAt = Date.now();
 
   function onCheckout() {
     return !!document.querySelector('app-checkout');
@@ -26,6 +27,7 @@
     s.id = STYLE_ID;
     s.textContent =
       'app-checkout .summery-list li.ab-summary-hidden{display:none!important}' +
+      'app-checkout .summery-list:not(.ab-summary-ready){visibility:hidden!important}' +
       'app-checkout .summery-list li.ab-actual-order-row>.ab-summary-original{display:none!important}' +
       'app-checkout .summery-list li.ab-actual-order-row>.' + LABEL_CLASS + '{' +
         'color:#666;font-family:hind-siliguri,SolaimanLipi,sans-serif;font-style:normal;' +
@@ -75,10 +77,12 @@
     if (!isFinite(actual)) actual = subtotal - discount;
     if (!isFinite(actual)) return;
     actual = Math.max(0, actual);
+    if (actual === 0 && (Number(shipping) || 0) === 0 && (Number(grandTotal) || 0) === 0 && Date.now() - startedAt < 3500) return;
 
     subtotalRow.classList.add('ab-actual-order-row');
     discountRow.classList.add('ab-summary-hidden');
     totalRow.classList.remove('ab-summary-hidden');
+    list.classList.add('ab-summary-ready');
 
     for (var i = 0; i < subtotalRow.children.length; i++) {
       var child = subtotalRow.children[i];

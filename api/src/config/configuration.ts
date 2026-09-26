@@ -26,7 +26,7 @@ export default () => ({
   // CDN Api
   cdnUrlBase:
     process.env.PRODUCTION_BUILD === 'true'
-      ? 'https://api.alambook.com'
+      ? 'https://apisub.amolbooks.com'
       : 'http://localhost:4001',
 
   // Gmail Api

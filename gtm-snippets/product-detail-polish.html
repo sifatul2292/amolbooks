@@ -1,0 +1,102 @@
+<!-- All Pages. Published catalogue in production; same-origin catalogue proxy locally. -->
+<style>
+  app-product-details .product-title { display: flex !important; flex-wrap: wrap; column-gap: 8px; }
+  app-product-details .product-title > :not(p) { flex-basis: 100%; }
+  app-product-details .product-title > p { display: inline !important; width: auto !important; flex: 0 0 auto; margin: 0 0 8px !important; font-size: 14px !important; }
+  app-product-details .product-title > p a { font-size: inherit !important; }
+  #ab-product-sections .ab-description-section { display: none !important; }
+  #ab-added-cart-modal .ab-added-cart-actions { grid-template-columns: minmax(0, 1fr) !important; }
+  #ab-added-cart-modal .ab-added-cart-actions button { padding: 12px; line-height: 1.4; }
+  app-product-details .product-rating { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .ab-rating-counts { color: #666; font-size: 14px; }
+  app-product-details .product-title h4[data-ab-product-pages] { display: none !important; }
+  app-product-details.ab-no-ratings .product-rating { display: none !important; }
+  app-product-details.ab-no-ratings app-all-reviews .review-rating-main { display: none !important; }
+  app-product-details.ab-no-ratings app-all-reviews .review-main-area::before { content: 'এখনো কোনো রিভিউ নেই।'; color: #666; }
+  #ab-product-sections .ab-summary-section .ab-rich-text[data-ab-summary-collapsed="true"] { max-height: 14rem; overflow: hidden; }
+  #ab-product-sections .ab-summary-toggle { margin-top: 12px; padding: 0; border: 0; background: transparent; color: #16833b; font: 600 16px/1.4 sans-serif; cursor: pointer; }
+  #ab-product-sections .ab-summary-toggle:focus-visible { outline: 2px solid #16833b; outline-offset: 3px; }
+  .view-all-link i.ab-menu-icon { font-family: Arial, sans-serif !important; font-style: normal !important; font-size: 28px !important; line-height: 1 !important; }
+  @media (max-width: 767px) {
+    body.ab-cart-enhanced app-cart-information .cart-area .cart-area-bottom { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; gap: 12px !important; padding: 16px !important; }
+    body.ab-cart-enhanced app-cart-information .cart-area .cart-area-bottom > a,
+    body.ab-cart-enhanced app-cart-information .cart-area .cart-area-bottom > button { display: flex !important; align-items: center !important; justify-content: center !important; width: 100% !important; min-height: 48px !important; padding: 12px !important; box-sizing: border-box !important; border: 1px solid #16833b !important; border-radius: 5px !important; background: #fff !important; color: #16833b !important; font: 600 16px/1.4 sans-serif !important; text-decoration: none !important; }
+    body.ab-cart-enhanced app-cart-information .cart-area .cart-area-bottom > button.order { background: #16833b !important; color: #fff !important; }
+  }
+</style>
+<script>
+(function () {
+  if (window.__abProductDetailPolish) return;
+  window.__abProductDetailPolish = true;
+  var host = location.hostname;
+  var local = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(host) || /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
+  var API_BASE = local ? location.origin + '/storefront-catalog' : 'https://apisub.amolbooks.com/api';
+  var route = '', product = null;
+  function updateSummaries() {
+    document.querySelectorAll('#ab-product-sections .ab-summary-section').forEach(function (section) {
+      var content = section.querySelector('.ab-rich-text');
+      if (!content || section.querySelector('.ab-summary-toggle')) return;
+      content.setAttribute('data-ab-summary-collapsed', 'true');
+      if (content.scrollHeight <= content.clientHeight + 1) {
+        content.removeAttribute('data-ab-summary-collapsed');
+        return;
+      }
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'ab-summary-toggle';
+      button.textContent = 'আরও দেখুন';
+      button.setAttribute('aria-expanded', 'false');
+      button.addEventListener('click', function () {
+        var expand = content.getAttribute('data-ab-summary-collapsed') === 'true';
+        content.setAttribute('data-ab-summary-collapsed', String(!expand));
+        button.textContent = expand ? 'কম দেখুন' : 'আরও দেখুন';
+        button.setAttribute('aria-expanded', String(expand));
+      });
+      section.appendChild(button);
+    });
+  }
+  function update() {
+    updateSummaries();
+    document.querySelectorAll('.title-area .view-all-link i.material-symbols-outlined').forEach(function (icon) {
+      if (icon.textContent.trim() !== 'menu') return;
+      icon.textContent = '☰';
+      icon.classList.add('ab-menu-icon');
+      icon.setAttribute('aria-hidden', 'true');
+      if (icon.parentElement) icon.parentElement.setAttribute('aria-label', 'ক্যাটাগরি মেনু');
+    });
+    var path = location.pathname;
+    if (path !== route) {
+      route = path;
+      product = null;
+      document.querySelectorAll('app-product-details.ab-no-ratings').forEach(function (node) { node.classList.remove('ab-no-ratings'); });
+      document.querySelectorAll('.ab-rating-counts').forEach(function (node) { node.remove(); });
+      if (path.indexOf('/product-details/') !== 0) return;
+      fetch(API_BASE + '/product/get-by-slug/' + path.split('/')[2])
+        .then(function (response) { if (!response.ok) throw new Error('Catalogue unavailable'); return response.json(); })
+        .then(function (result) { if (route === path) { product = result.data; update(); } })
+        .catch(function () { /* Leave the native rating visible if the catalogue is unavailable. */ });
+    }
+    document.querySelectorAll('app-product-details .delivery-area p').forEach(function (label) {
+      var text = label.textContent.trim();
+      var desired = /Inside Dhaka/i.test(text) ? 'Tk. 60 Inside Dhaka City' :
+        /Outside Dhaka/i.test(text) ? 'Tk. 75 Outside Dhaka City' : '';
+      if (desired && text !== desired) label.textContent = desired;
+    });
+    if (!product) return;
+    var ratingTotal = Math.max(0, Number(product.ratingTotal) || 0);
+    var reviewTotal = Math.max(0, Number(product.reviewTotal) || 0);
+    var page = document.querySelector('app-product-details');
+    if (page) page.classList.toggle('ab-no-ratings', !ratingTotal && !reviewTotal);
+    var rating = document.querySelector('app-product-details .product-rating');
+    if (rating && (ratingTotal || reviewTotal) && !rating.querySelector('.ab-rating-counts')) {
+      var counts = document.createElement('span');
+      counts.className = 'ab-rating-counts';
+      counts.textContent = [ratingTotal ? ratingTotal + ' Ratings' : '', reviewTotal ? reviewTotal + ' Reviews' : ''].filter(Boolean).join(' | ');
+      rating.appendChild(counts);
+    }
+  }
+  new MutationObserver(update).observe(document.documentElement, { childList: true, subtree: true });
+  window.setInterval(update, 1000);
+  update();
+})();
+</script>

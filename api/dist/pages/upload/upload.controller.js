@@ -43,18 +43,20 @@ let UploadController = UploadController_1 = class UploadController {
         };
     }
     async uploadSingleImageV2(file, req, body) {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j;
         const isProduction = this.configService.get('productionBuild');
-        if (body &&
-            body['convert'] &&
-            body['convert'].toString().toLowerCase() === 'yes') {
-            const quality = body['quality'] ? Number(body['quality']) : 85;
-            const width = body['width'] ? Number(body['width']) : null;
-            const height = body['height'] ? Number(body['height']) : null;
+        const convert = (_a = body === null || body === void 0 ? void 0 : body['convert']) !== null && _a !== void 0 ? _a : (_b = req.query) === null || _b === void 0 ? void 0 : _b['convert'];
+        if (convert &&
+            convert.toString().toLowerCase() === 'yes') {
+            const quality = Number((_e = (_c = body === null || body === void 0 ? void 0 : body['quality']) !== null && _c !== void 0 ? _c : (_d = req.query) === null || _d === void 0 ? void 0 : _d['quality']) !== null && _e !== void 0 ? _e : 85);
+            const width = Number((_f = body === null || body === void 0 ? void 0 : body['width']) !== null && _f !== void 0 ? _f : (_g = req.query) === null || _g === void 0 ? void 0 : _g['width']) || null;
+            const height = Number((_h = body === null || body === void 0 ? void 0 : body['height']) !== null && _h !== void 0 ? _h : (_j = req.query) === null || _j === void 0 ? void 0 : _j['height']) || null;
             const dir = `upload/images`;
             const filename = path.parse(file.filename).name;
             const newFilename = filename + '.webp';
             const newPath = `${dir}/${newFilename}`;
             await sharp(file.path)
+                .rotate()
                 .resize(width, height)
                 .webp({ effort: 4, quality: quality })
                 .toFile(path.join(dir, newFilename));
@@ -114,6 +116,7 @@ let UploadController = UploadController_1 = class UploadController {
                 const newFilename = filename + '.webp';
                 const newPath = `${dir}/${newFilename}`;
                 const conImage = await sharp(file.path)
+                    .rotate()
                     .resize(width, height)
                     .webp({ effort: 4, quality: quality })
                     .toFile(path.join(dir, newFilename));

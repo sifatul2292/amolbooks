@@ -16,7 +16,7 @@ import { OrderOffer } from '../../../interfaces/common/order-offer.interface';
 import { AddOrderOfferDto } from '../../../dto/order-offer.dto';
 
 const ObjectId = Types.ObjectId;
-const FREE_NOTEBOOK_MIN_AMOUNT = 499;
+const FREE_NOTEBOOK_MIN_AMOUNT = 799;
 
 @Injectable()
 export class OrderOfferService {

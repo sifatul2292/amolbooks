@@ -45,7 +45,7 @@ let EmailService = class EmailService {
             const emailFrom = gmail;
             const toReceiver = email;
             const info = await transporter.sendMail({
-                from: `"Alambook" <${emailFrom}>`,
+                from: `"Amol Books" <${emailFrom}>`,
                 replyTo: emailFrom,
                 to: toReceiver,
                 subject: subject,

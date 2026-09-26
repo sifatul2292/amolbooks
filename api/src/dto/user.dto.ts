@@ -209,6 +209,32 @@ export class AddAddressDto {
 
   @IsOptional()
   @IsString()
+  @MinLength(10)
+  @MaxLength(13)
+  phone: string;
+
+  @IsOptional()
+  @IsString()
+  name: string;
+
+  @IsOptional()
+  @IsObject()
+  division: Record<string, unknown>;
+
+  @IsOptional()
+  @IsObject()
+  area: Record<string, unknown>;
+
+  @IsOptional()
+  @IsObject()
+  zone: Record<string, unknown>;
+
+  @IsOptional()
+  @IsBoolean()
+  setDefaultAddress: boolean;
+
+  @IsOptional()
+  @IsString()
   city: string;
 
   @IsOptional()
@@ -226,6 +252,32 @@ export class UpdateAddressDto {
   @MinLength(10)
   @MaxLength(11)
   phoneNo: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(10)
+  @MaxLength(13)
+  phone: string;
+
+  @IsOptional()
+  @IsString()
+  name: string;
+
+  @IsOptional()
+  @IsObject()
+  division: Record<string, unknown>;
+
+  @IsOptional()
+  @IsObject()
+  area: Record<string, unknown>;
+
+  @IsOptional()
+  @IsObject()
+  zone: Record<string, unknown>;
+
+  @IsOptional()
+  @IsBoolean()
+  setDefaultAddress: boolean;
 
   @IsOptional()
   @IsString()

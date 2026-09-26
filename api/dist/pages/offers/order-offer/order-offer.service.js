@@ -21,7 +21,7 @@ const config_1 = require("@nestjs/config");
 const utils_service_1 = require("../../../shared/utils/utils.service");
 const error_code_enum_1 = require("../../../enum/error-code.enum");
 const ObjectId = mongoose_2.Types.ObjectId;
-const FREE_NOTEBOOK_MIN_AMOUNT = 499;
+const FREE_NOTEBOOK_MIN_AMOUNT = 799;
 let OrderOfferService = OrderOfferService_1 = class OrderOfferService {
     constructor(orderOfferModel, orderModel, userModel, configService, utilsService) {
         this.orderOfferModel = orderOfferModel;

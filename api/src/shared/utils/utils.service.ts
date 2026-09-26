@@ -189,7 +189,7 @@ export class UtilsService {
     doc
       .fontSize(10)
       .font('Helvetica')
-      .text('www.alambook.com', infoX, topPadding, { align: 'left' })
+      .text('www.amolbooks.com', infoX, topPadding, { align: 'left' })
       .text(
         '62/A, Islamiya Market, Office Goli, Nilkhet, Dhaka, Bangladesh',
         infoX,
@@ -404,7 +404,7 @@ export class UtilsService {
     doc
       .fontSize(10)
       .font('Helvetica')
-      .text('Thank you for choosing Alambook', doc.page.margins.left, y + 200, {
+      .text('Thank you for choosing Amol Books', doc.page.margins.left, y + 200, {
         align: 'center',
       });
 

@@ -1,0 +1,744 @@
+<!-- All Pages. Mobile-only account navigation; existing Angular account actions remain authoritative. -->
+<style>
+  /* Hallmark · pre-emit critique: P5 H5 E4 S5 R5 V4
+   */
+  /* Hallmark · macrostructure: Account Hub · tone: utilitarian · anchor hue: Amol green
+   * contrast: pass (46–50) · honest: pass (56) · chrome: pass (57) · tokens: pass (58)
+   * responsive: pass (36, 59, 61–69) · icons: pass (60)
+   */
+  :root {
+    --ab-account-paper: oklch(98% 0.006 145);
+    --ab-account-paper-2: oklch(95% 0.012 145);
+    --ab-account-ink: oklch(23% 0.018 145);
+    --ab-account-muted: oklch(43% 0.018 145);
+    --ab-account-rule: oklch(86% 0.018 145);
+    --ab-account-accent: oklch(52% 0.145 145);
+    --ab-account-accent-soft: oklch(94% 0.035 145);
+    --ab-account-accent-ink: oklch(99% 0.004 145);
+    --ab-account-danger: oklch(52% 0.19 27);
+    --ab-account-focus: oklch(20% 0.02 145);
+    --ab-account-shadow: oklch(20% 0.02 145 / 0.12);
+    --ab-account-backdrop: oklch(12% 0.015 145 / 0.58);
+    --ab-account-font-display: "hind-siliguri", "Hind Siliguri", sans-serif;
+    --ab-account-font-body: "Anek Bangla", "hind-siliguri", "Hind Siliguri", sans-serif;
+    --ab-account-space-2xs: 0.25rem;
+    --ab-account-space-xs: 0.5rem;
+    --ab-account-space-sm: 0.75rem;
+    --ab-account-space-md: 1rem;
+    --ab-account-space-lg: 1.5rem;
+    --ab-account-space-xl: 2rem;
+    --ab-account-radius-sm: 0.5rem;
+    --ab-account-radius-md: 0.75rem;
+    --ab-account-radius-lg: 1rem;
+    --ab-account-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ab-account-dur-short: 160ms;
+    --ab-account-z-modal: 400;
+  }
+
+  .ab-account-hub,
+  .ab-account-sheet { display: none; }
+
+  @media (max-width: 46.875rem) {
+    html,
+    body { overflow-x: clip; }
+
+    app-account .account-area { margin-top: var(--ab-account-space-sm) !important; }
+    app-account .account-area > .container { padding-inline: var(--ab-account-space-sm) !important; }
+    app-account .account-main {
+      display: block !important;
+      min-width: 0 !important;
+    }
+    app-account .account-main > .account-left,
+    app-account .mobile-bar,
+    app-account > .overlay,
+    app-account .account-main > .overlay {
+      display: none !important;
+      visibility: hidden !important;
+    }
+    app-account .account-right { min-width: 0 !important; }
+
+    .ab-account-hub {
+      display: grid;
+      gap: var(--ab-account-space-sm);
+      margin-block-end: var(--ab-account-space-lg);
+      color: var(--ab-account-ink);
+      font-family: var(--ab-account-font-body);
+    }
+    .ab-account-hub__identity {
+      display: grid;
+      grid-template-columns: 3rem minmax(0, 1fr) auto;
+      align-items: center;
+      gap: var(--ab-account-space-sm);
+      padding: var(--ab-account-space-sm);
+      border: 1px solid var(--ab-account-rule);
+      border-radius: var(--ab-account-radius-lg);
+      background: var(--ab-account-paper);
+      color: var(--ab-account-ink);
+      box-shadow: 0 1px 2px var(--ab-account-shadow);
+      min-height: 4.5rem;
+      overflow: hidden;
+    }
+    .ab-account-hub__avatar {
+      display: block !important;
+      width: 3rem !important;
+      height: 3rem !important;
+      min-width: 3rem;
+      max-width: 3rem !important;
+      max-height: 3rem !important;
+      aspect-ratio: 1;
+      border: 2px solid var(--ab-account-accent);
+      border-radius: 50%;
+      object-fit: cover;
+      background: var(--ab-account-paper-2);
+    }
+    .ab-account-hub__identity > img:not(.ab-account-hub__avatar),
+    .ab-account-hub__copy img { display: none !important; }
+    .ab-account-hub__copy { min-width: 0; }
+    .ab-account-hub__name,
+    .ab-account-hub__section {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .ab-account-hub__name {
+      font-family: var(--ab-account-font-display);
+      font-size: 1.125rem;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    .ab-account-hub__section {
+      color: var(--ab-account-muted);
+      font-size: 0.875rem;
+      line-height: 1.4;
+    }
+    .ab-account-hub__menu,
+    .ab-account-sheet__close,
+    .ab-account-action,
+    .ab-account-quick {
+      min-width: 44px;
+      min-height: 44px;
+      border: 1px solid var(--ab-account-rule);
+      border-radius: var(--ab-account-radius-md);
+      font-family: var(--ab-account-font-body);
+      font-size: 1rem;
+      line-height: 1.2;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ab-account-hub__menu {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--ab-account-space-xs);
+      padding-inline: var(--ab-account-space-sm);
+      background: var(--ab-account-accent);
+      color: var(--ab-account-accent-ink);
+      border-color: var(--ab-account-accent);
+      cursor: pointer;
+      width: 100%;
+      transition: transform var(--ab-account-dur-short) var(--ab-account-ease-out),
+        background-color var(--ab-account-dur-short) var(--ab-account-ease-out);
+    }
+    .ab-account-hub__menu:active,
+    .ab-account-sheet__close:active,
+    .ab-account-action:active,
+    .ab-account-quick:active { transform: translateY(1px); }
+    .ab-account-hub__menu:focus-visible,
+    .ab-account-sheet__close:focus-visible,
+    .ab-account-action:focus-visible,
+    .ab-account-quick:focus-visible {
+      outline: 3px solid var(--ab-account-focus);
+      outline-offset: 2px;
+    }
+    .ab-account-hub__menu:disabled,
+    .ab-account-sheet__close:disabled,
+    .ab-account-action[aria-disabled="true"],
+    .ab-account-quick[aria-disabled="true"] {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    .ab-account-action[data-state="loading"],
+    .ab-account-quick[data-state="loading"],
+    .ab-account-hub__menu[data-state="loading"],
+    .ab-account-sheet__close[data-state="loading"] { opacity: 0.65; cursor: wait; }
+    .ab-account-action[data-state="error"],
+    .ab-account-quick[data-state="error"],
+    .ab-account-hub__menu[data-state="error"],
+    .ab-account-sheet__close[data-state="error"] { border-color: var(--ab-account-danger); }
+    .ab-account-action[data-state="success"],
+    .ab-account-quick[data-state="success"],
+    .ab-account-hub__menu[data-state="success"],
+    .ab-account-sheet__close[data-state="success"] { border-color: var(--ab-account-accent); }
+
+    .ab-account-hub__quick {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--ab-account-space-xs);
+    }
+    .ab-account-quick {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: var(--ab-account-space-2xs);
+      padding: var(--ab-account-space-xs) var(--ab-account-space-2xs);
+      background: var(--ab-account-paper);
+      color: var(--ab-account-ink);
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform var(--ab-account-dur-short) var(--ab-account-ease-out),
+        background-color var(--ab-account-dur-short) var(--ab-account-ease-out);
+    }
+    .ab-account-quick i { color: var(--ab-account-accent); font-size: 1rem; }
+    .ab-account-quick span { font-size: 0.75rem; white-space: nowrap; }
+    .ab-account-quick[aria-current="page"] {
+      border-color: var(--ab-account-accent);
+      background: var(--ab-account-accent-soft);
+      color: var(--ab-account-ink);
+    }
+    .ab-account-quick[aria-current="page"]::after {
+      content: "";
+      width: 1rem;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--ab-account-accent);
+    }
+
+    .ab-account-sheet {
+      width: min(calc(100% - 1.5rem), 28rem);
+      max-width: none;
+      max-height: min(calc(100dvh - 2rem), 42rem);
+      margin: auto;
+      padding: 0;
+      border: 0;
+      border-radius: var(--ab-account-radius-lg);
+      background: var(--ab-account-paper);
+      color: var(--ab-account-ink);
+      box-shadow: 0 12px 40px var(--ab-account-shadow);
+      font-family: var(--ab-account-font-body);
+      overflow: hidden;
+      z-index: var(--ab-account-z-modal);
+    }
+    .ab-account-sheet[open] { display: flex; flex-direction: column; }
+    .ab-account-sheet::backdrop { background: var(--ab-account-backdrop); }
+    .ab-account-sheet__header {
+      display: flex;
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--ab-account-space-md);
+      padding: var(--ab-account-space-md);
+      border-bottom: 1px solid var(--ab-account-rule);
+    }
+    .ab-account-sheet__title {
+      margin: 0;
+      font-family: var(--ab-account-font-display);
+      font-size: 1.25rem;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    .ab-account-sheet__close {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      padding: 0;
+      background: var(--ab-account-paper-2);
+      color: var(--ab-account-ink);
+      cursor: pointer;
+    }
+    .ab-account-sheet__grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--ab-account-space-xs);
+      min-height: 0;
+      padding: var(--ab-account-space-md);
+      padding-bottom: max(var(--ab-account-space-lg), env(safe-area-inset-bottom));
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+    .ab-account-action {
+      display: flex;
+      align-items: center;
+      gap: var(--ab-account-space-sm);
+      padding: var(--ab-account-space-sm);
+      background: var(--ab-account-paper);
+      color: var(--ab-account-ink);
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform var(--ab-account-dur-short) var(--ab-account-ease-out),
+        background-color var(--ab-account-dur-short) var(--ab-account-ease-out);
+    }
+    .ab-account-action i {
+      display: grid;
+      place-items: center;
+      width: 1.5rem;
+      color: var(--ab-account-accent);
+    }
+    .ab-account-action[aria-current="page"] {
+      border-color: var(--ab-account-accent);
+      background: var(--ab-account-accent-soft);
+      color: var(--ab-account-ink);
+    }
+    .ab-account-action--logout { color: var(--ab-account-danger); }
+    .ab-account-action--logout i { color: var(--ab-account-danger); }
+
+    app-account .account-right input:not([type="radio"]):not([type="checkbox"]),
+    app-account .account-right select,
+    app-account .account-right textarea,
+    app-account .account-right button {
+      min-height: 44px;
+      max-width: 100%;
+      font-family: var(--ab-account-font-body) !important;
+    }
+    app-account .account-right input:not([type="radio"]):not([type="checkbox"]),
+    app-account .account-right select,
+    app-account .account-right textarea {
+      font-size: 1rem !important;
+      border-radius: var(--ab-account-radius-sm) !important;
+    }
+    app-account .account-right table { width: 100% !important; table-layout: fixed; }
+    app-account .account-right td,
+    app-account .account-right th { overflow-wrap: anywhere; }
+  }
+
+  .ab-checkout-addresses {
+    margin: 0 0 var(--ab-account-space-md);
+    padding: var(--ab-account-space-sm);
+    border: 1px solid var(--ab-account-rule);
+    border-radius: var(--ab-account-radius-md);
+    background: var(--ab-account-paper);
+    color: var(--ab-account-ink);
+    font-family: var(--ab-account-font-body);
+  }
+  .ab-checkout-addresses__title {
+    margin: 0 0 var(--ab-account-space-xs);
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+  .ab-checkout-addresses__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+    gap: var(--ab-account-space-xs);
+  }
+  .ab-checkout-address {
+    min-height: 44px;
+    padding: var(--ab-account-space-sm);
+    border: 1px solid var(--ab-account-rule);
+    border-radius: var(--ab-account-radius-sm);
+    background: white;
+    color: var(--ab-account-ink);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .ab-checkout-address[aria-pressed="true"] {
+    border-color: var(--ab-account-accent);
+    background: var(--ab-account-accent-soft);
+    box-shadow: inset 0 0 0 1px var(--ab-account-accent);
+  }
+  .ab-checkout-address__name,
+  .ab-checkout-address span { display: block; }
+  .ab-checkout-address__name { font-weight: 700; }
+  .ab-checkout-address span {
+    margin-top: var(--ab-account-space-2xs);
+    color: var(--ab-account-muted);
+    font-size: 0.875rem;
+    line-height: 1.35;
+  }
+  .ab-checkout-address:focus-visible {
+    outline: 3px solid var(--ab-account-focus);
+    outline-offset: 2px;
+  }
+
+  @media (min-width: 23rem) and (max-width: 46.875rem) {
+    .ab-account-hub__quick { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .ab-account-quick { flex-direction: column; }
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .ab-account-hub__menu:hover { background: var(--ab-account-focus); }
+    .ab-account-quick:hover,
+    .ab-account-action:hover { background: var(--ab-account-paper-2); }
+    .ab-account-sheet__close:hover { background: var(--ab-account-rule); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ab-account-hub__menu,
+    .ab-account-sheet__close,
+    .ab-account-action,
+    .ab-account-quick { transition-duration: 0.01ms !important; }
+  }
+</style>
+<script>
+(function () {
+  if (window.__abCustomerAccountMobile) return;
+  window.__abCustomerAccountMobile = true;
+
+  var API_BASE = 'https://apisub.amolbooks.com/api';
+  var checkoutAddresses = null;
+  var checkoutAddressesPending = false;
+  var checkoutProfile = null;
+  var checkoutProfilePending = false;
+
+  /* Capture Angular's real bearer token before its deferred bundle starts.
+     Production builds do not expose Angular component instances. */
+  if (!window.__abCartAuthorizationBridgeInstalled) {
+    window.__abCartAuthorizationBridgeInstalled = true;
+    var nativeSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
+    XMLHttpRequest.prototype.setRequestHeader = function (name, value) {
+      if (String(name || '').toLowerCase() === 'authorization') {
+        var authorization = String(value || '').trim();
+        if (authorization && authorization !== window.__abCartAuthorization) {
+          window.__abCartAuthorization = authorization;
+          window.dispatchEvent(new CustomEvent('ab-cart-authorization'));
+        }
+      }
+      return nativeSetRequestHeader.apply(this, arguments);
+    };
+  }
+
+  var items = [
+    { route: '/account/profile', label: 'আমার অ্যাকাউন্ট', short: 'অ্যাকাউন্ট', icon: 'fa-user' },
+    { route: '/account/orders', label: 'আমার অর্ডার', short: 'অর্ডার', icon: 'fa-shopping-bag' },
+    { action: 'address', label: 'ঠিকানা', short: 'ঠিকানা', icon: 'fa-map-marker' },
+    { route: '/account/notification', label: 'নোটিফিকেশন', short: 'নোটিফিকেশন', icon: 'fa-bell' },
+    { route: '/account/wishlist', label: 'উপহার তালিকা', short: 'উইশলিস্ট', icon: 'fa-heart' },
+    { route: '/account/review', label: 'আমার রেটিং ও রিভিউ', short: 'রিভিউ', icon: 'fa-star' },
+    { route: '/account/transactions', label: 'আমার লেনদেন', short: 'লেনদেন', icon: 'fa-credit-card' },
+    { action: 'logout', label: 'লগআউট', short: 'লগআউট', icon: 'fa-sign-out' }
+  ];
+  var quickRoutes = ['/account/orders', 'address', '/account/wishlist', '/account/review'];
+  var scheduled = false;
+
+  function isAccountPage() { return /^\/account(?:\/|$)/.test(location.pathname); }
+  function escapeHtml(value) {
+    return String(value || '').replace(/[&<>"']/g, function (char) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char];
+    });
+  }
+  function currentItem() {
+    return items.find(function (item) { return item.route === location.pathname; }) || items[0];
+  }
+  function itemHtml(item, className, useShort) {
+    var key = item.route || item.action;
+    var active = item.route === location.pathname ? ' aria-current="page"' : '';
+    var logout = item.action === 'logout' ? ' ab-account-action--logout' : '';
+    var content = '<i class="fa ' + item.icon + '" aria-hidden="true"></i><span>' + escapeHtml(useShort ? item.short : item.label) + '</span>';
+    if (item.action) {
+      return '<button type="button" class="' + className + logout + '" data-account-target="' + key + '">' + content + '</button>';
+    }
+    return '<a class="' + className + '" href="' + item.route + '" data-account-target="' + key + '"' + active + '>' + content + '</a>';
+  }
+  function buildShell() {
+    var shell = document.createElement('section');
+    shell.className = 'ab-account-hub';
+    shell.setAttribute('aria-label', 'কাস্টমার অ্যাকাউন্ট নেভিগেশন');
+    shell.innerHTML = '<div class="ab-account-hub__identity">' +
+      '<img class="ab-account-hub__avatar" alt="প্রোফাইল ছবি">' +
+      '<div class="ab-account-hub__copy"><strong class="ab-account-hub__name">আমার অ্যাকাউন্ট</strong>' +
+      '<span class="ab-account-hub__section"></span></div>' +
+      '<button class="ab-account-hub__menu" type="button" aria-haspopup="dialog" aria-controls="ab-account-sheet">' +
+      '<i class="fa fa-bars" aria-hidden="true"></i><span>সব অপশন</span></button></div>' +
+      '<nav class="ab-account-hub__quick" aria-label="দ্রুত লিংক">' +
+      items.filter(function (item) { return quickRoutes.indexOf(item.route || item.action) !== -1; })
+        .map(function (item) { return itemHtml(item, 'ab-account-quick', true); }).join('') + '</nav>';
+    return shell;
+  }
+  function buildDialog() {
+    var dialog = document.createElement('dialog');
+    dialog.id = 'ab-account-sheet';
+    dialog.className = 'ab-account-sheet';
+    dialog.setAttribute('aria-labelledby', 'ab-account-sheet-title');
+    dialog.innerHTML = '<div class="ab-account-sheet__header"><h2 class="ab-account-sheet__title" id="ab-account-sheet-title">অ্যাকাউন্ট মেনু</h2>' +
+      '<button class="ab-account-sheet__close" type="button" aria-label="মেনু বন্ধ করুন"><span aria-hidden="true">×</span></button></div>' +
+      '<nav class="ab-account-sheet__grid" aria-label="অ্যাকাউন্ট অপশন">' +
+      items.map(function (item) { return itemHtml(item, 'ab-account-action', false); }).join('') + '</nav>';
+    document.body.appendChild(dialog);
+    dialog.querySelector('.ab-account-sheet__close').addEventListener('click', function () { dialog.close(); });
+    dialog.addEventListener('click', function (event) { if (event.target === dialog) dialog.close(); });
+    return dialog;
+  }
+  function activate(target) {
+    var dialog = document.getElementById('ab-account-sheet');
+    if (dialog && dialog.open) dialog.close();
+    var nativeItems = document.querySelectorAll('app-account .account-left .side-bar nav li');
+    if (target === 'address') {
+      var address = nativeItems[2] && nativeItems[2].querySelector('a');
+      if (address) address.click();
+      return;
+    }
+    if (target === 'logout') {
+      var logout = nativeItems[nativeItems.length - 1];
+      if (logout) logout.click();
+      return;
+    }
+    var nativeLink = document.querySelector('app-account .account-left a[href="' + target + '"]');
+    if (nativeLink) nativeLink.click();
+    else window.location.assign(target);
+  }
+  function findCheckoutComponent(host) {
+    var context = host && host.__ngContext__;
+    if (!context || typeof context.length !== 'number') return null;
+    for (var index = 0; index < context.length; index += 1) {
+      var value = context[index];
+      if (value && value.formData && typeof value.formData.patchValue === 'function' &&
+          typeof value.getAllArea === 'function' && typeof value.getAllZone === 'function' &&
+          typeof value.getUserAddress === 'function') return value;
+    }
+    return null;
+  }
+  function addressLine(address) {
+    return [address.address, address.zone && address.zone.name, address.area && address.area.name, address.division && address.division.name]
+      .filter(Boolean).join(', ');
+  }
+  function checkoutAuthenticated() {
+    try {
+      return Boolean(window.__abCartAuthorization ||
+        localStorage.getItem('Amolbooks_USER_1_1') || localStorage.getItem('ALAMBOOKS_USER_1_1') ||
+        localStorage.getItem('Amolbooks_TOKEN_1') || localStorage.getItem('ALAMBOOKS_TOKEN_1'));
+    } catch (_) {
+      return false;
+    }
+  }
+  function checkoutAuthorization() {
+    var authorization = String(window.__abCartAuthorization || '').trim();
+    if (!authorization) return '';
+    return /^Bearer\s+/i.test(authorization) ? authorization : 'Bearer ' + authorization;
+  }
+  function setCheckoutControl(name, value) {
+    var control = document.querySelector('app-checkout [formcontrolname="' + name + '"]');
+    if (!control) return;
+    var prototype = control.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+    var setter = Object.getOwnPropertyDescriptor(prototype, 'value');
+    if (setter && setter.set) setter.set.call(control, value == null ? '' : String(value));
+    else control.value = value == null ? '' : String(value);
+    control.dispatchEvent(new Event('input', { bubbles: true }));
+    control.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  function selectCheckoutDelivery(value) {
+    var option = document.querySelector('app-checkout input[type="radio"][value="' + value + '"]');
+    if (option && !option.checked) option.click();
+  }
+  function loadCheckoutAddresses() {
+    var authorization = checkoutAuthorization();
+    if (!authorization || checkoutAddressesPending || Array.isArray(checkoutAddresses)) return;
+    checkoutAddressesPending = true;
+    fetch(API_BASE + '/user/get-user-address', {
+      headers: { Authorization: authorization, Accept: 'application/json' },
+      credentials: 'omit'
+    }).then(function (response) {
+      if (!response.ok) throw new Error('Saved addresses unavailable');
+      return response.json();
+    }).then(function (result) {
+      checkoutAddresses = result && Array.isArray(result.data) ? result.data : [];
+      scheduleMount();
+    }).catch(function () {
+      checkoutAddresses = null;
+    }).finally(function () {
+      checkoutAddressesPending = false;
+    });
+  }
+  function loadCheckoutProfile() {
+    var authorization = checkoutAuthorization();
+    if (!authorization || checkoutProfilePending || checkoutProfile) return;
+    checkoutProfilePending = true;
+    fetch(API_BASE + '/user/logged-in-user-data?select=name%20phoneNo%20username', {
+      headers: { Authorization: authorization, Accept: 'application/json' },
+      credentials: 'omit'
+    }).then(function (response) {
+      if (!response.ok) throw new Error('Profile unavailable');
+      return response.json();
+    }).then(function (result) {
+      checkoutProfile = result && result.data || {};
+      scheduleMount();
+    }).catch(function () {
+      checkoutProfile = {};
+    }).finally(function () {
+      checkoutProfilePending = false;
+    });
+  }
+  function applyCheckoutAddress(component, address, picker) {
+    if (!address) return;
+    var divisionName = String(address.division && address.division.name || '');
+    var areaName = String(address.area && address.area.name || '');
+    var dhaka = /Dhaka|ঢাকা/i.test(divisionName);
+    var dhakaOutskirts = /Savar|Dohar|Nawabganj|Keraniganj|Dhamrai|সাভার|দোহার|নবাবগঞ্জ|কেরানীগঞ্জ|ধামরাই/i.test(areaName);
+    var deliveryOption = dhaka && !dhakaOutskirts ? '1' : '2';
+    if (component) {
+      component.homeAddress = address;
+      component.formData.patchValue({
+        name: address.name || component.user && component.user.name || '',
+        phoneNo: address.phone || address.phoneNo || component.user && component.user.phoneNo || '',
+        division: address.division && address.division._id || null,
+        area: address.area && address.area._id || null,
+        zone: address.zone && address.zone._id || null,
+        address: address.address || '',
+        addressType: address.addressType || 'home',
+        deliveryOptions: deliveryOption
+      });
+    } else {
+      setCheckoutControl('name', address.name || checkoutProfile && checkoutProfile.name || '');
+      if (address.phone || address.phoneNo || checkoutProfile && (checkoutProfile.phoneNo || checkoutProfile.username)) {
+        setCheckoutControl('phoneNo', address.phone || address.phoneNo || checkoutProfile.phoneNo || checkoutProfile.username);
+      }
+      setCheckoutControl('address', address.address || '');
+      selectCheckoutDelivery(deliveryOption);
+    }
+    if (component && !component.__abSavedAddressDeliveryCharge && typeof component.calculateDeliveryCharge === 'function') {
+      var calculateDeliveryCharge = component.calculateDeliveryCharge;
+      component.calculateDeliveryCharge = function () {
+        var shipping = this.shippingCharge;
+        var option = this.formData && this.formData.value && this.formData.value.deliveryOptions;
+        var base = Number(shipping && (option === '1' ? shipping.deliveryInDhaka : shipping.deliveryOutsideDhaka));
+        return Number.isFinite(base) && base > 0 ? base : calculateDeliveryCharge.call(this);
+      };
+      component.__abSavedAddressDeliveryCharge = true;
+    }
+    if (component && address.division && address.division._id) component.getAllArea(address.division._id);
+    if (component && address.area && address.area._id) component.getAllZone(address.area._id);
+    picker.dataset.selectedAddress = address._id || '';
+    picker.querySelectorAll('.ab-checkout-address').forEach(function (button) {
+      button.setAttribute('aria-pressed', String(button.dataset.addressId === picker.dataset.selectedAddress));
+    });
+  }
+  function mountCheckoutAddresses() {
+    var oldPicker = document.querySelector('.ab-checkout-addresses');
+    if (location.pathname !== '/checkout') {
+      if (oldPicker) oldPicker.remove();
+      return;
+    }
+    var host = document.querySelector('app-checkout');
+    var component = findCheckoutComponent(host);
+    var addresses = component && component.addresses;
+    if (!Array.isArray(addresses)) addresses = checkoutAddresses;
+    var formArea = host && host.querySelector('.address-form-area');
+    if (!formArea) return;
+    if (!component && checkoutAuthenticated()) {
+      loadCheckoutAddresses();
+      loadCheckoutProfile();
+    }
+    if (!Array.isArray(addresses)) {
+      if (component && checkoutAuthenticated() && !component.__abRequestedSavedAddresses) {
+        component.__abRequestedSavedAddresses = true;
+        component.getUserAddress();
+      }
+      return;
+    }
+    if (!addresses.length) return;
+    var signature = addresses.map(function (address) { return address._id; }).join('|');
+    var picker = oldPicker;
+    if (!picker || picker.dataset.signature !== signature) {
+      if (picker) picker.remove();
+      picker = document.createElement('section');
+      picker.className = 'ab-checkout-addresses';
+      picker.dataset.signature = signature;
+      picker.setAttribute('aria-labelledby', 'ab-checkout-addresses-title');
+      picker.innerHTML = '<h3 class="ab-checkout-addresses__title" id="ab-checkout-addresses-title">সংরক্ষিত ঠিকানা থেকে বেছে নিন</h3>' +
+        '<div class="ab-checkout-addresses__list">' + addresses.map(function (address) {
+          return '<button type="button" class="ab-checkout-address" data-address-id="' + escapeHtml(address._id) + '" aria-pressed="false">' +
+            '<div class="ab-checkout-address__name">' + escapeHtml(address.name || address.addressType || 'ঠিকানা') + '</div>' +
+            '<span>' + escapeHtml(addressLine(address)) + '</span></button>';
+        }).join('') + '</div>';
+      var heading = formArea.querySelector('.address-form-top');
+      if (heading && heading.nextSibling) formArea.insertBefore(picker, heading.nextSibling);
+      else formArea.insertBefore(picker, formArea.firstChild);
+      picker.addEventListener('click', function (event) {
+        var button = event.target.closest('.ab-checkout-address');
+        if (!button) return;
+        var selected = addresses.find(function (address) { return address._id === button.dataset.addressId; });
+        applyCheckoutAddress(component, selected, picker);
+      });
+      var preferred = addresses.find(function (address) { return address.setDefaultAddress; }) ||
+        addresses.find(function (address) { return address.addressType === 'home'; }) || addresses[0];
+      applyCheckoutAddress(component, preferred, picker);
+    }
+    picker.querySelectorAll('.ab-checkout-address img').forEach(function (image) {
+      var wrapper = image.parentElement;
+      image.remove();
+      if (wrapper && wrapper !== picker && !wrapper.textContent.trim() && !wrapper.querySelector('img')) wrapper.remove();
+    });
+    if (!component && checkoutProfile && !picker.dataset.profileApplied) {
+      var selectedId = picker.dataset.selectedAddress;
+      var selectedAddress = addresses.find(function (address) { return address._id === selectedId; }) || addresses[0];
+      picker.dataset.profileApplied = 'true';
+      applyCheckoutAddress(null, selectedAddress, picker);
+    }
+    var phoneControl = !component && document.querySelector('app-checkout [formcontrolname="phoneNo"]');
+    if (phoneControl && !phoneControl.value && checkoutProfile && (checkoutProfile.phoneNo || checkoutProfile.username)) {
+      setCheckoutControl('phoneNo', checkoutProfile.phoneNo || checkoutProfile.username);
+    }
+  }
+  function sync(shell) {
+    var nativeImage = document.querySelector('app-account .account-left .user-img img');
+    var nativeName = document.querySelector('app-account .account-left .user-text h3');
+    var avatar = shell.querySelector('.ab-account-hub__avatar');
+    var name = shell.querySelector('.ab-account-hub__name');
+    var section = shell.querySelector('.ab-account-hub__section');
+    var active = currentItem();
+    var src = nativeImage && nativeImage.currentSrc || nativeImage && nativeImage.src;
+    if (src && avatar.src !== src) avatar.src = src;
+    var userName = nativeName && nativeName.textContent.trim();
+    if (userName && name.textContent !== userName) name.textContent = userName;
+    if (section.textContent !== active.label) section.textContent = active.label;
+    shell.querySelectorAll('[data-account-target]').forEach(function (link) {
+      var selected = link.getAttribute('data-account-target') === active.route;
+      if (selected && link.getAttribute('aria-current') !== 'page') link.setAttribute('aria-current', 'page');
+      else if (!selected && link.hasAttribute('aria-current')) link.removeAttribute('aria-current');
+    });
+    var dialog = document.getElementById('ab-account-sheet');
+    if (dialog) dialog.querySelectorAll('[data-account-target]').forEach(function (link) {
+      var selected = link.getAttribute('data-account-target') === active.route;
+      if (selected && link.getAttribute('aria-current') !== 'page') link.setAttribute('aria-current', 'page');
+      else if (!selected && link.hasAttribute('aria-current')) link.removeAttribute('aria-current');
+    });
+  }
+  function mount() {
+    scheduled = false;
+    var shell = document.querySelector('.ab-account-hub');
+    var dialog = document.getElementById('ab-account-sheet');
+    mountCheckoutAddresses();
+    if (!isAccountPage()) {
+      if (shell) shell.remove();
+      if (dialog) dialog.remove();
+      return;
+    }
+    var accountRight = document.querySelector('app-account .account-right');
+    if (!accountRight) return;
+    if (!shell) {
+      shell = buildShell();
+      accountRight.insertBefore(shell, accountRight.firstChild);
+      shell.querySelector('.ab-account-hub__menu').addEventListener('click', function () {
+        var menu = document.getElementById('ab-account-sheet') || buildDialog();
+        menu.showModal();
+        requestAnimationFrame(function () {
+          var first = menu.querySelector('[aria-current="page"]') || menu.querySelector('.ab-account-action');
+          if (first) first.focus({ preventScroll: true });
+        });
+      });
+    }
+    if (!dialog) dialog = buildDialog();
+    sync(shell);
+  }
+  function scheduleMount() {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(mount);
+  }
+  document.addEventListener('click', function (event) {
+    var link = event.target && event.target.closest && event.target.closest('[data-account-target]');
+    if (!link) return;
+    event.preventDefault();
+    activate(link.getAttribute('data-account-target'));
+  });
+  window.addEventListener('popstate', scheduleMount);
+  window.addEventListener('ab-cart-authorization', scheduleMount);
+  new MutationObserver(scheduleMount).observe(document.documentElement, { childList: true, subtree: true });
+  window.setInterval(function () {
+    if (location.pathname === '/checkout') scheduleMount();
+  }, 800);
+  scheduleMount();
+})();
+</script>

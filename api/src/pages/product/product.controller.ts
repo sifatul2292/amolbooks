@@ -35,6 +35,7 @@ import {
 } from '../../dto/product.dto';
 
 import { MongoIdValidationPipe } from '../../pipes/mongo-id-validation.pipe';
+import { Throttle } from '@nestjs/throttler';
 import {
   CreateStockPurchaseDto,
   GetStockMovementsDto,
@@ -113,6 +114,7 @@ export class ProductController {
    */
   @Version(VERSION_NEUTRAL)
   @Post('/get-all')
+  @Throttle(300, 60)
   @UsePipes(ValidationPipe)
   async getAllProducts(
     @Body() filterProductDto: FilterAndPaginationProductDto,

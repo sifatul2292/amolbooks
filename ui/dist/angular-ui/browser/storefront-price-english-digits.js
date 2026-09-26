@@ -12,6 +12,7 @@
   var productPagesSlug = '';
   var productPagesValue = 0;
   var productPagesLoading = false;
+  var checkoutSummaryStartedAt = Date.now();
   var PRODUCT_PAGES_MARKER = 'data-ab-product-pages';
   var bnDigits = {
     '০': '0',
@@ -78,6 +79,9 @@
       '}' +
       'app-checkout .condition-area{' +
         'display:none!important;' +
+      '}' +
+      'app-checkout .summery-list:not(.ab-summary-ready){' +
+        'visibility:hidden!important;' +
       '}' +
       'app-checkout .summery-list li.ab-summary-hidden{' +
         'display:none!important;' +
@@ -241,10 +245,19 @@
       if (!isFinite(actual)) actual = subtotal - discount;
       if (!isFinite(actual)) return;
       actual = Math.max(0, actual);
+      if (
+        actual === 0 &&
+        (Number(shipping) || 0) === 0 &&
+        (Number(grandTotal) || 0) === 0 &&
+        Date.now() - checkoutSummaryStartedAt < 3500
+      ) {
+        return;
+      }
 
       subtotalRow.classList.add('ab-actual-order-row');
       discountRow.classList.add('ab-summary-hidden');
       totalRow.classList.remove('ab-summary-hidden');
+      list.classList.add('ab-summary-ready');
 
       for (var i = 0; i < subtotalRow.children.length; i++) {
         var child = subtotalRow.children[i];
@@ -316,6 +329,7 @@
     productPagesSlug = '';
     productPagesValue = 0;
     productPagesLoading = false;
+    checkoutSummaryStartedAt = Date.now();
     lastPath = location.pathname;
     scheduleConvert();
   }

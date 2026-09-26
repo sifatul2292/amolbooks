@@ -1,4 +1,66 @@
-<!DOCTYPE html><html lang="bn"><head><script>window.__amolAnalyticsDisabled=['localhost','127.0.0.1','::1'].indexOf(window.location.hostname)!==-1;</script>
+<!DOCTYPE html><html lang="bn"><head><script>(function(w){
+    var h=String(w.location.hostname||'').toLowerCase();
+    window.__amolAnalyticsDisabled=['localhost','127.0.0.1','::1'].indexOf(h)!==-1||h.slice(-18)==='.trycloudflare.com';
+    if(!w.__amolAnalyticsDisabled)return;
+    function blocked(value){
+      try{
+        var u=new URL(String(value||''),w.location.href),host=u.hostname.toLowerCase(),path=u.pathname;
+        if(u.origin===w.location.origin&&/^\/api\/(?:gtag|gtm)\//.test(path))return true;
+        return /(^|\.)(?:googletagmanager\.com|google-analytics\.com|googleadservices\.com|doubleclick\.net|facebook\.com|facebook\.net|posthog\.com)$/.test(host)||
+          host==='server.amolbooks.com'||host==='load.server.amolbooks.com'||host.indexOf('posthog')!==-1||/tagioo-loader/i.test(path);
+      }catch(_){return false;}
+    }
+    w.__amolTrackingUrlBlocked=blocked;
+    var noop=function(){};
+    w.gtag=noop;
+    var fbq=function(){};fbq.callMethod=noop;fbq.queue=[];fbq.loaded=true;fbq.version='2.0';w.fbq=w._fbq=fbq;
+    var posthog={__SV:1,init:noop,capture:noop,identify:noop,register:noop,reset:noop,opt_out_capturing:noop};
+    w.posthog=typeof Proxy==='function'?new Proxy(posthog,{get:function(target,key){return key in target?target[key]:noop;}}):posthog;
+    if(typeof w.fetch==='function'){
+      var fetch=w.fetch;
+      w.fetch=function(input,init){
+        var url=typeof input==='string'?input:input&&input.url;
+        return blocked(url)?Promise.resolve(new Response(null,{status:204})):fetch.call(this,input,init);
+      };
+    }
+    if(w.navigator&&typeof w.navigator.sendBeacon==='function'){
+      var beacon=w.navigator.sendBeacon.bind(w.navigator);
+      w.navigator.sendBeacon=function(url,data){return blocked(url)?true:beacon(url,data);};
+    }
+    if(w.XMLHttpRequest&&w.XMLHttpRequest.prototype){
+      var open=w.XMLHttpRequest.prototype.open;
+      w.XMLHttpRequest.prototype.open=function(method,url){
+        if(!blocked(url))return open.apply(this,arguments);
+        var args=Array.prototype.slice.call(arguments);args[1]='data:application/json,%7B%7D';
+        return open.apply(this,args);
+      };
+    }
+    function neutralize(node){
+      if(!node||!node.tagName)return node;
+      var tag=node.tagName.toLowerCase(),url=node.src||node.href||'';
+      if(!blocked(url))return node;
+      if(tag==='script')node.src='data:text/javascript,void 0';
+      else if(tag==='iframe')node.src='about:blank';
+      else if(tag==='img')node.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+      else node.removeAttribute('href');
+      return node;
+    }
+    ['HTMLScriptElement','HTMLIFrameElement','HTMLImageElement'].forEach(function(name){
+      var type=w[name],descriptor=type&&Object.getOwnPropertyDescriptor(type.prototype,'src');
+      if(!descriptor||!descriptor.get||!descriptor.set)return;
+      Object.defineProperty(type.prototype,'src',{configurable:true,enumerable:descriptor.enumerable,get:descriptor.get,set:function(value){
+        return descriptor.set.call(this,blocked(value)?(name==='HTMLScriptElement'?'data:text/javascript,void 0':name==='HTMLIFrameElement'?'about:blank':'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='):value);
+      }});
+    });
+    var setAttribute=w.Element&&w.Element.prototype.setAttribute;
+    if(setAttribute)w.Element.prototype.setAttribute=function(name,value){
+      if((name==='src'||name==='href')&&blocked(value))return setAttribute.call(this,name,this.tagName==='SCRIPT'?'data:text/javascript,void%200':this.tagName==='IFRAME'?'about:blank':'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=');
+      return setAttribute.apply(this,arguments);
+    };
+    var append=w.Node&&w.Node.prototype.appendChild,insert=w.Node&&w.Node.prototype.insertBefore;
+    if(append)w.Node.prototype.appendChild=function(node){return append.call(this,neutralize(node));};
+    if(insert)w.Node.prototype.insertBefore=function(node,ref){return insert.call(this,neutralize(node),ref);};
+  })(window);</script>
 <!-- Product-page declutter flags. Set a value to 0 to TURN THE WIDGET BACK ON.
      giftOffer = free-notebook offer card (ab-widgets.js lever1)
      userIcon  = grey publisher-logo placeholder (a.pub-img) near "In Stock"
@@ -58,8 +120,11 @@ if(c.length){var s=document.createElement('style');s.id='ab-removed-sections';s.
 	  <meta name="theme-color" content="#00a0db">
 	  <link rel="preconnect" href="https://apisub.amolbooks.com" crossorigin>
 	  <link rel="dns-prefetch" href="//apisub.amolbooks.com">
-	  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
-	  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+	  <link rel="icon" href="/favicon.ico" sizes="any">
+	  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	  <link rel="manifest" href="/site.webmanifest">
 	  <link rel="prefetch" as="image" href="/assets/images/super-deal.webp" type="image/webp">
 	  <link rel="preload" as="image" href="https://apisub.amolbooks.com/api/upload/images/amolbooks-banner-24ee.webp" fetchpriority="high">
 	  <style type="text/css">@font-face{font-family:'Material Icons';font-style:normal;font-weight:400;src:url(https://fonts.gstatic.com/s/materialicons/v145/flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2) format('woff2');}.material-icons{font-family:'Material Icons';font-weight:normal;font-style:normal;font-size:24px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-feature-settings:'liga';-webkit-font-smoothing:antialiased;}</style><style>*{padding:0;margin:0;box-sizing:border-box}body{display:block;width:100%;height:auto;box-sizing:border-box;font-style:normal;font-weight:500;font-size:16px;font-family:hind-siliguri,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,sans-serif,"Apple Color Emoji","Segoe UI Emoji",Segoe UI Symbol,"Noto Color Emoji"!important;padding:0;margin:0;overflow-x:hidden;background-color:#fff}@font-face{font-family:hind-siliguri;src:url(HindSiliguri-Regular.abb045fe788f1297.ttf) format("truetype");font-weight:400 700;font-display:swap}:root{--swiper-theme-color:#007aff}:root{--swiper-navigation-size:44px}</style><link rel="stylesheet" href="styles.1cea6f789614a274.css" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="styles.1cea6f789614a274.css"></noscript>
@@ -228,7 +293,2052 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
     });
   })();
   </script>
-</head>
+<!-- amol-storefront-snippets:start --><script>
+(function () {
+  'use strict';
+
+  var EMAIL_PLACEHOLDER = 'আপনার মোবাইল নাম্বার/ইমেইল দিন';
+  function isAuthPage() {
+    return location.pathname === '/login' || location.pathname === '/registration';
+  }
+
+  function ensureGoogleIdentity() {
+    if (document.querySelector('script[data-amol-google-identity]')) return;
+    /* Google Identity Services is required by the compiled auth components. */
+    var script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.dataset.amolGoogleIdentity = 'true';
+    document.head.appendChild(script);
+  }
+
+  function clarifyEmailLogin() {
+    if (!isAuthPage()) return;
+    ensureGoogleIdentity();
+
+    var username = document.querySelector('input[formcontrolname="username"]');
+    if (username && username.getAttribute('placeholder') !== EMAIL_PLACEHOLDER) {
+      username.setAttribute('placeholder', EMAIL_PLACEHOLDER);
+      username.setAttribute('autocomplete', 'username');
+    }
+
+    var googleAction = document.querySelector('.social-area a');
+    if (!googleAction) return;
+    googleAction.setAttribute('role', 'button');
+    googleAction.setAttribute('tabindex', '0');
+    googleAction.setAttribute('aria-label', 'গুগল দিয়ে লগইন বা একাউন্ট খুলুন');
+  }
+
+  clarifyEmailLogin();
+  new MutationObserver(clarifyEmailLogin).observe(document.documentElement, {
+    childList: true,
+    subtree: true
+  });
+})();
+</script>
+<!-- All Pages. Mobile-only account navigation; existing Angular account actions remain authoritative. -->
+<style>
+  /* Hallmark · pre-emit critique: P5 H5 E4 S5 R5 V4
+   */
+  /* Hallmark · macrostructure: Account Hub · tone: utilitarian · anchor hue: Amol green
+   * contrast: pass (46–50) · honest: pass (56) · chrome: pass (57) · tokens: pass (58)
+   * responsive: pass (36, 59, 61–69) · icons: pass (60)
+   */
+  :root {
+    --ab-account-paper: oklch(98% 0.006 145);
+    --ab-account-paper-2: oklch(95% 0.012 145);
+    --ab-account-ink: oklch(23% 0.018 145);
+    --ab-account-muted: oklch(43% 0.018 145);
+    --ab-account-rule: oklch(86% 0.018 145);
+    --ab-account-accent: oklch(52% 0.145 145);
+    --ab-account-accent-soft: oklch(94% 0.035 145);
+    --ab-account-accent-ink: oklch(99% 0.004 145);
+    --ab-account-danger: oklch(52% 0.19 27);
+    --ab-account-focus: oklch(20% 0.02 145);
+    --ab-account-shadow: oklch(20% 0.02 145 / 0.12);
+    --ab-account-backdrop: oklch(12% 0.015 145 / 0.58);
+    --ab-account-font-display: "hind-siliguri", "Hind Siliguri", sans-serif;
+    --ab-account-font-body: "Anek Bangla", "hind-siliguri", "Hind Siliguri", sans-serif;
+    --ab-account-space-2xs: 0.25rem;
+    --ab-account-space-xs: 0.5rem;
+    --ab-account-space-sm: 0.75rem;
+    --ab-account-space-md: 1rem;
+    --ab-account-space-lg: 1.5rem;
+    --ab-account-space-xl: 2rem;
+    --ab-account-radius-sm: 0.5rem;
+    --ab-account-radius-md: 0.75rem;
+    --ab-account-radius-lg: 1rem;
+    --ab-account-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ab-account-dur-short: 160ms;
+    --ab-account-z-modal: 400;
+  }
+
+  .ab-account-hub,
+  .ab-account-sheet { display: none; }
+
+  @media (max-width: 46.875rem) {
+    html,
+    body { overflow-x: clip; }
+
+    app-account .account-area { margin-top: var(--ab-account-space-sm) !important; }
+    app-account .account-area > .container { padding-inline: var(--ab-account-space-sm) !important; }
+    app-account .account-main {
+      display: block !important;
+      min-width: 0 !important;
+    }
+    app-account .account-main > .account-left,
+    app-account .mobile-bar,
+    app-account > .overlay,
+    app-account .account-main > .overlay {
+      display: none !important;
+      visibility: hidden !important;
+    }
+    app-account .account-right { min-width: 0 !important; }
+
+    .ab-account-hub {
+      display: grid;
+      gap: var(--ab-account-space-sm);
+      margin-block-end: var(--ab-account-space-lg);
+      color: var(--ab-account-ink);
+      font-family: var(--ab-account-font-body);
+    }
+    .ab-account-hub__identity {
+      display: grid;
+      grid-template-columns: 3rem minmax(0, 1fr) auto;
+      align-items: center;
+      gap: var(--ab-account-space-sm);
+      padding: var(--ab-account-space-sm);
+      border: 1px solid var(--ab-account-rule);
+      border-radius: var(--ab-account-radius-lg);
+      background: var(--ab-account-paper);
+      color: var(--ab-account-ink);
+      box-shadow: 0 1px 2px var(--ab-account-shadow);
+      min-height: 4.5rem;
+      overflow: hidden;
+    }
+    .ab-account-hub__avatar {
+      display: block !important;
+      width: 3rem !important;
+      height: 3rem !important;
+      min-width: 3rem;
+      max-width: 3rem !important;
+      max-height: 3rem !important;
+      aspect-ratio: 1;
+      border: 2px solid var(--ab-account-accent);
+      border-radius: 50%;
+      object-fit: cover;
+      background: var(--ab-account-paper-2);
+    }
+    .ab-account-hub__identity > img:not(.ab-account-hub__avatar),
+    .ab-account-hub__copy img { display: none !important; }
+    .ab-account-hub__copy { min-width: 0; }
+    .ab-account-hub__name,
+    .ab-account-hub__section {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .ab-account-hub__name {
+      font-family: var(--ab-account-font-display);
+      font-size: 1.125rem;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    .ab-account-hub__section {
+      color: var(--ab-account-muted);
+      font-size: 0.875rem;
+      line-height: 1.4;
+    }
+    .ab-account-hub__menu,
+    .ab-account-sheet__close,
+    .ab-account-action,
+    .ab-account-quick {
+      min-width: 44px;
+      min-height: 44px;
+      border: 1px solid var(--ab-account-rule);
+      border-radius: var(--ab-account-radius-md);
+      font-family: var(--ab-account-font-body);
+      font-size: 1rem;
+      line-height: 1.2;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ab-account-hub__menu {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--ab-account-space-xs);
+      padding-inline: var(--ab-account-space-sm);
+      background: var(--ab-account-accent);
+      color: var(--ab-account-accent-ink);
+      border-color: var(--ab-account-accent);
+      cursor: pointer;
+      width: 100%;
+      transition: transform var(--ab-account-dur-short) var(--ab-account-ease-out),
+        background-color var(--ab-account-dur-short) var(--ab-account-ease-out);
+    }
+    .ab-account-hub__menu:active,
+    .ab-account-sheet__close:active,
+    .ab-account-action:active,
+    .ab-account-quick:active { transform: translateY(1px); }
+    .ab-account-hub__menu:focus-visible,
+    .ab-account-sheet__close:focus-visible,
+    .ab-account-action:focus-visible,
+    .ab-account-quick:focus-visible {
+      outline: 3px solid var(--ab-account-focus);
+      outline-offset: 2px;
+    }
+    .ab-account-hub__menu:disabled,
+    .ab-account-sheet__close:disabled,
+    .ab-account-action[aria-disabled="true"],
+    .ab-account-quick[aria-disabled="true"] {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    .ab-account-action[data-state="loading"],
+    .ab-account-quick[data-state="loading"],
+    .ab-account-hub__menu[data-state="loading"],
+    .ab-account-sheet__close[data-state="loading"] { opacity: 0.65; cursor: wait; }
+    .ab-account-action[data-state="error"],
+    .ab-account-quick[data-state="error"],
+    .ab-account-hub__menu[data-state="error"],
+    .ab-account-sheet__close[data-state="error"] { border-color: var(--ab-account-danger); }
+    .ab-account-action[data-state="success"],
+    .ab-account-quick[data-state="success"],
+    .ab-account-hub__menu[data-state="success"],
+    .ab-account-sheet__close[data-state="success"] { border-color: var(--ab-account-accent); }
+
+    .ab-account-hub__quick {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--ab-account-space-xs);
+    }
+    .ab-account-quick {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: var(--ab-account-space-2xs);
+      padding: var(--ab-account-space-xs) var(--ab-account-space-2xs);
+      background: var(--ab-account-paper);
+      color: var(--ab-account-ink);
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform var(--ab-account-dur-short) var(--ab-account-ease-out),
+        background-color var(--ab-account-dur-short) var(--ab-account-ease-out);
+    }
+    .ab-account-quick i { color: var(--ab-account-accent); font-size: 1rem; }
+    .ab-account-quick span { font-size: 0.75rem; white-space: nowrap; }
+    .ab-account-quick[aria-current="page"] {
+      border-color: var(--ab-account-accent);
+      background: var(--ab-account-accent-soft);
+      color: var(--ab-account-ink);
+    }
+    .ab-account-quick[aria-current="page"]::after {
+      content: "";
+      width: 1rem;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--ab-account-accent);
+    }
+
+    .ab-account-sheet {
+      width: min(calc(100% - 1.5rem), 28rem);
+      max-width: none;
+      max-height: min(calc(100dvh - 2rem), 42rem);
+      margin: auto;
+      padding: 0;
+      border: 0;
+      border-radius: var(--ab-account-radius-lg);
+      background: var(--ab-account-paper);
+      color: var(--ab-account-ink);
+      box-shadow: 0 12px 40px var(--ab-account-shadow);
+      font-family: var(--ab-account-font-body);
+      overflow: hidden;
+      z-index: var(--ab-account-z-modal);
+    }
+    .ab-account-sheet[open] { display: flex; flex-direction: column; }
+    .ab-account-sheet::backdrop { background: var(--ab-account-backdrop); }
+    .ab-account-sheet__header {
+      display: flex;
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--ab-account-space-md);
+      padding: var(--ab-account-space-md);
+      border-bottom: 1px solid var(--ab-account-rule);
+    }
+    .ab-account-sheet__title {
+      margin: 0;
+      font-family: var(--ab-account-font-display);
+      font-size: 1.25rem;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    .ab-account-sheet__close {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      padding: 0;
+      background: var(--ab-account-paper-2);
+      color: var(--ab-account-ink);
+      cursor: pointer;
+    }
+    .ab-account-sheet__grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--ab-account-space-xs);
+      min-height: 0;
+      padding: var(--ab-account-space-md);
+      padding-bottom: max(var(--ab-account-space-lg), env(safe-area-inset-bottom));
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+    .ab-account-action {
+      display: flex;
+      align-items: center;
+      gap: var(--ab-account-space-sm);
+      padding: var(--ab-account-space-sm);
+      background: var(--ab-account-paper);
+      color: var(--ab-account-ink);
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform var(--ab-account-dur-short) var(--ab-account-ease-out),
+        background-color var(--ab-account-dur-short) var(--ab-account-ease-out);
+    }
+    .ab-account-action i {
+      display: grid;
+      place-items: center;
+      width: 1.5rem;
+      color: var(--ab-account-accent);
+    }
+    .ab-account-action[aria-current="page"] {
+      border-color: var(--ab-account-accent);
+      background: var(--ab-account-accent-soft);
+      color: var(--ab-account-ink);
+    }
+    .ab-account-action--logout { color: var(--ab-account-danger); }
+    .ab-account-action--logout i { color: var(--ab-account-danger); }
+
+    app-account .account-right input:not([type="radio"]):not([type="checkbox"]),
+    app-account .account-right select,
+    app-account .account-right textarea,
+    app-account .account-right button {
+      min-height: 44px;
+      max-width: 100%;
+      font-family: var(--ab-account-font-body) !important;
+    }
+    app-account .account-right input:not([type="radio"]):not([type="checkbox"]),
+    app-account .account-right select,
+    app-account .account-right textarea {
+      font-size: 1rem !important;
+      border-radius: var(--ab-account-radius-sm) !important;
+    }
+    app-account .account-right table { width: 100% !important; table-layout: fixed; }
+    app-account .account-right td,
+    app-account .account-right th { overflow-wrap: anywhere; }
+  }
+
+  .ab-checkout-addresses {
+    margin: 0 0 var(--ab-account-space-md);
+    padding: var(--ab-account-space-sm);
+    border: 1px solid var(--ab-account-rule);
+    border-radius: var(--ab-account-radius-md);
+    background: var(--ab-account-paper);
+    color: var(--ab-account-ink);
+    font-family: var(--ab-account-font-body);
+  }
+  .ab-checkout-addresses__title {
+    margin: 0 0 var(--ab-account-space-xs);
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+  .ab-checkout-addresses__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+    gap: var(--ab-account-space-xs);
+  }
+  .ab-checkout-address {
+    min-height: 44px;
+    padding: var(--ab-account-space-sm);
+    border: 1px solid var(--ab-account-rule);
+    border-radius: var(--ab-account-radius-sm);
+    background: white;
+    color: var(--ab-account-ink);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .ab-checkout-address[aria-pressed="true"] {
+    border-color: var(--ab-account-accent);
+    background: var(--ab-account-accent-soft);
+    box-shadow: inset 0 0 0 1px var(--ab-account-accent);
+  }
+  .ab-checkout-address__name,
+  .ab-checkout-address span { display: block; }
+  .ab-checkout-address__name { font-weight: 700; }
+  .ab-checkout-address span {
+    margin-top: var(--ab-account-space-2xs);
+    color: var(--ab-account-muted);
+    font-size: 0.875rem;
+    line-height: 1.35;
+  }
+  .ab-checkout-address:focus-visible {
+    outline: 3px solid var(--ab-account-focus);
+    outline-offset: 2px;
+  }
+
+  @media (min-width: 23rem) and (max-width: 46.875rem) {
+    .ab-account-hub__quick { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .ab-account-quick { flex-direction: column; }
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .ab-account-hub__menu:hover { background: var(--ab-account-focus); }
+    .ab-account-quick:hover,
+    .ab-account-action:hover { background: var(--ab-account-paper-2); }
+    .ab-account-sheet__close:hover { background: var(--ab-account-rule); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ab-account-hub__menu,
+    .ab-account-sheet__close,
+    .ab-account-action,
+    .ab-account-quick { transition-duration: 0.01ms !important; }
+  }
+</style>
+<script>
+(function () {
+  if (window.__abCustomerAccountMobile) return;
+  window.__abCustomerAccountMobile = true;
+
+  var API_BASE = 'https://apisub.amolbooks.com/api';
+  var checkoutAddresses = null;
+  var checkoutAddressesPending = false;
+  var checkoutProfile = null;
+  var checkoutProfilePending = false;
+
+  /* Capture Angular's real bearer token before its deferred bundle starts.
+     Production builds do not expose Angular component instances. */
+  if (!window.__abCartAuthorizationBridgeInstalled) {
+    window.__abCartAuthorizationBridgeInstalled = true;
+    var nativeSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
+    XMLHttpRequest.prototype.setRequestHeader = function (name, value) {
+      if (String(name || '').toLowerCase() === 'authorization') {
+        var authorization = String(value || '').trim();
+        if (authorization && authorization !== window.__abCartAuthorization) {
+          window.__abCartAuthorization = authorization;
+          window.dispatchEvent(new CustomEvent('ab-cart-authorization'));
+        }
+      }
+      return nativeSetRequestHeader.apply(this, arguments);
+    };
+  }
+
+  var items = [
+    { route: '/account/profile', label: 'আমার অ্যাকাউন্ট', short: 'অ্যাকাউন্ট', icon: 'fa-user' },
+    { route: '/account/orders', label: 'আমার অর্ডার', short: 'অর্ডার', icon: 'fa-shopping-bag' },
+    { action: 'address', label: 'ঠিকানা', short: 'ঠিকানা', icon: 'fa-map-marker' },
+    { route: '/account/notification', label: 'নোটিফিকেশন', short: 'নোটিফিকেশন', icon: 'fa-bell' },
+    { route: '/account/wishlist', label: 'উপহার তালিকা', short: 'উইশলিস্ট', icon: 'fa-heart' },
+    { route: '/account/review', label: 'আমার রেটিং ও রিভিউ', short: 'রিভিউ', icon: 'fa-star' },
+    { route: '/account/transactions', label: 'আমার লেনদেন', short: 'লেনদেন', icon: 'fa-credit-card' },
+    { action: 'logout', label: 'লগআউট', short: 'লগআউট', icon: 'fa-sign-out' }
+  ];
+  var quickRoutes = ['/account/orders', 'address', '/account/wishlist', '/account/review'];
+  var scheduled = false;
+
+  function isAccountPage() { return /^\/account(?:\/|$)/.test(location.pathname); }
+  function escapeHtml(value) {
+    return String(value || '').replace(/[&<>"']/g, function (char) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char];
+    });
+  }
+  function currentItem() {
+    return items.find(function (item) { return item.route === location.pathname; }) || items[0];
+  }
+  function itemHtml(item, className, useShort) {
+    var key = item.route || item.action;
+    var active = item.route === location.pathname ? ' aria-current="page"' : '';
+    var logout = item.action === 'logout' ? ' ab-account-action--logout' : '';
+    var content = '<i class="fa ' + item.icon + '" aria-hidden="true"></i><span>' + escapeHtml(useShort ? item.short : item.label) + '</span>';
+    if (item.action) {
+      return '<button type="button" class="' + className + logout + '" data-account-target="' + key + '">' + content + '</button>';
+    }
+    return '<a class="' + className + '" href="' + item.route + '" data-account-target="' + key + '"' + active + '>' + content + '</a>';
+  }
+  function buildShell() {
+    var shell = document.createElement('section');
+    shell.className = 'ab-account-hub';
+    shell.setAttribute('aria-label', 'কাস্টমার অ্যাকাউন্ট নেভিগেশন');
+    shell.innerHTML = '<div class="ab-account-hub__identity">' +
+      '<img class="ab-account-hub__avatar" alt="প্রোফাইল ছবি">' +
+      '<div class="ab-account-hub__copy"><strong class="ab-account-hub__name">আমার অ্যাকাউন্ট</strong>' +
+      '<span class="ab-account-hub__section"></span></div>' +
+      '<button class="ab-account-hub__menu" type="button" aria-haspopup="dialog" aria-controls="ab-account-sheet">' +
+      '<i class="fa fa-bars" aria-hidden="true"></i><span>সব অপশন</span></button></div>' +
+      '<nav class="ab-account-hub__quick" aria-label="দ্রুত লিংক">' +
+      items.filter(function (item) { return quickRoutes.indexOf(item.route || item.action) !== -1; })
+        .map(function (item) { return itemHtml(item, 'ab-account-quick', true); }).join('') + '</nav>';
+    return shell;
+  }
+  function buildDialog() {
+    var dialog = document.createElement('dialog');
+    dialog.id = 'ab-account-sheet';
+    dialog.className = 'ab-account-sheet';
+    dialog.setAttribute('aria-labelledby', 'ab-account-sheet-title');
+    dialog.innerHTML = '<div class="ab-account-sheet__header"><h2 class="ab-account-sheet__title" id="ab-account-sheet-title">অ্যাকাউন্ট মেনু</h2>' +
+      '<button class="ab-account-sheet__close" type="button" aria-label="মেনু বন্ধ করুন"><span aria-hidden="true">×</span></button></div>' +
+      '<nav class="ab-account-sheet__grid" aria-label="অ্যাকাউন্ট অপশন">' +
+      items.map(function (item) { return itemHtml(item, 'ab-account-action', false); }).join('') + '</nav>';
+    document.body.appendChild(dialog);
+    dialog.querySelector('.ab-account-sheet__close').addEventListener('click', function () { dialog.close(); });
+    dialog.addEventListener('click', function (event) { if (event.target === dialog) dialog.close(); });
+    return dialog;
+  }
+  function activate(target) {
+    var dialog = document.getElementById('ab-account-sheet');
+    if (dialog && dialog.open) dialog.close();
+    var nativeItems = document.querySelectorAll('app-account .account-left .side-bar nav li');
+    if (target === 'address') {
+      var address = nativeItems[2] && nativeItems[2].querySelector('a');
+      if (address) address.click();
+      return;
+    }
+    if (target === 'logout') {
+      var logout = nativeItems[nativeItems.length - 1];
+      if (logout) logout.click();
+      return;
+    }
+    var nativeLink = document.querySelector('app-account .account-left a[href="' + target + '"]');
+    if (nativeLink) nativeLink.click();
+    else window.location.assign(target);
+  }
+  function findCheckoutComponent(host) {
+    var context = host && host.__ngContext__;
+    if (!context || typeof context.length !== 'number') return null;
+    for (var index = 0; index < context.length; index += 1) {
+      var value = context[index];
+      if (value && value.formData && typeof value.formData.patchValue === 'function' &&
+          typeof value.getAllArea === 'function' && typeof value.getAllZone === 'function' &&
+          typeof value.getUserAddress === 'function') return value;
+    }
+    return null;
+  }
+  function addressLine(address) {
+    return [address.address, address.zone && address.zone.name, address.area && address.area.name, address.division && address.division.name]
+      .filter(Boolean).join(', ');
+  }
+  function checkoutAuthenticated() {
+    try {
+      return Boolean(window.__abCartAuthorization ||
+        localStorage.getItem('Amolbooks_USER_1_1') || localStorage.getItem('ALAMBOOKS_USER_1_1') ||
+        localStorage.getItem('Amolbooks_TOKEN_1') || localStorage.getItem('ALAMBOOKS_TOKEN_1'));
+    } catch (_) {
+      return false;
+    }
+  }
+  function checkoutAuthorization() {
+    var authorization = String(window.__abCartAuthorization || '').trim();
+    if (!authorization) return '';
+    return /^Bearer\s+/i.test(authorization) ? authorization : 'Bearer ' + authorization;
+  }
+  function setCheckoutControl(name, value) {
+    var control = document.querySelector('app-checkout [formcontrolname="' + name + '"]');
+    if (!control) return;
+    var prototype = control.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+    var setter = Object.getOwnPropertyDescriptor(prototype, 'value');
+    if (setter && setter.set) setter.set.call(control, value == null ? '' : String(value));
+    else control.value = value == null ? '' : String(value);
+    control.dispatchEvent(new Event('input', { bubbles: true }));
+    control.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  function selectCheckoutDelivery(value) {
+    var option = document.querySelector('app-checkout input[type="radio"][value="' + value + '"]');
+    if (option && !option.checked) option.click();
+  }
+  function loadCheckoutAddresses() {
+    var authorization = checkoutAuthorization();
+    if (!authorization || checkoutAddressesPending || Array.isArray(checkoutAddresses)) return;
+    checkoutAddressesPending = true;
+    fetch(API_BASE + '/user/get-user-address', {
+      headers: { Authorization: authorization, Accept: 'application/json' },
+      credentials: 'omit'
+    }).then(function (response) {
+      if (!response.ok) throw new Error('Saved addresses unavailable');
+      return response.json();
+    }).then(function (result) {
+      checkoutAddresses = result && Array.isArray(result.data) ? result.data : [];
+      scheduleMount();
+    }).catch(function () {
+      checkoutAddresses = null;
+    }).finally(function () {
+      checkoutAddressesPending = false;
+    });
+  }
+  function loadCheckoutProfile() {
+    var authorization = checkoutAuthorization();
+    if (!authorization || checkoutProfilePending || checkoutProfile) return;
+    checkoutProfilePending = true;
+    fetch(API_BASE + '/user/logged-in-user-data?select=name%20phoneNo%20username', {
+      headers: { Authorization: authorization, Accept: 'application/json' },
+      credentials: 'omit'
+    }).then(function (response) {
+      if (!response.ok) throw new Error('Profile unavailable');
+      return response.json();
+    }).then(function (result) {
+      checkoutProfile = result && result.data || {};
+      scheduleMount();
+    }).catch(function () {
+      checkoutProfile = {};
+    }).finally(function () {
+      checkoutProfilePending = false;
+    });
+  }
+  function applyCheckoutAddress(component, address, picker) {
+    if (!address) return;
+    var divisionName = String(address.division && address.division.name || '');
+    var areaName = String(address.area && address.area.name || '');
+    var dhaka = /Dhaka|ঢাকা/i.test(divisionName);
+    var dhakaOutskirts = /Savar|Dohar|Nawabganj|Keraniganj|Dhamrai|সাভার|দোহার|নবাবগঞ্জ|কেরানীগঞ্জ|ধামরাই/i.test(areaName);
+    var deliveryOption = dhaka && !dhakaOutskirts ? '1' : '2';
+    if (component) {
+      component.homeAddress = address;
+      component.formData.patchValue({
+        name: address.name || component.user && component.user.name || '',
+        phoneNo: address.phone || address.phoneNo || component.user && component.user.phoneNo || '',
+        division: address.division && address.division._id || null,
+        area: address.area && address.area._id || null,
+        zone: address.zone && address.zone._id || null,
+        address: address.address || '',
+        addressType: address.addressType || 'home',
+        deliveryOptions: deliveryOption
+      });
+    } else {
+      setCheckoutControl('name', address.name || checkoutProfile && checkoutProfile.name || '');
+      if (address.phone || address.phoneNo || checkoutProfile && (checkoutProfile.phoneNo || checkoutProfile.username)) {
+        setCheckoutControl('phoneNo', address.phone || address.phoneNo || checkoutProfile.phoneNo || checkoutProfile.username);
+      }
+      setCheckoutControl('address', address.address || '');
+      selectCheckoutDelivery(deliveryOption);
+    }
+    if (component && !component.__abSavedAddressDeliveryCharge && typeof component.calculateDeliveryCharge === 'function') {
+      var calculateDeliveryCharge = component.calculateDeliveryCharge;
+      component.calculateDeliveryCharge = function () {
+        var shipping = this.shippingCharge;
+        var option = this.formData && this.formData.value && this.formData.value.deliveryOptions;
+        var base = Number(shipping && (option === '1' ? shipping.deliveryInDhaka : shipping.deliveryOutsideDhaka));
+        return Number.isFinite(base) && base > 0 ? base : calculateDeliveryCharge.call(this);
+      };
+      component.__abSavedAddressDeliveryCharge = true;
+    }
+    if (component && address.division && address.division._id) component.getAllArea(address.division._id);
+    if (component && address.area && address.area._id) component.getAllZone(address.area._id);
+    picker.dataset.selectedAddress = address._id || '';
+    picker.querySelectorAll('.ab-checkout-address').forEach(function (button) {
+      button.setAttribute('aria-pressed', String(button.dataset.addressId === picker.dataset.selectedAddress));
+    });
+  }
+  function mountCheckoutAddresses() {
+    var oldPicker = document.querySelector('.ab-checkout-addresses');
+    if (location.pathname !== '/checkout') {
+      if (oldPicker) oldPicker.remove();
+      return;
+    }
+    var host = document.querySelector('app-checkout');
+    var component = findCheckoutComponent(host);
+    var addresses = component && component.addresses;
+    if (!Array.isArray(addresses)) addresses = checkoutAddresses;
+    var formArea = host && host.querySelector('.address-form-area');
+    if (!formArea) return;
+    if (!component && checkoutAuthenticated()) {
+      loadCheckoutAddresses();
+      loadCheckoutProfile();
+    }
+    if (!Array.isArray(addresses)) {
+      if (component && checkoutAuthenticated() && !component.__abRequestedSavedAddresses) {
+        component.__abRequestedSavedAddresses = true;
+        component.getUserAddress();
+      }
+      return;
+    }
+    if (!addresses.length) return;
+    var signature = addresses.map(function (address) { return address._id; }).join('|');
+    var picker = oldPicker;
+    if (!picker || picker.dataset.signature !== signature) {
+      if (picker) picker.remove();
+      picker = document.createElement('section');
+      picker.className = 'ab-checkout-addresses';
+      picker.dataset.signature = signature;
+      picker.setAttribute('aria-labelledby', 'ab-checkout-addresses-title');
+      picker.innerHTML = '<h3 class="ab-checkout-addresses__title" id="ab-checkout-addresses-title">সংরক্ষিত ঠিকানা থেকে বেছে নিন</h3>' +
+        '<div class="ab-checkout-addresses__list">' + addresses.map(function (address) {
+          return '<button type="button" class="ab-checkout-address" data-address-id="' + escapeHtml(address._id) + '" aria-pressed="false">' +
+            '<div class="ab-checkout-address__name">' + escapeHtml(address.name || address.addressType || 'ঠিকানা') + '</div>' +
+            '<span>' + escapeHtml(addressLine(address)) + '</span></button>';
+        }).join('') + '</div>';
+      var heading = formArea.querySelector('.address-form-top');
+      if (heading && heading.nextSibling) formArea.insertBefore(picker, heading.nextSibling);
+      else formArea.insertBefore(picker, formArea.firstChild);
+      picker.addEventListener('click', function (event) {
+        var button = event.target.closest('.ab-checkout-address');
+        if (!button) return;
+        var selected = addresses.find(function (address) { return address._id === button.dataset.addressId; });
+        applyCheckoutAddress(component, selected, picker);
+      });
+      var preferred = addresses.find(function (address) { return address.setDefaultAddress; }) ||
+        addresses.find(function (address) { return address.addressType === 'home'; }) || addresses[0];
+      applyCheckoutAddress(component, preferred, picker);
+    }
+    picker.querySelectorAll('.ab-checkout-address img').forEach(function (image) {
+      var wrapper = image.parentElement;
+      image.remove();
+      if (wrapper && wrapper !== picker && !wrapper.textContent.trim() && !wrapper.querySelector('img')) wrapper.remove();
+    });
+    if (!component && checkoutProfile && !picker.dataset.profileApplied) {
+      var selectedId = picker.dataset.selectedAddress;
+      var selectedAddress = addresses.find(function (address) { return address._id === selectedId; }) || addresses[0];
+      picker.dataset.profileApplied = 'true';
+      applyCheckoutAddress(null, selectedAddress, picker);
+    }
+    var phoneControl = !component && document.querySelector('app-checkout [formcontrolname="phoneNo"]');
+    if (phoneControl && !phoneControl.value && checkoutProfile && (checkoutProfile.phoneNo || checkoutProfile.username)) {
+      setCheckoutControl('phoneNo', checkoutProfile.phoneNo || checkoutProfile.username);
+    }
+  }
+  function sync(shell) {
+    var nativeImage = document.querySelector('app-account .account-left .user-img img');
+    var nativeName = document.querySelector('app-account .account-left .user-text h3');
+    var avatar = shell.querySelector('.ab-account-hub__avatar');
+    var name = shell.querySelector('.ab-account-hub__name');
+    var section = shell.querySelector('.ab-account-hub__section');
+    var active = currentItem();
+    var src = nativeImage && nativeImage.currentSrc || nativeImage && nativeImage.src;
+    if (src && avatar.src !== src) avatar.src = src;
+    var userName = nativeName && nativeName.textContent.trim();
+    if (userName && name.textContent !== userName) name.textContent = userName;
+    if (section.textContent !== active.label) section.textContent = active.label;
+    shell.querySelectorAll('[data-account-target]').forEach(function (link) {
+      var selected = link.getAttribute('data-account-target') === active.route;
+      if (selected && link.getAttribute('aria-current') !== 'page') link.setAttribute('aria-current', 'page');
+      else if (!selected && link.hasAttribute('aria-current')) link.removeAttribute('aria-current');
+    });
+    var dialog = document.getElementById('ab-account-sheet');
+    if (dialog) dialog.querySelectorAll('[data-account-target]').forEach(function (link) {
+      var selected = link.getAttribute('data-account-target') === active.route;
+      if (selected && link.getAttribute('aria-current') !== 'page') link.setAttribute('aria-current', 'page');
+      else if (!selected && link.hasAttribute('aria-current')) link.removeAttribute('aria-current');
+    });
+  }
+  function mount() {
+    scheduled = false;
+    var shell = document.querySelector('.ab-account-hub');
+    var dialog = document.getElementById('ab-account-sheet');
+    mountCheckoutAddresses();
+    if (!isAccountPage()) {
+      if (shell) shell.remove();
+      if (dialog) dialog.remove();
+      return;
+    }
+    var accountRight = document.querySelector('app-account .account-right');
+    if (!accountRight) return;
+    if (!shell) {
+      shell = buildShell();
+      accountRight.insertBefore(shell, accountRight.firstChild);
+      shell.querySelector('.ab-account-hub__menu').addEventListener('click', function () {
+        var menu = document.getElementById('ab-account-sheet') || buildDialog();
+        menu.showModal();
+        requestAnimationFrame(function () {
+          var first = menu.querySelector('[aria-current="page"]') || menu.querySelector('.ab-account-action');
+          if (first) first.focus({ preventScroll: true });
+        });
+      });
+    }
+    if (!dialog) dialog = buildDialog();
+    sync(shell);
+  }
+  function scheduleMount() {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(mount);
+  }
+  document.addEventListener('click', function (event) {
+    var link = event.target && event.target.closest && event.target.closest('[data-account-target]');
+    if (!link) return;
+    event.preventDefault();
+    activate(link.getAttribute('data-account-target'));
+  });
+  window.addEventListener('popstate', scheduleMount);
+  window.addEventListener('ab-cart-authorization', scheduleMount);
+  new MutationObserver(scheduleMount).observe(document.documentElement, { childList: true, subtree: true });
+  window.setInterval(function () {
+    if (location.pathname === '/checkout') scheduleMount();
+  }, 800);
+  scheduleMount();
+})();
+</script>
+<!-- All Pages. Review upload bridge for previews plus capped stale-review recovery. -->
+<script>
+(function () {
+  if (window.__abReviewReliability) return;
+  window.__abReviewReliability = true;
+
+  var host = location.hostname.toLowerCase();
+  var preview = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(host) ||
+    /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host) ||
+    host.slice(-18) === '.trycloudflare.com';
+  var cachedImages = {};
+  var reviewRecords = {};
+  var activeUploads = 0;
+  var failedReviewSlug = '';
+  var repairTimer = 0;
+
+  function slug() {
+    var match = location.pathname.match(/^\/product-details\/([^/?#]+)/);
+    return match ? match[1] : '';
+  }
+  function requestPath(url) {
+    var link = document.createElement('a');
+    try { link.href = String(url); return link.pathname; } catch (_) { return ''; }
+  }
+  function responsePayload(xhr) {
+    try { return JSON.parse(xhr.responseText); } catch (_) { return null; }
+  }
+  function normalizeReviewPart(value) {
+    return String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
+  }
+  function reviewRecordKey(name, review) {
+    return normalizeReviewPart(name) + '\u001f' + normalizeReviewPart(review);
+  }
+  function cacheReviewRecords(list) {
+    var next = {};
+    for (var i = 0; i < list.length; i++) {
+      var record = list[i] || {};
+      var name = (record.user && record.user.name) || record.userName || record.name || '';
+      var key = reviewRecordKey(name, record.review);
+      if (normalizeReviewPart(name) && normalizeReviewPart(record.review)) {
+        if (!next[key]) next[key] = [];
+        next[key].push(Array.isArray(record.images) ? record.images.slice() : []);
+      }
+    }
+    reviewRecords = next;
+    scheduleReviewImageRepair();
+  }
+  function removeLegacyImageStrips(card) {
+    var strips = card.querySelectorAll('div[style]');
+    for (var i = 0; i < strips.length; i++) {
+      var style = strips[i].getAttribute('style') || '';
+      if (strips[i].querySelector('img') && /display\s*:\s*flex/i.test(style) && /border-top\s*:\s*1px/i.test(style)) {
+        strips[i].parentNode.removeChild(strips[i]);
+      }
+    }
+  }
+  function closeReviewLightbox() {
+    var lightbox = document.getElementById('arr-review-lightbox');
+    if (!lightbox) return;
+    document.removeEventListener('keydown', lightbox.__arrKeydown);
+    document.body.style.overflow = lightbox.getAttribute('data-arr-overflow') || '';
+    if (lightbox.parentNode) lightbox.parentNode.removeChild(lightbox);
+  }
+  function openReviewLightbox(url) {
+    closeReviewLightbox();
+    var lightbox = document.createElement('div');
+    var image = document.createElement('img');
+    var close = document.createElement('button');
+    lightbox.id = 'arr-review-lightbox';
+    lightbox.className = 'arr-review-lightbox';
+    lightbox.setAttribute('role', 'dialog');
+    lightbox.setAttribute('aria-modal', 'true');
+    lightbox.setAttribute('aria-label', 'রিভিউ ছবির বড় দৃশ্য');
+    lightbox.setAttribute('data-arr-overflow', document.body.style.overflow || '');
+    image.src = url;
+    image.alt = 'রিভিউ ছবি';
+    close.type = 'button';
+    close.className = 'arr-review-lightbox-close';
+    close.setAttribute('aria-label', 'ছবি বন্ধ করুন');
+    close.textContent = '×';
+    close.addEventListener('click', closeReviewLightbox);
+    lightbox.addEventListener('click', function (event) {
+      if (event.target === lightbox) closeReviewLightbox();
+    });
+    lightbox.__arrKeydown = function (event) {
+      if (event.key === 'Escape') closeReviewLightbox();
+    };
+    document.addEventListener('keydown', lightbox.__arrKeydown);
+    lightbox.appendChild(close);
+    lightbox.appendChild(image);
+    document.body.appendChild(lightbox);
+    document.body.style.overflow = 'hidden';
+    close.focus();
+  }
+  function renderReviewImages() {
+    repairTimer = 0;
+    window._riuMap = {};
+    window._riuInject = scheduleReviewImageRepair;
+    var cards = document.querySelectorAll('.user-review');
+    var positions = {};
+    for (var i = 0; i < cards.length; i++) {
+      var card = cards[i];
+      removeLegacyImageStrips(card);
+      card.setAttribute('data-riu-done', '1');
+      var review = card.querySelector('.user-review-data > p');
+      var target = card.querySelector('.review-product-img-main');
+      if (!review || !target) continue;
+      var names = card.querySelectorAll('.user-name span, .user-name a');
+      var images = null;
+      for (var n = 0; n < names.length && images === null; n++) {
+        var recordKey = reviewRecordKey(names[n].textContent, review.textContent);
+        var records = reviewRecords[recordKey];
+        var position = positions[recordKey] || 0;
+        if (records && position < records.length) {
+          images = records[position];
+          positions[recordKey] = position + 1;
+        }
+      }
+      if (images === null) continue;
+      var signature = images.join('\u001e');
+      if (target.getAttribute('data-arr-signature') === signature &&
+          target.querySelectorAll('.arr-review-image').length === images.length) continue;
+      target.textContent = '';
+      target.setAttribute('data-arr-signature', signature);
+      for (var j = 0; j < images.length; j++) {
+        var link = document.createElement('a');
+        var image = document.createElement('img');
+        link.className = 'arr-review-image';
+        link.href = images[j];
+        link.setAttribute('aria-label', 'রিভিউ ছবিটি বড় করে দেখুন');
+        link.addEventListener('click', function (event) {
+          event.preventDefault();
+          openReviewLightbox(this.href);
+        });
+        image.src = images[j];
+        image.alt = 'রিভিউ ছবি';
+        image.loading = 'lazy';
+        link.appendChild(image);
+        target.appendChild(link);
+      }
+    }
+  }
+  function scheduleReviewImageRepair() {
+    clearTimeout(repairTimer);
+    repairTimer = setTimeout(renderReviewImages, 60);
+  }
+  function markReviewDialog() {
+    var app = document.querySelector('app-rating-and-review');
+    if (!app) return;
+    var pane = app.closest ? app.closest('.cdk-overlay-pane') : null;
+    if (pane) pane.classList.add('arr-review-dialog');
+  }
+  function approvalToast() {
+    var old = document.getElementById('arr-review-approved');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    var toast = document.createElement('div');
+    toast.id = 'arr-review-approved';
+    toast.className = 'arr-review-toast';
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+    toast.textContent = 'আপনার রিভিউ অনুমোদনের জন্য পাঠানো হয়েছে।';
+    document.body.appendChild(toast);
+    setTimeout(function () { toast.classList.add('arr-review-toast-visible'); }, 20);
+    setTimeout(function () {
+      toast.classList.remove('arr-review-toast-visible');
+      setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 250);
+    }, 4500);
+  }
+  function reviewSubmit() {
+    return document.querySelector('app-rating-and-review form button[type="submit"]');
+  }
+  function updateSubmit() {
+    var button = reviewSubmit();
+    if (!button) return;
+    button.disabled = activeUploads > 0;
+    button.setAttribute('aria-busy', String(activeUploads > 0));
+  }
+  function uploadError() {
+    var status = document.getElementById('riu-status');
+    if (!status) return;
+    status.style.color = '#b42318';
+    status.textContent = 'ছবি আপলোড করা যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।';
+  }
+  function reviewError() {
+    var status = document.getElementById('riu-status');
+    var button = reviewSubmit();
+    if (!status && button && button.parentNode) {
+      status = document.createElement('div');
+      status.id = 'arr-review-status';
+      button.parentNode.insertBefore(status, button.nextSibling);
+    }
+    if (!status) return;
+    status.style.color = '#b42318';
+    status.textContent = 'রিভিউ জমা হয়নি। আবার চেষ্টা করুন—আপনার ছবিটি সংরক্ষিত আছে।';
+  }
+  function showReviewImageLimit() {
+    var status = document.getElementById('riu-status');
+    if (!status) return;
+    status.setAttribute('data-arr-limit', 'সর্বোচ্চ ৫টি ছবি যোগ করা যাবে।');
+    clearTimeout(window.__arrReviewLimitTimer);
+    window.__arrReviewLimitTimer = setTimeout(function () {
+      status.removeAttribute('data-arr-limit');
+    }, 6000);
+  }
+  function enforceReviewImageLimit(event) {
+    var input = event.target;
+    if (!input || !input.matches || !input.matches('#riu-file-input') || !input.files) return;
+    var available = 5 - document.querySelectorAll('#riu-preview > div').length;
+    if (input.files.length <= available) return;
+    showReviewImageLimit();
+    if (available > 0 && typeof DataTransfer === 'function') {
+      var limited = new DataTransfer();
+      for (var i = 0; i < available; i++) limited.items.add(input.files[i]);
+      input.files = limited.files;
+      return;
+    }
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    input.value = '';
+  }
+  document.addEventListener('change', enforceReviewImageLimit, true);
+
+  if (window.XMLHttpRequest) {
+    var nativeOpen = XMLHttpRequest.prototype.open;
+    var nativeSend = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.open = function (method, url) {
+      var path = requestPath(url);
+      this.__arrMethod = String(method || '').toUpperCase();
+      this.__arrPath = path;
+      this.__arrSlug = slug();
+      if (this.__arrMethod === 'POST' && /^\/api\/(?:v2\/)?upload\/single-image$/.test(path)) {
+        this.__arrUpload = true;
+        var args = Array.prototype.slice.call(arguments);
+        args[1] = preview
+          ? '/storefront-review-upload?convert=yes&width=300&quality=85'
+          : 'https://apisub.amolbooks.com/api/v2/upload/single-image?convert=yes&width=300&quality=85';
+        nativeOpen.apply(this, args);
+        this.__arrUploadStarted = true;
+        this.timeout = 90000;
+        activeUploads++;
+        updateSubmit();
+      } else {
+        nativeOpen.apply(this, arguments);
+      }
+      if (this.__arrMethod === 'POST' && /\/review\/get-all-review-by-query$/.test(path)) {
+        this.__arrReviewList = true;
+      }
+      var xhr = this;
+      this.addEventListener('loadend', function () {
+        if (xhr.__arrUploadStarted && !xhr.__arrUploadFinished) {
+          xhr.__arrUploadFinished = true;
+          activeUploads = Math.max(0, activeUploads - 1);
+          updateSubmit();
+          if (xhr.status < 200 || xhr.status >= 300) uploadError();
+        }
+        var sameReviewPage = xhr.__arrSlug === slug();
+        var payload = (xhr.__arrReviewList || xhr.__arrReviewKey) ? responsePayload(xhr) : null;
+        if (xhr.__arrReviewList && sameReviewPage) {
+          if (xhr.status < 200 || xhr.status >= 300 || !payload || payload.success === false || !Array.isArray(payload.data)) {
+            failedReviewSlug = xhr.__arrSlug;
+            retryMissingReviews();
+          } else {
+            if (failedReviewSlug === xhr.__arrSlug) failedReviewSlug = '';
+            cacheReviewRecords(payload.data);
+          }
+        }
+        if (xhr.__arrReviewKey && sameReviewPage && xhr.status >= 200 && xhr.status < 300 && payload && payload.success === true) {
+          delete cachedImages[xhr.__arrReviewKey];
+          approvalToast();
+        } else if (xhr.__arrReviewKey && sameReviewPage) {
+          reviewError();
+        }
+      });
+    };
+    XMLHttpRequest.prototype.send = function (body) {
+      if (this.__arrUpload && body instanceof FormData) {
+        if (!body.has('convert')) body.append('convert', 'yes');
+        if (!body.has('width')) body.append('width', '300');
+        if (!body.has('quality')) body.append('quality', '85');
+        if (!this.__arrUploadStarted) {
+          this.__arrUploadStarted = true;
+          this.timeout = 90000;
+          activeUploads++;
+          updateSubmit();
+        }
+      }
+      if (this.__arrMethod === 'POST' && this.__arrPath.indexOf('/review/add') !== -1 && typeof body === 'string') {
+        try {
+          var data = JSON.parse(body);
+          var key = this.__arrSlug;
+          if (data.images && data.images.length) cachedImages[key] = data.images.slice();
+          else if (cachedImages[key] && cachedImages[key].length) data.images = cachedImages[key].slice();
+          this.__arrReviewKey = key;
+          body = JSON.stringify(data);
+        } catch (_) {}
+      }
+      try {
+        return nativeSend.call(this, body);
+      } catch (error) {
+        if (this.__arrUploadStarted && !this.__arrUploadFinished) {
+          this.__arrUploadFinished = true;
+          activeUploads = Math.max(0, activeUploads - 1);
+          updateSubmit();
+          uploadError();
+        }
+        throw error;
+      }
+    };
+    new MutationObserver(function (mutations) {
+      updateSubmit();
+      markReviewDialog();
+      for (var i = 0; i < mutations.length; i++) {
+        if (mutations[i].addedNodes.length) { scheduleReviewImageRepair(); break; }
+      }
+    }).observe(document.documentElement, { childList: true, subtree: true });
+  }
+
+  var retrySlug = '';
+  var retries = 0;
+  var retryPending = false;
+  function retryMissingReviews() {
+    var key = slug();
+    if (key !== retrySlug) { retrySlug = key; retries = 0; retryPending = false; }
+    if (!key || retries >= 2 || retryPending || document.querySelector('.user-review')) return;
+    var counts = document.querySelector('.ab-rating-counts, app-product-details .product-rating');
+    var match = counts && counts.textContent.match(/([0-9০-৯]+)\s*(?:Reviews?|রিভিউ)/i);
+    var count = match && Number(match[1].replace(/[০-৯]/g, function (digit) { return '০১২৩৪৫৬৭৮৯'.indexOf(digit); }));
+    if (failedReviewSlug !== key && (!count || count < 1)) return;
+    var tabs = document.querySelectorAll('.product-menu button, [role="tab"], .mat-tab-label, .mat-mdc-tab');
+    var reviewTab = null;
+    var otherTab = null;
+    for (var i = 0; i < tabs.length; i++) {
+      if (!reviewTab && /review|রিভিউ/i.test(tabs[i].textContent || '')) reviewTab = tabs[i];
+      else if (!otherTab && !tabs[i].disabled && tabs[i].getAttribute('aria-disabled') !== 'true') otherTab = tabs[i];
+    }
+    if (!reviewTab) return;
+    retryPending = true;
+    retries++;
+    setTimeout(function () {
+      if (otherTab) otherTab.click();
+      setTimeout(function () { reviewTab.click(); retryPending = false; }, otherTab ? 450 : 0);
+    }, 500);
+  }
+  setInterval(retryMissingReviews, 2500);
+  markReviewDialog();
+  scheduleReviewImageRepair();
+})();
+</script>
+<style>
+  .arr-review-toast {
+    position: fixed; left: 50%; bottom: 24px; z-index: 100000;
+    max-width: calc(100vw - 32px); padding: 12px 18px; border-radius: 8px;
+    background: #087a34; color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,.22);
+    font: 500 16px/1.45 hind-siliguri, sans-serif; text-align: center;
+    opacity: 0; transform: translate(-50%, 12px); transition: opacity .2s, transform .2s;
+  }
+  .arr-review-toast.arr-review-toast-visible { opacity: 1; transform: translate(-50%, 0); }
+  .arr-review-image { display: block; min-width: 0; }
+  .arr-review-image img { display: block; width: 100%; height: 75px; object-fit: cover; image-orientation: from-image; border-radius: 6px; }
+  .arr-review-lightbox {
+    position: fixed; inset: 0; z-index: 100001; display: flex; align-items: center; justify-content: center;
+    padding: 56px 16px 24px; background: rgba(0,0,0,.88); box-sizing: border-box;
+  }
+  .arr-review-lightbox img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; }
+  .arr-review-lightbox-close {
+    position: absolute; top: max(12px, env(safe-area-inset-top)); right: 12px; width: 44px; height: 44px;
+    border: 0; border-radius: 50%; background: rgba(255,255,255,.16); color: #fff;
+    font: 400 34px/40px Arial, sans-serif; cursor: pointer;
+  }
+  #riu-status[data-arr-limit]::after { content: attr(data-arr-limit); display: block; color: #b42318; }
+
+  @media (max-width: 430px) {
+    .cdk-overlay-pane.arr-review-dialog { width: calc(100vw - 16px) !important; max-width: calc(100vw - 16px) !important; }
+    .arr-review-dialog mat-dialog-container,
+    .arr-review-dialog mat-mdc-dialog-container,
+    .arr-review-dialog .mat-mdc-dialog-container { max-height: calc(100dvh - 16px) !important; border-radius: 12px; overflow: auto; }
+    .arr-review-dialog app-rating-and-review > .container { padding: 12px !important; }
+    .arr-review-dialog app-rating-and-review .input-area { padding: 0 !important; margin: 0 !important; }
+    .arr-review-dialog app-rating-and-review .form { margin-top: 12px !important; }
+    .arr-review-dialog app-rating-and-review .rating-form-field { width: 100% !important; max-width: none !important; margin-left: 0 !important; }
+    .arr-review-dialog app-rating-and-review textarea { min-height: 96px; max-height: 24vh; }
+    .arr-review-dialog app-star-rating button,
+    .arr-review-dialog #riu-btn { min-width: 44px; min-height: 44px; }
+    .arr-review-dialog #riu-container { margin-top: 8px !important; }
+    .arr-review-dialog #riu-preview img { width: 64px !important; height: 64px !important; image-orientation: from-image; }
+    .arr-review-dialog app-rating-and-review .action {
+      position: sticky; bottom: 0; z-index: 2; display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px; width: 100%; margin-top: 12px !important; padding: 10px 0 0 !important; background: #fff;
+    }
+    .arr-review-dialog app-rating-and-review .action button { width: 100%; min-height: 44px; }
+    .arr-review-toast { bottom: 16px; width: calc(100vw - 32px); font-size: 15px; }
+  }
+</style>
+<!-- Local preview only: load before Angular so public catalogue reads use the existing proxy. -->
+<script>
+(function () {
+  'use strict';
+  var host = location.hostname;
+  var local = host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host === '::1' ||
+    /^10\./.test(host) || /^192\.168\./.test(host) || /^172\.(1[6-9]|2\d|3[0-1])\./.test(host);
+  if (!local || window.__abLocalCatalogueRequests || !window.XMLHttpRequest) return;
+  window.__abLocalCatalogueRequests = true;
+  var open = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function (method, url) {
+    var args = Array.prototype.slice.call(arguments);
+    try {
+      var target = new URL(url, location.href);
+      var verb = String(method).toUpperCase();
+      if (target.origin === 'https://apisub.amolbooks.com' &&
+          ((verb === 'POST' && target.pathname === '/api/product/get-all') ||
+           (verb === 'GET' && target.pathname === '/api/product/get-all-data'))) {
+        args[1] = location.origin + '/storefront-catalog' + target.pathname.slice(4) + target.search;
+      }
+    } catch (_error) {}
+    return open.apply(this, args);
+  };
+})();
+</script>
+<!-- All Pages. No API calls: cart and catalogue stay on the current host. -->
+<style>
+  app-cart-slide { display: none !important; }
+</style>
+<script>
+(function () {
+  if (window.__abCartPageNavigation) return;
+  window.__abCartPageNavigation = true;
+
+  function linkCart() {
+    var link = document.querySelector('app-header .menu-cart a');
+    if (link && link.getAttribute('href') !== '/cart') link.setAttribute('href', '/cart');
+    var catalogue = document.querySelector('app-header .bottom-nav li .fa-bars');
+    if (catalogue) {
+      catalogue = catalogue.closest('li');
+      catalogue.setAttribute('role', 'link');
+      catalogue.setAttribute('tabindex', '0');
+    }
+  }
+  linkCart();
+  new MutationObserver(linkCart).observe(document.documentElement, { childList: true, subtree: true });
+
+  // Capture before Angular and the other document-level navigation handlers.
+  function openNavigation(event) {
+    if (event.type === 'keydown' && event.key !== 'Enter') return;
+    var target = event.target;
+    if (!target || !target.closest) return;
+    var link = target.closest('app-header .menu-cart a');
+    var bottomItem = target.closest('app-header .bottom-nav li');
+    var catalogue = target.closest('.ab-sticky-catalogue') || (bottomItem && bottomItem.querySelector('.fa-bars'));
+    // Let the browser produce one click, bypassing the recursive fast-tap proxy.
+    if (event.type === 'pointerup' || event.type === 'touchend') {
+      if (catalogue) event.stopImmediatePropagation();
+      return;
+    }
+    if (!catalogue && !link && !(bottomItem && bottomItem.querySelector('.fa-shopping-bag'))) return;
+    event.stopImmediatePropagation();
+    if (link && (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)) return;
+    event.preventDefault();
+    if (catalogue) {
+      var categoryLink = document.querySelector('app-footer a[href="/category-list"]');
+      if (categoryLink) {
+        categoryLink.click();
+        return;
+      }
+    }
+    window.location.assign(catalogue ? '/category-list' : '/cart');
+  }
+  window.addEventListener('pointerup', openNavigation, true);
+  window.addEventListener('touchend', openNavigation, true);
+  window.addEventListener('click', openNavigation, true);
+  // The compiled header otherwise consumes Enter for its search suggestions.
+  window.addEventListener('keydown', openNavigation, true);
+})();
+</script>
+<!-- All Pages. Published catalogue in production; same-origin catalogue proxy locally. -->
+<style>
+  app-product-details .product-title { display: flex !important; flex-wrap: wrap; column-gap: 8px; }
+  app-product-details .product-title > :not(p) { flex-basis: 100%; }
+  app-product-details .product-title > p { display: inline !important; width: auto !important; flex: 0 0 auto; margin: 0 0 8px !important; font-size: 14px !important; }
+  app-product-details .product-title > p a { font-size: inherit !important; }
+  #ab-product-sections .ab-description-section { display: none !important; }
+  #ab-added-cart-modal .ab-added-cart-actions { grid-template-columns: minmax(0, 1fr) !important; }
+  #ab-added-cart-modal .ab-added-cart-actions button { padding: 12px; line-height: 1.4; }
+  app-product-details .product-rating { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .ab-rating-counts { color: #666; font-size: 14px; }
+  app-product-details .product-title h4[data-ab-product-pages] { display: none !important; }
+  app-product-details.ab-no-ratings .product-rating { display: none !important; }
+  app-product-details.ab-no-ratings app-all-reviews .review-rating-main { display: none !important; }
+  app-product-details.ab-no-ratings app-all-reviews .review-main-area::before { content: 'এখনো কোনো রিভিউ নেই।'; color: #666; }
+  #ab-product-sections .ab-summary-section .ab-rich-text[data-ab-summary-collapsed="true"] { max-height: 14rem; overflow: hidden; }
+  #ab-product-sections .ab-summary-toggle { margin-top: 12px; padding: 0; border: 0; background: transparent; color: #16833b; font: 600 16px/1.4 sans-serif; cursor: pointer; }
+  #ab-product-sections .ab-summary-toggle:focus-visible { outline: 2px solid #16833b; outline-offset: 3px; }
+  .view-all-link i.ab-menu-icon { font-family: Arial, sans-serif !important; font-style: normal !important; font-size: 28px !important; line-height: 1 !important; }
+  @media (max-width: 767px) {
+    body.ab-cart-enhanced app-cart-information .cart-area .cart-area-bottom { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; gap: 12px !important; padding: 16px !important; }
+    body.ab-cart-enhanced app-cart-information .cart-area .cart-area-bottom > a,
+    body.ab-cart-enhanced app-cart-information .cart-area .cart-area-bottom > button { display: flex !important; align-items: center !important; justify-content: center !important; width: 100% !important; min-height: 48px !important; padding: 12px !important; box-sizing: border-box !important; border: 1px solid #16833b !important; border-radius: 5px !important; background: #fff !important; color: #16833b !important; font: 600 16px/1.4 sans-serif !important; text-decoration: none !important; }
+    body.ab-cart-enhanced app-cart-information .cart-area .cart-area-bottom > button.order { background: #16833b !important; color: #fff !important; }
+  }
+</style>
+<script>
+(function () {
+  if (window.__abProductDetailPolish) return;
+  window.__abProductDetailPolish = true;
+  var host = location.hostname;
+  var local = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(host) || /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
+  var API_BASE = local ? location.origin + '/storefront-catalog' : 'https://apisub.amolbooks.com/api';
+  var route = '', product = null;
+  function updateSummaries() {
+    document.querySelectorAll('#ab-product-sections .ab-summary-section').forEach(function (section) {
+      var content = section.querySelector('.ab-rich-text');
+      if (!content || section.querySelector('.ab-summary-toggle')) return;
+      content.setAttribute('data-ab-summary-collapsed', 'true');
+      if (content.scrollHeight <= content.clientHeight + 1) {
+        content.removeAttribute('data-ab-summary-collapsed');
+        return;
+      }
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'ab-summary-toggle';
+      button.textContent = 'আরও দেখুন';
+      button.setAttribute('aria-expanded', 'false');
+      button.addEventListener('click', function () {
+        var expand = content.getAttribute('data-ab-summary-collapsed') === 'true';
+        content.setAttribute('data-ab-summary-collapsed', String(!expand));
+        button.textContent = expand ? 'কম দেখুন' : 'আরও দেখুন';
+        button.setAttribute('aria-expanded', String(expand));
+      });
+      section.appendChild(button);
+    });
+  }
+  function update() {
+    updateSummaries();
+    document.querySelectorAll('.title-area .view-all-link i.material-symbols-outlined').forEach(function (icon) {
+      if (icon.textContent.trim() !== 'menu') return;
+      icon.textContent = '☰';
+      icon.classList.add('ab-menu-icon');
+      icon.setAttribute('aria-hidden', 'true');
+      if (icon.parentElement) icon.parentElement.setAttribute('aria-label', 'ক্যাটাগরি মেনু');
+    });
+    var path = location.pathname;
+    if (path !== route) {
+      route = path;
+      product = null;
+      document.querySelectorAll('app-product-details.ab-no-ratings').forEach(function (node) { node.classList.remove('ab-no-ratings'); });
+      document.querySelectorAll('.ab-rating-counts').forEach(function (node) { node.remove(); });
+      if (path.indexOf('/product-details/') !== 0) return;
+      fetch(API_BASE + '/product/get-by-slug/' + path.split('/')[2])
+        .then(function (response) { if (!response.ok) throw new Error('Catalogue unavailable'); return response.json(); })
+        .then(function (result) { if (route === path) { product = result.data; update(); } })
+        .catch(function () { /* Leave the native rating visible if the catalogue is unavailable. */ });
+    }
+    document.querySelectorAll('app-product-details .delivery-area p').forEach(function (label) {
+      var text = label.textContent.trim();
+      var desired = /Inside Dhaka/i.test(text) ? 'Tk. 60 Inside Dhaka City' :
+        /Outside Dhaka/i.test(text) ? 'Tk. 75 Outside Dhaka City' : '';
+      if (desired && text !== desired) label.textContent = desired;
+    });
+    if (!product) return;
+    var ratingTotal = Math.max(0, Number(product.ratingTotal) || 0);
+    var reviewTotal = Math.max(0, Number(product.reviewTotal) || 0);
+    var page = document.querySelector('app-product-details');
+    if (page) page.classList.toggle('ab-no-ratings', !ratingTotal && !reviewTotal);
+    var rating = document.querySelector('app-product-details .product-rating');
+    if (rating && (ratingTotal || reviewTotal) && !rating.querySelector('.ab-rating-counts')) {
+      var counts = document.createElement('span');
+      counts.className = 'ab-rating-counts';
+      counts.textContent = [ratingTotal ? ratingTotal + ' Ratings' : '', reviewTotal ? reviewTotal + ' Reviews' : ''].filter(Boolean).join(' | ');
+      rating.appendChild(counts);
+    }
+  }
+  new MutationObserver(update).observe(document.documentElement, { childList: true, subtree: true });
+  window.setInterval(update, 1000);
+  update();
+})();
+</script>
+<!-- Homepage only. Curated catalogue preview; keeps compiled Angular routes and cart logic intact. -->
+<style>
+/* Hallmark · macrostructure: Catalogue + decision panel · tone: native storefront · anchor hue: Amol red/green
+ * Existing header, typography, white canvas, card shape, and sale treatment preserved.
+ * audience: unsure book shoppers · use: 3-answer recommendation · tone: utilitarian
+ */
+:root {
+  --color-paper: #ffffff;
+  --color-paper-2: #fafafa;
+  --color-surface: #ffffff;
+  --color-ink: #202020;
+  --color-muted: #666666;
+  --color-rule: #f0f0f0;
+  --color-accent: #ea2929;
+  --color-accent-strong: #c41e1e;
+  --color-accent-ink: #ffffff;
+  --color-focus: #168747;
+  --color-offer: #df3030;
+  --color-price: #168747;
+  --color-control: #e5e5e5;
+  --color-selected: #eef8f2;
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.07);
+  --shadow-control: 0 3px 10px rgba(234, 41, 41, 0.22);
+  --font-display: "hind-siliguri", "Hind Siliguri", sans-serif;
+  --font-body: "hind-siliguri", "Hind Siliguri", sans-serif;
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-md: 1.25rem;
+  --text-lg: 1.5625rem;
+  --text-xl: 1.953rem;
+  --text-display: clamp(2.25rem, 5vw + 0.5rem, 4.75rem);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-short: 120ms;
+  --dur-medium: 200ms;
+  --rule-thin: 1px;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.25rem;
+}
+
+#ab-header-ticker {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  height: 2.15rem;
+  background: #075f3b;
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: clamp(0.78rem, 1.5vw, 0.9rem);
+  line-height: 1.25;
+  box-shadow: inset 0 -1px rgba(0, 0, 0, 0.12);
+}
+.ab-header-ticker-label {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding-inline: clamp(0.75rem, 2vw, 1.2rem);
+  background: var(--color-accent-strong);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0.25rem 0 0.75rem rgba(0, 0, 0, 0.15);
+}
+.ab-header-ticker-viewport {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 1rem, #000 calc(100% - 1rem), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 1rem, #000 calc(100% - 1rem), transparent);
+}
+.ab-header-ticker-track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  height: 100%;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  animation: ab-header-ticker-scroll 28s linear infinite;
+}
+.ab-header-ticker-track span {
+  flex: none;
+  padding-inline: 1.5rem 6rem;
+  white-space: nowrap;
+}
+#ab-header-ticker:hover .ab-header-ticker-track { animation-play-state: paused; }
+@keyframes ab-header-ticker-scroll {
+  to { transform: translateX(-50%); }
+}
+
+html.ab-home-redesign,
+body.ab-home-redesign { overflow-x: clip !important; }
+body.ab-home-redesign { background: var(--color-paper) !important; color: var(--color-ink); }
+body.ab-home-redesign app-home { display: none !important; }
+
+#ab-homepage-redesign {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-weight: 400;
+  overflow-x: clip;
+}
+#ab-homepage-redesign *,
+#ab-homepage-redesign *::before,
+#ab-homepage-redesign *::after { box-sizing: border-box; }
+#ab-homepage-redesign a { color: inherit; text-decoration: none; }
+.ab-home-shell { width: min(100%, 82rem); margin-inline: auto; padding-inline: clamp(var(--space-md), 4vw, var(--space-2xl)); }
+
+.ab-home-goal:focus-visible,
+.ab-home-card a:focus-visible,
+.ab-home-card button:focus-visible,
+.ab-home-name:focus-visible,
+.ab-home-all-link:focus-visible,
+.ab-home-trust a:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 3px; }
+
+.ab-home-goals { margin-block: var(--space-xl); padding-block: var(--space-lg); background: var(--color-paper-2); border-block: var(--rule-thin) solid var(--color-rule); }
+.ab-home-section-head { display: flex; justify-content: space-between; gap: var(--space-md); align-items: center; margin-bottom: var(--space-lg); }
+.ab-home-section-head h2 { position: relative; margin: 0 !important; padding-bottom: var(--space-sm); font-family: var(--font-display); font-size: var(--text-lg); font-weight: 500; line-height: 1.2; }
+.ab-home-section-head h2::after { content: ''; position: absolute; inset-inline-start: 0; inset-block-end: 0; width: 5rem; height: 3px; border-radius: 3px; background: var(--color-accent); }
+.ab-home-all-link { padding: var(--space-xs) var(--space-md); border-radius: var(--radius-sm); background: linear-gradient(135deg, var(--color-accent), var(--color-accent-strong)); color: #fff !important; font-size: var(--text-xs); font-weight: 500; white-space: nowrap; box-shadow: 0 3px 10px rgba(234, 41, 41, 0.22); }
+.ab-home-goal-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-sm); }
+.ab-home-goal { display: flex; justify-content: space-between; gap: var(--space-sm); align-items: center; min-height: 3.25rem; padding: var(--space-sm) var(--space-md); border: var(--rule-thin) solid #e5e5e5; border-radius: var(--radius-sm); background: #fff; }
+.ab-home-goal-index { display: none; }
+.ab-home-goal strong { font-size: var(--text-sm); font-weight: 500; }
+.ab-home-goal-arrow { color: var(--color-focus); }
+
+.ab-book-quiz { margin-block: var(--space-xl); padding-block: var(--space-xl); background: var(--color-paper-2); border-block: var(--rule-thin) solid var(--color-rule); }
+.ab-book-quiz-intro { margin-bottom: var(--space-lg); }
+.ab-book-quiz-intro h2 { margin: 0 0 var(--space-xs) !important; color: var(--color-ink); font-size: var(--text-lg); font-weight: 500; overflow-wrap: anywhere; min-width: 0; }
+.ab-book-quiz-intro p { margin: 0 !important; color: var(--color-muted); font-size: var(--text-sm); }
+.ab-book-quiz-form { display: grid; gap: var(--space-lg); }
+.ab-book-quiz fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.ab-book-quiz legend { margin-bottom: var(--space-sm); color: var(--color-ink); font-size: var(--text-base); font-weight: 500; }
+.ab-quiz-options { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.ab-quiz-option { position: relative; cursor: pointer; }
+.ab-quiz-option input { position: absolute; width: 1px; height: 1px; margin: 0; opacity: 0; }
+.ab-quiz-option span { display: inline-flex; align-items: center; min-height: 2.75rem; padding: var(--space-xs) var(--space-md); border: var(--rule-thin) solid var(--color-control); border-radius: var(--radius-lg); background: var(--color-surface); color: var(--color-ink); font-size: var(--text-sm); white-space: nowrap; }
+.ab-quiz-option input:checked + span { border-color: var(--color-focus); background: var(--color-focus); color: var(--color-accent-ink); }
+.ab-quiz-option input:focus-visible + span { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+.ab-book-quiz-submit { width: 100%; min-height: 2.75rem; border: 0; border-radius: var(--radius-sm); background: var(--color-accent); color: var(--color-accent-ink); font: 500 var(--text-sm)/1 var(--font-body); white-space: nowrap; box-shadow: var(--shadow-control); }
+.ab-book-quiz-results:empty { display: none; }
+.ab-book-quiz-results:not(:empty) { margin-top: var(--space-xl); padding-top: var(--space-lg); border-top: var(--rule-thin) solid var(--color-rule); }
+.ab-book-quiz-results h3 { margin: 0 0 var(--space-md) !important; color: var(--color-ink); font-size: var(--text-md); font-weight: 500; outline: 0; }
+.ab-book-quiz-results .ab-home-grid { grid-template-rows: none; }
+
+.ab-home-products { padding-block: var(--space-xl); background: #fff; }
+.ab-home-grid { display: grid; grid-template-rows: repeat(2, auto); grid-auto-flow: column; grid-auto-columns: min(44vw, 12rem); gap: var(--space-md); overflow-x: auto; padding: 2px 2px var(--space-md); scroll-snap-type: x proximity; scrollbar-width: thin; scrollbar-color: #df3030 #f4f4f4; }
+.ab-home-name-strip { padding-block: var(--space-xl); background: #fff; }
+.ab-home-name-list { display: grid; grid-auto-flow: column; grid-auto-columns: clamp(10rem, 22vw, 15rem); gap: var(--space-sm); overflow-x: auto; padding: 2px 2px var(--space-md); scroll-snap-type: x proximity; scrollbar-width: thin; scrollbar-color: #df3030 #f4f4f4; }
+.ab-home-name { display: flex; align-items: center; min-height: 4rem; padding: var(--space-sm) var(--space-md); border: var(--rule-thin) solid var(--color-rule); border-radius: var(--radius-md); background: #fff; box-shadow: var(--shadow-card); scroll-snap-align: start; }
+.ab-home-name strong { display: -webkit-box; overflow: hidden; font-size: var(--text-sm); font-weight: 500; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.ab-home-card { position: relative; min-width: 0; padding: var(--space-sm); border: var(--rule-thin) solid var(--color-rule); border-radius: var(--radius-md); background: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07); scroll-snap-align: start; }
+.ab-home-card-media { position: relative; aspect-ratio: 3 / 4; margin-bottom: var(--space-sm); overflow: hidden; background: #fff; }
+.ab-home-card-media img { width: 100%; height: 100%; object-fit: contain; transition: transform var(--dur-medium) var(--ease-out); }
+.ab-home-discount { position: absolute; inset-block-start: 0; inset-inline-start: 0; z-index: 1; padding: var(--space-xs); border-radius: 0 0 var(--radius-sm) 0; background: var(--color-offer); color: #fff; font-size: var(--text-xs); font-weight: 600; white-space: nowrap; }
+.ab-cover-badge-host { position: relative !important; overflow: hidden; }
+.ab-cover-peek-badge { position: absolute; right: -2.7rem; bottom: 1.3rem; z-index: 3; width: 10.5rem; padding: 0.28rem 0; transform: rotate(-45deg); background: #168747; color: #fff; font: 500 0.6875rem/1.2 var(--font-body); text-align: center; pointer-events: none; }
+.ab-card-rating { display: flex; align-items: center; gap: 0.25rem; margin: 0.35rem 0; color: #666; font-size: 0.75rem; line-height: 1; }
+.ab-card-stars { position: relative; display: inline-block; color: #ddd; font-size: 0.9rem; letter-spacing: -0.08rem; white-space: nowrap; }
+.ab-card-stars-fill { position: absolute; inset: 0 auto 0 0; overflow: hidden; color: #f59e0b; white-space: nowrap; }
+.ab-home-card h3 { display: -webkit-box; min-height: 2.8rem; margin: 0 0 var(--space-xs) !important; overflow: hidden; color: var(--color-ink); font-size: var(--text-sm); font-weight: 500; line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.ab-home-author { min-height: 1.25rem; margin: 0 0 var(--space-xs) !important; overflow: hidden; color: var(--color-muted); font-size: var(--text-xs); line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+.ab-home-price { display: flex; flex-wrap: wrap; gap: var(--space-xs); align-items: baseline; min-height: 1.5rem; margin: 0 !important; color: var(--color-price); font-size: var(--text-base); font-weight: 600; font-variant-numeric: tabular-nums; }
+.ab-home-price s { color: var(--color-muted); font-size: var(--text-sm); font-weight: 400; }
+.ab-home-card button { width: 100%; min-height: 2.5rem; margin-top: var(--space-sm); border: var(--rule-thin) solid var(--color-price); border-radius: var(--radius-sm); background: #fff; color: var(--color-price); font: 500 var(--text-xs)/1 var(--font-body); white-space: nowrap; transition: background-color var(--dur-medium) var(--ease-out), color var(--dur-medium) var(--ease-out), transform var(--dur-short) var(--ease-out); }
+.ab-home-card button:active { transform: translateY(1px); }
+.ab-home-card button:disabled { cursor: wait; opacity: 0.55; }
+
+.ab-home-trust { display: grid; grid-template-columns: minmax(0, 1fr); padding-block: var(--space-xl); }
+.ab-home-trust a { display: flex; align-items: center; justify-content: space-between; min-height: 3.25rem; padding-block: var(--space-sm); border-bottom: var(--rule-thin) solid var(--color-rule); font-weight: 600; }
+.ab-home-trust span { color: var(--color-accent); }
+#ab-homepage-redesign a:active { opacity: 0.72; }
+
+@media (hover: hover) and (pointer: fine) {
+  .ab-home-goal:hover strong,
+  .ab-home-all-link:hover { color: inherit; }
+  .ab-home-card:hover .ab-home-card-media img { transform: translateY(-2px); }
+  .ab-home-card button:hover { background: var(--color-price); color: #fff; }
+}
+@media (min-width: 40rem) {
+  .ab-book-quiz-form { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; }
+  .ab-book-quiz-submit { grid-column: 1 / -1; width: max-content; min-width: 10rem; }
+  .ab-home-goal-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ab-home-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: none; grid-auto-flow: row; grid-auto-columns: auto; overflow: visible; }
+  .ab-home-card { width: auto; }
+  .ab-home-trust { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-xl); }
+}
+@media (min-width: 75rem) {
+  .ab-home-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+@media (min-width: 67rem) {
+  app-header .header-main-content { gap: var(--space-lg) !important; padding-block: 0 !important; }
+  app-header .logo img { width: auto !important; max-width: 8rem !important; max-height: 5rem !important; margin-block: 0.5rem !important; object-fit: contain; }
+  app-header .header-right { gap: var(--space-sm) !important; }
+  app-header .header-right-top,
+  app-header .services { padding-top: 0 !important; }
+  app-header .header-right-top ul { gap: var(--space-lg) !important; }
+  app-header .header-right-top ul li a { gap: var(--space-2xs) !important; }
+}
+@media (max-width: 39.99rem) {
+  .ab-home-shell { padding-inline: var(--space-md); }
+  .ab-home-grid { grid-auto-columns: clamp(8.75rem, 38vw, 10rem); gap: var(--space-sm); }
+  .ab-home-card { padding: var(--space-xs); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ab-header-ticker-track { animation: none; }
+  .ab-header-ticker-viewport { overflow-x: auto; mask-image: none; -webkit-mask-image: none; }
+  #ab-homepage-redesign *,
+  #ab-homepage-redesign *::before,
+  #ab-homepage-redesign *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+}
+</style>
+<script>
+(function () {
+  'use strict';
+  if (window.__abHomepageRedesign) return;
+  window.__abHomepageRedesign = true;
+
+  var ROOT_ID = 'ab-homepage-redesign';
+  var mountedPath = '';
+  var loading = false;
+  var requestSerial = 0;
+  var failedRoute = '';
+  var productsById = {};
+  var productsBySlug = {};
+  var pendingCarts = {};
+  var cataloguePromise = null;
+  var coverDataRequested = false;
+  var localHost = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname) || /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(location.hostname);
+  var API_BASE = localHost ? location.origin + '/storefront-catalog' : 'https://apisub.amolbooks.com/api';
+  var goals = [
+    { label: 'কুরআন বুঝতে', match: 'কুরআন বিষয়ক আলোচনা', fallback: '/product-list?categories=' + encodeURIComponent('কুরআন বিষয়ক আলোচনা') },
+    { label: 'নামাজ সুন্দর করতে', match: 'দোয়া, দরূদ ও যিকর', fallback: '/product-list?categories=' + encodeURIComponent('দোয়া, দরূদ ও যিকর') },
+    { label: 'নিজেকে বদলাতে', match: 'আত্মশুদ্ধি ও অনুপ্রেরণা', fallback: '/product-list?categories=' + encodeURIComponent('আত্মশুদ্ধি ও অনুপ্রেরণা') },
+    { label: 'ব্যবসা শিখতে', match: 'প্রোডাক্টিভিটি', fallback: '/product-list?categories=' + encodeURIComponent('প্রোডাক্টিভিটি') },
+    { label: 'ইতিহাস জানতে', match: 'ইসলামি ইতিহাস ও ঐতিহ্য', fallback: '/product-list?categories=' + encodeURIComponent('ইসলামি ইতিহাস ও ঐতিহ্য') },
+    { label: 'নবিজি ﷺ-কে জানতে', match: 'সীরাতে রাসূল', fallback: '/product-list?categories=' + encodeURIComponent('সীরাতে রাসূল (সা.)') },
+    { label: 'হাদিস জানতে', match: 'আল হাদিস', fallback: '/product-list?categories=' + encodeURIComponent('আল হাদিস') },
+    { label: 'পরিবার সুন্দর করতে', match: 'বিয়ে ও সংসার', fallback: '/product-list?categories=' + encodeURIComponent('বিয়ে ও সংসার') },
+    { label: 'নারীদের জন্য', match: 'ইসলামে নারী', fallback: '/product-list?categories=' + encodeURIComponent('ইসলামে নারী') },
+    { label: 'আদব ও চরিত্র গড়তে', match: 'আদব, আখলাক', fallback: '/product-list?categories=' + encodeURIComponent('আদব, আখলাক') },
+    { label: 'ইসলামি সাহিত্য পড়তে', match: 'ইসলামী সাহিত্য', fallback: '/product-list?categories=' + encodeURIComponent('ইসলামী সাহিত্য') },
+    { label: 'ফিতনা থেকে বাঁচতে', match: 'আধুনিক ফিতনা', fallback: '/product-list?categories=' + encodeURIComponent('আধুনিক ফিতনা') }
+  ];
+  var shelves = [
+    { id: 'popular', title: 'জনপ্রিয়তার শীর্ষে' },
+    {
+      id: 'combo',
+      title: 'বেস্টসেলার বুক কম্বো',
+      words: ['কম্বো', 'সেট', 'প্যাকেজ', 'খণ্ড সেট', 'দুই খণ্ড', 'তিন খণ্ড', 'একত্রে'],
+      manualSlugs: ['Jibonpaltano4books', 'Jibon', 'Poro Collection']
+    },
+    { id: 'personal-growth', title: 'ব্যক্তিত্ব ও আত্মোন্নয়ন', categories: ['প্রোডাক্টিভিটি', 'আত্মশুদ্ধি ও অনুপ্রেরণা'] },
+    { id: 'business', title: 'অর্থ, ব্যবসা ও সম্পদ গঠন', categories: ['বিনিয়োগ ও অর্থনীতি', 'প্রোডাক্টিভিটি'] },
+    { id: 'quran', title: 'কুরআন ও তাফসির', categories: ['কুরআন শেখা', 'কুরআন বিষয়ক আলোচনা'] },
+    { id: 'hadith-seerah', title: 'হাদিস ও সীরাত', categories: ['আল হাদিস', 'সীরাতে রাসূল (সা.)'] },
+    { id: 'prayer', title: 'নামাজ, দুআ ও যিকির', categories: ['দোয়া, দরূদ ও যিকর', 'ইসলামি আমল ও আমলের সহায়িকা'] },
+    { id: 'character', title: 'আত্মশুদ্ধি, আদব ও আখলাক', categories: ['আত্মশুদ্ধি ও অনুপ্রেরণা', 'আদব, আখলাক'] },
+    { id: 'family', title: 'ইসলামি জীবন ও পরিবার', categories: ['ইসলামে নারী', 'বিয়ে ও সংসার', 'ইসলামী সাহিত্য'] },
+    { id: 'history', title: 'ইতিহাস, জীবনী ও মনীষী', categories: ['ইসলামি ইতিহাস ও ঐতিহ্য'] }
+  ];
+
+  function escapeHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>'"]/g, function (character) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character];
+    });
+  }
+  function ensureHeaderTicker() {
+    if (document.getElementById('ab-header-ticker')) return;
+    var header = document.querySelector('app-header > header');
+    if (!header) return;
+    var offerGap = '\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0•\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0';
+    var deliveryGap = '\u00a0\u00a0\u00a0\u00a0•\u00a0\u00a0\u00a0\u00a0';
+    var message = '৳৭৯৯+ অর্ডারে ৭২ পৃষ্ঠার নোটবুক ফ্রি' + offerGap + 'ঢাকায় ডেলিভারি ৳৬০' + deliveryGap + 'ঢাকার বাইরে ৳৭৫';
+    var ticker = document.createElement('div');
+    ticker.id = 'ab-header-ticker';
+    ticker.setAttribute('role', 'region');
+    ticker.setAttribute('aria-label', message);
+    ticker.innerHTML = '<span class="ab-header-ticker-label" aria-hidden="true">বিশেষ অফার</span><div class="ab-header-ticker-viewport"><div class="ab-header-ticker-track" aria-hidden="true"><span>' + message + '</span><span>' + message + '</span></div></div>';
+    header.insertBefore(ticker, header.firstChild);
+  }
+  function number(value) { return Math.max(0, Number(value) || 0); }
+  function finalPrice(product) {
+    var explicit = number(product && product.afterDiscountPrice);
+    if (explicit > 0) return explicit;
+    var sale = number(product && product.salePrice);
+    var discount = number(product && product.discountAmount);
+    if (Number(product && product.discountType) === 1) return Math.max(0, Math.floor(sale - sale * discount / 100));
+    if (Number(product && product.discountType) === 2) return Math.max(0, Math.floor(sale - discount));
+    return sale;
+  }
+  function discountPercent(product) {
+    var sale = number(product && product.salePrice);
+    var price = finalPrice(product);
+    return sale > price && sale ? Math.max(1, Math.min(99, Math.round((sale - price) * 100 / sale))) : 0;
+  }
+  function money(value) { return '৳' + Math.round(number(value)).toLocaleString('en-US'); }
+  function authorName(product) {
+    var author = product && product.author;
+    if (Array.isArray(author)) return author.map(function (item) { return item && (item.name || item.nameEn); }).filter(Boolean).join(', ');
+    return author && (author.name || author.nameEn) || '';
+  }
+  function uniqueEntities(products, field) {
+    var seen = {};
+    return products.reduce(function (entities, product) {
+      var values = Array.isArray(product && product[field]) ? product[field] : [product && product[field]];
+      values.forEach(function (entity) {
+        var key = String(entity && (entity._id || entity.slug || entity.name) || '');
+        if (!key || !entity.name || seen[key]) return;
+        seen[key] = true;
+        entities.push(entity);
+      });
+      return entities;
+    }, []).slice(0, 18);
+  }
+  function imageUrl(product) {
+    var image = product && Array.isArray(product.images) && product.images[0] || '';
+    if (/^https?:\/\//i.test(image)) return image;
+    if (!image) return '/assets/images/placeholder/test.png';
+    if (image.indexOf('/api/') === 0) return 'https://apisub.amolbooks.com' + image;
+    return 'https://apisub.amolbooks.com/api/' + String(image).replace(/^\/+/, '');
+  }
+  function productUrl(product) { return '/product-details/' + encodeURIComponent(product && product.slug || ''); }
+  function slugFromLink(link) {
+    var match = String(link.getAttribute('href') || '').match(/\/product-details\/([^?#]+)/);
+    if (!match) return '';
+    try { return decodeURIComponent(match[1]); } catch (error) { return match[1]; }
+  }
+  function ratingHtml(product) {
+    var count = number(product && product.ratingTotal);
+    if (!count) return '';
+    var average = Math.min(5, number(product.ratingCount) / count);
+    var width = Math.round(average * 20);
+    return '<div class="ab-card-rating" aria-label="' + escapeHtml(average.toFixed(1) + ' out of 5, ' + count + ' ratings') + '">' +
+      '<span class="ab-card-stars" aria-hidden="true">★★★★★<span class="ab-card-stars-fill" style="width:' + width + '%">★★★★★</span></span>' +
+      '<span>(' + count + ')</span></div>';
+  }
+  function indexProducts(products) {
+    productsBySlug = products.reduce(function (result, product) {
+      result[String(product.slug || '')] = product;
+      return result;
+    }, {});
+  }
+  function decorateCovers() {
+    document.querySelectorAll('a[href*="/product-details/"]').forEach(function (link) {
+      if (link.closest('.ab-sticky-search-item')) return;
+      var image = link.querySelector('img');
+      if (!image) return;
+      var host = image.closest('.product-image, .ab-home-card-media, .ab-library-image-wrap') || image.parentElement;
+      var boughtTogether = link.closest('app-bought-together, .bought-together-section');
+      var suppressBadge = boughtTogether || link.closest('#ab-cart-offer-progress');
+      if (host && suppressBadge) {
+        var badge = host.querySelector('.ab-cover-peek-badge');
+        if (badge) badge.remove();
+        host.classList.remove('ab-cover-badge-host');
+      } else if (host && !host.querySelector('.ab-cover-peek-badge')) {
+        host.classList.add('ab-cover-badge-host');
+        host.insertAdjacentHTML('beforeend', '<span class="ab-cover-peek-badge">একটু পড়ে দেখুন</span>');
+      }
+      var product = productsBySlug[slugFromLink(link)];
+      var card = link.closest('app-product-card-one, app-product-card-two, .ab-home-card, .ab-product-card, .ab-library-card');
+      if (!product || !card || card.querySelector('.ab-card-rating')) return;
+      var html = ratingHtml(product);
+      if (!html) return;
+      var price = card.querySelector('.price-aria, .ab-home-price, .ab-product-price, .ab-library-price');
+      if (price) price.insertAdjacentHTML('beforebegin', html);
+      else host.insertAdjacentHTML('afterend', html);
+    });
+  }
+  function categoryNames(product) {
+    return (Array.isArray(product && product.category) ? product.category : []).map(function (category) { return category && category.name || ''; });
+  }
+  function productsForShelf(products, shelf) {
+    if (shelf.id === 'popular') return products.slice().sort(function (a, b) { return number(b.totalSold) - number(a.totalSold); }).slice(0, 10);
+    var matches = products.filter(function (product) {
+      if (shelf.words) return shelf.words.some(function (word) { return String(product.name || '').indexOf(word) !== -1; });
+      var names = categoryNames(product);
+      return shelf.categories.some(function (category) { return names.indexOf(category) !== -1; });
+    });
+    if (!shelf.manualSlugs) return matches.slice(0, 10);
+    var manual = shelf.manualSlugs.map(function (slug) {
+      return products.find(function (product) { return product.slug === slug; });
+    }).filter(Boolean);
+    return manual.concat(matches.filter(function (product) {
+      return shelf.manualSlugs.indexOf(product.slug) === -1;
+    })).slice(0, 10);
+  }
+  function isCombo(product) {
+    return shelves[1].words.some(function (word) { return String(product.name || '').indexOf(word) !== -1; });
+  }
+  function recommendProducts(products, topic, reader, quantity) {
+    var matches = topic === 'সব' ? products.slice() : products.filter(function (product) {
+      return categoryNames(product).indexOf(topic) !== -1;
+    });
+    matches = matches.filter(function (product) { return !isCombo(product); })
+      .sort(function (a, b) { return number(b.totalSold) - number(a.totalSold); });
+    if (reader === 'regular' && matches.length > 3) matches = matches.slice(3).concat(matches.slice(0, 3));
+    return matches.slice(0, quantity === 'one' ? 1 : 3);
+  }
+  function recommendationTitle(count) {
+    if (!count) return 'এই বিষয়ে কোনো বই পাওয়া যায়নি';
+    return 'আপনার জন্য এই ' + (['', '১টি', '২টি', '৩টি'][count] || count + 'টি') + ' বই';
+  }
+  function quizHtml() {
+    return '<section class="ab-book-quiz" aria-labelledby="ab-book-quiz-title"><div class="ab-home-shell">' +
+      '<div class="ab-book-quiz-intro"><h2 id="ab-book-quiz-title">আপনার জন্য কোন বই (বিশেষ ছাড়)?</h2><p>৩টি উত্তর দিন, সঙ্গে সঙ্গে বই বেছে দিচ্ছি।</p></div>' +
+      '<form class="ab-book-quiz-form">' +
+        '<fieldset><legend>কী বিষয়ে পড়তে চান?</legend><div class="ab-quiz-options">' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="সব" checked><span>যেকোনো বিষয়</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="কুরআন শেখা"><span>কুরআন</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="আত্মশুদ্ধি ও অনুপ্রেরণা"><span>আত্মউন্নয়ন</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="সীরাতে রাসূল (সা.)"><span>সীরাত</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="বিনিয়োগ ও অর্থনীতি"><span>অর্থ ও ব্যবসা</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="ইসলামে নারী"><span>নারী ও পরিবার</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="আল হাদিস"><span>হাদিস</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="দোয়া, দরূদ ও যিকর"><span>নামাজ ও দুআ</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="ইসলামি ইতিহাস ও ঐতিহ্য"><span>ইতিহাস</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="আদব, আখলাক"><span>আদব ও চরিত্র</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="ইসলামী সাহিত্য"><span>ইসলামি সাহিত্য</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="topic" value="বিয়ে ও সংসার"><span>বিয়ে ও সংসার</span></label>' +
+        '</div></fieldset>' +
+        '<fieldset><legend>আপনি কেমন পাঠক?</legend><div class="ab-quiz-options">' +
+          '<label class="ab-quiz-option"><input type="radio" name="reader" value="new" checked><span>নতুন পাঠক</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="reader" value="regular"><span>নিয়মিত পাঠক</span></label>' +
+        '</div></fieldset>' +
+        '<fieldset><legend>কী চান?</legend><div class="ab-quiz-options">' +
+          '<label class="ab-quiz-option"><input type="radio" name="quantity" value="three" checked><span>৩টি বই</span></label>' +
+          '<label class="ab-quiz-option"><input type="radio" name="quantity" value="one"><span>১ টি বই</span></label>' +
+        '</div></fieldset>' +
+        '<button class="ab-book-quiz-submit" type="submit">আপনার বই দেখুন</button>' +
+      '</form><div class="ab-book-quiz-results" aria-live="polite"></div>' +
+    '</div></section>';
+  }
+  function pushEvent(event, details) {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push(Object.assign({ event: event, homepage_version: 'curated_preview_v1' }, details || {}));
+  }
+  function pushEcommerce(event, listName, products) {
+    var items = products.map(function (product) {
+      return {
+        item_id: String(product._id),
+        item_name: product.name || '',
+        item_list_id: listName,
+        item_list_name: listName,
+        price: finalPrice(product),
+        quantity: 1
+      };
+    });
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ ecommerce: null });
+    window.dataLayer.push({
+      event: event,
+      homepage_version: 'curated_preview_v1',
+      ecommerce: {
+        currency: 'BDT',
+        value: items.reduce(function (total, item) { return total + item.price; }, 0),
+        item_list_id: listName,
+        item_list_name: listName,
+        items: items
+      }
+    });
+  }
+  function categoryUrl(match, fallback) {
+    var links = document.querySelectorAll('a[href*="/product-list"]');
+    for (var index = 0; index < links.length; index += 1) {
+      if (String(links[index].textContent || '').trim().indexOf(match) !== -1) return links[index].getAttribute('href') || fallback;
+    }
+    return fallback;
+  }
+  function productCard(product, listName) {
+    var price = finalPrice(product);
+    var regular = number(product && product.salePrice);
+    var discount = discountPercent(product);
+    return '<article class="ab-home-card" data-product-id="' + escapeHtml(product._id) + '" data-list-name="' + escapeHtml(listName) + '">' +
+      '<a href="' + escapeHtml(productUrl(product)) + '" aria-label="' + escapeHtml(product.name || 'বইটি দেখুন') + '">' +
+        '<div class="ab-home-card-media ab-cover-badge-host">' +
+          (discount ? '<span class="ab-home-discount">' + escapeHtml(discount) + '% ছাড়</span>' : '') +
+          '<span class="ab-cover-peek-badge">একটু পড়ে দেখুন</span>' +
+          '<img src="' + escapeHtml(imageUrl(product)) + '" alt="' + escapeHtml(product.name || 'বই') + '" width="320" height="426" loading="lazy" decoding="async">' +
+        '</div>' +
+        '<h3>' + escapeHtml(product.name || '') + '</h3>' +
+        '<p class="ab-home-author">' + escapeHtml(authorName(product)) + '</p>' +
+        ratingHtml(product) +
+        '<p class="ab-home-price"><span>' + escapeHtml(money(price)) + '</span>' + (regular > price ? '<s>' + escapeHtml(money(regular)) + '</s>' : '') + '</p>' +
+      '</a>' +
+      '<button class="ab-add-cart-button" type="button" data-product-id="' + escapeHtml(product._id) + '" data-ab-action-label="home">কার্টে যোগ করুন</button>' +
+    '</article>';
+  }
+  function sectionHtml(id, title, products, href) {
+    if (!products.length) return '';
+    return '<section class="ab-home-products" aria-labelledby="' + id + '"><div class="ab-home-shell">' +
+      '<div class="ab-home-section-head"><h2 id="' + id + '">' + escapeHtml(title) + '</h2><a class="ab-home-all-link" href="' + escapeHtml(href) + '">সব দেখুন</a></div>' +
+      '<div class="ab-home-grid">' + products.map(function (product) { return productCard(product, id); }).join('') + '</div>' +
+    '</div></section>';
+  }
+  function nameStripHtml(id, title, entities, field, allHref) {
+    if (!entities.length) return '';
+    return '<section class="ab-home-name-strip" aria-labelledby="' + id + '"><div class="ab-home-shell">' +
+      '<div class="ab-home-section-head"><h2 id="' + id + '">' + escapeHtml(title) + '</h2><a class="ab-home-all-link" href="' + escapeHtml(allHref) + '">সব দেখুন</a></div>' +
+      '<div class="ab-home-name-list">' + entities.map(function (entity) {
+        var href = '/product-list?' + field + '=' + encodeURIComponent(entity.slug || entity.name);
+        return '<a class="ab-home-name" href="' + escapeHtml(href) + '"><strong>' + escapeHtml(entity.name) + '</strong></a>';
+      }).join('') + '</div>' +
+    '</div></section>';
+  }
+  function fetchProducts() {
+    if (cataloguePromise) return cataloguePromise;
+    try {
+      var cached = JSON.parse(sessionStorage.getItem('ab-home-catalogue-v3') || 'null');
+      if (cached && Array.isArray(cached.data) && cached.data.length) {
+        cataloguePromise = Promise.resolve(cached);
+        return cataloguePromise;
+      }
+    } catch (error) { /* Fetch when storage is unavailable. */ }
+    var request = localHost ? fetch(API_BASE + '/library', { credentials: 'omit' }).then(function (response) {
+      if (!response.ok) throw new Error('Catalogue unavailable');
+      return response.json();
+    }) : fetch(API_BASE + '/product/get-all', {
+      method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filter: { status: 'publish', quantity: { $gt: 0 } },
+        pagination: { pageSize: 180, currentPage: 0 },
+        sort: { totalSold: -1, priority: -1 },
+        select: { _id: 1, name: 1, slug: 1, images: 1, salePrice: 1, afterDiscountPrice: 1, discountAmount: 1, discountType: 1, totalSold: 1, author: 1, publisher: 1, category: 1, ratingCount: 1, ratingTotal: 1, reviewTotal: 1 }
+      })
+    }).then(function (response) {
+      if (!response.ok) throw new Error('Catalogue unavailable');
+      return response.json();
+    });
+    cataloguePromise = request.then(function (result) {
+      try { sessionStorage.setItem('ab-home-catalogue-v3', JSON.stringify(result)); } catch (error) { /* Cache is optional. */ }
+      return result;
+    }).catch(function (error) {
+      cataloguePromise = null;
+      throw error;
+    });
+    return cataloguePromise;
+  }
+  function render(products) {
+    var nativeHome = document.querySelector('app-home');
+    if (!nativeHome || !nativeHome.parentNode || !products.length || location.pathname !== '/' || new URLSearchParams(location.search).get('home') === 'legacy' || document.getElementById(ROOT_ID)) return;
+    productsById = products.reduce(function (result, product) {
+      result[String(product._id)] = product;
+      return result;
+    }, {});
+    indexProducts(products);
+    var goalLinks = goals.map(function (goal, index) {
+      return '<a class="ab-home-goal" href="' + escapeHtml(categoryUrl(goal.match, goal.fallback)) + '" data-goal="' + escapeHtml(goal.label) + '"><span class="ab-home-goal-index">0' + (index + 1) + '</span><strong>' + escapeHtml(goal.label) + '</strong><span class="ab-home-goal-arrow" aria-hidden="true">→</span></a>';
+    }).join('');
+    var shelfData = shelves.map(function (shelf) {
+      return { shelf: shelf, products: productsForShelf(products, shelf) };
+    });
+    var authorsHtml = nameStripHtml('ab-home-authors', 'জনপ্রিয় লেখক', uniqueEntities(products, 'author'), 'author', '/author-list');
+    var publishersHtml = nameStripHtml('ab-home-publishers', 'জনপ্রিয় প্রকাশনী', uniqueEntities(products, 'publisher'), 'publisher', '/publisher-list');
+    var goalsHtml = '<section class="ab-home-goals" aria-labelledby="ab-home-goals-title"><div class="ab-home-shell"><div class="ab-home-section-head"><h2 id="ab-home-goals-title">আপনার প্রয়োজন অনুযায়ী</h2><a class="ab-home-all-link" href="/category-list">সব বিষয়</a></div><div class="ab-home-goal-grid">' + goalLinks + '</div></div></section>';
+    var root = document.createElement('div');
+    root.id = ROOT_ID;
+    root.innerHTML = shelfData.map(function (entry, index) {
+      var shelfHtml = sectionHtml('ab-home-' + entry.shelf.id, entry.shelf.title, entry.products, '/product-list');
+      return shelfHtml + (index === 1 ? quizHtml() : '') + (index === 4 ? goalsHtml : '') + (index === 6 ? authorsHtml : '') + (index === 8 ? publishersHtml : '');
+    }).join('') +
+      '<nav class="ab-home-shell ab-home-trust" aria-label="অর্ডার সহায়তা"><a href="/pages/how-to-order-website">কীভাবে অর্ডার করবেন <span aria-hidden="true">→</span></a><a href="/pages/delivery-policy">ডেলিভারি নীতি <span aria-hidden="true">→</span></a><a href="/pages/return-&-refund-policy">ফেরত ও পরিবর্তন <span aria-hidden="true">→</span></a></nav>';
+    nativeHome.parentNode.insertBefore(root, nativeHome);
+    document.documentElement.classList.add('ab-home-redesign');
+    document.body.classList.add('ab-home-redesign');
+    mountedPath = location.pathname;
+    decorateCovers();
+    root.addEventListener('click', function (event) {
+      var goal = event.target.closest('.ab-home-goal');
+      if (goal) pushEvent('ab_home_goal_click', { content_name: goal.getAttribute('data-goal') });
+      var card = event.target.closest('.ab-home-card');
+      if (card && event.target.closest('a')) {
+        var product = productsById[card.getAttribute('data-product-id')];
+        if (product) pushEcommerce('select_item', card.getAttribute('data-list-name'), [product]);
+      }
+    });
+    root.querySelector('.ab-book-quiz-form').addEventListener('submit', function (event) {
+      event.preventDefault();
+      var form = new FormData(event.currentTarget);
+      var topic = String(form.get('topic') || 'সব');
+      var reader = String(form.get('reader') || 'new');
+      var quantity = String(form.get('quantity') || 'three');
+      var recommendations = recommendProducts(products, topic, reader, quantity);
+      var results = root.querySelector('.ab-book-quiz-results');
+      results.innerHTML = '<h3 tabindex="-1">' + recommendationTitle(recommendations.length) + '</h3>' +
+        '<div class="ab-home-grid">' + recommendations.map(function (product) { return productCard(product, 'ab-home-quiz'); }).join('') + '</div>';
+      decorateCovers();
+      results.querySelector('h3').focus({ preventScroll: true });
+      results.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
+      pushEvent('ab_home_quiz_complete', { topic: topic, reader_type: reader, result_count: recommendations.length });
+    });
+    shelfData.forEach(function (entry) {
+      if (entry.products.length) pushEcommerce('view_item_list', 'ab-home-' + entry.shelf.id, entry.products);
+    });
+  }
+  function cleanup() {
+    requestSerial += 1;
+    var root = document.getElementById(ROOT_ID);
+    if (root) root.remove();
+    document.documentElement.classList.remove('ab-home-redesign');
+    if (document.body) document.body.classList.remove('ab-home-redesign');
+    mountedPath = '';
+    loading = false;
+    productsById = {};
+    pendingCarts = {};
+  }
+  function update() {
+    ensureHeaderTicker();
+    decorateCovers();
+    if (!coverDataRequested && document.querySelector('a[href*="/product-details/"]')) {
+      coverDataRequested = true;
+      fetchProducts().then(function (result) {
+        var products = result && Array.isArray(result.data) ? result.data : [];
+        indexProducts(products);
+        decorateCovers();
+      }).catch(function () { /* Badges work without rating data. */ });
+    }
+    var routeKey = location.pathname + location.search;
+    if (location.pathname !== '/' || new URLSearchParams(location.search).get('home') === 'legacy') {
+      failedRoute = '';
+      if (mountedPath || document.getElementById(ROOT_ID)) cleanup();
+      return;
+    }
+    if (failedRoute === routeKey || document.getElementById(ROOT_ID) || loading) return;
+    var nativeHome = document.querySelector('app-home');
+    if (!nativeHome || !nativeHome.parentNode) return;
+    loading = true;
+    var serial = ++requestSerial;
+    fetchProducts().then(function (result) {
+      if (serial !== requestSerial || location.pathname !== '/' || new URLSearchParams(location.search).get('home') === 'legacy') return;
+      var products = result && Array.isArray(result.data) ? result.data : [];
+      if (!products.length) throw new Error('Empty catalogue');
+      render(products);
+    }).catch(function () {
+      if (serial !== requestSerial) return;
+      failedRoute = routeKey;
+      cleanup();
+    }).finally(function () {
+      if (serial === requestSerial) loading = false;
+    });
+  }
+  window.addEventListener('click', function (event) {
+    var root = document.getElementById(ROOT_ID);
+    var add = event.target && event.target.closest && event.target.closest('.ab-add-cart-button');
+    var card = add && add.closest('.ab-home-card');
+    if (!root || !add || !card || !root.contains(add)) return;
+    var id = String(add.getAttribute('data-product-id') || '');
+    if (!id) return;
+    var queue = pendingCarts[id] || [];
+    queue = queue.filter(function (intent) { return Date.now() - intent.createdAt < 30000; });
+    queue.push({ listName: card.getAttribute('data-list-name'), createdAt: Date.now() });
+    pendingCarts[id] = queue;
+  }, true);
+  window.addEventListener('amol-cart-added', function (event) {
+    var id = String(event && event.detail && (event.detail.product || event.detail.productId || event.detail.product_id || event.detail._id) || '');
+    var queue = (pendingCarts[id] || []).filter(function (intent) { return Date.now() - intent.createdAt < 30000; });
+    var intent = queue.shift();
+    if (intent && location.pathname === '/') {
+      var product = productsById[id];
+      if (product) pushEcommerce('add_to_cart', intent.listName, [product]);
+    }
+    if (queue.length) pendingCarts[id] = queue;
+    else delete pendingCarts[id];
+  });
+  new MutationObserver(update).observe(document.documentElement, { childList: true, subtree: true });
+  window.addEventListener('popstate', update);
+  window.setInterval(update, 1000);
+  update();
+})();
+</script>
+<!-- amol-storefront-snippets:end --></head>
 
 <body>
   <!-- Google Tag Manager (noscript) -->
@@ -2734,4 +4844,4 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
   tick();
 })();
 </script>
-<script src="/ab-widgets.js?v=18" defer></script><script src="/storefront-attribution.js?v=0b10da2c614c" defer></script><script src="/storefront-price-english-digits.js?v=658b673d6ac0" defer></script><script src="/storefront-special-package.js?v=d8e6e766a7c1" defer></script><script src="/storefront-product-sections.js?v=99767c2cc106" defer></script></body></html>
+<script src="/ab-widgets.js?v=18" defer></script><script src="/storefront-attribution.js?v=fb28bf2381a1" defer></script><script src="/storefront-price-english-digits.js?v=71a536f70807" defer></script><script src="/storefront-special-package.js?v=d8e6e766a7c1" defer></script><script src="/storefront-product-sections.js?v=2482a33f71b7" defer></script></body></html>
