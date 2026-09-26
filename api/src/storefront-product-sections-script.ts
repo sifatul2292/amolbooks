@@ -5797,11 +5797,41 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     });
   }
 
+  function pushProductPageAddToCartTracking(productId) {
+    if (!isProductPage()) return;
+    var product = cartProductCache[String(productId)] ||
+      (currentProduct && String(currentProduct._id || '') === String(productId) ? currentProduct : null);
+    if (!product) return;
+    var price = finalPrice(product);
+    window.dataLayer = window.dataLayer || [];
+    window.__amolCartUiEventHandled = true;
+    try {
+      window.dataLayer.push({ ecommerce: null });
+      window.dataLayer.push({
+        event: 'add_to_cart',
+        __amolCartUiHandled: true,
+        ecommerce: {
+          currency: 'BDT',
+          value: price,
+          items: [{
+            item_id: String(productId),
+            item_name: product.name || product.nameEn || '',
+            price: price,
+            quantity: 1,
+          }],
+        },
+      });
+    } finally {
+      window.__amolCartUiEventHandled = false;
+    }
+  }
+
   function addProductToCart(productId, button) {
     if (!productId) return Promise.resolve();
     var authorization = cartAuthorization();
     if (isLocalPreviewHost()) {
       addGuestProductToCart(productId, button);
+      pushProductPageAddToCartTracking(productId);
       if (authorization) {
         fetchJson('/cart/add-to-cart', {
           method: 'POST',
@@ -5824,10 +5854,12 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       }, RECOMMENDATION_API_BASE).then(function (result) {
         if (!result || result.success === false) {
           addGuestProductToCart(productId, button);
+          pushProductPageAddToCartTracking(productId);
           return;
         }
         window.dispatchEvent(new CustomEvent('ab-cart-updated', { detail: { product: productId } }));
         window.dispatchEvent(new CustomEvent('amol-cart-added', { detail: { product: productId } }));
+        pushProductPageAddToCartTracking(productId);
         pulseStickyCart();
         return syncAuthenticatedCartUi();
       }).finally(function () {
@@ -5839,6 +5871,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       });
     }
     addGuestProductToCart(productId, button);
+    pushProductPageAddToCartTracking(productId);
     return Promise.resolve();
   }
 

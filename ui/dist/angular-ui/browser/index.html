@@ -2452,7 +2452,7 @@ body.ab-home-redesign app-home { display: none !important; }
           ?'order_'+String(sec.transaction_id)
           :'amol_'+String(s.event||'event')+'_'+now+'_'+Math.random().toString(36).slice(2,8);
       }
-      if(obj.event==='add_to_cart')try{window.dispatchEvent(new CustomEvent('amol-cart-added'));}catch(e2){}
+      if(obj.event==='add_to_cart'&&!window.__amolCartUiEventHandled)try{window.dispatchEvent(new CustomEvent('amol-cart-added'));}catch(e2){}
       // ecommerce:null clears GTM state immediately; stape event fires after stack clears
       window.dataLayer.push({ecommerce:null});
       setTimeout(function(){try{window.dataLayer.push(s);}catch(e){}},0);
@@ -4829,4 +4829,4 @@ body.ab-home-redesign app-home { display: none !important; }
   tick();
 })();
 </script>
-<script src="/ab-widgets.js?v=18" defer></script><script src="/storefront-attribution.js?v=fb28bf2381a1" defer></script><script src="/storefront-price-english-digits.js?v=71a536f70807" defer></script><script src="/storefront-special-package.js?v=d8e6e766a7c1" defer></script><script src="/storefront-product-sections.js?v=80ec475638c6" defer></script></body></html>
+<script src="/ab-widgets.js?v=18" defer></script><script src="/storefront-attribution.js?v=fb28bf2381a1" defer></script><script src="/storefront-price-english-digits.js?v=71a536f70807" defer></script><script src="/storefront-special-package.js?v=d8e6e766a7c1" defer></script><script src="/storefront-product-sections.js?v=6b1e435955c2" defer></script></body></html>

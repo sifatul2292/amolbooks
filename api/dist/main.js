@@ -267,6 +267,8 @@ async function bootstrap() {
         }`;
     const legacyStorefrontAddToCartPriceCode = 'atcItem.price=atcP.salePrice||atcP.regularPrice||0;';
     const storefrontAddToCartPriceCode = 'rememberTrackingProduct(atcP);atcItem.price=finalTrackingPrice(atcP);';
+    const legacyStorefrontCartAddedUiDispatch = "if(obj.event==='add_to_cart')try{window.dispatchEvent(new CustomEvent('amol-cart-added'));}catch(e2){}";
+    const storefrontCartAddedUiDispatch = "if(obj.event==='add_to_cart'&&!window.__amolCartUiEventHandled)try{window.dispatchEvent(new CustomEvent('amol-cart-added'));}catch(e2){}";
     const legacyStorefrontLoggedInCartPriceCode = "items.push({item_id:String(p._id||''),item_name:p.name||'',price:p.salePrice||p.regularPrice||0,quantity:i.selectedQty||1});";
     const storefrontLoggedInCartPriceCode = "rememberTrackingProduct(p);items.push({item_id:String(p._id||''),item_name:p.name||'',price:finalTrackingPrice(p),quantity:i.selectedQty||1});";
     const legacyStorefrontGuestProductMapCode = 'd.data.forEach(function(p){if(p&&p._id)prodMap[String(p._id)]=p;});';
@@ -474,6 +476,7 @@ ${storefrontPurchaseExternalIdHelper}
         }
         patchedTrackingHtml = patchedTrackingHtml
             .replace(legacyStorefrontAddToCartPriceCode, storefrontAddToCartPriceCode)
+            .replace(legacyStorefrontCartAddedUiDispatch, storefrontCartAddedUiDispatch)
             .replace(legacyStorefrontLoggedInCartPriceCode, storefrontLoggedInCartPriceCode)
             .replace(legacyStorefrontGuestProductMapCode, storefrontGuestProductMapCode)
             .replace(legacyStorefrontGuestCartPriceCode, storefrontGuestCartPriceCode);

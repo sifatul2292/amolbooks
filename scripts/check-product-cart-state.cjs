@@ -6,6 +6,7 @@ const compiled = ts.transpileModule(fs.readFileSync(require.resolve('../api/src/
 const exportsContext = { exports: {} };
 vm.runInNewContext(compiled, exportsContext);
 const source = exportsContext.exports.STOREFRONT_PRODUCT_SECTIONS_SCRIPT;
+const main = fs.readFileSync(require.resolve('../api/src/main.ts'), 'utf8');
 new vm.Script(source);
 assert.match(source, /@media \(max-width: 1023px\)[\s\S]*?\.section-right \.cart-products-area\.summery-pc[\s\S]*?display: none !important;/, 'Mobile checkout hides the desktop item list');
 assert.match(source, /generatedArea && nativeArea[\s\S]*?generatedArea\.remove\(\)/, 'Native checkout list replaces the temporary fallback');
@@ -18,6 +19,28 @@ assert.match(source, /searchParams\.set\('ab-auth-cart-ready', '1'\)/, 'Checkout
 assert.match(source, /if \(isLocalPreviewHost\(\)\) updateNativeCartCount\(storedGuestCartItems\(\)\)/, 'Local account pages keep the native cart badge aligned');
 assert.match(source, /if \(!isProductPage\(\) && location\.pathname !== '\/'\) return;/, 'Homepage uses the shared added-to-cart modal');
 assert.match(source, /data-ab-popular-price[\s\S]*?productPriceHtml\(product\)/, 'Cart popular cards use the shared discounted-price renderer');
+assert.match(main, /obj\.event==='add_to_cart'&&!window\.__amolCartUiEventHandled/, 'Tracking mirror avoids duplicating injected cart UI feedback');
+const trackingStart = source.indexOf('  function pushProductPageAddToCartTracking(');
+const trackingHelper = source.slice(trackingStart, source.indexOf('\n  function ', trackingStart + 1));
+const trackingContext = {
+  isProductPage: () => true,
+  cartProductCache: { p1: { _id: 'p1', name: 'Tracked book', afterDiscountPrice: 310 } },
+  currentProduct: null,
+  finalPrice: product => product.afterDiscountPrice,
+  window: { dataLayer: [] },
+};
+vm.createContext(trackingContext);
+vm.runInContext(trackingHelper, trackingContext);
+trackingContext.pushProductPageAddToCartTracking('p1');
+assert.equal(trackingContext.window.dataLayer.length, 2);
+assert.equal(trackingContext.window.dataLayer[1].event, 'add_to_cart');
+assert.equal(trackingContext.window.dataLayer[1].ecommerce.value, 310);
+assert.equal(trackingContext.window.dataLayer[1].ecommerce.items[0].item_id, 'p1');
+assert.equal(trackingContext.window.__amolCartUiEventHandled, false);
+trackingContext.window.dataLayer = [];
+trackingContext.isProductPage = () => false;
+trackingContext.pushProductPageAddToCartTracking('p1');
+assert.equal(trackingContext.window.dataLayer.length, 0, 'Homepage keeps its existing tracker without duplicates');
 const names = ['productIdIsInCart', 'productIsInCart', 'refreshProductCartState', 'boughtTogetherIsInCart', 'repairBoughtTogetherActionLabels', 'addBoughtTogetherToCart', 'cartPageProductId', 'repairProductActionLabels', 'updateStickyProductActions'];
 const helpers = names.map(name => {
   const start = source.indexOf('  function ' + name + '(');
