@@ -15,6 +15,7 @@
       var verb = String(method).toUpperCase();
       if (target.origin === 'https://apisub.amolbooks.com' &&
           ((verb === 'POST' && target.pathname === '/api/product/get-all') ||
+           (verb === 'POST' && target.pathname === '/api/product/get-products-by-ids') ||
            (verb === 'POST' && target.pathname === '/api/category/get-all/') ||
            (verb === 'GET' && target.pathname === '/api/product/get-all-data'))) {
         args[1] = location.origin + '/storefront-catalog' + target.pathname.slice(4) + target.search;

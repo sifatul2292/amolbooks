@@ -5476,7 +5476,7 @@
     updateNativeCartCount(items);
 
     var ids = items.filter(function (item) {
-      return item && (!item.cartType || Number(item.cartType) === 2) && item.product;
+      return item && item.product;
     }).map(function (item) { return item.product; });
     if (!ids.length) {
       syncNativeCartPage(items, []);

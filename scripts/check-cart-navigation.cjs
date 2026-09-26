@@ -8,6 +8,24 @@ const { chromium } = require('playwright');
   try {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     const base = 'http://localhost:3000';
+    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); window.name = ''; });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    const homeCartButtons = page.locator('#ab-homepage-redesign .ab-add-cart-button');
+    await homeCartButtons.nth(3).waitFor();
+    await homeCartButtons.evaluateAll(buttons => buttons.slice(0, 4).forEach(button => button.click()));
+    await page.evaluate(() => {
+      for (const key of ['Amolbooks_LOCAL_USER_CART_1', 'Amolbooks_USER_CART_1']) {
+        const items = JSON.parse(localStorage.getItem(key) || '[]');
+        if (items[1]) items[1].cartType = 1;
+        localStorage.setItem(key, JSON.stringify(items));
+      }
+    });
+    await page.goto(base + '/cart', { waitUntil: 'domcontentloaded' });
+    await page.locator('app-cart-information .ab-live-cart-page-item').nth(3).waitFor();
+    assert.equal(await page.locator('app-cart-information .ab-live-cart-page-item').count(), 4);
+    assert.match(await page.locator('#ab-cart-summary-inline').innerText(), /মোট আইটেম\(4\)/);
+
     for (const keyboard of [false, true]) {
       await page.goto(base, { waitUntil: 'domcontentloaded' });
       const cart = page.locator('app-header .menu-cart a');

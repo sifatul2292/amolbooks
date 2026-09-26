@@ -772,6 +772,7 @@ ${storefrontPurchaseExternalIdHelper}
         const isLibraryRequest = req.method === 'GET' && req.path === '/library';
         const allowedCatalogueRequest = isLibraryRequest ||
             (req.method === 'POST' && req.path === '/product/get-all') ||
+            (req.method === 'POST' && req.path === '/product/get-products-by-ids') ||
             (req.method === 'GET' && req.path === '/product/get-all-data') ||
             (req.method === 'GET' && req.path.startsWith('/product/get-by-slug/')) ||
             (req.method === 'GET' && /^\/author\/[^/]+$/.test(req.path)) ||

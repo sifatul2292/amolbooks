@@ -17,12 +17,14 @@ for (const hostname of ['localhost', '127.0.0.1', '[::1]', '192.168.1.5', '10.0.
   assert.equal(XHR.prototype.open, installed, 'Installing twice must not wrap twice');
   const xhr = new XHR();
   xhr.open('POST', remote + '/api/product/get-all?q=book', true);
+  xhr.open('POST', remote + '/api/product/get-products-by-ids?select=name', true);
   xhr.open('POST', remote + '/api/category/get-all/', true);
   xhr.open('GET', remote + '/api/product/get-all-data?status=publish', true);
   const local = !['amolbooks.com', '172.32.0.1'].includes(hostname);
   assert.equal(calls[0][1], local ? origin + '/storefront-catalog/product/get-all?q=book' : remote + '/api/product/get-all?q=book');
-  assert.equal(calls[1][1], local ? origin + '/storefront-catalog/category/get-all/' : remote + '/api/category/get-all/');
-  assert.equal(calls[2][1], local ? origin + '/storefront-catalog/product/get-all-data?status=publish' : remote + '/api/product/get-all-data?status=publish');
+  assert.equal(calls[1][1], local ? origin + '/storefront-catalog/product/get-products-by-ids?select=name' : remote + '/api/product/get-products-by-ids?select=name');
+  assert.equal(calls[2][1], local ? origin + '/storefront-catalog/category/get-all/' : remote + '/api/category/get-all/');
+  assert.equal(calls[3][1], local ? origin + '/storefront-catalog/product/get-all-data?status=publish' : remote + '/api/product/get-all-data?status=publish');
   for (const [method, url] of [['POST', remote + '/api/cart/add-to-cart'], ['POST', remote + '/api/product/add'], ['GET', remote + '/api/product/get-all'], ['POST', 'https://example.com/api/product/get-all']]) {
     xhr.open(method, url, false, 'user', 'password');
     assert.deepEqual(calls.at(-1), [method, url, false, 'user', 'password']);
@@ -35,6 +37,7 @@ const localHostCheck = new Function('process', localHostFunction + '; return isL
 assert.equal(localHostCheck({ env: { PRODUCTION_BUILD: 'true' } })('localhost'), false, 'Production must reject a forged localhost Host header');
 assert.equal(localHostCheck({ env: { PRODUCTION_BUILD: 'false' } })('localhost'), true, 'Local preview must retain its same-origin proxy');
 assert.match(main, /req\.method === 'POST' && req\.path === '\/product\/get-all'/, 'Catalogue proxy must allowlist product searches');
+assert.match(main, /req\.method === 'POST' && req\.path === '\/product\/get-products-by-ids'/, 'Catalogue proxy must allowlist cart hydration');
 assert.match(main, /req\.method === 'POST' && req\.path === '\/category\/get-all\/'/, 'Catalogue proxy must allowlist category reads');
 const storefront = fs.readFileSync(path.join(root, 'api/src/storefront-product-sections-script.ts'), 'utf8');
 const productService = fs.readFileSync(path.join(root, 'api/src/pages/product/product.service.ts'), 'utf8');
