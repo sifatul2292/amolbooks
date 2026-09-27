@@ -1,33 +1,45 @@
-# Product social-preview routing for the www.amolbooks.com nginx virtual host.
+# Search and social crawler routing for the www.amolbooks.com nginx virtual host.
 #
 # 1. Put the `map` block in nginx's `http` context (for example in a file under
 #    /etc/nginx/conf.d/).
-# 2. Put both `location` blocks in the www.amolbooks.com `server` block, before
+# 2. Put the `location` blocks in the www.amolbooks.com `server` block, before
 #    its generic `location /` SPA fallback.
 # 3. Validate with `nginx -t` before reloading nginx.
 
 # http context
-map $http_user_agent $amol_social_preview_bot {
+map $http_user_agent $amol_seo_crawler {
     default 0;
-    ~*(facebookexternalhit|facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Discordbot|Slackbot|redditbot|pinterest) 1;
+    ~*(Googlebot|Google-InspectionTool|bingbot|Slurp|DuckDuckBot|YandexBot|Applebot|facebookexternalhit|facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Discordbot|Slackbot|redditbot|pinterest) 1;
 }
 
 # www.amolbooks.com server context
-location ~ ^/product-details/([^/]+)/?$ {
-    set $amol_product_og_slug $1;
-    error_page 418 = @amol_product_social_preview;
+location = /robots.txt {
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_pass http://127.0.0.1:3000/api/robots.txt;
+}
 
-    if ($amol_social_preview_bot) {
+location = /sitemap.xml {
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_pass http://127.0.0.1:3000/api/sitemap.xml;
+}
+
+location ~ ^/product-details/([^/]+)/?$ {
+    set $amol_product_seo_slug $1;
+    error_page 418 = @amol_product_seo;
+
+    if ($amol_seo_crawler) {
         return 418;
     }
 
     try_files $uri $uri/ /index.html;
 }
 
-location @amol_product_social_preview {
+location @amol_product_seo {
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_pass http://127.0.0.1:3000/api/product/og/$amol_product_og_slug;
+    proxy_pass http://127.0.0.1:3000/api/product/og/$amol_product_seo_slug;
 }

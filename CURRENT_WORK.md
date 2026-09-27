@@ -1,5 +1,14 @@
 # CURRENT_WORK
 
+## Product-search SEO repair (2026-09-27)
+
+- Audited live Amolbooks product discovery against Rokomari and Wafilife. The public Amolbooks sitemap was a static 2024 file pointing at `apisub.amolbooks.com`, while the dynamic sitemap used the placeholder `your-domain.com`; Googlebot also received the generic homepage metadata on every product URL. Rokomari and Wafilife both expose current product sitemaps and crawlable, product-specific HTML.
+- Rebuilt the dynamic sitemap around the canonical `https://www.amolbooks.com` host, limited it to published products, added real product modification dates and cover images, removed private/checkout URLs, and corrected blog detail links to the ID-based route used by the storefront.
+- Expanded the crawler product response with a unique Bengali-aware title and description, author, publisher, cover, final price, stock state, ISBN/page details when available, canonical/Open Graph/Twitter metadata, and Product + Book + Breadcrumb JSON-LD. Missing or unpublished products now return a real 404 with `noindex`.
+- Added a generated `robots.txt` endpoint that allows the storefront, blocks transactional/account paths, and advertises the canonical public sitemap.
+- Updated the nginx SEO example to proxy public `robots.txt` and `sitemap.xml` to their live API endpoints and to send Google, Bing, DuckDuckGo, Apple, social, and inspection crawlers to the product-specific HTML endpoint.
+- Verification: `npm run build` passes. Local endpoint checks confirm canonical `www` product URLs, no placeholder/API product hosts, parsed JSON-LD with BDT offers and availability, published-only sitemap entries, and the expected robots directives. Production still requires deploying the API build and applying the documented nginx locations before crawlers can see the changes.
+
 ## Production release reconciliation (2026-09-26)
 
 - Preserved the complete pre-release working tree on `codex/prod-release-snapshot-20260926`, then replayed it onto the current `origin/main` on `codex/prod-release-20260926` so upstream fixes remain intact.

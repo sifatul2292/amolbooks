@@ -21,8 +21,27 @@ let SitemapController = class SitemapController {
     }
     async getSitemap(res) {
         const sitemap = await this.sitemapService.generateSitemapXml();
-        res.setHeader('Content-Type', 'application/xml');
+        res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+        res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
         res.status(200).send(sitemap);
+    }
+    getRobots(res) {
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        res.status(200).send(`User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /account
+Disallow: /cart
+Disallow: /checkout
+Disallow: /login
+Disallow: /order-details
+Disallow: /payment
+Disallow: /registration
+Disallow: /reset-password
+
+Sitemap: https://www.amolbooks.com/sitemap.xml
+`);
     }
     async getFbFeed(res) {
         const feed = await this.sitemapService.generateFbFeedXml();
@@ -39,6 +58,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], SitemapController.prototype, "getSitemap", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Get)('robots.txt'),
+    __param(0, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], SitemapController.prototype, "getRobots", null);
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Get)('fb-feed.xml'),

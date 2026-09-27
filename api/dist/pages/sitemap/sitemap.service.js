@@ -14,27 +14,40 @@ const common_1 = require("@nestjs/common");
 const sitemap_1 = require("sitemap");
 const product_service_1 = require("../product/product.service");
 const blog_service_1 = require("../blog/blog/blog.service");
+const STOREFRONT_ORIGIN = 'https://www.amolbooks.com';
 let SitemapService = class SitemapService {
     constructor(productService, blogService) {
         this.productService = productService;
         this.blogService = blogService;
     }
     async generateSitemapXml() {
-        const smStream = new sitemap_1.SitemapStream({ hostname: 'https://your-domain.com' });
+        const smStream = new sitemap_1.SitemapStream({ hostname: STOREFRONT_ORIGIN });
         smStream.write({ url: '/', changefreq: 'daily', priority: 1.0 });
-        smStream.write({ url: '/about', changefreq: 'monthly', priority: 0.7 });
-        smStream.write({ url: '/contact', changefreq: 'monthly', priority: 0.7 });
+        smStream.write({ url: '/product-list', changefreq: 'daily', priority: 0.9 });
+        smStream.write({ url: '/category-list', changefreq: 'weekly', priority: 0.7 });
+        smStream.write({ url: '/author-list', changefreq: 'weekly', priority: 0.7 });
+        smStream.write({ url: '/publisher-list', changefreq: 'weekly', priority: 0.7 });
+        smStream.write({ url: '/blogs', changefreq: 'weekly', priority: 0.7 });
+        smStream.write({ url: '/contact-us', changefreq: 'monthly', priority: 0.5 });
         const products = await this.productService.findAllPublished();
-        products.forEach((product) => smStream.write({
-            url: `/product-details/${product.slug}`,
-            changefreq: 'weekly',
-            priority: 0.8,
-        }));
+        products.forEach((product) => {
+            var _a;
+            return smStream.write({
+                url: `/product-details/${product.slug}`,
+                lastmod: product.updatedAt,
+                changefreq: 'weekly',
+                priority: 0.9,
+                img: ((_a = product.images) === null || _a === void 0 ? void 0 : _a[0])
+                    ? [{ url: product.images[0], title: product.name }]
+                    : undefined,
+            });
+        });
         const blogs = await this.blogService.findAllPublished();
         blogs.forEach((blog) => smStream.write({
-            url: `/blogs/blog-details/${blog.slug}`,
-            changefreq: 'weekly',
-            priority: 0.7,
+            url: `/blogs/blog-details/${blog._id}`,
+            lastmod: blog.updatedAt,
+            changefreq: 'monthly',
+            priority: 0.6,
         }));
         smStream.end();
         const xml = await (0, sitemap_1.streamToPromise)(smStream);

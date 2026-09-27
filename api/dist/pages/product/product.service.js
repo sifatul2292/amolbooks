@@ -760,68 +760,176 @@ let ProductService = ProductService_1 = class ProductService {
         }
     }
     async getProductOgHtml(slug, res) {
+        var _a;
         try {
             const data = await this.productModel
-                .findOne({ slug })
-                .select('name slug images salePrice seoTitle seoDescription seoKeywords');
+                .findOne({ slug, status: 'publish' })
+                .select('name nameEn slug images salePrice afterDiscountPrice discountAmount discountType quantity sku isbn totalPages author publisher category ratingAvr ratingCount reviewTotal shortDescription description seoTitle seoDescription seoKeywords')
+                .lean();
+            if (!data) {
+                res.setHeader('Cache-Control', 'no-store');
+                res.status(404).send('<!doctype html><html lang="bn"><head><meta charset="utf-8"><meta name="robots" content="noindex"><title>বইটি পাওয়া যায়নি | Amolbooks</title></head><body><h1>বইটি পাওয়া যায়নি</h1></body></html>');
+                return;
+            }
             const escapeHtml = (str) => (str || '')
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#x27;');
-            const normalizeMetaText = (value, maxLength = 300) => {
-                const normalized = (value || '').replace(/\s+/g, ' ').trim();
+            const normalizeMetaText = (value, maxLength = 160) => {
+                const normalized = (value || '')
+                    .replace(/<[^>]*>/g, ' ')
+                    .replace(/&nbsp;/gi, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
                 return normalized.length > maxLength
                     ? `${normalized.slice(0, maxLength - 1).trimEnd()}…`
                     : normalized;
             };
             const shopName = 'Amolbooks';
-            const title = data
-                ? escapeHtml(normalizeMetaText(data.seoTitle || data.name || shopName, 120))
-                : shopName;
-            const description = data
-                ? escapeHtml(normalizeMetaText(data.seoDescription ||
-                    `${data.name || ''} — ${shopName}`))
-                : shopName;
-            const keywords = data ? escapeHtml(data.seoKeywords || '') : '';
-            const images = data ? data.images : null;
+            const canonicalOrigin = 'https://www.amolbooks.com';
+            const authors = Array.isArray(data.author)
+                ? data.author.map((item) => item === null || item === void 0 ? void 0 : item.name).filter(Boolean)
+                : [];
+            const authorText = authors.join(', ');
+            const publisher = ((_a = data.publisher) === null || _a === void 0 ? void 0 : _a.name) || '';
+            const englishName = data.nameEn && data.nameEn !== data.name
+                ? ` (${data.nameEn})`
+                : '';
+            const categories = Array.isArray(data.category)
+                ? data.category.map((item) => item === null || item === void 0 ? void 0 : item.name).filter(Boolean)
+                : [];
+            const rawTitle = normalizeMetaText(data.seoTitle ||
+                `${data.name}${englishName}${authorText ? `: ${authorText}` : ''}`, 110);
+            const rawDescription = normalizeMetaText(data.seoDescription ||
+                data.shortDescription ||
+                data.description ||
+                `${data.name}${authorText ? ` — ${authorText}` : ''} বইটি Amolbooks থেকে অর্ডার করুন। সারা বাংলাদেশে হোম ডেলিভারি।`);
+            const title = escapeHtml(rawTitle);
+            const description = escapeHtml(rawDescription);
+            const keywords = escapeHtml(data.seoKeywords || '');
+            const images = data.images;
             const rawImage = images && images.length ? images[0] : '';
             const image = rawImage
                 ? rawImage
                 : 'https://www.amolbooks.com/assets/images/logo/logo.png';
-            const productSlug = data ? data.slug : slug;
-            const url = `https://www.amolbooks.com/product-details/${productSlug}`;
-            const price = data && data.salePrice ? `${data.salePrice}` : '';
+            const url = `${canonicalOrigin}/product-details/${encodeURIComponent(data.slug)}`;
+            const salePrice = Number(data.salePrice || 0);
+            const storedDiscountPrice = Number(data.afterDiscountPrice || 0);
+            const discountAmount = Number(data.discountAmount || 0);
+            const discountType = Number(data.discountType || 0);
+            let finalPrice = storedDiscountPrice > 0 ? storedDiscountPrice : salePrice;
+            if (!storedDiscountPrice && discountAmount > 0) {
+                if (discountType === 1) {
+                    finalPrice = Math.max(Math.floor(salePrice - (salePrice * discountAmount) / 100), 0);
+                }
+                else if (discountType === 2) {
+                    finalPrice = Math.max(Math.floor(salePrice - discountAmount), 0);
+                }
+            }
+            const inStock = Number(data.quantity || 0) > 0;
+            const productJsonLd = {
+                '@context': 'https://schema.org',
+                '@type': ['Product', 'Book'],
+                name: data.name,
+                description: rawDescription,
+                image: images && images.length ? images : [image],
+                url,
+                category: categories.join(', ') || 'Books',
+                sku: data.sku || String(data._id || data.slug),
+                brand: { '@type': 'Brand', name: publisher || shopName },
+                offers: {
+                    '@type': 'Offer',
+                    url,
+                    priceCurrency: 'BDT',
+                    price: finalPrice.toFixed(2),
+                    availability: inStock
+                        ? 'https://schema.org/InStock'
+                        : 'https://schema.org/OutOfStock',
+                    itemCondition: 'https://schema.org/NewCondition',
+                    seller: { '@type': 'Organization', name: shopName },
+                },
+            };
+            if (data.isbn)
+                productJsonLd.isbn = data.isbn;
+            if (authors.length) {
+                productJsonLd.author = authors.map((name) => ({
+                    '@type': 'Person',
+                    name,
+                }));
+            }
+            const ratingValue = Number(data.ratingAvr || 0);
+            const ratingCount = Number(data.ratingCount || 0);
+            if (ratingValue > 0 && ratingCount > 0) {
+                productJsonLd.aggregateRating = {
+                    '@type': 'AggregateRating',
+                    ratingValue,
+                    ratingCount,
+                    reviewCount: Number(data.reviewTotal || ratingCount),
+                };
+            }
+            const breadcrumbJsonLd = {
+                '@context': 'https://schema.org',
+                '@type': 'BreadcrumbList',
+                itemListElement: [
+                    { '@type': 'ListItem', position: 1, name: 'হোম', item: `${canonicalOrigin}/` },
+                    {
+                        '@type': 'ListItem',
+                        position: 2,
+                        name: 'বই',
+                        item: `${canonicalOrigin}/product-list`,
+                    },
+                    {
+                        '@type': 'ListItem',
+                        position: 3,
+                        name: data.name,
+                        item: url,
+                    },
+                ],
+            };
+            const safeJsonLd = (value) => JSON.stringify(value).replace(/</g, '\\u003c');
             const html = `<!DOCTYPE html>
 <html lang="bn">
 <head>
   <meta charset="utf-8">
   <title>${title} | ${shopName}</title>
   <meta name="description" content="${description}">
+  <meta name="robots" content="index, follow, max-image-preview:large">
   ${keywords ? `<meta name="keywords" content="${keywords}">` : ''}
   <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="product">
+  <meta property="og:type" content="book">
+  <meta property="og:locale" content="bn_BD">
   <meta property="og:site_name" content="${shopName}">
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
   <meta property="og:image" content="${escapeHtml(image)}">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="${title} বইয়ের প্রচ্ছদ">
   <meta property="og:url" content="${escapeHtml(url)}">
-  ${price ? `<meta property="product:price:amount" content="${escapeHtml(price)}">` : ''}
-  ${price ? `<meta property="product:price:currency" content="BDT">` : ''}
+  <meta property="product:price:amount" content="${finalPrice}">
+  <meta property="product:price:currency" content="BDT">
   <!-- Twitter / X Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${title}">
   <meta name="twitter:description" content="${description}">
   <meta name="twitter:image" content="${escapeHtml(image)}">
+  <meta name="twitter:image:alt" content="${title} বইয়ের প্রচ্ছদ">
   <link rel="canonical" href="${escapeHtml(url)}">
+  <script type="application/ld+json">${safeJsonLd(productJsonLd)}</script>
+  <script type="application/ld+json">${safeJsonLd(breadcrumbJsonLd)}</script>
 </head>
 <body>
-  <h1>${title}</h1>
+  <main><article>
+  <h1>${escapeHtml(data.name)}</h1>
+  ${authorText ? `<p>লেখক: ${escapeHtml(authorText)}</p>` : ''}
+  ${publisher ? `<p>প্রকাশনী: ${escapeHtml(publisher)}</p>` : ''}
+  <img src="${escapeHtml(image)}" alt="${title} বইয়ের প্রচ্ছদ">
   <p>${description}</p>
-  <a href="${escapeHtml(url)}">View Product</a>
+  <p>মূল্য: ৳${finalPrice} — ${inStock ? 'স্টকে আছে' : 'স্টক আউট'}</p>
+  ${data.isbn ? `<p>ISBN: ${escapeHtml(String(data.isbn))}</p>` : ''}
+  ${data.totalPages ? `<p>পৃষ্ঠা: ${escapeHtml(String(data.totalPages))}</p>` : ''}
+  <a href="${escapeHtml(url)}">Amolbooks থেকে বইটি দেখুন ও অর্ডার করুন</a>
+  </article></main>
 </body>
 </html>`;
             res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -1118,7 +1226,12 @@ let ProductService = ProductService_1 = class ProductService {
         }
     }
     async findAllPublished() {
-        return this.productModel.find({}).select('slug title').exec();
+        return this.productModel
+            .find({ status: 'publish', slug: { $exists: true, $ne: '' } })
+            .select('name slug updatedAt images')
+            .sort({ updatedAt: -1 })
+            .lean()
+            .exec();
     }
     async getMetaFeedXml() {
         const products = await this.productModel

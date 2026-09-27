@@ -375,7 +375,12 @@ let BlogService = BlogService_1 = class BlogService {
         }
     }
     async findAllPublished() {
-        return this.blogModel.find({ status: 'publish' }).select('slug title').exec();
+        return this.blogModel
+            .find({ status: 'publish' })
+            .select('_id updatedAt')
+            .sort({ updatedAt: -1 })
+            .lean()
+            .exec();
     }
 };
 BlogService = BlogService_1 = __decorate([

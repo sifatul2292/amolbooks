@@ -488,6 +488,11 @@ export class BlogService {
   }
 
   async findAllPublished(): Promise<Blog[]> {
-    return this.blogModel.find({ status: 'publish' }).select('slug title').exec();
+    return this.blogModel
+      .find({ status: 'publish' })
+      .select('_id updatedAt')
+      .sort({ updatedAt: -1 })
+      .lean()
+      .exec() as any;
   }
 }

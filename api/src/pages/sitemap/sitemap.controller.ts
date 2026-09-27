@@ -11,8 +11,33 @@ export class SitemapController {
   @Get('sitemap.xml')
   async getSitemap(@Res() res: Response) {
     const sitemap = await this.sitemapService.generateSitemapXml();
-    res.setHeader('Content-Type', 'application/xml');
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.setHeader(
+      'Cache-Control',
+      'public, max-age=3600, stale-while-revalidate=86400',
+    );
     res.status(200).send(sitemap);
+  }
+
+  @Version(VERSION_NEUTRAL)
+  @Get('robots.txt')
+  getRobots(@Res() res: Response) {
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.status(200).send(`User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /account
+Disallow: /cart
+Disallow: /checkout
+Disallow: /login
+Disallow: /order-details
+Disallow: /payment
+Disallow: /registration
+Disallow: /reset-password
+
+Sitemap: https://www.amolbooks.com/sitemap.xml
+`);
   }
 
   @Version(VERSION_NEUTRAL)

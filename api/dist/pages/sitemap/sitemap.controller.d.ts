@@ -4,5 +4,6 @@ export declare class SitemapController {
     private readonly sitemapService;
     constructor(sitemapService: SitemapService);
     getSitemap(res: Response): Promise<void>;
+    getRobots(res: Response): void;
     getFbFeed(res: Response): Promise<void>;
 }
