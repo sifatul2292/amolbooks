@@ -1848,6 +1848,69 @@ let OrderService = OrderService_1 = class OrderService {
             return false;
         }
     }
+    async reconcileEditedOrderStock(orderId, previousItems, nextItems, admin) {
+        try {
+            const quantities = (items) => {
+                const result = new Map();
+                (items || []).forEach((item) => {
+                    const id = String((item === null || item === void 0 ? void 0 : item._id) || (item === null || item === void 0 ? void 0 : item.product) || (item === null || item === void 0 ? void 0 : item.productId) || '');
+                    if (!ObjectId.isValid(id))
+                        return;
+                    const qty = Math.max(1, Math.floor(Number(item === null || item === void 0 ? void 0 : item.quantity)) || 1);
+                    result.set(id, (result.get(id) || 0) + qty);
+                });
+                return result;
+            };
+            const previous = quantities(previousItems);
+            const next = quantities(nextItems);
+            const ids = Array.from(new Set([...previous.keys(), ...next.keys()]));
+            const changes = ids
+                .map((id) => ({
+                id,
+                qtyChange: (previous.get(id) || 0) - (next.get(id) || 0),
+            }))
+                .filter((change) => change.qtyChange !== 0);
+            if (!changes.length)
+                return;
+            await this.productModel.bulkWrite(changes.map(({ id, qtyChange }) => ({
+                updateOne: {
+                    filter: { _id: id, stock: { $ne: null } },
+                    update: { $inc: { stock: qtyChange } },
+                },
+            })));
+            const products = await this.productModel
+                .find({
+                _id: { $in: changes.map((change) => change.id) },
+                stock: { $ne: null },
+            })
+                .select('sku stock')
+                .lean();
+            const byId = new Map(products.map((product) => [String(product._id), product]));
+            const movements = changes
+                .filter(({ id }) => byId.has(id))
+                .map(({ id, qtyChange }) => {
+                var _a, _b;
+                return ({
+                    product: id,
+                    sku: (_a = byId.get(id)) === null || _a === void 0 ? void 0 : _a.sku,
+                    qtyChange,
+                    stockAfter: (_b = byId.get(id)) === null || _b === void 0 ? void 0 : _b.stock,
+                    reason: 'manual_adjustment',
+                    referenceType: 'order',
+                    referenceId: orderId,
+                    note: 'Order items edited',
+                    adminId: admin === null || admin === void 0 ? void 0 : admin._id,
+                    adminName: admin === null || admin === void 0 ? void 0 : admin.name,
+                });
+            });
+            if (movements.length) {
+                await this.stockMovementModel.insertMany(movements);
+            }
+        }
+        catch (error) {
+            this.logger.warn(`Order ${orderId} updated, but stock reconciliation failed: ${(error === null || error === void 0 ? void 0 : error.message) || error}`);
+        }
+    }
     async restockProducts(orderId, items, reason) {
         try {
             if (!Array.isArray(items) || !items.length)
@@ -2680,6 +2743,26 @@ let OrderService = OrderService_1 = class OrderService {
         catch (err) {
             throw new common_1.InternalServerErrorException();
         }
+    }
+    async updateOrderByAdmin(id, updateOrderDto, admin) {
+        const order = await this.orderModel.findById(id);
+        if (!order)
+            throw new common_1.NotFoundException('No Data found!');
+        let updateData = Object.assign({}, updateOrderDto);
+        if (Array.isArray(updateOrderDto.orderedItems)) {
+            updateData = this.normalizeAdminOrderData(updateData);
+            updateData.orderedItems = await this.attachCostSnapshots(updateData.orderedItems);
+        }
+        await this.orderModel.findByIdAndUpdate(id, { $set: updateData }, { strict: false });
+        if (Array.isArray(updateData.orderedItems) &&
+            order.stockDecremented === true &&
+            !order.stockRestocked) {
+            await this.reconcileEditedOrderStock(id, order.orderedItems || [], updateData.orderedItems, admin);
+        }
+        return {
+            success: true,
+            message: 'Order updated successfully',
+        };
     }
     async updateMultipleOrderById(ids, updateOrderDto) {
         var _a, _b;

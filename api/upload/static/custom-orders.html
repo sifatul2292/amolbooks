@@ -506,6 +506,9 @@
     .btn-invoice:hover { background: #ddd6fe; }
     .btn-view { background: #dbeafe; color: #1d4ed8; }
     .btn-view:hover { background: #bfdbfe; }
+    .btn-edit { background: #ede9fe; color: #6d28d9; }
+    .btn-edit:hover { background: #ddd6fe; }
+    .order-row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 
     /* Pagination */
     .pagination-bar {
@@ -872,8 +875,10 @@
       tbody td:nth-child(4) { max-width: 76px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       tbody td:nth-child(7) { white-space: nowrap; }
       tbody td:nth-child(12), thead th:nth-child(12) { text-align: center; }
+      tbody td:nth-child(12) .order-row-actions { justify-content: center; }
       tbody td:nth-child(12) .btn-view { width: 38px; height: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0; border-radius: 9px; }
-      tbody td:nth-child(12) .btn-view i { font-size: 15px; }
+      tbody td:nth-child(12) .btn-edit { width: 38px; height: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0; border-radius: 9px; }
+      tbody td:nth-child(12) .btn-view i, tbody td:nth-child(12) .btn-edit i { font-size: 15px; }
       thead th { padding: 10px 5px; }
       tbody td { padding: 9px 5px; }
       thead th:first-child, tbody td:first-child { padding-left: 10px; width: 26px; }
@@ -3071,7 +3076,7 @@
         '<td>'+courierStatusCell(o)+'</td>',
         '<td>'+courierChargeCell(o)+'</td>',
         '<td>'+fraudCell(o.fraudChecker,o._id,o.phoneNo||'')+'</td>',
-        '<td><button class="btn-action btn-view" onclick="openProducts(\''+o._id+'\')" title="'+itemCount+' item(s)"><i class="fas fa-eye"></i> View'+(itemCount?' ('+itemCount+')':'')+'</button></td>',
+        '<td><div class="order-row-actions"><button class="btn-action btn-view" onclick="openProducts(\''+o._id+'\')" title="'+itemCount+' item(s)" aria-label="View order"><i class="fas fa-eye"></i> View'+(itemCount?' ('+itemCount+')':'')+'</button><button class="btn-action btn-edit" onclick="AmolbooksIncompleteEditor.openOrder(\''+o._id+'\')" title="Edit customer, products and price" aria-label="Edit order"><i class="fas fa-pen"></i> Edit</button></div></td>',
         '<td>'+payTypeBadge(o.paymentType)+'</td>',
         '<td>'+payStatusBadge(o.paymentStatus)+'</td>',
         '<td>'+statusSelect(o.orderId,o._id,o.orderStatus)+'</td>',

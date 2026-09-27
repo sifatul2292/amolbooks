@@ -2593,6 +2593,78 @@ export class OrderService {
     }
   }
 
+  private async reconcileEditedOrderStock(
+    orderId: string,
+    previousItems: any[],
+    nextItems: any[],
+    admin: Admin,
+  ): Promise<void> {
+    try {
+      const quantities = (items: any[]) => {
+        const result = new Map<string, number>();
+        (items || []).forEach((item) => {
+          const id = String(item?._id || item?.product || item?.productId || '');
+          if (!ObjectId.isValid(id)) return;
+          const qty = Math.max(1, Math.floor(Number(item?.quantity)) || 1);
+          result.set(id, (result.get(id) || 0) + qty);
+        });
+        return result;
+      };
+      const previous = quantities(previousItems);
+      const next = quantities(nextItems);
+      const ids = Array.from(new Set([...previous.keys(), ...next.keys()]));
+      const changes = ids
+        .map((id) => ({
+          id,
+          qtyChange: (previous.get(id) || 0) - (next.get(id) || 0),
+        }))
+        .filter((change) => change.qtyChange !== 0);
+      if (!changes.length) return;
+
+      await this.productModel.bulkWrite(
+        changes.map(({ id, qtyChange }) => ({
+          updateOne: {
+            filter: { _id: id, stock: { $ne: null } },
+            update: { $inc: { stock: qtyChange } },
+          },
+        })) as any,
+      );
+      const products: any[] = await this.productModel
+        .find({
+          _id: { $in: changes.map((change) => change.id) },
+          stock: { $ne: null },
+        })
+        .select('sku stock')
+        .lean();
+      const byId = new Map(
+        products.map((product) => [String(product._id), product]),
+      );
+      const movements = changes
+        .filter(({ id }) => byId.has(id))
+        .map(({ id, qtyChange }) => ({
+          product: id,
+          sku: byId.get(id)?.sku,
+          qtyChange,
+          stockAfter: byId.get(id)?.stock,
+          reason: 'manual_adjustment',
+          referenceType: 'order',
+          referenceId: orderId,
+          note: 'Order items edited',
+          adminId: admin?._id,
+          adminName: admin?.name,
+        }));
+      if (movements.length) {
+        await this.stockMovementModel.insertMany(movements);
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Order ${orderId} updated, but stock reconciliation failed: ${
+          error?.message || error
+        }`,
+      );
+    }
+  }
+
   /**
    * Reverse `decreaseProductStock` when an order is cancelled/refunded/
    * returned. Mirrors the tracked-only filter so untracked products are
@@ -3653,6 +3725,47 @@ export class OrderService {
     } catch (err) {
       throw new InternalServerErrorException();
     }
+  }
+
+  async updateOrderByAdmin(
+    id: string,
+    updateOrderDto: UpdateIncompleteOrderDto,
+    admin: Admin,
+  ): Promise<ResponsePayload> {
+    const order: any = await this.orderModel.findById(id);
+    if (!order) throw new NotFoundException('No Data found!');
+
+    let updateData: any = { ...updateOrderDto };
+    if (Array.isArray(updateOrderDto.orderedItems)) {
+      updateData = this.normalizeAdminOrderData(updateData);
+      updateData.orderedItems = await this.attachCostSnapshots(
+        updateData.orderedItems,
+      );
+    }
+
+    await this.orderModel.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { strict: false },
+    );
+
+    if (
+      Array.isArray(updateData.orderedItems) &&
+      order.stockDecremented === true &&
+      !order.stockRestocked
+    ) {
+      await this.reconcileEditedOrderStock(
+        id,
+        order.orderedItems || [],
+        updateData.orderedItems,
+        admin,
+      );
+    }
+
+    return {
+      success: true,
+      message: 'Order updated successfully',
+    } as ResponsePayload;
   }
 
   async updateMultipleOrderById(

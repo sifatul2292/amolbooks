@@ -315,6 +315,18 @@ export class OrderController {
   }
 
   @Version(VERSION_NEUTRAL)
+  @Put('/update-order-admin/:id')
+  @UsePipes(ValidationPipe)
+  @UseGuards(AdminJwtAuthGuard)
+  async updateOrderByAdmin(
+    @Param('id', MongoIdValidationPipe) id: string,
+    @Body() updateOrderDto: UpdateIncompleteOrderDto,
+    @GetAdmin() admin: Admin,
+  ): Promise<ResponsePayload> {
+    return await this.orderService.updateOrderByAdmin(id, updateOrderDto, admin);
+  }
+
+  @Version(VERSION_NEUTRAL)
   @Put('/update-multiple')
   @UsePipes(ValidationPipe)
   @AdminMetaRoles(AdminRoles.SUPER_ADMIN)

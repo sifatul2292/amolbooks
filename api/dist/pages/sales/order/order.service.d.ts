@@ -103,6 +103,7 @@ export declare class OrderService {
     private retryPendingManualMetaPurchases;
     private normalizeAdminOrderData;
     private decreaseProductStock;
+    private reconcileEditedOrderStock;
     private restockProducts;
     private normalizeOrderItems;
     private attachCostSnapshots;
@@ -133,6 +134,7 @@ export declare class OrderService {
     getOrdersByUser(user: User, filterOrderDto: FilterAndPaginationOrderDto, searchQuery?: string): Promise<ResponsePayload>;
     getOrderById(id: string, select: string): Promise<ResponsePayload>;
     updateOrderById(id: string, updateOrderDto: UpdateOrderDto): Promise<ResponsePayload>;
+    updateOrderByAdmin(id: string, updateOrderDto: UpdateIncompleteOrderDto, admin: Admin): Promise<ResponsePayload>;
     updateMultipleOrderById(ids: string[], updateOrderDto: UpdateOrderDto): Promise<ResponsePayload>;
     sendToCourier(id: string): Promise<ResponsePayload>;
     private addSingleOrderToCourier;

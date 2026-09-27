@@ -47,6 +47,7 @@ export declare class OrderController {
     getSalesStatsByFilter(filterType: 'publisher' | 'category', filterId: string): Promise<ResponsePayload>;
     getOrderById(id: string, select: string): Promise<ResponsePayload>;
     updateOrderById(id: string, updateOrderDto: UpdateOrderDto): Promise<ResponsePayload>;
+    updateOrderByAdmin(id: string, updateOrderDto: UpdateIncompleteOrderDto, admin: Admin): Promise<ResponsePayload>;
     updateMultipleOrderById(updateOrderDto: UpdateOrderDto): Promise<ResponsePayload>;
     updateOrderSessionKey(id: string, updateOrderDto: any): Promise<ResponsePayload>;
     sendToCourier(id: string): Promise<ResponsePayload>;

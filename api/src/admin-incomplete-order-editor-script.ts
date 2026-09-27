@@ -8,6 +8,8 @@ export const ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT = String.raw`
   var API = root.location.origin;
   var items = [];
   var currentId = '';
+  var currentMode = 'incomplete';
+  var currentOrder = null;
   var lastFocus = null;
   var searchTimer = null;
   var searchController = null;
@@ -29,7 +31,7 @@ export const ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT = String.raw`
   var HTML = [
     '<div class="ie-overlay" id="ie-overlay" aria-hidden="true">',
     '<section class="ie-dialog" role="dialog" aria-modal="true" aria-labelledby="ie-title">',
-    '<header class="ie-header"><div><h2 id="ie-title">Edit incomplete order</h2><p>Changes will be used when this order is added or sent to courier.</p></div><button class="ie-close" id="ie-close" type="button" aria-label="Close">&times;</button></header>',
+    '<header class="ie-header"><div><h2 id="ie-title">Edit incomplete order</h2><p id="ie-subtitle">Changes will be used when this order is added or sent to courier.</p></div><button class="ie-close" id="ie-close" type="button" aria-label="Close">&times;</button></header>',
     '<div class="ie-body">',
     '<div class="ie-grid"><div><label class="ie-label" for="ie-name">Customer name</label><input class="ie-control" id="ie-name" autocomplete="name"></div><div><label class="ie-label" for="ie-phone">Phone</label><input class="ie-control" id="ie-phone" inputmode="tel" autocomplete="tel"></div></div>',
     '<div class="ie-grid full"><div><label class="ie-label" for="ie-address">Shipping address</label><input class="ie-control" id="ie-address" autocomplete="street-address"></div></div>',
@@ -142,13 +144,17 @@ export const ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT = String.raw`
     byId('ie-overlay').classList.remove('open'); byId('ie-overlay').setAttribute('aria-hidden', 'true'); document.body.style.overflow = '';
     if (lastFocus && lastFocus.focus) lastFocus.focus();
   }
-  function open(id) {
-    if (!id) return; currentId = id; lastFocus = document.activeElement; items = []; renderItems(); setStatus('Loading order…');
+  function open(id, mode) {
+    if (!id) return; currentId = id; currentMode = mode === 'order' ? 'order' : 'incomplete'; currentOrder = null; lastFocus = document.activeElement; items = []; renderItems(); setStatus('Loading order…');
+    byId('ie-title').textContent = currentMode === 'order' ? 'Edit order' : 'Edit incomplete order';
+    byId('ie-subtitle').textContent = currentMode === 'order' ? 'Changes apply immediately to this order.' : 'Changes will be used when this order is added or sent to courier.';
     byId('ie-overlay').classList.add('open'); byId('ie-overlay').setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
-    fetch(API + '/api/order/incomplete/' + encodeURIComponent(id), { headers: headers() }).then(parseResponse).then(function (payload) {
+    var path = currentMode === 'order' ? '/api/order/' : '/api/order/incomplete/';
+    fetch(API + path + encodeURIComponent(id), { headers: headers() }).then(parseResponse).then(function (payload) {
       var order = payload.data;
-      if (!order) throw new Error('Incomplete order was not found.');
-      if (order.status === 'converted') throw new Error('Converted orders can no longer be edited here.');
+      if (!order) throw new Error(currentMode === 'order' ? 'Order was not found.' : 'Incomplete order was not found.');
+      if (currentMode === 'incomplete' && order.status === 'converted') throw new Error('Converted orders can no longer be edited here.');
+      currentOrder = order;
       byId('ie-name').value = order.name || ''; byId('ie-phone').value = order.phoneNo || ''; byId('ie-address').value = order.shippingAddress || '';
       byId('ie-city').value = order.city || ''; byId('ie-email').value = order.email || ''; byId('ie-payment').value = normalizePayment(order.paymentType);
       if (!byId('ie-payment').value) byId('ie-payment').value = 'cash_on_delivery';
@@ -178,11 +184,12 @@ export const ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT = String.raw`
     var payload = {
       name: byId('ie-name').value.trim(), phoneNo: byId('ie-phone').value.trim(), shippingAddress: byId('ie-address').value.trim(),
       city: byId('ie-city').value.trim(), email: byId('ie-email').value.trim(), paymentType: byId('ie-payment').value,
-      paymentStatus: 'unpaid', deliveryCharge: computed.deliveryCharge, subTotal: computed.subTotal, discount: 0,
+      paymentStatus: currentMode === 'order' ? (currentOrder && currentOrder.paymentStatus || 'unpaid') : 'unpaid', deliveryCharge: computed.deliveryCharge, subTotal: computed.subTotal, discount: 0,
       grandTotal: computed.grandTotal, orderedItems: orderedItems, note: byId('ie-note').value.trim()
     };
     var button = byId('ie-save'); button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…'; setStatus('');
-    fetch(API + '/api/order/update-incomplete-order-admin/' + encodeURIComponent(currentId), { method: 'PUT', headers: headers(), body: JSON.stringify(payload) })
+    var path = currentMode === 'order' ? '/api/order/update-order-admin/' : '/api/order/update-incomplete-order-admin/';
+    fetch(API + path + encodeURIComponent(currentId), { method: 'PUT', headers: headers(), body: JSON.stringify(payload) })
       .then(parseResponse).then(function () { setStatus('Changes saved. Refreshing the order list…', 'success'); root.setTimeout(function () { root.location.reload(); }, 450); })
       .catch(function (error) { setStatus(error.message || 'Could not save changes.', 'error'); button.disabled = false; button.innerHTML = '<i class="fas fa-save"></i> Save changes'; });
   }
@@ -194,6 +201,6 @@ export const ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT = String.raw`
   byId('ie-search').addEventListener('keydown', function (event) { if (event.key === 'Enter') { event.preventDefault(); search(); } });
   byId('ie-delivery').addEventListener('input', totals); byId('ie-overlay').addEventListener('click', function (event) { if (event.target === this) close(); });
   document.addEventListener('keydown', function (event) { if (event.key === 'Escape' && byId('ie-overlay').classList.contains('open')) close(); });
-  root.AmolbooksIncompleteEditor = { open: open, close: close };
+  root.AmolbooksIncompleteEditor = { open: open, openOrder: function (id) { open(id, 'order'); }, close: close };
 })(window);
 `;

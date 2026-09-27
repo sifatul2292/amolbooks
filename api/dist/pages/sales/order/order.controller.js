@@ -101,6 +101,9 @@ let OrderController = OrderController_1 = class OrderController {
     async updateOrderById(id, updateOrderDto) {
         return await this.orderService.updateOrderById(id, updateOrderDto);
     }
+    async updateOrderByAdmin(id, updateOrderDto, admin) {
+        return await this.orderService.updateOrderByAdmin(id, updateOrderDto, admin);
+    }
     async updateMultipleOrderById(updateOrderDto) {
         return await this.orderService.updateMultipleOrderById(updateOrderDto.ids, updateOrderDto);
     }
@@ -346,6 +349,18 @@ __decorate([
     __metadata("design:paramtypes", [String, order_dto_1.UpdateOrderDto]),
     __metadata("design:returntype", Promise)
 ], OrderController.prototype, "updateOrderById", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Put)('/update-order-admin/:id'),
+    (0, common_1.UsePipes)(common_1.ValidationPipe),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __param(0, (0, common_1.Param)('id', mongo_id_validation_pipe_1.MongoIdValidationPipe)),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, get_admin_decorator_1.GetAdmin)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, incomplete_order_dto_1.UpdateIncompleteOrderDto, Object]),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "updateOrderByAdmin", null);
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Put)('/update-multiple'),
