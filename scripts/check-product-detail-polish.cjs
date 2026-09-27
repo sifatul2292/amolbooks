@@ -24,7 +24,23 @@ assert.equal(catalogueBaseFor({ location: { hostname: 'demo.trycloudflare.com', 
 assert.equal(catalogueBaseFor({ location: { hostname: 'amolbooks.com', origin: 'https://amolbooks.com' } }), 'https://apisub.amolbooks.com/api');
 
 const mountLibrarySource = emittedFunction('mountCategoryLibrary');
+const categoryLibraryProductsSource = emittedFunction('categoryLibraryProducts');
 const publisherProductsSource = emittedFunction('publisherProducts');
+let categoryLibraryRequest;
+const categoryLibraryProducts = new Function('fetchJson', `${categoryLibraryProductsSource}; var CATALOG_API_BASE = '/catalogue'; return categoryLibraryProducts;`)(
+  async (path, options, base) => {
+    categoryLibraryRequest = { path, method: options.method, body: JSON.parse(options.body), base };
+    return { data: [] };
+  },
+);
+categoryLibraryProducts().then(() => {
+  assert.equal(categoryLibraryRequest.path, '/product/get-all');
+  assert.equal(categoryLibraryRequest.method, 'POST');
+  assert.equal(categoryLibraryRequest.base, '/catalogue');
+  assert.deepEqual(categoryLibraryRequest.body.filter, { status: 'publish', quantity: { $gt: 0 } });
+  assert.equal(categoryLibraryRequest.body.pagination.pageSize, 180);
+  assert.equal(categoryLibraryRequest.body.select.category, 1);
+});
 let publisherRequest;
 const publisherProducts = new Function('fetchJson', `${publisherProductsSource}; var CATALOG_API_BASE = '/catalogue'; return publisherProducts;`)(
   async (path, options, base) => {
@@ -71,6 +87,7 @@ function mountLibrary(existingSlug, productSlug) {
     var CATALOG_API_BASE = '/storefront-catalog';
     function removeCategoryLibrary() { calls.remove += 1; }
     function fetchJson() { calls.fetch += 1; return { then: function () {} }; }
+    function categoryLibraryProducts() { return fetchJson(); }
     function publisherProducts() { return Promise.resolve([]); }
     function publisherShelfHtml() { return ''; }
     mountCategoryLibrary(product);

@@ -1362,6 +1362,103 @@
       outline-offset: 3px;
     }
 
+    /* The native header search remains visible on desktop, so its injected
+       results need their own desktop rules. Sticky search stays mobile-only. */
+    @media (min-width: 768px) {
+      app-header .header-middle {
+        position: relative !important;
+        overflow: visible !important;
+      }
+
+      app-header #auto-suggestion-mobile {
+        display: none !important;
+      }
+
+      app-header .ab-header-search-results {
+        position: absolute;
+        z-index: 1001;
+        top: calc(100% + 0.38rem);
+        right: 0;
+        left: 0;
+        display: grid;
+        max-height: min(25rem, calc(100vh - 6rem));
+        overflow: auto;
+        border: 1px solid var(--ab-product-rule);
+        border-radius: 0.45rem;
+        background: #fff;
+        box-shadow: 0 0.85rem 1.7rem rgb(20 45 28 / 0.16);
+      }
+
+      app-header .ab-header-search-results[hidden] { display: none; }
+
+      app-header .ab-sticky-search-state,
+      app-header .ab-sticky-search-item {
+        min-width: 0;
+        padding: 0.72rem;
+      }
+
+      app-header .ab-sticky-search-state {
+        margin: 0;
+        color: var(--ab-product-muted);
+        font-size: 0.88rem;
+      }
+
+      app-header .ab-sticky-search-item {
+        display: grid;
+        grid-template-columns: 2.7rem minmax(0, 1fr) auto;
+        gap: 0.68rem;
+        align-items: center;
+        color: var(--ab-product-ink);
+        text-decoration: none;
+      }
+
+      app-header .ab-sticky-search-item + .ab-sticky-search-item {
+        border-top: 1px solid var(--ab-product-rule);
+      }
+
+      app-header .ab-sticky-search-item:focus-visible,
+      app-header .ab-sticky-search-item:hover {
+        background: var(--ab-product-surface-muted);
+        outline: 0;
+      }
+
+      app-header .ab-sticky-search-item img {
+        width: 2.7rem;
+        height: 3.45rem;
+        max-width: 2.7rem;
+        object-fit: contain;
+        background: var(--ab-product-surface-muted);
+      }
+
+      app-header .ab-sticky-search-title,
+      app-header .ab-sticky-search-author,
+      app-header .ab-sticky-search-price {
+        margin: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      app-header .ab-sticky-search-title {
+        font-size: 0.92rem;
+        font-weight: 700;
+        line-height: 1.35;
+      }
+
+      app-header .ab-sticky-search-author {
+        margin-top: 0.14rem;
+        color: var(--ab-product-muted);
+        font-size: 0.78rem;
+      }
+
+      app-header .ab-sticky-search-price {
+        color: var(--ab-product-accent-dark);
+        font-family: var(--ab-product-number);
+        font-size: 0.86rem;
+        font-weight: 700;
+      }
+    }
+
     @media (max-width: 767px) {
       #ab-sticky-commerce {
         position: fixed;
@@ -2160,13 +2257,31 @@
       body.ab-checkout-enhanced app-checkout .delivery-address-area,
       body.ab-checkout-enhanced app-checkout .customer-info-area,
       body.ab-checkout-enhanced app-checkout .payment-method-area,
-      body.ab-checkout-enhanced app-checkout .summery-area {
+      body.ab-checkout-enhanced app-checkout .summery-area,
+      body.ab-checkout-enhanced app-checkout #ab-checkout-delivery-card {
         overflow: hidden !important;
         margin: 0 0 var(--ab-product-space-sm) !important;
         border: 1px solid var(--ab-product-rule) !important;
         border-radius: 0.45rem !important;
         background: var(--ab-product-surface) !important;
         box-shadow: 0 0.5rem 1.1rem var(--ab-product-shadow) !important;
+      }
+
+      body.ab-checkout-enhanced app-checkout #ab-checkout-delivery-card .payment-method-top {
+        padding: 0.95rem 1rem !important;
+        border-bottom: 1px solid var(--ab-product-rule) !important;
+        background: var(--ab-product-surface) !important;
+      }
+
+      body.ab-checkout-enhanced app-checkout #ab-checkout-delivery-card .payment-method-top h4 {
+        margin: 0 !important;
+        color: var(--ab-product-ink) !important;
+        font: 800 1.05rem/1.35 var(--ab-product-heading-bold) !important;
+      }
+
+      body.ab-checkout-enhanced app-checkout #ab-checkout-delivery-card .radio-box-area {
+        margin-top: 0 !important;
+        padding: 0.25rem 0 !important;
       }
 
       body.ab-checkout-enhanced app-checkout .section-left > h3 + *,
@@ -6452,6 +6567,45 @@
     cartArea.appendChild(bottom);
   }
 
+  function repairCheckoutDeliveryPlacement() {
+    if (location.pathname.indexOf('/checkout') !== 0 || location.pathname.indexOf('order-success') !== -1) return;
+    var section = document.querySelector('app-checkout .section-left');
+    var paymentArea = section && section.querySelector('.payment-method-area');
+    if (!section || !paymentArea) return;
+
+    var card = document.getElementById('ab-checkout-delivery-card');
+    var nativeHeading = Array.prototype.slice.call(paymentArea.children).find(function (child) {
+      return child.classList && child.classList.contains('payment-method-top') && /ডেলিভারি চার্জ/.test(child.textContent || '');
+    });
+    var heading = nativeHeading || card && card.querySelector('.payment-method-top');
+    var radioBox = nativeHeading && nativeHeading.nextElementSibling && nativeHeading.nextElementSibling.classList.contains('radio-box-area')
+      ? nativeHeading.nextElementSibling
+      : card && card.querySelector('.radio-box-area');
+    if (!heading || !radioBox) return;
+
+    if (window.innerWidth >= 768) {
+      var restoreBefore = paymentArea.querySelector('.condition-area, .confirm-order');
+      paymentArea.insertBefore(heading, restoreBefore);
+      paymentArea.insertBefore(radioBox, restoreBefore);
+      if (card) card.remove();
+      return;
+    }
+
+    var summary = Array.prototype.slice.call(section.querySelectorAll(':scope > .summery-area')).find(function (area) {
+      return area.offsetParent !== null;
+    });
+    if (!summary) return;
+    if (!card) {
+      card = document.createElement('section');
+      card.id = 'ab-checkout-delivery-card';
+      card.setAttribute('aria-label', 'ডেলিভারি চার্জ');
+    }
+    if (nativeHeading && card.firstElementChild && card.firstElementChild !== nativeHeading) card.innerHTML = '';
+    card.appendChild(heading);
+    card.appendChild(radioBox);
+    if (card.nextElementSibling !== summary) section.insertBefore(card, summary);
+  }
+
   function repairCheckoutJourney() {
     if (location.pathname.indexOf('/checkout') !== 0 || location.pathname.indexOf('order-success') !== -1) return;
     document.body.classList.add('ab-checkout-enhanced');
@@ -6464,6 +6618,7 @@
       var form = document.querySelector('app-checkout form, app-checkout .container, app-checkout');
       if (form && form.parentNode) form.parentNode.insertBefore(existing, form);
     }
+    repairCheckoutDeliveryPlacement();
     var methodImage = Array.prototype.slice.call(document.querySelectorAll('.method-data img')).find(function (image) {
       var container = image.closest('.method-data');
       return container && /Cash on Delivery|বই হাতে পেয়ে টাকা দিন/.test(container.textContent || '');
@@ -7127,6 +7282,23 @@
     categoryLibrarySeen = {};
   }
 
+  function categoryLibraryProducts() {
+    return fetchJson('/product/get-all', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filter: { status: 'publish', quantity: { $gt: 0 } },
+        pagination: { pageSize: 180, currentPage: 0 },
+        sort: { totalSold: -1, priority: -1 },
+        select: {
+          _id: 1, name: 1, slug: 1, images: 1, salePrice: 1, afterDiscountPrice: 1,
+          discountAmount: 1, discountType: 1, totalSold: 1, author: 1, category: 1,
+          publisher: 1, ratingCount: 1, ratingTotal: 1, reviewTotal: 1,
+        },
+      }),
+    }, CATALOG_API_BASE);
+  }
+
   function mountCategoryLibrary(product) {
     var nativeSection = document.querySelector('app-product-details app-best-selling-book');
     if (!product || !nativeSection || !nativeSection.parentNode) return;
@@ -7151,7 +7323,7 @@
     var requestVersion = categoryLibraryVersion;
     var requestSlug = library.getAttribute('data-product-slug');
     Promise.all([
-      fetchJson('/library', null, CATALOG_API_BASE),
+      categoryLibraryProducts(),
       publisherProducts(product),
     ]).then(function (results) {
       var activeLibrary = document.getElementById(CATEGORY_LIBRARY_ID);
@@ -7894,6 +8066,7 @@
   window.addEventListener('scroll', mountStickyProductActions, { passive: true });
   window.addEventListener('resize', function () {
     syncCartPageFrame(document.getElementById('ab-cart-page'));
+    repairCheckoutDeliveryPlacement();
   }, { passive: true });
   window.addEventListener('ab-cart-updated', function () {
     updateStickyCartCount();
