@@ -19,6 +19,7 @@ assert.match(source, /searchParams\.set\('ab-auth-cart-ready', '1'\)/, 'Checkout
 assert.match(source, /if \(isLocalPreviewHost\(\)\) updateNativeCartCount\(storedGuestCartItems\(\)\)/, 'Local account pages keep the native cart badge aligned');
 assert.match(source, /if \(!isProductPage\(\) && location\.pathname !== '\/'\) return;/, 'Homepage uses the shared added-to-cart modal');
 assert.match(source, /data-ab-popular-price[\s\S]*?productPriceHtml\(product\)/, 'Cart popular cards use the shared discounted-price renderer');
+assert.match(source, /li\.ab-summary-hidden,[\s\S]*?li\.ab-hide-discount-row\s*\{\s*display: none !important;/, 'Mobile checkout keeps both discount-row classes hidden');
 assert.match(main, /obj\.event==='add_to_cart'&&!window\.__amolCartUiEventHandled/, 'Tracking mirror avoids duplicating injected cart UI feedback');
 assert.match(main, /event:'view_cart',ecommerce:\{currency:'BDT',value:val,items:items\}/, 'Legacy cart tracking emits the standard event for mirroring');
 const trackingStart = source.indexOf('  function pushProductPageAddToCartTracking(');

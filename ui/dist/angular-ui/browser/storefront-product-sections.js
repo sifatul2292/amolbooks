@@ -2238,6 +2238,7 @@
         font: 700 0.9rem/1.25 var(--ab-product-heading) !important;
       }
 
+      body.ab-checkout-enhanced app-checkout .summery-list li.ab-summary-hidden,
       body.ab-checkout-enhanced app-checkout .summery-list li.ab-hide-discount-row {
         display: none !important;
       }
