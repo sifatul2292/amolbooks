@@ -14,5 +14,12 @@ assert.match(editor, /currentMode === 'order' \? '\/api\/order\/update-order-adm
 assert.match(editor, /currentOrder && currentOrder\.paymentStatus \|\| 'unpaid'/, 'Actual order edits preserve payment status');
 assert.match(controller, /@Put\('\/update-order-admin\/:id'\)[\s\S]*?@UseGuards\(AdminJwtAuthGuard\)/, 'Actual order editor endpoint requires admin authentication');
 assert.match(service, /reconcileEditedOrderStock\([\s\S]*?reason: 'manual_adjustment'/, 'Editing stock-accounted orders reconciles tracked inventory');
+assert.match(page, /whatsappAction\(o, 'incomplete'\)/, 'Incomplete orders expose a WhatsApp action');
+assert.match(page, /whatsappAction\(o, 'order'\)/, 'Actual orders expose a WhatsApp action');
+assert.match(page, /আপনি আমাদের কাছে একটি বই অর্ডারের জন্য ফর্ম পূরণ করেছিলেন, কিন্তু অর্ডারটি সম্পন্ন হয়নি/, 'Incomplete orders use abandoned-order copy');
+assert.match(page, /আমলবুকস থেকে আপনার অর্ডারটি আমরা পেয়েছি/, 'Actual orders use order-confirmation copy');
+assert.match(page, /whatsappBookSummary\(o\.orderedItems\)/, 'WhatsApp messages include ordered book names');
+assert.match(page, /বইয়ের নাম:/, 'WhatsApp messages label the ordered books');
+assert.match(page, /https:\/\/wa\.me\//, 'WhatsApp opens with a prefilled message');
 
 console.log('Custom order editor checks passed');

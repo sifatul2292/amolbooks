@@ -508,6 +508,8 @@
     .btn-view:hover { background: #bfdbfe; }
     .btn-edit { background: #ede9fe; color: #6d28d9; }
     .btn-edit:hover { background: #ddd6fe; }
+    .btn-whatsapp { background: #dcfce7; color: #15803d; }
+    .btn-whatsapp:hover { background: #bbf7d0; }
     .order-row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 
     /* Pagination */
@@ -878,7 +880,8 @@
       tbody td:nth-child(12) .order-row-actions { justify-content: center; }
       tbody td:nth-child(12) .btn-view { width: 38px; height: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0; border-radius: 9px; }
       tbody td:nth-child(12) .btn-edit { width: 38px; height: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0; border-radius: 9px; }
-      tbody td:nth-child(12) .btn-view i, tbody td:nth-child(12) .btn-edit i { font-size: 15px; }
+      tbody td:nth-child(12) .btn-whatsapp { width: 38px; height: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0; border-radius: 9px; }
+      tbody td:nth-child(12) .btn-view i, tbody td:nth-child(12) .btn-edit i, tbody td:nth-child(12) .btn-whatsapp i { font-size: 15px; }
       thead th { padding: 10px 5px; }
       tbody td { padding: 9px 5px; }
       thead th:first-child, tbody td:first-child { padding-left: 10px; width: 26px; }
@@ -2879,6 +2882,47 @@
     return html+'</div>';
   }
 
+  function whatsappNumber(phone) {
+    var digits = String(phone || '').replace(/\D/g, '');
+    if (digits.indexOf('00880') === 0) digits = digits.slice(2);
+    if (digits.indexOf('880') === 0) return digits;
+    if (digits.indexOf('0') === 0) return '88' + digits;
+    if (digits.length === 10 && digits.indexOf('1') === 0) return '880' + digits;
+    return digits;
+  }
+
+  function whatsappBookSummary(items) {
+    var books = (Array.isArray(items) ? items : []).map(function (item) {
+      var name = String(item && (item.name || item.nameEn) || '').trim();
+      if (!name) return '';
+      var quantity = Number(item.quantity || item.selectedQty || 1);
+      return name + (quantity > 1 ? ' (' + quantity + ' কপি)' : '');
+    }).filter(Boolean);
+    if (!books.length) return '';
+    if (books.length === 1) return 'বইয়ের নাম: ' + books[0];
+    return 'বইয়ের নাম:\n' + books.map(function (book, index) {
+      return (index + 1) + '. ' + book;
+    }).join('\n');
+  }
+
+  window.openOrderWhatsApp = function (phone, kind, orderId, bookSummary) {
+    var number = whatsappNumber(phone);
+    if (number.length < 10) {
+      showToast('A valid phone number is required for WhatsApp', 'error');
+      return;
+    }
+    var reference = orderId ? '\nঅর্ডার নম্বর: #' + orderId : '';
+    var books = bookSummary ? '\n\n' + bookSummary : '';
+    var message = kind === 'incomplete'
+      ? 'আসসালামু আলাইকুম,\nআপনি আমাদের কাছে একটি বই অর্ডারের জন্য ফর্ম পূরণ করেছিলেন, কিন্তু অর্ডারটি সম্পন্ন হয়নি।' + reference + books + '\n\nঅর্ডারটি কি কনফার্ম করবো?\n\nকিংবা বইটি সম্পর্কে কিছু জানার থাকলে নির্দ্বিধায় আমাদের জানাবেন।\n\nজাজাকাল্লাহ খাইরান'
+      : 'আসসালামু আলাইকুম,\nআমলবুকস থেকে আপনার অর্ডারটি আমরা পেয়েছি।' + reference + books + '\n\nঅর্ডারটি কি কনফার্ম করবো?\n\nকিংবা বইটি সম্পর্কে কিছু জানার থাকলে নির্দ্বিধায় আমাদের জানাবেন।\n\nজাজাকাল্লাহ খাইরান';
+    window.open('https://wa.me/' + number + '?text=' + encodeURIComponent(message), '_blank', 'noopener,noreferrer');
+  };
+
+  function whatsappAction(o, kind) {
+    return '<button class="btn-action btn-whatsapp" data-phone="'+esc(o.phoneNo||'')+'" data-kind="'+kind+'" data-order-id="'+esc(o.orderId||'')+'" data-book-summary="'+esc(whatsappBookSummary(o.orderedItems))+'" onclick="openOrderWhatsApp(this.dataset.phone,this.dataset.kind,this.dataset.orderId,this.dataset.bookSummary)" title="Open WhatsApp with '+(kind === 'incomplete' ? 'abandoned-order' : 'order-confirmation')+' message" aria-label="Message customer on WhatsApp"><i class="fab fa-whatsapp"></i> WhatsApp</button>';
+  }
+
   function courierStatusCell(o) {
     if (isIncompleteView || !o.courierData || !o.courierData.providerName) {
       return '<span style="color:#94a3b8;font-size:11px">—</span>';
@@ -2926,14 +2970,16 @@
   /* ── Render Table ── */
   function incompleteActions(o) {
     var view = '<button class="btn-action btn-view" onclick="openProducts(\''+o._id+'\')" title="View abandoned order"><i class="fas fa-eye"></i> View</button>';
+    var whatsapp = whatsappAction(o, 'incomplete');
     // Converted rows already produced a real order; no re-convert (would duplicate).
     if (o.status === 'converted') {
-      return '<div style="display:flex;gap:6px;flex-wrap:wrap">' + view +
+      return '<div class="order-row-actions">' + view + whatsapp +
         '<button class="btn-action" onclick="deleteIncompleteOrder(\''+o._id+'\')" title="Remove from list" style="background:#fee2e2;color:#991b1b;border-color:#fecaca"><i class="fas fa-trash"></i></button>' +
         '</div>';
     }
-    return '<div style="display:flex;gap:6px;flex-wrap:wrap">' + view +
+    return '<div class="order-row-actions">' + view +
       '<button class="btn-action" onclick="AmolbooksIncompleteEditor.open(\''+o._id+'\')" title="Edit customer, products and price" style="background:#ede9fe;color:#6d28d9;border-color:#c4b5fd"><i class="fas fa-pen"></i> Edit</button>' +
+      whatsapp +
       '<button class="btn-action" onclick="convertIncompleteOrder(\''+o._id+'\')" title="Create order from this abandoned checkout" style="background:#dcfce7;color:#166534;border-color:#bbf7d0"><i class="fas fa-plus"></i> Add Order</button>' +
       '<button class="btn-action" onclick="deleteIncompleteOrder(\''+o._id+'\')" title="Delete abandoned order" style="background:#fee2e2;color:#991b1b;border-color:#fecaca"><i class="fas fa-trash"></i></button>' +
       '</div>';
@@ -3076,7 +3122,7 @@
         '<td>'+courierStatusCell(o)+'</td>',
         '<td>'+courierChargeCell(o)+'</td>',
         '<td>'+fraudCell(o.fraudChecker,o._id,o.phoneNo||'')+'</td>',
-        '<td><div class="order-row-actions"><button class="btn-action btn-view" onclick="openProducts(\''+o._id+'\')" title="'+itemCount+' item(s)" aria-label="View order"><i class="fas fa-eye"></i> View'+(itemCount?' ('+itemCount+')':'')+'</button><button class="btn-action btn-edit" onclick="AmolbooksIncompleteEditor.openOrder(\''+o._id+'\')" title="Edit customer, products and price" aria-label="Edit order"><i class="fas fa-pen"></i> Edit</button></div></td>',
+        '<td><div class="order-row-actions"><button class="btn-action btn-view" onclick="openProducts(\''+o._id+'\')" title="'+itemCount+' item(s)" aria-label="View order"><i class="fas fa-eye"></i> View'+(itemCount?' ('+itemCount+')':'')+'</button><button class="btn-action btn-edit" onclick="AmolbooksIncompleteEditor.openOrder(\''+o._id+'\')" title="Edit customer, products and price" aria-label="Edit order"><i class="fas fa-pen"></i> Edit</button>'+whatsappAction(o, 'order')+'</div></td>',
         '<td>'+payTypeBadge(o.paymentType)+'</td>',
         '<td>'+payStatusBadge(o.paymentStatus)+'</td>',
         '<td>'+statusSelect(o.orderId,o._id,o.orderStatus)+'</td>',
