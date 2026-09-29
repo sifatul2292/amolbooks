@@ -3324,7 +3324,7 @@ let OrderService = OrderService_1 = class OrderService {
         }
     }
     async newOrderMake(orderData) {
-        var _a, _b, _c, _d;
+        var _a;
         let cartItems = [];
         if (!(orderData === null || orderData === void 0 ? void 0 : orderData.user)) {
             const fProducts = JSON.parse(JSON.stringify(await this.productModel.find({
@@ -3338,7 +3338,7 @@ let OrderService = OrderService_1 = class OrderService {
                     .find({
                     _id: { $in: fSpecialPackages.map((id) => new ObjectId(id)) },
                 })
-                    .populate('products.product', 'salePrice costPrice discountType discountAmount variationsOptions hasVariations')))
+                    .populate('products.product', 'salePrice costPrice discountType discountAmount variationsOptions hasVariations weight')))
                 : [];
             if ((fProducts && fProducts.length) || specialPackages) {
                 cartItems = orderData.cartData.map((t1) => {
@@ -3351,12 +3351,12 @@ let OrderService = OrderService_1 = class OrderService {
         else {
             cartItems = JSON.parse(JSON.stringify(await this.cartModel
                 .find({ user: orderData.user })
-                .populate('product', 'name nameEn slug author description publisher salePrice costPrice sku tax discountType discountAmount images quantity trackQuantity category subCategory brand tags unit')
+                .populate('product', 'name nameEn slug author description publisher salePrice costPrice sku tax discountType discountAmount images quantity trackQuantity category subCategory brand tags unit weight')
                 .populate({
                 path: 'specialPackage',
                 populate: {
                     path: 'products.product',
-                    select: 'salePrice costPrice discountType discountAmount variationsOptions hasVariations',
+                    select: 'salePrice costPrice discountType discountAmount variationsOptions hasVariations weight',
                 },
             })));
         }
@@ -3427,21 +3427,17 @@ let OrderService = OrderService_1 = class OrderService {
         const orderDiscount = cartSubTotal > 0
             ? await this.calculateOrderDiscount(cartSubTotal, orderData === null || orderData === void 0 ? void 0 : orderData.user, orderData.orderFrom)
             : 0;
-        const weightBasedDeliveryCharge = this.calculateWeightBasedDeliveryCharge(finalData, (_a = orderData === null || orderData === void 0 ? void 0 : orderData.division) === null || _a === void 0 ? void 0 : _a.name, (_b = orderData === null || orderData === void 0 ? void 0 : orderData.area) === null || _b === void 0 ? void 0 : _b.name, (_c = orderData === null || orderData === void 0 ? void 0 : orderData.zone) === null || _c === void 0 ? void 0 : _c.name);
         const submittedDeliveryCharge = Math.max(0, Number(orderData === null || orderData === void 0 ? void 0 : orderData.deliveryCharge) || 0);
-        let deliveryCharge = submittedDeliveryCharge;
-        if (!deliveryCharge && ['1', '2'].includes(String((orderData === null || orderData === void 0 ? void 0 : orderData.deliveryOptions) || ''))) {
-            const shippingCharge = await this.shippingChargeModel
-                .findOne({})
-                .select('deliveryInDhaka deliveryOutsideDhaka')
-                .lean();
-            const configuredCharge = Number(String(orderData.deliveryOptions) === '2'
-                ? shippingCharge === null || shippingCharge === void 0 ? void 0 : shippingCharge.deliveryOutsideDhaka
-                : shippingCharge === null || shippingCharge === void 0 ? void 0 : shippingCharge.deliveryInDhaka);
-            if (Number.isFinite(configuredCharge) && configuredCharge > 0) {
-                deliveryCharge = configuredCharge + weightBasedDeliveryCharge;
-            }
-        }
+        const shippingCharge = await this.shippingChargeModel.findOne({}).lean();
+        const configuredDelivery = ['1', '2'].includes(String((orderData === null || orderData === void 0 ? void 0 : orderData.deliveryOptions) || ''))
+            ? this.calculateConfiguredDeliveryCharge(finalData, shippingCharge, String(orderData.deliveryOptions) === '2')
+            : null;
+        const deliveryCharge = configuredDelivery
+            ? configuredDelivery.deliveryCharge
+            : submittedDeliveryCharge;
+        const weightBasedDeliveryCharge = configuredDelivery
+            ? configuredDelivery.weightBasedDeliveryCharge
+            : 0;
         const grandTotal = cartSubTotal +
             deliveryCharge -
             couponDiscount -
@@ -3474,7 +3470,7 @@ let OrderService = OrderService_1 = class OrderService {
             checkoutDate: this.utilsService.getDateString(new Date()),
             user: (orderData === null || orderData === void 0 ? void 0 : orderData.user) || null,
             email: (orderData === null || orderData === void 0 ? void 0 : orderData.email) || null,
-            coupon: (_d = orderData === null || orderData === void 0 ? void 0 : orderData.coupon) !== null && _d !== void 0 ? _d : null,
+            coupon: (_a = orderData === null || orderData === void 0 ? void 0 : orderData.coupon) !== null && _a !== void 0 ? _a : null,
             couponDiscount,
             hasOrderTimeline: true,
             orderTimeline: orderData === null || orderData === void 0 ? void 0 : orderData.orderTimeline,
@@ -3672,36 +3668,42 @@ let OrderService = OrderService_1 = class OrderService {
             return orderDiscount + orderDiscountFromApps;
         }
     }
-    calculateWeightBasedDeliveryCharge(cartItems, division, area, zone) {
-        const dhakaOutsideAreas = [
-            'Savar >> সাভার',
-            'Dohar — দোহার',
-            'Nawabganj — নবাবগঞ্জ',
-            'Keraniganj — কেরানীগঞ্জ',
-            'Dhamrai — ধামরাই',
-        ];
-        const isDhakaDivision = division === 'Dhaka > ঢাকা' ||
-            division === 'Dhaka >> ঢাকা' ||
-            division === 'Dhaka >ঢাকা';
-        if (isDhakaDivision) {
-            if (area && dhakaOutsideAreas.includes(area)) {
-                return 0;
-            }
-            return 0;
-        }
+    calculateConfiguredDeliveryCharge(cartItems, shippingCharge, outsideDhaka) {
         const totalWeight = cartItems.reduce((totalWeight, item) => {
-            var _a;
-            const itemWeight = ((_a = item.product) === null || _a === void 0 ? void 0 : _a.weight) || 0;
-            const quantity = item.selectedQty || 1;
+            var _a, _b;
+            const packageProducts = Array.isArray((_a = item.product) === null || _a === void 0 ? void 0 : _a.products)
+                ? item.product.products
+                : [];
+            const itemWeight = packageProducts.length
+                ? packageProducts.reduce((weight, entry) => {
+                    const product = (entry === null || entry === void 0 ? void 0 : entry.product) || entry;
+                    const quantity = (entry === null || entry === void 0 ? void 0 : entry.quantity) == null
+                        ? 1
+                        : Math.max(0, Number(entry.quantity) || 0);
+                    return weight + (Number(product === null || product === void 0 ? void 0 : product.weight) || 0) * quantity;
+                }, 0)
+                : Number((_b = item.product) === null || _b === void 0 ? void 0 : _b.weight) || 0;
+            const quantity = item.selectedQty == null
+                ? 1
+                : Math.max(0, Number(item.selectedQty) || 0);
             return totalWeight + itemWeight * quantity;
         }, 0);
-        if (totalWeight > 2000) {
-            const excessWeight = totalWeight - 2000;
-            const additionalKg = Math.ceil(excessWeight / 1000);
-            const additionalCharge = additionalKg * 15;
-            return additionalCharge;
-        }
-        return 0;
+        const baseCharge = Math.max(0, Number(outsideDhaka
+            ? shippingCharge === null || shippingCharge === void 0 ? void 0 : shippingCharge.deliveryOutsideDhaka
+            : shippingCharge === null || shippingCharge === void 0 ? void 0 : shippingCharge.deliveryInDhaka) || 0);
+        const rules = outsideDhaka
+            ? shippingCharge === null || shippingCharge === void 0 ? void 0 : shippingCharge.outsideDhakaRules
+            : shippingCharge === null || shippingCharge === void 0 ? void 0 : shippingCharge.insideDhakaRules;
+        const rule = (Array.isArray(rules) ? rules : []).find((entry) => totalWeight >= Number(entry.fromGram) &&
+            totalWeight <= Number(entry.toGram));
+        const ruleCost = Number(rule === null || rule === void 0 ? void 0 : rule.cost);
+        const deliveryCharge = Number.isFinite(ruleCost)
+            ? Math.max(0, ruleCost)
+            : baseCharge;
+        return {
+            deliveryCharge,
+            weightBasedDeliveryCharge: Math.max(0, deliveryCharge - baseCharge),
+        };
     }
     async checkAndUpdateCourierStatus() {
         schedule.scheduleJob('0 */6 * * *', async () => {

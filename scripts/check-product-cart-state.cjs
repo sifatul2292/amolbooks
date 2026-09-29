@@ -17,10 +17,32 @@ assert.match(source, /fetchJson\(path,[\s\S]*?baseUrl\)\.catch\(function \(\) \{
 assert.match(source, /'\/special-package\/get-products-by-ids'[\s\S]*?CATALOG_API_BASE/, 'Special-package cart hydration uses the same-origin catalogue proxy');
 assert.match(source, /window\.addEventListener\('pageshow',[\s\S]*?event\.persisted[\s\S]*?location\.pathname\.indexOf\('\/checkout'\)[\s\S]*?window\.location\.reload\(\)/, 'A history-restored checkout must reinitialize its Angular cart and shipping state');
 assert.match(source, /function loadCheckoutShippingConfig\(\)[\s\S]*?'\/shipping-charge\/get'[\s\S]*?repairCheckoutDeliveryCharge\(\)/, 'Checkout must independently recover its delivery configuration');
-assert.match(source, /function repairCheckoutDeliveryCharge\(\)[\s\S]*?deliveryInDhaka[\s\S]*?deliveryOutsideDhaka[\s\S]*?updateCheckoutSummary/, 'Recovered delivery configuration must repair labels and totals');
+assert.match(source, /function configuredCheckoutDeliveryCharge\([\s\S]*?outsideDhakaRules[\s\S]*?insideDhakaRules[\s\S]*?checkoutCartWeight[\s\S]*?rule && rule\.cost/, 'Checkout delivery must use the configured weight band');
+assert.match(source, /function repairCheckoutDeliveryCharge\(\)[\s\S]*?configuredCheckoutDeliveryCharge\(input\.value === '2'\)[\s\S]*?updateCheckoutSummary/, 'Recovered delivery configuration must repair labels and totals with weight-based charges');
+assert.match(source, /function selectedCheckoutDeliveryOption\(\)[\s\S]*?checkoutDeliveryBox\(\)[\s\S]*?deliveryBox\.querySelector\('input\[type="radio"\]:checked'\)/, 'Delivery totals must read the checked radio from the delivery group only');
+assert.doesNotMatch(source, /document\.querySelector\('app-checkout input\[type="radio"\]\[name\^="mat-radio-group-"\]:checked'\)/, 'Unrelated checked checkout radios must not choose the delivery rate');
 assert.match(source, /\/Total\/i\.test\(text\) && !\/Subtotal\/i\.test\(text\)/, 'Shipping repair must not overwrite the actual-order subtotal as a grand total');
 const orderService = fs.readFileSync(require.resolve('../api/src/pages/sales/order/order.service.ts'), 'utf8');
-assert.match(orderService, /submittedDeliveryCharge[\s\S]*?deliveryOptions[\s\S]*?shippingChargeModel[\s\S]*?deliveryCharge = configuredCharge \+ weightBasedDeliveryCharge/, 'Order creation must restore base and weight shipping after a transient zero checkout charge');
+assert.match(orderService, /shippingChargeModel\.findOne\([\s\S]*?calculateConfiguredDeliveryCharge\([\s\S]*?configuredDelivery\.deliveryCharge/, 'Order creation must enforce the configured weight-band charge instead of trusting the browser');
+assert.match(orderService, /calculateConfiguredDeliveryCharge\([\s\S]*?outsideDhakaRules[\s\S]*?insideDhakaRules[\s\S]*?entry\.fromGram[\s\S]*?entry\.toGram[\s\S]*?rule\?\.cost/, 'Server delivery calculation must use the same configured weight bands');
+const shippingHelperStart = source.indexOf('  function configuredCheckoutDeliveryCharge(');
+const shippingHelper = source.slice(shippingHelperStart, source.indexOf('\n  function ', shippingHelperStart + 1));
+const shippingContext = {
+  Array,
+  Number,
+  checkoutCartWeight: 1500,
+  checkoutShippingConfig: {
+    deliveryInDhaka: 60,
+    deliveryOutsideDhaka: 75,
+    insideDhakaRules: [{ fromGram: 0, toGram: 1000, cost: 60 }, { fromGram: 1001, toGram: 2000, cost: 80 }],
+    outsideDhakaRules: [{ fromGram: 0, toGram: 1000, cost: 75 }, { fromGram: 1001, toGram: 2000, cost: 95 }],
+  },
+  selectedCheckoutDeliveryOption: () => '1',
+};
+vm.createContext(shippingContext);
+vm.runInContext(shippingHelper, shippingContext);
+assert.equal(shippingContext.configuredCheckoutDeliveryCharge(false), 80, 'A 1.5kg inside-Dhaka cart uses its configured band');
+assert.equal(shippingContext.configuredCheckoutDeliveryCharge(true), 95, 'A 1.5kg outside-Dhaka cart uses its configured band');
 assert.match(source, /var total = calculatedTotal \|\| cartDisplayedTotal\(\)/, 'Gift progress trusts hydrated cart prices before DOM text');
 assert.match(source, /body\.ab-home-redesign #amol-cart-toast,[\s\S]*?body\.ab-cart-auth-syncing #amol-cart-toast \{ display: none !important; \}/, 'Homepage and login cart sync hide the legacy cart toast');
 assert.match(source, /document\.body\.classList\.add\('ab-cart-auth-syncing'\)/, 'Authorization starts silent cart synchronization');
@@ -110,7 +132,7 @@ assert.match(source, /function cartStorageKey\([\s\S]*?localSnapshot !== null &&
 assert.match(source, /function updateAuthenticatedCartItem\([\s\S]*?guestOwnsItem[\s\S]*?if \(!cart \|\| !cart\._id\) return updateGuestCopy\(\)\.then\(finishMutation\)/, 'A stale login token still removes a guest-owned cart row');
 assert.match(source, /fetchJson\(path, options, RECOMMENDATION_API_BASE\)\.then\(function \(result\) \{[\s\S]*?if \(!result \|\| result\.success === false\) return false;[\s\S]*?updateGuestCopy\(\)\.then\(finishMutation\)/, 'A failed account mutation cannot discard its guest mirror');
 assert.match(source, /function ensureCartBottom\([\s\S]*?querySelectorAll\('\.cart-area-bottom'\)[\s\S]*?candidate !== existing\) candidate\.remove\(\)/, 'The native cart footer replaces the temporary fallback instead of duplicating actions');
-assert.match(source, /function mountCartStickyCheckout\(\)[\s\S]*?if \(cartPageOpen\(\)\) \{[\s\S]*?bar\.remove\(\)/, 'The cart keeps one checkout action instead of adding a second sticky action');
+assert.match(source, /function mountCartStickyCheckout\(\)[\s\S]*?if \(!cartPageOpen\(\)\) \{[\s\S]*?bar\.remove\(\)[\s\S]*?data-ab-cart-sticky-checkout/, 'The mobile cart mounts its sticky checkout action only on the cart route');
 assert.match(source, /claimCartControl\(cartOperation, 10000\)[\s\S]*?releaseCartControl\(cartOperation\)/, 'Cart controls stay locked until their request settles');
 assert.match(source, /function enhanceNativeCartRows\([\s\S]*?row\.setAttribute\('data-product-id',[\s\S]*?remove\.setAttribute\('data-ab-cart-op', 'remove'\)/, 'Ordinary rows retain one-click cart controls beside a package');
 assert.match(source, /repairCartPopularProducts\(\)[\s\S]*?action\.classList\.add\('ab-add-cart-button'\)[\s\S]*?action\.setAttribute\('data-product-id', String\(product\._id\)\)/, 'Popular-cart recommendations retain their resolved product ID');
@@ -309,7 +331,7 @@ vm.runInContext(helpers, context);
   assert.match(source, /authenticatedCartItemsOverride = null;[\s\S]*?setGuestCartItems\(items\);/, 'A local mutation clears stale authenticated cart state before rendering');
   assert.match(source, /function enhanceNativeCartRows\([\s\S]*?row\.classList\.toggle\('ab-cart-active-row', Boolean\(item\)\)/, 'Native product rows receive the compact mobile layout hook');
   assert.match(source, /function enhanceNativeCartRows\([\s\S]*?row\.hasAttribute\('data-ab-special-package-row'\)\) return;/, 'Ordinary row enhancement preserves the package compact-layout hook');
-  assert.match(source, /function repairCheckoutDeliveryCharge\([\s\S]*?deliveryHeading[\s\S]*?deliveryHeading && deliveryHeading\.nextElementSibling/, 'Desktop checkout delivery labels are repaired outside the mobile wrapper');
+  assert.match(source, /function checkoutDeliveryBox\([\s\S]*?deliveryHeading[\s\S]*?deliveryHeading && deliveryHeading\.nextElementSibling/, 'Desktop checkout delivery labels are repaired outside the mobile wrapper');
   assert.match(source, /var updateCartItem = isLocalPreviewHost\(\) \? updateGuestCartItem : updateAuthenticatedCartItem;[\s\S]*?Promise\.resolve\(updateCartItem\(/, 'Local cart controls mutate the persisted local snapshot without waiting on a retained login token');
   assert.match(source, /function handleCartOperationTap\(event\)[\s\S]*?event\.type !== 'click' && !isStationaryTap\(event\)[\s\S]*?markFastCartTap\(cartOperation\)/, 'Cart controls claim a stationary pointer release before compiled handlers can suppress the click');
   assert.match(source, /window\.addEventListener\('click',[\s\S]*?if \(cartPageOpen\(\)\) handleCartOperationTap\(event\);[\s\S]*?\}, true\);/, 'Injected cart controls are claimed before compiled document capture handlers');

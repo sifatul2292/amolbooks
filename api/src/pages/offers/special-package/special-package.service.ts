@@ -252,7 +252,7 @@ export class SpecialPackageService {
         .find({ _id: { $in: mIds } })
         .populate(
           'products.product',
-          'name nameEn editionEn translatorNameEn tagline taglineEn description totalPages currentVersion currentVersionEn translatorName publishedDate shortDescription author salePrice sku tax shortDesc discountType slug edition variations hasVariations variationsOptions discountAmount images quantity category subCategory brand tags unit _id',
+          'name nameEn editionEn translatorNameEn tagline taglineEn description totalPages currentVersion currentVersionEn translatorName publishedDate shortDescription author salePrice sku tax shortDesc discountType slug edition variations hasVariations variationsOptions discountAmount images quantity weight category subCategory brand tags unit _id',
         )
         .select(select);
 

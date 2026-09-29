@@ -4514,7 +4514,7 @@ export class OrderService {
                 })
                 .populate(
                   'products.product',
-                  'salePrice costPrice discountType discountAmount variationsOptions hasVariations',
+                  'salePrice costPrice discountType discountAmount variationsOptions hasVariations weight',
                 ),
             ),
           )
@@ -4542,14 +4542,14 @@ export class OrderService {
             .find({ user: orderData.user })
             .populate(
               'product',
-              'name nameEn slug author description publisher salePrice costPrice sku tax discountType discountAmount images quantity trackQuantity category subCategory brand tags unit',
+              'name nameEn slug author description publisher salePrice costPrice sku tax discountType discountAmount images quantity trackQuantity category subCategory brand tags unit weight',
             )
             .populate({
               path: 'specialPackage',
               populate: {
                 path: 'products.product',
                 select:
-                  'salePrice costPrice discountType discountAmount variationsOptions hasVariations',
+                  'salePrice costPrice discountType discountAmount variationsOptions hasVariations weight',
               },
             }),
         ),
@@ -4659,34 +4659,26 @@ export class OrderService {
           )
         : 0;
 
-    // Calculate Weight-Based Delivery Charge (for record-keeping only)
-    // Note: Frontend already includes weight charge in deliveryCharge, so we don't add it again to grandTotal
-    const weightBasedDeliveryCharge = this.calculateWeightBasedDeliveryCharge(
-      finalData,
-      orderData?.division?.name,
-      orderData?.area?.name,
-      orderData?.zone?.name,
-    );
-
     const submittedDeliveryCharge = Math.max(
       0,
       Number(orderData?.deliveryCharge) || 0,
     );
-    let deliveryCharge = submittedDeliveryCharge;
-    if (!deliveryCharge && ['1', '2'].includes(String(orderData?.deliveryOptions || ''))) {
-      const shippingCharge = await this.shippingChargeModel
-        .findOne({})
-        .select('deliveryInDhaka deliveryOutsideDhaka')
-        .lean();
-      const configuredCharge = Number(
-        String(orderData.deliveryOptions) === '2'
-          ? shippingCharge?.deliveryOutsideDhaka
-          : shippingCharge?.deliveryInDhaka,
-      );
-      if (Number.isFinite(configuredCharge) && configuredCharge > 0) {
-        deliveryCharge = configuredCharge + weightBasedDeliveryCharge;
-      }
-    }
+    const shippingCharge = await this.shippingChargeModel.findOne({}).lean();
+    const configuredDelivery = ['1', '2'].includes(
+      String(orderData?.deliveryOptions || ''),
+    )
+      ? this.calculateConfiguredDeliveryCharge(
+          finalData,
+          shippingCharge,
+          String(orderData.deliveryOptions) === '2',
+        )
+      : null;
+    const deliveryCharge = configuredDelivery
+      ? configuredDelivery.deliveryCharge
+      : submittedDeliveryCharge;
+    const weightBasedDeliveryCharge = configuredDelivery
+      ? configuredDelivery.weightBasedDeliveryCharge
+      : 0;
 
     // Grand Total. The server repairs a missing browser charge from the
     // selected delivery option so a transient checkout hydration failure can
@@ -5051,58 +5043,55 @@ export class OrderService {
     }
   }
 
-  // Calculate Weight-Based Delivery Charge
-  private calculateWeightBasedDeliveryCharge(
+  private calculateConfiguredDeliveryCharge(
     cartItems: any[],
-    division?: string,
-    area?: string,
-    zone?: string,
-  ): number {
-    // List of Dhaka areas that should NOT have weight charges (use outsideDhaka charge but no weight charge)
-    const dhakaOutsideAreas = [
-      'Savar >> সাভার',
-      'Dohar — দোহার',
-      'Nawabganj — নবাবগঞ্জ',
-      'Keraniganj — কেরানীগঞ্জ',
-      'Dhamrai — ধামরাই',
-    ];
-
-    // Check if division is Dhaka (with different possible formats)
-    const isDhakaDivision =
-      division === 'Dhaka > ঢাকা' ||
-      division === 'Dhaka >> ঢাকা' ||
-      division === 'Dhaka >ঢাকা';
-
-    // Skip weight charge for:
-    // 1. Dhaka division (all areas in Dhaka except specific outside areas)
-    // 2. Specific areas in Dhaka that use outsideDhaka charge (Savar, Dohar, etc.)
-    if (isDhakaDivision) {
-      // If it's one of the specific outside areas, still skip weight charge
-      // (they use outsideDhaka base charge but no weight-based charge)
-      if (area && dhakaOutsideAreas.includes(area)) {
-        return 0;
-      }
-      // For all other Dhaka areas, skip weight charge
-      return 0;
-    }
-
-    // Calculate total weight of all items in the cart
+    shippingCharge: ShippingCharge | null,
+    outsideDhaka: boolean,
+  ): { deliveryCharge: number; weightBasedDeliveryCharge: number } {
     const totalWeight = cartItems.reduce((totalWeight, item) => {
-      const itemWeight = item.product?.weight || 0; // Get weight from product, default to 0
-      const quantity = item.selectedQty || 1;
+      const packageProducts = Array.isArray(item.product?.products)
+        ? item.product.products
+        : [];
+      const itemWeight = packageProducts.length
+        ? packageProducts.reduce((weight, entry) => {
+            const product = entry?.product || entry;
+            const quantity =
+              entry?.quantity == null
+                ? 1
+                : Math.max(0, Number(entry.quantity) || 0);
+            return weight + (Number(product?.weight) || 0) * quantity;
+          }, 0)
+        : Number(item.product?.weight) || 0;
+      const quantity =
+        item.selectedQty == null
+          ? 1
+          : Math.max(0, Number(item.selectedQty) || 0);
       return totalWeight + itemWeight * quantity;
     }, 0);
-
-    // If total weight is above 2000 grams (2 kg), calculate additional delivery charge
-    // This only applies to areas outside Dhaka
-    if (totalWeight > 2000) {
-      const excessWeight = totalWeight - 2000; // Weight above 2000 grams
-      const additionalKg = Math.ceil(excessWeight / 1000); // Convert to kg and round up
-      const additionalCharge = additionalKg * 15; // 15 taka per kg
-      return additionalCharge;
-    }
-
-    return 0; // No additional charge if weight is 2000 grams or less
+    const baseCharge = Math.max(
+      0,
+      Number(
+        outsideDhaka
+          ? shippingCharge?.deliveryOutsideDhaka
+          : shippingCharge?.deliveryInDhaka,
+      ) || 0,
+    );
+    const rules = outsideDhaka
+      ? shippingCharge?.outsideDhakaRules
+      : shippingCharge?.insideDhakaRules;
+    const rule = (Array.isArray(rules) ? rules : []).find(
+      (entry) =>
+        totalWeight >= Number(entry.fromGram) &&
+        totalWeight <= Number(entry.toGram),
+    );
+    const ruleCost = Number(rule?.cost);
+    const deliveryCharge = Number.isFinite(ruleCost)
+      ? Math.max(0, ruleCost)
+      : baseCharge;
+    return {
+      deliveryCharge,
+      weightBasedDeliveryCharge: Math.max(0, deliveryCharge - baseCharge),
+    };
   }
 
   // Job Scheduler For Courier Status

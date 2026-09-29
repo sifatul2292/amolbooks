@@ -193,7 +193,7 @@ let SpecialPackageService = SpecialPackageService_1 = class SpecialPackageServic
             const mIds = ids.ids.map((m) => new ObjectId(m));
             const data = await this.specialPackageModel
                 .find({ _id: { $in: mIds } })
-                .populate('products.product', 'name nameEn editionEn translatorNameEn tagline taglineEn description totalPages currentVersion currentVersionEn translatorName publishedDate shortDescription author salePrice sku tax shortDesc discountType slug edition variations hasVariations variationsOptions discountAmount images quantity category subCategory brand tags unit _id')
+                .populate('products.product', 'name nameEn editionEn translatorNameEn tagline taglineEn description totalPages currentVersion currentVersionEn translatorName publishedDate shortDescription author salePrice sku tax shortDesc discountType slug edition variations hasVariations variationsOptions discountAmount images quantity weight category subCategory brand tags unit _id')
                 .select(select);
             const transformedData = data.map((specialPackage) => {
                 const transformedProducts = specialPackage.products.map((item) => {

@@ -150,7 +150,7 @@ export declare class OrderService {
     private evaluateGiftLine;
     calculateCouponDiscount(cartSubTotal: number, couponId: any): Promise<ResponsePayload | any>;
     calculateOrderDiscount(cartSubTotal: number, userId: any, orderFrom: any): Promise<ResponsePayload | any>;
-    private calculateWeightBasedDeliveryCharge;
+    private calculateConfiguredDeliveryCharge;
     private checkAndUpdateCourierStatus;
     getAllCourierStatusAndUpdate(): Promise<void>;
     getAndUpdateOrderStatusFromCourier(order: any, courierMethod: any): Promise<void>;

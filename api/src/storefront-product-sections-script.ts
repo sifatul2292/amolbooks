@@ -86,6 +86,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   var checkoutShippingConfig = null;
   var checkoutShippingConfigPending = false;
   var checkoutCartSubtotal = 0;
+  var checkoutCartWeight = 0;
   var stickySearchTimer = null;
   var stickySearchRequestVersion = 0;
   var fastCartTapTarget = null;
@@ -5491,6 +5492,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       afterDiscountPrice: product.afterDiscountPrice,
       images: product.images,
       author: product.author,
+      weight: product.weight,
     };
   }
 
@@ -5622,7 +5624,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
 
   function mountCartStickyCheckout() {
     var bar = document.getElementById('ab-cart-sticky-checkout');
-    if (cartPageOpen()) {
+    if (!cartPageOpen()) {
       if (bar) bar.remove();
       return;
     }
@@ -5633,7 +5635,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       bar.innerHTML = '<button type="button" data-ab-cart-sticky-checkout="true">অর্ডার করতে এগিয়ে যান →</button>';
       document.body.appendChild(bar);
     }
-    bar.hidden = !cartPageOpen();
+    bar.hidden = false;
   }
 
   function updateCartCheckoutCtas(total) {
@@ -6995,36 +6997,49 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       '<div class="cart-product-price">' + productPriceHtml(product) + '</div><p>পরিমাণ: ' + escapeHtml(String(qty)) + '</p></div></div>';
   }
 
+  function checkoutDeliveryBox() {
+    var deliveryBox = document.querySelector('#ab-checkout-delivery-card .radio-box-area');
+    if (deliveryBox) return deliveryBox;
+    var deliveryHeading = Array.prototype.slice.call(document.querySelectorAll('app-checkout .payment-method-top')).find(function (node) {
+      return /ডেলিভারি চার্জ/.test(node.textContent || '');
+    });
+    deliveryBox = deliveryHeading && deliveryHeading.nextElementSibling;
+    return deliveryBox && deliveryBox.classList.contains('radio-box-area') ? deliveryBox : null;
+  }
+
   function selectedCheckoutDeliveryOption() {
-    var selected = document.querySelector('app-checkout input[type="radio"][name^="mat-radio-group-"]:checked');
+    var deliveryBox = checkoutDeliveryBox();
+    var selected = deliveryBox && deliveryBox.querySelector('input[type="radio"]:checked');
     return selected ? String(selected.value || '') : '1';
   }
 
-  function configuredCheckoutDeliveryCharge() {
+  function configuredCheckoutDeliveryCharge(outsideOverride) {
     if (!checkoutShippingConfig) return 0;
-    var outside = selectedCheckoutDeliveryOption() === '2';
-    var charge = Number(outside
+    var outside = typeof outsideOverride === 'boolean'
+      ? outsideOverride
+      : selectedCheckoutDeliveryOption() === '2';
+    var fallback = Number(outside
       ? checkoutShippingConfig.deliveryOutsideDhaka
       : checkoutShippingConfig.deliveryInDhaka);
-    return Number.isFinite(charge) && charge > 0 ? charge : 0;
+    var rules = outside ? checkoutShippingConfig.outsideDhakaRules : checkoutShippingConfig.insideDhakaRules;
+    var rule = (Array.isArray(rules) ? rules : []).find(function (entry) {
+      return checkoutCartWeight >= Number(entry.fromGram) && checkoutCartWeight <= Number(entry.toGram);
+    });
+    var charge = Number(rule && rule.cost);
+    if (Number.isFinite(charge) && charge >= 0) return charge;
+    return Number.isFinite(fallback) && fallback > 0 ? fallback : 0;
   }
 
   function repairCheckoutDeliveryCharge() {
     if (location.pathname.indexOf('/checkout') !== 0 || !checkoutShippingConfig) return;
-    var inside = Math.max(0, Number(checkoutShippingConfig.deliveryInDhaka) || 0);
-    var outside = Math.max(0, Number(checkoutShippingConfig.deliveryOutsideDhaka) || 0);
-    var deliveryHeading = Array.prototype.slice.call(document.querySelectorAll('app-checkout .payment-method-top')).find(function (node) {
-      return /ডেলিভারি চার্জ/.test(node.textContent || '');
-    });
-    var deliveryBox = document.querySelector('#ab-checkout-delivery-card .radio-box-area') ||
-      deliveryHeading && deliveryHeading.nextElementSibling;
-    if (deliveryBox && !deliveryBox.classList.contains('radio-box-area')) deliveryBox = null;
+    var deliveryBox = checkoutDeliveryBox();
     Array.prototype.slice.call(deliveryBox ? deliveryBox.querySelectorAll('input[type="radio"]') : []).forEach(function (input) {
       var label = document.querySelector('label[for="' + input.id + '"]');
       if (!label) return;
+      var charge = configuredCheckoutDeliveryCharge(input.value === '2');
       updateNodeText(label, input.value === '2'
-        ? 'ঢাকা সিটির বাইরে ' + outside + ' টাকা'
-        : 'ঢাকা সিটির ভেতর ' + inside + ' টাকা');
+        ? 'ঢাকা সিটির বাইরে ' + charge + ' টাকা'
+        : 'ঢাকা সিটির ভেতর ' + charge + ' টাকা');
     });
     if (checkoutCartSubtotal > 0) {
       updateCheckoutSummary(checkoutCartSubtotal, configuredCheckoutDeliveryCharge());
@@ -7143,7 +7158,8 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
           }
         });
         checkoutCartSubtotal = cartTotalFromProducts(items, products || []);
-        updateCheckoutSummary(checkoutCartSubtotal, configuredCheckoutDeliveryCharge());
+        checkoutCartWeight = cartWeightFromProducts(items, products || []);
+        repairCheckoutDeliveryCharge();
         loadCheckoutShippingConfig();
         checkoutCartMirrorRenderKey = mirrorKey;
         renderCheckoutGift();
@@ -7171,11 +7187,13 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       }
     });
     if (!uniqueIds.length) return Promise.resolve([]);
-    var missingIds = uniqueIds.filter(function (id) { return !cartProductCache[id]; });
+    var missingIds = uniqueIds.filter(function (id) {
+      return !cartProductCache[id] || cartProductCache[id].weight == null;
+    });
     if (!missingIds.length) {
       return Promise.resolve(uniqueIds.map(function (id) { return cartProductCache[id]; }).filter(Boolean));
     }
-    var path = '/product/get-products-by-ids?select=name%20slug%20salePrice%20discountType%20discountAmount%20afterDiscountPrice%20images%20author';
+    var path = '/product/get-products-by-ids?select=name%20slug%20salePrice%20discountType%20discountAmount%20afterDiscountPrice%20images%20author%20weight';
     var bases = [RECOMMENDATION_API_BASE];
     if (CATALOG_API_BASE !== RECOMMENDATION_API_BASE) bases.push(CATALOG_API_BASE);
     var requestKey = missingIds.slice().sort().join('|');
@@ -7224,6 +7242,9 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       afterDiscountPrice: Number(specialPackage.subTotal) || Number(specialPackage.afterDiscountPrice) || 0,
       images: image ? [image] : [],
       author: [],
+      weight: (specialPackage.products || []).reduce(function (total, item) {
+        return total + (Number(item && (item.weight != null ? item.weight : item.product && item.product.weight)) || 0) * Math.max(0, Number(item && item.quantity) || 0);
+      }, 0),
       isSpecialPackage: true,
     };
   }
@@ -7330,6 +7351,15 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     return (items || []).reduce(function (total, item) {
       var product = byId[cartPageProductId(item)];
       return total + (product ? finalPrice(product) * Math.max(1, Number(item.selectedQty) || 1) : 0);
+    }, 0);
+  }
+
+  function cartWeightFromProducts(items, products) {
+    var byId = {};
+    products.forEach(function (product) { byId[String(product._id)] = product; });
+    return (items || []).reduce(function (total, item) {
+      var product = byId[cartPageProductId(item)];
+      return total + (Number(product && product.weight) || 0) * Math.max(1, Number(item.selectedQty) || 1);
     }, 0);
   }
 
@@ -8618,7 +8648,8 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   }, true);
 
   document.addEventListener('change', function (event) {
-    if (event.target && event.target.matches && event.target.matches('#ab-checkout-delivery-card input[type="radio"]')) {
+    var deliveryBox = checkoutDeliveryBox();
+    if (deliveryBox && event.target && deliveryBox.contains(event.target)) {
       window.setTimeout(repairCheckoutDeliveryCharge, 0);
     }
     var input = event.target && event.target.matches && event.target.matches('.ab-sticky-search, #searchInput') ? event.target : null;

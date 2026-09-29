@@ -1,5 +1,24 @@
 # CURRENT_WORK
 
+## Checkout weight-band delivery charges (2026-09-29)
+
+- Connected checkout delivery pricing to the saved `insideDhakaRules` and `outsideDhakaRules` instead of the flat ৳60/৳75 fallback or the legacy hardcoded per-kilogram formula.
+- Product and special-package hydration now includes weight, and website order creation recalculates delivery from current database products and shipping rules instead of trusting the browser-submitted charge.
+- Verification: focused shipping/cart checks, server-side normal/package rule checks, API build, `git diff --check`, and live checkout toggling pass. The current 2.01–3kg cart shows ৳100 inside Dhaka and ৳115 outside Dhaka. `npm run lint` remains blocked because the existing ESLint configuration ignores its configured glob.
+
+## Mobile cart sticky checkout restoration (2026-09-29)
+
+- Corrected the reversed route guard that removed the existing sticky “অর্ডার করতে এগিয়ে যান” action whenever the cart was open.
+- The sticky action is now mounted only on the cart route and continues to use the existing checkout navigation handler and live total label.
+- Verification: the focused cart-state check, API build, `git diff --check`, and live mobile cart rendering pass; the sticky action displays the current ৳294 cart total.
+
+## Checkout delivery-option total repair (2026-09-29)
+
+- Traced the stale total to a checkout-wide checked-radio selector: the always-selected parcel-location radio appeared before the delivery group, so both delivery choices resolved to the inside-Dhaka rate.
+- Scoped delivery selection and change handling to the actual delivery radio box on both mobile and desktop. The summary now switches between the configured ৳60 and ৳75 rates with the selected option.
+- Added a focused regression that rejects checkout-wide delivery selection.
+- Verification: focused cart-state checks, API build, `git diff --check`, and a live browser 60→75→60 toggle pass. `npm run lint` remains blocked because the existing ESLint configuration ignores its configured glob.
+
 ## Production cart and checkout follow-through (2026-09-29)
 
 - Confirmed the repeated live failures were deployment/version drift plus three cart bridge races: production was still serving an older storefront bundle and missing the same-origin shipping proxy; the bridge could create a fallback footer before Angular rendered its native footer; and a retained login token sent a guest-owned final row through a server-only mutation path.
