@@ -25,6 +25,12 @@ location = /sitemap.xml {
     proxy_pass http://127.0.0.1:3000/api/sitemap.xml;
 }
 
+location = /api/fb-feed.xml {
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_pass http://127.0.0.1:3000/api/fb-feed.xml;
+}
+
 location ~ ^/product-details/([^/]+)/?$ {
     set $amol_product_seo_slug $1;
     error_page 418 = @amol_product_seo;

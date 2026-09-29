@@ -2025,13 +2025,43 @@ body.ab-home-redesign app-home { display: none !important; }
   function categoryNames(product) {
     return (Array.isArray(product && product.category) ? product.category : []).map(function (category) { return category && category.name || ''; });
   }
+  function trackedStock(product) {
+    if (!product || product.stock === null || product.stock === undefined || !isFinite(Number(product.stock))) return -1;
+    return Math.max(0, Number(product.stock));
+  }
+  function isHealthyStock(product) {
+    var stock = trackedStock(product);
+    if (stock < 0) return false;
+    var threshold = product.lowStockThreshold === null || product.lowStockThreshold === undefined
+      ? 5
+      : Math.max(0, number(product.lowStockThreshold));
+    return stock > threshold;
+  }
+  function compareHomepagePriority(a, b) {
+    var aSold = number(a && a.totalSold);
+    var bSold = number(b && b.totalSold);
+    var aHot = aSold > 0;
+    var bHot = bSold > 0;
+    if (aHot !== bHot) return aHot ? -1 : 1;
+    if (aHot && aSold !== bSold) return bSold - aSold;
+
+    var aHealthy = isHealthyStock(a);
+    var bHealthy = isHealthyStock(b);
+    if (aHealthy !== bHealthy) return aHealthy ? -1 : 1;
+
+    var stockDifference = trackedStock(b) - trackedStock(a);
+    if (stockDifference) return stockDifference;
+    var priorityDifference = number(b && b.priority) - number(a && a.priority);
+    if (priorityDifference) return priorityDifference;
+    return String(a && a.name || '').localeCompare(String(b && b.name || ''), 'bn');
+  }
   function productsForShelf(products, shelf) {
-    if (shelf.id === 'popular') return products.slice().sort(function (a, b) { return number(b.totalSold) - number(a.totalSold); }).slice(0, 10);
+    if (shelf.id === 'popular') return products.slice().sort(compareHomepagePriority).slice(0, 10);
     var matches = products.filter(function (product) {
       if (shelf.words) return shelf.words.some(function (word) { return String(product.name || '').indexOf(word) !== -1; });
       var names = categoryNames(product);
       return shelf.categories.some(function (category) { return names.indexOf(category) !== -1; });
-    });
+    }).sort(compareHomepagePriority);
     if (!shelf.manualSlugs) return matches.slice(0, 10);
     var manual = shelf.manualSlugs.map(function (slug) {
       return products.find(function (product) { return product.slug === slug; });
@@ -2161,7 +2191,7 @@ body.ab-home-redesign app-home { display: none !important; }
   function fetchProducts() {
     if (cataloguePromise) return cataloguePromise;
     try {
-      var cached = JSON.parse(sessionStorage.getItem('ab-home-catalogue-v3') || 'null');
+      var cached = JSON.parse(sessionStorage.getItem('ab-home-catalogue-v4') || 'null');
       if (cached && Array.isArray(cached.data) && cached.data.length) {
         cataloguePromise = Promise.resolve(cached);
         return cataloguePromise;
@@ -2176,14 +2206,14 @@ body.ab-home-redesign app-home { display: none !important; }
         filter: { status: 'publish', quantity: { $gt: 0 } },
         pagination: { pageSize: 180, currentPage: 0 },
         sort: { totalSold: -1, priority: -1 },
-        select: { _id: 1, name: 1, slug: 1, images: 1, salePrice: 1, afterDiscountPrice: 1, discountAmount: 1, discountType: 1, totalSold: 1, author: 1, publisher: 1, category: 1, ratingCount: 1, ratingTotal: 1, reviewTotal: 1 }
+        select: { _id: 1, name: 1, slug: 1, images: 1, salePrice: 1, afterDiscountPrice: 1, discountAmount: 1, discountType: 1, totalSold: 1, stock: 1, lowStockThreshold: 1, priority: 1, author: 1, publisher: 1, category: 1, ratingCount: 1, ratingTotal: 1, reviewTotal: 1 }
       })
     }).then(function (response) {
       if (!response.ok) throw new Error('Catalogue unavailable');
       return response.json();
     });
     cataloguePromise = request.then(function (result) {
-      try { sessionStorage.setItem('ab-home-catalogue-v3', JSON.stringify(result)); } catch (error) { /* Cache is optional. */ }
+      try { sessionStorage.setItem('ab-home-catalogue-v4', JSON.stringify(result)); } catch (error) { /* Cache is optional. */ }
       return result;
     }).catch(function (error) {
       cataloguePromise = null;
@@ -4832,4 +4862,4 @@ body.ab-home-redesign app-home { display: none !important; }
   tick();
 })();
 </script>
-<script src="/ab-widgets.js?v=18" defer></script><script src="/storefront-attribution.js?v=fb28bf2381a1" defer></script><script src="/storefront-price-english-digits.js?v=71a536f70807" defer></script><script src="/storefront-special-package.js?v=d8e6e766a7c1" defer></script><script src="/storefront-product-sections.js?v=ed2021a819f7" defer></script></body></html>
+<script src="/ab-widgets.js?v=18" defer></script><script src="/storefront-attribution.js?v=fb28bf2381a1" defer></script><script src="/storefront-price-english-digits.js?v=71a536f70807" defer></script><script src="/storefront-special-package.js?v=3733f7539847" defer></script><script src="/storefront-product-sections.js?v=41c71e89fdd2" defer></script></body></html>

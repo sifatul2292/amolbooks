@@ -18,6 +18,7 @@ assert.match(source, /function reconcileAuthenticatedCartFromLocal\([\s\S]*?\/ca
 assert.match(source, /searchParams\.set\('ab-auth-cart-ready', '1'\)/, 'Checkout reloads once after authenticated cart reconciliation');
 assert.match(source, /if \(isLocalPreviewHost\(\)\) updateNativeCartCount\(storedGuestCartItems\(\)\)/, 'Local account pages keep the native cart badge aligned');
 assert.match(source, /if \(!isProductPage\(\) && location\.pathname !== '\/'\) return;/, 'Homepage uses the shared added-to-cart modal');
+assert.match(source, /target\.closest\('#ab-added-cart-modal, #ab-pdf-dialog'\)/, 'Global header navigation leaves PDF dialog controls alone');
 assert.match(source, /data-ab-popular-price[\s\S]*?productPriceHtml\(product\)/, 'Cart popular cards use the shared discounted-price renderer');
 assert.match(source, /li\.ab-summary-hidden,[\s\S]*?li\.ab-hide-discount-row\s*\{\s*display: none !important;/, 'Mobile checkout keeps both discount-row classes hidden');
 assert.match(source, /@media \(min-width: 768px\) \{[\s\S]*?app-header \.ab-header-search-results \{[\s\S]*?position: absolute;[\s\S]*?app-header \.ab-sticky-search-item img \{[\s\S]*?width: 2\.7rem;[\s\S]*?height: 3\.45rem;/, 'Desktop header search results keep compact product rows');
@@ -25,6 +26,66 @@ assert.match(source, /function repairCheckoutDeliveryPlacement\(\)[\s\S]*?sectio
 assert.match(source, /window\.innerWidth >= 768[\s\S]*?paymentArea\.insertBefore\(heading, restoreBefore\)/, 'Desktop checkout restores delivery options to the payment card');
 assert.match(main, /obj\.event==='add_to_cart'&&!window\.__amolCartUiEventHandled/, 'Tracking mirror avoids duplicating injected cart UI feedback');
 assert.match(main, /event:'view_cart',ecommerce:\{currency:'BDT',value:val,items:items\}/, 'Legacy cart tracking emits the standard event for mirroring');
+assert.match(main, /\/api\/special-package\/get-products-by-ids[\s\S]*?Published storefront special-package proxy failed/, 'Local package hydration uses the published catalogue');
+assert.match(source, /function fetchSpecialPackagesByIds\([\s\S]*?'\/special-package\/get-products-by-ids'[\s\S]*?specialPackageCartProduct/, 'Package cart rows hydrate through the special-package endpoint');
+assert.match(source, /function repairCartPage\([\s\S]*?filter\(cartItemIsSpecialPackage\)[\s\S]*?fetchSpecialPackagesByIds\(packageIds\)/, 'The recurring cart repair keeps package IDs out of ordinary product hydration');
+assert.doesNotMatch(source, /if \(isLocalPreviewHost\(\)\) \{\s*if \(hasSpecialPackageItems\)/, 'Local package carts use the owned row renderer instead of leaving an empty Angular list');
+const packageHelperNames = ['cartItemIsSpecialPackage', 'cartPageProductId', 'syncNativeCartPage', 'enhanceSpecialPackageCartRows'];
+const packageHelpers = packageHelperNames.map(name => {
+  const start = source.indexOf('  function ' + name + '(');
+  return source.slice(start, source.indexOf('\n  function ', start + 1));
+}).join('\n');
+const nativePackageRow = {
+  attributes: {},
+  classList: {
+    stale: true,
+    remove(name) { if (name === 'ab-cart-native-stale') this.stale = false; },
+    toggle() { throw new Error('Special-package rows must not be stale-checked against the product catalogue'); },
+  },
+  setAttribute(name, value) { this.attributes[name] = value; },
+  querySelector(selector) {
+    if (selector === '.cart-text-info h3') return { textContent: 'Package' };
+    if (selector === '.cart-text-info ul button, .cart-text-info ul span') return null;
+    return { textContent: 'Package' };
+  },
+  querySelectorAll: () => [],
+};
+const packageArea = {
+  querySelectorAll(selector) {
+    if (selector === '.cart-card:not(.ab-live-cart-page-item)' || selector === '.ab-cart-native-stale') return [nativePackageRow];
+    return [];
+  },
+  querySelector: () => null,
+};
+const packageContext = {
+  Boolean, Number, String,
+  cartPageOpen: () => true,
+  pushCartViewTracking() {},
+  document: { querySelector: selector => selector === 'app-cart-information .cart-area-main' ? packageArea : null },
+  isLocalPreviewHost: () => false,
+  placeCartSummaryInsideItems() {},
+  updateNodeText() { throw new Error('Partial product totals must not overwrite a package cart summary'); },
+  updateCartCheckoutCtas() { throw new Error('Partial product totals must not overwrite a package checkout CTA'); },
+  cartTotalFromProducts() { throw new Error('A package total cannot be calculated from regular products'); },
+  escapeHtml: String,
+};
+vm.createContext(packageContext);
+vm.runInContext(packageHelpers, packageContext);
+const packageItem = { specialPackage: 'package-1', selectedQty: 1, cartType: 1 };
+assert.equal(packageContext.cartItemIsSpecialPackage(packageItem), true);
+assert.equal(packageContext.cartPageProductId(packageItem), 'package-1');
+packageContext.syncNativeCartPage([packageItem], []);
+assert.equal(nativePackageRow.classList.stale, false, 'Special-package rows remain visible on the cart page');
+assert.equal(nativePackageRow.attributes['data-product-id'], 'package-1', 'Special-package rows receive a stable cart identifier');
+assert.equal(nativePackageRow.attributes['data-ab-special-package-row'], 'true', 'Special-package rows are explicitly owned by the cart bridge');
+assert.match(source, /renderCheckoutCartMirror\(\)[\s\S]*?items\.some\(cartItemIsSpecialPackage\)[\s\S]*?return;/, 'Local checkout leaves special-package hydration to Angular');
+assert.match(source, /return fetchJson\('\/cart\/get-carts-by-user'[\s\S]*?return cartPageProductId\(entry\) === String\(productId\)/, 'Authenticated deletes can resolve package cart entries');
+assert.match(source, /function updateGuestCartItem\([\s\S]*?isLocalPreviewHost\(\) \? storedGuestCartItems\(\) : guestCartItems\(\)/, 'Local deletion mutates the persisted snapshot that owns the visible row');
+assert.match(source, /function updateAuthenticatedCartItem\([\s\S]*?fetchJson\(path, options, RECOMMENDATION_API_BASE\)[\s\S]*?if \(localPreview\) return updateGuestCartItem/, 'Local authenticated deletion clears the server entry before its guest mirror');
+assert.match(source, /claimCartControl\(cartOperation, 10000\)[\s\S]*?releaseCartControl\(cartOperation\)/, 'Cart controls stay locked until their request settles');
+assert.match(source, /function enhanceNativeCartRows\([\s\S]*?row\.setAttribute\('data-product-id',[\s\S]*?remove\.setAttribute\('data-ab-cart-op', 'remove'\)/, 'Ordinary rows retain one-click cart controls beside a package');
+assert.match(source, /repairCartPopularProducts\(\)[\s\S]*?action\.classList\.add\('ab-add-cart-button'\)[\s\S]*?action\.setAttribute\('data-product-id', String\(product\._id\)\)/, 'Popular-cart recommendations retain their resolved product ID');
+assert.match(source, /function handleSpecialPackageTap\([\s\S]*?addSpecialPackageToCart\(packageId\)\.then\(function \(added\)[\s\S]*?if \(buyNow\) \{[\s\S]*?goToCheckout\(\)/, 'Package Buy Now waits for cart persistence before checkout');
 const trackingStart = source.indexOf('  function pushProductPageAddToCartTracking(');
 const trackingHelper = source.slice(trackingStart, source.indexOf('\n  function ', trackingStart + 1));
 const trackingContext = {
@@ -143,6 +204,87 @@ vm.runInContext(helpers, context);
   context.updateStickyProductActions();
   assert.equal(mainButton.textContent, 'Add to Cart', 'Failed add leaves main action ready to retry');
   assert.equal(stickyClasses['is-cart-ready'], false, 'Failed add leaves sticky action ready to retry');
+  const guestMutationStart = source.indexOf('  function updateGuestCartItem(');
+  const guestMutationSource = source.slice(guestMutationStart, source.indexOf('\n  function ', guestMutationStart + 1));
+  let guestItems = [{ product: 'last-product', selectedQty: 1 }];
+  let storedGuestItems = null;
+  let reloads = 0;
+  const unloadListeners = {};
+  const queuedTimers = [];
+  const localCartStorage = new Map([
+    ['Amolbooks_USER_CART_1', JSON.stringify(guestItems)],
+    ['Amolbooks_LOCAL_USER_CART_1', JSON.stringify(guestItems)],
+    ['ALAMBOOKS_USER_CART_1', JSON.stringify(guestItems)],
+  ]);
+  let tabItems = guestItems.slice();
+  const guestMutationContext = {
+    Promise,
+    String,
+    cartPageProductId: item => String(item && item.product || ''),
+    isLocalPreviewHost: () => true,
+    storedGuestCartItems: () => guestItems.slice(),
+    guestCartItems: () => guestItems.slice(),
+    setGuestCartItems: next => { storedGuestItems = next.slice(); guestItems = next.slice(); },
+    syncGuestCartUi: async () => {},
+    cartPageOpen: () => true,
+    isLocalPreviewHost: () => true,
+    setTabCartItems: next => { tabItems = next.slice(); },
+    localStorage: {
+      setItem: (key, value) => localCartStorage.set(key, value),
+      removeItem: key => localCartStorage.delete(key),
+    },
+    window: {
+      addEventListener: (name, callback) => { unloadListeners[name] = callback; },
+      setTimeout: callback => queuedTimers.push(callback),
+      location: { reload: () => reloads++ },
+    },
+  };
+  vm.createContext(guestMutationContext);
+  vm.runInContext(guestMutationSource, guestMutationContext);
+  assert.equal(await guestMutationContext.updateGuestCartItem('last-product', 'remove'), true);
+  assert.deepEqual(storedGuestItems, [], 'Removing the last guest item persists an empty cart');
+  localCartStorage.set('Amolbooks_USER_CART_1', JSON.stringify([{ product: 'stale-angular-item' }]));
+  localCartStorage.set('Amolbooks_LOCAL_USER_CART_1', JSON.stringify([{ product: 'stale-angular-item' }]));
+  tabItems = [{ product: 'stale-angular-item' }];
+  unloadListeners.beforeunload();
+  assert.equal(localCartStorage.get('Amolbooks_USER_CART_1'), '[]', 'Final-item removal wins over Angular beforeunload persistence');
+  assert.equal(localCartStorage.get('Amolbooks_LOCAL_USER_CART_1'), '[]', 'Local preview storage remains empty during reload');
+  assert.equal(localCartStorage.has('ALAMBOOKS_USER_CART_1'), false, 'Legacy cart cannot restore the final item');
+  assert.equal(tabItems.length, 0, 'Per-tab fallback cannot restore the final item');
+  queuedTimers.shift()();
+  assert.equal(reloads, 1, 'Removing the last injected item reloads Angular into its empty-cart template');
+  guestItems = [
+    { product: 'first-product', selectedQty: 1 },
+    { product: 'second-product', selectedQty: 1 },
+  ];
+  await guestMutationContext.updateGuestCartItem('first-product', 'remove');
+  assert.equal(reloads, 1, 'Removing from a multi-item cart does not reload the route');
+  assert.deepEqual(storedGuestItems, [{ product: 'second-product', selectedQty: 1 }]);
+  const packageAddStart = source.indexOf('  function addGuestSpecialPackageToCart(');
+  const packageAddSource = source.slice(packageAddStart, source.indexOf('\n  function ', packageAddStart + 1));
+  let packageCartItems = [{ product: 'ordinary-product', selectedQty: 1 }];
+  let packageSyncs = 0;
+  const packageAddContext = {
+    Promise,
+    String,
+    authenticatedCartItemsOverride: [{ product: 'stale-account-item' }],
+    storedGuestCartItems: () => packageCartItems.slice(),
+    cartItemIsSpecialPackage: item => Boolean(item && item.specialPackage),
+    cartPageProductId: item => String(item && (item.specialPackage || item.product) || ''),
+    setGuestCartItems: next => { packageCartItems = JSON.parse(JSON.stringify(next)); },
+    syncGuestCartUi: async () => { packageSyncs++; },
+  };
+  vm.createContext(packageAddContext);
+  vm.runInContext(packageAddSource, packageAddContext);
+  assert.equal(await packageAddContext.addGuestSpecialPackageToCart('package-1'), true);
+  assert.equal(packageCartItems.length, 2, 'Package add preserves ordinary cart products');
+  assert.deepEqual(packageCartItems[1], {
+    specialPackage: 'package-1', selectedQty: 1, selectedVariation: null, cartType: 1,
+  }, 'Package add uses Angular-compatible cart data');
+  await packageAddContext.addGuestSpecialPackageToCart('package-1');
+  assert.equal(packageCartItems.length, 2, 'Repeated package taps do not duplicate the package');
+  assert.equal(packageSyncs, 2, 'Package add synchronizes the visible cart on every completed tap');
+  assert.equal(packageAddContext.authenticatedCartItemsOverride, null, 'Package add clears stale authenticated cart state');
   const nativeClick = source.slice(source.indexOf('    var nativeCartButton = event.target'), source.indexOf('    var bottomCart = event.target'));
   assert.ok(!nativeClick.includes('setTimeout'), 'Native cart click has no unconditional success timer');
   console.log('Product cart state checks passed');

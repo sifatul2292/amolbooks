@@ -1035,6 +1035,52 @@ ${storefrontPurchaseExternalIdHelper}
   // while the compiled storefront previews the published catalogue. Register
   // this after JSON parsing so POST catalogue filters reach the publisher.
   app.use(
+    '/api/special-package/get-products-by-ids',
+    (
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction
+    ) => {
+      if (!isLocalStorefrontHost(req.hostname) || req.method !== 'POST')
+        return next();
+      const requestBody = JSON.stringify(req.body || {});
+      const remoteRequest = httpsRequest(
+        `https://apisub.amolbooks.com/api/special-package/get-products-by-ids${req.url}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            'Content-Length': Buffer.byteLength(requestBody),
+          },
+        },
+        (remoteResponse) => {
+          const chunks: Buffer[] = [];
+          remoteResponse.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+          remoteResponse.on('end', () => {
+            res.status(remoteResponse.statusCode || 502);
+            res.type(
+              String(
+                remoteResponse.headers['content-type'] || 'application/json'
+              )
+            );
+            res.send(Buffer.concat(chunks));
+          });
+        }
+      );
+      remoteRequest.on('error', (error) => {
+        logger.warn(
+          `Published storefront special-package proxy failed: ${error.message}`
+        );
+        res
+          .status(502)
+          .json({ success: false, message: 'Special package unavailable' });
+      });
+      remoteRequest.end(requestBody);
+    }
+  );
+
+  app.use(
     '/api/product/get-by-slug',
     (
       req: express.Request,
@@ -1111,6 +1157,9 @@ ${storefrontPurchaseExternalIdHelper}
               discountAmount: 1,
               discountType: 1,
               totalSold: 1,
+              stock: 1,
+              lowStockThreshold: 1,
+              priority: 1,
               author: 1,
               category: 1,
               publisher: 1,

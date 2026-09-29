@@ -1,5 +1,42 @@
 # CURRENT_WORK
 
+## Special-package PDF close repair (2026-09-28)
+
+- Stopped the global header-navigation interceptor from claiming controls inside the PDF dialog; the modal close button now reaches its own click handler on touch and pointer devices.
+- Added focused source regressions and verified the real mobile browser flow opens the sample reader and closes it with one click.
+
+## Special-package cart flow repair (2026-09-28)
+
+- Routed the compiled storefront's exact special-package batch lookup to the published catalogue during local preview, so a saved package no longer produces an empty cart page with a non-zero cart badge.
+- Gave ordinary native cart rows stable product IDs and one-click remove/quantity operations even when a special-package row is present, preventing the package bridge from leaving mixed-cart controls in competing native/injected states.
+- Added focused source checks plus a real-browser package-only and mixed-cart regression covering one-click removal for both package and ordinary rows.
+- Verification: the special-package endpoint returns the published package locally; `node scripts/check-product-cart-state.cjs`, `node scripts/check-special-package-redesign.cjs`, `git diff --check`, and `cd api && npm run build` pass. The isolated mobile browser regression adds/removes the package alone, then adds a package plus an ordinary homepage book and removes each with one click while asserting storage after every operation. `npm run lint` remains blocked because the existing ESLint configuration ignores its configured glob.
+- Final-item deletion now mutates the persisted localhost cart snapshot rather than a transient authenticated override. With a retained or stale login token, the bridge removes the server entry when present and then clears the local mirror, preventing the last row from being immediately restored.
+- Added a 480×1034 touch-browser regression with a stale authentication token; the final ordinary item disappears on one tap and remains absent after the reload window.
+
+## Local development cache reset (2026-09-28)
+
+- Stopped the existing Nest watch process, removed `api/dist` and `api/node_modules/.cache`, cleared the npm cache, rebuilt the API successfully, and restarted `npm run start:dev` on port 3000.
+- The clean watch compilation completed with zero TypeScript errors and the restarted API passed a local HTTP smoke check.
+
+## Special-package reading-room redesign (2026-09-28)
+
+- Reworked the offer detail page into a mobile-first editorial reading flow while preserving the compiled storefront, native package cart button, order button, header, and footer.
+- Hydrates each package book from its full product record so every entry shows its author, page count, regular-weight CMS description, current/original price, savings, product-detail link, and an accessible “আরও দেখুন / কম দেখুন” disclosure.
+- Added an in-page PDF reader for each available “একটু পড়ে দেখুন” sample, with a labelled modal, close control, backdrop/Escape behavior, and event guards so the surrounding compiled product card cannot hijack the interaction.
+- Replaced the blocked cross-origin PDF iframe (`X-Frame-Options: SAMEORIGIN`) with the storefront’s already-bundled product-page PDF.js engine. A real-browser regression check opens the offer reader, renders all 18 placeholders and six visible canvases without navigation or console errors.
+- Removed the long repeated package description from the hero; the hero now shows the correct three-book combined list price (৳1,645), final package offer price (৳1,208), and a dedicated free-notebook callout using the real package artwork.
+- Replaced the failed banner crop in the notebook callout with the published “Amol Notebook” catalogue cover; real-browser verification confirms the image loads at its natural dimensions.
+- Fixed the inflated package total by preserving each package-line quantity when full product details are merged; warehouse stock quantities no longer enter price calculations.
+- `node scripts/check-special-package-redesign.cjs`, `node scripts/check-product-cart-state.cjs`, `git diff --check`, and `cd api && npm run build` pass. Browser checks confirm the new hero data, three collapsed descriptions, regular `400` description weight, and zero horizontal overflow. `npm run lint` remains blocked by the existing ESLint configuration ignoring its entire configured glob.
+
+## Homepage sales-and-stock ranking (2026-09-28)
+
+- Reordered every generated homepage book shelf into three inventory-aware tiers: products with recorded sales first (highest `totalSold` first), then products whose tracked stock is above their configured low-stock threshold (highest stock first), then the remaining catalogue. Manually curated bestseller-combo positions remain unchanged.
+- Added `stock`, `lowStockThreshold`, and `priority` to the homepage catalogue projection and its localhost catalogue proxy. Bumped the session catalogue cache to `v4` so returning visitors do not keep the old stock-free response.
+- Live-data verification moves “শিকড়ের সন্ধানে” (10 tracked units) from outside the 10-card history cutoff to the first card, followed by the 8- and 7-unit titles; a recorded seller would still rank ahead of all three.
+- `node scripts/check-homepage-redesign.cjs`, `git diff --check`, and `cd api && npm run build` pass. `npm run lint` remains blocked by the existing ESLint configuration ignoring its entire configured glob.
+
 ## Product-search SEO repair (2026-09-27)
 
 - Audited live Amolbooks product discovery against Rokomari and Wafilife. The public Amolbooks sitemap was a static 2024 file pointing at `apisub.amolbooks.com`, while the dynamic sitemap used the placeholder `your-domain.com`; Googlebot also received the generic homepage metadata on every product URL. Rokomari and Wafilife both expose current product sitemaps and crawlable, product-specific HTML.
@@ -1670,6 +1707,22 @@ count even when tracking is perfect.
 - Cart synchronization: corrected the injected cart key to Angular's real `Amolbooks_USER_CART_1`, one-time merges/removes the wrongly cased legacy cart, keeps the native bottom-navigation count aligned, and forces full cart/checkout route loads so every surface rebuilds from the same product list.
 - Cart gift offer add: cache gift-card product metadata before buttons render and use that cache for immediate cart-page repaint, so gift products add dynamically even from an empty local cart. Local cart reads now use the local cart snapshot to avoid stale authenticated responses.
 - Product-detail category shelves: replaced the preview-only `/library` request with the production-supported `/product/get-all` catalogue request, so “বিষয়ভিত্তিক জনপ্রিয় বই” loads from published, in-stock products on both localhost and the live site.
+- Special-package cart consistency: preserved `specialPackage`, `cartType`, and cart IDs while synchronizing guest/authenticated carts; package rows are no longer treated as missing ordinary products, hidden as stale, or allowed to overwrite the native cart total with a partial ৳0 value.
+- Cart deletion reliability: guest and authenticated mutations now resolve both ordinary-product and special-package identities, return their async completion, and keep injected delete/quantity controls locked until the request settles to prevent duplicate mobile taps and overlapping mutations.
+- Last-item cart deletion: when an injected guest-cart row removes the final item, the cart now reasserts the empty native/local/tab snapshots after Angular's unload teardown and reloads once, preventing Angular's stale in-memory cart from resurrecting the removed item before it switches to the separate empty-cart template. Multi-item removals continue without a route reload.
+- Unified remaining cart entry points: cart-page popular-book buttons now retain their already-resolved product IDs and use the standard direct add flow; special-package Add/Buy actions now persist the backend-supported `specialPackage`/`cartType: 1` line through the same guest/authenticated bridge before cart or checkout navigation. Native package rows receive stable package IDs and shared remove/quantity controls so returning from checkout cannot strand an undeletable package.
+- `node scripts/check-product-cart-state.cjs` after the package-cart fix → passed, including package identity, row visibility, total-preservation, authenticated lookup, and request-lock regressions.
+- `cd api && npm run build` after the package-cart fix → passed (TypeScript deprecation warnings only).
+- `cd api && npm run lint` after the package-cart fix → still cannot lint because the configured glob is fully ignored.
+- Special-package cart rendering follow-up: the cart bridge now hydrates package metadata from `/special-package/get-products-by-ids`, converts it to the shared cart display shape, and renders package and ordinary rows together instead of trusting Angular's empty package-item container.
+- Recurring cart repair now separates ordinary product IDs from special-package IDs. This stops the 900ms repair loop from clearing package rows, repeatedly querying the ordinary product endpoint with a package ID, and causing the multi-click deletion behavior.
+- Mixed-cart mobile browser verification at 390×844: package and ordinary rows both appeared, the ordinary item was removed with one click while the package remained, then the package was removed with one click → passed.
+- PDF dialog close regression: global mobile navigation handling now leaves `#ab-pdf-dialog` clicks to the dialog handler; the selected × control closes the preview in the browser → passed.
+- `node scripts/check-product-cart-state.cjs` and `node scripts/check-special-package-redesign.cjs` after the cart-row repair → passed.
+- `git diff --check` and `cd api && npm run build` after the cart-row repair → passed (TypeScript deprecation warnings only).
+- `cd api && npm run lint` after the cart-row repair → still stops before linting because the configured glob is fully ignored.
+- Facebook catalogue feed diagnosis: `https://apisub.amolbooks.com/api/fb-feed.xml` and the local API return XML, while `https://www.amolbooks.com/api/fb-feed.xml` returns the Angular `index.html`; the feed generator is healthy and the production `www` SPA fallback is intercepting the public path.
+- Added an exact `/api/fb-feed.xml` proxy rule to `scripts/nginx-product-social-seo.conf.example`, forwarding the public URL to the Nest API before the generic SPA fallback. Production requires installing this location in the `www.amolbooks.com` server block, then running `nginx -t` and reloading nginx.
 
 ## Do NOT touch / be careful
 

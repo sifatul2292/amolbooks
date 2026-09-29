@@ -26,9 +26,13 @@ assert.equal(ratingHtml({ ratingTotal: 0, ratingCount: 0 }), '');
 assert.match(ratingHtml({ ratingTotal: 8, ratingCount: 40 }), /width:100%/);
 
 const shelfSource = script.slice(script.indexOf('function categoryNames'), script.indexOf('function isCombo'));
-const productsForShelf = new Function('number', shelfSource + '; return productsForShelf;')(
+const shelfHelpers = new Function(
+  'number',
+  shelfSource + '; return { productsForShelf: productsForShelf, compareHomepagePriority: compareHomepagePriority, isHealthyStock: isHealthyStock };'
+)(
   (value) => Math.max(0, Number(value) || 0)
 );
+const productsForShelf = shelfHelpers.productsForShelf;
 const manualComboShelf = {
   id: 'combo',
   words: ['কম্বো'],
@@ -44,6 +48,23 @@ assert.deepEqual(
   productsForShelf(manualComboProducts, manualComboShelf).map((product) => product.slug),
   ['Jibonpaltano4books', 'Jibon', 'Poro Collection', 'automatic']
 );
+const rankedShelf = { id: 'history', categories: ['ইসলামি ইতিহাস ও ঐতিহ্য'] };
+const historyCategory = [{ name: 'ইসলামি ইতিহাস ও ঐতিহ্য' }];
+const rankedProducts = [
+  { name: 'Other high legacy quantity', category: historyCategory, stock: null, totalSold: 0, priority: 20 },
+  { name: 'Healthy stock', category: historyCategory, stock: 10, totalSold: 0, priority: 0 },
+  { name: 'Low stock', category: historyCategory, stock: 5, lowStockThreshold: 5, totalSold: 0, priority: 30 },
+  { name: 'Hot seller', category: historyCategory, stock: 2, totalSold: 3, priority: 0 },
+  { name: 'Hotter seller', category: historyCategory, stock: 1, totalSold: 8, priority: 0 }
+];
+assert.deepEqual(
+  productsForShelf(rankedProducts, rankedShelf).map((product) => product.name),
+  ['Hotter seller', 'Hot seller', 'Healthy stock', 'Low stock', 'Other high legacy quantity']
+);
+assert.equal(shelfHelpers.isHealthyStock({ stock: 6 }), true);
+assert.equal(shelfHelpers.isHealthyStock({ stock: 5 }), false);
+assert.equal(shelfHelpers.isHealthyStock({ stock: 3, lowStockThreshold: 2 }), true);
+assert.equal(shelfHelpers.isHealthyStock({ stock: null }), false);
 
 const recommendationSource = script.slice(script.indexOf('function isCombo'), script.indexOf('function quizHtml'));
 const recommendationHelpers = new Function(
@@ -158,9 +179,14 @@ assert.match(html, /link\.closest\('#ab-cart-offer-progress'\)/);
 assert.match(html, /if \(badge\) badge\.remove\(\)/);
 assert.match(html, /function ratingHtml\(product\)/);
 assert.match(html, /ratingCount/);
+assert.match(html, /stock: 1/);
+assert.match(html, /lowStockThreshold: 1/);
+assert.match(html, /function compareHomepagePriority\(a, b\)/);
+assert.match(html, /ab-home-catalogue-v4/);
 assert.match(html, /grid-template-rows:\s*repeat\(2, auto\)/);
 assert.match(html, /grid-auto-flow:\s*column/);
 assert.match(main, /publisher:\s*1,\s*ratingCount:\s*1,\s*ratingTotal:\s*1,\s*reviewTotal:\s*1/);
+assert.match(main, /totalSold:\s*1,\s*stock:\s*1,\s*lowStockThreshold:\s*1,\s*priority:\s*1/);
 assert.match(html, /return shelfHtml \+ \(index === 1 \? quizHtml\(\) : ''\) \+ \(index === 4 \? goalsHtml : ''\) \+ \(index === 6 \? authorsHtml : ''\) \+ \(index === 8 \? publishersHtml : ''\)/);
 assert.match(html, /nativeHome\.parentNode\.insertBefore\(root, nativeHome\)/);
 assert.match(html, /\/product\/get-all/);

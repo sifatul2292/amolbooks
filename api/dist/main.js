@@ -771,6 +771,34 @@ ${storefrontPurchaseExternalIdHelper}
     });
     app.use((0, express_1.json)({ limit: '50mb' }));
     app.use((0, express_1.urlencoded)({ extended: true, limit: '50mb' }));
+    app.use('/api/special-package/get-products-by-ids', (req, res, next) => {
+        if (!isLocalStorefrontHost(req.hostname) || req.method !== 'POST')
+            return next();
+        const requestBody = JSON.stringify(req.body || {});
+        const remoteRequest = (0, https_1.request)(`https://apisub.amolbooks.com/api/special-package/get-products-by-ids${req.url}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+                'Content-Length': Buffer.byteLength(requestBody),
+            },
+        }, (remoteResponse) => {
+            const chunks = [];
+            remoteResponse.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+            remoteResponse.on('end', () => {
+                res.status(remoteResponse.statusCode || 502);
+                res.type(String(remoteResponse.headers['content-type'] || 'application/json'));
+                res.send(Buffer.concat(chunks));
+            });
+        });
+        remoteRequest.on('error', (error) => {
+            logger.warn(`Published storefront special-package proxy failed: ${error.message}`);
+            res
+                .status(502)
+                .json({ success: false, message: 'Special package unavailable' });
+        });
+        remoteRequest.end(requestBody);
+    });
     app.use('/api/product/get-by-slug', (req, res, next) => {
         if (!isLocalStorefrontHost(req.hostname) ||
             !['GET', 'HEAD'].includes(req.method))
@@ -823,6 +851,9 @@ ${storefrontPurchaseExternalIdHelper}
                     discountAmount: 1,
                     discountType: 1,
                     totalSold: 1,
+                    stock: 1,
+                    lowStockThreshold: 1,
+                    priority: 1,
                     author: 1,
                     category: 1,
                     publisher: 1,

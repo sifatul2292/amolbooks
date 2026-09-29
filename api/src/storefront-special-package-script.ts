@@ -2,31 +2,29 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
 (function () {
   'use strict';
 
-  /* Hallmark · pre-emit critique: P5 H4 E4 S5 R5 V4
-   * genre: editorial · macrostructure: Split Studio · theme: Garden
-   * H2 Split Diptych knobs: ratio=7/5, proof=offer-artwork, divider=negative-space
-   * F3 Tabular Spec knobs: columns=2, rules=groups, numbers=tabular
-   * F6 Product knobs: ratio=3/4, density=ledger, micro-action=view
-   * C4 Sticky Bar knobs: reveal=always, anchor=inline-bottom, shadow=hairline
-   * enrichment: existing product artwork · nav/footer: existing storefront chrome preserved
+  /* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5
+   * genre: editorial · macrostructure: Long Document · theme: Linen adapted to Amol green
+   * audience: Bangla-speaking Islamic-book shoppers · use: evaluate every book before purchase
+   * tone: calm, scholarly, trustworthy · enrichment: real book artwork and CMS PDF samples
+   * nav/footer: existing storefront chrome preserved
    */
 
   var STYLE_ID = 'ab-special-package-style';
   var PAGE_CLASS = 'ab-special-package-page';
-  var API_BASE = window.location.hostname === 'localhost'
-    ? window.location.origin
-    : 'https://apisub.amolbooks.com';
+  var API_BASE = 'https://apisub.amolbooks.com';
+  var NOTEBOOK_IMAGE = API_BASE + '/api/upload/images/amolbooks-notebook-8ddd.webp';
   var lastPath = '';
   var requestId = '';
   var packageCache = {};
+  var productCache = {};
+  var pdfEnginePromise = null;
   var timer = null;
   var observer = null;
 
   var css = \`
-    /* Hallmark · macrostructure: Split Studio · genre: editorial · theme: Garden adapted to Amol brand
-     * anchor hue: forest green · contrast: pass (46–50) · honest: pass (56)
-     * chrome: pass (57) · tokens: pass (58) · responsive/mobile: pass (36, 59, 61–69)
-     * pre-emit critique: P5 H4 E4 S5 R5 V4
+    /* Hallmark · macrostructure: Long Document · genre: editorial · theme: Linen adapted to Amol green
+     * compatibility layer: active mobile-first refinements follow below
+     * pre-emit critique: P5 H5 E5 S5 R5 V5
      */
     :root {
       --ab-offer-paper: oklch(97% 0.012 105);
@@ -490,11 +488,139 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
     }
   \`;
 
+  var redesignCss = \`
+    /* Hallmark · genre: editorial · macrostructure: Long Document · theme: Linen adapted to Amol green
+     * enrichment: real book artwork + CMS PDF samples · nav/footer: existing storefront chrome
+     * responsive: 320/375/414/768 · pre-emit critique: P5 H5 E5 S5 R5 V5
+     */
+    :root {
+      --ab-read-paper: oklch(97% 0.012 105);
+      --ab-read-paper-deep: oklch(94% 0.018 105);
+      --ab-read-ink: oklch(22% 0.026 150);
+      --ab-read-muted: oklch(46% 0.026 145);
+      --ab-read-rule: oklch(82% 0.027 115);
+      --ab-read-accent: oklch(49% 0.14 150);
+      --ab-read-accent-dark: oklch(37% 0.105 150);
+      --ab-read-accent-ink: oklch(98% 0.008 105);
+      --ab-read-focus: oklch(56% 0.16 145);
+      --ab-read-danger: oklch(51% 0.17 28);
+      --ab-read-shadow: oklch(20% 0.01 145 / 0.07);
+      --ab-read-display: Hind Siliguri, Noto Serif Bengali, serif;
+      --ab-read-body: Hind Siliguri, Noto Sans Bengali, sans-serif;
+      --ab-read-numeric: ui-sans-serif, system-ui, sans-serif;
+      --ab-read-2xs: 0.25rem;
+      --ab-read-xs: 0.5rem;
+      --ab-read-sm: 0.75rem;
+      --ab-read-md: 1rem;
+      --ab-read-lg: 1.5rem;
+      --ab-read-xl: 2.5rem;
+      --ab-read-2xl: 4rem;
+      --ab-read-3xl: 6rem;
+      --ab-read-radius-sm: 0.375rem;
+      --ab-read-radius-md: 0.75rem;
+      --ab-read-dur: 120ms;
+      --ab-read-ease: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    html.ab-special-package-page, body.ab-special-package-page { overflow-x: clip; }
+    body.ab-special-package-page { background: var(--ab-read-paper); }
+    app-special-package-details { color: var(--ab-read-ink); font-family: var(--ab-read-body); }
+    app-special-package-details .banner-area { margin-block: var(--ab-read-lg) var(--ab-read-2xl) !important; }
+    app-special-package-details .banner-area .bannar-main { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; gap: var(--ab-read-lg) !important; align-items: center; padding: var(--ab-read-sm) !important; background: var(--ab-read-paper-deep) !important; border: 1px solid var(--ab-read-rule) !important; border-radius: var(--ab-read-radius-md) !important; box-shadow: 0 1px 2px var(--ab-read-shadow) !important; }
+    app-special-package-details .banner-area .bannar-main > img { width: 100% !important; height: min(88vw, 24rem) !important; min-height: 0 !important; object-fit: contain !important; background: var(--ab-read-paper) !important; border-radius: var(--ab-read-radius-sm) !important; }
+    .ab-offer-summary { gap: var(--ab-read-md) !important; padding: var(--ab-read-sm) var(--ab-read-xs) var(--ab-read-md); opacity: 1 !important; transform: none !important; animation: none !important; }
+    .ab-offer-kicker { width: fit-content; margin: 0; padding-block-end: var(--ab-read-2xs); color: var(--ab-read-accent-dark); border-block-end: 2px solid var(--ab-read-accent); font-size: 0.875rem; font-weight: 700; letter-spacing: 0; }
+    .ab-offer-summary h1, .ab-books-heading h2, app-special-package-details .product-body > a { min-width: 0; overflow-wrap: anywhere; font-family: var(--ab-read-display) !important; }
+    .ab-offer-summary h1 { max-width: 15ch; margin: 0; color: var(--ab-read-ink); font-size: clamp(1.85rem, 8vw, 3rem); font-weight: 700; letter-spacing: -0.025em; line-height: 1.12; }
+    .ab-offer-description { max-width: 62ch; margin: 0; color: var(--ab-read-muted); font-size: 1rem; font-weight: 400; line-height: 1.72; white-space: pre-line; }
+    .ab-offer-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ab-read-sm); margin-block-start: var(--ab-read-xs); }
+    .ab-offer-fact { gap: var(--ab-read-2xs); padding-block: var(--ab-read-sm); border-block-start: 1px solid var(--ab-read-rule); }
+    .ab-offer-fact-label { color: var(--ab-read-muted); font-size: 0.875rem; }
+    .ab-offer-fact-value { color: var(--ab-read-ink); font-family: var(--ab-read-numeric); font-size: 1.25rem; font-variant-numeric: tabular-nums; font-weight: 800; }
+    app-special-package-details .section1 { background: var(--ab-read-paper) !important; }
+    app-special-package-details .section1-main { display: block !important; }
+    .ab-books-heading { grid-template-columns: minmax(0, 1fr) !important; gap: var(--ab-read-xs); margin-block: 0 var(--ab-read-lg); padding-block-end: var(--ab-read-lg); border-block-end: 1px solid var(--ab-read-rule); }
+    .ab-books-heading h2 { max-width: 22ch; margin: 0; color: var(--ab-read-ink); font-size: clamp(1.65rem, 6vw, 2.35rem); font-weight: 700; letter-spacing: -0.018em; line-height: 1.2; }
+    .ab-books-heading p { max-width: 62ch; margin: var(--ab-read-sm) 0 0; color: var(--ab-read-muted); font-size: 1rem; font-weight: 400; line-height: 1.65; letter-spacing: 0; }
+    .ab-books-count { color: var(--ab-read-accent-dark); font-family: var(--ab-read-numeric); font-size: 0.9rem; font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+    app-special-package-details .section1-main > .product { position: relative; display: grid !important; grid-template-columns: 6.25rem minmax(0, 1fr) !important; gap: var(--ab-read-md) !important; align-items: start; margin: 0 !important; padding: var(--ab-read-xl) 0 !important; background: transparent !important; border: 0 !important; border-block-end: 1px solid var(--ab-read-rule) !important; border-radius: 0 !important; box-shadow: none !important; cursor: default !important; opacity: 1 !important; transform: none !important; animation: none !important; }
+    .ab-book-number { position: absolute; inset-block-start: var(--ab-read-lg); inset-inline-end: 0; color: var(--ab-read-rule); font-family: var(--ab-read-numeric); font-size: 2.5rem; font-variant-numeric: tabular-nums; font-weight: 800; line-height: 1; pointer-events: none; }
+    app-special-package-details .product-image { min-width: 0; }
+    app-special-package-details .product-image img { width: 100% !important; height: 9rem !important; object-fit: contain !important; background: var(--ab-read-paper-deep) !important; border-radius: var(--ab-read-radius-sm) !important; }
+    app-special-package-details .product-body { min-width: 0; padding: 0 var(--ab-read-xl) 0 0 !important; }
+    app-special-package-details .product-body > a { display: inline !important; max-height: none !important; margin: 0 !important; color: var(--ab-read-ink) !important; font-size: 1.2rem !important; font-weight: 700 !important; line-height: 1.35 !important; text-decoration: none; }
+    app-special-package-details .product-body > a:hover { color: var(--ab-read-accent-dark) !important; text-decoration: underline; text-underline-offset: 0.2em; }
+    app-special-package-details .product-body > p:not(.ab-book-description), app-special-package-details .product-body > ul { display: none !important; }
+    .ab-book-meta { display: flex; flex-wrap: wrap; gap: var(--ab-read-2xs) var(--ab-read-md); margin-block-start: var(--ab-read-sm); color: var(--ab-read-muted); font-size: 0.875rem; line-height: 1.45; }
+    .ab-book-meta span + span::before { content: '·'; margin-inline-end: var(--ab-read-md); color: var(--ab-read-rule); }
+    app-special-package-details .product-body > p.ab-book-description { display: -webkit-box !important; max-width: 65ch; margin: var(--ab-read-md) 0 0 !important; overflow: hidden !important; color: var(--ab-read-muted) !important; font-family: var(--ab-read-body) !important; font-size: 1rem !important; font-synthesis: none; font-weight: 400 !important; line-height: 1.72 !important; -webkit-box-orient: vertical; -webkit-line-clamp: 4 !important; }
+    app-special-package-details .product-body > p.ab-book-description.is-expanded { display: block !important; overflow: visible !important; -webkit-line-clamp: unset !important; }
+    .ab-book-description-toggle { position: relative; z-index: 2; min-height: 2.25rem; margin-block-start: var(--ab-read-xs); padding: 0; color: var(--ab-read-accent-dark); background: transparent; border: 0; border-block-end: 1px solid currentColor; border-radius: 0; font-family: var(--ab-read-body); font-size: 0.9rem; font-weight: 700; cursor: pointer; }
+    app-special-package-details .price-area { grid-column: 1 / -1; display: block !important; min-width: 0; padding: 0 !important; }
+    app-special-package-details .price-area .price-main > ul { display: none !important; }
+    .ab-book-price { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--ab-read-xs) var(--ab-read-sm); margin: 0; padding: 0; border: 0; font-family: var(--ab-read-numeric); font-variant-numeric: tabular-nums; }
+    .ab-book-current { color: var(--ab-read-accent-dark); font-size: 1.45rem; font-weight: 800; line-height: 1; }
+    .ab-book-list-price { color: var(--ab-read-muted); font-size: 0.95rem; text-decoration: line-through; }
+    .ab-book-saving { width: auto; margin: 0; color: var(--ab-read-danger); font-family: var(--ab-read-body); font-size: 0.82rem; font-weight: 700; white-space: nowrap; }
+    .ab-book-actions { display: flex; flex-wrap: wrap; gap: var(--ab-read-sm); margin-block-start: var(--ab-read-md); }
+    .ab-book-action { position: relative; z-index: 2; display: inline-flex; min-height: 2.75rem; align-items: center; justify-content: center; padding: var(--ab-read-sm) var(--ab-read-md); color: var(--ab-read-accent-dark) !important; background: transparent; border: 1px solid var(--ab-read-accent); border-radius: var(--ab-read-radius-sm); font-family: var(--ab-read-body) !important; font-size: 0.92rem; font-weight: 700; line-height: 1; text-decoration: none !important; white-space: nowrap; transition: transform var(--ab-read-dur) var(--ab-read-ease), opacity var(--ab-read-dur) var(--ab-read-ease); }
+    .ab-book-action--preview { color: var(--ab-read-accent-ink) !important; background: var(--ab-read-accent-dark); border-color: var(--ab-read-accent-dark); }
+    .ab-book-action[aria-disabled='true'] { opacity: 0.58; cursor: not-allowed; pointer-events: none; }
+    .ab-offer-gift { display: grid; grid-template-columns: 4.75rem minmax(0, 1fr); gap: var(--ab-read-md); align-items: center; padding: var(--ab-read-sm); background: var(--ab-read-paper); border: 1px solid var(--ab-read-rule); border-radius: var(--ab-read-radius-sm); }
+    .ab-offer-gift-visual { height: 4.75rem; overflow: hidden; background: var(--ab-read-paper-deep); border-radius: var(--ab-read-radius-sm); }
+    .ab-offer-gift-visual img { width: 100%; height: 100%; object-fit: contain; }
+    .ab-offer-gift-copy { min-width: 0; }
+    .ab-offer-gift-copy span { display: block; color: var(--ab-read-accent-dark); font-size: 0.78rem; font-weight: 700; }
+    .ab-offer-gift-copy strong { display: block; color: var(--ab-read-ink); font-size: 1rem; line-height: 1.3; }
+    .ab-offer-gift-copy p { margin: var(--ab-read-2xs) 0 0; color: var(--ab-read-muted); font-size: 0.82rem; font-weight: 400; line-height: 1.45; }
+    .ab-pdf-dialog { position: fixed; z-index: 10000; inset: 0; display: none; align-items: center; justify-content: center; padding: var(--ab-read-xs); color: var(--ab-read-ink); background: oklch(15% 0.02 145 / 0.72); }
+    .ab-pdf-dialog.is-open { display: flex; }
+    .ab-pdf-dialog-panel { width: min(58rem, 100%); height: min(52rem, calc(100dvh - 1rem)); overflow: hidden; background: var(--ab-read-paper); border: 1px solid var(--ab-read-rule); border-radius: var(--ab-read-radius-md); box-shadow: 0 1rem 3rem oklch(15% 0.02 145 / 0.3); }
+    .ab-pdf-dialog-header { display: flex; min-height: 3.5rem; align-items: center; justify-content: space-between; gap: var(--ab-read-sm); padding: var(--ab-read-sm) var(--ab-read-md); border-block-end: 1px solid var(--ab-read-rule); }
+    .ab-pdf-dialog-title { min-width: 0; margin: 0; overflow: hidden; font-family: var(--ab-read-display); font-size: 1rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .ab-pdf-dialog-close { flex: 0 0 auto; min-width: 2.75rem; min-height: 2.75rem; color: var(--ab-read-ink); background: transparent; border: 1px solid var(--ab-read-rule); border-radius: var(--ab-read-radius-sm); font-family: var(--ab-read-body); font-size: 1.35rem; cursor: pointer; }
+    .ab-pdf-dialog-pages { width: 100%; height: calc(100% - 3.5rem); padding: var(--ab-read-sm); overflow-y: auto; overscroll-behavior: contain; background: var(--ab-read-paper-deep); }
+    .ab-pdf-dialog-state { display: grid; min-height: 8rem; place-items: center; margin: 0; color: var(--ab-read-muted); font-size: 0.95rem; text-align: center; }
+    .ab-pdf-page { display: grid; min-height: 8rem; place-items: center; margin: 0 auto var(--ab-read-sm); }
+    .ab-pdf-page canvas { display: block; max-width: 100%; height: auto; background: white; box-shadow: 0 1px 3px var(--ab-read-shadow); }
+    app-special-package-details .section2 { margin-block: var(--ab-read-2xl) var(--ab-read-3xl); }
+    app-special-package-details .section2 .container { display: grid; gap: var(--ab-read-sm); padding: var(--ab-read-sm) !important; background: var(--ab-read-paper-deep); border: 1px solid var(--ab-read-rule); border-radius: var(--ab-read-radius-md); box-shadow: 0 1px 2px var(--ab-read-shadow); }
+    app-special-package-details .section2-bottom { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: var(--ab-read-sm) !important; margin: 0 !important; }
+    app-special-package-details .section2-bottom.prices { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+    app-special-package-details .section2-bottom.prices button:nth-child(2), app-special-package-details .section2-bottom:not(.prices) button:first-child { display: none !important; }
+    app-special-package-details .section2-bottom button { min-height: 3rem; margin: 0 !important; border-radius: var(--ab-read-radius-sm) !important; font-family: var(--ab-read-body) !important; font-weight: 700; white-space: nowrap; transition: transform var(--ab-read-dur) var(--ab-read-ease), opacity var(--ab-read-dur) var(--ab-read-ease) !important; }
+    app-special-package-details .section2-bottom button:disabled, app-special-package-details .section2-bottom button[data-ab-cart-busy='true'] { opacity: 0.62; }
+    app-special-package-details .section2-bottom button:focus-visible, app-special-package-details a:focus-visible { outline: 3px solid var(--ab-read-focus) !important; outline-offset: 3px; }
+    @media (min-width: 40rem) {
+      app-special-package-details .banner-area .bannar-main { padding: var(--ab-read-lg) !important; }
+      .ab-offer-facts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .ab-books-heading { grid-template-columns: minmax(0, 1fr) auto !important; align-items: end; }
+      app-special-package-details .section1-main > .product { grid-template-columns: 7.5rem minmax(0, 1fr) !important; gap: var(--ab-read-lg) !important; }
+      app-special-package-details .product-image img { height: 11rem !important; }
+      app-special-package-details .product-body { padding-inline-end: var(--ab-read-2xl) !important; }
+      app-special-package-details .section2 .container { padding: var(--ab-read-md) !important; }
+      app-special-package-details .section2-bottom:not(.prices) { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+      app-special-package-details .section2-bottom:not(.prices) button:first-child { display: block !important; }
+    }
+    @media (min-width: 60rem) {
+      app-special-package-details .banner-area .bannar-main { grid-template-columns: minmax(0, 5fr) minmax(20rem, 4fr) !important; gap: clamp(var(--ab-read-xl), 4vw, var(--ab-read-3xl)) !important; padding: clamp(var(--ab-read-lg), 3vw, var(--ab-read-2xl)) !important; }
+      app-special-package-details .banner-area .bannar-main > img { height: clamp(24rem, 38vw, 34rem) !important; }
+      app-special-package-details .section1-main > .product { grid-template-columns: 8.5rem minmax(0, 1fr) minmax(13rem, 0.36fr) !important; gap: clamp(var(--ab-read-lg), 3vw, var(--ab-read-xl)) !important; }
+      app-special-package-details .product-image img { height: 12.5rem !important; }
+      app-special-package-details .price-area { grid-column: auto; }
+      .ab-book-price { padding-block-end: var(--ab-read-md); border-block-end: 2px solid var(--ab-read-accent); }
+      .ab-book-actions { display: grid; }
+      .ab-book-action { width: 100%; }
+    }
+    @media (hover: hover) and (pointer: fine) { .ab-book-action:hover, app-special-package-details .section2-bottom button:hover { transform: translateY(-1px); } }
+    @media (pointer: coarse) { .ab-book-action, app-special-package-details .section2-bottom button { min-height: 3rem; } }
+    @media (prefers-reduced-motion: reduce) { .ab-book-action, app-special-package-details .section2-bottom button { transition-duration: 0ms !important; } }
+  \`;
+
   function styleOnce() {
     if (document.getElementById(STYLE_ID)) return;
     var style = document.createElement('style');
     style.id = STYLE_ID;
-    style.textContent = css;
+    style.textContent = css + redesignCss;
     document.head.appendChild(style);
   }
 
@@ -537,6 +663,15 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
     return '৳' + Math.round(Number(value) || 0).toLocaleString('en-BD');
   }
 
+  function packageListPrice(data) {
+    return (data.products || []).reduce(function (total, product) {
+      var quantity = product.quantity == null
+        ? 1
+        : Math.max(0, Math.floor(Number(product.quantity) || 0));
+      return total + (Number(product.salePrice) || 0) * quantity;
+    }, 0);
+  }
+
   function packagePrice(data) {
     var productsTotal = (data.products || []).reduce(function (total, product) {
       var quantity = product.quantity == null
@@ -555,6 +690,248 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
     parent.appendChild(fact);
   }
 
+  function authorNames(product) {
+    return (product && product.author || []).map(function (author) {
+      return String(author && author.name || '').trim();
+    }).filter(Boolean).join(', ');
+  }
+
+  function productPath(product) {
+    return product && product.slug
+      ? '/product-details/' + encodeURIComponent(product.slug)
+      : '';
+  }
+
+  function appendBookMeta(body, product) {
+    if (!body || body.querySelector('.ab-book-meta')) return;
+    var values = [
+      authorNames(product),
+      product && product.totalPages ? String(product.totalPages) + ' পৃষ্ঠা' : '',
+      String(product && (product.currentVersion || product.edition) || '').trim(),
+    ].filter(Boolean);
+    if (!values.length) return;
+    var meta = createElement('div', 'ab-book-meta');
+    values.forEach(function (value) { meta.appendChild(createElement('span', '', value)); });
+    body.appendChild(meta);
+  }
+
+  function bindCardControl(control, onClick) {
+    ['pointerdown', 'mousedown', 'touchstart', 'pointerup', 'mouseup'].forEach(function (eventName) {
+      control.addEventListener(eventName, function (event) {
+        event.stopPropagation();
+      });
+    });
+    control.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      onClick();
+    });
+  }
+
+  function appendBookActions(priceMain, product) {
+    if (!priceMain || priceMain.querySelector('.ab-book-actions')) return;
+    var actions = createElement('div', 'ab-book-actions');
+    if (product && product.pdfFile) {
+      var preview = createElement('button', 'ab-book-action ab-book-action--preview', 'একটু পড়ে দেখুন');
+      preview.type = 'button';
+      preview.setAttribute('aria-label', (product.name || 'বই') + ' — একটু পড়ে দেখুন');
+      preview.setAttribute('data-ab-pdf-file', product.pdfFile);
+      preview.setAttribute('data-ab-pdf-title', product.name || 'বইয়ের নমুনা');
+      bindCardControl(preview, function () {
+        openPdfDialog(product.pdfFile, product.name || 'বইয়ের নমুনা');
+      });
+      actions.appendChild(preview);
+    }
+    var path = productPath(product);
+    if (path) {
+      var details = createElement('a', 'ab-book-action', 'বইটি দেখুন');
+      details.href = path;
+      details.setAttribute('aria-label', (product.name || 'বই') + ' — বিস্তারিত দেখুন');
+      actions.appendChild(details);
+    }
+    if (actions.children.length) priceMain.appendChild(actions);
+  }
+
+  function openPdfDialog(pdfFile, title) {
+    var dialog = document.getElementById('ab-pdf-dialog');
+    if (!dialog) {
+      dialog = createElement('div', 'ab-pdf-dialog');
+      dialog.id = 'ab-pdf-dialog';
+      dialog.setAttribute('role', 'dialog');
+      dialog.setAttribute('aria-modal', 'true');
+      dialog.setAttribute('aria-labelledby', 'ab-pdf-dialog-title');
+      var panel = createElement('section', 'ab-pdf-dialog-panel');
+      var header = createElement('header', 'ab-pdf-dialog-header');
+      var heading = createElement('h2', 'ab-pdf-dialog-title');
+      heading.id = 'ab-pdf-dialog-title';
+      var close = createElement('button', 'ab-pdf-dialog-close', '×');
+      close.type = 'button';
+      close.setAttribute('aria-label', 'পিডিএফ বন্ধ করুন');
+      close.addEventListener('click', closePdfDialog);
+      header.appendChild(heading);
+      header.appendChild(close);
+      var pages = createElement('div', 'ab-pdf-dialog-pages');
+      panel.appendChild(header);
+      panel.appendChild(pages);
+      dialog.appendChild(panel);
+      dialog.addEventListener('click', function (event) {
+        if (event.target === dialog) closePdfDialog();
+      });
+      document.body.appendChild(dialog);
+    }
+    dialog.querySelector('.ab-pdf-dialog-title').textContent = title + ' — নমুনা পৃষ্ঠা';
+    var pages = dialog.querySelector('.ab-pdf-dialog-pages');
+    pages.innerHTML = '<p class="ab-pdf-dialog-state">নমুনা পৃষ্ঠা লোড হচ্ছে…</p>';
+    dialog.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+    dialog.querySelector('.ab-pdf-dialog-close').focus();
+    loadProductPdfEngine().then(function (pdfjs) {
+      var task = pdfjs.getDocument(pdfFile);
+      dialog._abPdfTask = task;
+      return task.promise;
+    }).then(function (pdf) {
+      if (!dialog.classList.contains('is-open')) return;
+      dialog._abPdf = pdf;
+      renderPdfPages(pdf, pages, dialog);
+    }).catch(function () {
+      pages.innerHTML = '<p class="ab-pdf-dialog-state">দুঃখিত, নমুনা পৃষ্ঠা এখন দেখানো যাচ্ছে না।</p>';
+    });
+  }
+
+  function loadProductPdfEngine() {
+    if (pdfEnginePromise) return pdfEnginePromise;
+    pdfEnginePromise = new Promise(function (resolve, reject) {
+      var chunks = window.webpackChunkangular_ui;
+      if (!chunks || !chunks.push) {
+        reject(new Error('Storefront PDF engine unavailable'));
+        return;
+      }
+      chunks.push([[987654], {}, function (webpackRequire) {
+        webpackRequire.e(158).then(function () {
+          var pdfjs = webpackRequire(5908);
+          pdfjs.GlobalWorkerOptions.workerSrc = webpackRequire(1091);
+          resolve(pdfjs);
+        }).catch(reject);
+      }]);
+    });
+    return pdfEnginePromise;
+  }
+
+  function renderPdfPages(pdf, container, dialog) {
+    container.innerHTML = '';
+    var rendered = {};
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        var pageNumber = Number(entry.target.getAttribute('data-page-number'));
+        if (!pageNumber || rendered[pageNumber]) return;
+        rendered[pageNumber] = true;
+        observer.unobserve(entry.target);
+        pdf.getPage(pageNumber).then(function (page) {
+          if (!dialog.classList.contains('is-open')) return;
+          var base = page.getViewport({ scale: 1 });
+          var scale = Math.max(0.5, (container.clientWidth - 24) / base.width * 0.95);
+          var viewport = page.getViewport({ scale: scale });
+          var ratio = Math.min(window.devicePixelRatio || 1, 2);
+          var canvas = document.createElement('canvas');
+          var context = canvas.getContext('2d');
+          canvas.width = Math.floor(viewport.width * ratio);
+          canvas.height = Math.floor(viewport.height * ratio);
+          canvas.style.width = viewport.width + 'px';
+          canvas.style.height = viewport.height + 'px';
+          context.setTransform(ratio, 0, 0, ratio, 0, 0);
+          return page.render({ canvasContext: context, viewport: viewport }).promise.then(function () {
+            entry.target.replaceChildren(canvas);
+          });
+        }).catch(function () {
+          entry.target.textContent = 'পৃষ্ঠা লোড করা যায়নি';
+        });
+      });
+    }, { root: container, threshold: 0.05 });
+    dialog._abPdfObserver = observer;
+    for (var pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+      var placeholder = createElement('div', 'ab-pdf-page');
+      placeholder.setAttribute('data-page-number', String(pageNumber));
+      container.appendChild(placeholder);
+      observer.observe(placeholder);
+    }
+  }
+
+  function closePdfDialog() {
+    var dialog = document.getElementById('ab-pdf-dialog');
+    if (!dialog) return;
+    dialog.classList.remove('is-open');
+    document.body.style.overflow = '';
+    if (dialog._abPdfObserver) dialog._abPdfObserver.disconnect();
+    if (dialog._abPdfTask && dialog._abPdfTask.destroy) dialog._abPdfTask.destroy();
+    dialog._abPdfObserver = null;
+    dialog._abPdfTask = null;
+    dialog._abPdf = null;
+    dialog.querySelector('.ab-pdf-dialog-pages').innerHTML = '';
+  }
+
+  function installInteractionHandlers() {
+    if (document.documentElement.getAttribute('data-ab-offer-handlers') === 'true') return;
+    document.documentElement.setAttribute('data-ab-offer-handlers', 'true');
+    function handlePreviewInteraction(event) {
+      var target = event.target && event.target.closest
+        ? event.target.closest('.ab-book-action--preview')
+        : null;
+      if (!target) return;
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      if (event.type === 'click') {
+        openPdfDialog(
+          target.getAttribute('data-ab-pdf-file'),
+          target.getAttribute('data-ab-pdf-title') || 'বইয়ের নমুনা'
+        );
+      }
+    }
+    ['pointerdown', 'mousedown', 'click'].forEach(function (eventName) {
+      document.addEventListener(eventName, handlePreviewInteraction, true);
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') closePdfDialog();
+    });
+  }
+
+  function appendDescriptionToggle(body, description, index) {
+    if (!body || !description || body.querySelector('.ab-book-description-toggle')) return;
+    var toggle = createElement('button', 'ab-book-description-toggle', 'আরও দেখুন');
+    var descriptionId = 'ab-book-description-' + index;
+    description.id = descriptionId;
+    toggle.type = 'button';
+    toggle.setAttribute('aria-controls', descriptionId);
+    toggle.setAttribute('aria-expanded', 'false');
+    bindCardControl(toggle, function () {
+      var expanded = toggle.getAttribute('aria-expanded') === 'true';
+      description.classList.toggle('is-expanded', !expanded);
+      toggle.setAttribute('aria-expanded', String(!expanded));
+      toggle.textContent = expanded ? 'আরও দেখুন' : 'কম দেখুন';
+    });
+    body.appendChild(toggle);
+  }
+
+  function appendGift(summary, data) {
+    var gift = createElement('aside', 'ab-offer-gift');
+    gift.setAttribute('aria-label', 'প্যাকেজের ফ্রি উপহার');
+    var visual = createElement('div', 'ab-offer-gift-visual');
+    var image = document.createElement('img');
+    image.src = data.notebookImage || NOTEBOOK_IMAGE;
+    image.alt = 'প্যাকেজের সাথে ফ্রি নোটবুক';
+    image.loading = 'lazy';
+    visual.appendChild(image);
+    var copy = createElement('div', 'ab-offer-gift-copy');
+    copy.appendChild(createElement('span', '', 'প্যাকেজ বোনাস'));
+    copy.appendChild(createElement('strong', '', 'সাথে ফ্রি নোটবুক'));
+    copy.appendChild(createElement('p', '', 'এই প্যাকেজ অর্ডার করলে নোটবুকটি বিনামূল্যে পাবেন।'));
+    gift.appendChild(visual);
+    gift.appendChild(copy);
+    summary.appendChild(gift);
+  }
+
   function enhanceHero(root, id, data) {
     var banner = root.querySelector('.bannar-main');
     if (!banner || banner.querySelector('.ab-offer-summary')) return;
@@ -564,13 +941,12 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
     summary.appendChild(createElement('p', 'ab-offer-kicker', 'বিশেষ প্যাকেজ'));
     summary.appendChild(createElement('h1', '', data.name || 'বিশেষ বইয়ের প্যাকেজ'));
 
-    var description = plainText(data.description, 520);
-    if (description) summary.appendChild(createElement('p', 'ab-offer-description', description));
-
     var facts = createElement('div', 'ab-offer-facts');
     addFact(facts, 'প্যাকেজে বই', String((data.products || []).length) + 'টি');
-    addFact(facts, 'প্যাকেজ মূল্য', formatMoney(packagePrice(data)));
+    addFact(facts, 'বইগুলোর মোট মূল্য', formatMoney(packageListPrice(data)));
+    addFact(facts, 'অফার মূল্য', formatMoney(packagePrice(data)));
     summary.appendChild(facts);
+    appendGift(summary, data);
     banner.appendChild(summary);
   }
 
@@ -583,8 +959,8 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
     if (!section.querySelector('.ab-books-heading')) {
       var heading = createElement('header', 'ab-books-heading');
       var titleWrap = createElement('div', '');
-      titleWrap.appendChild(createElement('p', '', 'প্যাকেজে যা থাকছে'));
-      titleWrap.appendChild(createElement('h2', '', 'প্রতিটি বইয়ের সংক্ষিপ্ত পরিচিতি'));
+      titleWrap.appendChild(createElement('h2', '', 'তিনটি বই, একটি ধারাবাহিক পাঠ'));
+      titleWrap.appendChild(createElement('p', '', 'প্রতিটি বইয়ের পরিচিতি পড়ুন, নমুনা পৃষ্ঠা দেখুন, তারপর সিদ্ধান্ত নিন।'));
       heading.appendChild(titleWrap);
       heading.appendChild(createElement('span', 'ab-books-count', products.length + 'টি বই'));
       section.insertBefore(heading, section.firstChild);
@@ -593,11 +969,22 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
     cards.slice(0, products.length).forEach(function (card, index) {
       var product = products[index] || {};
       card.style.setProperty('--ab-offer-index', String(index + 1));
+      if (!card.querySelector('.ab-book-number')) {
+        card.appendChild(createElement('span', 'ab-book-number', String(index + 1).padStart(2, '0')));
+      }
 
       var body = card.querySelector('.product-body');
+      var title = body && body.querySelector(':scope > a');
+      var path = productPath(product);
+      if (title && path) title.href = path;
+      appendBookMeta(body, product);
       if (body && !body.querySelector('.ab-book-description')) {
-        var description = plainText(product.shortDescription || product.description, 300);
-        if (description) body.appendChild(createElement('p', 'ab-book-description', description));
+        var description = plainText(product.shortDescription || product.description, 760);
+        if (description) {
+          var descriptionElement = createElement('p', 'ab-book-description', description);
+          body.appendChild(descriptionElement);
+          appendDescriptionToggle(body, descriptionElement, index + 1);
+        }
       }
 
       var priceMain = card.querySelector('.price-main');
@@ -613,8 +1000,34 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
         }
         priceMain.insertBefore(price, priceMain.firstChild);
       }
+      appendBookActions(priceMain, product);
     });
     return true;
+  }
+
+  function hydrateProducts(data) {
+    var products = data && Array.isArray(data.products) ? data.products : [];
+    return Promise.all(products.map(function (product) {
+      var slug = product && product.slug;
+      if (!slug) return Promise.resolve(product);
+      if (productCache[slug]) return Promise.resolve(Object.assign({}, product, productCache[slug]));
+      return fetch(API_BASE + '/api/product/get-by-slug/' + encodeURIComponent(slug), {
+        headers: { Accept: 'application/json' },
+      }).then(function (response) {
+        if (!response.ok) throw new Error('Product request failed');
+        return response.json();
+      }).then(function (response) {
+        var detail = response && response.success && response.data ? response.data : {};
+        productCache[slug] = detail;
+        return Object.assign({}, detail, product, {
+          pdfFile: detail.pdfFile,
+          description: detail.description,
+          shortDescription: detail.shortDescription,
+        });
+      }).catch(function () { return product; });
+    })).then(function (details) {
+      return Object.assign({}, data, { products: details });
+    });
   }
 
   function applyEnhancements(id, data) {
@@ -642,8 +1055,12 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
       .then(function (response) {
         requestId = '';
         if (!response || !response.success || !response.data) return;
-        packageCache[id] = response.data;
-        applyEnhancements(id, response.data);
+        return hydrateProducts(response.data);
+      })
+      .then(function (data) {
+        if (!data) return;
+        packageCache[id] = data;
+        applyEnhancements(id, data);
       })
       .catch(function () { requestId = ''; });
   }
@@ -670,6 +1087,7 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
 
   function watch() {
     if (!document.body) return;
+    installInteractionHandlers();
     observer = new MutationObserver(schedule);
     observer.observe(document.body, { childList: true, subtree: true });
     run();
