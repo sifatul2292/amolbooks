@@ -28,9 +28,9 @@ assert.equal(catalogueBaseFor({ location: { hostname: 'www.amolbooks.com', origi
 const fallbackDom = new JSDOM(`<app-product-details-area>
   <div class="product-image-box"><img src="" alt=""></div>
   <div class="product-title"><h3></h3><p>লেখক:</p></div>
+  <div class="product-rating"></div>
   <div class="product-price"><h3>Tk 0</h3></div>
   <div class="stock-out"><h5>Out of Stock</h5></div>
-  <div class="short-description"><p></p></div>
 </app-product-details-area>`);
 const fallbackFunctionNames = [
   'escapeHtml',
@@ -42,21 +42,26 @@ const fallbackFunctionNames = [
   'firstCategoryName',
   'hydrateNativeProductOverview',
 ];
-const hydrateNativeProductOverview = new Function(
+const hydrateFor = document => new Function(
   'document',
   `${fallbackFunctionNames.map(emittedFunction).join('\n')}; return hydrateNativeProductOverview;`,
-)(fallbackDom.window.document);
+)(document);
+const hydrateNativeProductOverview = hydrateFor(fallbackDom.window.document);
 assert.equal(hydrateNativeProductOverview({
   _id: 'product-1',
+  slug: 'visible-book',
   name: 'Visible Book',
   currentVersion: 'Paperback',
   images: ['https://example.com/book.webp'],
-  author: [{ name: 'Visible Author' }],
-  category: [{ name: 'Visible Category' }],
-  publisher: { name: 'Visible Publisher' },
+  author: [{ name: 'Visible Author', slug: 'visible-author' }],
+  category: [{ name: 'Visible Category', slug: 'visible-category' }],
+  publisher: { name: 'Visible Publisher', slug: 'visible-publisher' },
   salePrice: 470,
   afterDiscountPrice: 310,
   quantity: 5,
+  ratingCount: 40,
+  ratingTotal: 8,
+  reviewTotal: 8,
   shortDescription: '<p>Visible summary</p>',
 }), true);
 assert.match(fallbackDom.window.document.querySelector('.product-title h3').textContent, /Visible Book/);
@@ -65,9 +70,90 @@ assert.match(fallbackDom.window.document.querySelector('.product-price h3').text
 assert.match(fallbackDom.window.document.querySelector('.stock h5').textContent, /In Stock/);
 assert.equal(fallbackDom.window.document.querySelector('[data-ab-empty-native-meta]').hidden, true);
 assert.match(fallbackDom.window.document.querySelector('[data-ab-native-product-meta]').textContent, /Visible Author/);
+assert.deepEqual(Array.from(fallbackDom.window.document.querySelectorAll('[data-ab-native-product-meta] a'), link => link.getAttribute('href')), [
+  '/author-list/author-details/visible-author',
+  '/product-list?categories=visible-category',
+  '/product-list?publisher=visible-publisher',
+]);
+assert.equal(fallbackDom.window.document.querySelectorAll('[data-ab-native-product-meta] p').length, 3);
+assert.equal(fallbackDom.window.document.querySelector('[data-ab-fallback-rating] li').textContent, '5.0');
+assert.equal(fallbackDom.window.document.querySelectorAll('[data-ab-fallback-rating] .fa-star').length, 5);
+assert.equal(fallbackDom.window.document.querySelector('.ab-rating-counts').textContent, '8 Ratings | 8 Reviews');
+assert.match(fallbackDom.window.document.querySelector('.ab-fallback-price-current').textContent, /310/);
+assert.match(fallbackDom.window.document.querySelector('.ab-fallback-price-old').textContent, /470/);
+assert.match(fallbackDom.window.document.querySelector('.ab-fallback-price-saving').textContent, /160/);
+assert.equal(fallbackDom.window.document.querySelector('[data-ab-fallback-description] p').textContent, 'Visible summary');
+assert.equal(fallbackDom.window.document.querySelector('[data-ab-fallback-description-more]').getAttribute('href'), '#product-description');
 assert.equal(fallbackDom.window.document.querySelectorAll('[data-ab-fallback-action]').length, 2);
+const whatsApp = fallbackDom.window.document.querySelector('[data-ab-fallback-actions] #__wa-order-btn');
+assert.match(whatsApp.getAttribute('href'), /^https:\/\/wa\.me\/8801893058682\?text=/);
+assert.match(decodeURIComponent(whatsApp.getAttribute('href').split('?text=')[1]), /Visible Book[\s\S]*\/product-details\/visible-book/);
+assert.ok(whatsApp.querySelector('.fa-whatsapp'));
+hydrateNativeProductOverview({
+  _id: 'product-2', slug: 'next-book', name: 'Next Book', salePrice: 200, quantity: 1,
+  shortDescription: 'Next summary',
+});
+assert.equal(fallbackDom.window.document.querySelector('[data-ab-fallback-description] p').textContent, 'Next summary');
+assert.match(decodeURIComponent(whatsApp.getAttribute('href').split('?text=')[1]), /Next Book[\s\S]*\/product-details\/next-book/);
+assert.equal(fallbackDom.window.document.querySelector('[data-ab-fallback-rating]'), null);
+hydrateNativeProductOverview({ _id: 'product-3', slug: 'empty-book', name: 'Empty Book', salePrice: 200, quantity: 0 });
+assert.equal(fallbackDom.window.document.querySelector('[data-ab-fallback-description]'), null);
+assert.equal(fallbackDom.window.document.querySelector('[data-ab-fallback-actions]'), null);
 assert.match(source, /\[data-ab-fallback-actions\] button[\s\S]*?background: #3e97e3/);
 assert.match(source, /\[data-ab-fallback-actions\] button\.active[\s\S]*?background: #33c24d/);
+assert.match(source, /@media \(max-width: 991px\)[\s\S]*?\[data-ab-fallback-actions\][\s\S]*?grid-template-columns: minmax\(0, 1fr\)/);
+assert.match(source, /\[data-ab-fallback-actions\] #__wa-order-btn[\s\S]*?background: #0d8174/);
+assert.match(source, /\[data-ab-fallback-actions\] button,[\s\S]*?display: flex !important;[\s\S]*?align-items: center !important;[\s\S]*?justify-content: center !important;[\s\S]*?box-sizing: border-box !important;/);
+assert.match(source, /\[data-ab-native-product-meta\] > p[\s\S]*?margin: 0 0\.85rem 0\.5rem 0 !important;/);
+
+hydrateNativeProductOverview({
+  _id: 'product-1', slug: 'visible-book', name: 'Visible Book', images: ['https://example.com/book.webp'],
+  author: [{ name: 'Visible Author', slug: 'visible-author' }], salePrice: 470, afterDiscountPrice: 310,
+  quantity: 5, ratingCount: 40, ratingTotal: 8, reviewTotal: 8, shortDescription: 'Visible summary',
+});
+const nativeMeta = fallbackDom.window.document.querySelector('.product-title > p');
+nativeMeta.innerHTML = '<a href="/author-list/author-details/native-author">Native Author</a>';
+const nativeActions = fallbackDom.window.document.querySelector('.product-action-btn');
+nativeActions.appendChild(fallbackDom.window.document.createElement('button'));
+assert.equal(hydrateNativeProductOverview({
+  _id: 'product-1', name: 'Visible Book', images: ['https://example.com/book.webp'], author: [{ name: 'Native Author' }],
+  salePrice: 470, afterDiscountPrice: 310, quantity: 5, ratingCount: 40, ratingTotal: 8, reviewTotal: 8,
+  shortDescription: 'Visible summary',
+}), false);
+assert.ok(fallbackDom.window.document.querySelector('[data-ab-fallback-rating]'));
+assert.ok(fallbackDom.window.document.querySelector('[data-ab-fallback-description]'));
+const nativeRating = fallbackDom.window.document.createElement('ul');
+nativeRating.innerHTML = '<li>5.0</li>';
+fallbackDom.window.document.querySelector('.product-rating').appendChild(nativeRating);
+const nativeDescription = fallbackDom.window.document.createElement('div');
+nativeDescription.className = 'short-description';
+nativeDescription.innerHTML = '<p>Native summary</p>';
+fallbackDom.window.document.querySelector('app-product-details-area').appendChild(nativeDescription);
+hydrateNativeProductOverview({ _id: 'product-1' });
+assert.equal(fallbackDom.window.document.querySelector('[data-ab-fallback-rating]'), null);
+assert.equal(fallbackDom.window.document.querySelector('[data-ab-fallback-description]'), null);
+
+const emptyDescriptionDom = new JSDOM(`<app-product-details-area>
+  <div><div class="product-title"><h3></h3></div><div class="product-price"><h3>Tk 0</h3></div>
+  <div class="short-description"><p></p></div></div>
+</app-product-details-area>`);
+hydrateFor(emptyDescriptionDom.window.document)({
+  _id: 'empty-description', name: 'Book', salePrice: 100, quantity: 1, shortDescription: 'Fallback summary',
+});
+assert.equal(emptyDescriptionDom.window.document.querySelector('.short-description:not([data-ab-fallback-description]) p').textContent, '');
+assert.equal(emptyDescriptionDom.window.document.querySelectorAll('[data-ab-fallback-description]').length, 1);
+assert.equal(emptyDescriptionDom.window.document.querySelector('.short-see-more').getAttribute('href'), '#product-description');
+
+const nativeDescriptionDom = new JSDOM(`<app-product-details-area>
+  <div><div class="product-title"><h3></h3></div><div class="product-price"><h3>Tk 0</h3></div>
+  <div class="short-description"><p>Native summary</p></div></div>
+</app-product-details-area>`);
+hydrateFor(nativeDescriptionDom.window.document)({
+  _id: 'native-description', name: 'Book', salePrice: 100, quantity: 1, shortDescription: 'Fallback summary',
+});
+assert.equal(nativeDescriptionDom.window.document.querySelector('.short-description').hasAttribute('data-ab-fallback-description'), false);
+assert.equal(nativeDescriptionDom.window.document.querySelector('.short-description p').textContent, 'Native summary');
+assert.match(emittedFunction('renderProductSections'), /productDescriptionSection\.id = 'product-description'/);
 
 const mountLibrarySource = emittedFunction('mountCategoryLibrary');
 const categoryLibraryProductsSource = emittedFunction('categoryLibraryProducts');

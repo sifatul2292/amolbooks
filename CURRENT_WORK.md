@@ -1,5 +1,11 @@
 # CURRENT_WORK
 
+## Native-parity production product fallback (2026-09-30)
+
+- Confirmed the requested first screenshot is the successful native Angular product card; reverting the recent fallback would only restore the incomplete two-green-button production state.
+- The production fallback now mirrors the native card with linked inline metadata, score and stars, separated price colors, green stock status, bordered summary with “আরও দেখুন”, and stacked blue/green/WhatsApp actions on mobile and tablet.
+- Kept the cart-shell and dynamic shipping repairs intact. Added focused coverage for the missing Angular shells, partial native recovery, mobile action layout, and functional product-aware WhatsApp link.
+
 ## Production product UI and empty-cart shell repair (2026-09-30)
 
 - Reproduced the live split state: the persisted item appeared in the cart badge and checkout, while `/cart` stayed on Angular's `Your Cart is Empty` shell because its failed resolver never created `.cart-area-main`.

@@ -210,7 +210,11 @@
       list-style: none !important;
     }
 
-    app-product-details [data-ab-fallback-actions] button {
+    app-product-details [data-ab-fallback-actions] button,
+    app-product-details [data-ab-fallback-actions] #__wa-order-btn {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
       width: 100% !important;
       min-height: 3.25rem !important;
       padding: 0.75rem 1.1rem !important;
@@ -220,14 +224,68 @@
       color: #fff !important;
       font-size: 1rem !important;
       line-height: 1.2 !important;
+      box-sizing: border-box !important;
     }
 
     app-product-details [data-ab-fallback-actions] button.active {
       background: #33c24d !important;
     }
 
+    app-product-details [data-ab-fallback-actions] #__wa-order-btn {
+      margin: 0 !important;
+      background: #0d8174 !important;
+      text-decoration: none !important;
+    }
+
+    app-product-details [data-ab-native-product-meta] {
+      display: contents !important;
+    }
+
+    app-product-details [data-ab-native-product-meta] > p {
+      display: inline !important;
+      width: auto !important;
+      flex: 0 0 auto !important;
+      margin: 0 0.85rem 0.5rem 0 !important;
+    }
+
+    app-product-details [data-ab-native-product-meta] a {
+      color: #009ee2 !important;
+    }
+
+    app-product-details [data-ab-fallback-rating] {
+      display: flex !important;
+      align-items: center !important;
+      flex-wrap: wrap !important;
+      gap: 0.5rem !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      list-style: none !important;
+    }
+
+    app-product-details [data-ab-fallback-rating] li { list-style: none !important; }
+    app-product-details [data-ab-fallback-rating] i { color: #ff9800 !important; }
+    app-product-details .ab-rating-counts { color: #666 !important; }
+    app-product-details .ab-fallback-price-current { color: #f00 !important; }
+    app-product-details .ab-fallback-price-old { color: #888 !important; }
+    app-product-details .ab-fallback-price-saving { color: #008c16 !important; }
+    app-product-details [data-ab-fallback-product] .stock i { color: #2fc552 !important; }
+
+    app-product-details [data-ab-fallback-description] {
+      margin-block: 1rem !important;
+      padding: 0.85rem 1rem !important;
+      border: 1px solid #ddd !important;
+      border-radius: 0.4rem !important;
+    }
+
     app-product-details [data-ab-empty-native-meta] {
       display: none !important;
+    }
+
+    @media (max-width: 991px) {
+      app-product-details .product-action-btn > [data-ab-fallback-actions] {
+        grid-template-columns: minmax(0, 1fr) !important;
+        width: 100% !important;
+      }
     }
 
     @media (min-width: 992px) {
@@ -7963,12 +8021,15 @@
     var panel = document.querySelector('app-product-details-area');
     if (!panel) return false;
     var titleArea = panel.querySelector('.product-title');
+    var contentArea = titleArea && titleArea.parentElement || panel;
     var title = titleArea && titleArea.querySelector('h3');
     var image = panel.querySelector('.product-image-box img');
     var price = panel.querySelector('.product-price h3');
     var nativeActions = panel.querySelector('.product-action-btn');
     var fallbackMeta = titleArea && titleArea.querySelector('[data-ab-native-product-meta]');
     var fallbackActions = nativeActions && nativeActions.querySelector('[data-ab-fallback-actions]');
+    var fallbackRating = panel.querySelector('[data-ab-fallback-rating]');
+    var fallbackDescription = panel.querySelector('[data-ab-fallback-description]');
     var nativeMetaNodes = titleArea ? titleArea.querySelectorAll(':scope > p') : [];
     var nativeMetaReady = titleArea && Array.prototype.some.call(
       nativeMetaNodes,
@@ -7988,6 +8049,16 @@
     if (nativeReady) {
       if (fallbackMeta) fallbackMeta.remove();
       if (fallbackActions) fallbackActions.remove();
+      var nativeRatingReady = fallbackRating && fallbackRating.parentElement.querySelector(
+        'ul:not([data-ab-fallback-rating])'
+      );
+      if (fallbackRating && nativeRatingReady) {
+        var fallbackRatingCounts = fallbackRating.parentElement.querySelector('[data-ab-fallback-rating-counts]');
+        fallbackRating.remove();
+        if (fallbackRatingCounts) fallbackRatingCounts.remove();
+      }
+      var nativeDescription = panel.querySelector('.short-description:not([data-ab-fallback-description]) p');
+      if (fallbackDescription && nativeDescription && plainText(nativeDescription.textContent)) fallbackDescription.remove();
       Array.prototype.forEach.call(nativeMetaNodes, function (node) {
         if (node.hasAttribute('data-ab-empty-native-meta')) {
           node.hidden = false;
@@ -8028,15 +8099,50 @@
         fallbackMeta.setAttribute('data-ab-native-product-meta', 'true');
         titleArea.appendChild(fallbackMeta);
       }
+      var authors = Array.isArray(product.author) ? product.author.slice(0, 2) : [product.author].filter(Boolean);
+      var categories = Array.isArray(product.category) ? product.category : [product.category].filter(Boolean);
+      var linkedNames = function (items, hrefFor) {
+        return items.map(function (item) {
+          var label = firstName(item);
+          var href = item && typeof item === 'object' ? hrefFor(item) : '';
+          return href ? '<a href="' + escapeHtml(href) + '">' + escapeHtml(label) + '</a>' : escapeHtml(label);
+        }).filter(Boolean).join(', ');
+      };
+      var authorLinks = linkedNames(authors, function (item) {
+        return item.slug ? '/author-list/author-details/' + encodeURIComponent(item.slug) : '';
+      });
+      var categoryLinks = linkedNames(categories, function (item) {
+        return item.slug ? '/product-list?categories=' + encodeURIComponent(item.slug) : '';
+      });
+      var publisherLinks = linkedNames([product.publisher].filter(Boolean), function (item) {
+        return item.slug ? '/product-list?publisher=' + encodeURIComponent(item.slug) : '';
+      });
       fallbackMeta.innerHTML =
-        (author ? '<p>লেখক: <strong>' + escapeHtml(author) + '</strong></p>' : '') +
-        (category ? '<p>ক্যাটাগরি: <strong>' + escapeHtml(category) + '</strong></p>' : '') +
-        (publisher ? '<p>প্রকাশক: <strong>' + escapeHtml(publisher) + '</strong></p>' : '');
+        (author ? '<p>লেখক: ' + authorLinks + '</p>' : '') +
+        (category ? '<p>ক্যাটাগরি: ' + categoryLinks + '</p>' : '') +
+        (publisher ? '<p>প্রকাশক: ' + publisherLinks + '</p>' : '');
+    }
+    var ratingArea = panel.querySelector('.product-rating');
+    var ratingTotal = Math.max(0, Number(product.ratingTotal) || 0);
+    var reviewTotal = Math.max(0, Number(product.reviewTotal) || 0);
+    var ratingScore = ratingTotal ? Math.min(5, Math.max(0, Number(product.ratingCount) / ratingTotal)) : 0;
+    if (ratingArea && (ratingTotal || reviewTotal)) {
+      var stars = '';
+      for (var star = 1; star <= 5; star += 1) {
+        var starClass = ratingScore >= star ? 'fas fa-star' : ratingScore > star - 1 ? 'fas fa-star-half-alt' : 'far fa-star';
+        stars += '<li><i class="' + starClass + '"></i></li>';
+      }
+      ratingArea.innerHTML = '<ul data-ab-fallback-rating="true"><li><u>' + ratingScore.toFixed(1) + '</u></li>' + stars +
+        '</ul><span class="ab-rating-counts" data-ab-fallback-rating-counts="true">' + ratingTotal + ' Ratings | ' + reviewTotal + ' Reviews</span>';
+    } else if (fallbackRating) {
+      var fallbackRatingCounts = fallbackRating.parentElement && fallbackRating.parentElement.querySelector('[data-ab-fallback-rating-counts]');
+      fallbackRating.remove();
+      if (fallbackRatingCounts) fallbackRatingCounts.remove();
     }
     if (price) {
-      price.innerHTML = 'Tk ' + escapeHtml(String(Math.round(productPrice))) +
-        (salePrice > productPrice ? ' <del>Tk ' + escapeHtml(String(Math.round(salePrice))) + '</del>' : '') +
-        (saving ? ' <span class="oti-discount">You Save TK ' + escapeHtml(String(Math.round(saving))) +
+      price.innerHTML = '<span class="ab-fallback-price-current">Tk ' + escapeHtml(String(Math.round(productPrice))) + '</span>' +
+        (salePrice > productPrice ? ' <del class="ab-fallback-price-old">Tk ' + escapeHtml(String(Math.round(salePrice))) + '</del>' : '') +
+        (saving ? ' <span class="oti-discount ab-fallback-price-saving">You Save TK ' + escapeHtml(String(Math.round(saving))) +
           ' (' + escapeHtml(String(discountPercent(product))) + '% Off)</span>' : '');
     }
     var stock = panel.querySelector('.stock h5, .stock-out h5');
@@ -8048,26 +8154,67 @@
       stock.innerHTML = '<i class="fa ' + (available ? 'fa-check-circle' : 'fa-times-circle') + '"></i>' +
         (available ? 'In Stock' : 'Out of Stock');
     }
-    var summary = panel.querySelector('.short-description p');
     var summaryText = plainText(product.shortDescription || product.description || '');
+    var nativeSummaryArea = panel.querySelector('.short-description:not([data-ab-fallback-description])');
+    var nativeSummary = nativeSummaryArea && nativeSummaryArea.querySelector('p');
+    var nativeSummaryReady = nativeSummary && plainText(nativeSummary.textContent);
+    var summaryArea = panel.querySelector('[data-ab-fallback-description]');
+    if (!nativeSummaryReady && !summaryArea && summaryText) {
+      summaryArea = document.createElement('div');
+      summaryArea.className = 'short-description';
+      summaryArea.setAttribute('data-ab-fallback-description', 'true');
+      summaryArea.innerHTML = '<p></p>';
+      contentArea.insertBefore(
+        summaryArea,
+        nativeSummaryArea && nativeSummaryArea.parentElement === contentArea
+          ? nativeSummaryArea
+          : nativeActions && nativeActions.parentElement === contentArea ? nativeActions : null,
+      );
+    }
+    var summary = summaryArea && summaryArea.querySelector('p');
+    if (summaryArea && !summaryText) {
+      summaryArea.remove();
+      summaryArea = null;
+      summary = null;
+    }
     if (summary && summaryText) {
-      summary.textContent = summaryText.length > 320 ? summaryText.slice(0, 317) + '...' : summaryText;
+      var summaryWords = summaryText.split(/s+/);
+      summary.textContent = summaryWords.length > 30 ? summaryWords.slice(0, 30).join(' ') + '...' : summaryText;
+      var summaryMore = summaryArea.querySelector('[data-ab-fallback-description-more]');
+      if (!summaryMore) {
+        summaryMore = document.createElement('a');
+        summaryMore.className = 'short-see-more';
+        summaryMore.href = '#product-description';
+        summaryMore.textContent = 'আরও দেখুন';
+        summaryMore.setAttribute('data-ab-fallback-description-more', 'true');
+        summaryArea.appendChild(summaryMore);
+      }
     }
     if (available) {
       if (!nativeActions) {
         nativeActions = document.createElement('div');
         nativeActions.className = 'product-action-btn';
-        var summaryArea = panel.querySelector('.short-description');
-        (summaryArea && summaryArea.parentNode || panel).insertBefore(nativeActions, summaryArea ? summaryArea.nextSibling : null);
+        contentArea.insertBefore(nativeActions, summaryArea && summaryArea.parentElement === contentArea ? summaryArea.nextSibling : null);
       }
       if (!nativeActionReady && !fallbackActions) {
         fallbackActions = document.createElement('ul');
         fallbackActions.setAttribute('data-ab-fallback-actions', 'true');
         fallbackActions.innerHTML =
           '<li><button data-ab-action-label="buy-now" data-ab-fallback-action="true">Buy Now</button></li>' +
-          '<li><button class="active" data-ab-action-label="cart" data-ab-fallback-action="true">Add to Cart</button></li>';
+          '<li><button class="active" data-ab-action-label="cart" data-ab-fallback-action="true">Add to Cart</button></li>' +
+          '<li><a id="__wa-order-btn" target="_blank" rel="noopener noreferrer"><i class="fab fa-whatsapp" aria-hidden="true"></i> হোয়াটসঅ্যাপে অর্ডার করুন</a></li>';
         nativeActions.appendChild(fallbackActions);
       }
+      if (!nativeActionReady && fallbackActions) {
+        var productPageUrl = typeof location !== 'undefined' && location.href
+          ? location.href
+          : '/product-details/' + encodeURIComponent(product.slug || '');
+        var whatsAppMessage = 'আস-সালামু আলাইকুম!\nআমি নিচের বইটি অর্ডার করতে চাই:\n\n📚 ' + name + '\n🔗 ' + productPageUrl;
+        var whatsAppLink = fallbackActions.querySelector('#__wa-order-btn');
+        if (whatsAppLink) whatsAppLink.href = 'https://wa.me/8801893058682?text=' + encodeURIComponent(whatsAppMessage);
+      }
+    } else if (fallbackActions) {
+      fallbackActions.remove();
     }
     panel.setAttribute('data-ab-fallback-product', String(product._id));
     return true;
@@ -8101,6 +8248,8 @@
     }
     html += recommendationsHtml(recommendations);
     root.innerHTML = html;
+    var productDescriptionSection = root.querySelector('.ab-description-section') || root.querySelector('.ab-summary-section');
+    if (productDescriptionSection) productDescriptionSection.id = 'product-description';
     overview.parentNode.insertBefore(root, overview);
     hydrateAuthorImages(root);
     moveBoughtTogetherBelowRecommendations(root);
