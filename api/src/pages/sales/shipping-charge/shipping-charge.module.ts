@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ShippingChargeService } from './shipping-charge.service';
-import { ShippingChargeController } from './shipping-charge.controller';
+import {
+  LegacyDeliveryChargeController,
+  ShippingChargeController,
+} from './shipping-charge.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ShippingChargeSchema } from '../../../schema/shipping-charge.schema';
 
@@ -11,6 +14,6 @@ import { ShippingChargeSchema } from '../../../schema/shipping-charge.schema';
     ]),
   ],
   providers: [ShippingChargeService],
-  controllers: [ShippingChargeController],
+  controllers: [ShippingChargeController, LegacyDeliveryChargeController],
 })
 export class ShippingChargeModule {}

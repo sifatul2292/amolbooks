@@ -23,9 +23,13 @@
       /^172\.(1[6-9]|2\d|3[0-1])\./.test(host) ||
       /\.trycloudflare\.com$/.test(host);
   }
-  /* Use a same-origin proxy in local preview: the compiled storefront uses the
-     published catalogue, whereas the local database only has fixture data. */
-  var CATALOG_API_BASE = isLocalPreviewHost()
+  function useStorefrontCatalogueProxy() {
+    var host = window.location.hostname;
+    return isLocalPreviewHost() || host === 'amolbooks.com' || host === 'www.amolbooks.com';
+  }
+  /* Checkout-critical catalogue reads stay same-origin in production too, so
+     cart totals and shipping do not depend on a cross-origin browser request. */
+  var CATALOG_API_BASE = useStorefrontCatalogueProxy()
     ? window.location.origin + '/storefront-catalog'
     : API_BASE;
   var RECOMMENDATION_API_BASE = isLocalPreviewHost()
@@ -79,6 +83,9 @@
   var checkoutGiftPendingKey = '';
   var checkoutCartMirrorRenderKey = '';
   var checkoutCartMirrorPendingKey = '';
+  var checkoutShippingConfig = null;
+  var checkoutShippingConfigPending = false;
+  var checkoutCartSubtotal = 0;
   var stickySearchTimer = null;
   var stickySearchRequestVersion = 0;
   var fastCartTapTarget = null;
@@ -4522,6 +4529,74 @@
       body.ab-cart-enhanced app-cart-information .cart-card.ab-live-cart-page-item .cart-price-area h3 {
         font-size: 1.05rem !important;
       }
+
+      body.ab-cart-enhanced app-cart-information .cart-card.ab-cart-active-row {
+        display: block !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0.85rem !important;
+        border: 0 !important;
+        border-bottom: 1px solid var(--ab-product-rule) !important;
+        border-radius: 0 !important;
+        background: var(--ab-product-surface) !important;
+        box-shadow: none !important;
+      }
+
+      body.ab-cart-enhanced app-cart-information .cart-card.ab-cart-active-row .cart-card-main {
+        display: grid !important;
+        grid-template-columns: 5rem minmax(0, 1fr) !important;
+        gap: 0.7rem !important;
+        align-items: start !important;
+      }
+
+      body.ab-cart-enhanced app-cart-information .cart-card.ab-cart-active-row .cart-img,
+      body.ab-cart-enhanced app-cart-information .cart-card.ab-cart-active-row .cart-img img {
+        width: 5rem !important;
+        max-width: 5rem !important;
+        height: 6.6rem !important;
+        object-fit: contain !important;
+      }
+
+      body.ab-cart-enhanced app-cart-information .cart-card.ab-cart-active-row .cart-body {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto !important;
+        gap: 0.45rem 0.55rem !important;
+        min-width: 0 !important;
+        align-items: end !important;
+      }
+
+      body.ab-cart-enhanced app-cart-information .cart-card.ab-cart-active-row .cart-text-info {
+        grid-column: 1 / -1 !important;
+        min-width: 0 !important;
+      }
+
+      body.ab-cart-enhanced app-cart-information .cart-card.ab-cart-active-row .quantity-area {
+        display: inline-flex !important;
+        grid-column: 1 !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-self: start !important;
+        width: auto !important;
+        min-height: 2.5rem !important;
+        margin: 0 !important;
+      }
+
+      body.ab-cart-enhanced app-cart-information .cart-card.ab-cart-active-row .quantity-area > div,
+      body.ab-cart-enhanced app-cart-information .cart-card.ab-cart-active-row .quantity-area span,
+      body.ab-cart-enhanced app-cart-information .cart-card.ab-cart-active-row .quantity-area input {
+        display: inline-grid !important;
+        place-items: center !important;
+        width: 2.65rem !important;
+        min-width: 2.65rem !important;
+        height: 2.5rem !important;
+        margin: 0 !important;
+      }
+
+      body.ab-cart-enhanced app-cart-information .cart-card.ab-cart-active-row .cart-price-area {
+        grid-column: 2 !important;
+        justify-self: end !important;
+        align-self: center !important;
+      }
     }
 
     body.ab-cart-enhanced app-related-products.ab-cart-popular,
@@ -4800,10 +4875,13 @@
     if (isLocalPreviewHost()) {
       var localKey = 'Amolbooks_LOCAL_USER_CART_1';
       var localItems = [];
+      var localSnapshot = localStorage.getItem(localKey);
       var tabItems = [];
       var sourceItems = [];
-      try { localItems = JSON.parse(localStorage.getItem(localKey) || '[]') || []; } catch (_) { localItems = []; }
-      if (Array.isArray(localItems) && localItems.length) {
+      try { localItems = JSON.parse(localSnapshot || '[]') || []; } catch (_) { localItems = []; }
+      /* An explicit empty local snapshot is authoritative. Treating it like a
+         missing key lets Angular's stale native cart resurrect the last item. */
+      if (localSnapshot !== null && Array.isArray(localItems)) {
         localStorage.setItem(storefrontKey, JSON.stringify(localItems));
         setTabCartItems(localItems);
         return localKey;
@@ -4920,15 +4998,22 @@
 
   function goToCheckout() {
     syncCheckoutCartStorage();
+    var checkoutUrl = '/checkout';
+    var checkoutItems = storedGuestCartItems();
+    if (checkoutItems.some(cartItemIsSpecialPackage)) {
+      var checkoutTarget = new URL(checkoutUrl, window.location.origin);
+      checkoutTarget.searchParams.set('ab-package-cart', cartItemsSignature(checkoutItems));
+      checkoutUrl = checkoutTarget.pathname + checkoutTarget.search;
+    }
     if (isLocalPreviewHost()) {
       reconcileAuthenticatedCartFromLocal().finally(function () {
-        window.location.assign('/checkout');
+        window.location.assign(checkoutUrl);
       });
       return;
     }
     mergeGuestCartIntoAuthenticatedCart(true).finally(function () {
       syncCheckoutCartStorage();
-      window.location.assign('/checkout');
+      window.location.assign(checkoutUrl);
     });
   }
 
@@ -5537,6 +5622,10 @@
 
   function mountCartStickyCheckout() {
     var bar = document.getElementById('ab-cart-sticky-checkout');
+    if (cartPageOpen()) {
+      if (bar) bar.remove();
+      return;
+    }
     if (!bar) {
       bar = document.createElement('div');
       bar.id = 'ab-cart-sticky-checkout';
@@ -5765,8 +5854,8 @@
     });
   }
 
-  function updateGuestCartItem(productId, operation) {
-    var items = isLocalPreviewHost() ? storedGuestCartItems() : guestCartItems();
+  function updateGuestCartItem(productId, operation, deferEmptyReload) {
+    var items = storedGuestCartItems();
     var index = items.findIndex(function (item) {
       return cartPageProductId(item) === String(productId);
     });
@@ -5775,6 +5864,10 @@
     if (operation === 'plus') items[index].selectedQty = Math.max(1, Number(items[index].selectedQty) || 1) + 1;
     if (operation === 'minus') items[index].selectedQty = Math.max(1, (Number(items[index].selectedQty) || 1) - 1);
     var removedLastItem = operation === 'remove' && items.length === 0;
+    /* Local preview rows are owned by the persisted guest snapshot even when
+       a stale login token is still present. Do not let an earlier account-cart
+       read repaint the item after this local mutation. */
+    authenticatedCartItemsOverride = null;
     setGuestCartItems(items);
     return Promise.resolve(syncGuestCartUi()).then(function () {
       /* Injected rows bypass Angular's cart service. Angular can keep its
@@ -5793,7 +5886,7 @@
         };
         window.addEventListener('beforeunload', preserveEmptyCart);
         window.addEventListener('pagehide', preserveEmptyCart);
-        window.setTimeout(function () { window.location.reload(); }, 0);
+        if (!deferEmptyReload) window.setTimeout(function () { window.location.reload(); }, 0);
       }
       return true;
     });
@@ -5961,6 +6054,7 @@
       if (!packageId) return;
       row.setAttribute('data-product-id', packageId);
       row.setAttribute('data-ab-special-package-row', 'true');
+      row.classList.add('ab-cart-active-row');
       var remove = row.querySelector('.cart-text-info ul button, .cart-text-info ul span');
       if (remove) {
         remove.setAttribute('data-ab-cart-op', 'remove');
@@ -6008,9 +6102,11 @@
   }
 
   function updateAuthenticatedCartItem(productId, operation) {
-    var localPreview = isLocalPreviewHost();
     var authorization = cartAuthorization();
     if (!authorization) return updateGuestCartItem(productId, operation);
+    var guestOwnsItem = storedGuestCartItems().some(function (item) {
+      return cartPageProductId(item) === String(productId);
+    });
     return fetchJson('/cart/get-carts-by-user', {
       headers: { Authorization: authorization },
     }, RECOMMENDATION_API_BASE).then(function (result) {
@@ -6018,7 +6114,19 @@
       var cart = carts.find(function (entry) {
         return cartPageProductId(entry) === String(productId);
       });
-      if (!cart || !cart._id) return localPreview ? updateGuestCartItem(productId, operation) : false;
+      var updateGuestCopy = function () {
+        return guestOwnsItem ? updateGuestCartItem(productId, operation, true) : Promise.resolve(false);
+      };
+      var finishMutation = function () {
+        return syncAuthenticatedCartUi().then(function () {
+          if (operation !== 'remove' || !cartPageOpen()) return true;
+          return cartPageItems().then(function (remainingItems) {
+            if (!remainingItems.length) window.setTimeout(function () { window.location.reload(); }, 0);
+            return true;
+          });
+        });
+      };
+      if (!cart || !cart._id) return updateGuestCopy().then(finishMutation);
       var path = operation === 'remove' ? '/cart/delete/' + encodeURIComponent(cart._id) :
         '/cart/update-qty/' + encodeURIComponent(cart._id);
       var options = operation === 'remove' ? {
@@ -6028,10 +6136,10 @@
         headers: { Authorization: authorization, 'Content-Type': 'application/json' },
         body: JSON.stringify({ selectedQty: 1, type: operation === 'plus' ? 'increment' : 'decrement' }),
       };
-      return fetchJson(path, options, RECOMMENDATION_API_BASE).then(function () {
-        if (localPreview) return updateGuestCartItem(productId, operation);
-        return syncAuthenticatedCartUi();
-      }).then(function () { return true; });
+      return fetchJson(path, options, RECOMMENDATION_API_BASE).then(function (result) {
+        if (!result || result.success === false) return false;
+        return updateGuestCopy().then(finishMutation);
+      });
     });
   }
 
@@ -6675,8 +6783,7 @@
   function placeCartSummaryInsideItems() {
     var summary = document.querySelector('app-cart-information .select-items-area');
     var cartArea = document.querySelector('app-cart-information .cart-area');
-    ensureCartBottom();
-    var cartBottom = cartArea && cartArea.querySelector('.cart-area-bottom');
+    var cartBottom = ensureCartBottom();
     if (!summary || !cartArea || !cartBottom) return;
     summary.classList.add('ab-cart-summary-source');
     var inline = document.getElementById('ab-cart-summary-inline');
@@ -6695,11 +6802,22 @@
 
   function ensureCartBottom() {
     var cartArea = document.querySelector('app-cart-information .cart-area');
-    if (!cartArea || cartArea.querySelector('.cart-area-bottom')) return;
+    if (!cartArea) return null;
+    var bottoms = Array.prototype.slice.call(cartArea.querySelectorAll('.cart-area-bottom'));
+    var nativeBottom = bottoms.find(function (candidate) {
+      return !candidate.hasAttribute('data-ab-cart-bottom-fallback');
+    });
+    var existing = nativeBottom || bottoms[0];
+    bottoms.forEach(function (candidate) {
+      if (candidate !== existing) candidate.remove();
+    });
+    if (existing) return existing;
     var bottom = document.createElement('div');
     bottom.className = 'cart-area-bottom';
+    bottom.setAttribute('data-ab-cart-bottom-fallback', 'true');
     bottom.innerHTML = '<a href="/" data-ab-cart-continue="true">আরও কিনুন</a><button class="order" type="button">অর্ডার করতে এগিয়ে যান</button>';
     cartArea.appendChild(bottom);
+    return bottom;
   }
 
   function repairCheckoutDeliveryPlacement() {
@@ -6877,7 +6995,55 @@
       '<div class="cart-product-price">' + productPriceHtml(product) + '</div><p>পরিমাণ: ' + escapeHtml(String(qty)) + '</p></div></div>';
   }
 
-  function updateCheckoutSummary(subtotal) {
+  function selectedCheckoutDeliveryOption() {
+    var selected = document.querySelector('app-checkout input[type="radio"][name^="mat-radio-group-"]:checked');
+    return selected ? String(selected.value || '') : '1';
+  }
+
+  function configuredCheckoutDeliveryCharge() {
+    if (!checkoutShippingConfig) return 0;
+    var outside = selectedCheckoutDeliveryOption() === '2';
+    var charge = Number(outside
+      ? checkoutShippingConfig.deliveryOutsideDhaka
+      : checkoutShippingConfig.deliveryInDhaka);
+    return Number.isFinite(charge) && charge > 0 ? charge : 0;
+  }
+
+  function repairCheckoutDeliveryCharge() {
+    if (location.pathname.indexOf('/checkout') !== 0 || !checkoutShippingConfig) return;
+    var inside = Math.max(0, Number(checkoutShippingConfig.deliveryInDhaka) || 0);
+    var outside = Math.max(0, Number(checkoutShippingConfig.deliveryOutsideDhaka) || 0);
+    var deliveryHeading = Array.prototype.slice.call(document.querySelectorAll('app-checkout .payment-method-top')).find(function (node) {
+      return /ডেলিভারি চার্জ/.test(node.textContent || '');
+    });
+    var deliveryBox = document.querySelector('#ab-checkout-delivery-card .radio-box-area') ||
+      deliveryHeading && deliveryHeading.nextElementSibling;
+    if (deliveryBox && !deliveryBox.classList.contains('radio-box-area')) deliveryBox = null;
+    Array.prototype.slice.call(deliveryBox ? deliveryBox.querySelectorAll('input[type="radio"]') : []).forEach(function (input) {
+      var label = document.querySelector('label[for="' + input.id + '"]');
+      if (!label) return;
+      updateNodeText(label, input.value === '2'
+        ? 'ঢাকা সিটির বাইরে ' + outside + ' টাকা'
+        : 'ঢাকা সিটির ভেতর ' + inside + ' টাকা');
+    });
+    if (checkoutCartSubtotal > 0) {
+      updateCheckoutSummary(checkoutCartSubtotal, configuredCheckoutDeliveryCharge());
+    }
+  }
+
+  function loadCheckoutShippingConfig() {
+    if (location.pathname.indexOf('/checkout') !== 0 || checkoutShippingConfig || checkoutShippingConfigPending) return;
+    checkoutShippingConfigPending = true;
+    fetchJson('/shipping-charge/get', { cache: 'no-store' }, CATALOG_API_BASE).then(function (result) {
+      checkoutShippingConfigPending = false;
+      checkoutShippingConfig = result && result.data || null;
+      repairCheckoutDeliveryCharge();
+    }).catch(function () {
+      checkoutShippingConfigPending = false;
+    });
+  }
+
+  function updateCheckoutSummary(subtotal, shippingOverride) {
     document.querySelectorAll('app-checkout .summery-area').forEach(function (area) {
       var shipping = 0;
       var rows = Array.prototype.slice.call(area.querySelectorAll('.summery-list li'));
@@ -6892,6 +7058,7 @@
           shipping = match ? Number(match[1]) || 0 : shipping;
         }
       });
+      if (Number.isFinite(shippingOverride) && shippingOverride > 0) shipping = shippingOverride;
       var list = area.querySelector('.summery-list');
       if (list && subtotal > 0) list.classList.add('ab-summary-ready');
       rows.forEach(function (row) {
@@ -6899,7 +7066,10 @@
         var spans = row.querySelectorAll('span');
         var target = row.querySelector('.ab-actual-order-value') || spans[spans.length - 1] || row;
         if (/প্রকৃত অর্ডার মূল্য|Subtotal/i.test(text) || (/মোট টাকা/.test(text) && !/সর্বমোট টাকা/.test(text))) updateNodeText(target, money(subtotal));
-        if (/Total|সর্বমোট টাকা/i.test(text)) updateNodeText(target, money(subtotal + shipping));
+        if (/শিপিং|Shipping/i.test(text) && shipping > 0) updateNodeText(target, money(shipping));
+        if ((/Total/i.test(text) && !/Subtotal/i.test(text)) || /সর্বমোট টাকা/.test(text)) {
+          updateNodeText(target, money(subtotal + shipping));
+        }
       });
     });
   }
@@ -6908,26 +7078,38 @@
     if (location.pathname.indexOf('/checkout') !== 0 || location.pathname.indexOf('order-success') !== -1) return;
     var generatedArea = document.querySelector('app-checkout .cart-products-area[data-ab-checkout-generated="true"]');
     var nativeArea = document.querySelector('app-checkout .cart-products-area:not([data-ab-checkout-generated="true"])');
-    if (generatedArea && nativeArea) {
+    var nativeRows = nativeArea && nativeArea.querySelectorAll('.cart-product-item, .cart-card, .cart-item');
+    if (generatedArea && nativeRows && nativeRows.length) {
       generatedArea.remove();
       checkoutCartMirrorRenderKey = '';
     }
     cartPageItems().then(function (items) {
       items = Array.isArray(items) ? items : [];
-      /* Angular already hydrates special packages through its package API. Its
-         product-only local mirror cannot reproduce their rows or totals. */
-      if (items.some(cartItemIsSpecialPackage)) {
-        checkoutCartMirrorPendingKey = '';
-        checkoutCartMirrorRenderKey = '';
+      var mirrorKey = cartItemsSignature(items);
+      var packageItems = items.filter(cartItemIsSpecialPackage);
+      if (packageItems.length && new URL(location.href).searchParams.get('ab-package-cart') !== mirrorKey) {
+        /* Angular reads the cart only while constructing checkout. A router or
+           history transition can therefore leave its package request bound to
+           the previous cart, producing a non-zero badge with a zero summary.
+           Re-enter checkout once as a document navigation so Angular and its
+           shipping calculation start from the same persisted snapshot. */
+        var freshUrl = new URL(location.href);
+        freshUrl.searchParams.set('ab-package-cart', mirrorKey);
+        window.location.replace(freshUrl.toString());
         return;
       }
       var ids = items.map(cartPageProductId).filter(Boolean);
       if (!ids.length) return;
-      var mirrorKey = cartItemsSignature(items);
       if (checkoutCartMirrorRenderKey === mirrorKey || checkoutCartMirrorPendingKey === mirrorKey) return;
       checkoutCartMirrorPendingKey = mirrorKey;
-      fetchProductsByIds(ids).then(function (products) {
+      var productIds = items.filter(function (item) { return !cartItemIsSpecialPackage(item); }).map(cartPageProductId).filter(Boolean);
+      var packageIds = packageItems.map(cartPageProductId).filter(Boolean);
+      Promise.all([
+        productIds.length ? fetchProductsByIds(productIds) : Promise.resolve([]),
+        packageIds.length ? fetchSpecialPackagesByIds(packageIds) : Promise.resolve([]),
+      ]).then(function (results) {
         checkoutCartMirrorPendingKey = '';
+        var products = (results[0] || []).concat(results[1] || []);
         var rows = items.map(function (item) {
           var productId = cartPageProductId(item);
           var product = (products || []).find(function (entry) { return String(entry && entry._id || '') === productId; });
@@ -6960,7 +7142,9 @@
             list.setAttribute('data-ab-render-key', renderKey);
           }
         });
-        updateCheckoutSummary(cartTotalFromProducts(items, products || []));
+        checkoutCartSubtotal = cartTotalFromProducts(items, products || []);
+        updateCheckoutSummary(checkoutCartSubtotal, configuredCheckoutDeliveryCharge());
+        loadCheckoutShippingConfig();
         checkoutCartMirrorRenderKey = mirrorKey;
         renderCheckoutGift();
       }).catch(function () {
@@ -7005,7 +7189,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: missingIds }),
-      }, baseUrl);
+      }, baseUrl).catch(function () { return null; });
     })).then(function (results) {
       var byId = {};
       results.forEach(function (result) {
@@ -7056,7 +7240,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: missingIds }),
-      }, RECOMMENDATION_API_BASE).then(function (result) {
+      }, CATALOG_API_BASE).then(function (result) {
         var packages = result && Array.isArray(result.data) ? result.data : [];
         packages.forEach(function (specialPackage) {
           var product = specialPackageCartProduct(specialPackage);
@@ -7082,12 +7266,14 @@
     Array.prototype.slice.call(document.querySelectorAll('.cart-card, .cart-item')).forEach(function (row) {
       if (!row.offsetParent) return;
       if (row.classList && row.classList.contains('ab-live-cart-page-item')) return;
+      if (row.hasAttribute('data-ab-special-package-row')) return;
       var text = (row.textContent || '').replace(/\s+/g, ' ').trim();
       var product = products.find(function (candidate) { return candidate && candidate.name && text.indexOf(candidate.name) !== -1; });
       if (!product) return;
       var item = (items || []).find(function (candidate) {
         return !cartItemIsSpecialPackage(candidate) && cartPageProductId(candidate) === String(product._id);
       });
+      row.classList.toggle('ab-cart-active-row', Boolean(item));
       if (item) {
         row.setAttribute('data-product-id', String(product._id));
         var remove = row.querySelector('.cart-text-info ul button, .cart-text-info ul span, .cart-img .del');
@@ -7710,10 +7896,107 @@
     currentProduct = null;
   }
 
+  function hydrateNativeProductOverview(product) {
+    if (!product || !product._id) return false;
+    var panel = document.querySelector('app-product-details-area');
+    if (!panel) return false;
+    var titleArea = panel.querySelector('.product-title');
+    var title = titleArea && titleArea.querySelector('h3');
+    var image = panel.querySelector('.product-image-box img');
+    var price = panel.querySelector('.product-price h3');
+    var nativeActions = panel.querySelector('.product-action-btn');
+    var fallbackMeta = titleArea && titleArea.querySelector('[data-ab-native-product-meta]');
+    var fallbackActions = nativeActions && nativeActions.querySelector('[data-ab-fallback-actions]');
+    var nativeMetaReady = titleArea && Array.prototype.some.call(
+      titleArea.querySelectorAll(':scope > p'),
+      function (node) { return Boolean(plainText(node.textContent)); },
+    );
+    var nativeActionReady = nativeActions && nativeActions.querySelector(
+      'button:not([data-ab-fallback-action])'
+    );
+    var nativeReady = Boolean(
+      title && plainText(title.textContent) &&
+      image && String(image.getAttribute('src') || '').trim() &&
+      price && !/Tk\s*0(?:\D|$)/i.test(plainText(price.textContent)) &&
+      nativeMetaReady && nativeActionReady
+    );
+    if (nativeReady) {
+      if (fallbackMeta) fallbackMeta.remove();
+      if (fallbackActions) fallbackActions.remove();
+      panel.removeAttribute('data-ab-fallback-product');
+      return false;
+    }
+
+    var name = firstName(product.name || product.nameEn || product.slug) || 'Product';
+    var version = firstName(product.currentVersion || product.version);
+    var author = firstName(product.author);
+    var category = firstCategoryName(product);
+    var publisher = firstName(product.publisher);
+    var productImage = Array.isArray(product.images) ? product.images[0] : product.image;
+    var salePrice = Math.max(0, Number(product.salePrice) || 0);
+    var productPrice = finalPrice(product);
+    var saving = Math.max(0, salePrice - productPrice);
+    var available = product.trackQuantity === false || Number(product.quantity) > 0 || Number(product.stock) > 0;
+
+    if (title) {
+      title.innerHTML = escapeHtml(name) + (version ? ' <span>(' + escapeHtml(version) + ')</span>' : '');
+    }
+    if (image && productImage) {
+      image.src = imageUrl(productImage);
+      image.alt = name;
+    }
+    if (titleArea) {
+      if (!fallbackMeta) {
+        fallbackMeta = document.createElement('div');
+        fallbackMeta.setAttribute('data-ab-native-product-meta', 'true');
+        titleArea.appendChild(fallbackMeta);
+      }
+      fallbackMeta.innerHTML =
+        (author ? '<p>লেখক: <strong>' + escapeHtml(author) + '</strong></p>' : '') +
+        (category ? '<p>ক্যাটাগরি: <strong>' + escapeHtml(category) + '</strong></p>' : '') +
+        (publisher ? '<p>প্রকাশক: <strong>' + escapeHtml(publisher) + '</strong></p>' : '');
+    }
+    if (price) {
+      price.innerHTML = 'Tk ' + escapeHtml(String(Math.round(productPrice))) +
+        (salePrice > productPrice ? ' <del>Tk ' + escapeHtml(String(Math.round(salePrice))) + '</del>' : '') +
+        (saving ? ' <span class="oti-discount">You Save TK ' + escapeHtml(String(Math.round(saving))) +
+          ' (' + escapeHtml(String(discountPercent(product))) + '% Off)</span>' : '');
+    }
+    var stock = panel.querySelector('.stock h5');
+    if (stock) {
+      stock.innerHTML = '<i class="fa ' + (available ? 'fa-check-circle' : 'fa-times-circle') + '"></i>' +
+        (available ? 'In Stock' : 'Out of Stock');
+    }
+    var summary = panel.querySelector('.short-description p');
+    var summaryText = plainText(product.shortDescription || product.description || '');
+    if (summary && summaryText) {
+      summary.textContent = summaryText.length > 320 ? summaryText.slice(0, 317) + '...' : summaryText;
+    }
+    if (available) {
+      if (!nativeActions) {
+        nativeActions = document.createElement('div');
+        nativeActions.className = 'product-action-btn';
+        var summaryArea = panel.querySelector('.short-description');
+        (summaryArea && summaryArea.parentNode || panel).insertBefore(nativeActions, summaryArea ? summaryArea.nextSibling : null);
+      }
+      if (!nativeActionReady && !fallbackActions) {
+        fallbackActions = document.createElement('ul');
+        fallbackActions.setAttribute('data-ab-fallback-actions', 'true');
+        fallbackActions.innerHTML =
+          '<li><button data-ab-action-label="buy-now" data-ab-fallback-action="true">Buy Now</button></li>' +
+          '<li><button class="active" data-ab-action-label="cart" data-ab-fallback-action="true">Add to Cart</button></li>';
+        nativeActions.appendChild(fallbackActions);
+      }
+    }
+    panel.setAttribute('data-ab-fallback-product', String(product._id));
+    return true;
+  }
+
   function renderProductSections(product, authors, recommendations, overview, version) {
     if (version !== renderVersion || getSlug() !== currentSlug || !overview || !overview.isConnected) return;
     removeMountedSections();
     currentProduct = product;
+    hydrateNativeProductOverview(product);
     rememberCartProducts([product]);
     rememberViewedProduct(product);
     var root = document.createElement('div');
@@ -7753,6 +8036,9 @@
         return;
       }
       var product = productResult.data;
+      currentProduct = product;
+      hydrateNativeProductOverview(product);
+      rememberCartProducts([product]);
       var authorRefs = Array.isArray(product.author) ? product.author.filter(Boolean) : [];
       var authorRequests = authorRefs.map(function (author) {
         if (!author._id) return Promise.resolve({ detail: author, fallback: author });
@@ -7767,6 +8053,8 @@
         if (version === renderVersion) loadingSlug = '';
         renderProductSections(product, results[0] || [], results[1], overview, version);
       });
+    }).catch(function () {
+      if (version === renderVersion) loadingSlug = '';
     });
   }
 
@@ -7777,6 +8065,8 @@
     mountStickyCommerce();
     mountStickyProductActions();
     if (location.pathname.indexOf('/checkout') === 0) syncCheckoutCartStorage();
+    loadCheckoutShippingConfig();
+    repairCheckoutDeliveryCharge();
     repairCheckoutJourney();
     if (cartPageOpen()) {
       repairCartPage();
@@ -7808,6 +8098,7 @@
     var existing = document.getElementById(ROOT_ID);
     if (slug === currentSlug && loadingSlug === slug) return;
     if (slug === currentSlug && existing && existing.getAttribute('data-product-slug') === slug) {
+      hydrateNativeProductOverview(currentProduct);
       moveBoughtTogetherBelowRecommendations(existing);
       mountCategoryLibrary(currentProduct);
       activateReviewSection(overview);
@@ -7911,15 +8202,16 @@
   function handleCartOperationTap(event) {
     var cartOperation = event.target && event.target.closest && event.target.closest('[data-ab-cart-op]');
     if (!cartOperation) return false;
+    if (event.type !== 'click' && !isStationaryTap(event)) return false;
     var cartRow = cartOperation.closest('.ab-live-cart-item, .cart-card[data-product-id]');
     if (!cartRow) return false;
-    if (event.type !== 'click' && !isStationaryTap(event)) return false;
     preventCartEvent(event);
     if (wasFastCartTap(cartOperation)) return true;
     if (cartOperation.getAttribute('data-ab-cart-busy') === 'true') return true;
     if (event.type !== 'click') markFastCartTap(cartOperation);
     claimCartControl(cartOperation, 10000);
-    Promise.resolve(updateAuthenticatedCartItem(
+    var updateCartItem = isLocalPreviewHost() ? updateGuestCartItem : updateAuthenticatedCartItem;
+    Promise.resolve(updateCartItem(
       cartRow.getAttribute('data-product-id'),
       cartOperation.getAttribute('data-ab-cart-op')
     )).then(function () {
@@ -8093,6 +8385,12 @@
   document.addEventListener('touchstart', rememberFastNavStart, true);
   document.addEventListener('pointerup', handleFastCartTap, true);
   document.addEventListener('touchend', handleFastCartTap, true);
+  /* Angular's compiled cart also installs document-level capture handlers.
+     Claim our injected row controls at window first so a native handler cannot
+     stop the click before it reaches the local-cart bridge. */
+  window.addEventListener('click', function (event) {
+    if (cartPageOpen()) handleCartOperationTap(event);
+  }, true);
   document.addEventListener('pointerup', function (event) {
     handleCheckoutCtaTap(event) || handleMenuTap(event);
   }, true);
@@ -8320,6 +8618,9 @@
   }, true);
 
   document.addEventListener('change', function (event) {
+    if (event.target && event.target.matches && event.target.matches('#ab-checkout-delivery-card input[type="radio"]')) {
+      window.setTimeout(repairCheckoutDeliveryCharge, 0);
+    }
     var input = event.target && event.target.matches && event.target.matches('.ab-sticky-search, #searchInput') ? event.target : null;
     if (!input) return;
     if (input.matches('.ab-sticky-search')) syncNativeSearchValue(input.value);
@@ -8397,4 +8698,11 @@
   observer.observe(document.documentElement, { childList: true, subtree: true });
   window.addEventListener('popstate', scheduleMount);
   window.addEventListener('hashchange', scheduleMount);
+  window.addEventListener('pageshow', function (event) {
+    if (event.persisted && location.pathname.indexOf('/checkout') === 0) {
+      window.location.reload();
+      return;
+    }
+    scheduleMount();
+  });
 })();

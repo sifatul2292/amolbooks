@@ -19,7 +19,7 @@ import { STOREFRONT_ATTRIBUTION_SCRIPT } from './storefront-attribution-script';
 import { STOREFRONT_PRODUCT_SECTIONS_SCRIPT } from './storefront-product-sections-script';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
-  const app = await NestFactory.create(AppModule, { cors: true });
+  const app = await NestFactory.create(AppModule);
 
   // Security headers
   app.use(
@@ -531,6 +531,15 @@ ${storefrontPurchaseExternalIdHelper}
       ['localhost', '127.0.0.1', '::1', '[::1]'].includes(host) ||
       /^(?:10\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.)/.test(host) ||
       host.endsWith('.trycloudflare.com')
+    );
+  }
+
+  function isStorefrontCatalogueProxyHost(hostname: string) {
+    const host = String(hostname || '').toLowerCase();
+    return (
+      host === 'amolbooks.com' ||
+      host === 'www.amolbooks.com' ||
+      isLocalStorefrontHost(host)
     );
   }
 
@@ -1131,12 +1140,14 @@ ${storefrontPurchaseExternalIdHelper}
       res: express.Response,
       next: express.NextFunction
     ) => {
-      if (!isLocalStorefrontHost(req.hostname)) return next();
+      if (!isStorefrontCatalogueProxyHost(req.hostname)) return next();
       const isLibraryRequest = req.method === 'GET' && req.path === '/library';
       const allowedCatalogueRequest =
         isLibraryRequest ||
         (req.method === 'POST' && req.path === '/product/get-all') ||
         (req.method === 'POST' && req.path === '/product/get-products-by-ids') ||
+        (req.method === 'POST' &&
+          req.path === '/special-package/get-products-by-ids') ||
         (req.method === 'GET' && req.path === '/product/get-all-data') ||
         (req.method === 'GET' && req.path.startsWith('/product/get-by-slug/')) ||
         (req.method === 'GET' && /^\/author\/[^/]+$/.test(req.path)) ||

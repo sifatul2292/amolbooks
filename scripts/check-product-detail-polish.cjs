@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
+const { JSDOM } = require('../api/node_modules/jsdom');
 const root = path.resolve(__dirname, '..');
 const { STOREFRONT_PRODUCT_SECTIONS_SCRIPT: source } = require(path.join(root, 'api/dist/storefront-product-sections-script'));
 new vm.Script(source);
@@ -18,10 +19,52 @@ function emittedFunction(name) {
   assert.fail(`Unclosed ${name}`);
 }
 const localHostSource = emittedFunction('isLocalPreviewHost');
-const catalogueBaseFor = new Function('window', `${localHostSource}; var API_BASE = 'https://apisub.amolbooks.com/api'; return isLocalPreviewHost() ? window.location.origin + '/storefront-catalog' : API_BASE;`);
+const proxyHostSource = emittedFunction('useStorefrontCatalogueProxy');
+const catalogueBaseFor = new Function('window', `${localHostSource}; ${proxyHostSource}; var API_BASE = 'https://apisub.amolbooks.com/api'; return useStorefrontCatalogueProxy() ? window.location.origin + '/storefront-catalog' : API_BASE;`);
 assert.equal(catalogueBaseFor({ location: { hostname: 'localhost', origin: 'http://localhost:3000' } }), 'http://localhost:3000/storefront-catalog');
 assert.equal(catalogueBaseFor({ location: { hostname: 'demo.trycloudflare.com', origin: 'https://demo.trycloudflare.com' } }), 'https://demo.trycloudflare.com/storefront-catalog');
-assert.equal(catalogueBaseFor({ location: { hostname: 'amolbooks.com', origin: 'https://amolbooks.com' } }), 'https://apisub.amolbooks.com/api');
+assert.equal(catalogueBaseFor({ location: { hostname: 'amolbooks.com', origin: 'https://amolbooks.com' } }), 'https://amolbooks.com/storefront-catalog');
+
+const fallbackDom = new JSDOM(`<app-product-details-area>
+  <div class="product-image-box"><img src="" alt=""></div>
+  <div class="product-title"><h3></h3></div>
+  <div class="product-price"><h3>Tk 0</h3></div>
+  <div class="stock"><h5>Out of Stock</h5></div>
+  <div class="short-description"><p></p></div>
+</app-product-details-area>`);
+const fallbackFunctionNames = [
+  'escapeHtml',
+  'plainText',
+  'imageUrl',
+  'finalPrice',
+  'discountPercent',
+  'firstName',
+  'firstCategoryName',
+  'hydrateNativeProductOverview',
+];
+const hydrateNativeProductOverview = new Function(
+  'document',
+  `${fallbackFunctionNames.map(emittedFunction).join('\n')}; return hydrateNativeProductOverview;`,
+)(fallbackDom.window.document);
+assert.equal(hydrateNativeProductOverview({
+  _id: 'product-1',
+  name: 'Visible Book',
+  currentVersion: 'Paperback',
+  images: ['https://example.com/book.webp'],
+  author: [{ name: 'Visible Author' }],
+  category: [{ name: 'Visible Category' }],
+  publisher: { name: 'Visible Publisher' },
+  salePrice: 470,
+  afterDiscountPrice: 310,
+  quantity: 5,
+  shortDescription: '<p>Visible summary</p>',
+}), true);
+assert.match(fallbackDom.window.document.querySelector('.product-title h3').textContent, /Visible Book/);
+assert.equal(fallbackDom.window.document.querySelector('.product-image-box img').src, 'https://example.com/book.webp');
+assert.match(fallbackDom.window.document.querySelector('.product-price h3').textContent, /310/);
+assert.match(fallbackDom.window.document.querySelector('.stock h5').textContent, /In Stock/);
+assert.match(fallbackDom.window.document.querySelector('[data-ab-native-product-meta]').textContent, /Visible Author/);
+assert.equal(fallbackDom.window.document.querySelectorAll('[data-ab-fallback-action]').length, 2);
 
 const mountLibrarySource = emittedFunction('mountCategoryLibrary');
 const categoryLibraryProductsSource = emittedFunction('categoryLibraryProducts');

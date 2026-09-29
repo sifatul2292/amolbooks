@@ -21,7 +21,7 @@ const storefront_attribution_script_1 = require("./storefront-attribution-script
 const storefront_product_sections_script_1 = require("./storefront-product-sections-script");
 async function bootstrap() {
     const logger = new common_1.Logger('Bootstrap');
-    const app = await core_1.NestFactory.create(app_module_1.AppModule, { cors: true });
+    const app = await core_1.NestFactory.create(app_module_1.AppModule);
     app.use(helmet.default({
         crossOriginResourcePolicy: { policy: 'cross-origin' },
         crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
@@ -449,6 +449,12 @@ ${storefrontPurchaseExternalIdHelper}
             /^(?:10\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.)/.test(host) ||
             host.endsWith('.trycloudflare.com'));
     }
+    function isStorefrontCatalogueProxyHost(hostname) {
+        const host = String(hostname || '').toLowerCase();
+        return (host === 'amolbooks.com' ||
+            host === 'www.amolbooks.com' ||
+            isLocalStorefrontHost(host));
+    }
     function injectStorefrontSnippets(indexHtml) {
         const snippets = storefrontSnippetFiles
             .map((file) => (0, fs_1.readFileSync)((0, path_1.join)(__dirname, '..', '..', 'gtm-snippets', file), 'utf8'))
@@ -824,12 +830,14 @@ ${storefrontPurchaseExternalIdHelper}
         remoteRequest.end();
     });
     app.use('/storefront-catalog', (req, res, next) => {
-        if (!isLocalStorefrontHost(req.hostname))
+        if (!isStorefrontCatalogueProxyHost(req.hostname))
             return next();
         const isLibraryRequest = req.method === 'GET' && req.path === '/library';
         const allowedCatalogueRequest = isLibraryRequest ||
             (req.method === 'POST' && req.path === '/product/get-all') ||
             (req.method === 'POST' && req.path === '/product/get-products-by-ids') ||
+            (req.method === 'POST' &&
+                req.path === '/special-package/get-products-by-ids') ||
             (req.method === 'GET' && req.path === '/product/get-all-data') ||
             (req.method === 'GET' && req.path.startsWith('/product/get-by-slug/')) ||
             (req.method === 'GET' && /^\/author\/[^/]+$/.test(req.path)) ||

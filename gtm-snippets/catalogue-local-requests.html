@@ -1,11 +1,12 @@
-<!-- Local preview only: load before Angular so public catalogue reads use the existing proxy. -->
+<!-- Load before Angular so critical public catalogue reads use the same-origin proxy. -->
 <script>
 (function () {
   'use strict';
   var host = location.hostname;
   var local = host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host === '::1' ||
     /^10\./.test(host) || /^192\.168\./.test(host) || /^172\.(1[6-9]|2\d|3[0-1])\./.test(host);
-  if (!local || window.__abLocalCatalogueRequests || !window.XMLHttpRequest) return;
+  var storefront = host === 'amolbooks.com' || host === 'www.amolbooks.com';
+  if ((!local && !storefront) || window.__abLocalCatalogueRequests || !window.XMLHttpRequest) return;
   window.__abLocalCatalogueRequests = true;
   var open = XMLHttpRequest.prototype.open;
   XMLHttpRequest.prototype.open = function (method, url) {
@@ -13,14 +14,19 @@
     try {
       var target = new URL(url, location.href);
       var verb = String(method).toUpperCase();
+      var legacyDeliveryRequest = verb === 'GET' &&
+        target.pathname === '/api/setting/get-delivery-charges';
       if (target.origin === 'https://apisub.amolbooks.com' &&
           ((verb === 'POST' && target.pathname === '/api/product/get-all') ||
            (verb === 'POST' && target.pathname === '/api/product/get-products-by-ids') ||
+           (verb === 'POST' && target.pathname === '/api/special-package/get-products-by-ids') ||
            (verb === 'POST' && target.pathname === '/api/category/get-all/') ||
            (verb === 'GET' && target.pathname === '/api/product/get-all-data') ||
            (verb === 'GET' && target.pathname.indexOf('/api/product/get-by-slug/') === 0) ||
-           (verb === 'GET' && target.pathname === '/api/shipping-charge/get'))) {
-        args[1] = location.origin + '/storefront-catalog' + target.pathname.slice(4) + target.search;
+           (verb === 'GET' && target.pathname === '/api/shipping-charge/get') ||
+           legacyDeliveryRequest)) {
+        args[1] = location.origin + '/storefront-catalog' +
+          (legacyDeliveryRequest ? '/shipping-charge/get' : target.pathname.slice(4)) + target.search;
       }
     } catch (_error) {}
     return open.apply(this, args);

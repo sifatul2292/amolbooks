@@ -35,7 +35,7 @@ const recentBuyersCache = new Map();
 const WEBSITE_PURCHASE_GRACE_MS = 20 * 60 * 1000;
 const META_EVENT_MAX_AGE_MS = 6 * 24 * 60 * 60 * 1000;
 let OrderService = OrderService_1 = class OrderService {
-    constructor(adminModel, orderModel, incompleteOrderModel, productModel, specialPackageModel, uniqueIdModel, cartModel, userModel, settingModel, couponModel, courierService, shopInformationModel, orderOfferModel, stockMovementModel, configService, utilsService, bulkSmsService, emailService, analyticsService) {
+    constructor(adminModel, orderModel, incompleteOrderModel, productModel, specialPackageModel, uniqueIdModel, cartModel, userModel, settingModel, couponModel, courierService, shopInformationModel, orderOfferModel, stockMovementModel, shippingChargeModel, configService, utilsService, bulkSmsService, emailService, analyticsService) {
         this.adminModel = adminModel;
         this.orderModel = orderModel;
         this.incompleteOrderModel = incompleteOrderModel;
@@ -50,6 +50,7 @@ let OrderService = OrderService_1 = class OrderService {
         this.shopInformationModel = shopInformationModel;
         this.orderOfferModel = orderOfferModel;
         this.stockMovementModel = stockMovementModel;
+        this.shippingChargeModel = shippingChargeModel;
         this.configService = configService;
         this.utilsService = utilsService;
         this.bulkSmsService = bulkSmsService;
@@ -3427,8 +3428,22 @@ let OrderService = OrderService_1 = class OrderService {
             ? await this.calculateOrderDiscount(cartSubTotal, orderData === null || orderData === void 0 ? void 0 : orderData.user, orderData.orderFrom)
             : 0;
         const weightBasedDeliveryCharge = this.calculateWeightBasedDeliveryCharge(finalData, (_a = orderData === null || orderData === void 0 ? void 0 : orderData.division) === null || _a === void 0 ? void 0 : _a.name, (_b = orderData === null || orderData === void 0 ? void 0 : orderData.area) === null || _b === void 0 ? void 0 : _b.name, (_c = orderData === null || orderData === void 0 ? void 0 : orderData.zone) === null || _c === void 0 ? void 0 : _c.name);
+        const submittedDeliveryCharge = Math.max(0, Number(orderData === null || orderData === void 0 ? void 0 : orderData.deliveryCharge) || 0);
+        let deliveryCharge = submittedDeliveryCharge;
+        if (!deliveryCharge && ['1', '2'].includes(String((orderData === null || orderData === void 0 ? void 0 : orderData.deliveryOptions) || ''))) {
+            const shippingCharge = await this.shippingChargeModel
+                .findOne({})
+                .select('deliveryInDhaka deliveryOutsideDhaka')
+                .lean();
+            const configuredCharge = Number(String(orderData.deliveryOptions) === '2'
+                ? shippingCharge === null || shippingCharge === void 0 ? void 0 : shippingCharge.deliveryOutsideDhaka
+                : shippingCharge === null || shippingCharge === void 0 ? void 0 : shippingCharge.deliveryInDhaka);
+            if (Number.isFinite(configuredCharge) && configuredCharge > 0) {
+                deliveryCharge = configuredCharge + weightBasedDeliveryCharge;
+            }
+        }
         const grandTotal = cartSubTotal +
-            (orderData === null || orderData === void 0 ? void 0 : orderData.deliveryCharge) -
+            deliveryCharge -
             couponDiscount -
             cartDiscountAmount -
             orderDiscount;
@@ -3450,7 +3465,7 @@ let OrderService = OrderService_1 = class OrderService {
             orderStatus: order_enum_1.OrderStatus.PENDING,
             orderedItems: products,
             subTotal: cartSubTotal,
-            deliveryCharge: (orderData === null || orderData === void 0 ? void 0 : orderData.deliveryCharge) || 0,
+            deliveryCharge,
             weightBasedDeliveryCharge: weightBasedDeliveryCharge,
             discount: cartDiscountAmount.toFixed(2),
             totalSave: cartDiscountAmount,
@@ -4244,6 +4259,7 @@ OrderService = OrderService_1 = __decorate([
     __param(11, (0, mongoose_1.InjectModel)('ShopInformation')),
     __param(12, (0, mongoose_1.InjectModel)('OrderOffer')),
     __param(13, (0, mongoose_1.InjectModel)('StockMovement')),
+    __param(14, (0, mongoose_1.InjectModel)('ShippingCharge')),
     __metadata("design:paramtypes", [mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,
@@ -4255,6 +4271,7 @@ OrderService = OrderService_1 = __decorate([
         mongoose_2.Model,
         mongoose_2.Model,
         courier_service_1.CourierService,
+        mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,

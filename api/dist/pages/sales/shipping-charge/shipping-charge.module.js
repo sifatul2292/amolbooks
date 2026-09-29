@@ -22,7 +22,7 @@ ShippingChargeModule = __decorate([
             ]),
         ],
         providers: [shipping_charge_service_1.ShippingChargeService],
-        controllers: [shipping_charge_controller_1.ShippingChargeController],
+        controllers: [shipping_charge_controller_1.ShippingChargeController, shipping_charge_controller_1.LegacyDeliveryChargeController],
     })
 ], ShippingChargeModule);
 exports.ShippingChargeModule = ShippingChargeModule;

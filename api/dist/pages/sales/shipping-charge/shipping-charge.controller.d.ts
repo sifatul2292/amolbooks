@@ -8,3 +8,8 @@ export declare class ShippingChargeController {
     addShippingCharge(addShippingChargeDto: AddShippingChargeDto): Promise<ResponsePayload>;
     getShippingCharge(select: string): Promise<ResponsePayload>;
 }
+export declare class LegacyDeliveryChargeController {
+    private shippingChargeService;
+    constructor(shippingChargeService: ShippingChargeService);
+    getDeliveryCharges(select: string): Promise<ResponsePayload>;
+}

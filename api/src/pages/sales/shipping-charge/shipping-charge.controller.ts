@@ -54,3 +54,19 @@ export class ShippingChargeController {
     return await this.shippingChargeService.getShippingCharge(select);
   }
 }
+
+/**
+ * Compatibility endpoint for the compiled storefront. The current checkout
+ * still requests this former setting route, while shipping charges now live in
+ * the dedicated ShippingCharge collection.
+ */
+@Controller('setting')
+export class LegacyDeliveryChargeController {
+  constructor(private shippingChargeService: ShippingChargeService) {}
+
+  @Version(VERSION_NEUTRAL)
+  @Get('/get-delivery-charges')
+  async getDeliveryCharges(@Query() select: string): Promise<ResponsePayload> {
+    return await this.shippingChargeService.getShippingCharge(select);
+  }
+}

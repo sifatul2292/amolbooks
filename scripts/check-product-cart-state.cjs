@@ -9,9 +9,18 @@ const source = exportsContext.exports.STOREFRONT_PRODUCT_SECTIONS_SCRIPT;
 const main = fs.readFileSync(require.resolve('../api/src/main.ts'), 'utf8');
 new vm.Script(source);
 assert.match(source, /@media \(max-width: 1023px\)[\s\S]*?\.section-right \.cart-products-area\.summery-pc[\s\S]*?display: none !important;/, 'Mobile checkout hides the desktop item list');
-assert.match(source, /generatedArea && nativeArea[\s\S]*?generatedArea\.remove\(\)/, 'Native checkout list replaces the temporary fallback');
+assert.match(source, /generatedArea && nativeRows && nativeRows\.length[\s\S]*?generatedArea\.remove\(\)/, 'A populated native checkout list replaces the temporary fallback');
 assert.match(source, /data-ab-checkout-generated/, 'Temporary checkout list is identifiable');
 assert.doesNotMatch(source, /function renderCheckoutCartMirror\(\) \{\s*if \(!isLocalPreviewHost\(\)/, 'Checkout fallback also repairs the live storefront');
+assert.match(source, /function useStorefrontCatalogueProxy\(\)[\s\S]*?www\.amolbooks\.com[\s\S]*?var CATALOG_API_BASE = useStorefrontCatalogueProxy\(\)/, 'Live checkout catalogue reads use the same-origin proxy');
+assert.match(source, /fetchJson\(path,[\s\S]*?baseUrl\)\.catch\(function \(\) \{ return null; \}\)/, 'One failed product source cannot discard a successful checkout fallback');
+assert.match(source, /'\/special-package\/get-products-by-ids'[\s\S]*?CATALOG_API_BASE/, 'Special-package cart hydration uses the same-origin catalogue proxy');
+assert.match(source, /window\.addEventListener\('pageshow',[\s\S]*?event\.persisted[\s\S]*?location\.pathname\.indexOf\('\/checkout'\)[\s\S]*?window\.location\.reload\(\)/, 'A history-restored checkout must reinitialize its Angular cart and shipping state');
+assert.match(source, /function loadCheckoutShippingConfig\(\)[\s\S]*?'\/shipping-charge\/get'[\s\S]*?repairCheckoutDeliveryCharge\(\)/, 'Checkout must independently recover its delivery configuration');
+assert.match(source, /function repairCheckoutDeliveryCharge\(\)[\s\S]*?deliveryInDhaka[\s\S]*?deliveryOutsideDhaka[\s\S]*?updateCheckoutSummary/, 'Recovered delivery configuration must repair labels and totals');
+assert.match(source, /\/Total\/i\.test\(text\) && !\/Subtotal\/i\.test\(text\)/, 'Shipping repair must not overwrite the actual-order subtotal as a grand total');
+const orderService = fs.readFileSync(require.resolve('../api/src/pages/sales/order/order.service.ts'), 'utf8');
+assert.match(orderService, /submittedDeliveryCharge[\s\S]*?deliveryOptions[\s\S]*?shippingChargeModel[\s\S]*?deliveryCharge = configuredCharge \+ weightBasedDeliveryCharge/, 'Order creation must restore base and weight shipping after a transient zero checkout charge');
 assert.match(source, /var total = calculatedTotal \|\| cartDisplayedTotal\(\)/, 'Gift progress trusts hydrated cart prices before DOM text');
 assert.match(source, /body\.ab-home-redesign #amol-cart-toast,[\s\S]*?body\.ab-cart-auth-syncing #amol-cart-toast \{ display: none !important; \}/, 'Homepage and login cart sync hide the legacy cart toast');
 assert.match(source, /document\.body\.classList\.add\('ab-cart-auth-syncing'\)/, 'Authorization starts silent cart synchronization');
@@ -32,6 +41,16 @@ assert.match(main, /\/api\/special-package\/get-products-by-ids[\s\S]*?Published
 assert.match(source, /function fetchSpecialPackagesByIds\([\s\S]*?'\/special-package\/get-products-by-ids'[\s\S]*?specialPackageCartProduct/, 'Package cart rows hydrate through the special-package endpoint');
 assert.match(source, /function repairCartPage\([\s\S]*?filter\(cartItemIsSpecialPackage\)[\s\S]*?fetchSpecialPackagesByIds\(packageIds\)/, 'The recurring cart repair keeps package IDs out of ordinary product hydration');
 assert.doesNotMatch(source, /if \(isLocalPreviewHost\(\)\) \{\s*if \(hasSpecialPackageItems\)/, 'Local package carts use the owned row renderer instead of leaving an empty Angular list');
+const footerStart = source.indexOf('  function ensureCartBottom(');
+const footerHelper = source.slice(footerStart, source.indexOf('\n  function ', footerStart + 1));
+const fallbackFooter = { removed: false, hasAttribute: name => name === 'data-ab-cart-bottom-fallback', remove() { this.removed = true; } };
+const nativeFooter = { removed: false, hasAttribute: () => false, remove() { this.removed = true; } };
+const footerArea = { querySelectorAll: () => [fallbackFooter, nativeFooter] };
+const footerContext = { Array, document: { querySelector: () => footerArea } };
+vm.createContext(footerContext);
+vm.runInContext(footerHelper, footerContext);
+assert.equal(footerContext.ensureCartBottom(), nativeFooter, 'Nested native footer is preferred over the temporary fallback');
+assert.equal(fallbackFooter.removed, true, 'Temporary footer is removed when Angular renders its nested native footer');
 const packageHelperNames = ['cartItemIsSpecialPackage', 'cartPageProductId', 'syncNativeCartPage', 'enhanceSpecialPackageCartRows'];
 const packageHelpers = packageHelperNames.map(name => {
   const start = source.indexOf('  function ' + name + '(');
@@ -41,6 +60,7 @@ const nativePackageRow = {
   attributes: {},
   classList: {
     stale: true,
+    add(name) { this[name] = true; },
     remove(name) { if (name === 'ab-cart-native-stale') this.stale = false; },
     toggle() { throw new Error('Special-package rows must not be stale-checked against the product catalogue'); },
   },
@@ -80,10 +100,17 @@ packageContext.syncNativeCartPage([packageItem], []);
 assert.equal(nativePackageRow.classList.stale, false, 'Special-package rows remain visible on the cart page');
 assert.equal(nativePackageRow.attributes['data-product-id'], 'package-1', 'Special-package rows receive a stable cart identifier');
 assert.equal(nativePackageRow.attributes['data-ab-special-package-row'], 'true', 'Special-package rows are explicitly owned by the cart bridge');
-assert.match(source, /renderCheckoutCartMirror\(\)[\s\S]*?items\.some\(cartItemIsSpecialPackage\)[\s\S]*?return;/, 'Local checkout leaves special-package hydration to Angular');
+assert.equal(nativePackageRow.classList['ab-cart-active-row'], true, 'Active package rows receive the compact mobile layout hook');
+assert.match(source, /function goToCheckout\(\)[\s\S]*?checkoutItems\.some\(cartItemIsSpecialPackage\)[\s\S]*?searchParams\.set\('ab-package-cart', cartItemsSignature\(checkoutItems\)\)/, 'Package checkout navigation carries the persisted cart signature');
+assert.match(source, /function renderCheckoutCartMirror\(\)[\s\S]*?packageItems = items\.filter\(cartItemIsSpecialPackage\)[\s\S]*?window\.location\.replace\(freshUrl\.toString\(\)\)/, 'A stale package checkout is re-entered once from its persisted cart snapshot');
+assert.match(source, /function renderCheckoutCartMirror\(\)[\s\S]*?fetchProductsByIds\(productIds\)[\s\S]*?fetchSpecialPackagesByIds\(packageIds\)[\s\S]*?concat\(results\[1\]/, 'Checkout fallback hydrates regular products and special packages together');
 assert.match(source, /return fetchJson\('\/cart\/get-carts-by-user'[\s\S]*?return cartPageProductId\(entry\) === String\(productId\)/, 'Authenticated deletes can resolve package cart entries');
-assert.match(source, /function updateGuestCartItem\([\s\S]*?isLocalPreviewHost\(\) \? storedGuestCartItems\(\) : guestCartItems\(\)/, 'Local deletion mutates the persisted snapshot that owns the visible row');
-assert.match(source, /function updateAuthenticatedCartItem\([\s\S]*?fetchJson\(path, options, RECOMMENDATION_API_BASE\)[\s\S]*?if \(localPreview\) return updateGuestCartItem/, 'Local authenticated deletion clears the server entry before its guest mirror');
+assert.match(source, /function updateGuestCartItem\([\s\S]*?var items = storedGuestCartItems\(\)/, 'Guest deletion mutates the persisted snapshot that owns the visible row');
+assert.match(source, /function cartStorageKey\([\s\S]*?localSnapshot !== null && Array\.isArray\(localItems\)[\s\S]*?localStorage\.setItem\(storefrontKey, JSON\.stringify\(localItems\)\)/, 'An explicit empty local cart cannot be repopulated from stale Angular storage');
+assert.match(source, /function updateAuthenticatedCartItem\([\s\S]*?guestOwnsItem[\s\S]*?if \(!cart \|\| !cart\._id\) return updateGuestCopy\(\)\.then\(finishMutation\)/, 'A stale login token still removes a guest-owned cart row');
+assert.match(source, /fetchJson\(path, options, RECOMMENDATION_API_BASE\)\.then\(function \(result\) \{[\s\S]*?if \(!result \|\| result\.success === false\) return false;[\s\S]*?updateGuestCopy\(\)\.then\(finishMutation\)/, 'A failed account mutation cannot discard its guest mirror');
+assert.match(source, /function ensureCartBottom\([\s\S]*?querySelectorAll\('\.cart-area-bottom'\)[\s\S]*?candidate !== existing\) candidate\.remove\(\)/, 'The native cart footer replaces the temporary fallback instead of duplicating actions');
+assert.match(source, /function mountCartStickyCheckout\(\)[\s\S]*?if \(cartPageOpen\(\)\) \{[\s\S]*?bar\.remove\(\)/, 'The cart keeps one checkout action instead of adding a second sticky action');
 assert.match(source, /claimCartControl\(cartOperation, 10000\)[\s\S]*?releaseCartControl\(cartOperation\)/, 'Cart controls stay locked until their request settles');
 assert.match(source, /function enhanceNativeCartRows\([\s\S]*?row\.setAttribute\('data-product-id',[\s\S]*?remove\.setAttribute\('data-ab-cart-op', 'remove'\)/, 'Ordinary rows retain one-click cart controls beside a package');
 assert.match(source, /repairCartPopularProducts\(\)[\s\S]*?action\.classList\.add\('ab-add-cart-button'\)[\s\S]*?action\.setAttribute\('data-product-id', String\(product\._id\)\)/, 'Popular-cart recommendations retain their resolved product ID');
@@ -279,6 +306,13 @@ vm.runInContext(helpers, context);
   await guestMutationContext.updateGuestCartItem('first-product', 'remove');
   assert.equal(reloads, 1, 'Removing from a multi-item cart does not reload the route');
   assert.deepEqual(storedGuestItems, [{ product: 'second-product', selectedQty: 1 }]);
+  assert.match(source, /authenticatedCartItemsOverride = null;[\s\S]*?setGuestCartItems\(items\);/, 'A local mutation clears stale authenticated cart state before rendering');
+  assert.match(source, /function enhanceNativeCartRows\([\s\S]*?row\.classList\.toggle\('ab-cart-active-row', Boolean\(item\)\)/, 'Native product rows receive the compact mobile layout hook');
+  assert.match(source, /function enhanceNativeCartRows\([\s\S]*?row\.hasAttribute\('data-ab-special-package-row'\)\) return;/, 'Ordinary row enhancement preserves the package compact-layout hook');
+  assert.match(source, /function repairCheckoutDeliveryCharge\([\s\S]*?deliveryHeading[\s\S]*?deliveryHeading && deliveryHeading\.nextElementSibling/, 'Desktop checkout delivery labels are repaired outside the mobile wrapper');
+  assert.match(source, /var updateCartItem = isLocalPreviewHost\(\) \? updateGuestCartItem : updateAuthenticatedCartItem;[\s\S]*?Promise\.resolve\(updateCartItem\(/, 'Local cart controls mutate the persisted local snapshot without waiting on a retained login token');
+  assert.match(source, /function handleCartOperationTap\(event\)[\s\S]*?event\.type !== 'click' && !isStationaryTap\(event\)[\s\S]*?markFastCartTap\(cartOperation\)/, 'Cart controls claim a stationary pointer release before compiled handlers can suppress the click');
+  assert.match(source, /window\.addEventListener\('click',[\s\S]*?if \(cartPageOpen\(\)\) handleCartOperationTap\(event\);[\s\S]*?\}, true\);/, 'Injected cart controls are claimed before compiled document capture handlers');
   const packageAddStart = source.indexOf('  function addGuestSpecialPackageToCart(');
   const packageAddSource = source.slice(packageAddStart, source.indexOf('\n  function ', packageAddStart + 1));
   let packageCartItems = [{ product: 'ordinary-product', selectedQty: 1 }];

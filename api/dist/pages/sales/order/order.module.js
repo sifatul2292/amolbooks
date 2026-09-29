@@ -24,6 +24,7 @@ const shop_information_schema_1 = require("../../../schema/shop-information.sche
 const setting_schema_1 = require("../../customization/setting/schema/setting.schema");
 const admin_schema_1 = require("../../../schema/admin.schema");
 const stock_movement_schema_1 = require("../../../schema/stock-movement.schema");
+const shipping_charge_schema_1 = require("../../../schema/shipping-charge.schema");
 let OrderModule = class OrderModule {
 };
 OrderModule = __decorate([
@@ -43,6 +44,7 @@ OrderModule = __decorate([
                 { name: 'Setting', schema: setting_schema_1.SettingSchema },
                 { name: 'Admin', schema: admin_schema_1.AdminSchema },
                 { name: 'StockMovement', schema: stock_movement_schema_1.StockMovementSchema },
+                { name: 'ShippingCharge', schema: shipping_charge_schema_1.ShippingChargeSchema },
             ]),
         ],
         controllers: [order_controller_1.OrderController],

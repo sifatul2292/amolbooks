@@ -15,6 +15,7 @@ import { ShopInformationSchema } from '../../../schema/shop-information.schema';
 import { SettingSchema } from '../../customization/setting/schema/setting.schema';
 import { AdminSchema } from '../../../schema/admin.schema';
 import { StockMovementSchema } from '../../../schema/stock-movement.schema';
+import { ShippingChargeSchema } from '../../../schema/shipping-charge.schema';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { StockMovementSchema } from '../../../schema/stock-movement.schema';
       { name: 'Setting', schema: SettingSchema },
       { name: 'Admin', schema: AdminSchema },
       { name: 'StockMovement', schema: StockMovementSchema },
+      { name: 'ShippingCharge', schema: ShippingChargeSchema },
     ]),
   ],
   controllers: [OrderController],

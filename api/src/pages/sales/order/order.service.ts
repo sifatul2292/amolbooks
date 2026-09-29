@@ -51,6 +51,7 @@ import * as crypto from 'crypto';
 import { Admin } from '../../../interfaces/admin/admin.interface';
 import { AnalyticsService } from '../../../shared/analytics/analytics.service';
 import { StockMovement } from '../../../interfaces/common/stock-movement.interface';
+import { ShippingCharge } from '../../../interfaces/common/shipping-charge.interface';
 import { withCalculatedSpecialPackageSubtotal } from '../../../shared/utils/special-package-price.util';
 const ObjectId = Types.ObjectId;
 
@@ -121,6 +122,8 @@ export class OrderService {
     private readonly orderOfferModel: Model<OrderOffer>,
     @InjectModel('StockMovement')
     private readonly stockMovementModel: Model<StockMovement>,
+    @InjectModel('ShippingCharge')
+    private readonly shippingChargeModel: Model<ShippingCharge>,
     private configService: ConfigService,
     private utilsService: UtilsService,
     private bulkSmsService: BulkSmsService,
@@ -4665,12 +4668,32 @@ export class OrderService {
       orderData?.zone?.name,
     );
 
-    // Grand Total
-    // Note: orderData?.deliveryCharge already includes weight-based charge from frontend
-    // So we don't add weightBasedDeliveryCharge again to avoid double counting
+    const submittedDeliveryCharge = Math.max(
+      0,
+      Number(orderData?.deliveryCharge) || 0,
+    );
+    let deliveryCharge = submittedDeliveryCharge;
+    if (!deliveryCharge && ['1', '2'].includes(String(orderData?.deliveryOptions || ''))) {
+      const shippingCharge = await this.shippingChargeModel
+        .findOne({})
+        .select('deliveryInDhaka deliveryOutsideDhaka')
+        .lean();
+      const configuredCharge = Number(
+        String(orderData.deliveryOptions) === '2'
+          ? shippingCharge?.deliveryOutsideDhaka
+          : shippingCharge?.deliveryInDhaka,
+      );
+      if (Number.isFinite(configuredCharge) && configuredCharge > 0) {
+        deliveryCharge = configuredCharge + weightBasedDeliveryCharge;
+      }
+    }
+
+    // Grand Total. The server repairs a missing browser charge from the
+    // selected delivery option so a transient checkout hydration failure can
+    // never create a zero-delivery order.
     const grandTotal =
       cartSubTotal +
-      orderData?.deliveryCharge -
+      deliveryCharge -
       couponDiscount -
       cartDiscountAmount -
       orderDiscount;
@@ -4694,7 +4717,7 @@ export class OrderService {
       orderStatus: OrderStatus.PENDING,
       orderedItems: products,
       subTotal: cartSubTotal,
-      deliveryCharge: orderData?.deliveryCharge || 0,
+      deliveryCharge,
       weightBasedDeliveryCharge: weightBasedDeliveryCharge,
       discount: cartDiscountAmount.toFixed(2),
       totalSave: cartDiscountAmount,

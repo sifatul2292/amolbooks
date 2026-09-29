@@ -1,5 +1,48 @@
 # CURRENT_WORK
 
+## Production cart and checkout follow-through (2026-09-29)
+
+- Confirmed the repeated live failures were deployment/version drift plus three cart bridge races: production was still serving an older storefront bundle and missing the same-origin shipping proxy; the bridge could create a fallback footer before Angular rendered its native footer; and a retained login token sent a guest-owned final row through a server-only mutation path.
+- Cart controls now claim the stationary pointer release before the compiled storefront can suppress its follow-up click. Mutations remove both the account record (when present) and its persisted guest mirror, including the stale-token/final-item case. An explicitly empty local snapshot is authoritative instead of being mistaken for a missing key, so Angular's stale native storage cannot resurrect the final book on a later SPA navigation; final empty carts reload once into Angular's empty-cart state.
+- The temporary cart footer now yields to Angular's nested native footer, and the separate sticky checkout CTA is disabled on the cart route, leaving one continue/checkout action pair.
+- Active native product and package rows receive the same compact mobile layout hook, keeping the cover, details, horizontal quantity controls, and line total together; ordinary-row enhancement no longer removes the package hook.
+- Failed account mutations no longer discard the guest mirror and pretend the removal succeeded. Checkout repairs delivery option labels on desktop as well as mobile, and the server's zero-charge safeguard restores both configured base shipping and any applicable outside-Dhaka weight surcharge.
+- Added focused regression checks for guest-owned deletion with a retained token, failed account mutations, nested-footer reconciliation, single checkout CTA ownership, desktop delivery labels, and native/package row layout hooks.
+- Production still requires deployment of the rebuilt frontend bundle and API proxy/controller before the live site can be considered fixed.
+
+## Local final-cart-item removal repair (2026-09-29)
+
+- Traced the non-responsive final-item trash action to a state-ownership mismatch: localhost cart rows are rendered from the persisted local guest snapshot, but the shared click dispatcher still chose the authenticated server mutation whenever a retained or stale login token existed. The local row therefore waited on unrelated account-cart state and could be repainted instead of being removed.
+- Local preview cart controls now mutate their persisted local snapshot immediately, while production keeps the authenticated server mutation path. Local mutations also clear any in-flight authenticated cart override before rendering so it cannot restore the deleted row. Cart operations now use the browser's authoritative click event and claim injected controls at the window capture boundary, before the compiled cart's document handlers can suppress them.
+- Added focused regression coverage for the dispatcher decision as well as the existing empty-snapshot and reload protection.
+- Verification: the focused cart-state, catalogue-routing, and shipping-persistence checks, API build, and `git diff --check` pass. The rebuilt cart-control bundle is being served by the restarted local API on port 3000.
+
+## Checkout delivery-charge compatibility repair (2026-09-29)
+
+- Traced the remaining zero delivery charge to the compiled checkout's legacy `setting/get-delivery-charges` request. That route no longer exists (404), while the current `shipping-charge/get` endpoint returns the configured ৳60/৳75 values.
+- Mapped only that legacy public read to the existing same-origin shipping proxy, preserving all unrelated storefront and write requests. Added a server-side compatibility endpoint backed by the current shipping-charge service as well, so an already-open storefront document no longer depends on receiving the early browser rewrite before Angular starts.
+- Reproduced the intermittent failure again with the exact eight-item mixed product/package cart: the fallback cart rendered subtotal ৳2,461 while Angular's delivery configuration stayed at zero. Checkout now independently loads the current shipping configuration and repairs both option labels and summary totals whenever the native request loses the initialization race.
+- Hardened website order creation so a selected inside/outside delivery option cannot be persisted as a zero-charge order; when the browser submits zero, the API restores the configured base charge before calculating the grand total.
+- Added focused routing coverage for local, production-storefront, and unrelated hosts.
+- Verification: the focused routing, cart-state, and shipping-persistence checks, API build, and `git diff --check` pass. The compatibility route returns 200 after restarting the local API. Three consecutive reloads of the exact reported eight-item checkout showed ৳60 inside Dhaka and ৳75 outside Dhaka; a final post-fix stability check retained the ৳2,461 order value and ৳2,521 total. `npm run lint` remains blocked because the existing ESLint configuration ignores its configured glob.
+
+## Product-detail no-reload recovery (2026-09-29)
+
+- Reproduced the intermittent blank product panel: the compiled Angular resolver could time out and leave the title, cover, price, stock, and purchase controls at empty defaults even though the independent same-origin product request succeeded; a full reload merely retried the resolver and hid the race.
+- The injected product-detail bridge now applies its already-hydrated product record to the native panel immediately when those defaults are detected, including the real cover, metadata, discounted price, stock state, summary, and Buy/Add actions. Native Angular content remains authoritative whenever it arrives normally.
+- Reset the bridge's in-flight guard after an unexpected request rejection so a transient failure can retry without reloading.
+- Verification: the focused product-detail fallback regression, catalogue routing check, product cart-state check, API build, and `git diff --check` pass. Real-browser hard reload and product-to-product navigation both render the full native product panel. `npm run lint` remains blocked because the existing ESLint configuration ignores its configured glob.
+
+## Production checkout zero-state hardening (2026-09-29)
+
+- Reproduced the live cart-badge/zero-checkout mismatch and captured browser CORS failures for both product hydration and `shipping-charge/get`. The API was installing Nest's default CORS middleware and then a second allowlisted policy, producing an invalid wildcard-origin plus credentials response on production reads.
+- Removed the duplicate default CORS layer so the explicit storefront/admin allowlist is the single response policy. A production-origin probe now returns `Access-Control-Allow-Origin: https://www.amolbooks.com` with credentials instead of `*`.
+- Routed the allowlisted public catalogue and shipping reads through the storefront's same-origin proxy on `amolbooks.com`/`www.amolbooks.com`, not only local preview. Checkout product totals, weights, and delivery rules therefore no longer depend on cross-origin browser acceptance.
+- Made checkout product hydration preserve a successful proxy response when the alternate source fails, rather than collapsing the whole fallback to an empty order.
+- Traced the remaining subtotal-present/shipping-zero state to Angular's combined product + special-package hydration: it requests the package endpoint even for an empty package-ID list, and one failed half discards the whole native cart result. Added the package batch read to the same-origin proxy and made the injected package reader use that proxy too.
+- A checkout restored from browser history now reloads once on the browser's persisted `pageshow`, ensuring Angular recalculates cart weight and shipping instead of reviving an obsolete in-memory checkout.
+- Verification: focused catalogue/cart regressions and `git diff --check` pass. Four consecutive 390×844 production-host simulations each retained the 2-item cart, rendered subtotal ৳412, inside-Dhaka delivery ৳60, and total ৳472 with no failed product, package, or shipping hydration request. The development server is running on port 3000.
+
 ## Local product-detail hydration repair (2026-09-29)
 
 - Reproduced the blank native product header: the resolver's published `product/get-by-slug` XHR was blocked by CORS on localhost, leaving the title, cover, price, and stock at their empty defaults while later injected sections loaded independently.
@@ -1747,6 +1790,11 @@ count even when tracking is perfect.
 - Shipping-charge persistence diagnosis: the compiled admin submits `insideDhakaRules` and `outsideDhakaRules`, but the API's strict Mongoose schema omitted both paths, so Mongo update casting silently discarded rule edits while returning a successful response.
 - Added the missing nested rule schema, DTO validation, shared interface fields, and a focused update-casting regression check. Existing base delivery-charge fields and the compiled admin remain unchanged.
 - `node scripts/check-shipping-charge-persistence.cjs`, `git diff --check`, and `cd api && npm run build` after the shipping-charge fix → passed. `npm run lint` remains blocked by the existing all-files-ignored ESLint configuration.
+- Special-package checkout diagnosis: the cart badge read the persisted package entry, but the checkout fallback intentionally skipped every cart containing a package and left Angular's route-time package request as the only source of rows, subtotal, and weight-based shipping. SPA/history transitions could therefore retain a non-empty badge while rendering a zero checkout until a manual reload.
+- Special-package checkout recovery: checkout navigation now carries the persisted cart signature, stale package checkouts re-enter once as a full document navigation, and the fallback hydrates ordinary products and packages together. An empty native checkout shell no longer removes the populated fallback.
+- `node scripts/check-product-cart-state.cjs`, `node scripts/check-catalogue-requests.cjs`, `node scripts/check-product-detail-polish.cjs`, and `git diff --check` after the package checkout recovery → passed.
+- `cd api && npm run build` after the package checkout recovery → passed (TypeScript deprecation warnings only). `npm run lint` remains blocked before linting because the configured glob is fully ignored.
+- Final localhost checkout browser verification without a manual reload: two persisted products render ৳420 subtotal, ৳60 Dhaka / ৳75 outside delivery, and ৳480 total; dev server restarted on port 3000.
 
 ## Do NOT touch / be careful
 

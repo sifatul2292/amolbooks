@@ -13,7 +13,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 var ShippingChargeController_1;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ShippingChargeController = void 0;
+exports.LegacyDeliveryChargeController = exports.ShippingChargeController = void 0;
 const common_1 = require("@nestjs/common");
 const admin_roles_decorator_1 = require("../../../decorator/admin-roles.decorator");
 const admin_roles_enum_1 = require("../../../enum/admin-roles.enum");
@@ -62,4 +62,25 @@ ShippingChargeController = ShippingChargeController_1 = __decorate([
     __metadata("design:paramtypes", [shipping_charge_service_1.ShippingChargeService])
 ], ShippingChargeController);
 exports.ShippingChargeController = ShippingChargeController;
+let LegacyDeliveryChargeController = class LegacyDeliveryChargeController {
+    constructor(shippingChargeService) {
+        this.shippingChargeService = shippingChargeService;
+    }
+    async getDeliveryCharges(select) {
+        return await this.shippingChargeService.getShippingCharge(select);
+    }
+};
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Get)('/get-delivery-charges'),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], LegacyDeliveryChargeController.prototype, "getDeliveryCharges", null);
+LegacyDeliveryChargeController = __decorate([
+    (0, common_1.Controller)('setting'),
+    __metadata("design:paramtypes", [shipping_charge_service_1.ShippingChargeService])
+], LegacyDeliveryChargeController);
+exports.LegacyDeliveryChargeController = LegacyDeliveryChargeController;
 //# sourceMappingURL=shipping-charge.controller.js.map

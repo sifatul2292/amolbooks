@@ -21,6 +21,7 @@ import { CourierService } from '../../../shared/courier/courier.service';
 import { Admin } from '../../../interfaces/admin/admin.interface';
 import { AnalyticsService } from '../../../shared/analytics/analytics.service';
 import { StockMovement } from '../../../interfaces/common/stock-movement.interface';
+import { ShippingCharge } from '../../../interfaces/common/shipping-charge.interface';
 type SteadfastWebhookPayload = {
     notification_type?: 'delivery_status' | 'tracking_update';
     consignment_id?: string | number;
@@ -47,6 +48,7 @@ export declare class OrderService {
     private readonly shopInformationModel;
     private readonly orderOfferModel;
     private readonly stockMovementModel;
+    private readonly shippingChargeModel;
     private configService;
     private utilsService;
     private bulkSmsService;
@@ -60,7 +62,7 @@ export declare class OrderService {
     private steadfastMissingChargeSyncRunning;
     private steadfastMissingChargeSyncCompletedAt;
     private websitePurchaseGapFillRunning;
-    constructor(adminModel: Model<Admin>, orderModel: Model<Order>, incompleteOrderModel: Model<IncompleteOrder>, productModel: Model<Product>, specialPackageModel: Model<SpecialPackage>, uniqueIdModel: Model<UniqueId>, cartModel: Model<Cart>, userModel: Model<Cart>, settingModel: Model<Setting>, couponModel: Model<Coupon>, courierService: CourierService, shopInformationModel: Model<ShopInformation>, orderOfferModel: Model<OrderOffer>, stockMovementModel: Model<StockMovement>, configService: ConfigService, utilsService: UtilsService, bulkSmsService: BulkSmsService, emailService: EmailService, analyticsService: AnalyticsService);
+    constructor(adminModel: Model<Admin>, orderModel: Model<Order>, incompleteOrderModel: Model<IncompleteOrder>, productModel: Model<Product>, specialPackageModel: Model<SpecialPackage>, uniqueIdModel: Model<UniqueId>, cartModel: Model<Cart>, userModel: Model<Cart>, settingModel: Model<Setting>, couponModel: Model<Coupon>, courierService: CourierService, shopInformationModel: Model<ShopInformation>, orderOfferModel: Model<OrderOffer>, stockMovementModel: Model<StockMovement>, shippingChargeModel: Model<ShippingCharge>, configService: ConfigService, utilsService: UtilsService, bulkSmsService: BulkSmsService, emailService: EmailService, analyticsService: AnalyticsService);
     private getSteadfastDeliveryCharge;
     addOrderAdmin(admin: any, addOrderDto: AddOrderDto): Promise<ResponsePayload>;
     private processAdminOrderBookkeeping;

@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
 const script = fs.readFileSync(path.join(root, 'gtm-snippets/catalogue-local-requests.html'), 'utf8').match(/<script>([\s\S]*?)<\/script>/)[1];
 const remote = 'https://apisub.amolbooks.com';
-for (const hostname of ['localhost', '127.0.0.1', '[::1]', '192.168.1.5', '10.0.0.2', '172.31.2.3', 'amolbooks.com', '172.32.0.1']) {
+for (const hostname of ['localhost', '127.0.0.1', '[::1]', '192.168.1.5', '10.0.0.2', '172.31.2.3', 'amolbooks.com', 'www.amolbooks.com', '172.32.0.1']) {
   const calls = [];
   class XHR { open(...args) { calls.push(args); } }
   const origin = 'http://' + hostname + ':3000';
@@ -18,32 +18,44 @@ for (const hostname of ['localhost', '127.0.0.1', '[::1]', '192.168.1.5', '10.0.
   const xhr = new XHR();
   xhr.open('POST', remote + '/api/product/get-all?q=book', true);
   xhr.open('POST', remote + '/api/product/get-products-by-ids?select=name', true);
+  xhr.open('POST', remote + '/api/special-package/get-products-by-ids', true);
   xhr.open('POST', remote + '/api/category/get-all/', true);
   xhr.open('GET', remote + '/api/product/get-all-data?status=publish', true);
   xhr.open('GET', remote + '/api/product/get-by-slug/500%20shobder%20kuraner%2075%25', true);
   xhr.open('GET', remote + '/api/shipping-charge/get', true);
-  const local = !['amolbooks.com', '172.32.0.1'].includes(hostname);
+  xhr.open('GET', remote + '/api/setting/get-delivery-charges', true);
+  const local = hostname !== '172.32.0.1';
   assert.equal(calls[0][1], local ? origin + '/storefront-catalog/product/get-all?q=book' : remote + '/api/product/get-all?q=book');
   assert.equal(calls[1][1], local ? origin + '/storefront-catalog/product/get-products-by-ids?select=name' : remote + '/api/product/get-products-by-ids?select=name');
-  assert.equal(calls[2][1], local ? origin + '/storefront-catalog/category/get-all/' : remote + '/api/category/get-all/');
-  assert.equal(calls[3][1], local ? origin + '/storefront-catalog/product/get-all-data?status=publish' : remote + '/api/product/get-all-data?status=publish');
-  assert.equal(calls[4][1], local ? origin + '/storefront-catalog/product/get-by-slug/500%20shobder%20kuraner%2075%25' : remote + '/api/product/get-by-slug/500%20shobder%20kuraner%2075%25');
-  assert.equal(calls[5][1], local ? origin + '/storefront-catalog/shipping-charge/get' : remote + '/api/shipping-charge/get');
+  assert.equal(calls[2][1], local ? origin + '/storefront-catalog/special-package/get-products-by-ids' : remote + '/api/special-package/get-products-by-ids');
+  assert.equal(calls[3][1], local ? origin + '/storefront-catalog/category/get-all/' : remote + '/api/category/get-all/');
+  assert.equal(calls[4][1], local ? origin + '/storefront-catalog/product/get-all-data?status=publish' : remote + '/api/product/get-all-data?status=publish');
+  assert.equal(calls[5][1], local ? origin + '/storefront-catalog/product/get-by-slug/500%20shobder%20kuraner%2075%25' : remote + '/api/product/get-by-slug/500%20shobder%20kuraner%2075%25');
+  assert.equal(calls[6][1], local ? origin + '/storefront-catalog/shipping-charge/get' : remote + '/api/shipping-charge/get');
+  assert.equal(calls[7][1], local ? origin + '/storefront-catalog/shipping-charge/get' : remote + '/api/setting/get-delivery-charges');
   for (const [method, url] of [['POST', remote + '/api/cart/add-to-cart'], ['POST', remote + '/api/product/add'], ['GET', remote + '/api/product/get-all'], ['POST', 'https://example.com/api/product/get-all']]) {
     xhr.open(method, url, false, 'user', 'password');
     assert.deepEqual(calls.at(-1), [method, url, false, 'user', 'password']);
   }
 }
 const main = fs.readFileSync(path.join(root, 'api/src/main.ts'), 'utf8');
+const shippingController = fs.readFileSync(path.join(root, 'api/src/pages/sales/shipping-charge/shipping-charge.controller.ts'), 'utf8');
 assert.ok(main.includes("'catalogue-local-requests.html'"), 'The API must inject the remap before Angular starts');
+assert.match(shippingController, /@Controller\('setting'\)[\s\S]*?@Get\('\/get-delivery-charges'\)[\s\S]*?getShippingCharge\(select\)/, 'The compiled checkout legacy delivery endpoint must remain compatible');
+assert.doesNotMatch(main, /NestFactory\.create\(AppModule,\s*\{\s*cors:\s*true\s*\}\)/, 'CORS must have one authoritative configuration');
 const localHostFunction = main.match(/function isLocalStorefrontHost\([\s\S]*?\n  \}/)[0].replace('hostname: string', 'hostname');
 const localHostCheck = new Function('process', localHostFunction + '; return isLocalStorefrontHost;');
 assert.equal(localHostCheck({ env: { PRODUCTION_BUILD: 'true' } })('localhost'), false, 'Production must reject a forged localhost Host header');
 assert.equal(localHostCheck({ env: { PRODUCTION_BUILD: 'false' } })('localhost'), true, 'Local preview must retain its same-origin proxy');
+const proxyHostFunction = main.match(/function isStorefrontCatalogueProxyHost\([\s\S]*?\n  \}/)[0].replace('hostname: string', 'hostname');
+const proxyHostCheck = new Function('process', localHostFunction + ';' + proxyHostFunction + '; return isStorefrontCatalogueProxyHost;');
+assert.equal(proxyHostCheck({ env: { PRODUCTION_BUILD: 'true' } })('www.amolbooks.com'), true, 'Production checkout reads must retain their same-origin proxy');
+assert.equal(proxyHostCheck({ env: { PRODUCTION_BUILD: 'true' } })('attacker.example'), false, 'The public proxy must reject unrelated hosts');
 assert.match(main, /req\.method === 'POST' && req\.path === '\/product\/get-all'/, 'Catalogue proxy must allowlist product searches');
 assert.match(main, /req\.method === 'POST' && req\.path === '\/product\/get-products-by-ids'/, 'Catalogue proxy must allowlist cart hydration');
+assert.match(main, /req\.path === '\/special-package\/get-products-by-ids'/, 'Catalogue proxy must keep the cart hydration fork join same-origin');
 assert.match(main, /req\.method === 'POST' && req\.path === '\/category\/get-all\/'/, 'Catalogue proxy must allowlist category reads');
-assert.match(main, /req\.method === 'GET' && req\.path === '\/shipping-charge\/get'/, 'Local checkout must proxy shipping configuration');
+assert.match(main, /req\.method === 'GET' && req\.path === '\/shipping-charge\/get'/, 'Checkout must proxy shipping configuration');
 const storefront = fs.readFileSync(path.join(root, 'api/src/storefront-product-sections-script.ts'), 'utf8');
 const productService = fs.readFileSync(path.join(root, 'api/src/pages/product/product.service.ts'), 'utf8');
 assert.match(storefront, /function headerSearchResults\(\)/, 'Native header search needs its own results panel');
