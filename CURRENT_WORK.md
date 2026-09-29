@@ -1,5 +1,11 @@
 # CURRENT_WORK
 
+## Product-detail stock fallback repair (2026-09-29)
+
+- Confirmed the live “প্রোডাক্টিভ মুসলিম” record is in stock (`quantity: 9985`, `stock: 485`) while Angular rendered its failed-resolver `.stock-out` placeholder.
+- The existing product hydration fallback now repairs either native stock container, hides empty native metadata labels, and gives fallback purchase controls a complete mobile layout.
+- Added focused regression coverage using the exact stock-out and empty-author markup from production.
+
 ## Production product-detail hydration repair (2026-09-29)
 
 - Reproduced the deployed blank product card: production catalogue reads were sent to `/storefront-catalog`, but Nginx returned the Angular HTML fallback instead of JSON, leaving the native panel at its `Tk 0` / `Out of Stock` defaults.

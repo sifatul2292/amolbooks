@@ -27,9 +27,9 @@ assert.equal(catalogueBaseFor({ location: { hostname: 'www.amolbooks.com', origi
 
 const fallbackDom = new JSDOM(`<app-product-details-area>
   <div class="product-image-box"><img src="" alt=""></div>
-  <div class="product-title"><h3></h3></div>
+  <div class="product-title"><h3></h3><p>লেখক:</p></div>
   <div class="product-price"><h3>Tk 0</h3></div>
-  <div class="stock"><h5>Out of Stock</h5></div>
+  <div class="stock-out"><h5>Out of Stock</h5></div>
   <div class="short-description"><p></p></div>
 </app-product-details-area>`);
 const fallbackFunctionNames = [
@@ -63,8 +63,10 @@ assert.match(fallbackDom.window.document.querySelector('.product-title h3').text
 assert.equal(fallbackDom.window.document.querySelector('.product-image-box img').src, 'https://example.com/book.webp');
 assert.match(fallbackDom.window.document.querySelector('.product-price h3').textContent, /310/);
 assert.match(fallbackDom.window.document.querySelector('.stock h5').textContent, /In Stock/);
+assert.equal(fallbackDom.window.document.querySelector('[data-ab-empty-native-meta]').hidden, true);
 assert.match(fallbackDom.window.document.querySelector('[data-ab-native-product-meta]').textContent, /Visible Author/);
 assert.equal(fallbackDom.window.document.querySelectorAll('[data-ab-fallback-action]').length, 2);
+assert.match(source, /\[data-ab-fallback-actions\] button[\s\S]*?background: #129245/);
 
 const mountLibrarySource = emittedFunction('mountCategoryLibrary');
 const categoryLibraryProductsSource = emittedFunction('categoryLibraryProducts');

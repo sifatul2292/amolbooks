@@ -195,6 +195,33 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       font-weight: 800 !important;
     }
 
+    app-product-details .product-action-btn > [data-ab-fallback-actions] {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 0.75rem !important;
+      margin: 1rem 0 !important;
+      padding: 0 !important;
+      list-style: none !important;
+    }
+
+    app-product-details [data-ab-fallback-actions] > li {
+      margin: 0 !important;
+      padding: 0 !important;
+      list-style: none !important;
+    }
+
+    app-product-details [data-ab-fallback-actions] button {
+      width: 100% !important;
+      min-height: 3rem !important;
+      padding: 0.7rem 1rem !important;
+      border: 1px solid #129245 !important;
+      border-radius: 0.35rem !important;
+      background: #129245 !important;
+      color: #fff !important;
+      font-size: 1rem !important;
+      line-height: 1.2 !important;
+    }
+
     @media (min-width: 992px) {
       app-product-details .product-action-btn > ul {
         display: grid !important;
@@ -7931,9 +7958,12 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     var nativeActions = panel.querySelector('.product-action-btn');
     var fallbackMeta = titleArea && titleArea.querySelector('[data-ab-native-product-meta]');
     var fallbackActions = nativeActions && nativeActions.querySelector('[data-ab-fallback-actions]');
+    var nativeMetaNodes = titleArea ? titleArea.querySelectorAll(':scope > p') : [];
     var nativeMetaReady = titleArea && Array.prototype.some.call(
-      titleArea.querySelectorAll(':scope > p'),
-      function (node) { return Boolean(plainText(node.textContent)); },
+      nativeMetaNodes,
+      function (node) {
+        return Boolean(node.querySelector('a, strong') || plainText(node.textContent).replace(/^[^:：]+[:：]\s*$/, ''));
+      },
     );
     var nativeActionReady = nativeActions && nativeActions.querySelector(
       'button:not([data-ab-fallback-action])'
@@ -7947,6 +7977,12 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     if (nativeReady) {
       if (fallbackMeta) fallbackMeta.remove();
       if (fallbackActions) fallbackActions.remove();
+      Array.prototype.forEach.call(nativeMetaNodes, function (node) {
+        if (node.hasAttribute('data-ab-empty-native-meta')) {
+          node.hidden = false;
+          node.removeAttribute('data-ab-empty-native-meta');
+        }
+      });
       panel.removeAttribute('data-ab-fallback-product');
       return false;
     }
@@ -7970,6 +8006,12 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       image.alt = name;
     }
     if (titleArea) {
+      Array.prototype.forEach.call(nativeMetaNodes, function (node) {
+        if (!node.querySelector('a, strong') && /^[^:：]+[:：]\s*$/.test(plainText(node.textContent))) {
+          node.hidden = true;
+          node.setAttribute('data-ab-empty-native-meta', 'true');
+        }
+      });
       if (!fallbackMeta) {
         fallbackMeta = document.createElement('div');
         fallbackMeta.setAttribute('data-ab-native-product-meta', 'true');
@@ -7986,8 +8028,12 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         (saving ? ' <span class="oti-discount">You Save TK ' + escapeHtml(String(Math.round(saving))) +
           ' (' + escapeHtml(String(discountPercent(product))) + '% Off)</span>' : '');
     }
-    var stock = panel.querySelector('.stock h5');
+    var stock = panel.querySelector('.stock h5, .stock-out h5');
     if (stock) {
+      if (stock.parentElement) {
+        stock.parentElement.classList.toggle('stock', available);
+        stock.parentElement.classList.toggle('stock-out', !available);
+      }
       stock.innerHTML = '<i class="fa ' + (available ? 'fa-check-circle' : 'fa-times-circle') + '"></i>' +
         (available ? 'In Stock' : 'Out of Stock');
     }
