@@ -66,7 +66,8 @@ assert.match(fallbackDom.window.document.querySelector('.stock h5').textContent,
 assert.equal(fallbackDom.window.document.querySelector('[data-ab-empty-native-meta]').hidden, true);
 assert.match(fallbackDom.window.document.querySelector('[data-ab-native-product-meta]').textContent, /Visible Author/);
 assert.equal(fallbackDom.window.document.querySelectorAll('[data-ab-fallback-action]').length, 2);
-assert.match(source, /\[data-ab-fallback-actions\] button[\s\S]*?background: #129245/);
+assert.match(source, /\[data-ab-fallback-actions\] button[\s\S]*?background: #3e97e3/);
+assert.match(source, /\[data-ab-fallback-actions\] button\.active[\s\S]*?background: #33c24d/);
 
 const mountLibrarySource = emittedFunction('mountCategoryLibrary');
 const categoryLibraryProductsSource = emittedFunction('categoryLibraryProducts');

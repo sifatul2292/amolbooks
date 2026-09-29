@@ -123,6 +123,25 @@ assert.equal(nativePackageRow.classList.stale, false, 'Special-package rows rema
 assert.equal(nativePackageRow.attributes['data-product-id'], 'package-1', 'Special-package rows receive a stable cart identifier');
 assert.equal(nativePackageRow.attributes['data-ab-special-package-row'], 'true', 'Special-package rows are explicitly owned by the cart bridge');
 assert.equal(nativePackageRow.classList['ab-cart-active-row'], true, 'Active package rows receive the compact mobile layout hook');
+let emptyStateRemoved = false;
+let insertedCartArea;
+const recoveredCartArea = { querySelectorAll: () => [], querySelector: () => null };
+const emptyCartShell = {
+  querySelector(selector) {
+    if (selector === '.empty-cart-card') return { remove() { emptyStateRemoved = true; } };
+    if (selector === '.cart-area-bottom') return 'footer';
+    return null;
+  },
+  insertBefore(node, before) { insertedCartArea = { node, before }; },
+};
+packageContext.document = {
+  querySelector: selector => selector === 'app-cart-information .cart-area' ? emptyCartShell : null,
+  createElement: () => recoveredCartArea,
+};
+packageContext.syncNativeCartPage([packageItem], []);
+assert.equal(emptyStateRemoved, true, 'A persisted production cart removes Angular\'s stale empty-state shell');
+assert.equal(insertedCartArea.node.className, 'cart-area-main', 'A persisted production cart recreates its missing item list');
+assert.equal(insertedCartArea.before, 'footer', 'Recovered cart items stay above the checkout footer');
 assert.match(source, /function goToCheckout\(\)[\s\S]*?checkoutItems\.some\(cartItemIsSpecialPackage\)[\s\S]*?searchParams\.set\('ab-package-cart', cartItemsSignature\(checkoutItems\)\)/, 'Package checkout navigation carries the persisted cart signature');
 assert.match(source, /function renderCheckoutCartMirror\(\)[\s\S]*?packageItems = items\.filter\(cartItemIsSpecialPackage\)[\s\S]*?window\.location\.replace\(freshUrl\.toString\(\)\)/, 'A stale package checkout is re-entered once from its persisted cart snapshot');
 assert.match(source, /function renderCheckoutCartMirror\(\)[\s\S]*?fetchProductsByIds\(productIds\)[\s\S]*?fetchSpecialPackagesByIds\(packageIds\)[\s\S]*?concat\(results\[1\]/, 'Checkout fallback hydrates regular products and special packages together');

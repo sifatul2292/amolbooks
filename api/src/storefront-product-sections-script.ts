@@ -197,9 +197,9 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
 
     app-product-details .product-action-btn > [data-ab-fallback-actions] {
       display: grid !important;
-      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-      gap: 0.75rem !important;
-      margin: 1rem 0 !important;
+      grid-template-columns: repeat(2, minmax(8.75rem, 10rem)) !important;
+      gap: 0.85rem !important;
+      margin: 0.875rem 0 0 !important;
       padding: 0 !important;
       list-style: none !important;
     }
@@ -212,14 +212,22 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
 
     app-product-details [data-ab-fallback-actions] button {
       width: 100% !important;
-      min-height: 3rem !important;
-      padding: 0.7rem 1rem !important;
-      border: 1px solid #129245 !important;
+      min-height: 3.25rem !important;
+      padding: 0.75rem 1.1rem !important;
+      border: 0 !important;
       border-radius: 0.35rem !important;
-      background: #129245 !important;
+      background: #3e97e3 !important;
       color: #fff !important;
       font-size: 1rem !important;
       line-height: 1.2 !important;
+    }
+
+    app-product-details [data-ab-fallback-actions] button.active {
+      background: #33c24d !important;
+    }
+
+    app-product-details [data-ab-empty-native-meta] {
+      display: none !important;
     }
 
     @media (min-width: 992px) {
@@ -5936,11 +5944,14 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     if (!cartPageOpen()) return;
     pushCartViewTracking(items, products);
     var area = document.querySelector('app-cart-information .cart-area-main');
-    if (!area && isLocalPreviewHost()) {
+    if (!area && (items || []).length) {
       var cartArea = document.querySelector('app-cart-information .cart-area');
       if (cartArea) {
-        cartArea.innerHTML = '<div class="select-items-area ab-cart-summary-source"><div class="select-items-left"><h3></h3></div><div class="select-items-right"><h3></h3></div></div><div class="cart-area-main"></div>';
-        area = cartArea.querySelector('.cart-area-main');
+        var emptyState = cartArea.querySelector('.empty-cart-card');
+        if (emptyState) emptyState.remove();
+        area = document.createElement('div');
+        area.className = 'cart-area-main';
+        cartArea.insertBefore(area, cartArea.querySelector('.cart-area-bottom'));
       }
     }
     if (!area) return;

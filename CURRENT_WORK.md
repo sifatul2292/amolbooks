@@ -1,5 +1,12 @@
 # CURRENT_WORK
 
+## Production product UI and empty-cart shell repair (2026-09-30)
+
+- Reproduced the live split state: the persisted item appeared in the cart badge and checkout, while `/cart` stayed on Angular's `Your Cart is Empty` shell because its failed resolver never created `.cart-area-main`.
+- The shared cart renderer now removes that stale empty state and recreates the missing item list above the existing checkout footer whenever persisted items exist.
+- Product fallback actions now match the native storefront's compact blue `Buy Now` and green cart controls instead of stretching two identical green buttons across the panel; empty native metadata labels remain hidden.
+- Verification: focused cart-state regression (including the missing production shell), API build, generated storefront asset, and `git diff --check` pass. `npm run lint` remains blocked because the existing ESLint configuration ignores its configured glob.
+
 ## Product-detail stock fallback repair (2026-09-29)
 
 - Confirmed the live “প্রোডাক্টিভ মুসলিম” record is in stock (`quantity: 9985`, `stock: 485`) while Angular rendered its failed-resolver `.stock-out` placeholder.
