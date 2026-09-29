@@ -20,11 +20,15 @@ for (const hostname of ['localhost', '127.0.0.1', '[::1]', '192.168.1.5', '10.0.
   xhr.open('POST', remote + '/api/product/get-products-by-ids?select=name', true);
   xhr.open('POST', remote + '/api/category/get-all/', true);
   xhr.open('GET', remote + '/api/product/get-all-data?status=publish', true);
+  xhr.open('GET', remote + '/api/product/get-by-slug/500%20shobder%20kuraner%2075%25', true);
+  xhr.open('GET', remote + '/api/shipping-charge/get', true);
   const local = !['amolbooks.com', '172.32.0.1'].includes(hostname);
   assert.equal(calls[0][1], local ? origin + '/storefront-catalog/product/get-all?q=book' : remote + '/api/product/get-all?q=book');
   assert.equal(calls[1][1], local ? origin + '/storefront-catalog/product/get-products-by-ids?select=name' : remote + '/api/product/get-products-by-ids?select=name');
   assert.equal(calls[2][1], local ? origin + '/storefront-catalog/category/get-all/' : remote + '/api/category/get-all/');
   assert.equal(calls[3][1], local ? origin + '/storefront-catalog/product/get-all-data?status=publish' : remote + '/api/product/get-all-data?status=publish');
+  assert.equal(calls[4][1], local ? origin + '/storefront-catalog/product/get-by-slug/500%20shobder%20kuraner%2075%25' : remote + '/api/product/get-by-slug/500%20shobder%20kuraner%2075%25');
+  assert.equal(calls[5][1], local ? origin + '/storefront-catalog/shipping-charge/get' : remote + '/api/shipping-charge/get');
   for (const [method, url] of [['POST', remote + '/api/cart/add-to-cart'], ['POST', remote + '/api/product/add'], ['GET', remote + '/api/product/get-all'], ['POST', 'https://example.com/api/product/get-all']]) {
     xhr.open(method, url, false, 'user', 'password');
     assert.deepEqual(calls.at(-1), [method, url, false, 'user', 'password']);
@@ -39,6 +43,7 @@ assert.equal(localHostCheck({ env: { PRODUCTION_BUILD: 'false' } })('localhost')
 assert.match(main, /req\.method === 'POST' && req\.path === '\/product\/get-all'/, 'Catalogue proxy must allowlist product searches');
 assert.match(main, /req\.method === 'POST' && req\.path === '\/product\/get-products-by-ids'/, 'Catalogue proxy must allowlist cart hydration');
 assert.match(main, /req\.method === 'POST' && req\.path === '\/category\/get-all\/'/, 'Catalogue proxy must allowlist category reads');
+assert.match(main, /req\.method === 'GET' && req\.path === '\/shipping-charge\/get'/, 'Local checkout must proxy shipping configuration');
 const storefront = fs.readFileSync(path.join(root, 'api/src/storefront-product-sections-script.ts'), 'utf8');
 const productService = fs.readFileSync(path.join(root, 'api/src/pages/product/product.service.ts'), 'utf8');
 assert.match(storefront, /function headerSearchResults\(\)/, 'Native header search needs its own results panel');

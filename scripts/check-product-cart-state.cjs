@@ -11,6 +11,8 @@ new vm.Script(source);
 assert.match(source, /@media \(max-width: 1023px\)[\s\S]*?\.section-right \.cart-products-area\.summery-pc[\s\S]*?display: none !important;/, 'Mobile checkout hides the desktop item list');
 assert.match(source, /generatedArea && nativeArea[\s\S]*?generatedArea\.remove\(\)/, 'Native checkout list replaces the temporary fallback');
 assert.match(source, /data-ab-checkout-generated/, 'Temporary checkout list is identifiable');
+assert.doesNotMatch(source, /function renderCheckoutCartMirror\(\) \{\s*if \(!isLocalPreviewHost\(\)/, 'Checkout fallback also repairs the live storefront');
+assert.match(source, /var total = calculatedTotal \|\| cartDisplayedTotal\(\)/, 'Gift progress trusts hydrated cart prices before DOM text');
 assert.match(source, /body\.ab-home-redesign #amol-cart-toast,[\s\S]*?body\.ab-cart-auth-syncing #amol-cart-toast \{ display: none !important; \}/, 'Homepage and login cart sync hide the legacy cart toast');
 assert.match(source, /document\.body\.classList\.add\('ab-cart-auth-syncing'\)/, 'Authorization starts silent cart synchronization');
 assert.doesNotMatch(source.slice(source.indexOf("window.addEventListener('ab-cart-authorization'")), /mergeGuestCartIntoAuthenticatedCart\(\)/, 'Native login sync is not duplicated');
@@ -131,6 +133,23 @@ cartViewContext.pushCartViewTracking(
   [{ _id: 'p1', name: 'Cart book', afterDiscountPrice: 310 }]
 );
 assert.equal(cartViewContext.window.dataLayer.length, 2, 'Cart view fires once per page load');
+const displayedTotalStart = source.indexOf('  function cartDisplayedTotal(');
+const displayedTotalHelper = source.slice(displayedTotalStart, source.indexOf('\n  function ', displayedTotalStart + 1));
+const totalNodes = [
+  { textContent: 'সর্বমোট টাকা : ৳310' },
+  { textContent: 'কার্টের বই ৫০০ শব্দে কুরআনের ৭৫%' },
+];
+const displayedTotalContext = {
+  Number,
+  document: { querySelectorAll: () => totalNodes },
+  banglaNumber(value) {
+    const digits = { '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4', '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9' };
+    return String(value || '').replace(/[০-৯]/g, digit => digits[digit]);
+  },
+};
+vm.createContext(displayedTotalContext);
+vm.runInContext(displayedTotalHelper, displayedTotalContext);
+assert.equal(displayedTotalContext.cartDisplayedTotal(), 310, 'A following “৫০০” product title cannot inflate a ৳310 cart to 310500');
 const names = ['productIdIsInCart', 'productIsInCart', 'refreshProductCartState', 'boughtTogetherIsInCart', 'repairBoughtTogetherActionLabels', 'addBoughtTogetherToCart', 'cartPageProductId', 'repairProductActionLabels', 'updateStickyProductActions'];
 const helpers = names.map(name => {
   const start = source.indexOf('  function ' + name + '(');

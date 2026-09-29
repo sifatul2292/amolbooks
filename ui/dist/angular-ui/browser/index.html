@@ -1476,7 +1476,9 @@ img[src="/assets/images/logo/logo.png"]{width:56px;height:69px;aspect-ratio:56/6
           ((verb === 'POST' && target.pathname === '/api/product/get-all') ||
            (verb === 'POST' && target.pathname === '/api/product/get-products-by-ids') ||
            (verb === 'POST' && target.pathname === '/api/category/get-all/') ||
-           (verb === 'GET' && target.pathname === '/api/product/get-all-data'))) {
+           (verb === 'GET' && target.pathname === '/api/product/get-all-data') ||
+           (verb === 'GET' && target.pathname.indexOf('/api/product/get-by-slug/') === 0) ||
+           (verb === 'GET' && target.pathname === '/api/shipping-charge/get'))) {
         args[1] = location.origin + '/storefront-catalog' + target.pathname.slice(4) + target.search;
       }
     } catch (_error) {}
@@ -4862,4 +4864,4 @@ body.ab-home-redesign app-home { display: none !important; }
   tick();
 })();
 </script>
-<script src="/ab-widgets.js?v=18" defer></script><script src="/storefront-attribution.js?v=fb28bf2381a1" defer></script><script src="/storefront-price-english-digits.js?v=71a536f70807" defer></script><script src="/storefront-special-package.js?v=3733f7539847" defer></script><script src="/storefront-product-sections.js?v=41c71e89fdd2" defer></script></body></html>
+<script src="/ab-widgets.js?v=18" defer></script><script src="/storefront-attribution.js?v=fb28bf2381a1" defer></script><script src="/storefront-price-english-digits.js?v=71a536f70807" defer></script><script src="/storefront-special-package.js?v=3733f7539847" defer></script><script src="/storefront-product-sections.js?v=1a57f84cfd19" defer></script></body></html>

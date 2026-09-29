@@ -9,10 +9,28 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FilterAndPaginationShippingChargeDto = exports.UpdateShippingChargeDto = exports.OptionShippingChargeDto = exports.FilterShippingChargeDto = exports.AddShippingChargeDto = void 0;
+exports.FilterAndPaginationShippingChargeDto = exports.UpdateShippingChargeDto = exports.OptionShippingChargeDto = exports.FilterShippingChargeDto = exports.AddShippingChargeDto = exports.ShippingChargeRuleDto = void 0;
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 const pagination_dto_1 = require("./pagination.dto");
+class ShippingChargeRuleDto {
+}
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(0),
+    __metadata("design:type", Number)
+], ShippingChargeRuleDto.prototype, "fromGram", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(0),
+    __metadata("design:type", Number)
+], ShippingChargeRuleDto.prototype, "toGram", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(0),
+    __metadata("design:type", Number)
+], ShippingChargeRuleDto.prototype, "cost", void 0);
+exports.ShippingChargeRuleDto = ShippingChargeRuleDto;
 class AddShippingChargeDto {
 }
 __decorate([
@@ -30,6 +48,24 @@ __decorate([
     (0, class_validator_1.IsNumber)(),
     __metadata("design:type", Number)
 ], AddShippingChargeDto.prototype, "deliveryOutsideBD", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.ArrayMinSize)(1),
+    (0, class_validator_1.ArrayMaxSize)(50),
+    (0, class_validator_1.ValidateNested)({ each: true }),
+    (0, class_transformer_1.Type)(() => ShippingChargeRuleDto),
+    __metadata("design:type", Array)
+], AddShippingChargeDto.prototype, "insideDhakaRules", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.ArrayMinSize)(1),
+    (0, class_validator_1.ArrayMaxSize)(50),
+    (0, class_validator_1.ValidateNested)({ each: true }),
+    (0, class_transformer_1.Type)(() => ShippingChargeRuleDto),
+    __metadata("design:type", Array)
+], AddShippingChargeDto.prototype, "outsideDhakaRules", void 0);
 exports.AddShippingChargeDto = AddShippingChargeDto;
 class FilterShippingChargeDto {
 }

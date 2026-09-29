@@ -1140,6 +1140,7 @@ ${storefrontPurchaseExternalIdHelper}
         (req.method === 'GET' && req.path === '/product/get-all-data') ||
         (req.method === 'GET' && req.path.startsWith('/product/get-by-slug/')) ||
         (req.method === 'GET' && /^\/author\/[^/]+$/.test(req.path)) ||
+        (req.method === 'GET' && req.path === '/shipping-charge/get') ||
         (req.method === 'POST' && req.path === '/category/get-all/');
       if (!allowedCatalogueRequest) return res.sendStatus(404);
       const requestBody = isLibraryRequest

@@ -1,8 +1,15 @@
 import { PaginationDto } from './pagination.dto';
+export declare class ShippingChargeRuleDto {
+    fromGram: number;
+    toGram: number;
+    cost: number;
+}
 export declare class AddShippingChargeDto {
     deliveryInDhaka: number;
     deliveryOutsideDhaka: number;
     deliveryOutsideBD: number;
+    insideDhakaRules: ShippingChargeRuleDto[];
+    outsideDhakaRules: ShippingChargeRuleDto[];
 }
 export declare class FilterShippingChargeDto {
     name: string;

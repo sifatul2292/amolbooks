@@ -1,5 +1,26 @@
 # CURRENT_WORK
 
+## Local product-detail hydration repair (2026-09-29)
+
+- Reproduced the blank native product header: the resolver's published `product/get-by-slug` XHR was blocked by CORS on localhost, leaving the title, cover, price, and stock at their empty defaults while later injected sections loaded independently.
+- Added that public single-product GET to the existing localhost same-origin catalogue bridge. Production requests and write endpoints remain untouched.
+- Verification: the reported product now hydrates through a successful same-origin 200 response and renders its title, ৳310 price, in-stock state, description, and purchase actions; the focused routing check, API build, and `git diff --check` pass.
+
+## Local checkout delivery-charge hydration repair (2026-09-29)
+
+- Reproduced the cart-to-checkout failure: the compiled storefront requested `https://apisub.amolbooks.com/api/shipping-charge/get` from `http://localhost:3000`, the browser rejected the response for missing CORS headers, and checkout remained at its initial ৳0 values until a successful reload.
+- Routed that public GET through the existing allowlisted same-origin local storefront proxy. Production requests and all cart/order writes remain unchanged.
+- Added focused routing coverage for local/private preview hosts and the production-host bypass.
+- Verification: the exact two-book cart-to-checkout flow now requests `http://localhost:3000/storefront-catalog/shipping-charge/get` successfully and shows ৳60/৳75 immediately, with no reload; the routing check, shipping persistence check, API build, and `git diff --check` pass.
+
+## Cart-to-checkout and free-notebook eligibility repair (2026-09-29)
+
+- Reproduced the reported production mobile flow with the exact “৫০০ শব্দে কুরআনের ৭৫%” book: the cart retained its ৳310 line in storage, checkout rendered zero items, and the cart falsely claimed the ৳799 notebook was earned.
+- Fixed the gift-progress parser that concatenated the ৳310 subtotal with the Bengali-digit product title (`৫০০`) and interpreted it as 310500. Gift eligibility now trusts hydrated cart prices first and only parses isolated total controls as a fallback.
+- Enabled the existing checkout cart mirror on the live storefront instead of localhost only, so persisted guest cart lines and their subtotal survive the cart-to-checkout transition while Angular finishes hydration.
+- Added focused regression proof for the ৳310 + `৫০০` adjacency and the live-host checkout guard.
+- Verification: `node scripts/check-product-cart-state.cjs`, `git diff --check`, and `cd api && npm run build` pass. A routed live-host mobile browser replay keeps the ৳310 book visible at checkout with a ৳310 subtotal, shows “আর মাত্র ৳489”, and renders no notebook; a qualifying ৳930 cart renders the free notebook. `npm run lint` remains blocked because the existing ESLint configuration ignores its configured glob.
+
 ## Special-package PDF close repair (2026-09-28)
 
 - Stopped the global header-navigation interceptor from claiming controls inside the PDF dialog; the modal close button now reaches its own click handler on touch and pointer devices.
@@ -1723,6 +1744,9 @@ count even when tracking is perfect.
 - `cd api && npm run lint` after the cart-row repair → still stops before linting because the configured glob is fully ignored.
 - Facebook catalogue feed diagnosis: `https://apisub.amolbooks.com/api/fb-feed.xml` and the local API return XML, while `https://www.amolbooks.com/api/fb-feed.xml` returns the Angular `index.html`; the feed generator is healthy and the production `www` SPA fallback is intercepting the public path.
 - Added an exact `/api/fb-feed.xml` proxy rule to `scripts/nginx-product-social-seo.conf.example`, forwarding the public URL to the Nest API before the generic SPA fallback. Production requires installing this location in the `www.amolbooks.com` server block, then running `nginx -t` and reloading nginx.
+- Shipping-charge persistence diagnosis: the compiled admin submits `insideDhakaRules` and `outsideDhakaRules`, but the API's strict Mongoose schema omitted both paths, so Mongo update casting silently discarded rule edits while returning a successful response.
+- Added the missing nested rule schema, DTO validation, shared interface fields, and a focused update-casting regression check. Existing base delivery-charge fields and the compiled admin remain unchanged.
+- `node scripts/check-shipping-charge-persistence.cjs`, `git diff --check`, and `cd api && npm run build` after the shipping-charge fix → passed. `npm run lint` remains blocked by the existing all-files-ignored ESLint configuration.
 
 ## Do NOT touch / be careful
 

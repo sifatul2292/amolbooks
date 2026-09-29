@@ -9,4 +9,14 @@ export declare const ShippingChargeSchema: mongoose.Schema<any, mongoose.Model<a
     deliveryInDhaka: number;
     deliveryOutsideDhaka: number;
     deliveryOutsideBD?: number;
+    insideDhakaRules?: mongoose.Types.DocumentArray<{
+        cost: number;
+        fromGram: number;
+        toGram: number;
+    }>;
+    outsideDhakaRules?: mongoose.Types.DocumentArray<{
+        cost: number;
+        fromGram: number;
+        toGram: number;
+    }>;
 }>;

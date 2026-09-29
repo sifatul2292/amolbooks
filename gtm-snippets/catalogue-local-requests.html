@@ -17,7 +17,9 @@
           ((verb === 'POST' && target.pathname === '/api/product/get-all') ||
            (verb === 'POST' && target.pathname === '/api/product/get-products-by-ids') ||
            (verb === 'POST' && target.pathname === '/api/category/get-all/') ||
-           (verb === 'GET' && target.pathname === '/api/product/get-all-data'))) {
+           (verb === 'GET' && target.pathname === '/api/product/get-all-data') ||
+           (verb === 'GET' && target.pathname.indexOf('/api/product/get-by-slug/') === 0) ||
+           (verb === 'GET' && target.pathname === '/api/shipping-charge/get'))) {
         args[1] = location.origin + '/storefront-catalog' + target.pathname.slice(4) + target.search;
       }
     } catch (_error) {}

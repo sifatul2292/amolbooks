@@ -6905,7 +6905,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   }
 
   function renderCheckoutCartMirror() {
-    if (!isLocalPreviewHost() || location.pathname.indexOf('/checkout') !== 0 || location.pathname.indexOf('order-success') !== -1) return;
+    if (location.pathname.indexOf('/checkout') !== 0 || location.pathname.indexOf('order-success') !== -1) return;
     var generatedArea = document.querySelector('app-checkout .cart-products-area[data-ab-checkout-generated="true"]');
     var nativeArea = document.querySelector('app-checkout .cart-products-area:not([data-ab-checkout-generated="true"])');
     if (generatedArea && nativeArea) {
@@ -7158,11 +7158,15 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   }
 
   function cartDisplayedTotal() {
-    var root = document.querySelector('app-cart-information .section-main, app-cart-information .section-main, .cart-area-main');
-    if (!root) return 0;
-    var text = banglaNumber(root.textContent || '').replace(/,/g, '');
-    var match = text.match(/(?:সর্বমোট\\s*টাকা|মোট\\s*টাকা|Subtotal|Total)\\s*:?\\s*৳?\\s*(\\d+(?:\\.\\d+)?)/i);
-    return match ? Number(match[1]) || 0 : 0;
+    var candidates = document.querySelectorAll(
+      'app-cart-information .select-items-area h3, app-cart-information .cart-area-bottom a, app-cart-information .cart-area-bottom button'
+    );
+    for (var i = 0; i < candidates.length; i += 1) {
+      var text = banglaNumber(candidates[i].textContent || '').replace(/,/g, '').replace(/\\s+/g, ' ').trim();
+      var match = text.match(/(?:সর্বমোট টাকা|মোট টাকা|Subtotal|Total)[^\\d]*৳?\\s*(\\d+(?:\\.\\d+)?)\\s*(?:→)?\\s*$/i);
+      if (match) return Number(match[1]) || 0;
+    }
+    return 0;
   }
 
   function warmCartOfferNotebook() {
@@ -7258,7 +7262,10 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     if (!anchor) return;
     var threshold = Number(cartOfferConfig.giftMinAmount) || CART_OFFER_FALLBACK_THRESHOLD;
     var calculatedTotal = cartTotalFromProducts(items || [], products || []);
-    var total = isLocalPreviewHost() ? calculatedTotal : (cartDisplayedTotal() || calculatedTotal);
+    /* The hydrated cart is authoritative. Reading the whole cart DOM used to
+       concatenate a subtotal with a Bengali-digit product title (for example
+       ৳310 + “৫০০ শব্দে…” => 310500), falsely unlocking the gift. */
+    var total = calculatedTotal || cartDisplayedTotal();
     if (!total) return;
     var remaining = Math.max(0, Math.ceil(threshold - total));
     var progress = document.getElementById('ab-cart-offer-progress');

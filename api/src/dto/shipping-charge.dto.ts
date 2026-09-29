@@ -8,10 +8,25 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  Min,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PaginationDto } from './pagination.dto';
+
+export class ShippingChargeRuleDto {
+  @IsNumber()
+  @Min(0)
+  fromGram: number;
+
+  @IsNumber()
+  @Min(0)
+  toGram: number;
+
+  @IsNumber()
+  @Min(0)
+  cost: number;
+}
 
 export class AddShippingChargeDto {
   @IsOptional()
@@ -25,6 +40,22 @@ export class AddShippingChargeDto {
   @IsOptional()
   @IsNumber()
   deliveryOutsideBD: number;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(50)
+  @ValidateNested({ each: true })
+  @Type(() => ShippingChargeRuleDto)
+  insideDhakaRules: ShippingChargeRuleDto[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(50)
+  @ValidateNested({ each: true })
+  @Type(() => ShippingChargeRuleDto)
+  outsideDhakaRules: ShippingChargeRuleDto[];
 }
 
 export class FilterShippingChargeDto {
