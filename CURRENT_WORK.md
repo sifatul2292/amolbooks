@@ -1,5 +1,11 @@
 # CURRENT_WORK
 
+## Production product-detail hydration repair (2026-09-29)
+
+- Reproduced the deployed blank product card: production catalogue reads were sent to `/storefront-catalog`, but Nginx returned the Angular HTML fallback instead of JSON, leaving the native panel at its `Tk 0` / `Out of Stock` defaults.
+- Production catalogue reads now use the published API directly; its CORS policy explicitly allows both `amolbooks.com` storefront origins. Local/private previews keep the same-origin proxy they require.
+- Added focused routing coverage for both production storefront hosts. Product-detail, cart-state, catalogue-routing, API build, generated-asset hash, and browser hydration checks pass. `npm run lint` remains blocked because the existing ESLint configuration ignores its configured glob.
+
 ## Checkout weight-band delivery charges (2026-09-29)
 
 - Connected checkout delivery pricing to the saved `insideDhakaRules` and `outsideDhakaRules` instead of the flat ৳60/৳75 fallback or the legacy hardcoded per-kilogram formula.

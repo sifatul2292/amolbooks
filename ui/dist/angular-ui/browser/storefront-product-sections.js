@@ -23,13 +23,7 @@
       /^172\.(1[6-9]|2\d|3[0-1])\./.test(host) ||
       /\.trycloudflare\.com$/.test(host);
   }
-  function useStorefrontCatalogueProxy() {
-    var host = window.location.hostname;
-    return isLocalPreviewHost() || host === 'amolbooks.com' || host === 'www.amolbooks.com';
-  }
-  /* Checkout-critical catalogue reads stay same-origin in production too, so
-     cart totals and shipping do not depend on a cross-origin browser request. */
-  var CATALOG_API_BASE = useStorefrontCatalogueProxy()
+  var CATALOG_API_BASE = isLocalPreviewHost()
     ? window.location.origin + '/storefront-catalog'
     : API_BASE;
   var RECOMMENDATION_API_BASE = isLocalPreviewHost()

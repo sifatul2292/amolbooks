@@ -19,11 +19,11 @@ function emittedFunction(name) {
   assert.fail(`Unclosed ${name}`);
 }
 const localHostSource = emittedFunction('isLocalPreviewHost');
-const proxyHostSource = emittedFunction('useStorefrontCatalogueProxy');
-const catalogueBaseFor = new Function('window', `${localHostSource}; ${proxyHostSource}; var API_BASE = 'https://apisub.amolbooks.com/api'; return useStorefrontCatalogueProxy() ? window.location.origin + '/storefront-catalog' : API_BASE;`);
+const catalogueBaseFor = new Function('window', `${localHostSource}; var API_BASE = 'https://apisub.amolbooks.com/api'; return isLocalPreviewHost() ? window.location.origin + '/storefront-catalog' : API_BASE;`);
 assert.equal(catalogueBaseFor({ location: { hostname: 'localhost', origin: 'http://localhost:3000' } }), 'http://localhost:3000/storefront-catalog');
 assert.equal(catalogueBaseFor({ location: { hostname: 'demo.trycloudflare.com', origin: 'https://demo.trycloudflare.com' } }), 'https://demo.trycloudflare.com/storefront-catalog');
-assert.equal(catalogueBaseFor({ location: { hostname: 'amolbooks.com', origin: 'https://amolbooks.com' } }), 'https://amolbooks.com/storefront-catalog');
+assert.equal(catalogueBaseFor({ location: { hostname: 'amolbooks.com', origin: 'https://amolbooks.com' } }), 'https://apisub.amolbooks.com/api');
+assert.equal(catalogueBaseFor({ location: { hostname: 'www.amolbooks.com', origin: 'https://www.amolbooks.com' } }), 'https://apisub.amolbooks.com/api');
 
 const fallbackDom = new JSDOM(`<app-product-details-area>
   <div class="product-image-box"><img src="" alt=""></div>

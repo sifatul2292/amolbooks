@@ -12,7 +12,7 @@ assert.match(source, /@media \(max-width: 1023px\)[\s\S]*?\.section-right \.cart
 assert.match(source, /generatedArea && nativeRows && nativeRows\.length[\s\S]*?generatedArea\.remove\(\)/, 'A populated native checkout list replaces the temporary fallback');
 assert.match(source, /data-ab-checkout-generated/, 'Temporary checkout list is identifiable');
 assert.doesNotMatch(source, /function renderCheckoutCartMirror\(\) \{\s*if \(!isLocalPreviewHost\(\)/, 'Checkout fallback also repairs the live storefront');
-assert.match(source, /function useStorefrontCatalogueProxy\(\)[\s\S]*?www\.amolbooks\.com[\s\S]*?var CATALOG_API_BASE = useStorefrontCatalogueProxy\(\)/, 'Live checkout catalogue reads use the same-origin proxy');
+assert.match(source, /var CATALOG_API_BASE = isLocalPreviewHost\(\)[\s\S]*?: API_BASE;/, 'Production catalogue reads use the CORS-enabled API');
 assert.match(source, /fetchJson\(path,[\s\S]*?baseUrl\)\.catch\(function \(\) \{ return null; \}\)/, 'One failed product source cannot discard a successful checkout fallback');
 assert.match(source, /'\/special-package\/get-products-by-ids'[\s\S]*?CATALOG_API_BASE/, 'Special-package cart hydration uses the same-origin catalogue proxy');
 assert.match(source, /window\.addEventListener\('pageshow',[\s\S]*?event\.persisted[\s\S]*?location\.pathname\.indexOf\('\/checkout'\)[\s\S]*?window\.location\.reload\(\)/, 'A history-restored checkout must reinitialize its Angular cart and shipping state');
