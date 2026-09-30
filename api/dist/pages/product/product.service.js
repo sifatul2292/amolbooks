@@ -1457,7 +1457,7 @@ ${items.join('\n')}
             const total = await this.productModel.countDocuments(filter);
             const data = await this.productModel
                 .find(filter)
-                .select('name nameEn sku images salePrice stock lowStockThreshold totalSold publisher')
+                .select('name nameEn sku images salePrice costPrice stock lowStockThreshold totalSold publisher')
                 .sort({ totalSold: -1, name: 1, _id: 1 })
                 .skip((page - 1) * limit)
                 .limit(limit)

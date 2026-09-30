@@ -5,6 +5,7 @@
 - Added a protected `GET /api/order/customer-bundle-insights` report using existing order data only.
 - Added an admin sidebar section listing repeat customers, complete multi-item basket patterns, and the top repeated 3–4 book combinations from the last 90 days as advertising bundle suggestions.
 - Customer phone numbers are normalized before grouping; cancelled, refunded, returned, and held/trash orders are excluded.
+- Added a read-only manual bundle calculator using current product sale/cost prices, proposed bundle price, ad cost, fulfilment cost, and a configurable target margin. Missing cost prices block the viability result instead of being treated as zero.
 - No order data, database schema, or product records are changed by this read-only report.
 
 ## Product-search SEO repair (2026-09-27)

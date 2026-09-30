@@ -5,6 +5,7 @@ const page = fs.readFileSync('api/upload/static/custom-orders.html', 'utf8');
 const editor = fs.readFileSync('api/src/admin-incomplete-order-editor-script.ts', 'utf8');
 const controller = fs.readFileSync('api/src/pages/sales/order/order.controller.ts', 'utf8');
 const service = fs.readFileSync('api/src/pages/sales/order/order.service.ts', 'utf8');
+const productService = fs.readFileSync('api/src/pages/product/product.service.ts', 'utf8');
 
 assert.match(page, /AmolbooksIncompleteEditor\.openOrder\(\\'\'\+o\._id\+\'\\'\)/, 'Actual orders expose the Edit action');
 assert.match(page, /class="btn-action btn-edit"/, 'Actual order Edit action has its own visible style');
@@ -31,6 +32,10 @@ assert.match(service, /recommendationWindowDays = 90[\s\S]*?recentOrderCount > 1
 assert.match(service, /orderBundles,[\s\S]*?bundleSuggestions/, 'Endpoint returns recommendations and complete packages');
 assert.match(page, /Complete multi-item packages/, 'Page shows complete customer baskets');
 assert.match(page, /Recommended ad bundles/, 'Page shows ranked advertising bundle suggestions');
+assert.match(page, /Manual bundle profit calculator/, 'Insights include the manual bundle calculator');
+assert.match(page, /sellingPrice - productCost - adCost - otherCost/, 'Calculator subtracts product, ad, and fulfilment costs');
+assert.match(page, /Profit is hidden until costs are complete/, 'Calculator does not claim profit when product costs are missing');
+assert.match(productService, /salePrice costPrice stock lowStockThreshold/, 'Admin product search returns current sale and cost prices');
 assert.match(service, /OrderStatus\.CANCEL[\s\S]*?OrderStatus\.REFUND[\s\S]*?OrderStatus\.RETURN[\s\S]*?OrderStatus\.HOLD/, 'Invalid order statuses are excluded from insights');
 
 console.log('Custom order editor checks passed');

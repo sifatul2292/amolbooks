@@ -1010,10 +1010,46 @@
     .bundle-plus { color: var(--p); flex: 0 0 auto; font-weight: 900; }
     .bundle-rank { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--p); color: #fff; font-weight: 900; }
     .bundle-hot { color: #b45309; background: #fef3c7; border-radius: 999px; padding: 4px 8px; font-size: 10px; font-weight: 800; white-space: nowrap; }
+    .bundle-builder { margin-bottom: 14px; padding: 18px; background: #fff; border: 1px solid var(--g200); border-radius: 14px; box-shadow: 0 1px 3px rgba(15,23,42,.05); }
+    .bundle-builder-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+    .bundle-builder-head h3 { color: var(--g900); font-size: 17px; }
+    .bundle-builder-head p { margin-top: 4px; color: var(--g500); font-size: 11px; }
+    .bundle-builder-grid { display: grid; grid-template-columns: minmax(0,1.35fr) minmax(280px,.65fr); gap: 16px; align-items: start; }
+    .bundle-builder-grid > * { min-width: 0; }
+    .bundle-search-wrap { position: relative; }
+    .bundle-search { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1.5px solid var(--g200); border-radius: 10px; }
+    .bundle-search:focus-within { border-color: var(--p); box-shadow: 0 0 0 3px rgba(124,58,237,.1); }
+    .bundle-search input { width: 100%; border: 0; outline: 0; background: none; color: var(--g900); font: inherit; }
+    .bundle-search-results { position: absolute; z-index: 20; top: calc(100% + 5px); left: 0; right: 0; display: none; max-height: 260px; overflow-y: auto; border: 1px solid var(--g200); border-radius: 10px; background: #fff; box-shadow: 0 14px 35px rgba(15,23,42,.16); }
+    .bundle-search-result { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 10px 12px; border: 0; border-bottom: 1px solid var(--g100); background: #fff; text-align: left; cursor: pointer; }
+    .bundle-search-result:hover { background: #f8f7ff; }
+    .bundle-search-result small { display: block; margin-top: 2px; color: var(--g500); }
+    .bundle-selected { margin-top: 12px; overflow-x: auto; }
+    .bundle-selected table { min-width: 620px; }
+    .bundle-qty { width: 58px; padding: 6px; border: 1px solid var(--g200); border-radius: 7px; text-align: center; }
+    .bundle-remove { border: 0; background: #fee2e2; color: #b91c1c; border-radius: 7px; padding: 7px 9px; cursor: pointer; }
+    .bundle-calc { padding: 15px; border: 1px solid #ddd6fe; border-radius: 12px; background: #faf9ff; }
+    .bundle-calc-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+    .bundle-calc-field label { display: block; margin-bottom: 5px; color: var(--g600); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+    .bundle-calc-field input { box-sizing: border-box; min-width: 0; width: 100%; padding: 9px 10px; border: 1px solid var(--g200); border-radius: 8px; font: inherit; }
+    .bundle-profit-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; margin-top: 12px; }
+    .bundle-profit-metric { padding: 10px; border-radius: 9px; background: #fff; border: 1px solid var(--g200); }
+    .bundle-profit-metric span { display: block; color: var(--g500); font-size: 10px; font-weight: 700; }
+    .bundle-profit-metric strong { display: block; margin-top: 3px; color: var(--g900); font-size: 17px; }
+    .bundle-verdict { margin-top: 10px; padding: 11px; border-radius: 9px; font-size: 12px; font-weight: 800; }
+    .bundle-verdict.good { background: #dcfce7; color: #166534; }
+    .bundle-verdict.tight { background: #fef3c7; color: #92400e; }
+    .bundle-verdict.bad { background: #fee2e2; color: #991b1b; }
+    .bundle-verdict.unknown { background: var(--g100); color: var(--g600); }
+    .bundle-cost-warning { margin-top: 8px; color: #b45309; font-size: 11px; font-weight: 700; }
     @media (max-width: 900px) {
       .insights-grid { grid-template-columns: 1fr; }
       #insightsView .stats-row { grid-template-columns: 1fr; }
       .insights-card-wide { grid-column: auto; }
+      .bundle-builder-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 520px) {
+      .bundle-calc-fields, .bundle-profit-grid { grid-template-columns: 1fr; }
     }
 
     /* Hallmark · pre-emit critique: P4 H5 E5 S5 R5 V4 */
@@ -1405,6 +1441,47 @@
             <div class="stat-info"><label>Recommended Bundles</label><div class="val" id="insightsSuggestionCount">—</div></div>
           </div>
         </div>
+        <section class="bundle-builder" aria-labelledby="bundleBuilderTitle">
+          <div class="bundle-builder-head">
+            <div>
+              <h3 id="bundleBuilderTitle"><i class="fas fa-calculator" style="color:var(--p);margin-right:7px"></i>Manual bundle profit calculator</h3>
+              <p>Build a draft bundle without changing the catalogue. Product costs come from the current admin cost price.</p>
+            </div>
+            <button class="btn-reset" type="button" onclick="resetBundleCalculator()"><i class="fas fa-rotate-left"></i> Reset</button>
+          </div>
+          <div class="bundle-builder-grid">
+            <div>
+              <div class="bundle-search-wrap">
+                <div class="bundle-search"><i class="fas fa-search"></i><input id="bundleProductSearch" type="search" placeholder="Search and add books…" autocomplete="off" aria-label="Search products for bundle"></div>
+                <div class="bundle-search-results" id="bundleSearchResults"></div>
+              </div>
+              <div class="bundle-selected">
+                <table>
+                  <thead><tr><th>Book</th><th>Sale price</th><th>Unit cost</th><th>Qty</th><th></th></tr></thead>
+                  <tbody id="bundleSelectedBody"><tr><td colspan="5" class="empty-state">Search above to add books.</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="bundle-calc">
+              <div class="bundle-calc-fields">
+                <div class="bundle-calc-field"><label for="bundleSellingPrice">Bundle selling price</label><input id="bundleSellingPrice" type="number" min="0" step="1" value="0" oninput="markBundlePriceManual();calculateBundleProfit()"></div>
+                <div class="bundle-calc-field"><label for="bundleAdCost">Ad cost per sale</label><input id="bundleAdCost" type="number" min="0" step="1" value="0" oninput="calculateBundleProfit()"></div>
+                <div class="bundle-calc-field"><label for="bundleOtherCost">Courier + packaging</label><input id="bundleOtherCost" type="number" min="0" step="1" value="0" oninput="calculateBundleProfit()"></div>
+                <div class="bundle-calc-field"><label for="bundleTargetMargin">Healthy margin target</label><input id="bundleTargetMargin" type="number" min="0" max="100" step="1" value="20" oninput="calculateBundleProfit()"></div>
+              </div>
+              <div class="bundle-profit-grid">
+                <div class="bundle-profit-metric"><span>Normal selling total</span><strong id="bundleNormalTotal">৳0</strong></div>
+                <div class="bundle-profit-metric"><span>Product cost</span><strong id="bundleProductCost">৳0</strong></div>
+                <div class="bundle-profit-metric"><span>Bundle discount</span><strong id="bundleDiscount">৳0</strong></div>
+                <div class="bundle-profit-metric"><span>Expected profit</span><strong id="bundleProfit">৳0</strong></div>
+                <div class="bundle-profit-metric"><span>Profit margin</span><strong id="bundleMargin">0%</strong></div>
+                <div class="bundle-profit-metric"><span>Break-even ad cost</span><strong id="bundleBreakEvenAd">৳0</strong></div>
+              </div>
+              <div class="bundle-verdict unknown" id="bundleVerdict">Add books to calculate viability.</div>
+              <div class="bundle-cost-warning" id="bundleCostWarning" style="display:none"></div>
+            </div>
+          </div>
+        </section>
         <div class="insights-grid">
           <section class="table-card insights-card">
             <div class="insights-card-head">
@@ -1970,6 +2047,10 @@
   var isIncompleteView = params.get('view') === 'incomplete';
   var isStockView = params.get('view') === 'stock';
   var isInsightsView = params.get('view') === 'insights';
+  var bundleCalculatorProducts = [];
+  var bundleSearchProducts = {};
+  var bundlePriceManual = false;
+  var bundleSearchTimer = null;
   var courierBackfillRunning = false;
   var courierBackfillRetryMode = false;
   var courierInReviewSyncPromise = null;
@@ -2267,6 +2348,160 @@
         showToast(error.message, 'error');
       });
   };
+
+  function bundleMoney(value) {
+    var amount = Math.round(Number(value) || 0);
+    return (amount < 0 ? '-৳' : '৳') + Math.abs(amount).toLocaleString('en-US');
+  }
+
+  function bundleNormalTotal() {
+    return bundleCalculatorProducts.reduce(function (total, product) {
+      return total + product.salePrice * product.qty;
+    }, 0);
+  }
+
+  function syncBundlePrice() {
+    if (!bundlePriceManual) document.getElementById('bundleSellingPrice').value = String(bundleNormalTotal());
+  }
+
+  window.markBundlePriceManual = function () { bundlePriceManual = true; };
+
+  window.searchBundleProducts = function () {
+    var input = document.getElementById('bundleProductSearch');
+    var results = document.getElementById('bundleSearchResults');
+    var query = input.value.trim();
+    if (query.length < 2) { results.style.display = 'none'; return; }
+    results.style.display = 'block';
+    results.innerHTML = '<div class="empty-state"><div class="spinner"></div></div>';
+    fetch(API + '/api/product/stock-list?page=1&limit=20&includeSalesMetrics=false&q=' + encodeURIComponent(query), { headers: authHeaders() })
+      .then(function (response) {
+        if (response.status === 401) {
+          clearToken();
+          showLogin('Session expired. Please sign in again.');
+          throw new Error('auth');
+        }
+        if (!response.ok) throw new Error('Product search failed');
+        return response.json();
+      })
+      .then(function (response) {
+        var products = response.data || [];
+        bundleSearchProducts = {};
+        products.forEach(function (product) { bundleSearchProducts[product._id] = product; });
+        results.innerHTML = products.length ? products.map(function (product) {
+          var hasCost = product.costPrice !== null && product.costPrice !== undefined && isFinite(Number(product.costPrice));
+          return '<button type="button" class="bundle-search-result" onclick="addBundleProduct(\'' + esc(product._id) + '\')">' +
+            '<span><strong>' + esc(product.name || product.nameEn || 'Unknown book') + '</strong><small>Sale: ' + bundleMoney(product.salePrice) + ' · Cost: ' + (hasCost ? bundleMoney(product.costPrice) : 'missing') + '</small></span>' +
+            '<span class="bundle-hot">Add</span></button>';
+        }).join('') : '<div class="empty-state">No books found.</div>';
+      })
+      .catch(function (error) {
+        if (error.message !== 'auth') results.innerHTML = '<div class="empty-state">' + esc(error.message) + '</div>';
+      });
+  };
+
+  window.addBundleProduct = function (id) {
+    var source = bundleSearchProducts[id];
+    if (!source) return;
+    var existing = bundleCalculatorProducts.find(function (product) { return product.id === id; });
+    if (existing) existing.qty += 1;
+    else bundleCalculatorProducts.push({
+      id: id,
+      name: source.name || source.nameEn || 'Unknown book',
+      salePrice: Math.max(0, Number(source.salePrice) || 0),
+      costPrice: source.costPrice === null || source.costPrice === undefined || !isFinite(Number(source.costPrice)) ? null : Math.max(0, Number(source.costPrice)),
+      qty: 1,
+    });
+    document.getElementById('bundleProductSearch').value = '';
+    document.getElementById('bundleSearchResults').style.display = 'none';
+    syncBundlePrice();
+    renderBundleCalculator();
+  };
+
+  window.setBundleProductQty = function (id, value) {
+    var product = bundleCalculatorProducts.find(function (item) { return item.id === id; });
+    if (!product) return;
+    product.qty = Math.max(1, parseInt(value, 10) || 1);
+    syncBundlePrice();
+    renderBundleCalculator();
+  };
+
+  window.removeBundleProduct = function (id) {
+    bundleCalculatorProducts = bundleCalculatorProducts.filter(function (product) { return product.id !== id; });
+    syncBundlePrice();
+    renderBundleCalculator();
+  };
+
+  function renderBundleCalculator() {
+    var body = document.getElementById('bundleSelectedBody');
+    body.innerHTML = bundleCalculatorProducts.length ? bundleCalculatorProducts.map(function (product) {
+      return '<tr><td><strong>' + esc(product.name) + '</strong></td>' +
+        '<td>' + bundleMoney(product.salePrice) + '</td>' +
+        '<td>' + (product.costPrice === null ? '<span style="color:#b45309;font-weight:700">Missing</span>' : bundleMoney(product.costPrice)) + '</td>' +
+        '<td><input class="bundle-qty" type="number" min="1" value="' + product.qty + '" onchange="setBundleProductQty(\'' + esc(product.id) + '\',this.value)" aria-label="Quantity for ' + esc(product.name) + '"></td>' +
+        '<td><button type="button" class="bundle-remove" onclick="removeBundleProduct(\'' + esc(product.id) + '\')" aria-label="Remove ' + esc(product.name) + '"><i class="fas fa-trash"></i></button></td></tr>';
+    }).join('') : '<tr><td colspan="5" class="empty-state">Search above to add books.</td></tr>';
+    calculateBundleProfit();
+  }
+
+  window.calculateBundleProfit = function () {
+    var normalTotal = bundleNormalTotal();
+    var sellingPrice = Math.max(0, Number(document.getElementById('bundleSellingPrice').value) || 0);
+    var adCost = Math.max(0, Number(document.getElementById('bundleAdCost').value) || 0);
+    var otherCost = Math.max(0, Number(document.getElementById('bundleOtherCost').value) || 0);
+    var targetMargin = Math.max(0, Math.min(100, Number(document.getElementById('bundleTargetMargin').value) || 0));
+    var missing = bundleCalculatorProducts.filter(function (product) { return product.costPrice === null; });
+    var productCost = bundleCalculatorProducts.reduce(function (total, product) {
+      return total + (product.costPrice || 0) * product.qty;
+    }, 0);
+    var profit = sellingPrice - productCost - adCost - otherCost;
+    var margin = sellingPrice > 0 ? profit / sellingPrice * 100 : 0;
+    var breakEvenAd = sellingPrice - productCost - otherCost;
+    var verdict = document.getElementById('bundleVerdict');
+    var warning = document.getElementById('bundleCostWarning');
+
+    document.getElementById('bundleNormalTotal').textContent = bundleMoney(normalTotal);
+    document.getElementById('bundleProductCost').textContent = missing.length ? 'Incomplete' : bundleMoney(productCost);
+    document.getElementById('bundleDiscount').textContent = bundleMoney(normalTotal - sellingPrice);
+    document.getElementById('bundleProfit').textContent = missing.length || !bundleCalculatorProducts.length ? '—' : bundleMoney(profit);
+    document.getElementById('bundleMargin').textContent = missing.length || !bundleCalculatorProducts.length ? '—' : margin.toFixed(1) + '%';
+    document.getElementById('bundleBreakEvenAd').textContent = missing.length || !bundleCalculatorProducts.length ? '—' : bundleMoney(breakEvenAd);
+
+    warning.style.display = missing.length ? '' : 'none';
+    warning.textContent = missing.length ? 'Add cost prices for: ' + missing.map(function (product) { return product.name; }).join(', ') + '. Profit is hidden until costs are complete.' : '';
+    if (!bundleCalculatorProducts.length) {
+      verdict.className = 'bundle-verdict unknown';
+      verdict.textContent = 'Add books to calculate viability.';
+    } else if (missing.length) {
+      verdict.className = 'bundle-verdict unknown';
+      verdict.textContent = 'Viability unavailable because product cost data is missing.';
+    } else if (profit <= 0) {
+      verdict.className = 'bundle-verdict bad';
+      verdict.textContent = 'Not viable: this bundle loses ' + bundleMoney(Math.abs(profit)) + ' per sale.';
+    } else if (margin >= targetMargin) {
+      verdict.className = 'bundle-verdict good';
+      verdict.textContent = 'Viable: ' + margin.toFixed(1) + '% margin after product, ad, and fulfilment costs.';
+    } else {
+      verdict.className = 'bundle-verdict tight';
+      verdict.textContent = 'Tight margin: ' + margin.toFixed(1) + '% is below your ' + targetMargin.toFixed(0) + '% target.';
+    }
+  };
+
+  window.resetBundleCalculator = function () {
+    bundleCalculatorProducts = [];
+    bundlePriceManual = false;
+    document.getElementById('bundleProductSearch').value = '';
+    document.getElementById('bundleSellingPrice').value = '0';
+    document.getElementById('bundleAdCost').value = '0';
+    document.getElementById('bundleOtherCost').value = '0';
+    document.getElementById('bundleTargetMargin').value = '20';
+    document.getElementById('bundleSearchResults').style.display = 'none';
+    renderBundleCalculator();
+  };
+
+  document.getElementById('bundleProductSearch').addEventListener('input', function () {
+    clearTimeout(bundleSearchTimer);
+    bundleSearchTimer = setTimeout(searchBundleProducts, 300);
+  });
 
   /* ── Toast ── */
   var toastTimer;

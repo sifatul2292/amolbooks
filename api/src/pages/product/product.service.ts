@@ -1897,7 +1897,7 @@ ${items.join('\n')}
       const data = await this.productModel
         .find(filter)
         .select(
-          'name nameEn sku images salePrice stock lowStockThreshold totalSold publisher',
+          'name nameEn sku images salePrice costPrice stock lowStockThreshold totalSold publisher',
         )
         // Rank globally before pagination so best sellers always appear first.
         .sort({ totalSold: -1, name: 1, _id: 1 })
