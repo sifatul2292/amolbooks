@@ -262,6 +262,13 @@ export class OrderController {
     return this.orderService.getAllOrders(filterOrderDto, searchString);
   }
 
+  @Version(VERSION_NEUTRAL)
+  @Get('/customer-bundle-insights')
+  @UseGuards(AdminJwtAuthGuard)
+  async getCustomerBundleInsights(): Promise<ResponsePayload> {
+    return this.orderService.getCustomerBundleInsights();
+  }
+
   @Post('/get-orders-by-user')
   @UsePipes(ValidationPipe)
   @UseGuards(UserJwtAuthGuard)

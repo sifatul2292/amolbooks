@@ -21,5 +21,11 @@ assert.match(page, /আমলবুকস থেকে আপনার অর্
 assert.match(page, /whatsappBookSummary\(o\.orderedItems\)/, 'WhatsApp messages include ordered book names');
 assert.match(page, /বইয়ের নাম:/, 'WhatsApp messages label the ordered books');
 assert.match(page, /https:\/\/wa\.me\//, 'WhatsApp opens with a prefilled message');
+assert.match(page, /custom-orders\.html\?view=insights/, 'Sidebar exposes customer and bundle insights');
+assert.match(page, /\/api\/order\/customer-bundle-insights/, 'Insights page loads the aggregation endpoint');
+assert.match(controller, /@Get\('\/customer-bundle-insights'\)[\s\S]*?@UseGuards\(AdminJwtAuthGuard\)/, 'Insights endpoint requires admin authentication');
+assert.match(service, /repeatCustomers:[\s\S]*?orderCount: \{ \$gte: 2 \}/, 'Repeat-customer results require multiple valid orders');
+assert.match(service, /productPairs:[\s\S]*?\$lt: \['\$firstIndex', '\$secondIndex'\]/, 'Bundle insights count each product pair once per order');
+assert.match(service, /OrderStatus\.CANCEL[\s\S]*?OrderStatus\.REFUND[\s\S]*?OrderStatus\.RETURN[\s\S]*?OrderStatus\.HOLD/, 'Invalid order statuses are excluded from insights');
 
 console.log('Custom order editor checks passed');

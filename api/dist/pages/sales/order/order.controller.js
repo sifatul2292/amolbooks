@@ -89,6 +89,9 @@ let OrderController = OrderController_1 = class OrderController {
     async getAllOrders(filterOrderDto, searchString) {
         return this.orderService.getAllOrders(filterOrderDto, searchString);
     }
+    async getCustomerBundleInsights() {
+        return this.orderService.getCustomerBundleInsights();
+    }
     async getOrdersByUser(user, filterOrderDto, searchString) {
         return await this.orderService.getOrdersByUser(user, filterOrderDto, searchString);
     }
@@ -310,6 +313,14 @@ __decorate([
     __metadata("design:paramtypes", [order_dto_1.FilterAndPaginationOrderDto, String]),
     __metadata("design:returntype", Promise)
 ], OrderController.prototype, "getAllOrders", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Get)('/customer-bundle-insights'),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "getCustomerBundleInsights", null);
 __decorate([
     (0, common_1.Post)('/get-orders-by-user'),
     (0, common_1.UsePipes)(common_1.ValidationPipe),

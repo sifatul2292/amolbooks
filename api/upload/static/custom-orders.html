@@ -977,6 +977,39 @@
     body.salesman-mode .money-stat { display: none !important; }
     body.salesman-mode .stats-row { grid-template-columns: repeat(2,1fr); }
 
+    /* ── Customer & Bundle Insights ── */
+    body.insights-mode .content > :not(#insightsView) { display: none !important; }
+    #insightsView { display: none; }
+    body.insights-mode #insightsView { display: block; }
+    body.insights-mode .topbar .search-wrap,
+    body.insights-mode .topbar .ai-topbar-btn,
+    body.insights-mode .topbar > a.topbar-btn,
+    body.insights-mode #courierBackfillBtn { display: none !important; }
+    .insights-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .insights-head h2 { font-size: 19px; font-weight: 900; color: var(--g900); letter-spacing: -.02em; }
+    .insights-head h2 i { color: var(--p); margin-right: 8px; }
+    .insights-head p { color: var(--g500); font-size: 12px; margin-top: 4px; }
+    #insightsView .stats-row { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .insights-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
+    .insights-card { min-width: 0; }
+    .insights-card-head { padding: 16px 18px; border-bottom: 1px solid var(--g200); }
+    .insights-card-head h3 { font-size: 15px; color: var(--g900); }
+    .insights-card-head p { font-size: 11px; color: var(--g500); margin-top: 3px; }
+    .insights-table-wrap { overflow-x: auto; }
+    .insights-table { min-width: 650px; }
+    .insights-table td { vertical-align: middle; }
+    .insights-customer { font-weight: 800; color: var(--g900); }
+    .insights-phone { color: var(--blue); text-decoration: none; font-weight: 700; }
+    .insights-count { font-size: 15px; font-weight: 900; color: var(--p); }
+    .bundle-books { display: flex; align-items: center; gap: 7px; font-weight: 700; color: var(--g800); }
+    .bundle-plus { color: var(--p); flex: 0 0 auto; }
+    @media (max-width: 900px) {
+      .insights-grid { grid-template-columns: 1fr; }
+    }
+
     /* Hallmark · pre-emit critique: P4 H5 E5 S5 R5 V4 */
     /* ── Stock Management ── */
     body.stock-mode .content > :not(#stockView) { display: none !important; }
@@ -1262,6 +1295,9 @@
         <i class="fas fa-boxes-stacked"></i> Stock Management
       </a>
       <div class="nav-label" style="margin-top:8px" data-salesman-hidden>Analytics</div>
+      <a href="custom-orders.html?view=insights" class="nav-item" id="navInsights" data-salesman-hidden>
+        <i class="fas fa-users"></i> Customer &amp; Bundle Insights
+      </a>
       <a href="profit-dashboard.html" class="nav-item" data-salesman-hidden>
         <i class="fas fa-chart-line"></i> Profit Dashboard
       </a>
@@ -1329,7 +1365,7 @@
       <button class="topbar-btn" id="courierBackfillBtn" onclick="startCourierBackfill()" title="Retrieve missing historical Steadfast statuses" data-salesman-hidden>
         <i class="fas fa-clock-rotate-left"></i><span class="btn-label"> Backfill Courier</span>
       </button>
-      <button class="topbar-btn" onclick="loadRepeatCustomers();loadTodayStats();loadStatusCounts();" title="Refresh">
+      <button class="topbar-btn" onclick="refreshCurrentView()" title="Refresh">
         <i class="fas fa-sync-alt"></i>
       </button>
       <button class="topbar-btn danger" onclick="doLogout()">
@@ -1339,6 +1375,53 @@
 
     <!-- Content -->
     <div class="content">
+
+      <!-- Customer & Bundle Insights -->
+      <div id="insightsView">
+        <div class="insights-head">
+          <div>
+            <h2><i class="fas fa-chart-pie"></i>Customer &amp; Bundle Insights</h2>
+            <p>Repeat customers and book combinations from valid orders.</p>
+          </div>
+          <button class="btn-reset" onclick="loadCustomerBundleInsights()"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
+        <div class="stats-row">
+          <div class="stat-card c1">
+            <div class="stat-icon"><i class="fas fa-user-group"></i></div>
+            <div class="stat-info"><label>Repeat Customers</label><div class="val" id="insightsCustomerCount">—</div></div>
+          </div>
+          <div class="stat-card c3">
+            <div class="stat-icon"><i class="fas fa-layer-group"></i></div>
+            <div class="stat-info"><label>Popular Book Pairs</label><div class="val" id="insightsPairCount">—</div></div>
+          </div>
+        </div>
+        <div class="insights-grid">
+          <section class="table-card insights-card">
+            <div class="insights-card-head">
+              <h3>Customers with multiple orders</h3>
+              <p>Sorted by order count, then total spend.</p>
+            </div>
+            <div class="insights-table-wrap">
+              <table class="insights-table">
+                <thead><tr><th>Customer</th><th>Orders</th><th>Items</th><th>Spent</th><th>Last order</th></tr></thead>
+                <tbody id="insightsCustomersBody"><tr><td colspan="5"><div class="spinner"></div></td></tr></tbody>
+              </table>
+            </div>
+          </section>
+          <section class="table-card insights-card">
+            <div class="insights-card-head">
+              <h3>Books bought together</h3>
+              <p>Use the strongest combinations as bundle ideas.</p>
+            </div>
+            <div class="insights-table-wrap">
+              <table class="insights-table">
+                <thead><tr><th>Book combination</th><th>Orders together</th><th>Last order</th></tr></thead>
+                <tbody id="insightsPairsBody"><tr><td colspan="3"><div class="spinner"></div></td></tr></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </div>
 
       <!-- Stock Management View -->
       <div id="stockView">
@@ -1864,6 +1947,7 @@
   var params = new URLSearchParams(window.location.search);
   var isIncompleteView = params.get('view') === 'incomplete';
   var isStockView = params.get('view') === 'stock';
+  var isInsightsView = params.get('view') === 'insights';
   var courierBackfillRunning = false;
   var courierBackfillRetryMode = false;
   var courierInReviewSyncPromise = null;
@@ -1879,7 +1963,15 @@
 
   function configureView() {
     var backfillBtn = document.getElementById('courierBackfillBtn');
-    if (backfillBtn) backfillBtn.style.display = (canRunCourierBackfill() && !isStockView && !isIncompleteView) ? '' : 'none';
+    if (backfillBtn) backfillBtn.style.display = (canRunCourierBackfill() && !isStockView && !isIncompleteView && !isInsightsView) ? '' : 'none';
+    if (isInsightsView) {
+      document.body.classList.add('insights-mode');
+      var insightsNav = document.getElementById('navInsights');
+      if (insightsNav) insightsNav.classList.add('active');
+      var insightsTitle = document.getElementById('pageTitle');
+      if (insightsTitle) insightsTitle.textContent = 'Customer & Bundle Insights';
+      return;
+    }
     if (isStockView) {
       document.body.classList.add('stock-mode');
       var stockNav = document.getElementById('navStock');
@@ -2011,7 +2103,7 @@
     var backfillBtn = document.getElementById('courierBackfillBtn');
     if (backfillBtn) {
       backfillBtn.style.display =
-        canRunCourierBackfill() && !isStockView && !isIncompleteView ? '' : 'none';
+        canRunCourierBackfill() && !isStockView && !isIncompleteView && !isInsightsView ? '' : 'none';
     }
   }
 
@@ -2042,7 +2134,8 @@
       if (data && data.token) {
         saveToken(data.token);
         hideLogin();
-        if (isStockView) { loadStockPublishers(); loadStockList(); loadUrgentStock(); }
+        if (isInsightsView) loadCustomerBundleInsights();
+        else if (isStockView) { loadStockPublishers(); loadStockList(); loadUrgentStock(); }
         else {
           loadRepeatCustomers();
           loadTodayStats();
@@ -2065,6 +2158,72 @@
     if (t) h.administrator = t;
     return h;
   }
+
+  window.refreshCurrentView = function () {
+    if (isInsightsView) return loadCustomerBundleInsights();
+    if (isStockView) {
+      loadStockPublishers();
+      loadStockList();
+      loadUrgentStock();
+      return;
+    }
+    loadRepeatCustomers();
+    loadTodayStats();
+    loadStatusCounts();
+  };
+
+  window.loadCustomerBundleInsights = function () {
+    var customersBody = document.getElementById('insightsCustomersBody');
+    var pairsBody = document.getElementById('insightsPairsBody');
+    if (!customersBody || !pairsBody) return;
+    customersBody.innerHTML = '<tr><td colspan="5"><div class="spinner"></div></td></tr>';
+    pairsBody.innerHTML = '<tr><td colspan="3"><div class="spinner"></div></td></tr>';
+
+    fetch(API + '/api/order/customer-bundle-insights', { headers: authHeaders() })
+      .then(function (response) {
+        if (response.status === 401) {
+          clearToken();
+          showLogin('Session expired. Please sign in again.');
+          throw new Error('auth');
+        }
+        if (!response.ok) throw new Error('Could not load insights');
+        return response.json();
+      })
+      .then(function (response) {
+        var data = response.data || {};
+        var customers = data.repeatCustomers || [];
+        var pairs = data.productPairs || [];
+        document.getElementById('insightsCustomerCount').textContent = customers.length.toLocaleString('en-US');
+        document.getElementById('insightsPairCount').textContent = pairs.length.toLocaleString('en-US');
+
+        customersBody.innerHTML = customers.length ? customers.map(function (customer) {
+          var phone = String(customer.phoneNo || '');
+          return '<tr>' +
+            '<td><div class="insights-customer">' + esc(customer.name || 'Unknown') + '</div>' +
+              '<a class="insights-phone" href="tel:' + esc(phone) + '">' + esc(phone || '—') + '</a></td>' +
+            '<td><span class="insights-count">' + Number(customer.orderCount || 0).toLocaleString('en-US') + '</span></td>' +
+            '<td>' + Number(customer.itemCount || 0).toLocaleString('en-US') + '</td>' +
+            '<td><strong>৳' + Math.round(Number(customer.totalSpent || 0)).toLocaleString('en-US') + '</strong></td>' +
+            '<td>' + fmtDate(customer.lastOrderAt) + '</td>' +
+          '</tr>';
+        }).join('') : '<tr><td colspan="5" class="empty-state">No repeat customers found.</td></tr>';
+
+        pairsBody.innerHTML = pairs.length ? pairs.map(function (pair) {
+          return '<tr>' +
+            '<td><div class="bundle-books"><span>' + esc(pair.firstName || 'Unknown book') + '</span>' +
+              '<i class="fas fa-plus bundle-plus"></i><span>' + esc(pair.secondName || 'Unknown book') + '</span></div></td>' +
+            '<td><span class="insights-count">' + Number(pair.orderCount || 0).toLocaleString('en-US') + '</span></td>' +
+            '<td>' + fmtDate(pair.lastOrderAt) + '</td>' +
+          '</tr>';
+        }).join('') : '<tr><td colspan="3" class="empty-state">No multi-book combinations found.</td></tr>';
+      })
+      .catch(function (error) {
+        if (error.message === 'auth') return;
+        customersBody.innerHTML = '<tr><td colspan="5" class="empty-state">Could not load customer insights.</td></tr>';
+        pairsBody.innerHTML = '<tr><td colspan="3" class="empty-state">Could not load bundle insights.</td></tr>';
+        showToast(error.message, 'error');
+      });
+  };
 
   /* ── Toast ── */
   var toastTimer;
@@ -4049,7 +4208,10 @@
   /* ── Init ── */
   applyRoleMode();
   configureView();
-  if (isStockView) {
+  if (isInsightsView) {
+    if (getToken()) { hideLogin(); loadCustomerBundleInsights(); }
+    else { showLogin(); }
+  } else if (isStockView) {
     if (getToken()) { hideLogin(); loadStockPublishers(); loadStockList(); loadUrgentStock(); }
     else { showLogin(); }
   } else if (getToken()) {

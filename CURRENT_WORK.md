@@ -1,5 +1,12 @@
 # CURRENT_WORK
 
+## Customer and bundle insights (2026-09-30)
+
+- Added a protected `GET /api/order/customer-bundle-insights` report using existing order data only.
+- Added an admin sidebar section listing repeat customers and the top 100 book pairs bought together.
+- Customer phone numbers are normalized before grouping; cancelled, refunded, returned, and held/trash orders are excluded.
+- No order data, database schema, or product records are changed by this read-only report.
+
 ## Product-search SEO repair (2026-09-27)
 
 - Audited live Amolbooks product discovery against Rokomari and Wafilife. The public Amolbooks sitemap was a static 2024 file pointing at `apisub.amolbooks.com`, while the dynamic sitemap used the placeholder `your-domain.com`; Googlebot also received the generic homepage metadata on every product URL. Rokomari and Wafilife both expose current product sitemaps and crawlable, product-specific HTML.

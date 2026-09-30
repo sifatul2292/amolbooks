@@ -43,6 +43,7 @@ export declare class OrderController {
     }): Promise<ResponsePayload>;
     generateInvoices(dto: GenerateInvoicesDto): Promise<ResponsePayload>;
     getAllOrders(filterOrderDto: FilterAndPaginationOrderDto, searchString: string): Promise<ResponsePayload>;
+    getCustomerBundleInsights(): Promise<ResponsePayload>;
     getOrdersByUser(user: User, filterOrderDto: FilterAndPaginationOrderDto, searchString: string): Promise<ResponsePayload>;
     getSalesStatsByFilter(filterType: 'publisher' | 'category', filterId: string): Promise<ResponsePayload>;
     getOrderById(id: string, select: string): Promise<ResponsePayload>;

@@ -130,6 +130,7 @@ export declare class OrderService {
     getOrderByOrderId(orderId: string, select: string): Promise<ResponsePayload>;
     insertManyOrder(addOrdersDto: AddOrderDto[], optionOrderDto: OptionOrderDto): Promise<ResponsePayload>;
     getAllOrders(filterOrderDto: FilterAndPaginationOrderDto, searchQuery?: string): Promise<ResponsePayload>;
+    getCustomerBundleInsights(): Promise<ResponsePayload>;
     getSalesStatsByFilter(filterType: 'publisher' | 'category', filterId: string): Promise<ResponsePayload>;
     getOrdersByUser(user: User, filterOrderDto: FilterAndPaginationOrderDto, searchQuery?: string): Promise<ResponsePayload>;
     getOrderById(id: string, select: string): Promise<ResponsePayload>;

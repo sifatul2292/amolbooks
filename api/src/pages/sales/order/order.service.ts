@@ -3518,6 +3518,189 @@ export class OrderService {
     }
   }
 
+  async getCustomerBundleInsights(): Promise<ResponsePayload> {
+    const cleanPhone = (input: any) =>
+      [' ', '-', '+', '(', ')'].reduce<any>(
+        (value, find) => ({
+          $replaceAll: { input: value, find, replacement: '' },
+        }),
+        { $ifNull: [input, ''] },
+      );
+
+    const [data] = await this.orderModel.aggregate([
+      {
+        $match: {
+          orderStatus: {
+            $nin: [
+              OrderStatus.CANCEL,
+              OrderStatus.REFUND,
+              OrderStatus.RETURN,
+              OrderStatus.HOLD,
+            ],
+          },
+        },
+      },
+      { $set: { cleanedPhone: cleanPhone('$phoneNo') } },
+      {
+        $set: {
+          normalizedPhone: {
+            $cond: [
+              {
+                $and: [
+                  { $eq: [{ $strLenCP: '$cleanedPhone' }, 13] },
+                  { $eq: [{ $substrCP: ['$cleanedPhone', 0, 2] }, '88'] },
+                ],
+              },
+              { $substrCP: ['$cleanedPhone', 2, 11] },
+              '$cleanedPhone',
+            ],
+          },
+          products: {
+            $filter: {
+              input: { $ifNull: ['$orderedItems', []] },
+              as: 'item',
+              cond: {
+                $and: [
+                  { $ne: ['$$item.isGift', true] },
+                  { $ne: ['$$item._id', null] },
+                ],
+              },
+            },
+          },
+        },
+      },
+      {
+        $facet: {
+          repeatCustomers: [
+            { $match: { normalizedPhone: { $ne: '' } } },
+            { $sort: { createdAt: -1 } },
+            {
+              $group: {
+                _id: '$normalizedPhone',
+                name: { $first: '$name' },
+                orderCount: { $sum: 1 },
+                itemCount: {
+                  $sum: {
+                    $sum: {
+                      $map: {
+                        input: '$products',
+                        as: 'item',
+                        in: { $ifNull: ['$$item.quantity', 1] },
+                      },
+                    },
+                  },
+                },
+                totalSpent: { $sum: { $ifNull: ['$grandTotal', 0] } },
+                lastOrderAt: { $max: '$createdAt' },
+              },
+            },
+            { $match: { orderCount: { $gte: 2 } } },
+            { $sort: { orderCount: -1, totalSpent: -1 } },
+            {
+              $project: {
+                _id: 0,
+                phoneNo: '$_id',
+                name: 1,
+                orderCount: 1,
+                itemCount: 1,
+                totalSpent: 1,
+                lastOrderAt: 1,
+              },
+            },
+          ],
+          productPairs: [
+            { $match: { 'products.1': { $exists: true } } },
+            { $set: { firstProducts: '$products', secondProducts: '$products' } },
+            {
+              $unwind: {
+                path: '$firstProducts',
+                includeArrayIndex: 'firstIndex',
+              },
+            },
+            {
+              $unwind: {
+                path: '$secondProducts',
+                includeArrayIndex: 'secondIndex',
+              },
+            },
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $lt: ['$firstIndex', '$secondIndex'] },
+                    {
+                      $ne: [
+                        { $toString: '$firstProducts._id' },
+                        { $toString: '$secondProducts._id' },
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
+            {
+              $set: {
+                firstComesFirst: {
+                  $lte: [
+                    { $toString: '$firstProducts._id' },
+                    { $toString: '$secondProducts._id' },
+                  ],
+                },
+              },
+            },
+            {
+              $set: {
+                firstProduct: {
+                  $cond: [
+                    '$firstComesFirst',
+                    '$firstProducts',
+                    '$secondProducts',
+                  ],
+                },
+                secondProduct: {
+                  $cond: [
+                    '$firstComesFirst',
+                    '$secondProducts',
+                    '$firstProducts',
+                  ],
+                },
+              },
+            },
+            {
+              $group: {
+                _id: {
+                  first: '$firstProduct._id',
+                  second: '$secondProduct._id',
+                },
+                firstName: {
+                  $first: {
+                    $ifNull: ['$firstProduct.name', '$firstProduct.nameEn'],
+                  },
+                },
+                secondName: {
+                  $first: {
+                    $ifNull: ['$secondProduct.name', '$secondProduct.nameEn'],
+                  },
+                },
+                orderCount: { $sum: 1 },
+                lastOrderAt: { $max: '$createdAt' },
+              },
+            },
+            { $sort: { orderCount: -1, lastOrderAt: -1 } },
+            { $limit: 100 },
+            { $project: { _id: 0, firstName: 1, secondName: 1, orderCount: 1, lastOrderAt: 1 } },
+          ],
+        },
+      },
+    ]);
+
+    return {
+      success: true,
+      message: 'Success',
+      data: data || { repeatCustomers: [], productPairs: [] },
+    } as ResponsePayload;
+  }
+
   /**
    * Get Sales Statistics by Publisher or Category
    * getSalesStatsByFilter()
