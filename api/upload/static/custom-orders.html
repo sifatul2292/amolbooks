@@ -1457,7 +1457,7 @@
               </div>
               <div class="bundle-selected">
                 <table>
-                  <thead><tr><th>Book</th><th>Sale price</th><th>Unit cost</th><th>Qty</th><th></th></tr></thead>
+                  <thead><tr><th>Book</th><th>Discounted price</th><th>Unit cost</th><th>Qty</th><th></th></tr></thead>
                   <tbody id="bundleSelectedBody"><tr><td colspan="5" class="empty-state">Search above to add books.</td></tr></tbody>
                 </table>
               </div>
@@ -1470,7 +1470,7 @@
                 <div class="bundle-calc-field"><label for="bundleTargetMargin">Healthy margin target</label><input id="bundleTargetMargin" type="number" min="0" max="100" step="1" value="20" oninput="calculateBundleProfit()"></div>
               </div>
               <div class="bundle-profit-grid">
-                <div class="bundle-profit-metric"><span>Normal selling total</span><strong id="bundleNormalTotal">৳0</strong></div>
+                <div class="bundle-profit-metric"><span>Current discounted total</span><strong id="bundleNormalTotal">৳0</strong></div>
                 <div class="bundle-profit-metric"><span>Product cost</span><strong id="bundleProductCost">৳0</strong></div>
                 <div class="bundle-profit-metric"><span>Bundle discount</span><strong id="bundleDiscount">৳0</strong></div>
                 <div class="bundle-profit-metric"><span>Expected profit</span><strong id="bundleProfit">৳0</strong></div>
@@ -2389,8 +2389,10 @@
         products.forEach(function (product) { bundleSearchProducts[product._id] = product; });
         results.innerHTML = products.length ? products.map(function (product) {
           var hasCost = product.costPrice !== null && product.costPrice !== undefined && isFinite(Number(product.costPrice));
+          var effectivePrice = Math.max(0, Number(product.effectivePrice != null ? product.effectivePrice : product.salePrice) || 0);
+          var listPrice = Math.max(0, Number(product.salePrice) || 0);
           return '<button type="button" class="bundle-search-result" onclick="addBundleProduct(\'' + esc(product._id) + '\')">' +
-            '<span><strong>' + esc(product.name || product.nameEn || 'Unknown book') + '</strong><small>Sale: ' + bundleMoney(product.salePrice) + ' · Cost: ' + (hasCost ? bundleMoney(product.costPrice) : 'missing') + '</small></span>' +
+            '<span><strong>' + esc(product.name || product.nameEn || 'Unknown book') + '</strong><small>Price: ' + bundleMoney(effectivePrice) + (effectivePrice < listPrice ? ' (was ' + bundleMoney(listPrice) + ')' : '') + ' · Cost: ' + (hasCost ? bundleMoney(product.costPrice) : 'missing') + '</small></span>' +
             '<span class="bundle-hot">Add</span></button>';
         }).join('') : '<div class="empty-state">No books found.</div>';
       })
@@ -2407,7 +2409,8 @@
     else bundleCalculatorProducts.push({
       id: id,
       name: source.name || source.nameEn || 'Unknown book',
-      salePrice: Math.max(0, Number(source.salePrice) || 0),
+      salePrice: Math.max(0, Number(source.effectivePrice != null ? source.effectivePrice : source.salePrice) || 0),
+      listPrice: Math.max(0, Number(source.salePrice) || 0),
       costPrice: source.costPrice === null || source.costPrice === undefined || !isFinite(Number(source.costPrice)) ? null : Math.max(0, Number(source.costPrice)),
       qty: 1,
     });
@@ -2435,7 +2438,7 @@
     var body = document.getElementById('bundleSelectedBody');
     body.innerHTML = bundleCalculatorProducts.length ? bundleCalculatorProducts.map(function (product) {
       return '<tr><td><strong>' + esc(product.name) + '</strong></td>' +
-        '<td>' + bundleMoney(product.salePrice) + '</td>' +
+        '<td><strong>' + bundleMoney(product.salePrice) + '</strong>' + (product.salePrice < product.listPrice ? '<small style="display:block;color:var(--g400)"><s>' + bundleMoney(product.listPrice) + '</s></small>' : '') + '</td>' +
         '<td>' + (product.costPrice === null ? '<span style="color:#b45309;font-weight:700">Missing</span>' : bundleMoney(product.costPrice)) + '</td>' +
         '<td><input class="bundle-qty" type="number" min="1" value="' + product.qty + '" onchange="setBundleProductQty(\'' + esc(product.id) + '\',this.value)" aria-label="Quantity for ' + esc(product.name) + '"></td>' +
         '<td><button type="button" class="bundle-remove" onclick="removeBundleProduct(\'' + esc(product.id) + '\')" aria-label="Remove ' + esc(product.name) + '"><i class="fas fa-trash"></i></button></td></tr>';

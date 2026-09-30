@@ -35,7 +35,9 @@ assert.match(page, /Recommended ad bundles/, 'Page shows ranked advertising bund
 assert.match(page, /Manual bundle profit calculator/, 'Insights include the manual bundle calculator');
 assert.match(page, /sellingPrice - productCost - adCost - otherCost/, 'Calculator subtracts product, ad, and fulfilment costs');
 assert.match(page, /Profit is hidden until costs are complete/, 'Calculator does not claim profit when product costs are missing');
-assert.match(productService, /salePrice costPrice stock lowStockThreshold/, 'Admin product search returns current sale and cost prices');
+assert.match(productService, /salePrice afterDiscountPrice discountAmount discountType costPrice/, 'Admin product search returns discount and cost fields');
+assert.match(productService, /effectivePrice:[\s\S]*?afterDiscountPrice[\s\S]*?transform\(product, 'salePrice'\)/, 'Calculator products use the storefront discount calculation');
+assert.match(page, /Discounted price/, 'Calculator labels the effective customer price');
 assert.match(service, /OrderStatus\.CANCEL[\s\S]*?OrderStatus\.REFUND[\s\S]*?OrderStatus\.RETURN[\s\S]*?OrderStatus\.HOLD/, 'Invalid order statuses are excluded from insights');
 
 console.log('Custom order editor checks passed');

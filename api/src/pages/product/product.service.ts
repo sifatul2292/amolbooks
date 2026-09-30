@@ -1897,7 +1897,7 @@ ${items.join('\n')}
       const data = await this.productModel
         .find(filter)
         .select(
-          'name nameEn sku images salePrice costPrice stock lowStockThreshold totalSold publisher',
+          'name nameEn sku images salePrice afterDiscountPrice discountAmount discountType costPrice stock lowStockThreshold totalSold publisher',
         )
         // Rank globally before pagination so best sellers always appear first.
         .sort({ totalSold: -1, name: 1, _id: 1 })
@@ -1905,7 +1905,13 @@ ${items.join('\n')}
         .limit(limit)
         .lean();
 
-      let resultData: any[] = data;
+      let resultData: any[] = data.map((product: any) => ({
+        ...product,
+        effectivePrice:
+          Number(product.afterDiscountPrice) > 0
+            ? Number(product.afterDiscountPrice)
+            : this.utilsService.transform(product, 'salePrice'),
+      }));
       if (includeSalesMetrics && data.length) {
         const productIds = data.map((product: any) => new ObjectId(product._id));
         const salesMetrics = await this.getStockSalesMetrics(productIds);
@@ -1914,7 +1920,7 @@ ${items.join('\n')}
           soldLast30Days: 0,
           predictedNeedNext30Days: 0,
         };
-        resultData = data.map((product: any) => ({
+        resultData = resultData.map((product: any) => ({
           ...product,
           ...(salesMetrics.get(String(product._id)) || emptyMetrics),
         }));

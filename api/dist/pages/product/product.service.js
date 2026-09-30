@@ -1457,12 +1457,14 @@ ${items.join('\n')}
             const total = await this.productModel.countDocuments(filter);
             const data = await this.productModel
                 .find(filter)
-                .select('name nameEn sku images salePrice costPrice stock lowStockThreshold totalSold publisher')
+                .select('name nameEn sku images salePrice afterDiscountPrice discountAmount discountType costPrice stock lowStockThreshold totalSold publisher')
                 .sort({ totalSold: -1, name: 1, _id: 1 })
                 .skip((page - 1) * limit)
                 .limit(limit)
                 .lean();
-            let resultData = data;
+            let resultData = data.map((product) => (Object.assign(Object.assign({}, product), { effectivePrice: Number(product.afterDiscountPrice) > 0
+                    ? Number(product.afterDiscountPrice)
+                    : this.utilsService.transform(product, 'salePrice') })));
             if (includeSalesMetrics && data.length) {
                 const productIds = data.map((product) => new ObjectId(product._id));
                 const salesMetrics = await this.getStockSalesMetrics(productIds);
@@ -1471,7 +1473,7 @@ ${items.join('\n')}
                     soldLast30Days: 0,
                     predictedNeedNext30Days: 0,
                 };
-                resultData = data.map((product) => (Object.assign(Object.assign({}, product), (salesMetrics.get(String(product._id)) || emptyMetrics))));
+                resultData = resultData.map((product) => (Object.assign(Object.assign({}, product), (salesMetrics.get(String(product._id)) || emptyMetrics))));
             }
             return {
                 success: true,
