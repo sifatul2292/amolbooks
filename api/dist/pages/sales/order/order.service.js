@@ -2676,95 +2676,105 @@ let OrderService = OrderService_1 = class OrderService {
                             },
                         },
                     ],
-                    productPairs: [
+                    multiItemOrders: [
                         { $match: { 'products.1': { $exists: true } } },
-                        { $set: { firstProducts: '$products', secondProducts: '$products' } },
                         {
-                            $unwind: {
-                                path: '$firstProducts',
-                                includeArrayIndex: 'firstIndex',
-                            },
-                        },
-                        {
-                            $unwind: {
-                                path: '$secondProducts',
-                                includeArrayIndex: 'secondIndex',
-                            },
-                        },
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $lt: ['$firstIndex', '$secondIndex'] },
-                                        {
-                                            $ne: [
-                                                { $toString: '$firstProducts._id' },
-                                                { $toString: '$secondProducts._id' },
-                                            ],
+                            $project: {
+                                _id: 0,
+                                orderId: 1,
+                                createdAt: 1,
+                                products: {
+                                    $map: {
+                                        input: '$products',
+                                        as: 'item',
+                                        in: {
+                                            id: { $toString: '$$item._id' },
+                                            name: { $ifNull: ['$$item.name', '$$item.nameEn'] },
                                         },
-                                    ],
-                                },
-                            },
-                        },
-                        {
-                            $set: {
-                                firstComesFirst: {
-                                    $lte: [
-                                        { $toString: '$firstProducts._id' },
-                                        { $toString: '$secondProducts._id' },
-                                    ],
-                                },
-                            },
-                        },
-                        {
-                            $set: {
-                                firstProduct: {
-                                    $cond: [
-                                        '$firstComesFirst',
-                                        '$firstProducts',
-                                        '$secondProducts',
-                                    ],
-                                },
-                                secondProduct: {
-                                    $cond: [
-                                        '$firstComesFirst',
-                                        '$secondProducts',
-                                        '$firstProducts',
-                                    ],
-                                },
-                            },
-                        },
-                        {
-                            $group: {
-                                _id: {
-                                    first: '$firstProduct._id',
-                                    second: '$secondProduct._id',
-                                },
-                                firstName: {
-                                    $first: {
-                                        $ifNull: ['$firstProduct.name', '$firstProduct.nameEn'],
                                     },
                                 },
-                                secondName: {
-                                    $first: {
-                                        $ifNull: ['$secondProduct.name', '$secondProduct.nameEn'],
-                                    },
-                                },
-                                orderCount: { $sum: 1 },
-                                lastOrderAt: { $max: '$createdAt' },
                             },
                         },
-                        { $sort: { orderCount: -1, lastOrderAt: -1 } },
-                        { $limit: 100 },
-                        { $project: { _id: 0, firstName: 1, secondName: 1, orderCount: 1, lastOrderAt: 1 } },
                     ],
                 },
             },
         ]);
+        const normalizedOrders = ((data === null || data === void 0 ? void 0 : data.multiItemOrders) || [])
+            .map((order) => {
+            const products = new Map();
+            (order.products || []).forEach((product) => {
+                if (product.id) {
+                    products.set(product.id, {
+                        id: product.id,
+                        name: product.name || 'Unknown book',
+                    });
+                }
+            });
+            return {
+                orderId: order.orderId,
+                createdAt: order.createdAt,
+                products: Array.from(products.values()).sort((a, b) => a.id.localeCompare(b.id)),
+            };
+        })
+            .filter((order) => order.products.length > 1);
+        const fullPackages = new Map();
+        const recommendations = new Map();
+        const recommendationWindowDays = 90;
+        const recentCutoff = Date.now() - recommendationWindowDays * 24 * 60 * 60 * 1000;
+        const newerDate = (next, current) => new Date(next).getTime() > new Date(current).getTime() ? next : current;
+        normalizedOrders.forEach((order) => {
+            const isRecent = new Date(order.createdAt).getTime() >= recentCutoff;
+            const fullKey = order.products.map((product) => product.id).join('|');
+            const existingPackage = fullPackages.get(fullKey);
+            fullPackages.set(fullKey, {
+                products: order.products,
+                orderCount: ((existingPackage === null || existingPackage === void 0 ? void 0 : existingPackage.orderCount) || 0) + 1,
+                recentOrderCount: ((existingPackage === null || existingPackage === void 0 ? void 0 : existingPackage.recentOrderCount) || 0) + (isRecent ? 1 : 0),
+                lastOrderAt: existingPackage
+                    ? newerDate(order.createdAt, existingPackage.lastOrderAt)
+                    : order.createdAt,
+            });
+            const addCombinations = (size, start = 0, selected = []) => {
+                if (selected.length === size) {
+                    const key = selected.map((product) => product.id).join('|');
+                    const existing = recommendations.get(key);
+                    recommendations.set(key, {
+                        products: selected.slice(),
+                        orderCount: ((existing === null || existing === void 0 ? void 0 : existing.orderCount) || 0) + 1,
+                        recentOrderCount: ((existing === null || existing === void 0 ? void 0 : existing.recentOrderCount) || 0) + (isRecent ? 1 : 0),
+                        lastOrderAt: existing
+                            ? newerDate(order.createdAt, existing.lastOrderAt)
+                            : order.createdAt,
+                    });
+                    return;
+                }
+                for (let index = start; index <= order.products.length - (size - selected.length); index += 1) {
+                    addCombinations(size, index + 1, [...selected, order.products[index]]);
+                }
+            };
+            for (let size = 3; size <= Math.min(4, order.products.length); size += 1) {
+                addCombinations(size);
+            }
+        });
+        const sortPackages = (a, b) => b.orderCount - a.orderCount ||
+            b.products.length - a.products.length ||
+            new Date(b.lastOrderAt).getTime() - new Date(a.lastOrderAt).getTime();
+        const sortRecommendations = (a, b) => b.recentOrderCount - a.recentOrderCount || sortPackages(a, b);
+        const orderBundles = Array.from(fullPackages.values()).sort(sortPackages).slice(0, 100);
+        const bundleSuggestions = Array.from(recommendations.values())
+            .filter((bundle) => bundle.recentOrderCount > 1)
+            .sort(sortRecommendations)
+            .slice(0, 12);
         return {
             success: true,
             message: 'Success',
-            data: data || { repeatCustomers: [], productPairs: [] },
+            data: {
+                repeatCustomers: (data === null || data === void 0 ? void 0 : data.repeatCustomers) || [],
+                multiItemOrderCount: normalizedOrders.length,
+                recommendationWindowDays,
+                orderBundles,
+                bundleSuggestions,
+            },
         };
     }
     async getSalesStatsByFilter(filterType, filterId) {

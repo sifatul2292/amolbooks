@@ -25,7 +25,12 @@ assert.match(page, /custom-orders\.html\?view=insights/, 'Sidebar exposes custom
 assert.match(page, /\/api\/order\/customer-bundle-insights/, 'Insights page loads the aggregation endpoint');
 assert.match(controller, /@Get\('\/customer-bundle-insights'\)[\s\S]*?@UseGuards\(AdminJwtAuthGuard\)/, 'Insights endpoint requires admin authentication');
 assert.match(service, /repeatCustomers:[\s\S]*?orderCount: \{ \$gte: 2 \}/, 'Repeat-customer results require multiple valid orders');
-assert.match(service, /productPairs:[\s\S]*?\$lt: \['\$firstIndex', '\$secondIndex'\]/, 'Bundle insights count each product pair once per order');
+assert.match(service, /multiItemOrders:[\s\S]*?products:[\s\S]*?\$map:/, 'Insights retain every product from multi-item orders');
+assert.match(service, /for \(let size = 3; size <= Math\.min\(4, order\.products\.length\)/, 'Recommendations use repeated three- and four-book combinations');
+assert.match(service, /recommendationWindowDays = 90[\s\S]*?recentOrderCount > 1/, 'Recommendations require repeated purchases in the recent window');
+assert.match(service, /orderBundles,[\s\S]*?bundleSuggestions/, 'Endpoint returns recommendations and complete packages');
+assert.match(page, /Complete multi-item packages/, 'Page shows complete customer baskets');
+assert.match(page, /Recommended ad bundles/, 'Page shows ranked advertising bundle suggestions');
 assert.match(service, /OrderStatus\.CANCEL[\s\S]*?OrderStatus\.REFUND[\s\S]*?OrderStatus\.RETURN[\s\S]*?OrderStatus\.HOLD/, 'Invalid order statuses are excluded from insights');
 
 console.log('Custom order editor checks passed');

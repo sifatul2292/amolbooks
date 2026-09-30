@@ -992,9 +992,10 @@
     .insights-head h2 { font-size: 19px; font-weight: 900; color: var(--g900); letter-spacing: -.02em; }
     .insights-head h2 i { color: var(--p); margin-right: 8px; }
     .insights-head p { color: var(--g500); font-size: 12px; margin-top: 4px; }
-    #insightsView .stats-row { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    #insightsView .stats-row { grid-template-columns: repeat(3,minmax(0,1fr)); }
     .insights-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
     .insights-card { min-width: 0; }
+    .insights-card-wide { grid-column: 1 / -1; }
     .insights-card-head { padding: 16px 18px; border-bottom: 1px solid var(--g200); }
     .insights-card-head h3 { font-size: 15px; color: var(--g900); }
     .insights-card-head p { font-size: 11px; color: var(--g500); margin-top: 3px; }
@@ -1004,10 +1005,15 @@
     .insights-customer { font-weight: 800; color: var(--g900); }
     .insights-phone { color: var(--blue); text-decoration: none; font-weight: 700; }
     .insights-count { font-size: 15px; font-weight: 900; color: var(--p); }
-    .bundle-books { display: flex; align-items: center; gap: 7px; font-weight: 700; color: var(--g800); }
-    .bundle-plus { color: var(--p); flex: 0 0 auto; }
+    .bundle-books { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-weight: 700; color: var(--g800); }
+    .bundle-book { background: #f3f0ff; border: 1px solid #ddd6fe; border-radius: 7px; padding: 5px 8px; }
+    .bundle-plus { color: var(--p); flex: 0 0 auto; font-weight: 900; }
+    .bundle-rank { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--p); color: #fff; font-weight: 900; }
+    .bundle-hot { color: #b45309; background: #fef3c7; border-radius: 999px; padding: 4px 8px; font-size: 10px; font-weight: 800; white-space: nowrap; }
     @media (max-width: 900px) {
       .insights-grid { grid-template-columns: 1fr; }
+      #insightsView .stats-row { grid-template-columns: 1fr; }
+      .insights-card-wide { grid-column: auto; }
     }
 
     /* Hallmark · pre-emit critique: P4 H5 E5 S5 R5 V4 */
@@ -1392,7 +1398,11 @@
           </div>
           <div class="stat-card c3">
             <div class="stat-icon"><i class="fas fa-layer-group"></i></div>
-            <div class="stat-info"><label>Popular Book Pairs</label><div class="val" id="insightsPairCount">—</div></div>
+            <div class="stat-info"><label>Multi-item Orders</label><div class="val" id="insightsMultiOrderCount">—</div></div>
+          </div>
+          <div class="stat-card c2">
+            <div class="stat-icon"><i class="fas fa-fire"></i></div>
+            <div class="stat-info"><label>Recommended Bundles</label><div class="val" id="insightsSuggestionCount">—</div></div>
           </div>
         </div>
         <div class="insights-grid">
@@ -1410,13 +1420,25 @@
           </section>
           <section class="table-card insights-card">
             <div class="insights-card-head">
-              <h3>Books bought together</h3>
-              <p>Use the strongest combinations as bundle ideas.</p>
+              <h3>Recommended ad bundles</h3>
+              <p>Best repeated 3–4 book combinations from the last 90 days.</p>
             </div>
             <div class="insights-table-wrap">
               <table class="insights-table">
-                <thead><tr><th>Book combination</th><th>Orders together</th><th>Last order</th></tr></thead>
-                <tbody id="insightsPairsBody"><tr><td colspan="3"><div class="spinner"></div></td></tr></tbody>
+                <thead><tr><th>#</th><th>Suggested bundle</th><th>Recent / all time</th><th>Last order</th></tr></thead>
+                <tbody id="insightsSuggestionsBody"><tr><td colspan="4"><div class="spinner"></div></td></tr></tbody>
+              </table>
+            </div>
+          </section>
+          <section class="table-card insights-card insights-card-wide">
+            <div class="insights-card-head">
+              <h3>Complete multi-item packages</h3>
+              <p>Every book in the original customer basket, grouped by identical combinations.</p>
+            </div>
+            <div class="insights-table-wrap">
+              <table class="insights-table">
+                <thead><tr><th>Items</th><th>Complete package</th><th>Exact orders</th><th>Last order</th></tr></thead>
+                <tbody id="insightsPackagesBody"><tr><td colspan="4"><div class="spinner"></div></td></tr></tbody>
               </table>
             </div>
           </section>
@@ -2174,10 +2196,12 @@
 
   window.loadCustomerBundleInsights = function () {
     var customersBody = document.getElementById('insightsCustomersBody');
-    var pairsBody = document.getElementById('insightsPairsBody');
-    if (!customersBody || !pairsBody) return;
+    var suggestionsBody = document.getElementById('insightsSuggestionsBody');
+    var packagesBody = document.getElementById('insightsPackagesBody');
+    if (!customersBody || !suggestionsBody || !packagesBody) return;
     customersBody.innerHTML = '<tr><td colspan="5"><div class="spinner"></div></td></tr>';
-    pairsBody.innerHTML = '<tr><td colspan="3"><div class="spinner"></div></td></tr>';
+    suggestionsBody.innerHTML = '<tr><td colspan="4"><div class="spinner"></div></td></tr>';
+    packagesBody.innerHTML = '<tr><td colspan="4"><div class="spinner"></div></td></tr>';
 
     fetch(API + '/api/order/customer-bundle-insights', { headers: authHeaders() })
       .then(function (response) {
@@ -2192,9 +2216,18 @@
       .then(function (response) {
         var data = response.data || {};
         var customers = data.repeatCustomers || [];
-        var pairs = data.productPairs || [];
+        var suggestions = data.bundleSuggestions || [];
+        var packages = data.orderBundles || [];
         document.getElementById('insightsCustomerCount').textContent = customers.length.toLocaleString('en-US');
-        document.getElementById('insightsPairCount').textContent = pairs.length.toLocaleString('en-US');
+        document.getElementById('insightsMultiOrderCount').textContent = Number(data.multiItemOrderCount || 0).toLocaleString('en-US');
+        document.getElementById('insightsSuggestionCount').textContent = suggestions.length.toLocaleString('en-US');
+
+        function bundleBooks(products) {
+          return '<div class="bundle-books">' + (products || []).map(function (product, index) {
+            return (index ? '<span class="bundle-plus">+</span>' : '') +
+              '<span class="bundle-book">' + esc(product.name || 'Unknown book') + '</span>';
+          }).join('') + '</div>';
+        }
 
         customersBody.innerHTML = customers.length ? customers.map(function (customer) {
           var phone = String(customer.phoneNo || '');
@@ -2208,19 +2241,29 @@
           '</tr>';
         }).join('') : '<tr><td colspan="5" class="empty-state">No repeat customers found.</td></tr>';
 
-        pairsBody.innerHTML = pairs.length ? pairs.map(function (pair) {
+        suggestionsBody.innerHTML = suggestions.length ? suggestions.map(function (bundle, index) {
           return '<tr>' +
-            '<td><div class="bundle-books"><span>' + esc(pair.firstName || 'Unknown book') + '</span>' +
-              '<i class="fas fa-plus bundle-plus"></i><span>' + esc(pair.secondName || 'Unknown book') + '</span></div></td>' +
-            '<td><span class="insights-count">' + Number(pair.orderCount || 0).toLocaleString('en-US') + '</span></td>' +
-            '<td>' + fmtDate(pair.lastOrderAt) + '</td>' +
+            '<td><span class="bundle-rank">' + (index + 1) + '</span></td>' +
+            '<td>' + bundleBooks(bundle.products) + '</td>' +
+            '<td><span class="insights-count">' + Number(bundle.recentOrderCount || 0).toLocaleString('en-US') + '</span> / ' + Number(bundle.orderCount || 0).toLocaleString('en-US') + ' <span class="bundle-hot">90-day hot</span></td>' +
+            '<td>' + fmtDate(bundle.lastOrderAt) + '</td>' +
           '</tr>';
-        }).join('') : '<tr><td colspan="3" class="empty-state">No multi-book combinations found.</td></tr>';
+        }).join('') : '<tr><td colspan="4" class="empty-state">No repeated 3–4 book combinations found yet.</td></tr>';
+
+        packagesBody.innerHTML = packages.length ? packages.map(function (bundle) {
+          return '<tr>' +
+            '<td><span class="insights-count">' + Number((bundle.products || []).length).toLocaleString('en-US') + '</span></td>' +
+            '<td>' + bundleBooks(bundle.products) + '</td>' +
+            '<td><span class="insights-count">' + Number(bundle.orderCount || 0).toLocaleString('en-US') + '</span></td>' +
+            '<td>' + fmtDate(bundle.lastOrderAt) + '</td>' +
+          '</tr>';
+        }).join('') : '<tr><td colspan="4" class="empty-state">No multi-item orders found.</td></tr>';
       })
       .catch(function (error) {
         if (error.message === 'auth') return;
         customersBody.innerHTML = '<tr><td colspan="5" class="empty-state">Could not load customer insights.</td></tr>';
-        pairsBody.innerHTML = '<tr><td colspan="3" class="empty-state">Could not load bundle insights.</td></tr>';
+        suggestionsBody.innerHTML = '<tr><td colspan="4" class="empty-state">Could not load bundle suggestions.</td></tr>';
+        packagesBody.innerHTML = '<tr><td colspan="4" class="empty-state">Could not load package insights.</td></tr>';
         showToast(error.message, 'error');
       });
   };
