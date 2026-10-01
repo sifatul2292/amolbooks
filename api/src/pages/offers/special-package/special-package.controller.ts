@@ -26,6 +26,7 @@ import { MongoIdValidationPipe } from '../../../pipes/mongo-id-validation.pipe';
 import { SpecialPackageService } from './special-package.service';
 import {
   AddSpecialPackageDto,
+  AddSpecialPackageDraftDto,
   FilterAndPaginationSpecialPackageDto,
   OptionSpecialPackageDto,
   UpdateSpecialPackageDto,
@@ -50,6 +51,17 @@ export class SpecialPackageController {
     addSpecialPackageDto: AddSpecialPackageDto,
   ): Promise<ResponsePayload> {
     return await this.promoOfferService.addSpecialPackage(addSpecialPackageDto);
+  }
+
+  @Post('/create-draft')
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @UseGuards(AdminRolesGuard)
+  @UseGuards(AdminJwtAuthGuard)
+  async createSpecialPackageDraft(
+    @Body() draft: AddSpecialPackageDraftDto,
+  ): Promise<ResponsePayload> {
+    return this.promoOfferService.createSpecialPackageDraft(draft);
   }
 
   @Post('/insert-many')

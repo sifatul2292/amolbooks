@@ -33,6 +33,9 @@ let SpecialPackageController = SpecialPackageController_1 = class SpecialPackage
     async addSpecialPackage(addSpecialPackageDto) {
         return await this.promoOfferService.addSpecialPackage(addSpecialPackageDto);
     }
+    async createSpecialPackageDraft(draft) {
+        return this.promoOfferService.createSpecialPackageDraft(draft);
+    }
     async insertManySpecialPackage(body) {
         return await this.promoOfferService.insertManySpecialPackage(body.data, body.option);
     }
@@ -72,6 +75,17 @@ __decorate([
     __metadata("design:paramtypes", [special_package_dto_1.AddSpecialPackageDto]),
     __metadata("design:returntype", Promise)
 ], SpecialPackageController.prototype, "addSpecialPackage", null);
+__decorate([
+    (0, common_1.Post)('/create-draft'),
+    (0, common_1.UsePipes)(new common_1.ValidationPipe({ transform: true, whitelist: true })),
+    (0, admin_roles_decorator_1.AdminMetaRoles)(admin_roles_enum_1.AdminRoles.SUPER_ADMIN, admin_roles_enum_1.AdminRoles.ADMIN),
+    (0, common_1.UseGuards)(admin_roles_guard_1.AdminRolesGuard),
+    (0, common_1.UseGuards)(admin_jwt_auth_guard_1.AdminJwtAuthGuard),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [special_package_dto_1.AddSpecialPackageDraftDto]),
+    __metadata("design:returntype", Promise)
+], SpecialPackageController.prototype, "createSpecialPackageDraft", null);
 __decorate([
     (0, common_1.Post)('/insert-many'),
     (0, common_1.UsePipes)(common_1.ValidationPipe),

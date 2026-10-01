@@ -6,6 +6,8 @@ const editor = fs.readFileSync('api/src/admin-incomplete-order-editor-script.ts'
 const controller = fs.readFileSync('api/src/pages/sales/order/order.controller.ts', 'utf8');
 const service = fs.readFileSync('api/src/pages/sales/order/order.service.ts', 'utf8');
 const productService = fs.readFileSync('api/src/pages/product/product.service.ts', 'utf8');
+const packageController = fs.readFileSync('api/src/pages/offers/special-package/special-package.controller.ts', 'utf8');
+const packageService = fs.readFileSync('api/src/pages/offers/special-package/special-package.service.ts', 'utf8');
 
 assert.match(page, /AmolbooksIncompleteEditor\.openOrder\(\\'\'\+o\._id\+\'\\'\)/, 'Actual orders expose the Edit action');
 assert.match(page, /class="btn-action btn-edit"/, 'Actual order Edit action has its own visible style');
@@ -38,6 +40,12 @@ assert.match(page, /Profit is hidden until costs are complete/, 'Calculator does
 assert.match(productService, /salePrice afterDiscountPrice discountAmount discountType costPrice/, 'Admin product search returns discount and cost fields');
 assert.match(productService, /effectivePrice:[\s\S]*?afterDiscountPrice[\s\S]*?transform\(product, 'salePrice'\)/, 'Calculator products use the storefront discount calculation');
 assert.match(page, /Discounted price/, 'Calculator labels the effective customer price');
+assert.match(page, /saveBundleDraft/, 'Calculator can save a selected bundle');
+assert.match(page, /Save bundle as draft/, 'Saving is explicitly inactive');
+assert.match(packageController, /@Post\('\/create-draft'\)[\s\S]*?@UseGuards\(AdminJwtAuthGuard\)/, 'Bundle draft endpoint requires admin authentication');
+assert.match(packageController, /@Post\('\/create-draft'\)[\s\S]*?AdminRoles\.SUPER_ADMIN, AdminRoles\.ADMIN/, 'Only admins can create package drafts');
+assert.match(packageService, /discountAmount: regularPrice - draft\.sellingPrice,[\s\S]*?active: false/, 'Saved bundles remain inactive and preserve the planned selling price');
+assert.match(packageService, /new Set\(productIds\)[\s\S]*?products\.length !== productIds\.length/, 'Bundle draft validation rejects duplicate or missing products');
 assert.match(service, /OrderStatus\.CANCEL[\s\S]*?OrderStatus\.REFUND[\s\S]*?OrderStatus\.RETURN[\s\S]*?OrderStatus\.HOLD/, 'Invalid order statuses are excluded from insights');
 
 console.log('Custom order editor checks passed');

@@ -1042,6 +1042,10 @@
     .bundle-verdict.bad { background: #fee2e2; color: #991b1b; }
     .bundle-verdict.unknown { background: var(--g100); color: var(--g600); }
     .bundle-cost-warning { margin-top: 8px; color: #b45309; font-size: 11px; font-weight: 700; }
+    .bundle-name-field { grid-column: 1 / -1; }
+    .bundle-save { width: 100%; margin-top: 10px; padding: 11px; border: 0; border-radius: 9px; background: var(--p); color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
+    .bundle-save:disabled { opacity: .55; cursor: wait; }
+    .bundle-saved { display: none; margin-top: 8px; color: #166534; font-size: 11px; font-weight: 800; }
     @media (max-width: 900px) {
       .insights-grid { grid-template-columns: 1fr; }
       #insightsView .stats-row { grid-template-columns: 1fr; }
@@ -1445,7 +1449,7 @@
           <div class="bundle-builder-head">
             <div>
               <h3 id="bundleBuilderTitle"><i class="fas fa-calculator" style="color:var(--p);margin-right:7px"></i>Manual bundle profit calculator</h3>
-              <p>Build a draft bundle without changing the catalogue. Product costs come from the current admin cost price.</p>
+              <p>Check profitability, then save the selected books and price as an inactive package draft.</p>
             </div>
             <button class="btn-reset" type="button" onclick="resetBundleCalculator()"><i class="fas fa-rotate-left"></i> Reset</button>
           </div>
@@ -1464,6 +1468,7 @@
             </div>
             <div class="bundle-calc">
               <div class="bundle-calc-fields">
+                <div class="bundle-calc-field bundle-name-field"><label for="bundleName">Bundle name</label><input id="bundleName" type="text" maxlength="120" placeholder="Example: Productive Muslim Pack"></div>
                 <div class="bundle-calc-field"><label for="bundleSellingPrice">Bundle selling price</label><input id="bundleSellingPrice" type="number" min="0" step="1" value="0" oninput="markBundlePriceManual();calculateBundleProfit()"></div>
                 <div class="bundle-calc-field"><label for="bundleAdCost">Ad cost per sale</label><input id="bundleAdCost" type="number" min="0" step="1" value="0" oninput="calculateBundleProfit()"></div>
                 <div class="bundle-calc-field"><label for="bundleOtherCost">Courier + packaging</label><input id="bundleOtherCost" type="number" min="0" step="1" value="0" oninput="calculateBundleProfit()"></div>
@@ -1479,6 +1484,8 @@
               </div>
               <div class="bundle-verdict unknown" id="bundleVerdict">Add books to calculate viability.</div>
               <div class="bundle-cost-warning" id="bundleCostWarning" style="display:none"></div>
+              <button class="bundle-save" id="bundleSaveButton" type="button" onclick="saveBundleDraft()"><i class="fas fa-save"></i> Save bundle as draft</button>
+              <div class="bundle-saved" id="bundleSavedMessage"></div>
             </div>
           </div>
         </section>
@@ -2493,12 +2500,63 @@
     bundleCalculatorProducts = [];
     bundlePriceManual = false;
     document.getElementById('bundleProductSearch').value = '';
+    document.getElementById('bundleName').value = '';
     document.getElementById('bundleSellingPrice').value = '0';
     document.getElementById('bundleAdCost').value = '0';
     document.getElementById('bundleOtherCost').value = '0';
     document.getElementById('bundleTargetMargin').value = '20';
     document.getElementById('bundleSearchResults').style.display = 'none';
+    document.getElementById('bundleSavedMessage').style.display = 'none';
     renderBundleCalculator();
+  };
+
+  window.saveBundleDraft = function () {
+    var name = document.getElementById('bundleName').value.trim();
+    var sellingPrice = Math.max(0, Number(document.getElementById('bundleSellingPrice').value) || 0);
+    var normalTotal = bundleNormalTotal();
+    if (!name) return showToast('Enter a bundle name.', 'error');
+    if (bundleCalculatorProducts.length < 2) return showToast('Add at least two different books.', 'error');
+    if (!sellingPrice || sellingPrice > normalTotal) return showToast('Bundle price must be between ৳1 and the discounted total.', 'error');
+
+    var button = document.getElementById('bundleSaveButton');
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
+    fetch(API + '/api/special-package/create-draft', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        name: name,
+        sellingPrice: sellingPrice,
+        products: bundleCalculatorProducts.map(function (product) {
+          return { product: product.id, quantity: product.qty };
+        }),
+      }),
+    })
+      .then(function (response) {
+        if (response.status === 401) {
+          clearToken();
+          showLogin('Session expired. Please sign in again.');
+          throw new Error('auth');
+        }
+        return response.json().then(function (body) {
+          if (!response.ok || !body.success) throw new Error(body.message || 'Could not save bundle');
+          return body;
+        });
+      })
+      .then(function (response) {
+        var saved = response.data || {};
+        var message = document.getElementById('bundleSavedMessage');
+        message.textContent = 'Saved as inactive draft: ' + (saved.name || name) + ' (' + (saved.slug || saved._id || '') + ')';
+        message.style.display = 'block';
+        showToast('Bundle saved as an inactive draft.', 'success');
+      })
+      .catch(function (error) {
+        if (error.message !== 'auth') showToast(error.message, 'error');
+      })
+      .finally(function () {
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-save"></i> Save bundle as draft';
+      });
   };
 
   document.getElementById('bundleProductSearch').addEventListener('input', function () {

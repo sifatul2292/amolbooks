@@ -4,7 +4,7 @@ import { UtilsService } from '../../../shared/utils/utils.service';
 import { ResponsePayload } from '../../../interfaces/core/response-payload.interface';
 import { Product } from '../../../interfaces/common/product.interface';
 import { SpecialPackage } from '../../../interfaces/common/special-package.interface';
-import { AddSpecialPackageDto, FilterAndPaginationSpecialPackageDto, OptionSpecialPackageDto, UpdateSpecialPackageDto } from '../../../dto/special-package.dto';
+import { AddSpecialPackageDto, AddSpecialPackageDraftDto, FilterAndPaginationSpecialPackageDto, OptionSpecialPackageDto, UpdateSpecialPackageDto } from '../../../dto/special-package.dto';
 import { JobSchedulerService } from '../../../shared/job-scheduler/job-scheduler.service';
 export declare class SpecialPackageService {
     private readonly specialPackageModel;
@@ -15,6 +15,7 @@ export declare class SpecialPackageService {
     private logger;
     constructor(specialPackageModel: Model<SpecialPackage>, productModel: Model<Product>, configService: ConfigService, utilsService: UtilsService, jobSchedulerService: JobSchedulerService);
     addSpecialPackage(addSpecialPackageDto: AddSpecialPackageDto): Promise<ResponsePayload>;
+    createSpecialPackageDraft(draft: AddSpecialPackageDraftDto): Promise<ResponsePayload>;
     insertManySpecialPackage(addSpecialPackagesDto: AddSpecialPackageDto[], optionSpecialPackageDto: OptionSpecialPackageDto): Promise<ResponsePayload>;
     getAllSpecialPackages(filterSpecialPackageDto: FilterAndPaginationSpecialPackageDto, searchQuery?: string): Promise<ResponsePayload>;
     getSpecialPackageByIds(ids: any, select: string): Promise<ResponsePayload>;

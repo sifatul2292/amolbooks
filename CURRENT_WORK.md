@@ -5,9 +5,10 @@
 - Added a protected `GET /api/order/customer-bundle-insights` report using existing order data only.
 - Added an admin sidebar section listing repeat customers, complete multi-item basket patterns, and the top repeated 3–4 book combinations from the last 90 days as advertising bundle suggestions.
 - Customer phone numbers are normalized before grouping; cancelled, refunded, returned, and held/trash orders are excluded.
-- Added a read-only manual bundle calculator using current product sale/cost prices, proposed bundle price, ad cost, fulfilment cost, and a configurable target margin. Missing cost prices block the viability result instead of being treated as zero.
+- Added a manual bundle calculator using current product sale/cost prices, proposed bundle price, ad cost, fulfilment cost, and a configurable target margin. Missing cost prices block the viability result instead of being treated as zero.
+- The calculator can save its selected books, quantities, name, and selling price as an inactive Special Package draft. The protected endpoint recalculates prices server-side and rejects duplicate/missing books or a price above the current discounted total; publishing remains a separate admin action.
 - Bundle calculations use the storefront's effective discounted price (including stored final prices) and display the original price only as a comparison.
-- No order data, database schema, or product records are changed by this read-only report.
+- Insights remain read-only until an admin explicitly uses the calculator's Save bundle as draft action; saving does not change orders or product records.
 
 ## Product-search SEO repair (2026-09-27)
 

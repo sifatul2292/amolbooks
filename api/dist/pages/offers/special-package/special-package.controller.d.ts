@@ -1,11 +1,12 @@
 import { ResponsePayload } from '../../../interfaces/core/response-payload.interface';
 import { SpecialPackageService } from './special-package.service';
-import { AddSpecialPackageDto, FilterAndPaginationSpecialPackageDto, OptionSpecialPackageDto, UpdateSpecialPackageDto } from '../../../dto/special-package.dto';
+import { AddSpecialPackageDto, AddSpecialPackageDraftDto, FilterAndPaginationSpecialPackageDto, OptionSpecialPackageDto, UpdateSpecialPackageDto } from '../../../dto/special-package.dto';
 export declare class SpecialPackageController {
     private promoOfferService;
     private logger;
     constructor(promoOfferService: SpecialPackageService);
     addSpecialPackage(addSpecialPackageDto: AddSpecialPackageDto): Promise<ResponsePayload>;
+    createSpecialPackageDraft(draft: AddSpecialPackageDraftDto): Promise<ResponsePayload>;
     insertManySpecialPackage(body: {
         data: AddSpecialPackageDto[];
         option: OptionSpecialPackageDto;

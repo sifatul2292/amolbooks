@@ -3,6 +3,15 @@ export declare class AddSpecialPackageDto {
     name: string;
     products: any[];
 }
+export declare class SpecialPackageDraftItemDto {
+    product: string;
+    quantity: number;
+}
+export declare class AddSpecialPackageDraftDto {
+    name: string;
+    sellingPrice: number;
+    products: SpecialPackageDraftItemDto[];
+}
 export declare class FilterSpecialPackageDto {
     name: string;
     visibility: boolean;

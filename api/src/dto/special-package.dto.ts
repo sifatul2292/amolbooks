@@ -6,10 +6,13 @@ import {
   IsNotEmpty,
   IsNotEmptyObject,
   IsNumber,
+  IsInt,
+  IsMongoId,
   IsObject,
   IsOptional,
   IsString,
   ValidateNested,
+  Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PaginationDto } from './pagination.dto';
@@ -22,6 +25,31 @@ export class AddSpecialPackageDto {
   @IsNotEmpty()
   @IsArray()
   products: any[];
+}
+
+export class SpecialPackageDraftItemDto {
+  @IsMongoId()
+  product: string;
+
+  @IsInt()
+  @Min(1)
+  quantity: number;
+}
+
+export class AddSpecialPackageDraftDto {
+  @IsNotEmpty()
+  @IsString()
+  name: string;
+
+  @IsNumber()
+  @Min(1)
+  sellingPrice: number;
+
+  @IsArray()
+  @ArrayMinSize(2)
+  @ValidateNested({ each: true })
+  @Type(() => SpecialPackageDraftItemDto)
+  products: SpecialPackageDraftItemDto[];
 }
 
 export class FilterSpecialPackageDto {

@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FilterAndPaginationSpecialPackageDto = exports.UpdateSpecialPackageDto = exports.OptionSpecialPackageDto = exports.FilterSpecialPackageDto = exports.AddSpecialPackageDto = void 0;
+exports.FilterAndPaginationSpecialPackageDto = exports.UpdateSpecialPackageDto = exports.OptionSpecialPackageDto = exports.FilterSpecialPackageDto = exports.AddSpecialPackageDraftDto = exports.SpecialPackageDraftItemDto = exports.AddSpecialPackageDto = void 0;
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 const pagination_dto_1 = require("./pagination.dto");
@@ -26,6 +26,38 @@ __decorate([
     __metadata("design:type", Array)
 ], AddSpecialPackageDto.prototype, "products", void 0);
 exports.AddSpecialPackageDto = AddSpecialPackageDto;
+class SpecialPackageDraftItemDto {
+}
+__decorate([
+    (0, class_validator_1.IsMongoId)(),
+    __metadata("design:type", String)
+], SpecialPackageDraftItemDto.prototype, "product", void 0);
+__decorate([
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    __metadata("design:type", Number)
+], SpecialPackageDraftItemDto.prototype, "quantity", void 0);
+exports.SpecialPackageDraftItemDto = SpecialPackageDraftItemDto;
+class AddSpecialPackageDraftDto {
+}
+__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], AddSpecialPackageDraftDto.prototype, "name", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(1),
+    __metadata("design:type", Number)
+], AddSpecialPackageDraftDto.prototype, "sellingPrice", void 0);
+__decorate([
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.ArrayMinSize)(2),
+    (0, class_validator_1.ValidateNested)({ each: true }),
+    (0, class_transformer_1.Type)(() => SpecialPackageDraftItemDto),
+    __metadata("design:type", Array)
+], AddSpecialPackageDraftDto.prototype, "products", void 0);
+exports.AddSpecialPackageDraftDto = AddSpecialPackageDraftDto;
 class FilterSpecialPackageDto {
 }
 __decorate([

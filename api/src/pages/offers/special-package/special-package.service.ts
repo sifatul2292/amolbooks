@@ -16,12 +16,17 @@ import { Product } from '../../../interfaces/common/product.interface';
 import { SpecialPackage } from '../../../interfaces/common/special-package.interface';
 import {
   AddSpecialPackageDto,
+  AddSpecialPackageDraftDto,
   FilterAndPaginationSpecialPackageDto,
   OptionSpecialPackageDto,
   UpdateSpecialPackageDto,
 } from '../../../dto/special-package.dto';
 import { JobSchedulerService } from '../../../shared/job-scheduler/job-scheduler.service';
-import { withCalculatedSpecialPackageSubtotal } from '../../../shared/utils/special-package-price.util';
+import {
+  calculateEffectiveProductPrice,
+  withCalculatedSpecialPackageSubtotal,
+} from '../../../shared/utils/special-package-price.util';
+import { DiscountTypeEnum } from '../../../enum/product.enum';
 
 const ObjectId = Types.ObjectId;
 
@@ -83,6 +88,74 @@ export class SpecialPackageService {
         throw new InternalServerErrorException(error.message);
       }
     }
+  }
+
+  async createSpecialPackageDraft(
+    draft: AddSpecialPackageDraftDto,
+  ): Promise<ResponsePayload> {
+    if (!draft.name.trim()) {
+      throw new BadRequestException('Bundle name is required');
+    }
+    const productIds = draft.products.map((item) => item.product);
+    if (new Set(productIds).size !== productIds.length) {
+      throw new BadRequestException('Each book can only appear once');
+    }
+
+    const products: any[] = await this.productModel
+      .find({ _id: { $in: productIds.map((id) => new ObjectId(id)) } })
+      .select('salePrice discountType discountAmount');
+    if (products.length !== productIds.length) {
+      throw new BadRequestException('One or more books no longer exist');
+    }
+
+    const productsById = new Map(
+      products.map((product) => [String(product._id), product]),
+    );
+    const regularPrice = draft.products.reduce(
+      (total, item) =>
+        total +
+        calculateEffectiveProductPrice(productsById.get(item.product)) *
+          item.quantity,
+      0,
+    );
+    if (!regularPrice || draft.sellingPrice > regularPrice) {
+      throw new BadRequestException(
+        'Bundle price must not exceed the current discounted total',
+      );
+    }
+
+    const existing = await this.specialPackageModel.findOne({
+      name: draft.name.trim(),
+    });
+    if (existing)
+      throw new ConflictException('A package with this name exists');
+
+    const slugBase = this.utilsService.transformToSlug(draft.name) || 'bundle';
+    const saved: any = await new this.specialPackageModel({
+      name: draft.name.trim(),
+      slug: `${slugBase}-${Date.now().toString(36)}`,
+      salePrice: regularPrice,
+      discountType: DiscountTypeEnum.CASH,
+      discountAmount: regularPrice - draft.sellingPrice,
+      active: false,
+      products: draft.products.map((item) => ({
+        product: item.product,
+        quantity: item.quantity,
+        hasVariations: false,
+      })),
+    }).save();
+
+    return {
+      success: true,
+      message: 'Bundle saved as an inactive draft',
+      data: {
+        _id: saved._id,
+        name: saved.name,
+        slug: saved.slug,
+        active: saved.active,
+        sellingPrice: draft.sellingPrice,
+      },
+    } as ResponsePayload;
   }
 
   async insertManySpecialPackage(
