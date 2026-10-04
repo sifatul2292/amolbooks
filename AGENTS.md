@@ -2,6 +2,14 @@
 
 Instructions for any coding assistant (Claude Code, Codex, etc.) working in this repo.
 
+## Authoritative working tree
+
+- Use the deployed Sunday rollback worktree and branch for all new work:
+  `/Users/sifatulalamshohan/.codex/worktrees/rollback-sunday/Amolbooks-local`
+  on `codex/rollback-sunday-20260927`.
+- Do not develop from `codex/prod-release-20260926`; it is considered corrupted.
+- Before editing, verify both the worktree path and branch name match the values above.
+
 ## Before editing
 
 1. Read `PROJECT_CONTEXT.md` and `CURRENT_WORK.md`.

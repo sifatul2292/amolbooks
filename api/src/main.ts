@@ -1079,6 +1079,61 @@ ${storefrontPurchaseExternalIdHelper}
   );
 
   app.use(
+    '/api/special-package',
+    (
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction
+    ) => {
+      if (!isLocalStorefrontHost(req.hostname)) return next();
+      const allowedRequest =
+        (req.method === 'POST' && req.path === '/get-all') ||
+        (['GET', 'HEAD'].includes(req.method) && /^\/[^/]+$/.test(req.path));
+      if (!allowedRequest) return res.sendStatus(404);
+      const requestBody = ['GET', 'HEAD'].includes(req.method)
+        ? ''
+        : JSON.stringify(req.body || {});
+      const remoteRequest = httpsRequest(
+        `https://apisub.amolbooks.com/api/special-package${req.url}`,
+        {
+          method: req.method,
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            ...(requestBody
+              ? { 'Content-Length': Buffer.byteLength(requestBody) }
+              : {}),
+          },
+        },
+        (remoteResponse) => {
+          const chunks: Buffer[] = [];
+          remoteResponse.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+          remoteResponse.on('end', () => {
+            res.status(remoteResponse.statusCode || 502);
+            res.type(
+              String(
+                remoteResponse.headers['content-type'] || 'application/json'
+              )
+            );
+            res.send(Buffer.concat(chunks));
+          });
+        }
+      );
+      remoteRequest.on('error', (error) => {
+        logger.warn(
+          `Published storefront special-package proxy failed: ${error.message}`
+        );
+        return res.status(502).json({
+          success: false,
+          message: 'Published special package unavailable',
+        });
+      });
+      if (requestBody) remoteRequest.write(requestBody);
+      remoteRequest.end();
+    }
+  );
+
+  app.use(
     '/storefront-catalog',
     (
       req: express.Request,

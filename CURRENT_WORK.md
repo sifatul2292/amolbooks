@@ -1,5 +1,22 @@
 # CURRENT_WORK
 
+## Special-package conversion redesign (2026-10-01)
+
+- Reworked the deployed rollback branch's offer detail page around the real package saving, offer price, included-book artwork, and immediate purchase actions while preserving the native package cart and checkout handlers.
+- Added an API-backed related-offers shelf that excludes the current package and uses real package/product artwork and pricing.
+- Added a localhost-only, read-only special-package catalogue proxy so the rollback preview uses published package data without cross-origin failures.
+- Replaced the `/offers` carousel below 768px with a full-width stacked offer list while preserving the desktop carousel and every offer link.
+- Replaced the package page's inert native-click simulation with the same shared cart storage/API, badge refresh, and checkout pipeline used by product-page actions; both hero and lower controls now read `Add to Cart` and `Buy Now`.
+- Fixed cart hydration for package-only and mixed carts: package entries now load their published name, artwork, offer price, quantity, and line total instead of being discarded by the product-only renderer. Guest and authenticated quantity/remove matching now recognizes package IDs too.
+- Kept compiled Angular source untouched: all changes remain in the API-served storefront injections.
+- Verification: API build, focused redesign check, product cart-state check, and isolated browser purchase check pass. The browser check clicks `Add to Cart`, confirms a valid package cart entry, clicks `Buy Now`, and reaches checkout with the package preserved. Responsive checks confirm vertically stacked offers at 320/375/414px and the carousel retained at 768px. The existing lint command remains blocked because the repository ESLint configuration ignores every file matched by its configured glob.
+
+## Authoritative deployed baseline (2026-10-01)
+
+- All new work must use this Sunday rollback worktree on `codex/rollback-sunday-20260927`.
+- Do not continue development from `codex/prod-release-20260926`; that branch is considered corrupted.
+- The previous checkout's uncommitted offer-page work remains preserved there but is not part of this deployed baseline and must not be copied automatically.
+
 ## Customer and bundle insights (2026-09-30)
 
 - Added a protected `GET /api/order/customer-bundle-insights` report using existing order data only.
@@ -1680,6 +1697,12 @@ count even when tracking is perfect.
 - Cart synchronization: corrected the injected cart key to Angular's real `Amolbooks_USER_CART_1`, one-time merges/removes the wrongly cased legacy cart, keeps the native bottom-navigation count aligned, and forces full cart/checkout route loads so every surface rebuilds from the same product list.
 - Cart gift offer add: cache gift-card product metadata before buttons render and use that cache for immediate cart-page repaint, so gift products add dynamically even from an empty local cart. Local cart reads now use the local cart snapshot to avoid stale authenticated responses.
 - Product-detail category shelves: replaced the preview-only `/library` request with the production-supported `/product/get-all` catalogue request, so “বিষয়ভিত্তিক জনপ্রিয় বই” loads from published, in-stock products on both localhost and the live site.
+- Special-package Add to Cart now reuses the standard product confirmation modal and its cart-page CTA; the lower mobile Add to Cart and Buy Now controls are full width. Verified the lower button opens the modal, the modal navigates to `/cart`, and the package renders there at ৳1,208. `cd api && npm run build`, `git diff --check`, and the focused test-script syntax check pass; lint remains blocked by the existing all-files-ignored ESLint configuration.
+- Cart action deduplication: the temporary fallback footer now removes itself after Angular's native footer mounts, leaving one “আরও কিনুন” and one in-card checkout control. Cart remove controls now use an immediate inline SVG instead of the delayed Font Awesome glyph. Verified live with one footer, two rendered remove buttons, and two inline trash SVGs; `cd api && npm run build` passed.
+- Cart remove icon refinement: replaced the solid bin with a larger rounded outline matching the supplied reference while retaining the dependency-free inline SVG. Verified the rendered path in the live mobile cart; `cd api && npm run build` passed.
+- Desktop cart remove icon: moved the shared remove-control styles out of the phone-only breakpoint, fixing the desktop SVG collapse from 0×0 to 23px inside a 44px accessible button. Verified live at 1024px; `cd api && npm run build` passed.
+- Product utility icons: replaced the delayed Font Awesome stock, gift-list, and share glyphs with dependency-free inline SVGs while preserving the native parent controls and stock-green treatment. Live verification found all three rendered SVGs and zero remaining target font icons.
+- Mobile bottom navigation icons: embedded dependency-free SVGs inside the existing Home, Catalogue, Cart, and Login Font Awesome elements, preserving the class-based navigation and cart-badge hooks. Live verification found four 25px SVGs with all native labels intact; `cd api && npm run build` passed.
 
 ## Do NOT touch / be careful
 
