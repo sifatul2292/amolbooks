@@ -50,6 +50,8 @@ assert.match(source, /function renderRelatedOffers[\s\S]*?আপনার জন
 assert.match(source, /String\(item\._id\) !== String\(id\)/, 'The related-offer shelf excludes the current package');
 assert.match(source, /@media \(min-width: 40rem\)[\s\S]*?@media \(min-width: 60rem\)/, 'The redesign is mobile-first');
 assert.match(source, /html\.ab-special-package-page, body\.ab-special-package-page \{ overflow-x: clip; \}/, 'Offer pages cannot scroll horizontally');
+assert.match(source, /body\.ab-special-package-page #amol-cart-toast,[\s\S]*?body\.ab-special-package-page #ab-added-cart-modal \{ display: none !important; \}/, 'Package Add to Cart feedback stays silent while the cart updates');
+assert.match(source, /p\.ab-book-description[\s\S]*?font-weight: 500 !important;/, 'Book descriptions use the storefront light Bengali font face');
 assert.match(source, /prefers-reduced-motion: reduce/, 'Interactive motion has a reduced-motion fallback');
 assert.match(productSectionsSource, /@media \(max-width: 767px\)[\s\S]*?app-offers app-special-package[\s\S]*?\.swiper-wrapper[\s\S]*?display: grid !important/, 'Mobile offers render as a stacked list');
 assert.match(productSectionsSource, /app-offers app-special-package[\s\S]*?\.swiper-slide[\s\S]*?width: 100% !important[\s\S]*?margin: 0 !important/, 'Every mobile offer occupies its own full-width row');

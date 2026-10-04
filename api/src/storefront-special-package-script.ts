@@ -529,6 +529,8 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
     }
     html.ab-special-package-page, body.ab-special-package-page { overflow-x: clip; }
     body.ab-special-package-page { background: var(--ab-read-paper); }
+    body.ab-special-package-page #amol-cart-toast,
+    body.ab-special-package-page #ab-added-cart-modal { display: none !important; }
     app-special-package-details { color: var(--ab-read-ink); font-family: var(--ab-read-body); }
     app-special-package-details .banner-area { margin-block: var(--ab-read-lg) var(--ab-read-2xl) !important; }
     app-special-package-details .banner-area .bannar-main { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; gap: var(--ab-read-lg) !important; align-items: center; padding: var(--ab-read-sm) !important; background: var(--ab-read-paper-deep) !important; border: 1px solid var(--ab-read-rule) !important; border-radius: var(--ab-read-radius-md) !important; box-shadow: 0 1px 2px var(--ab-read-shadow) !important; }
@@ -558,7 +560,7 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
     app-special-package-details .product-body > p:not(.ab-book-description), app-special-package-details .product-body > ul { display: none !important; }
     .ab-book-meta { display: flex; flex-wrap: wrap; gap: var(--ab-read-2xs) var(--ab-read-md); margin-block-start: var(--ab-read-sm); color: var(--ab-read-muted); font-size: 0.875rem; line-height: 1.45; }
     .ab-book-meta span + span::before { content: '·'; margin-inline-end: var(--ab-read-md); color: var(--ab-read-rule); }
-    app-special-package-details .product-body > p.ab-book-description { display: -webkit-box !important; max-width: 65ch; margin: var(--ab-read-md) 0 0 !important; overflow: hidden !important; color: var(--ab-read-muted) !important; font-family: var(--ab-read-body) !important; font-size: 1rem !important; font-synthesis: none; font-weight: 400 !important; line-height: 1.72 !important; -webkit-box-orient: vertical; -webkit-line-clamp: 4 !important; }
+    app-special-package-details .product-body > p.ab-book-description { display: -webkit-box !important; max-width: 65ch; margin: var(--ab-read-md) 0 0 !important; overflow: hidden !important; color: var(--ab-read-muted) !important; font-family: var(--ab-read-body) !important; font-size: 1rem !important; font-synthesis: none; font-weight: 500 !important; line-height: 1.72 !important; -webkit-box-orient: vertical; -webkit-line-clamp: 4 !important; }
     app-special-package-details .product-body > p.ab-book-description.is-expanded { display: block !important; overflow: visible !important; -webkit-line-clamp: unset !important; }
     .ab-book-description-toggle { position: relative; z-index: 2; min-height: 2.25rem; margin-block-start: var(--ab-read-xs); padding: 0; color: var(--ab-read-accent-dark); background: transparent; border: 0; border-block-end: 1px solid currentColor; border-radius: 0; font-family: var(--ab-read-body); font-size: 0.9rem; font-weight: 700; cursor: pointer; }
     app-special-package-details .price-area { grid-column: 1 / -1; display: block !important; min-width: 0; padding: 0 !important; }
