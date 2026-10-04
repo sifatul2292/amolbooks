@@ -1703,6 +1703,7 @@ count even when tracking is perfect.
 - Desktop cart remove icon: moved the shared remove-control styles out of the phone-only breakpoint, fixing the desktop SVG collapse from 0×0 to 23px inside a 44px accessible button. Verified live at 1024px; `cd api && npm run build` passed.
 - Product utility icons: replaced the delayed Font Awesome stock, gift-list, and share glyphs with dependency-free inline SVGs while preserving the native parent controls and stock-green treatment. Live verification found all three rendered SVGs and zero remaining target font icons.
 - Mobile bottom navigation icons: embedded dependency-free SVGs inside the existing Home, Catalogue, Cart, and Login Font Awesome elements, preserving the class-based navigation and cart-badge hooks. Live verification found four 25px SVGs with all native labels intact; `cd api && npm run build` passed.
+- Special-package PDF reader: added a delegated close-button handler so the visible × remains functional when the dialog DOM is recreated. Verified on `/special-package-details/6ac0b248b1f44997b7cd9a0b` that the dialog opens, the × removes `is-open`, and body scrolling is restored; the focused redesign check and `cd api && npm run build` pass. Lint remains blocked by the existing all-files-ignored ESLint configuration.
 
 ## Do NOT touch / be careful
 

@@ -1019,6 +1019,15 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
   function installInteractionHandlers() {
     if (document.documentElement.getAttribute('data-ab-offer-handlers') === 'true') return;
     document.documentElement.setAttribute('data-ab-offer-handlers', 'true');
+    document.addEventListener('click', function (event) {
+      var closeTarget = event.target && event.target.closest
+        ? event.target.closest('.ab-pdf-dialog-close')
+        : null;
+      if (!closeTarget) return;
+      event.preventDefault();
+      event.stopPropagation();
+      closePdfDialog();
+    }, true);
     function handlePreviewInteraction(event) {
       var target = event.target && event.target.closest
         ? event.target.closest('.ab-book-action--preview')

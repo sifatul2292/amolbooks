@@ -29,7 +29,7 @@ assert.match(source, /product\.shortDescription \|\| product\.description/, 'Eve
 assert.match(source, /product && product\.pdfFile[\s\S]*?একটু পড়ে দেখুন[\s\S]*?openPdfDialog/, 'Available PDF samples open in an in-page reader');
 assert.match(source, /function loadProductPdfEngine[\s\S]*?webpackRequire\.e\(158\)[\s\S]*?webpackRequire\(5908\)/, 'The reader reuses the storefront product-page PDF.js engine');
 assert.match(source, /function renderPdfPages[\s\S]*?page\.render/, 'PDF pages render to canvases instead of a blocked cross-origin iframe');
-assert.match(source, /ab-pdf-dialog-close[\s\S]*?close\.addEventListener\('click', closePdfDialog\)/, 'The PDF reader exposes a working close control');
+assert.match(source, /event\.target\.closest[\s\S]*?'\.ab-pdf-dialog-close'[\s\S]*?closePdfDialog\(\)/, 'The PDF reader delegates its close control so recreated dialogs remain dismissible');
 assert.doesNotMatch(source, /ab-pdf-dialog-frame|createElement\('iframe'/, 'The blocked iframe implementation is removed');
 assert.match(source, /আরও দেখুন[\s\S]*?aria-expanded/, 'Long book descriptions have an accessible see-more control');
 assert.match(source, /বইগুলোর মোট মূল্য[\s\S]*?অফার মূল্য/, 'The hero separates combined list price from package offer price');
