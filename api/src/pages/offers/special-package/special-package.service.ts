@@ -27,6 +27,9 @@ import {
   withCalculatedSpecialPackageSubtotal,
 } from '../../../shared/utils/special-package-price.util';
 import { DiscountTypeEnum } from '../../../enum/product.enum';
+import { Response } from 'express';
+import * as sharp from 'sharp';
+import { basename, join } from 'path';
 
 const ObjectId = Types.ObjectId;
 
@@ -42,6 +45,239 @@ export class SpecialPackageService {
     private utilsService: UtilsService,
     private jobSchedulerService: JobSchedulerService,
   ) {}
+
+  private async getPackageImageDimensions(
+    imageUrl?: string,
+  ): Promise<{ width: number; height: number } | null> {
+    if (!imageUrl) return null;
+
+    try {
+      const fileName = basename(decodeURIComponent(new URL(imageUrl).pathname));
+      const imagePath = join(
+        __dirname,
+        '..',
+        '..',
+        '..',
+        '..',
+        'upload',
+        'images',
+        fileName,
+      );
+      const metadata = await sharp(imagePath).metadata();
+      return metadata.width && metadata.height
+        ? { width: metadata.width, height: metadata.height }
+        : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  async getSpecialPackageOgHtml(id: string, res: Response): Promise<void> {
+    const sendError = (status: number, title: string) => {
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(status).send(
+        `<!doctype html><html lang="bn"><head><meta charset="utf-8"><meta name="robots" content="noindex"><title>${title} | Amolbooks</title></head><body><h1>${title}</h1></body></html>`,
+      );
+    };
+
+    try {
+      if (!ObjectId.isValid(id)) {
+        sendError(404, 'প্যাকেজটি পাওয়া যায়নি');
+        return;
+      }
+
+      const data: any = await this.specialPackageModel
+        .findById(id)
+        .populate('products.product', 'name slug images quantity')
+        .select('name slug description image salePrice products updatedAt')
+        .lean();
+
+      if (!data) {
+        sendError(404, 'প্যাকেজটি পাওয়া যায়নি');
+        return;
+      }
+
+      const escapeHtml = (value: string) =>
+        (value || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#x27;');
+      const normalizeMetaText = (value: string, maxLength = 160) => {
+        const normalized = (value || '')
+          .replace(/<[^>]*>/g, ' ')
+          .replace(/&nbsp;/gi, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        return normalized.length > maxLength
+          ? `${normalized.slice(0, maxLength - 1).trimEnd()}…`
+          : normalized;
+      };
+
+      const origin = 'https://www.amolbooks.com';
+      const items = Array.isArray(data.products) ? data.products : [];
+      const products = items.map((item: any) => item?.product).filter(Boolean);
+      const productCount = products.length;
+      const packageName = data.name || 'বিশেষ বইয়ের প্যাকেজ';
+      const rawTitle = normalizeMetaText(
+        `${packageName}${
+          productCount ? ` — ${productCount}টি বইয়ের বিশেষ প্যাকেজ` : ''
+        }`,
+        110,
+      );
+      const price = Math.max(0, Number(data.salePrice || 0));
+      const rawDescription = normalizeMetaText(
+        data.description ||
+          `${packageName}-এ${
+            productCount
+              ? ` ${productCount}টি নির্বাচিত ইসলামিক বই`
+              : ' নির্বাচিত ইসলামিক বই'
+          } একসাথে পান। অফার মূল্য ৳${price}। সারা বাংলাদেশে হোম ডেলিভারি।`,
+      );
+      const image =
+        data.image ||
+        products.find((product: any) => product?.images?.length)?.images?.[0] ||
+        'https://www.amolbooks.com/assets/images/logo/logo.png';
+      const dimensions = await this.getPackageImageDimensions(image);
+      const imageType = /\.webp(?:$|\?)/i.test(image)
+        ? 'image/webp'
+        : /\.png(?:$|\?)/i.test(image)
+          ? 'image/png'
+          : 'image/jpeg';
+      const canonicalUrl = `${origin}/special-package-details/${encodeURIComponent(
+        String(data._id),
+      )}`;
+      const safeJsonLd = (value: any) =>
+        JSON.stringify(value).replace(/</g, '\\u003c');
+      const productJsonLd: Record<string, any> = {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        '@id': `${canonicalUrl}#product`,
+        name: packageName,
+        description: rawDescription,
+        image: [image],
+        url: canonicalUrl,
+        sku: String(data._id),
+        category: 'Book bundle',
+        brand: { '@type': 'Brand', name: 'Amolbooks' },
+        offers: {
+          '@type': 'Offer',
+          url: canonicalUrl,
+          priceCurrency: 'BDT',
+          price: price.toFixed(2),
+          availability: 'https://schema.org/InStock',
+          itemCondition: 'https://schema.org/NewCondition',
+          seller: { '@type': 'Organization', name: 'Amolbooks' },
+        },
+      };
+      if (products.length) {
+        productJsonLd.isRelatedTo = products.map((product: any) => ({
+          '@type': 'Book',
+          name: product.name,
+          image: product.images?.[0],
+          url: product.slug
+            ? `${origin}/product-details/${encodeURIComponent(product.slug)}`
+            : undefined,
+        }));
+      }
+      const breadcrumbJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'হোম',
+            item: `${origin}/`,
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'অফার',
+            item: `${origin}/offers`,
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: packageName,
+            item: canonicalUrl,
+          },
+        ],
+      };
+
+      const title = escapeHtml(rawTitle);
+      const description = escapeHtml(rawDescription);
+      const safeImage = escapeHtml(image);
+      const safeUrl = escapeHtml(canonicalUrl);
+      const imageAlt = escapeHtml(`${packageName} বিশেষ প্যাকেজ`);
+      const imageSizeTags = dimensions
+        ? `<meta property="og:image:width" content="${dimensions.width}">\n  <meta property="og:image:height" content="${dimensions.height}">`
+        : '';
+      const imageSizeAttributes = dimensions
+        ? ` width="${dimensions.width}" height="${dimensions.height}"`
+        : '';
+      const productList = products.length
+        ? `<ul>${products
+            .map((product: any) => `<li>${escapeHtml(product.name || '')}</li>`)
+            .join('')}</ul>`
+        : '';
+
+      const html = `<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <title>${title} | Amolbooks</title>
+  <meta name="description" content="${description}">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta property="og:type" content="product">
+  <meta property="og:locale" content="bn_BD">
+  <meta property="og:site_name" content="Amolbooks">
+  <meta property="og:title" content="${title}">
+  <meta property="og:description" content="${description}">
+  <meta property="og:image" content="${safeImage}">
+  <meta property="og:image:secure_url" content="${safeImage}">
+  <meta property="og:image:type" content="${imageType}">
+  ${imageSizeTags}
+  <meta property="og:image:alt" content="${imageAlt}">
+  <meta property="og:url" content="${safeUrl}">
+  <meta property="product:price:amount" content="${price}">
+  <meta property="product:price:currency" content="BDT">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${title}">
+  <meta name="twitter:description" content="${description}">
+  <meta name="twitter:image" content="${safeImage}">
+  <meta name="twitter:image:alt" content="${imageAlt}">
+  <link rel="canonical" href="${safeUrl}">
+  <script type="application/ld+json">${safeJsonLd(productJsonLd)}</script>
+  <script type="application/ld+json">${safeJsonLd(breadcrumbJsonLd)}</script>
+</head>
+<body>
+  <main><article>
+    <h1>${escapeHtml(packageName)}</h1>
+    <img src="${safeImage}"${imageSizeAttributes} alt="${imageAlt}">
+    <p>${description}</p>
+    <p>প্যাকেজ মূল্য: ৳${price}</p>
+    ${productList}
+    <a href="${safeUrl}">Amolbooks থেকে প্যাকেজটি দেখুন ও অর্ডার করুন</a>
+  </article></main>
+</body>
+</html>`;
+
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=300');
+      res.status(200).send(html);
+    } catch (_) {
+      sendError(500, 'প্যাকেজ তথ্য লোড করা যায়নি');
+    }
+  }
+
+  async findAllForSitemap(): Promise<any[]> {
+    return this.specialPackageModel
+      .find({})
+      .select('_id name image updatedAt')
+      .lean();
+  }
 
   /**
    * addSpecialPackage

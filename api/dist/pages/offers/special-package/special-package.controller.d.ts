@@ -1,3 +1,4 @@
+import { Response } from 'express';
 import { ResponsePayload } from '../../../interfaces/core/response-payload.interface';
 import { SpecialPackageService } from './special-package.service';
 import { AddSpecialPackageDto, AddSpecialPackageDraftDto, FilterAndPaginationSpecialPackageDto, OptionSpecialPackageDto, UpdateSpecialPackageDto } from '../../../dto/special-package.dto';
@@ -13,6 +14,7 @@ export declare class SpecialPackageController {
     }): Promise<ResponsePayload>;
     getAllSpecialPackages(filterSpecialPackageDto: FilterAndPaginationSpecialPackageDto, searchString: string): Promise<ResponsePayload>;
     getSpecialPackageSingle(select: string): Promise<ResponsePayload>;
+    getSpecialPackageOgHtml(id: string, res: Response): Promise<void>;
     getSpecialPackageById(id: string, select: string): Promise<ResponsePayload>;
     getSpecialPackageBySlug(slug: string, select: string): Promise<ResponsePayload>;
     getProductByIds(ids: any, select: string): Promise<ResponsePayload>;

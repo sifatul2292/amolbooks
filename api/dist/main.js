@@ -798,6 +798,10 @@ ${storefrontPurchaseExternalIdHelper}
     app.use('/api/special-package', (req, res, next) => {
         if (!isLocalStorefrontHost(req.hostname))
             return next();
+        const isSeoPreviewRequest = ['GET', 'HEAD'].includes(req.method) &&
+            /^\/og\/[a-fA-F0-9]{24}$/.test(req.path);
+        if (isSeoPreviewRequest)
+            return next();
         const allowedRequest = (req.method === 'POST' && req.path === '/get-all') ||
             (['GET', 'HEAD'].includes(req.method) && /^\/[^/]+$/.test(req.path));
         if (!allowedRequest)

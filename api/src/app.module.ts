@@ -81,8 +81,8 @@ import { MetaAdsModule } from './pages/meta-ads/meta-ads.module';
         serveRoot: '/invoice',
       },
       // Serve the Angular SPA for all non-API routes.
-      // Bots hitting /product-details/:slug are intercepted first by
-      // SeoBotMiddleware before reaching ServeStatic.
+      // Bots hitting product and special-package detail routes are intercepted
+      // first by SeoBotMiddleware before reaching ServeStatic.
       {
         rootPath: join(__dirname, '..', '..', 'ui', 'dist', 'angular-ui', 'browser'),
         exclude: ['/api/(.*)'],

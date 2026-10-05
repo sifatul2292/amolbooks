@@ -8,12 +8,14 @@ import {
   Post,
   Put,
   Query,
+  Res,
   UseGuards,
   UsePipes,
   ValidationPipe,
   Version,
   VERSION_NEUTRAL,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { AdminMetaRoles } from '../../../decorator/admin-roles.decorator';
 import { AdminRoles } from '../../../enum/admin-roles.enum';
 import { AdminRolesGuard } from '../../../guards/admin-roles.guard';
@@ -109,6 +111,15 @@ export class SpecialPackageController {
     @Query() select: string,
   ): Promise<ResponsePayload> {
     return await this.promoOfferService.getSpecialPackageSingle(select);
+  }
+
+  @Version(VERSION_NEUTRAL)
+  @Get('/og/:id')
+  async getSpecialPackageOgHtml(
+    @Param('id') id: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    return this.promoOfferService.getSpecialPackageOgHtml(id, res);
   }
 
   @Version(VERSION_NEUTRAL)

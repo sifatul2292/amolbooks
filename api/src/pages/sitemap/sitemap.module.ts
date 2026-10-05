@@ -4,9 +4,10 @@ import { SitemapController } from './sitemap.controller';
 import { SitemapService } from './sitemap.service';
 import { ProductModule } from '../product/product.module';
 import { BlogModule } from '../blog/blog/blog.module';
+import { SpecialPackageModule } from '../offers/special-package/special-package.module';
 
 @Module({
-  imports: [ProductModule, BlogModule],
+  imports: [ProductModule, BlogModule, SpecialPackageModule],
   controllers: [SitemapController],
   providers: [SitemapService],
 })

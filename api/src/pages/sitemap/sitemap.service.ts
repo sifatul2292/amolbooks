@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { SitemapStream, streamToPromise } from 'sitemap';
 import { ProductService } from '../product/product.service';
 import { BlogService } from '../blog/blog/blog.service';
+import { SpecialPackageService } from '../offers/special-package/special-package.service';
 
 const STOREFRONT_ORIGIN = 'https://www.amolbooks.com';
 
@@ -11,6 +12,7 @@ export class SitemapService {
   constructor(
     private readonly productService: ProductService,
     private readonly blogService: BlogService,
+    private readonly specialPackageService: SpecialPackageService,
   ) {}
 
   async generateSitemapXml(): Promise<string> {
@@ -22,6 +24,7 @@ export class SitemapService {
     smStream.write({ url: '/author-list', changefreq: 'weekly', priority: 0.7 });
     smStream.write({ url: '/publisher-list', changefreq: 'weekly', priority: 0.7 });
     smStream.write({ url: '/blogs', changefreq: 'weekly', priority: 0.7 });
+    smStream.write({ url: '/offers', changefreq: 'daily', priority: 0.8 });
     smStream.write({ url: '/contact-us', changefreq: 'monthly', priority: 0.5 });
 
     const products = await this.productService.findAllPublished();
@@ -33,6 +36,19 @@ export class SitemapService {
         priority: 0.9,
         img: product.images?.[0]
           ? [{ url: product.images[0], title: product.name }]
+          : undefined,
+      }),
+    );
+
+    const specialPackages = await this.specialPackageService.findAllForSitemap();
+    specialPackages.forEach((specialPackage) =>
+      smStream.write({
+        url: `/special-package-details/${specialPackage._id}`,
+        lastmod: specialPackage.updatedAt,
+        changefreq: 'weekly',
+        priority: 0.8,
+        img: specialPackage.image
+          ? [{ url: specialPackage.image, title: specialPackage.name }]
           : undefined,
       }),
     );

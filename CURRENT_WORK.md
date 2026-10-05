@@ -1,5 +1,29 @@
 # CURRENT_WORK
 
+## Special-package cart confirmation restored (2026-10-05)
+
+- Restored the shared product-style cart confirmation dialog after a customer selects `Add to Cart` on a special-package detail page.
+- Kept the obsolete legacy cart toast suppressed; the visible dialog now offers both “আরও বই কিনুন” and “অর্ডার সম্পন্ন করতে কার্টে যান”, with the latter opening the cart containing the package.
+- Updated the tracked generated storefront asset and its cache-busting hash so the fix is included in the next deployment.
+- Verification: the focused special-package browser check confirms the full-width mobile action, visible confirmation dialog, cart navigation, package cart row and total, and Buy Now checkout flow.
+
+## Production cart quantity selector parity (2026-10-05)
+
+- Kept the current localhost cart selector unchanged and applied its compact horizontal `− / quantity / +` presentation to the published Angular cart control on mobile.
+- Preserved Angular's native increment/decrement handlers in production; the patch only marks and styles the existing control, including the disabled minimum-quantity state.
+- Replaced the production control's Font Awesome plus/minus glyph dependency with immediate CSS text glyphs, preventing the old vertical selector and slow-loading icons from reappearing.
+- Updated both the source injection and tracked generated storefront asset. The content-hashed script URL changed from `f19b504a42d8` to `b782a7699539`, so the next safe deployment fetches the new selector instead of using the year-long cached production asset.
+- Verification: API build and focused product/cart state checks pass. Local mobile browser verification confirms the existing selector remains a 136px horizontal three-column control with 44px targets and the order `−`, quantity, `+`; `/cart` responds with HTTP 200.
+
+## Special-package SEO repair (2026-10-04)
+
+- Added crawler-rendered HTML for every `/special-package-details/:id` page with a package-specific title, description, canonical URL, Open Graph/Twitter image, real image dimensions, offer price, and semantic package contents instead of inheriting the homepage metadata.
+- Added Product/Offer and BreadcrumbList JSON-LD using the package's live price, image, and included books; invalid or missing package IDs return a real `404` with `noindex`.
+- Added the offers index and package detail URLs (including offer artwork) to the dynamic sitemap.
+- Extended the nginx crawler-routing example so search/social crawlers reach the package metadata endpoint while normal customers continue to receive the Angular page.
+- Kept the localhost published-catalogue proxy intact while allowing the new local SEO endpoint to reach Nest directly.
+- Verification: `npm run build` passes; focused response assertions confirm the exact package canonical/`og:url`, 1170×658 image metadata, BDT offer price, and Product/Offer/Breadcrumb structured data. Local Atlas does not contain the referenced production package, so a live local request correctly returns `404 noindex`; the renderer was verified with the same production package fields. The repository's existing lint command remains blocked because its configured glob ignores every matching file.
+
 ## Special-package conversion redesign (2026-10-01)
 
 - Reworked the deployed rollback branch's offer detail page around the real package saving, offer price, included-book artwork, and immediate purchase actions while preserving the native package cart and checkout handlers.

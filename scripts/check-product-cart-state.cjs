@@ -23,6 +23,8 @@ assert.match(source, /li\.ab-summary-hidden,[\s\S]*?li\.ab-hide-discount-row\s*\
 assert.match(source, /@media \(min-width: 768px\) \{[\s\S]*?app-header \.ab-header-search-results \{[\s\S]*?position: absolute;[\s\S]*?app-header \.ab-sticky-search-item img \{[\s\S]*?width: 2\.7rem;[\s\S]*?height: 3\.45rem;/, 'Desktop header search results keep compact product rows');
 assert.match(source, /function repairCheckoutDeliveryPlacement\(\)[\s\S]*?section\.insertBefore\(card, summary\)/, 'Mobile checkout places delivery options before its summary');
 assert.match(source, /window\.innerWidth >= 768[\s\S]*?paymentArea\.insertBefore\(heading, restoreBefore\)/, 'Desktop checkout restores delivery options to the payment card');
+assert.match(source, /quantityArea\.classList\.add\('ab-native-cart-quantity'\)/, 'Published native cart rows receive the horizontal quantity selector');
+assert.match(source, /\.ab-native-cart-quantity \{[\s\S]*?grid-template-columns: 2\.7rem 3rem 2\.7rem[\s\S]*?\.q-icon:first-child \{ order: 3; \}[\s\S]*?\.q-icon:last-child \{ order: 1; \}/, 'Published mobile selector matches the local minus, quantity, plus order');
 assert.match(main, /obj\.event==='add_to_cart'&&!window\.__amolCartUiEventHandled/, 'Tracking mirror avoids duplicating injected cart UI feedback');
 assert.match(main, /event:'view_cart',ecommerce:\{currency:'BDT',value:val,items:items\}/, 'Legacy cart tracking emits the standard event for mirroring');
 const trackingStart = source.indexOf('  function pushProductPageAddToCartTracking(');

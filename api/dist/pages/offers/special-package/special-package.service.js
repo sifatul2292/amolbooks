@@ -23,6 +23,8 @@ const error_code_enum_1 = require("../../../enum/error-code.enum");
 const job_scheduler_service_1 = require("../../../shared/job-scheduler/job-scheduler.service");
 const special_package_price_util_1 = require("../../../shared/utils/special-package-price.util");
 const product_enum_1 = require("../../../enum/product.enum");
+const sharp = require("sharp");
+const path_1 = require("path");
 const ObjectId = mongoose_2.Types.ObjectId;
 let SpecialPackageService = SpecialPackageService_1 = class SpecialPackageService {
     constructor(specialPackageModel, productModel, configService, utilsService, jobSchedulerService) {
@@ -32,6 +34,207 @@ let SpecialPackageService = SpecialPackageService_1 = class SpecialPackageServic
         this.utilsService = utilsService;
         this.jobSchedulerService = jobSchedulerService;
         this.logger = new common_1.Logger(SpecialPackageService_1.name);
+    }
+    async getPackageImageDimensions(imageUrl) {
+        if (!imageUrl)
+            return null;
+        try {
+            const fileName = (0, path_1.basename)(decodeURIComponent(new URL(imageUrl).pathname));
+            const imagePath = (0, path_1.join)(__dirname, '..', '..', '..', '..', 'upload', 'images', fileName);
+            const metadata = await sharp(imagePath).metadata();
+            return metadata.width && metadata.height
+                ? { width: metadata.width, height: metadata.height }
+                : null;
+        }
+        catch (_) {
+            return null;
+        }
+    }
+    async getSpecialPackageOgHtml(id, res) {
+        var _a, _b;
+        const sendError = (status, title) => {
+            res.setHeader('Cache-Control', 'no-store');
+            res.status(status).send(`<!doctype html><html lang="bn"><head><meta charset="utf-8"><meta name="robots" content="noindex"><title>${title} | Amolbooks</title></head><body><h1>${title}</h1></body></html>`);
+        };
+        try {
+            if (!ObjectId.isValid(id)) {
+                sendError(404, 'প্যাকেজটি পাওয়া যায়নি');
+                return;
+            }
+            const data = await this.specialPackageModel
+                .findById(id)
+                .populate('products.product', 'name slug images quantity')
+                .select('name slug description image salePrice products updatedAt')
+                .lean();
+            if (!data) {
+                sendError(404, 'প্যাকেজটি পাওয়া যায়নি');
+                return;
+            }
+            const escapeHtml = (value) => (value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#x27;');
+            const normalizeMetaText = (value, maxLength = 160) => {
+                const normalized = (value || '')
+                    .replace(/<[^>]*>/g, ' ')
+                    .replace(/&nbsp;/gi, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                return normalized.length > maxLength
+                    ? `${normalized.slice(0, maxLength - 1).trimEnd()}…`
+                    : normalized;
+            };
+            const origin = 'https://www.amolbooks.com';
+            const items = Array.isArray(data.products) ? data.products : [];
+            const products = items.map((item) => item === null || item === void 0 ? void 0 : item.product).filter(Boolean);
+            const productCount = products.length;
+            const packageName = data.name || 'বিশেষ বইয়ের প্যাকেজ';
+            const rawTitle = normalizeMetaText(`${packageName}${productCount ? ` — ${productCount}টি বইয়ের বিশেষ প্যাকেজ` : ''}`, 110);
+            const price = Math.max(0, Number(data.salePrice || 0));
+            const rawDescription = normalizeMetaText(data.description ||
+                `${packageName}-এ${productCount
+                    ? ` ${productCount}টি নির্বাচিত ইসলামিক বই`
+                    : ' নির্বাচিত ইসলামিক বই'} একসাথে পান। অফার মূল্য ৳${price}। সারা বাংলাদেশে হোম ডেলিভারি।`);
+            const image = data.image ||
+                ((_b = (_a = products.find((product) => { var _a; return (_a = product === null || product === void 0 ? void 0 : product.images) === null || _a === void 0 ? void 0 : _a.length; })) === null || _a === void 0 ? void 0 : _a.images) === null || _b === void 0 ? void 0 : _b[0]) ||
+                'https://www.amolbooks.com/assets/images/logo/logo.png';
+            const dimensions = await this.getPackageImageDimensions(image);
+            const imageType = /\.webp(?:$|\?)/i.test(image)
+                ? 'image/webp'
+                : /\.png(?:$|\?)/i.test(image)
+                    ? 'image/png'
+                    : 'image/jpeg';
+            const canonicalUrl = `${origin}/special-package-details/${encodeURIComponent(String(data._id))}`;
+            const safeJsonLd = (value) => JSON.stringify(value).replace(/</g, '\\u003c');
+            const productJsonLd = {
+                '@context': 'https://schema.org',
+                '@type': 'Product',
+                '@id': `${canonicalUrl}#product`,
+                name: packageName,
+                description: rawDescription,
+                image: [image],
+                url: canonicalUrl,
+                sku: String(data._id),
+                category: 'Book bundle',
+                brand: { '@type': 'Brand', name: 'Amolbooks' },
+                offers: {
+                    '@type': 'Offer',
+                    url: canonicalUrl,
+                    priceCurrency: 'BDT',
+                    price: price.toFixed(2),
+                    availability: 'https://schema.org/InStock',
+                    itemCondition: 'https://schema.org/NewCondition',
+                    seller: { '@type': 'Organization', name: 'Amolbooks' },
+                },
+            };
+            if (products.length) {
+                productJsonLd.isRelatedTo = products.map((product) => {
+                    var _a;
+                    return ({
+                        '@type': 'Book',
+                        name: product.name,
+                        image: (_a = product.images) === null || _a === void 0 ? void 0 : _a[0],
+                        url: product.slug
+                            ? `${origin}/product-details/${encodeURIComponent(product.slug)}`
+                            : undefined,
+                    });
+                });
+            }
+            const breadcrumbJsonLd = {
+                '@context': 'https://schema.org',
+                '@type': 'BreadcrumbList',
+                itemListElement: [
+                    {
+                        '@type': 'ListItem',
+                        position: 1,
+                        name: 'হোম',
+                        item: `${origin}/`,
+                    },
+                    {
+                        '@type': 'ListItem',
+                        position: 2,
+                        name: 'অফার',
+                        item: `${origin}/offers`,
+                    },
+                    {
+                        '@type': 'ListItem',
+                        position: 3,
+                        name: packageName,
+                        item: canonicalUrl,
+                    },
+                ],
+            };
+            const title = escapeHtml(rawTitle);
+            const description = escapeHtml(rawDescription);
+            const safeImage = escapeHtml(image);
+            const safeUrl = escapeHtml(canonicalUrl);
+            const imageAlt = escapeHtml(`${packageName} বিশেষ প্যাকেজ`);
+            const imageSizeTags = dimensions
+                ? `<meta property="og:image:width" content="${dimensions.width}">\n  <meta property="og:image:height" content="${dimensions.height}">`
+                : '';
+            const imageSizeAttributes = dimensions
+                ? ` width="${dimensions.width}" height="${dimensions.height}"`
+                : '';
+            const productList = products.length
+                ? `<ul>${products
+                    .map((product) => `<li>${escapeHtml(product.name || '')}</li>`)
+                    .join('')}</ul>`
+                : '';
+            const html = `<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <title>${title} | Amolbooks</title>
+  <meta name="description" content="${description}">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta property="og:type" content="product">
+  <meta property="og:locale" content="bn_BD">
+  <meta property="og:site_name" content="Amolbooks">
+  <meta property="og:title" content="${title}">
+  <meta property="og:description" content="${description}">
+  <meta property="og:image" content="${safeImage}">
+  <meta property="og:image:secure_url" content="${safeImage}">
+  <meta property="og:image:type" content="${imageType}">
+  ${imageSizeTags}
+  <meta property="og:image:alt" content="${imageAlt}">
+  <meta property="og:url" content="${safeUrl}">
+  <meta property="product:price:amount" content="${price}">
+  <meta property="product:price:currency" content="BDT">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${title}">
+  <meta name="twitter:description" content="${description}">
+  <meta name="twitter:image" content="${safeImage}">
+  <meta name="twitter:image:alt" content="${imageAlt}">
+  <link rel="canonical" href="${safeUrl}">
+  <script type="application/ld+json">${safeJsonLd(productJsonLd)}</script>
+  <script type="application/ld+json">${safeJsonLd(breadcrumbJsonLd)}</script>
+</head>
+<body>
+  <main><article>
+    <h1>${escapeHtml(packageName)}</h1>
+    <img src="${safeImage}"${imageSizeAttributes} alt="${imageAlt}">
+    <p>${description}</p>
+    <p>প্যাকেজ মূল্য: ৳${price}</p>
+    ${productList}
+    <a href="${safeUrl}">Amolbooks থেকে প্যাকেজটি দেখুন ও অর্ডার করুন</a>
+  </article></main>
+</body>
+</html>`;
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            res.setHeader('Cache-Control', 'public, max-age=300');
+            res.status(200).send(html);
+        }
+        catch (_) {
+            sendError(500, 'প্যাকেজ তথ্য লোড করা যায়নি');
+        }
+    }
+    async findAllForSitemap() {
+        return this.specialPackageModel
+            .find({})
+            .select('_id name image updatedAt')
+            .lean();
     }
     async addSpecialPackage(addSpecialPackageDto) {
         try {

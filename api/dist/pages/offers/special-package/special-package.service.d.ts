@@ -6,6 +6,7 @@ import { Product } from '../../../interfaces/common/product.interface';
 import { SpecialPackage } from '../../../interfaces/common/special-package.interface';
 import { AddSpecialPackageDto, AddSpecialPackageDraftDto, FilterAndPaginationSpecialPackageDto, OptionSpecialPackageDto, UpdateSpecialPackageDto } from '../../../dto/special-package.dto';
 import { JobSchedulerService } from '../../../shared/job-scheduler/job-scheduler.service';
+import { Response } from 'express';
 export declare class SpecialPackageService {
     private readonly specialPackageModel;
     private readonly productModel;
@@ -14,6 +15,9 @@ export declare class SpecialPackageService {
     private jobSchedulerService;
     private logger;
     constructor(specialPackageModel: Model<SpecialPackage>, productModel: Model<Product>, configService: ConfigService, utilsService: UtilsService, jobSchedulerService: JobSchedulerService);
+    private getPackageImageDimensions;
+    getSpecialPackageOgHtml(id: string, res: Response): Promise<void>;
+    findAllForSitemap(): Promise<any[]>;
     addSpecialPackage(addSpecialPackageDto: AddSpecialPackageDto): Promise<ResponsePayload>;
     createSpecialPackageDraft(draft: AddSpecialPackageDraftDto): Promise<ResponsePayload>;
     insertManySpecialPackage(addSpecialPackagesDto: AddSpecialPackageDto[], optionSpecialPackageDto: OptionSpecialPackageDto): Promise<ResponsePayload>;

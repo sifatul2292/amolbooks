@@ -13,6 +13,7 @@ exports.SeoBotMiddleware = void 0;
 const common_1 = require("@nestjs/common");
 const product_service_1 = require("../pages/product/product.service");
 const seo_page_service_1 = require("../pages/seo-page/seo-page.service");
+const special_package_service_1 = require("../pages/offers/special-package/special-package.service");
 const BOT_UA_REGEX = /facebookexternalhit|facebot|Twitterbot|LinkedInBot|Googlebot|bingbot|Slurp|DuckDuckBot|YandexBot|redditbot|WhatsApp|TelegramBot|Discordbot|Slackbot|vkShare|W3C_Validator|pinterest|Applebot/i;
 const DEFAULT_IMAGE = 'https://www.amolbooks.com/assets/images/logo/logo.png';
 const SHOP_NAME = 'Amolbooks';
@@ -85,15 +86,21 @@ function buildPageNamePattern(pathname) {
     return new RegExp(`^(${variants.join('|')})$`, 'i');
 }
 let SeoBotMiddleware = class SeoBotMiddleware {
-    constructor(productService, seoPageService) {
+    constructor(productService, seoPageService, specialPackageService) {
         this.productService = productService;
         this.seoPageService = seoPageService;
+        this.specialPackageService = specialPackageService;
     }
     async use(req, res, next) {
         try {
             const ua = req.headers['user-agent'] || '';
             if (!BOT_UA_REGEX.test(ua)) {
                 return next();
+            }
+            const packageMatch = req.path.match(/^\/special-package-details\/([^/?#]+)/);
+            if (packageMatch) {
+                const packageId = decodeURIComponent(packageMatch[1]);
+                return this.specialPackageService.getSpecialPackageOgHtml(packageId, res);
             }
             const slugMatch = req.path.match(/^\/product-details\/([^/?#]+)/);
             if (slugMatch) {
@@ -143,7 +150,8 @@ let SeoBotMiddleware = class SeoBotMiddleware {
 SeoBotMiddleware = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [product_service_1.ProductService,
-        seo_page_service_1.SeoPageService])
+        seo_page_service_1.SeoPageService,
+        special_package_service_1.SpecialPackageService])
 ], SeoBotMiddleware);
 exports.SeoBotMiddleware = SeoBotMiddleware;
 //# sourceMappingURL=seo-bot.middleware.js.map

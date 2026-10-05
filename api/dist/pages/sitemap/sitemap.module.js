@@ -12,11 +12,12 @@ const sitemap_controller_1 = require("./sitemap.controller");
 const sitemap_service_1 = require("./sitemap.service");
 const product_module_1 = require("../product/product.module");
 const blog_module_1 = require("../blog/blog/blog.module");
+const special_package_module_1 = require("../offers/special-package/special-package.module");
 let SitemapModule = class SitemapModule {
 };
 SitemapModule = __decorate([
     (0, common_1.Module)({
-        imports: [product_module_1.ProductModule, blog_module_1.BlogModule],
+        imports: [product_module_1.ProductModule, blog_module_1.BlogModule, special_package_module_1.SpecialPackageModule],
         controllers: [sitemap_controller_1.SitemapController],
         providers: [sitemap_service_1.SitemapService],
     })

@@ -45,6 +45,9 @@ let SpecialPackageController = SpecialPackageController_1 = class SpecialPackage
     async getSpecialPackageSingle(select) {
         return await this.promoOfferService.getSpecialPackageSingle(select);
     }
+    async getSpecialPackageOgHtml(id, res) {
+        return this.promoOfferService.getSpecialPackageOgHtml(id, res);
+    }
     async getSpecialPackageById(id, select) {
         return await this.promoOfferService.getSpecialPackageById(id, select);
     }
@@ -117,6 +120,15 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], SpecialPackageController.prototype, "getSpecialPackageSingle", null);
+__decorate([
+    (0, common_1.Version)(common_1.VERSION_NEUTRAL),
+    (0, common_1.Get)('/og/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], SpecialPackageController.prototype, "getSpecialPackageOgHtml", null);
 __decorate([
     (0, common_1.Version)(common_1.VERSION_NEUTRAL),
     (0, common_1.Get)('/:id'),

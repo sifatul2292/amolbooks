@@ -2,6 +2,7 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { ProductService } from '../pages/product/product.service';
 import { SeoPageService } from '../pages/seo-page/seo-page.service';
+import { SpecialPackageService } from '../pages/offers/special-package/special-package.service';
 
 const BOT_UA_REGEX =
   /facebookexternalhit|facebot|Twitterbot|LinkedInBot|Googlebot|bingbot|Slurp|DuckDuckBot|YandexBot|redditbot|WhatsApp|TelegramBot|Discordbot|Slackbot|vkShare|W3C_Validator|pinterest|Applebot/i;
@@ -99,6 +100,7 @@ export class SeoBotMiddleware implements NestMiddleware {
   constructor(
     private readonly productService: ProductService,
     private readonly seoPageService: SeoPageService,
+    private readonly specialPackageService: SpecialPackageService,
   ) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
@@ -106,6 +108,17 @@ export class SeoBotMiddleware implements NestMiddleware {
       const ua = req.headers['user-agent'] || '';
       if (!BOT_UA_REGEX.test(ua)) {
         return next();
+      }
+
+      const packageMatch = req.path.match(
+        /^\/special-package-details\/([^/?#]+)/,
+      );
+      if (packageMatch) {
+        const packageId = decodeURIComponent(packageMatch[1]);
+        return this.specialPackageService.getSpecialPackageOgHtml(
+          packageId,
+          res,
+        );
       }
 
       // Handle /product-details/:slug

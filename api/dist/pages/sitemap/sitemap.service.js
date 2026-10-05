@@ -14,11 +14,13 @@ const common_1 = require("@nestjs/common");
 const sitemap_1 = require("sitemap");
 const product_service_1 = require("../product/product.service");
 const blog_service_1 = require("../blog/blog/blog.service");
+const special_package_service_1 = require("../offers/special-package/special-package.service");
 const STOREFRONT_ORIGIN = 'https://www.amolbooks.com';
 let SitemapService = class SitemapService {
-    constructor(productService, blogService) {
+    constructor(productService, blogService, specialPackageService) {
         this.productService = productService;
         this.blogService = blogService;
+        this.specialPackageService = specialPackageService;
     }
     async generateSitemapXml() {
         const smStream = new sitemap_1.SitemapStream({ hostname: STOREFRONT_ORIGIN });
@@ -28,6 +30,7 @@ let SitemapService = class SitemapService {
         smStream.write({ url: '/author-list', changefreq: 'weekly', priority: 0.7 });
         smStream.write({ url: '/publisher-list', changefreq: 'weekly', priority: 0.7 });
         smStream.write({ url: '/blogs', changefreq: 'weekly', priority: 0.7 });
+        smStream.write({ url: '/offers', changefreq: 'daily', priority: 0.8 });
         smStream.write({ url: '/contact-us', changefreq: 'monthly', priority: 0.5 });
         const products = await this.productService.findAllPublished();
         products.forEach((product) => {
@@ -42,6 +45,16 @@ let SitemapService = class SitemapService {
                     : undefined,
             });
         });
+        const specialPackages = await this.specialPackageService.findAllForSitemap();
+        specialPackages.forEach((specialPackage) => smStream.write({
+            url: `/special-package-details/${specialPackage._id}`,
+            lastmod: specialPackage.updatedAt,
+            changefreq: 'weekly',
+            priority: 0.8,
+            img: specialPackage.image
+                ? [{ url: specialPackage.image, title: specialPackage.name }]
+                : undefined,
+        }));
         const blogs = await this.blogService.findAllPublished();
         blogs.forEach((blog) => smStream.write({
             url: `/blogs/blog-details/${blog._id}`,
@@ -60,7 +73,8 @@ let SitemapService = class SitemapService {
 SitemapService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [product_service_1.ProductService,
-        blog_service_1.BlogService])
+        blog_service_1.BlogService,
+        special_package_service_1.SpecialPackageService])
 ], SitemapService);
 exports.SitemapService = SitemapService;
 //# sourceMappingURL=sitemap.service.js.map

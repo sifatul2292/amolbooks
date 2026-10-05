@@ -529,8 +529,7 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
     }
     html.ab-special-package-page, body.ab-special-package-page { overflow-x: clip; }
     body.ab-special-package-page { background: var(--ab-read-paper); }
-    body.ab-special-package-page #amol-cart-toast,
-    body.ab-special-package-page #ab-added-cart-modal { display: none !important; }
+    body.ab-special-package-page #amol-cart-toast { display: none !important; }
     app-special-package-details { color: var(--ab-read-ink); font-family: var(--ab-read-body); }
     app-special-package-details .banner-area { margin-block: var(--ab-read-lg) var(--ab-read-2xl) !important; }
     app-special-package-details .banner-area .bannar-main { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; gap: var(--ab-read-lg) !important; align-items: center; padding: var(--ab-read-sm) !important; background: var(--ab-read-paper-deep) !important; border: 1px solid var(--ab-read-rule) !important; border-radius: var(--ab-read-radius-md) !important; box-shadow: 0 1px 2px var(--ab-read-shadow) !important; }
