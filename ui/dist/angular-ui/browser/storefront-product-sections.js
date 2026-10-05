@@ -5957,6 +5957,16 @@
     if (node && node.textContent !== value) node.textContent = value;
   }
 
+  function syncCartRowQuantity(row, quantity) {
+    var input = row.querySelector('.quantity-area input');
+    if (input && input.value !== String(quantity)) input.value = String(quantity);
+    var minus = row.querySelector('[data-ab-cart-op="minus"]');
+    if (minus) {
+      minus.classList.toggle('is-disabled', quantity <= 1);
+      if ('disabled' in minus && minus.getAttribute('data-ab-cart-busy') !== 'true') minus.disabled = quantity <= 1;
+    }
+  }
+
   function cartMirrorRowHtml(item, product) {
     var productId = cartPageProductId(item);
     var quantity = Math.max(1, Number(item && item.selectedQty) || 1);
@@ -5991,7 +6001,10 @@
       }).filter(Boolean);
       var renderKey = cartItemsSignature(items || []) + '|' + rows.join('').length;
       if (area.getAttribute('data-ab-render-key') !== renderKey) {
+        var giftRow = area.querySelector('.ab-cart-gift-row');
+        if (giftRow) giftRow.remove();
         area.innerHTML = rows.join('');
+        if (giftRow) area.appendChild(giftRow);
         area.setAttribute('data-ab-render-key', renderKey);
       }
       var itemCount = (items || []).reduce(function (total, item) {
@@ -6030,6 +6043,7 @@
         return Boolean(title && (title.textContent || '').trim() === String(product.name || '').trim());
       });
       if (nativeMatch) {
+        syncCartRowQuantity(nativeMatch, quantity);
         if (injected) injected.remove();
         return;
       }
@@ -6077,8 +6091,7 @@
         controls[1].setAttribute('aria-label', 'পরিমাণ কমান');
         controls[1].classList.toggle('is-disabled', quantity <= 1);
       }
-      var input = row.querySelector('.quantity-area input');
-      if (input) input.value = String(quantity);
+      syncCartRowQuantity(row, quantity);
     });
 
     var total = cartTotalFromProducts(items || [], products || []);
@@ -6105,6 +6118,9 @@
       row = template.cloneNode(true);
       row.classList.remove('ab-cart-native-stale');
       row.classList.add('ab-live-cart-page-item', 'ab-cart-gift-row');
+      row.removeAttribute('data-product-id');
+      row.removeAttribute('aria-busy');
+      row.classList.remove('ab-cart-removing');
       row.querySelectorAll('.quantity-area, .cart-text-info ul, .ab-cart-native-author, .ab-cart-native-discount').forEach(function (node) { node.remove(); });
       area.appendChild(row);
     }
@@ -6112,8 +6128,8 @@
     var notebookCover = notebookImageUrl(notebook);
     var image = row.querySelector('.cart-img img');
     if (image && notebookCover) {
-      image.setAttribute('src', notebookCover);
-      image.setAttribute('alt', notebookName);
+      if (image.getAttribute('src') !== notebookCover) image.setAttribute('src', notebookCover);
+      if (image.getAttribute('alt') !== notebookName) image.setAttribute('alt', notebookName);
     }
     updateNodeText(row.querySelector('.cart-text-info h3'), notebookName);
     var label = row.querySelector('.cart-text-info > p');
@@ -7279,6 +7295,7 @@
         controls[1].setAttribute('aria-label', 'পরিমাণ কমান');
         controls[1].classList.toggle('is-disabled', quantity <= 1);
       }
+      if (item) syncCartRowQuantity(row, quantity);
       var target = row.querySelector('.cart-text-info, .cart-text') || row;
       var author = authorName(product);
       target.querySelectorAll('.ab-cart-native-discount').forEach(function (node) { node.remove(); });
@@ -7437,7 +7454,10 @@
     if (!anchor) return;
     var threshold = Number(cartOfferConfig.giftMinAmount) || CART_OFFER_FALLBACK_THRESHOLD;
     var calculatedTotal = cartTotalFromProducts(items || [], products || []);
-    var total = isLocalPreviewHost() ? calculatedTotal : (cartDisplayedTotal() || calculatedTotal);
+    var hasCartProducts = (items || []).length && (items || []).every(function (item) {
+      return (products || []).some(function (product) { return String(product._id) === cartPageProductId(item); });
+    });
+    var total = hasCartProducts || isLocalPreviewHost() ? calculatedTotal : cartDisplayedTotal();
     if (!total) return;
     var remaining = Math.max(0, Math.ceil(threshold - total));
     var progress = document.getElementById('ab-cart-offer-progress');
@@ -8092,7 +8112,7 @@
       return false;
     }).finally(function () {
       cartOperation.removeAttribute('data-ab-cart-busy');
-      if ('disabled' in cartOperation) cartOperation.disabled = false;
+      if ('disabled' in cartOperation) cartOperation.disabled = operation === 'minus' && cartOperation.classList.contains('is-disabled');
       cartRow.classList.remove('ab-cart-removing');
       cartRow.removeAttribute('aria-busy');
     });

@@ -1,5 +1,11 @@
 # CURRENT_WORK
 
+## Cart quantity display and gift stability (2026-10-05)
+
+- Synchronize native quantity inputs from saved guest/authenticated cart quantities; keep decrement disabled at one.
+- Preserve the gift row during local paid-row rebuilds and avoid resetting its image source on every repair. Use complete cart product data for gift eligibility instead of transient Angular totals.
+- Verification: quantity increase/decrease and minimum-one regression checks, gift repair assertions, API build, and diff whitespace check pass. Lint remains blocked by the existing all-files-ignored configuration. The available browser cart is empty, so the populated production flow remains unverified.
+
 ## Reliable one-tap cart removal (2026-10-05)
 
 - Push verification: cart-state regression check, API build, and diff whitespace check passed; lint remains blocked by the existing all-files-ignored ESLint configuration. Package loading and popup delay were investigated only; no performance fix is included.
