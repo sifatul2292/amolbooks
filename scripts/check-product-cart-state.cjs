@@ -25,6 +25,22 @@ assert.match(source, /function repairCheckoutDeliveryPlacement\(\)[\s\S]*?sectio
 assert.match(source, /window\.innerWidth >= 768[\s\S]*?paymentArea\.insertBefore\(heading, restoreBefore\)/, 'Desktop checkout restores delivery options to the payment card');
 assert.match(source, /quantityArea\.classList\.add\('ab-native-cart-quantity'\)/, 'Published native cart rows receive the horizontal quantity selector');
 assert.match(source, /\.ab-native-cart-quantity \{[\s\S]*?grid-template-columns: 2\.7rem 3rem 2\.7rem[\s\S]*?\.q-icon:first-child \{ order: 3; \}[\s\S]*?\.q-icon:last-child \{ order: 1; \}/, 'Published mobile selector matches the local minus, quantity, plus order');
+assert.match(source, /row\.classList\.add\('ab-native-cart-row'\)/, 'Published native cart rows receive the mobile layout marker');
+assert.match(source, /\.cart-card\.ab-native-cart-row \.ab-native-cart-quantity \{[\s\S]*?width: 8\.4rem !important;/, 'Published mobile native selector reserves all three control columns');
+assert.match(source, /remove\.classList\.add\('ab-cart-remove'\)[\s\S]*?remove\.innerHTML = '<svg/, 'Published native cart rows receive the inline trash icon');
+assert.match(source, /config\.giftMinAmount = CART_OFFER_FALLBACK_THRESHOLD;/, 'Free notebook keeps the ৳799 storefront threshold');
+const cartTotalHelpers = ['banglaNumber', 'cartDisplayedTotal'].map(name => {
+  const start = source.indexOf('  function ' + name + '(');
+  return source.slice(start, source.indexOf('\n  function ', start + 1));
+}).join('\n');
+const cartTotalContext = {
+  document: { querySelector: () => ({ textContent: 'মোট আইটেম(১) সর্বমোট টাকা : ৳৩১০' }) },
+};
+vm.createContext(cartTotalContext);
+vm.runInContext(cartTotalHelpers, cartTotalContext);
+assert.equal(cartTotalContext.cartDisplayedTotal(), 310, 'Gift eligibility reads only the cart summary total');
+cartTotalContext.document.querySelector = () => null;
+assert.equal(cartTotalContext.cartDisplayedTotal(), 0, 'Missing cart summary falls back to the calculated product total');
 assert.match(main, /obj\.event==='add_to_cart'&&!window\.__amolCartUiEventHandled/, 'Tracking mirror avoids duplicating injected cart UI feedback');
 assert.match(main, /event:'view_cart',ecommerce:\{currency:'BDT',value:val,items:items\}/, 'Legacy cart tracking emits the standard event for mirroring');
 const trackingStart = source.indexOf('  function pushProductPageAddToCartTracking(');

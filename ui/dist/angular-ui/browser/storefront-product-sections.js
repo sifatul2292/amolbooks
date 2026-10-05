@@ -3499,7 +3499,7 @@
       list-style: none !important;
     }
 
-    body.ab-cart-enhanced app-cart-information .cart-card.ab-live-cart-page-item .ab-cart-remove {
+    body.ab-cart-enhanced app-cart-information .cart-card .ab-cart-remove {
       display: inline-grid !important;
       width: 2.75rem !important;
       height: 2.75rem !important;
@@ -3516,7 +3516,7 @@
       -webkit-tap-highlight-color: transparent !important;
     }
 
-    body.ab-cart-enhanced app-cart-information .cart-card.ab-live-cart-page-item .ab-cart-remove:active {
+    body.ab-cart-enhanced app-cart-information .cart-card .ab-cart-remove:active {
       border-color: color-mix(in oklab, #3f4542 20%, transparent) !important;
       background: var(--ab-product-surface-muted) !important;
     }
@@ -3530,6 +3530,43 @@
       stroke-width: 1.8 !important;
       stroke-linecap: round !important;
       stroke-linejoin: round !important;
+    }
+
+    @media (max-width: 767px) {
+      body.ab-cart-enhanced app-cart-information .cart-card.ab-native-cart-row .cart-card-main {
+        display: grid !important;
+        grid-template-columns: 5.5rem minmax(0, 1fr) !important;
+        gap: 0.85rem !important;
+        align-items: start !important;
+      }
+
+      body.ab-cart-enhanced app-cart-information .cart-card.ab-native-cart-row .cart-body {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto !important;
+        gap: 0.55rem 0.75rem !important;
+        width: 100% !important;
+        min-width: 0 !important;
+      }
+
+      body.ab-cart-enhanced app-cart-information .cart-card.ab-native-cart-row .cart-text-info {
+        grid-column: 1 / -1 !important;
+        min-width: 0 !important;
+      }
+
+      body.ab-cart-enhanced app-cart-information .cart-card.ab-native-cart-row .ab-native-cart-quantity {
+        grid-column: 1 !important;
+        justify-self: start !important;
+        width: 8.4rem !important;
+        min-width: 8.4rem !important;
+        max-width: 8.4rem !important;
+      }
+
+      body.ab-cart-enhanced app-cart-information .cart-card.ab-native-cart-row .cart-price-area {
+        grid-column: 2 !important;
+        justify-self: end !important;
+        align-self: center !important;
+        text-align: right !important;
+      }
     }
 
     @media (min-width: 768px) {
@@ -7194,6 +7231,20 @@
     Array.prototype.slice.call(document.querySelectorAll('.cart-card, .cart-item')).forEach(function (row) {
       if (!row.offsetParent) return;
       if (row.classList && row.classList.contains('ab-live-cart-page-item')) return;
+      row.classList.add('ab-native-cart-row');
+      var quantityArea = row.querySelector('.quantity-area');
+      if (quantityArea && quantityArea.querySelector('.q-icon')) {
+        quantityArea.classList.add('ab-native-cart-quantity');
+      }
+      var remove = row.querySelector('.cart-text-info ul button, .cart-text-info ul span');
+      if (remove) {
+        remove.classList.add('ab-cart-remove');
+        remove.setAttribute('aria-label', 'কার্ট থেকে সরান');
+        if (remove.tagName === 'BUTTON') remove.setAttribute('type', 'button');
+        if (!remove.querySelector('svg')) {
+          remove.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 14h9l1-14M10 11v6M14 11v6"/></svg>';
+        }
+      }
       var text = (row.textContent || '').replace(/\s+/g, ' ').trim();
       var product = products.find(function (candidate) { return candidate && candidate.name && text.indexOf(candidate.name) !== -1; });
       if (!product) return;
@@ -7212,10 +7263,6 @@
         priceNode.classList.add('cart-product-price');
         var priceHtml = productPriceHtml(product);
         if (priceNode.innerHTML !== priceHtml) priceNode.innerHTML = priceHtml;
-      }
-      var quantityArea = row.querySelector('.quantity-area');
-      if (quantityArea && quantityArea.querySelector('.q-icon')) {
-        quantityArea.classList.add('ab-native-cart-quantity');
       }
     });
   }
@@ -7259,9 +7306,9 @@
   }
 
   function cartDisplayedTotal() {
-    var root = document.querySelector('app-cart-information .section-main, app-cart-information .section-main, .cart-area-main');
-    if (!root) return 0;
-    var text = banglaNumber(root.textContent || '').replace(/,/g, '');
+    var summary = document.querySelector('#ab-cart-summary-inline, app-cart-information .select-items-area, app-cart .select-items-area');
+    if (!summary) return 0;
+    var text = banglaNumber(summary.textContent || '').replace(/,/g, '');
     var match = text.match(/(?:সর্বমোট\s*টাকা|মোট\s*টাকা|Subtotal|Total)\s*:?\s*৳?\s*(\d+(?:\.\d+)?)/i);
     return match ? Number(match[1]) || 0 : 0;
   }

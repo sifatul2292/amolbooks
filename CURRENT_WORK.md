@@ -1,5 +1,11 @@
 # CURRENT_WORK
 
+## Production cart controls and gift threshold (2026-10-05)
+
+- Applied the horizontal quantity selector and inline SVG remove icon directly to every native cart row, without waiting for a catalogue-name match. The mobile native row now reserves the selector's full three-column width so the minus control cannot be clipped by Angular's flex layout.
+- Fixed free-notebook eligibility to parse the isolated cart-summary value. A ৳310 total followed by a title beginning with `500` can no longer be misread as ৳310,500; the notebook is shown only when the subtotal reaches the configured ৳799 threshold.
+- Added focused regression checks for native control enhancement and isolated subtotal parsing.
+
 ## Special-package cart confirmation restored (2026-10-05)
 
 - Restored the shared product-style cart confirmation dialog after a customer selects `Add to Cart` on a special-package detail page.
