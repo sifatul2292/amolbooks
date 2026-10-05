@@ -19,6 +19,8 @@ assert.match(source, /searchParams\.set\('ab-auth-cart-ready', '1'\)/, 'Checkout
 assert.match(source, /if \(isLocalPreviewHost\(\)\) updateNativeCartCount\(storedGuestCartItems\(\)\)/, 'Local account pages keep the native cart badge aligned');
 assert.match(source, /if \(!isProductPage\(\) && location\.pathname !== '\/'\) return;/, 'Homepage uses the shared added-to-cart modal');
 assert.match(source, /data-ab-popular-price[\s\S]*?productPriceHtml\(product\)/, 'Cart popular cards use the shared discounted-price renderer');
+assert.match(source, /repairCartPopularProducts\(\)[\s\S]*?addButton\.classList\.add\('ab-add-cart-button'\)[\s\S]*?addButton\.setAttribute\('data-product-id', String\(product\._id\)\)/, 'Cart popular buttons upgrade to the shared product-ID add handler');
+assert.match(source, /if \(!template\) \{\s*area\.insertAdjacentHTML\('beforeend', cartMirrorRowHtml\(item, product\)\);\s*return;/, 'A newly added cart product renders even when no native row exists to clone');
 assert.match(source, /li\.ab-summary-hidden,[\s\S]*?li\.ab-hide-discount-row\s*\{\s*display: none !important;/, 'Mobile checkout keeps both discount-row classes hidden');
 assert.match(source, /@media \(min-width: 768px\) \{[\s\S]*?app-header \.ab-header-search-results \{[\s\S]*?position: absolute;[\s\S]*?app-header \.ab-sticky-search-item img \{[\s\S]*?width: 2\.7rem;[\s\S]*?height: 3\.45rem;/, 'Desktop header search results keep compact product rows');
 assert.match(source, /function repairCheckoutDeliveryPlacement\(\)[\s\S]*?section\.insertBefore\(card, summary\)/, 'Mobile checkout places delivery options before its summary');
@@ -28,6 +30,12 @@ assert.match(source, /\.ab-native-cart-quantity \{[\s\S]*?grid-template-columns:
 assert.match(source, /row\.classList\.add\('ab-native-cart-row'\)/, 'Published native cart rows receive the mobile layout marker');
 assert.match(source, /\.cart-card\.ab-native-cart-row \.ab-native-cart-quantity \{[\s\S]*?width: 8\.4rem !important;/, 'Published mobile native selector reserves all three control columns');
 assert.match(source, /remove\.classList\.add\('ab-cart-remove'\)[\s\S]*?remove\.innerHTML = '<svg/, 'Published native cart rows receive the inline trash icon');
+assert.match(source, /row\.setAttribute\('data-product-id', productId\)[\s\S]*?remove\.setAttribute\('data-ab-cart-op', 'remove'\)/, 'Native trash controls use the reliable injected cart handler');
+assert.match(source, /return fetchJson\('\/cart\/get-carts-by-user'[\s\S]*?return Promise\.resolve\(syncAuthenticatedCartUi\(\)\)/, 'Authenticated cart operations remain pending until the server and UI synchronize');
+assert.match(source, /operation === 'remove'[\s\S]*?cartRow\.classList\.add\('ab-cart-removing'\)[\s\S]*?success && operation === 'remove'[\s\S]*?cartRow\.remove\(\)/, 'A single remove tap locks the row and removes it after confirmation');
+assert.match(source, /function setGuestCartItems\(items\) \{\s*cartPageRenderVersion \+= 1;/, 'Persisting a cart change invalidates older cart renders');
+assert.match(source, /function syncGuestCartUi\(\) \{\s*var pageVersion = \+\+cartPageRenderVersion;[\s\S]*?fetchCartProducts\(items\)\.then\(function \(products\) \{\s*if \(pageVersion !== cartPageRenderVersion\) return;/, 'A stale guest cart fetch cannot redraw a removed product');
+assert.match(source, /function repairCartPage\(\) \{[\s\S]*?var pageVersion = cartPageRenderVersion;[\s\S]*?cartPageItems\(\)\.then\(function \(items\) \{\s*if \(pageVersion !== cartPageRenderVersion\) return;[\s\S]*?if \(!cartPageOpen\(\) \|\| pageVersion !== cartPageRenderVersion\) return;/, 'A stale page repair cannot redraw a removed product');
 assert.match(source, /config\.giftMinAmount = CART_OFFER_FALLBACK_THRESHOLD;/, 'Free notebook keeps the ৳799 storefront threshold');
 const cartTotalHelpers = ['banglaNumber', 'cartDisplayedTotal'].map(name => {
   const start = source.indexOf('  function ' + name + '(');
@@ -41,6 +49,40 @@ vm.runInContext(cartTotalHelpers, cartTotalContext);
 assert.equal(cartTotalContext.cartDisplayedTotal(), 310, 'Gift eligibility reads only the cart summary total');
 cartTotalContext.document.querySelector = () => null;
 assert.equal(cartTotalContext.cartDisplayedTotal(), 0, 'Missing cart summary falls back to the calculated product total');
+const storageHelperNames = ['cartStorageKey', 'tabCartItems', 'setTabCartItems', 'storedGuestCartItems', 'setGuestCartItems'];
+const storageHelpers = storageHelperNames.map(name => {
+  const start = source.indexOf('  function ' + name + '(');
+  return source.slice(start, source.indexOf('\n  function ', start + 1));
+}).join('\n');
+const storageValues = new Map([
+  ['Amolbooks_USER_CART_1', JSON.stringify([{ product: 'last-product', selectedQty: 1 }])],
+  ['ALAMBOOKS_USER_CART_1', JSON.stringify([{ product: 'last-product', selectedQty: 1 }])],
+]);
+const storageWindowListeners = {};
+const storageContext = {
+  authenticatedCartItemsOverride: null,
+  cartMigrationScheduled: false,
+  cartPageRenderVersion: 0,
+  isLocalPreviewHost: () => false,
+  localStorage: {
+    getItem: key => storageValues.has(key) ? storageValues.get(key) : null,
+    setItem: (key, value) => storageValues.set(key, String(value)),
+    removeItem: key => storageValues.delete(key),
+  },
+  location: { pathname: '/product-list' },
+  window: {
+    name: '',
+    addEventListener: (name, listener) => { storageWindowListeners[name] = listener; },
+    dispatchEvent() {},
+  },
+  Event: function Event() {},
+  CustomEvent: function CustomEvent() {},
+};
+vm.createContext(storageContext);
+vm.runInContext(storageHelpers, storageContext);
+assert.equal(storageContext.cartStorageKey(), 'Amolbooks_USER_CART_1');
+storageContext.setGuestCartItems([]);
+assert.equal(storageContext.storedGuestCartItems().length, 0, 'Removing the final item cannot be repopulated by the legacy cart key');
 assert.match(main, /obj\.event==='add_to_cart'&&!window\.__amolCartUiEventHandled/, 'Tracking mirror avoids duplicating injected cart UI feedback');
 assert.match(main, /event:'view_cart',ecommerce:\{currency:'BDT',value:val,items:items\}/, 'Legacy cart tracking emits the standard event for mirroring');
 const trackingStart = source.indexOf('  function pushProductPageAddToCartTracking(');
@@ -88,6 +130,23 @@ cartViewContext.pushCartViewTracking(
   [{ _id: 'p1', name: 'Cart book', afterDiscountPrice: 310 }]
 );
 assert.equal(cartViewContext.window.dataLayer.length, 2, 'Cart view fires once per page load');
+const syncGuestStart = source.indexOf('  function syncGuestCartUi(');
+const syncGuestHelper = source.slice(syncGuestStart, source.indexOf('\n  function ', syncGuestStart + 1));
+let staleCartItems = [{ product: 'last-product', selectedQty: 1 }];
+let resolveStaleProducts;
+const staleCartRenders = [];
+const staleCartContext = {
+  cartPageRenderVersion: 0,
+  guestCartItems: () => staleCartItems,
+  updateStickyCartCount() {},
+  updateNativeCartCount() {},
+  cartPageProductId: item => item.product,
+  syncNativeCartPage: items => staleCartRenders.push(items.slice()),
+  renderCartGiftRow() {},
+  fetchCartProducts: () => new Promise(resolve => { resolveStaleProducts = resolve; }),
+};
+vm.createContext(staleCartContext);
+vm.runInContext(syncGuestHelper, staleCartContext);
 const names = ['productIdIsInCart', 'productIsInCart', 'refreshProductCartState', 'boughtTogetherIsInCart', 'repairBoughtTogetherActionLabels', 'addBoughtTogetherToCart', 'cartPageProductId', 'repairProductActionLabels', 'updateStickyProductActions'];
 const helpers = names.map(name => {
   const start = source.indexOf('  function ' + name + '(');
@@ -115,6 +174,12 @@ const context = {
 vm.createContext(context);
 vm.runInContext(helpers, context);
 (async () => {
+  const staleRender = staleCartContext.syncGuestCartUi();
+  staleCartItems = [];
+  staleCartContext.cartPageRenderVersion += 1;
+  resolveStaleProducts([{ _id: 'last-product', name: 'Removed product' }]);
+  await staleRender;
+  assert.deepEqual(staleCartRenders, [], 'An older product fetch cannot redraw the final removed cart item');
   assert.equal(context.productIsInCart(), false);
   context.repairProductActionLabels();
   context.updateStickyProductActions();

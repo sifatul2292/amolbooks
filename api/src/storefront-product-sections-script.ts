@@ -3521,6 +3521,12 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       background: var(--ab-product-surface-muted) !important;
     }
 
+    body.ab-cart-enhanced app-cart-information .cart-card.ab-cart-removing {
+      opacity: 0.5 !important;
+      pointer-events: none !important;
+      transition: opacity 120ms ease !important;
+    }
+
     body.ab-cart-enhanced app-cart-information .ab-cart-remove svg {
       display: block !important;
       width: 1.45rem !important;
@@ -4997,6 +5003,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       }
       return localKey;
     }
+    if (cartMigrationScheduled) return storefrontKey;
     var legacyItems = [];
     var storefrontItems = [];
     try { legacyItems = JSON.parse(localStorage.getItem(legacyKey) || '[]') || []; } catch (_) { legacyItems = []; }
@@ -5069,6 +5076,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   }
 
   function setGuestCartItems(items) {
+    cartPageRenderVersion += 1;
     localStorage.setItem(cartStorageKey(), JSON.stringify(items));
     if (isLocalPreviewHost()) localStorage.setItem('Amolbooks_USER_CART_1', JSON.stringify(items));
     if (isLocalPreviewHost()) setTabCartItems(items);
@@ -5811,6 +5819,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   }
 
   function syncGuestCartUi() {
+    var pageVersion = ++cartPageRenderVersion;
     var items = guestCartItems();
     updateStickyCartCount();
     updateNativeCartCount(items);
@@ -5823,6 +5832,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     }
 
     return fetchCartProducts(items).then(function (products) {
+      if (pageVersion !== cartPageRenderVersion) return;
       rememberCartProducts(products);
       products = ids.map(function (id) {
         return (products || []).find(function (product) { return String(product && product._id || '') === String(id); }) ||
@@ -5935,12 +5945,12 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     var index = items.findIndex(function (item) {
       return cartPageProductId(item) === String(productId);
     });
-    if (index < 0) return;
+    if (index < 0) return Promise.resolve(false);
     if (operation === 'remove') items.splice(index, 1);
     if (operation === 'plus') items[index].selectedQty = Math.max(1, Number(items[index].selectedQty) || 1) + 1;
     if (operation === 'minus') items[index].selectedQty = Math.max(1, (Number(items[index].selectedQty) || 1) - 1);
     setGuestCartItems(items);
-    syncGuestCartUi();
+    return Promise.resolve(syncGuestCartUi()).then(function () { return true; });
   }
 
   function updateNodeText(node, value) {
@@ -6026,7 +6036,10 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       var row = injected;
       if (!row) {
         var template = area.querySelector('.cart-card:not(.ab-live-cart-page-item)');
-        if (!template) return;
+        if (!template) {
+          area.insertAdjacentHTML('beforeend', cartMirrorRowHtml(item, product));
+          return;
+        }
         row = template.cloneNode(true);
         row.classList.remove('ab-cart-native-stale');
         row.classList.add('ab-live-cart-item', 'ab-live-cart-page-item');
@@ -6114,7 +6127,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     if (isLocalPreviewHost()) return updateGuestCartItem(productId, operation);
     var authorization = cartAuthorization();
     if (!authorization) return updateGuestCartItem(productId, operation);
-    fetchJson('/cart/get-carts-by-user', {
+    return fetchJson('/cart/get-carts-by-user', {
       headers: { Authorization: authorization },
     }, RECOMMENDATION_API_BASE).then(function (result) {
       var carts = result && Array.isArray(result.data) ? result.data : [];
@@ -6123,7 +6136,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         var specialPackage = entry && entry.specialPackage;
         return String(product && product._id || product || specialPackage && specialPackage._id || specialPackage || '') === String(productId);
       });
-      if (!cart || !cart._id) return;
+      if (!cart || !cart._id) return false;
       var path = operation === 'remove' ? '/cart/delete/' + encodeURIComponent(cart._id) :
         '/cart/update-qty/' + encodeURIComponent(cart._id);
       var options = operation === 'remove' ? {
@@ -6133,7 +6146,10 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         headers: { Authorization: authorization, 'Content-Type': 'application/json' },
         body: JSON.stringify({ selectedQty: 1, type: operation === 'plus' ? 'increment' : 'decrement' }),
       };
-      return fetchJson(path, options, RECOMMENDATION_API_BASE).then(syncAuthenticatedCartUi);
+      return fetchJson(path, options, RECOMMENDATION_API_BASE).then(function (updateResult) {
+        if (!updateResult || updateResult.success === false) return false;
+        return Promise.resolve(syncAuthenticatedCartUi()).then(function () { return true; });
+      });
     });
   }
 
@@ -7248,6 +7264,21 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       var text = (row.textContent || '').replace(/\\s+/g, ' ').trim();
       var product = products.find(function (candidate) { return candidate && candidate.name && text.indexOf(candidate.name) !== -1; });
       if (!product) return;
+      var productId = String(product._id);
+      var item = (items || []).find(function (candidate) { return cartPageProductId(candidate) === productId; });
+      var quantity = Math.max(1, Number(item && item.selectedQty) || 1);
+      row.setAttribute('data-product-id', productId);
+      if (remove) remove.setAttribute('data-ab-cart-op', 'remove');
+      var controls = row.querySelectorAll('.quantity-area .q-icon span');
+      if (controls[0]) {
+        controls[0].setAttribute('data-ab-cart-op', 'plus');
+        controls[0].setAttribute('aria-label', 'পরিমাণ বাড়ান');
+      }
+      if (controls[1]) {
+        controls[1].setAttribute('data-ab-cart-op', 'minus');
+        controls[1].setAttribute('aria-label', 'পরিমাণ কমান');
+        controls[1].classList.toggle('is-disabled', quantity <= 1);
+      }
       var target = row.querySelector('.cart-text-info, .cart-text') || row;
       var author = authorName(product);
       target.querySelectorAll('.ab-cart-native-discount').forEach(function (node) { node.remove(); });
@@ -7514,6 +7545,11 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         var price = slide.querySelector('.price-aria');
         if (!product || !price || slide.getAttribute('data-ab-popular-price') !== slug) return;
         rememberCartProducts([product]);
+        var addButton = slide.querySelector('.ab-native-cart-add');
+        if (addButton) {
+          addButton.classList.add('ab-add-cart-button');
+          addButton.setAttribute('data-product-id', String(product._id));
+        }
         price.innerHTML = '<div class="new-price"><p class="ab-cart-popular-price">' + productPriceHtml(product) + '</p></div>';
       }).catch(function () {
         if (slide.getAttribute('data-ab-popular-price') === slug) slide.removeAttribute('data-ab-popular-price');
@@ -7546,6 +7582,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
 
   function repairCartPage() {
     if (!cartPageOpen()) return;
+    var pageVersion = cartPageRenderVersion;
     document.body.classList.add('ab-cart-enhanced');
     mountCartStickyCheckout();
     var cartToast = document.getElementById('amol-cart-toast');
@@ -7581,6 +7618,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       });
     }
     cartPageItems().then(function (items) {
+      if (pageVersion !== cartPageRenderVersion) return;
       updateNativeCartCount(items);
       var signature = cartItemsSignature(items);
       var ids = (items || []).map(cartPageProductId).filter(Boolean);
@@ -7600,7 +7638,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         return;
       }
       fetchCartProducts(items).then(function (products) {
-        if (!cartPageOpen()) return;
+        if (!cartPageOpen() || pageVersion !== cartPageRenderVersion) return;
         cartNativeProductSignature = signature;
         cartNativeProducts = products;
         syncNativeCartPage(items, products);
@@ -8041,8 +8079,23 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     if (wasFastCartTap(cartOperation)) return true;
     if (cartOperation.getAttribute('data-ab-cart-busy') === 'true') return true;
     if (event.type !== 'click') markFastCartTap(cartOperation);
-    claimCartControl(cartOperation, 360);
-    updateAuthenticatedCartItem(cartRow.getAttribute('data-product-id'), cartOperation.getAttribute('data-ab-cart-op'));
+    var operation = cartOperation.getAttribute('data-ab-cart-op');
+    cartOperation.setAttribute('data-ab-cart-busy', 'true');
+    if ('disabled' in cartOperation) cartOperation.disabled = true;
+    if (operation === 'remove') {
+      cartRow.classList.add('ab-cart-removing');
+      cartRow.setAttribute('aria-busy', 'true');
+    }
+    Promise.resolve(updateAuthenticatedCartItem(cartRow.getAttribute('data-product-id'), operation)).then(function (success) {
+      if (success && operation === 'remove' && cartRow.isConnected) cartRow.remove();
+    }).catch(function () {
+      return false;
+    }).finally(function () {
+      cartOperation.removeAttribute('data-ab-cart-busy');
+      if ('disabled' in cartOperation) cartOperation.disabled = false;
+      cartRow.classList.remove('ab-cart-removing');
+      cartRow.removeAttribute('aria-busy');
+    });
     return true;
   }
 

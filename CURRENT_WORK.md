@@ -1,5 +1,15 @@
 # CURRENT_WORK
 
+## Reliable one-tap cart removal (2026-10-05)
+
+- Push verification: cart-state regression check, API build, and diff whitespace check passed; lint remains blocked by the existing all-files-ignored ESLint configuration. Package loading and popup delay were investigated only; no performance fix is included.
+
+- Attached native Angular cart rows, including special-package rows, to the same product-ID-based cart operation handler used by injected rows. The complete 44px trash control now owns the action instead of relying on a click landing on the icon glyph.
+- Kept the row locked with immediate visual feedback until the guest or authenticated cart update and UI synchronization finish, preventing missed taps and duplicate requests on slower production connections.
+- Prevented the legacy cart migration key from being merged more than once per page; it can no longer restore the final removed product before the page unloads.
+- Invalidated in-flight cart hydration and repair requests whenever cart storage changes, preventing an older product fetch from redrawing the final item milliseconds after it was removed.
+- Added focused regression checks for native remove ownership, awaited authenticated updates, and confirmed single-tap row removal in the local mobile cart.
+
 ## Production cart controls and gift threshold (2026-10-05)
 
 - Applied the horizontal quantity selector and inline SVG remove icon directly to every native cart row, without waiting for a catalogue-name match. The mobile native row now reserves the selector's full three-column width so the minus control cannot be clipped by Angular's flex layout.
@@ -1735,6 +1745,7 @@ count even when tracking is perfect.
 - Mobile bottom navigation icons: embedded dependency-free SVGs inside the existing Home, Catalogue, Cart, and Login Font Awesome elements, preserving the class-based navigation and cart-badge hooks. Live verification found four 25px SVGs with all native labels intact; `cd api && npm run build` passed.
 - Special-package PDF reader: added a delegated close-button handler so the visible × remains functional when the dialog DOM is recreated. Verified on `/special-package-details/6ac0b248b1f44997b7cd9a0b` that the dialog opens, the × removes `is-open`, and body scrolling is restored; the focused redesign check and `cd api && npm run build` pass. Lint remains blocked by the existing all-files-ignored ESLint configuration.
 - Special-package cart/typography refinement: suppressed both the native cart toast and injected cart modal on package-detail routes while preserving the cart mutation, button feedback, and badge update. Switched book descriptions to the storefront's mapped light Bengali face. Browser verification confirmed Add to Cart changed the badge from 4 to 5 with neither overlay visible and the selected description computed at weight 500; focused checks and the API build pass.
+- Cart popular-books add repair: recommendation buttons now upgrade to the same product-ID-backed cart action used by the other injected product shelves after their product data loads. The cart renderer also creates a complete row when the native cart has no existing row to clone, so adding from an empty cart appears immediately without a reload.
 
 ## Do NOT touch / be careful
 
