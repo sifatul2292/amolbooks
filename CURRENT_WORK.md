@@ -1,5 +1,10 @@
 # CURRENT_WORK
 
+## FraudSpy key rotation (2026-10-06)
+
+- Replaced the FraudSpy fallback API key in backend configuration and its tracked compiled output; preserved the existing FRAUDSPY_API_KEY environment override. No key is included in this log.
+- Verification: API build and diff whitespace check pass. Lint remains blocked by the existing all-files-ignored ESLint configuration.
+
 ## Cart quantity display and gift stability (2026-10-05)
 
 - Synchronize native quantity inputs from saved guest/authenticated cart quantities; keep decrement disabled at one.

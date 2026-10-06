@@ -66,7 +66,7 @@ export default () => ({
   accountGmail: 'softlabit.drive@gmail.com',
 
   // FraudSpy API
-  fraudspyApiKey: process.env.FRAUDSPY_API_KEY || 'fs_live_4b3b_7dc0067d-8ed2-4322-915e-37b419008ae9_110e494edd31cc0f',
+  fraudspyApiKey: process.env.FRAUDSPY_API_KEY || 'fs_live_d44a_060a4045-f68f-4bbe-8196-fee46a8d5cff_e51d113021b21024',
   greenwebsmsToken: process.env.GREENWEBSMS_TOKEN,
   steadfastWebhookToken: process.env.STEADFAST_WEBHOOK_TOKEN,
 });
