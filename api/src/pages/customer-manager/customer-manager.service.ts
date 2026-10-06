@@ -39,7 +39,40 @@ export class CustomerManagerService {
     private readonly utils: UtilsService,
   ) {}
 
-  private base(): any[] {
+  private deliveredExpression(): any {
+    return {
+      $and: [
+        {
+          $not: [
+            {
+              $in: [
+                '$orderStatus',
+                [OrderStatus.CANCEL, OrderStatus.REFUND, OrderStatus.RETURN],
+              ],
+            },
+          ],
+        },
+        {
+          $not: [
+            {
+              $in: [
+                { $ifNull: ['$courierStatus.status', ''] },
+                ['cancelled', 'partial_delivered', 'returned'],
+              ],
+            },
+          ],
+        },
+        {
+          $or: [
+            { $eq: ['$orderStatus', OrderStatus.DELIVERED] },
+            { $eq: ['$courierStatus.status', 'delivered'] },
+          ],
+        },
+      ],
+    };
+  }
+
+  private base(deliveredOnly = true): any[] {
     const replacements = [
       ' ',
       '+',
@@ -63,20 +96,8 @@ export class CustomerManagerService {
       };
     });
     return [
-      {
-        $match: {
-          orderStatus: {
-            $nin: [OrderStatus.CANCEL, OrderStatus.REFUND, OrderStatus.RETURN],
-          },
-          'courierStatus.status': {
-            $nin: ['cancelled', 'partial_delivered', 'returned'],
-          },
-          $or: [
-            { orderStatus: OrderStatus.DELIVERED },
-            { 'courierStatus.status': 'delivered' },
-          ],
-        },
-      },
+      { $set: { crmDelivered: this.deliveredExpression() } },
+      ...(deliveredOnly ? [{ $match: { crmDelivered: true } }] : []),
       { $set: { crmPhone: expression } },
       {
         $set: {
@@ -118,10 +139,11 @@ export class CustomerManagerService {
 
   private customerPipeline(): any[] {
     return [
-      ...this.base(),
+      ...this.base(false),
       {
         $project: {
           crmPhone: 1,
+          crmDelivered: 1,
           name: 1,
           shippingAddress: 1,
           city: 1,
@@ -132,7 +154,7 @@ export class CustomerManagerService {
           'orderedItems.category': 1,
         },
       },
-      { $sort: { createdAt: -1, _id: -1 } },
+      { $sort: { crmDelivered: -1, createdAt: -1, _id: -1 } },
       {
         $group: {
           _id: '$crmPhone',
@@ -140,12 +162,20 @@ export class CustomerManagerService {
           shippingAddress: { $first: '$shippingAddress' },
           city: { $first: '$city' },
           lastPurchase: { $first: '$createdAt' },
-          orderCount: { $sum: 1 },
-          totalSpent: { $sum: '$grandTotal' },
-          maxOrderValue: { $max: '$grandTotal' },
-          itemGroups: { $push: { $ifNull: ['$orderedItems', []] } },
+          orderCount: { $sum: { $cond: ['$crmDelivered', 1, 0] } },
+          totalOrderCount: { $sum: 1 },
+          totalSpent: { $sum: { $cond: ['$crmDelivered', '$grandTotal', 0] } },
+          maxOrderValue: {
+            $max: { $cond: ['$crmDelivered', '$grandTotal', 0] },
+          },
+          itemGroups: {
+            $push: {
+              $cond: ['$crmDelivered', { $ifNull: ['$orderedItems', []] }, []],
+            },
+          },
         },
       },
+      { $match: { orderCount: { $gt: 0 } } },
       {
         $set: {
           items: {
@@ -328,6 +358,7 @@ export class CustomerManagerService {
                   shippingAddress: 1,
                   city: 1,
                   orderCount: 1,
+                  totalOrderCount: 1,
                   totalSpent: 1,
                   lastPurchase: 1,
                   latestContact: 1,
@@ -360,17 +391,18 @@ export class CustomerManagerService {
     const phone = normalizeCustomerPhone(rawPhone);
     if (!phone) throw new BadRequestException('Invalid phone number');
     const customer = await this.orders.aggregate([
-      ...this.base(),
+      ...this.base(false),
       { $match: { crmPhone: phone } },
       {
         $group: {
           _id: null,
-          orderCount: { $sum: 1 },
-          totalSpent: { $sum: '$grandTotal' },
+          orderCount: { $sum: { $cond: ['$crmDelivered', 1, 0] } },
+          totalOrderCount: { $sum: 1 },
+          totalSpent: { $sum: { $cond: ['$crmDelivered', '$grandTotal', 0] } },
         },
       },
     ]);
-    if (!customer.length)
+    if (!customer.length || !customer[0].orderCount)
       throw new NotFoundException('No delivered orders for this customer');
     const [orders, history] = await Promise.all([
       this.orders.aggregate([
@@ -422,11 +454,30 @@ export class CustomerManagerService {
           paymentType: orders[0].paymentType || 'cash_on_delivery',
         },
         orderCount: customer[0].orderCount,
+        totalOrderCount: customer[0].totalOrderCount,
         totalSpent: customer[0].totalSpent,
         orders,
         history,
       },
     };
+  }
+
+  async searchPurchasedBooks(query: string) {
+    const term = String(query || '')
+      .trim()
+      .slice(0, 120);
+    if (term.length < 2) return { success: true, data: [] };
+    const regex = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    const books = await this.orders.aggregate([
+      ...this.base(),
+      { $unwind: '$orderedItems' },
+      { $match: { 'orderedItems.name': regex } },
+      { $group: { _id: '$orderedItems.name' } },
+      { $sort: { _id: 1 } },
+      { $limit: 12 },
+      { $project: { _id: 0, name: '$_id' } },
+    ]);
+    return { success: true, data: books };
   }
 
   async searchProducts(query: string) {

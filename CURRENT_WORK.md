@@ -1,5 +1,11 @@
 # CURRENT_WORK
 
+## Customer delivery ratio and purchased-book search (2026-10-06)
+
+- Added each customer's delivered/total recorded order ratio and percentage to the customer table and details panel. Total includes pending, cancelled, refunded, returned and partial orders; spending, purchased-book filters, dates, addresses and delivered-history eligibility remain based on delivered orders. Order creation refreshes the ratio after success.
+- Added a protected purchased-title search endpoint and suggestions as staff type in the Purchased book/package filter. Suggestions are deduplicated from delivered-order snapshots, including titles no longer in the catalog; selecting/typing a title and applying filters narrows the customer list. Sales Man access is retained.
+- Verification: API build and isolated MongoDB/HTTP/browser checks pass, including normalized phone grouping with 3 delivered out of 8 recorded orders, unchanged delivered-only totals, saved order creation, title suggestions, filter/reset behavior and responsive layouts. Lint remains blocked by the existing all-files-ignored configuration. Production API base remains `https://apisub.amolbooks.com`.
+
 ## Customer Manager seven-day filter (2026-10-06)
 
 - Added “Over 7 days ago” to Last purchase, using the existing server-side days filter. Production API base remains `https://apisub.amolbooks.com`. API build, served-page verification and whitespace checks pass; lint remains blocked by the existing all-files-ignored configuration.

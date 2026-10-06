@@ -901,10 +901,13 @@
             <div>
               <label for="product">Purchased book / package</label
               ><input
+                list="purchased-book-suggestions"
+                autocomplete="off"
                 id="product"
                 name="product"
-                placeholder="Any book or package"
-              />
+                placeholder="Search purchased books…"
+              /><datalist id="purchased-book-suggestions"></datalist>
+              <small>Type a book name, then apply filters.</small>
             </div>
             <div>
               <label for="category">Product category</label
@@ -1069,6 +1072,7 @@
             <small>Total spent</small><strong id="customer-spent"></strong>
           </div>
         </div>
+        <p class="footnote" id="customer-ratio"></p>
         <div class="tabs" role="tablist">
           <button role="tab" data-tab="history" aria-selected="false">
             History</button
@@ -1462,7 +1466,13 @@
                     (c.orderCount === 1 ? 'order' : 'orders') +
                     '</strong><small>' +
                     money(c.totalSpent) +
-                    '</small></td><td>' +
+                    '</small><small title="Delivered orders / all recorded orders, including pending and cancelled">Delivery ratio: ' +
+                    c.orderCount +
+                    '/' +
+                    c.totalOrderCount +
+                    ' · ' +
+                    Math.round((c.orderCount / c.totalOrderCount) * 100) +
+                    '%</small></td><td>' +
                     date(c.lastPurchase) +
                     '</td><td>' +
                     badge(c.latestContact) +
@@ -1586,6 +1596,14 @@
               .join(', ') ||
             'No saved address. Add it when creating the order.';
           $('customer-orders').textContent = data.orderCount;
+          $('customer-ratio').textContent =
+            'Delivery ratio: ' +
+            data.orderCount +
+            '/' +
+            data.totalOrderCount +
+            ' orders (' +
+            Math.round((data.orderCount / data.totalOrderCount) * 100) +
+            '%). Total includes pending, cancelled, returned and refunded orders.';
           $('customer-spent').textContent = money(data.totalSpent);
           $('contact-actions').innerHTML = blocked
             ? '<p class="notice">This customer requested no contact.</p>'
@@ -2067,6 +2085,16 @@
               '<strong>Order #' +
               esc(result.orderId) +
               ' created.</strong><a href="custom-orders.html" target="_blank" rel="noopener noreferrer">View Amolbooks Orders →</a>';
+            try {
+              const fresh = await request(
+                '/api/customer-manager/' + orderCustomer.phone
+              );
+              renderDetail(fresh, true);
+              await load();
+            } catch (_) {
+              $('order-status').textContent =
+                'Order created. Refresh the customer details to update the delivery ratio.';
+            }
             $('outcome').value = 'ordered';
           } catch (error) {
             $('order-status').className = 'form-status error';
@@ -2084,6 +2112,32 @@
           page = 1;
           load();
         };
+        let purchasedSearchTimer, purchasedSearchController;
+        $('product').addEventListener('input', () => {
+          clearTimeout(purchasedSearchTimer);
+          if (purchasedSearchController) purchasedSearchController.abort();
+          $('purchased-book-suggestions').innerHTML = '';
+          const query = $('product').value.trim();
+          if (query.length < 2) return;
+          purchasedSearchTimer = setTimeout(async () => {
+            purchasedSearchController = new AbortController();
+            try {
+              const books = await request(
+                '/api/customer-manager/purchased-books/search?q=' +
+                  encodeURIComponent(query),
+                { signal: purchasedSearchController.signal }
+              );
+              $('purchased-book-suggestions').innerHTML = books
+                .map(
+                  (book) => '<option value="' + esc(book.name) + '"></option>'
+                )
+                .join('');
+            } catch (error) {
+              if (error.name !== 'AbortError')
+                $('notice').textContent = error.message;
+            }
+          }, 250);
+        });
         roleMode();
         if (token()) load();
         else $('login').hidden = false;

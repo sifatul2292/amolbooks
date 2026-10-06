@@ -214,6 +214,7 @@ let connection, app, browser;
     (r) => r.phone === '01711123456'
   );
   assert.equal(customer.orderCount, 3);
+  assert.equal(customer.totalOrderCount, 8);
   assert.equal(customer.totalSpent, 3500);
   assert.equal(
     (
@@ -235,6 +236,21 @@ let connection, app, browser;
   assert.equal((await call('/api/customer-manager?minSpent=oops')).status, 400);
   response = await call('/api/customer-manager/01711123456');
   assert.equal(response.body.data.orders.length, 3);
+  assert.equal(response.body.data.totalOrderCount, 8);
+  assert.deepEqual(
+    (await call('/api/customer-manager/purchased-books/search?q=Fixture')).body
+      .data,
+    [{ name: 'Fixture Book' }]
+  );
+  assert.equal(
+    (
+      await call(
+        '/api/customer-manager/purchased-books/search?q=Fixture',
+        'editor'
+      )
+    ).status,
+    401
+  );
   assert.equal(response.body.data.history.length, 0);
   const save = (body) =>
     call('/api/customer-manager/01711123456/contacts', 'salesman', {
@@ -435,6 +451,19 @@ let connection, app, browser;
     );
     assert.equal(await page.locator('[data-admin-only]:visible').count(), 0);
     assert.equal(await page.locator('#rows script').count(), 0);
+    await page.locator('#product').fill('Fixture');
+    await page.waitForSelector(
+      '#purchased-book-suggestions option[value="Fixture Book"]',
+      { state: 'attached' }
+    );
+    await page.locator('#product').fill('Fixture Book');
+    await page.locator('#filters button[type="submit"]').click();
+    await page.waitForFunction(
+      () => document.querySelector('#notice').textContent === ''
+    );
+    assert.equal(await page.locator('#rows [data-phone]').count(), 1);
+    await page.locator('#reset-filters').click();
+    await page.waitForSelector('[data-phone="01811123456"]');
     assert.equal(
       await page.locator('#status option[value="never"]').count(),
       1

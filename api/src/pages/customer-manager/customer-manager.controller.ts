@@ -29,6 +29,13 @@ export class CustomerManagerController {
   }
 
   @Version(VERSION_NEUTRAL)
+  @Get('purchased-books/search')
+  @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN, AdminRoles.SALESMAN)
+  purchasedBooks(@Query('q') query: string) {
+    return this.service.searchPurchasedBooks(query);
+  }
+
+  @Version(VERSION_NEUTRAL)
   @Get('products/search')
   @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN, AdminRoles.SALESMAN)
   products(@Query('q') query: string) {
