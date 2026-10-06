@@ -1794,3 +1794,9 @@ count even when tracking is perfect.
 - `api/node_modules/` — never re-track (Linux/Mac native-binary crash history).
 - On VPS: never `git clean` / `reset --hard` / `stash -u`; use `scripts/vps-safe-pull.sh`.
 - Every `npm install` needs `--legacy-peer-deps`.
+
+## Customer Manager performance — 6 October 2026
+
+- Filters update automatically (400 ms typing debounce); order-product search responds as you type (300 ms). Existing Apply/Search buttons remain. Requests cancel previous work and ignore obsolete results; refresh errors retain loaded rows. Customer selection toggles row highlighting without repainting the table; full histories render only when opened. No external UI libraries added.
+- Default list aggregation skips purchase-item arrays and catalog joins when those filters are absent. Detail narrows phone candidates before normalization, scans orders once for counts/history, and loads contacts in parallel. Contact logging validates customer existence without fetching full history. Purchased-book search prefilters matching item names. Phone normalization and delivered-only rules retained.
+- API build and isolated Mongo/HTTP/Chrome checks pass, including automatic filtering, sales-role access, mobile layout and repeat-order persistence/stock/idempotency. Optional 10,000-order fixture benchmark: median detail 45→8 ms, list 221→217 ms, category 225→288 ms (local measurements, not production guarantees). Lint still fails because all matching source files are ignored by existing ESLint configuration.

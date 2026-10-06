@@ -1439,7 +1439,12 @@
           $('workspace').classList.remove('has-detail');
           if (detailController) detailController.abort();
           selected = null;
-          renderRows();
+          highlightSelectedRow();
+        }
+        function highlightSelectedRow() {
+          document.querySelectorAll('#rows [data-phone]').forEach((button) => {
+            button.closest('tr').classList.toggle('selected', Boolean(selected && selected.phone === button.dataset.phone));
+          });
         }
         function renderRows() {
           if (!listData) return;
@@ -1493,7 +1498,9 @@
                 .join('')
             : '<tr><td colspan="5" class="empty">No customers match these filters.</td></tr>';
         }
+        let filterTimer, orderSearchTimer;
         async function load() {
+          clearTimeout(filterTimer);
           if (listController) listController.abort();
           listController = new AbortController();
           const controller = listController;
@@ -1506,6 +1513,7 @@
             const data = await request('/api/customer-manager?' + params, {
               signal: controller.signal,
             });
+            if (controller.signal.aborted || controller !== listController) return;
             listData = data;
             page = data.page;
             renderRows();
@@ -1539,13 +1547,59 @@
                 )
               );
           } catch (error) {
-            if (error.name === 'AbortError') return;
+            if (error.name === 'AbortError' || controller !== listController) return;
             $('notice').textContent = error.message;
-            $('rows').innerHTML =
+            if (!listData) $('rows').innerHTML =
               '<tr><td colspan="5" class="empty">Unable to load customers. Apply filters to retry.</td></tr>';
           }
         }
+        function renderHistory() {
+          if (!selected || $('orders').childElementCount) return;
+          const data = selected;
+          $('orders').innerHTML = data.orders
+            .map(
+              (o) =>
+                '<div class="purchase"><strong>Order #' +
+                esc(o.orderId) +
+                ' · ' +
+                money(o.grandTotal) +
+                '</strong><p style="margin-top:6px">' +
+                esc(
+                  (o.orderedItems || []).map((i) => i.name || 'Book').join(', ')
+                ) +
+                '</p><small>' +
+                date(o.createdAt) +
+                '</small></div>'
+            )
+            .join('');
+          $('history').innerHTML = data.history.length
+            ? data.history
+                .map(
+                  (c) =>
+                    '<div class="history-entry">' +
+                    '<span class="badge ' +
+                    esc(c.outcome) +
+                    '">' +
+                    esc(labels[c.outcome] || c.outcome) +
+                    '</span><p style="margin-top:8px;white-space:pre-wrap">' +
+                    esc(c.note) +
+                    '</p><small>' +
+                    esc(c.channel) +
+                    ' · ' +
+                    esc(c.contactedByName || 'Staff') +
+                    ' · ' +
+                    date(c.createdAt) +
+                    '</small>' +
+                    (c.nextFollowUp
+                      ? '<small>Follow-up: ' + date(c.nextFollowUp) + '</small>'
+                      : '') +
+                    '</div>'
+                )
+                .join('')
+            : '<p class="muted section">No contacts logged yet.</p>';
+        }
         function switchTab(value) {
+          if (value === 'history') renderHistory();
           ['history', 'contact', 'followup'].forEach(
             (t) => ($('tab-' + t).hidden = t !== value)
           );
@@ -1629,47 +1683,8 @@
                 '</small></div>'
             )
             .join('');
-          $('orders').innerHTML = data.orders
-            .map(
-              (o) =>
-                '<div class="purchase"><strong>Order #' +
-                esc(o.orderId) +
-                ' · ' +
-                money(o.grandTotal) +
-                '</strong><p style="margin-top:6px">' +
-                esc(
-                  (o.orderedItems || []).map((i) => i.name || 'Book').join(', ')
-                ) +
-                '</p><small>' +
-                date(o.createdAt) +
-                '</small></div>'
-            )
-            .join('');
-          $('history').innerHTML = data.history.length
-            ? data.history
-                .map(
-                  (c) =>
-                    '<div class="history-entry">' +
-                    '<span class="badge ' +
-                    esc(c.outcome) +
-                    '">' +
-                    esc(labels[c.outcome] || c.outcome) +
-                    '</span><p style="margin-top:8px;white-space:pre-wrap">' +
-                    esc(c.note) +
-                    '</p><small>' +
-                    esc(c.channel) +
-                    ' · ' +
-                    esc(c.contactedByName || 'Staff') +
-                    ' · ' +
-                    date(c.createdAt) +
-                    '</small>' +
-                    (c.nextFollowUp
-                      ? '<small>Follow-up: ' + date(c.nextFollowUp) + '</small>'
-                      : '') +
-                    '</div>'
-                )
-                .join('')
-            : '<p class="muted section">No contacts logged yet.</p>';
+          $('orders').innerHTML = $('history').innerHTML = '';
+          if (!$('tab-history').hidden) renderHistory();
           $('followup-summary').textContent = blocked
             ? 'Do not contact this customer.'
             : contact && contact.nextFollowUp
@@ -1690,7 +1705,7 @@
             updateMessage();
             $('save-status').textContent = '';
           }
-          renderRows();
+          highlightSelectedRow();
         }
         async function openCustomer(phone) {
           if (saving) return;
@@ -1703,6 +1718,7 @@
               '/api/customer-manager/' + encodeURIComponent(phone),
               { signal: controller.signal }
             );
+            if (controller.signal.aborted || controller !== detailController) return;
             renderDetail(data, false);
             switchTab('contact');
             $('notice').textContent = '';
@@ -1712,6 +1728,12 @@
               $('notice').textContent = error.message;
           }
         }
+        $('filters').addEventListener('input', (event) => {
+          if (event.target.tagName === 'SELECT') return;
+          clearTimeout(filterTimer);
+          filterTimer = setTimeout(() => { page = 1; load(); }, 400);
+        });
+        $('filters').addEventListener('change', () => { page = 1; load(); });
         $('filters').addEventListener('submit', (event) => {
           event.preventDefault();
           page = 1;
@@ -1957,6 +1979,7 @@
           $('order-search').focus();
         }
         async function searchOrderProducts() {
+          clearTimeout(orderSearchTimer);
           if (creatingOrder || orderCreated) return;
           const query = $('order-search').value.trim();
           if (productController) productController.abort();
@@ -1966,13 +1989,16 @@
             return;
           }
           productController = new AbortController();
+          const controller = productController;
           $('order-search-results').textContent = 'Searching…';
           try {
-            orderProducts = await request(
+            const products = await request(
               '/api/customer-manager/products/search?q=' +
                 encodeURIComponent(query),
               { signal: productController.signal }
             );
+            if (controller.signal.aborted || controller !== productController) return;
+            orderProducts = products;
             $('order-search-results').innerHTML = orderProducts.length
               ? orderProducts
                   .map(
@@ -2003,6 +2029,12 @@
           if (creatingOrder) event.preventDefault();
           else if (productController) productController.abort();
         });
+        $('order-search').addEventListener('input', () => {
+          clearTimeout(orderSearchTimer);
+          if (productController) productController.abort();
+          orderSearchTimer = setTimeout(searchOrderProducts, 300);
+        });
+        $('order-dialog').addEventListener('close', () => clearTimeout(orderSearchTimer));
         $('order-search-button').onclick = searchOrderProducts;
         $('order-search').addEventListener('keydown', (event) => {
           if (event.key === 'Enter') {
@@ -2121,12 +2153,14 @@
           if (query.length < 2) return;
           purchasedSearchTimer = setTimeout(async () => {
             purchasedSearchController = new AbortController();
+            const controller = purchasedSearchController;
             try {
               const books = await request(
                 '/api/customer-manager/purchased-books/search?q=' +
                   encodeURIComponent(query),
                 { signal: purchasedSearchController.signal }
               );
+              if (controller.signal.aborted || controller !== purchasedSearchController) return;
               $('purchased-book-suggestions').innerHTML = books
                 .map(
                   (book) => '<option value="' + esc(book.name) + '"></option>'

@@ -592,7 +592,7 @@ let connection, app, browser;
     });
     await page.locator('#close').click();
     await page.locator('#product').fill('no match');
-    await page.locator('#filters button[type="submit"]').click();
+    // Typing alone applies the filter; no submit or page reload needed.
     await page.waitForSelector('#rows .empty');
     assert.match(
       await page.locator('#rows').textContent(),
@@ -603,6 +603,27 @@ let connection, app, browser;
     console.log(
       'PASS: browser Sales Man navigation, escaped data, save/reload/history, filters and responsive layouts at 320–1440px.'
     );
+  }
+  if (process.env.CRM_PERF_CHECK) {
+    const bulk=[];
+    for(let i=0;i<5000;i++) {
+      const phone='019'+String(10000000+i);
+      bulk.push(fixture(phone,500,10),fixture(phone,400,70));
+    }
+    await Orders.collection.insertMany(bulk);
+    const measurements={};
+    for(const [key,action] of [
+      ['list',()=>service.list({})],
+      ['category',()=>service.list({category:'Self'})],
+      ['detail',()=>service.detail('01711123456')],
+    ]) {
+      await action();
+      const samples=[];
+      for(let i=0;i<3;i++){const started=performance.now();await action();samples.push(Math.round(performance.now()-started));}
+      measurements[key]=samples.sort((a,b)=>a-b)[1];
+    }
+    fs.writeFileSync(path.join(root,'tmp/customer-manager-perf-'+(process.env.CRM_PERF_LABEL||'result')+'.json'),JSON.stringify(measurements));
+    console.log('Fixture performance (10,000 orders), median milliseconds:', measurements);
   }
 })()
   .catch((error) => {

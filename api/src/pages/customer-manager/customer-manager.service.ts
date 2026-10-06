@@ -137,8 +137,8 @@ export class CustomerManagerService {
     ];
   }
 
-  private customerPipeline(): any[] {
-    return [
+  private customerPipeline(query: any = {}): any[] {
+    const stages: any[] = [
       ...this.base(false),
       {
         $project: {
@@ -222,6 +222,7 @@ export class CustomerManagerService {
             { $match: { $expr: { $eq: ['$phone', '$$phone'] } } },
             { $sort: { createdAt: -1, _id: -1 } },
             { $limit: 1 },
+            { $project: { outcome: 1, nextFollowUp: 1, createdAt: 1 } },
           ],
           as: 'contact',
         },
@@ -233,6 +234,25 @@ export class CustomerManagerService {
         },
       },
     ];
+    // Ordinary lists need neither purchase-item arrays nor a catalog join.
+    const group = stages.find((stage) => stage.$group).$group;
+    if (!query.product && !query.category) {
+      delete group.itemGroups;
+      stages.forEach((stage) => {
+        if (stage.$project) {
+          delete stage.$project['orderedItems._id'];
+          delete stage.$project['orderedItems.name'];
+          delete stage.$project['orderedItems.category'];
+        }
+      });
+    }
+    return stages.filter((stage) => {
+      if (stage.$lookup?.from === this.products.collection.name)
+        return Boolean(query.category);
+      if (stage.$set?.missingCategoryProductIds) return Boolean(query.category);
+      if (stage.$set?.items) return Boolean(query.product || query.category);
+      return true;
+    });
   }
 
   async list(query: any) {
@@ -306,7 +326,7 @@ export class CustomerManagerService {
         : { lastPurchase: -1, _id: 1 };
     const result = await this.orders
       .aggregate([
-        ...this.customerPipeline(),
+        ...this.customerPipeline(query),
         {
           $facet: {
             summary: [
@@ -387,46 +407,62 @@ export class CustomerManagerService {
     };
   }
 
+  private phoneCandidates(phone: string): any {
+    const separators = '[\\s()+.\\-]*';
+    const digits = phone
+      .slice(1)
+      .split('')
+      .map((digit) => '[' + digit + '০১২৩৪৫৬৭৮৯'[Number(digit)] + ']')
+      .join(separators);
+    return { phoneNo: new RegExp(digits + separators + '$') };
+  }
+
   async detail(rawPhone: string) {
     const phone = normalizeCustomerPhone(rawPhone);
     if (!phone) throw new BadRequestException('Invalid phone number');
-    const customer = await this.orders.aggregate([
-      ...this.base(false),
-      { $match: { crmPhone: phone } },
-      {
-        $group: {
-          _id: null,
-          orderCount: { $sum: { $cond: ['$crmDelivered', 1, 0] } },
-          totalOrderCount: { $sum: 1 },
-          totalSpent: { $sum: { $cond: ['$crmDelivered', '$grandTotal', 0] } },
-        },
-      },
-    ]);
-    if (!customer.length || !customer[0].orderCount)
-      throw new NotFoundException('No delivered orders for this customer');
-    const [orders, history] = await Promise.all([
+    const [result, history] = await Promise.all([
       this.orders.aggregate([
-        ...this.base(),
+        { $match: this.phoneCandidates(phone) },
+        ...this.base(false),
         { $match: { crmPhone: phone } },
-        { $sort: { createdAt: -1, _id: -1 } },
-        { $limit: 50 },
         {
-          $project: {
-            orderId: 1,
-            name: 1,
-            createdAt: 1,
-            grandTotal: 1,
-            shippingAddress: 1,
-            city: 1,
-            email: 1,
-            division: 1,
-            area: 1,
-            zone: 1,
-            deliveryCharge: 1,
-            paymentType: 1,
-            'orderedItems.name': 1,
-            'orderedItems.quantity': 1,
-            'orderedItems.category.name': 1,
+          $facet: {
+            customer: [
+              {
+                $group: {
+                  _id: null,
+                  orderCount: { $sum: { $cond: ['$crmDelivered', 1, 0] } },
+                  totalOrderCount: { $sum: 1 },
+                  totalSpent: {
+                    $sum: { $cond: ['$crmDelivered', '$grandTotal', 0] },
+                  },
+                },
+              },
+            ],
+            orders: [
+              { $match: { crmDelivered: true } },
+              { $sort: { createdAt: -1, _id: -1 } },
+              { $limit: 50 },
+              {
+                $project: {
+                  orderId: 1,
+                  name: 1,
+                  createdAt: 1,
+                  grandTotal: 1,
+                  shippingAddress: 1,
+                  city: 1,
+                  email: 1,
+                  division: 1,
+                  area: 1,
+                  zone: 1,
+                  deliveryCharge: 1,
+                  paymentType: 1,
+                  'orderedItems.name': 1,
+                  'orderedItems.quantity': 1,
+                  'orderedItems.category.name': 1,
+                },
+              },
+            ],
           },
         },
       ]),
@@ -436,6 +472,10 @@ export class CustomerManagerService {
         .limit(50)
         .lean(),
     ]);
+    const customer = result[0].customer,
+      orders = result[0].orders;
+    if (!customer.length || !customer[0].orderCount)
+      throw new NotFoundException('No delivered orders for this customer');
     return {
       success: true,
       data: {
@@ -469,6 +509,7 @@ export class CustomerManagerService {
     if (term.length < 2) return { success: true, data: [] };
     const regex = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
     const books = await this.orders.aggregate([
+      { $match: { 'orderedItems.name': regex } },
       ...this.base(),
       { $unwind: '$orderedItems' },
       { $match: { 'orderedItems.name': regex } },
@@ -605,7 +646,15 @@ export class CustomerManagerService {
           new Date(date).toISOString().slice(0, 10) !== date))
     )
       throw new BadRequestException('Invalid follow-up date');
-    await this.detail(phone);
+    const exists = await this.orders.aggregate([
+      { $match: this.phoneCandidates(phone) },
+      ...this.base(),
+      { $match: { crmPhone: phone } },
+      { $limit: 1 },
+      { $project: { _id: 1 } },
+    ]);
+    if (!exists.length)
+      throw new NotFoundException('No delivered orders for this customer');
     await this.contacts.create({
       phone,
       outcome: body.outcome,
