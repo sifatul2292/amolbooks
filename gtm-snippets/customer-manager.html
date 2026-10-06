@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Customer Manager · Amolbooks</title>
+    <style>
+      :root {
+        font-family: Inter, system-ui, -apple-system, sans-serif;
+        color: #182039;
+        background: #f3f1fc;
+        font-size: 14px;
+        --purple: #7135e8;
+        --muted: #667697;
+        --border: #e3e6f1;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+      button,
+      a,
+      input,
+      select,
+      textarea {
+        touch-action: manipulation;
+      }
+      button,
+      a {
+        cursor: pointer;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      button,
+      input,
+      select,
+      textarea,
+      .action {
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 10px 12px;
+        background: #fff;
+        color: inherit;
+      }
+      button:hover,
+      .action:hover {
+        border-color: var(--purple);
+      }
+      :focus-visible {
+        outline: 3px solid #bba0fa;
+        outline-offset: 2px;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+      h1 {
+        font-size: 28px;
+        letter-spacing: -0.8px;
+      }
+      h2 {
+        font-size: 19px;
+      }
+      h3 {
+        font-size: 14px;
+      }
+      .muted,
+      small {
+        color: var(--muted);
+      }
+      small {
+        font-size: 12px;
+      }
+      aside.nav {
+        position: fixed;
+        inset: 0 auto 0 0;
+        width: 230px;
+        background: #141426;
+        color: #a4adc3;
+        display: flex;
+        flex-direction: column;
+        z-index: 20;
+      }
+      .brand {
+        display: flex;
+        gap: 13px;
+        padding: 25px 20px;
+        border-bottom: 1px solid #2a293d;
+        align-items: center;
+      }
+      .logo {
+        display: grid;
+        place-items: center;
+        background: var(--purple);
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        font-size: 25px;
+      }
+      .brand strong {
+        color: #fff;
+        font-size: 19px;
+      }
+      .brand small {
+        display: block;
+        margin-top: 4px;
+      }
+      .nav-label {
+        padding: 25px 22px 10px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1.4px;
+      }
+      .nav a {
+        display: block;
+        padding: 14px 22px;
+        font-weight: 600;
+        font-size: 13px;
+      }
+      .nav a:hover {
+        background: #25213e;
+      }
+      .nav a.active {
+        background: #302046;
+        color: #b899ff;
+        border-left: 3px solid #9958ff;
+        padding-left: 19px;
+      }
+      .nav footer {
+        margin-top: auto;
+        padding-bottom: 20px;
+      }
+      .workspace {
+        margin-left: 230px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        min-height: 100vh;
+      }
+      .workspace.has-detail {
+        grid-template-columns: minmax(0, 1fr) 360px;
+      }
+      main {
+        min-width: 0;
+        padding: 28px 24px;
+      }
+      .heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      .heading p {
+        margin-top: 7px;
+      }
+      .primary {
+        background: var(--purple);
+        border-color: var(--purple);
+        color: #fff;
+        font-weight: 650;
+      }
+      .green {
+        background: #179c43;
+        border-color: #179c43;
+        color: #fff;
+      }
+      .pale {
+        background: #f2ebff;
+        color: #6933d4;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: #fff;
+        padding: 19px;
+      }
+      .stat {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .stat-icon {
+        background: #efe9ff;
+        color: #7135e8;
+        border-radius: 12px;
+        width: 46px;
+        height: 46px;
+        display: grid;
+        place-items: center;
+        font-size: 21px;
+      }
+      .stat:nth-child(2) .stat-icon {
+        background: #fff2df;
+        color: #ae6500;
+      }
+      .stat:nth-child(3) .stat-icon {
+        background: #e9fbef;
+        color: #138638;
+      }
+      .stat strong {
+        display: block;
+        font-size: 24px;
+        margin-top: 4px;
+      }
+      .filters input,
+      .filters select {
+        width: 100%;
+        min-width: 0;
+      }
+      .filter-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 14px;
+      }
+      label {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+      .more {
+        margin-top: 14px;
+      }
+      .more summary {
+        cursor: pointer;
+        color: #6933d4;
+      }
+      .more .filter-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      .chips {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 18px 0;
+        flex-wrap: wrap;
+      }
+      .chips button.active {
+        background: var(--purple);
+        color: #fff;
+        border-color: var(--purple);
+      }
+      .chips select {
+        margin-left: auto;
+      }
+      .table-card {
+        padding: 18px 10px 0;
+      }
+      .table-title {
+        padding: 0 8px 16px;
+      }
+      .table-title p {
+        margin-top: 5px;
+      }
+      .table-scroll {
+        overflow: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+      th {
+        background: #f5f4fc;
+        color: var(--muted);
+        font-size: 10px;
+        letter-spacing: 0.5px;
+        text-align: left;
+        padding: 14px 10px;
+      }
+      td {
+        padding: 17px 10px;
+        border-bottom: 1px solid #edf0f6;
+      }
+      td strong,
+      td small {
+        display: block;
+      }
+      td small {
+        margin-top: 5px;
+      }
+      tbody tr.selected {
+        background: #f0e8ff;
+      }
+      .customer-button {
+        padding: 0;
+        border: 0;
+        text-align: left;
+        background: transparent;
+        font-weight: 650;
+      }
+      .badge {
+        display: inline-block;
+        padding: 7px 10px;
+        border-radius: 20px;
+        background: #f0f3f8;
+        color: #52627e;
+        font-size: 11px;
+      }
+      .badge.interested,
+      .badge.ordered {
+        background: #e7faee;
+        color: #16763b;
+      }
+      .badge.due,
+      .badge.follow_up {
+        background: #fff1db;
+        color: #965000;
+      }
+      .badge.no_answer,
+      .badge.dont_contact {
+        background: #fff0f0;
+        color: #a73535;
+      }
+      .row-actions {
+        display: flex;
+        gap: 6px;
+      }
+      .action {
+        padding: 8px;
+        color: #7135e8;
+        background: #f6f1ff;
+        font-size: 12px;
+      }
+      .action.whatsapp {
+        color: #12813a;
+        background: #effbf3;
+      }
+      .pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        padding: 18px 8px;
+      }
+      .pager {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .notice {
+        color: #a12c38;
+        margin-bottom: 12px;
+        min-height: 20px;
+      }
+      .empty {
+        padding: 40px 15px;
+        text-align: center;
+        color: var(--muted);
+      }
+      .drawer {
+        background: #fff;
+        border-left: 1px solid var(--border);
+        padding: 24px 20px;
+        min-width: 0;
+      }
+      .drawer[hidden] {
+        display: none;
+      }
+      .drawer-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+      .drawer-head p {
+        margin-top: 6px;
+      }
+      .close {
+        border: 0;
+        font-size: 24px;
+        padding: 0 5px;
+        color: var(--muted);
+      }
+      .contact-actions {
+        display: flex;
+        gap: 10px;
+        margin: 18px 0;
+      }
+      .contact-actions a {
+        flex: 1;
+        text-align: center;
+      }
+      .mini-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 14px;
+        gap: 12px;
+      }
+      .mini-stats strong {
+        display: block;
+        margin-top: 5px;
+        font-size: 19px;
+      }
+      .tabs {
+        display: flex;
+        margin: 18px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .tabs button {
+        flex: 1;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        color: var(--muted);
+        padding: 12px 0;
+      }
+      .tabs button.active {
+        color: var(--purple);
+        border-bottom: 2px solid var(--purple);
+        font-weight: 650;
+      }
+      .purchase,
+      .history-entry {
+        background: #fafafe;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 12px;
+        margin-top: 9px;
+        font-size: 13px;
+        overflow-wrap: anywhere;
+      }
+      .purchase small,
+      .history-entry small {
+        display: block;
+        margin-top: 6px;
+      }
+      .section {
+        margin-top: 20px;
+      }
+      .section h3 {
+        margin-bottom: 12px;
+      }
+      .drawer select,
+      .drawer input,
+      .drawer textarea {
+        width: 100%;
+        min-width: 0;
+      }
+      .drawer textarea {
+        resize: vertical;
+        line-height: 1.6;
+      }
+      .drawer .wide {
+        width: 100%;
+        margin-top: 10px;
+      }
+      .log-form {
+        border-top: 1px solid var(--border);
+        padding-top: 20px;
+      }
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .form-status {
+        margin-top: 10px;
+        min-height: 18px;
+        font-size: 12px;
+      }
+      .form-status.error {
+        color: #a12c38;
+      }
+      .form-status.success {
+        color: #137537;
+      }
+      .login {
+        position: fixed;
+        inset: 0;
+        background: #141426e8;
+        z-index: 100;
+        display: grid;
+        place-items: center;
+        padding: 20px;
+      }
+      .login[hidden] {
+        display: none;
+      }
+      .login form {
+        width: min(400px, 100%);
+        background: #fff;
+        padding: 30px;
+        border-radius: 18px;
+      }
+      .login input {
+        width: 100%;
+        margin-bottom: 18px;
+      }
+      .login h2 {
+        margin-bottom: 8px;
+      }
+      .login p {
+        margin-bottom: 22px;
+      }
+      .login button {
+        width: 100%;
+      }
+      .menu {
+        display: none;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .footnote {
+        margin-top: 12px;
+        font-size: 11px;
+        line-height: 1.6;
+        color: var(--muted);
+      }
+      @media (min-width: 1700px) {
+        main {
+          padding: 30px 36px;
+        }
+        .workspace.has-detail {
+          grid-template-columns: minmax(0, 1fr) 390px;
+        }
+      }
+      @media (max-width: 1250px) {
+        .workspace.has-detail {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .drawer {
+          position: fixed;
+          right: 0;
+          top: 0;
+          bottom: 0;
+          width: 390px;
+          max-width: 100%;
+          overflow: auto;
+          z-index: 40;
+          box-shadow: -30px 0 70px #14142644;
+        }
+        .filter-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 900px) {
+        aside.nav {
+          transform: translateX(-100%);
+        }
+        aside.nav.open {
+          transform: none;
+          box-shadow: 20px 0 60px #14142666;
+        }
+        .workspace {
+          margin-left: 0;
+        }
+        .menu {
+          display: inline-block;
+        }
+        .heading h1 {
+          font-size: 24px;
+        }
+        main {
+          padding: 20px 16px;
+        }
+      }
+      @media (max-width: 520px) {
+        main {
+          padding: 18px 12px;
+        }
+        .heading {
+          align-items: flex-start;
+        }
+        .heading p {
+          font-size: 12px;
+        }
+        .heading .logout {
+          padding: 8px;
+          font-size: 11px;
+        }
+        .stats {
+          gap: 7px;
+        }
+        .stat {
+          padding: 12px 8px;
+          display: block;
+        }
+        .stat-icon {
+          display: none;
+        }
+        .stat small {
+          font-size: 10px;
+        }
+        .stat strong {
+          font-size: 22px;
+        }
+        .filter-grid,
+        .more .filter-grid {
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+        }
+        .card.filters {
+          padding: 14px;
+        }
+        .chips {
+          gap: 7px;
+        }
+        .chips button {
+          font-size: 11px;
+          padding: 9px;
+        }
+        .chips select {
+          margin-left: 0;
+          width: 100%;
+        }
+        .pagination {
+          font-size: 11px;
+        }
+        .drawer {
+          width: 100%;
+          padding: 20px;
+        }
+        .heading {
+          gap: 7px;
+        }
+        .menu {
+          padding: 8px;
+        }
+        .heading-actions {
+          display: flex;
+          gap: 6px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <aside class="nav" id="navigation" aria-label="Admin navigation">
+      <div class="brand">
+        <span class="logo">📚</span>
+        <div><strong>Amolbooks</strong><small>Order Management</small></div>
+      </div>
+      <nav>
+        <div class="nav-label">SALES</div>
+        <a href="https://adminsub.amolbooks.com/dashboard"
+          >☷ &nbsp; Orders (Angular)</a
+        ><a href="custom-orders.html">☷ &nbsp; Amolbooks Orders</a
+        ><a href="custom-orders.html?view=incomplete"
+          >◷ &nbsp; Incomplete Order</a
+        ><a href="import-woo-orders.html" data-admin-only
+          >⇥ &nbsp; Import WooCommerce</a
+        ><a class="active" href="customer-manager.html" aria-current="page"
+          >♧ &nbsp; Customer Manager</a
+        >
+        <div class="nav-label">INVENTORY</div>
+        <a href="custom-orders.html?view=stock">▣ &nbsp; Stock Management</a>
+        <div class="nav-label" data-admin-only>ANALYTICS</div>
+        <a href="profit-dashboard.html" data-admin-only
+          >↗ &nbsp; Profit Dashboard</a
+        >
+      </nav>
+      <footer><a href="custom-orders.html">← &nbsp; Back to Orders</a></footer>
+    </aside>
+    <div class="workspace" id="workspace">
+      <main>
+        <header class="heading">
+          <div>
+            <h1>Customer Manager</h1>
+            <p class="muted">Turn previous buyers into repeat customers</p>
+          </div>
+          <div class="heading-actions">
+            <button class="menu" id="menu" aria-label="Toggle navigation">
+              ☰</button
+            ><button class="logout" id="logout">Sign out</button>
+          </div>
+        </header>
+        <div class="stats">
+          <div class="card stat">
+            <span class="stat-icon">♧</span>
+            <div>
+              <small>Delivered customers</small
+              ><strong id="stat-customers">—</strong>
+            </div>
+          </div>
+          <div class="card stat">
+            <span class="stat-icon">♧</span>
+            <div>
+              <small>Never contacted</small><strong id="stat-never">—</strong>
+            </div>
+          </div>
+          <div class="card stat">
+            <span class="stat-icon">▦</span>
+            <div>
+              <small>Follow-ups due</small><strong id="stat-due">—</strong>
+            </div>
+          </div>
+        </div>
+        <form class="card filters" id="filters">
+          <label for="search">Search customers</label
+          ><input
+            id="search"
+            name="q"
+            placeholder="Customer name or phone number…"
+            autocomplete="off"
+          />
+          <div class="filter-grid">
+            <div>
+              <label for="product">Purchased book / package</label
+              ><input
+                id="product"
+                name="product"
+                placeholder="Any book or package"
+              />
+            </div>
+            <div>
+              <label for="category">Product category</label
+              ><input
+                id="category"
+                name="category"
+                placeholder="Any category"
+              />
+            </div>
+            <div>
+              <label for="days">Last purchase</label
+              ><select id="days" name="days">
+                <option value="">Any time</option>
+                <option value="30">Over 30 days ago</option>
+                <option value="60">Over 60 days ago</option>
+                <option value="90">Over 90 days ago</option>
+              </select>
+            </div>
+            <div>
+              <label for="status">Contact status</label
+              ><select id="status" name="status">
+                <option value="">All contactable customers</option>
+                <option value="never">Never contacted</option>
+                <option value="due">Follow-up due</option>
+                <option value="interested">Interested</option>
+                <option value="no_answer">No answer</option>
+                <option value="follow_up">Follow up later</option>
+                <option value="ordered">Ordered</option>
+                <option value="dont_contact">Don't contact</option>
+              </select>
+            </div>
+          </div>
+          <details class="more">
+            <summary>Spending &amp; purchase frequency</summary>
+            <div class="filter-grid">
+              <div>
+                <label for="minSpent">Total spent from (৳)</label
+                ><input
+                  id="minSpent"
+                  name="minSpent"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label for="maxSpent">Total spent up to (৳)</label
+                ><input
+                  id="maxSpent"
+                  name="maxSpent"
+                  type="number"
+                  min="0"
+                  placeholder="Any amount"
+                />
+              </div>
+              <div>
+                <label for="minOrderValue">Any order worth at least (৳)</label
+                ><input
+                  id="minOrderValue"
+                  name="minOrderValue"
+                  type="number"
+                  min="0"
+                  placeholder="Any order value"
+                />
+              </div>
+              <div>
+                <label for="frequency">Purchase frequency</label
+                ><select id="frequency" name="frequency">
+                  <option value="">All buyers</option>
+                  <option value="once">One-time buyers</option>
+                  <option value="repeat">Repeat buyers</option>
+                </select>
+              </div>
+            </div>
+          </details>
+          <div style="display: flex; gap: 8px; margin-top: 14px">
+            <button class="primary" type="submit">Apply filters</button
+            ><button type="button" id="reset-filters">Reset</button>
+          </div>
+        </form>
+        <div class="chips">
+          <button data-status="" class="active">All customers</button
+          ><button data-status="never">Never contacted</button
+          ><button data-status="due">Follow-up due</button
+          ><select id="sort" aria-label="Sort customers">
+            <option value="recent">Latest purchase first</option>
+            <option value="spent">Highest spending first</option>
+          </select>
+        </div>
+        <p id="notice" class="notice" role="status" aria-live="polite"></p>
+        <section class="card table-card">
+          <div class="table-title">
+            <h2 id="list-title">Customers</h2>
+            <p class="muted">
+              Based on delivered orders · One row per phone number
+            </p>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>CUSTOMER</th>
+                  <th>ORDERS / SPENT</th>
+                  <th>LAST PURCHASE</th>
+                  <th>CONTACT STATUS</th>
+                  <th>ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody id="rows">
+                <tr>
+                  <td colspan="5" class="empty">Loading customers…</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <span id="range">—</span>
+            <div class="pager">
+              <button id="previous" aria-label="Previous page">‹</button
+              ><span id="page">1</span
+              ><button id="next" aria-label="Next page">›</button>
+            </div>
+          </div>
+        </section>
+        <p class="footnote">
+          Cancelled, returned, refunded and partial deliveries are excluded.
+          Category filters use saved order categories, with current catalog
+          categories as a fallback. Invalid phone numbers are excluded.
+        </p>
+      </main>
+      <section class="drawer" id="drawer" aria-label="Customer details" hidden>
+        <div class="drawer-head">
+          <div>
+            <h2 id="customer-name"></h2>
+            <p class="muted" id="customer-phone"></p>
+          </div>
+          <button class="close" id="close" aria-label="Close customer details">
+            ×
+          </button>
+        </div>
+        <div class="contact-actions" id="contact-actions"></div>
+        <div class="mini-stats">
+          <div>
+            <small>Delivered orders</small
+            ><strong id="customer-orders"></strong>
+          </div>
+          <div>
+            <small>Total spent</small><strong id="customer-spent"></strong>
+          </div>
+        </div>
+        <div class="tabs" role="tablist">
+          <button role="tab" data-tab="history" aria-selected="false">
+            History</button
+          ><button
+            role="tab"
+            data-tab="contact"
+            class="active"
+            aria-selected="true"
+          >
+            Contact</button
+          ><button role="tab" data-tab="followup" aria-selected="false">
+            Follow-up
+          </button>
+        </div>
+        <div id="tab-history" role="tabpanel" hidden>
+          <h3>Delivered order history</h3>
+          <div id="orders"></div>
+          <h3 class="section">Contact history</h3>
+          <div id="history"></div>
+          <p class="footnote">
+            Showing the latest 50 orders and contact entries.
+          </p>
+        </div>
+        <div id="tab-contact" role="tabpanel">
+          <h3>Recent purchases</h3>
+          <div id="purchases"></div>
+          <div class="section">
+            <label for="template">Message template</label
+            ><select id="template">
+              <option value="related">Related book recommendation</option>
+              <option value="arrival">New arrival</option>
+              <option value="offer">Repeat-customer offer</option></select
+            ><label for="message" style="margin-top: 12px"
+              >Review and personalize your message</label
+            ><textarea
+              id="message"
+              rows="6"
+              maxlength="4000"
+              lang="bn"
+            ></textarea
+            ><a
+              class="action whatsapp"
+              id="open-whatsapp"
+              target="_blank"
+              rel="noopener noreferrer"
+              style="display: block; text-align: center; margin-top: 12px"
+              >Open in WhatsApp</a
+            ><button class="wide" id="copy" type="button">Copy message</button>
+            <p class="footnote">
+              Review before sending. Opening WhatsApp does not send or log a
+              message.
+            </p>
+          </div>
+        </div>
+        <div id="tab-followup" role="tabpanel" hidden>
+          <h3>Next follow-up</h3>
+          <p class="muted" id="followup-summary"></p>
+        </div>
+        <form class="section log-form" id="contact-form">
+          <h3>Log this contact</h3>
+          <div class="form-grid">
+            <div>
+              <label for="outcome">Outcome</label
+              ><select id="outcome" required>
+                <option value="interested">Interested</option>
+                <option value="no_answer">No answer</option>
+                <option value="follow_up">Follow up later</option>
+                <option value="ordered">Ordered</option>
+                <option value="dont_contact">Don't contact</option>
+              </select>
+            </div>
+            <div>
+              <label for="channel">Channel</label
+              ><select id="channel">
+                <option value="call">Call</option>
+                <option value="whatsapp">WhatsApp</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+          <label for="note">Notes</label
+          ><textarea
+            id="note"
+            rows="2"
+            maxlength="2000"
+            placeholder="What did the customer say?"
+          ></textarea
+          ><label for="followup" style="margin-top: 12px"
+            >Next follow-up (optional)</label
+          ><input id="followup" type="date" /><button
+            class="wide primary"
+            id="save"
+            type="submit"
+          >
+            Save contact &amp; follow-up
+          </button>
+          <p
+            class="form-status"
+            id="save-status"
+            role="status"
+            aria-live="polite"
+          ></p>
+          <p class="footnote" id="last-contact"></p>
+        </form>
+      </section>
+    </div>
+    <div class="login" id="login" hidden>
+      <form id="login-form">
+        <h2>Amolbooks Customer Manager</h2>
+        <p class="muted">Sign in with your admin or Sales Man account.</p>
+        <label for="username">Username</label
+        ><input id="username" autocomplete="username" required /><label
+          for="password"
+          >Password</label
+        ><input
+          id="password"
+          type="password"
+          autocomplete="current-password"
+          required
+        /><button id="login-button" class="primary">Sign in</button>
+        <p id="login-status" class="form-status" role="status"></p>
+      </form>
+    </div>
+    <script>
+      (function () {
+        'use strict';
+        // Same-origin on local previews; production uses the current API environment.
+        const API_BASE = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(
+          location.hostname
+        )
+          ? location.origin
+          : 'https://apisub.amolbooks.com';
+        const $ = (id) => document.getElementById(id),
+          esc = (v) =>
+            String(v == null ? '' : v).replace(
+              /[&<>"']/g,
+              (c) =>
+                ({
+                  '&': '&amp;',
+                  '<': '&lt;',
+                  '>': '&gt;',
+                  '"': '&quot;',
+                  "'": '&#39;',
+                }[c])
+            );
+        const money = (v) => '৳' + Number(v || 0).toLocaleString('en-BD'),
+          date = (v) =>
+            v
+              ? new Date(
+                  v.length === 10 ? v + 'T12:00:00+06:00' : v
+                ).toLocaleDateString('en-GB', {
+                  timeZone: 'Asia/Dhaka',
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })
+              : '—';
+        const today = () =>
+          new Date(Date.now() + 21600000).toISOString().slice(0, 10);
+        const labels = {
+          interested: 'Interested',
+          no_answer: 'No answer',
+          follow_up: 'Follow up later',
+          ordered: 'Ordered',
+          dont_contact: "Don't contact",
+          never: 'Never contacted',
+          due: 'Follow-up due',
+        };
+        let page = 1,
+          listData = null,
+          selected = null,
+          listController = null,
+          detailController = null,
+          saving = false;
+        function token() {
+          return localStorage.getItem('co_admin_token') || '';
+        }
+        function roleMode() {
+          let role = '';
+          try {
+            role = JSON.parse(
+              atob(token().split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))
+            ).role;
+          } catch (_) {}
+          document
+            .querySelectorAll('[data-admin-only]')
+            .forEach((el) => (el.hidden = role === 'salesman'));
+        }
+        async function request(path, options = {}) {
+          const response = await fetch(API_BASE + path, {
+            ...options,
+            headers: {
+              'Content-Type': 'application/json',
+              administrator: token(),
+              ...(options.headers || {}),
+            },
+          });
+          let payload;
+          try {
+            payload = await response.json();
+          } catch (_) {
+            throw new Error(
+              'The server did not return customer data. Please try again.'
+            );
+          }
+          if (!response.ok || payload.success === false) {
+            if (response.status === 401) {
+              $('login').hidden = false;
+              $('login-status').textContent =
+                payload.message || 'Please sign in again.';
+            }
+            throw new Error(payload.message || 'Request failed');
+          }
+          return payload.data || payload;
+        }
+        function status(contact) {
+          if (!contact) return 'never';
+          if (contact.outcome === 'dont_contact') return 'dont_contact';
+          return contact.nextFollowUp && contact.nextFollowUp <= today()
+            ? 'due'
+            : contact.outcome;
+        }
+        function badge(contact) {
+          const value = status(contact);
+          return (
+            '<span class="badge ' +
+            value +
+            '">' +
+            esc(labels[value] || value) +
+            '</span>'
+          );
+        }
+        function phoneLink(phone) {
+          return '880' + phone.slice(1);
+        }
+        function closeDrawer() {
+          $('drawer').hidden = true;
+          $('workspace').classList.remove('has-detail');
+          if (detailController) detailController.abort();
+          selected = null;
+          renderRows();
+        }
+        function renderRows() {
+          if (!listData) return;
+          $('rows').innerHTML = listData.rows.length
+            ? listData.rows
+                .map(
+                  (c) =>
+                    '<tr class="' +
+                    (selected && selected.phone === c.phone ? 'selected' : '') +
+                    '"><td><button class="customer-button" data-phone="' +
+                    esc(c.phone) +
+                    '">' +
+                    esc(c.name) +
+                    '<small>' +
+                    esc(c.phone) +
+                    '</small></button></td><td><strong>' +
+                    c.orderCount +
+                    ' ' +
+                    (c.orderCount === 1 ? 'order' : 'orders') +
+                    '</strong><small>' +
+                    money(c.totalSpent) +
+                    '</small></td><td>' +
+                    date(c.lastPurchase) +
+                    '</td><td>' +
+                    badge(c.latestContact) +
+                    '</td><td><div class="row-actions">' +
+                    (status(c.latestContact) === 'dont_contact'
+                      ? '<small>Contact disabled</small>'
+                      : '<a class="action" aria-label="Call ' +
+                        esc(c.name) +
+                        '" href="tel:' +
+                        esc(c.phone) +
+                        '">Call</a><a class="action whatsapp" aria-label="WhatsApp ' +
+                        esc(c.name) +
+                        '" href="https://wa.me/' +
+                        phoneLink(c.phone) +
+                        '" target="_blank" rel="noopener noreferrer">WhatsApp</a>') +
+                    '</div></td></tr>'
+                )
+                .join('')
+            : '<tr><td colspan="5" class="empty">No customers match these filters.</td></tr>';
+        }
+        async function load() {
+          if (listController) listController.abort();
+          listController = new AbortController();
+          const controller = listController;
+          const params = new URLSearchParams(new FormData($('filters')));
+          params.set('page', page);
+          params.set('sort', $('sort').value);
+          $('notice').textContent = 'Loading customers…';
+          $('previous').disabled = $('next').disabled = true;
+          try {
+            const data = await request('/api/customer-manager?' + params, {
+              signal: controller.signal,
+            });
+            listData = data;
+            page = data.page;
+            renderRows();
+            ['customers', 'never', 'due'].forEach(
+              (k) =>
+                ($('stat-' + k).textContent = Number(
+                  data.summary[k] || 0
+                ).toLocaleString())
+            );
+            $('list-title').textContent =
+              data.total.toLocaleString() +
+              (data.total === 1 ? ' customer' : ' customers');
+            $('range').textContent = data.total
+              ? 'Showing ' +
+                ((page - 1) * 20 + 1) +
+                '–' +
+                Math.min(page * 20, data.total) +
+                ' of ' +
+                data.total
+              : '0 customers';
+            $('page').textContent = page;
+            $('previous').disabled = page <= 1;
+            $('next').disabled = page * 20 >= data.total;
+            $('notice').textContent = '';
+            document
+              .querySelectorAll('[data-status]')
+              .forEach((el) =>
+                el.classList.toggle(
+                  'active',
+                  el.dataset.status === $('status').value
+                )
+              );
+          } catch (error) {
+            if (error.name === 'AbortError') return;
+            $('notice').textContent = error.message;
+            $('rows').innerHTML =
+              '<tr><td colspan="5" class="empty">Unable to load customers. Apply filters to retry.</td></tr>';
+          }
+        }
+        function switchTab(value) {
+          ['history', 'contact', 'followup'].forEach(
+            (t) => ($('tab-' + t).hidden = t !== value)
+          );
+          document.querySelectorAll('[data-tab]').forEach((el) => {
+            el.classList.toggle('active', el.dataset.tab === value);
+            el.setAttribute('aria-selected', String(el.dataset.tab === value));
+          });
+        }
+        function updateMessage() {
+          if (!selected) return;
+          const name = selected.name || '';
+          const templates = {
+            related:
+              'আসসালামু আলাইকুম ' +
+              name +
+              '। আপনি আগে আমলবুকস থেকে বই নিয়েছিলেন। আপনার পছন্দের বিষয়ের আরও কিছু বই এসেছে। আপনি আগ্রহী হলে বইয়ের বিস্তারিত পাঠাতে পারি।\nhttps://amolbooks.com',
+            arrival:
+              'আসসালামু আলাইকুম ' +
+              name +
+              '। আমলবুকসে নতুন কিছু বই এসেছে। আপনার পছন্দের বিষয় জানালে কয়েকটি বই সাজেস্ট করতে পারি।\nhttps://amolbooks.com',
+            offer:
+              'আসসালামু আলাইকুম ' +
+              name +
+              '। আমাদের পূর্বের পাঠকদের জন্য কিছু বইয়ের অফার আছে। আপনি চাইলে বর্তমান অফারের বিস্তারিত পাঠাতে পারি।\nhttps://amolbooks.com',
+          };
+          $('message').value = templates[$('template').value];
+          updateWhatsApp();
+        }
+        function updateWhatsApp() {
+          if (!selected) return;
+          $('open-whatsapp').href =
+            'https://wa.me/' +
+            phoneLink(selected.phone) +
+            '?text=' +
+            encodeURIComponent($('message').value);
+        }
+        function renderDetail(data, preserveMessage) {
+          selected = data;
+          const contact = data.history[0],
+            blocked = contact && contact.outcome === 'dont_contact';
+          $('drawer').hidden = false;
+          $('workspace').classList.add('has-detail');
+          $('customer-name').textContent = data.name;
+          $('customer-phone').textContent = data.phone;
+          $('customer-orders').textContent = data.orderCount;
+          $('customer-spent').textContent = money(data.totalSpent);
+          $('contact-actions').innerHTML = blocked
+            ? '<p class="notice">This customer requested no contact.</p>'
+            : '<a class="action pale" href="tel:' +
+              data.phone +
+              '">Call</a><a class="action whatsapp" href="https://wa.me/' +
+              phoneLink(data.phone) +
+              '" target="_blank" rel="noopener noreferrer">WhatsApp</a>';
+          $('open-whatsapp').hidden = blocked;
+          $('copy').hidden = blocked;
+          $('purchases').innerHTML = data.orders
+            .slice(0, 2)
+            .map(
+              (o) =>
+                '<div class="purchase">' +
+                esc(
+                  (o.orderedItems || []).map((i) => i.name || 'Book').join(', ')
+                ) +
+                '<small>' +
+                date(o.createdAt) +
+                ' · ' +
+                money(o.grandTotal) +
+                '</small></div>'
+            )
+            .join('');
+          $('orders').innerHTML = data.orders
+            .map(
+              (o) =>
+                '<div class="purchase"><strong>Order #' +
+                esc(o.orderId) +
+                ' · ' +
+                money(o.grandTotal) +
+                '</strong><p style="margin-top:6px">' +
+                esc(
+                  (o.orderedItems || []).map((i) => i.name || 'Book').join(', ')
+                ) +
+                '</p><small>' +
+                date(o.createdAt) +
+                '</small></div>'
+            )
+            .join('');
+          $('history').innerHTML = data.history.length
+            ? data.history
+                .map(
+                  (c) =>
+                    '<div class="history-entry">' +
+                    '<span class="badge ' +
+                    esc(c.outcome) +
+                    '">' +
+                    esc(labels[c.outcome] || c.outcome) +
+                    '</span><p style="margin-top:8px;white-space:pre-wrap">' +
+                    esc(c.note) +
+                    '</p><small>' +
+                    esc(c.channel) +
+                    ' · ' +
+                    esc(c.contactedByName || 'Staff') +
+                    ' · ' +
+                    date(c.createdAt) +
+                    '</small>' +
+                    (c.nextFollowUp
+                      ? '<small>Follow-up: ' + date(c.nextFollowUp) + '</small>'
+                      : '') +
+                    '</div>'
+                )
+                .join('')
+            : '<p class="muted section">No contacts logged yet.</p>';
+          $('followup-summary').textContent = blocked
+            ? 'Do not contact this customer.'
+            : contact && contact.nextFollowUp
+            ? 'Scheduled for ' + date(contact.nextFollowUp)
+            : 'No follow-up scheduled. Set a date below.';
+          $('last-contact').textContent = contact
+            ? 'Last contacted: ' +
+              date(contact.createdAt) +
+              ' · ' +
+              (labels[contact.outcome] || contact.outcome)
+            : 'Never contacted';
+          $('followup').value = (contact && contact.nextFollowUp) || '';
+          $('note').value = '';
+          $('outcome').value = blocked ? 'dont_contact' : 'interested';
+          $('followup').disabled = blocked;
+          if (!preserveMessage) {
+            $('template').value = 'related';
+            updateMessage();
+            $('save-status').textContent = '';
+          }
+          renderRows();
+        }
+        async function openCustomer(phone) {
+          if (saving) return;
+          if (detailController) detailController.abort();
+          detailController = new AbortController();
+          const controller = detailController;
+          $('notice').textContent = 'Loading customer history…';
+          try {
+            const data = await request(
+              '/api/customer-manager/' + encodeURIComponent(phone),
+              { signal: controller.signal }
+            );
+            renderDetail(data, false);
+            switchTab('contact');
+            $('notice').textContent = '';
+            $('close').focus();
+          } catch (error) {
+            if (error.name !== 'AbortError')
+              $('notice').textContent = error.message;
+          }
+        }
+        $('filters').addEventListener('submit', (event) => {
+          event.preventDefault();
+          page = 1;
+          load();
+        });
+        $('reset-filters').onclick = () => {
+          $('filters').reset();
+          $('sort').value = 'recent';
+          page = 1;
+          load();
+        };
+        document.querySelectorAll('[data-status]').forEach(
+          (el) =>
+            (el.onclick = () => {
+              $('status').value = el.dataset.status;
+              page = 1;
+              load();
+            })
+        );
+        $('sort').onchange = () => {
+          page = 1;
+          load();
+        };
+        $('previous').onclick = () => {
+          page--;
+          load();
+        };
+        $('next').onclick = () => {
+          page++;
+          load();
+        };
+        $('rows').onclick = (event) => {
+          const button = event.target.closest('[data-phone]');
+          if (button) openCustomer(button.dataset.phone);
+        };
+        $('close').onclick = () => {
+          if (!saving) closeDrawer();
+        };
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && !saving) {
+            closeDrawer();
+            $('navigation').classList.remove('open');
+          }
+        });
+        document
+          .querySelectorAll('[data-tab]')
+          .forEach((el) => (el.onclick = () => switchTab(el.dataset.tab)));
+        $('template').onchange = updateMessage;
+        $('message').oninput = updateWhatsApp;
+        $('open-whatsapp').onclick = () => {
+          $('channel').value = 'whatsapp';
+        };
+        $('copy').onclick = async () => {
+          try {
+            await navigator.clipboard.writeText($('message').value);
+            $('copy').textContent = 'Copied';
+            setTimeout(() => ($('copy').textContent = 'Copy message'), 1600);
+          } catch (_) {
+            $('message').focus();
+            $('message').select();
+            $('save-status').textContent =
+              'Select and copy the message manually.';
+          }
+        };
+        $('outcome').onchange = () => {
+          $('followup').disabled = $('outcome').value === 'dont_contact';
+          if ($('followup').disabled) $('followup').value = '';
+        };
+        $('contact-form').onsubmit = async (event) => {
+          event.preventDefault();
+          if (!selected || saving) return;
+          const phone = selected.phone;
+          const body = {
+            outcome: $('outcome').value,
+            channel: $('channel').value,
+            note: $('note').value,
+            nextFollowUp: $('followup').value,
+          };
+          saving = true;
+          $('logout').disabled = true;
+          $('save').disabled = true;
+          $('close').disabled = true;
+          $('save-status').className = 'form-status';
+          $('save-status').textContent = 'Saving…';
+          try {
+            await request('/api/customer-manager/' + phone + '/contacts', {
+              method: 'POST',
+              body: JSON.stringify(body),
+            });
+            $('save-status').textContent = 'Contact saved. Refreshing history…';
+            try {
+              const data = await request('/api/customer-manager/' + phone);
+              renderDetail(data, true);
+              $('save-status').className = 'form-status success';
+              $('save-status').textContent = 'Contact saved.';
+            } catch (refreshError) {
+              $('save-status').textContent =
+                'Contact saved. Reopen this customer to refresh history.';
+            }
+            await load();
+          } catch (error) {
+            $('save-status').className = 'form-status error';
+            $('save-status').textContent = error.message;
+          } finally {
+            saving = false;
+            $('logout').disabled = false;
+            $('save').disabled = false;
+            $('close').disabled = false;
+          }
+        };
+        $('menu').onclick = () => $('navigation').classList.toggle('open');
+        $('logout').onclick = () => {
+          if (saving) return;
+          if (listController) listController.abort();
+          if (detailController) detailController.abort();
+          localStorage.removeItem('co_admin_token');
+          localStorage.removeItem('profit_admin_token');
+          closeDrawer();
+          listData = null;
+          $('rows').innerHTML =
+            '<tr><td colspan="5" class="empty">Sign in to view customers.</td></tr>';
+          ['customers', 'never', 'due'].forEach(
+            (k) => ($('stat-' + k).textContent = '—')
+          );
+          $('login').hidden = false;
+        };
+        $('login-form').onsubmit = async (event) => {
+          event.preventDefault();
+          $('login-button').disabled = true;
+          $('login-status').textContent = 'Signing in…';
+          try {
+            const response = await fetch(API_BASE + '/api/admin/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                username: $('username').value,
+                password: $('password').value,
+              }),
+            });
+            const payload = await response.json();
+            const value =
+              payload.token ||
+              (payload.data &&
+                (payload.data.token || payload.data.accessToken));
+            if (!response.ok || !value)
+              throw new Error(payload.message || 'Sign in failed');
+            localStorage.setItem('co_admin_token', value);
+            $('password').value = '';
+            $('login').hidden = true;
+            roleMode();
+            page = 1;
+            await load();
+          } catch (error) {
+            $('login-status').textContent = error.message;
+          } finally {
+            $('login-button').disabled = false;
+          }
+        };
+        roleMode();
+        if (token()) load();
+        else $('login').hidden = false;
+      })();
+    </script>
+  </body>
+</html>

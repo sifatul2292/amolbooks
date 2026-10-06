@@ -1,5 +1,15 @@
 # CURRENT_WORK
 
+## Customer Manager (2026-10-06)
+
+- Added the purple Customer Manager design as a tracked custom page at `gtm-snippets/customer-manager.html`, served at `/upload/static/customer-manager.html`; the existing order sidebar receives its link at response time. Runtime uploads and compiled admin/storefront files are not edited.
+- Added a focused NestJS module with protected, paginated customer summaries, delivered order history and persistent contact logs. Super Admin, Admin and Sales Man can read and save; unauthenticated users and unrelated roles are denied. Staff identity comes from the verified JWT.
+- Groups Bangladesh phone variants (including Bengali digits and international prefixes) into one customer; excludes invalid phones, pending/cancelled/refunded/returned/partial deliveries. Filters include books/packages, category snapshots with current-catalog fallback, total spending, individual order value, purchase age, frequency and contact status.
+- Provides Call/WhatsApp actions, editable Bengali templates, outcome/channel/notes and optional follow-up dates in Asia/Dhaka. Opening WhatsApp does not send or log automatically. Don't-contact customers are excluded from outreach lists and their contact actions are disabled.
+- Page uses existing `co_admin_token` login and production API base `https://apisub.amolbooks.com`; localhost uses its own origin. No external messages were sent.
+- Validation: API build and isolated MongoDB/HTTP checks pass for grouping, delivered-only totals, filters, pagination, contact persistence, input validation, opt-out, authenticated staff attribution and allowed/denied roles. Browser checks cover Sales Man visibility, safe text rendering, contact save/history, filter/reset interactions, and 320/390/768/1024/1440px layouts without document overflow. Lint remains blocked by the existing all-files-ignored ESLint configuration.
+- Deployment pending: use `scripts/vps-safe-pull.sh`, rebuild the API and restart its process. The page source stays outside `api/upload`, so the safe pull includes it. No new dependency or data migration is required.
+
 ## Native-parity production product fallback (2026-09-30)
 
 - Confirmed the requested first screenshot is the successful native Angular product card; reverting the recent fallback would only restore the incomplete two-green-button production state.
