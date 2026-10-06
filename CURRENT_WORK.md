@@ -1,5 +1,9 @@
 # CURRENT_WORK
 
+## Customer Manager seven-day filter (2026-10-06)
+
+- Added “Over 7 days ago” to Last purchase, using the existing server-side days filter. Production API base remains `https://apisub.amolbooks.com`. API build, served-page verification and whitespace checks pass; lint remains blocked by the existing all-files-ignored configuration.
+
 ## Customer Manager repeat orders and follow-up totals (2026-10-06)
 
 - Added customer address/city to the customer list and details drawer, taken from the latest delivered order, plus a Create Order dialog prefilled with name, normalized phone, email, address, city, payment type and previous delivery charge. Staff can review/edit delivery details, search the real catalog, add products and quantities, and create the order without re-entering customer information.
