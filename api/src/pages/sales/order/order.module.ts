@@ -36,5 +36,6 @@ import { StockMovementSchema } from '../../../schema/stock-movement.schema';
   ],
   controllers: [OrderController],
   providers: [OrderService],
+  exports: [OrderService],
 })
 export class OrderModule {}

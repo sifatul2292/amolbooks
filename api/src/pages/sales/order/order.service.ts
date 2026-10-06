@@ -425,6 +425,7 @@ export class OrderService {
   async addAiAssistOrderAdmin(
     admin: Admin,
     addOrderDto: AddOrderDto,
+    manualOrderSource: 'phone' | 'whatsapp' = 'whatsapp',
   ): Promise<ResponsePayload> {
     if (!admin || !admin._id) {
       throw new BadRequestException('Admin authentication failed');
@@ -504,8 +505,8 @@ export class OrderService {
       grandTotal: saleTotal + deliveryCharge,
       paymentStatus: (addOrderDto as any).paymentStatus || 'unpaid',
       orderStatus: OrderStatus.PENDING,
-      manualOrderSource: 'whatsapp',
-      orderFrom: 'WhatsApp',
+      manualOrderSource,
+      orderFrom: this.manualOrderLabel(manualOrderSource),
     } as AddOrderDto;
 
     return this.addOrderAdmin(admin, manualOrderDto);

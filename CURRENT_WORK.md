@@ -1,5 +1,14 @@
 # CURRENT_WORK
 
+## Customer Manager repeat orders and follow-up totals (2026-10-06)
+
+- Added customer address/city to the customer list and details drawer, taken from the latest delivered order, plus a Create Order dialog prefilled with name, normalized phone, email, address, city, payment type and previous delivery charge. Staff can review/edit delivery details, search the real catalog, add products and quantities, and create the order without re-entering customer information.
+- Added protected Sales Man/Admin/Super Admin catalog-search and order-creation endpoints. The new flow reuses the existing catalog-priced manual-order service and normal Order collection, so created orders appear as unpaid/Pending in Amolbooks Orders with the existing stock, invoice and background processing. Phone/WhatsApp source is preserved; the existing AI flow keeps its WhatsApp default.
+- Server-side validation rejects missing addresses, empty/invalid items, quantities and delivery charges; client prices/status/customer phone cannot override the server values. Each draft has an idempotent request ID and locked submission controls to prevent duplicate orders on retries.
+- Added a clickable Customers followed up summary and Already followed up filter. Counts unique delivered customers with at least one saved contact log, including no-answer attempts and opted-out customers; repeated contact logs count once. Order creation does not automatically log a follow-up. Contact history remains explicit.
+- Verification: API build and isolated MongoDB/HTTP/browser checks pass, including Sales Man creation and denied roles, saved-address prefill, current catalog discounts, order persistence in the real schema, pending/unpaid status, stock and sales-counter changes only once on retry, follow-up counts, and dialog layouts at 320/390/768/1440px. Lint is still blocked by the existing all-files-ignored configuration. No real customer orders or external messages were created during testing.
+- Local dev server now runs from the authoritative Sunday rollback worktree on port 3000. Production API base remains `https://apisub.amolbooks.com`; localhost uses its own origin. Deployment requires a safe pull, API build and process restart.
+
 ## Customer Manager (2026-10-06)
 
 - Added the purple Customer Manager design as a tracked custom page at `gtm-snippets/customer-manager.html`, served at `/upload/static/customer-manager.html`; the existing order sidebar receives its link at response time. Runtime uploads and compiled admin/storefront files are not edited.

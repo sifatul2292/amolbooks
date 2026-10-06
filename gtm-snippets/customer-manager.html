@@ -186,7 +186,7 @@
       }
       .stats {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr);
         gap: 12px;
         margin-bottom: 18px;
       }
@@ -649,6 +649,170 @@
           gap: 6px;
         }
       }
+      .stat-button {
+        text-align: left;
+        width: 100%;
+        font: inherit;
+        cursor: pointer;
+      }
+      .customer-address {
+        max-width: 230px;
+        white-space: normal;
+        font-weight: 400;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+      }
+      .address-card {
+        margin: 16px 0;
+        padding: 12px;
+        background: #fafafe;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        font-size: 13px;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+        white-space: pre-line;
+      }
+      .create-order-button {
+        width: 100%;
+        margin-bottom: 16px;
+      }
+      .order-dialog {
+        width: min(760px, calc(100% - 24px));
+        max-height: 92vh;
+        border: 0;
+        border-radius: 16px;
+        padding: 0;
+        color: inherit;
+        box-shadow: 0 24px 80px #14142666;
+      }
+      .order-dialog::backdrop {
+        background: #14142699;
+      }
+      .order-header {
+        position: sticky;
+        top: 0;
+        background: #fff;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border);
+      }
+      .order-body {
+        padding: 24px;
+      }
+      .order-dialog input,
+      .order-dialog select,
+      .order-dialog textarea {
+        width: 100%;
+      }
+      .order-fields {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin: 16px 0;
+      }
+      .order-fields .full {
+        grid-column: 1/-1;
+      }
+      .product-search {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+      }
+      .product-results {
+        margin-top: 10px;
+        max-height: 210px;
+        overflow: auto;
+      }
+      .product-result {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        width: 100%;
+        text-align: left;
+        margin-bottom: 6px;
+      }
+      .product-result span {
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+      .product-result strong {
+        white-space: nowrap;
+      }
+      .order-item {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 76px 85px 36px;
+        gap: 10px;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .order-item strong {
+        overflow-wrap: anywhere;
+      }
+      .order-item input {
+        padding: 8px;
+      }
+      .order-item button {
+        padding: 7px;
+      }
+      .order-totals {
+        display: flex;
+        justify-content: space-between;
+        gap: 15px;
+        padding: 18px 0;
+      }
+      .order-totals strong {
+        display: block;
+        margin-top: 5px;
+      }
+      .order-footer {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-top: 16px;
+      }
+      .order-footer button {
+        margin-left: auto;
+      }
+      .order-success {
+        padding: 14px;
+        border-radius: 10px;
+        background: #e7faee;
+        color: #16763b;
+        margin-top: 12px;
+      }
+      .order-success a {
+        text-decoration: underline;
+        display: block;
+        margin-top: 8px;
+      }
+      @media (max-width: 600px) {
+        .stats {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .order-body,
+        .order-header {
+          padding: 16px;
+        }
+        .order-fields {
+          grid-template-columns: 1fr;
+        }
+        .order-item {
+          grid-template-columns: minmax(0, 1fr) 64px 72px 30px;
+          font-size: 12px;
+          gap: 6px;
+        }
+        .order-footer {
+          align-items: flex-start;
+        }
+        .order-footer small {
+          max-width: 50%;
+        }
+      }
     </style>
   </head>
   <body>
@@ -705,6 +869,19 @@
               <small>Never contacted</small><strong id="stat-never">—</strong>
             </div>
           </div>
+          <button
+            class="card stat stat-button"
+            id="followed-up-card"
+            type="button"
+            aria-label="View customers followed up"
+          >
+            <span class="stat-icon">✓</span>
+            <div>
+              <small>Customers followed up</small
+              ><strong id="stat-followedUp">—</strong
+              ><small>Unique customers · contact logged</small>
+            </div>
+          </button>
           <div class="card stat">
             <span class="stat-icon">▦</span>
             <div>
@@ -751,6 +928,7 @@
               ><select id="status" name="status">
                 <option value="">All contactable customers</option>
                 <option value="never">Never contacted</option>
+                <option value="contacted">Already followed up</option>
                 <option value="due">Follow-up due</option>
                 <option value="interested">Interested</option>
                 <option value="no_answer">No answer</option>
@@ -810,6 +988,7 @@
         </form>
         <div class="chips">
           <button data-status="" class="active">All customers</button
+          ><button data-status="contacted">Already followed up</button
           ><button data-status="never">Never contacted</button
           ><button data-status="due">Follow-up due</button
           ><select id="sort" aria-label="Sort customers">
@@ -869,6 +1048,17 @@
           </button>
         </div>
         <div class="contact-actions" id="contact-actions"></div>
+        <div class="address-card">
+          <small>Customer address</small>
+          <div id="customer-address"></div>
+        </div>
+        <button
+          class="primary create-order-button"
+          id="create-order"
+          type="button"
+        >
+          ＋ Create Order
+        </button>
         <div class="mini-stats">
           <div>
             <small>Delivered orders</small
@@ -1001,6 +1191,131 @@
         <p id="login-status" class="form-status" role="status"></p>
       </form>
     </div>
+    <dialog
+      class="order-dialog"
+      id="order-dialog"
+      aria-labelledby="order-title"
+    >
+      <div class="order-header">
+        <div>
+          <h2 id="order-title">Create customer order</h2>
+          <p class="muted" style="margin-top: 5px">
+            Customer details are prefilled. Add products to continue.
+          </p>
+        </div>
+        <button
+          id="order-close"
+          class="close"
+          type="button"
+          aria-label="Close order form"
+        >
+          ×
+        </button>
+      </div>
+      <form id="order-form" class="order-body">
+        <div class="order-fields">
+          <div>
+            <label for="order-name">Customer name</label
+            ><input id="order-name" maxlength="200" required />
+          </div>
+          <div>
+            <label for="order-phone">Phone</label
+            ><input id="order-phone" readonly />
+          </div>
+          <div class="full">
+            <label for="order-address">Delivery address</label
+            ><textarea
+              id="order-address"
+              rows="2"
+              maxlength="2000"
+              required
+            ></textarea>
+          </div>
+          <div>
+            <label for="order-city">City / area</label
+            ><input id="order-city" maxlength="200" />
+          </div>
+          <div>
+            <label for="order-email">Email (optional)</label
+            ><input id="order-email" type="email" maxlength="200" />
+          </div>
+        </div>
+        <h3>Add products</h3>
+        <label for="order-search" style="margin-top: 12px"
+          >Search by book name or SKU</label
+        >
+        <div class="product-search">
+          <input
+            id="order-search"
+            placeholder="Type at least two characters…"
+            autocomplete="off"
+          /><button id="order-search-button" type="button">Search</button>
+        </div>
+        <div
+          id="order-search-results"
+          class="product-results"
+          aria-live="polite"
+        ></div>
+        <div id="order-items"><p class="empty">No products added yet.</p></div>
+        <div class="order-fields">
+          <div>
+            <label for="order-delivery">Delivery charge (৳)</label
+            ><input
+              id="order-delivery"
+              type="number"
+              min="0"
+              max="10000"
+              step="0.01"
+              required
+            /><small
+              >Copied from the last delivered order. Adjust if needed.</small
+            >
+          </div>
+          <div>
+            <label for="order-payment">Payment type</label
+            ><select id="order-payment">
+              <option value="cash_on_delivery">Cash on Delivery</option>
+              <option value="bkash">bKash</option>
+              <option value="nagad">Nagad</option>
+              <option value="card">Card</option>
+              <option value="online_payment">Online payment</option>
+            </select>
+          </div>
+          <div>
+            <label for="order-source">Order received through</label
+            ><select id="order-source">
+              <option value="phone">Phone call</option>
+              <option value="whatsapp">WhatsApp</option>
+            </select>
+          </div>
+        </div>
+        <div class="order-totals">
+          <div>
+            <small>Products</small><strong id="order-subtotal">৳0</strong>
+          </div>
+          <div>
+            <small>Delivery</small><strong id="order-delivery-total">৳0</strong>
+          </div>
+          <div>
+            <small>Estimated total</small><strong id="order-total">৳0</strong>
+          </div>
+        </div>
+        <div class="order-footer">
+          <small class="muted"
+            >Creates a new unpaid order in Amolbooks Orders.</small
+          ><button id="order-submit" class="primary" type="submit">
+            Create Order
+          </button>
+        </div>
+        <p
+          id="order-status"
+          class="form-status"
+          role="status"
+          aria-live="polite"
+        ></p>
+        <div id="order-success" class="order-success" hidden></div>
+      </form>
+    </dialog>
     <script>
       (function () {
         'use strict';
@@ -1085,6 +1400,7 @@
           }
           if (!response.ok || payload.success === false) {
             if (response.status === 401) {
+              if ($('order-dialog').open) $('order-dialog').close();
               $('login').hidden = false;
               $('login-status').textContent =
                 payload.message || 'Please sign in again.';
@@ -1134,7 +1450,12 @@
                     esc(c.name) +
                     '<small>' +
                     esc(c.phone) +
-                    '</small></button></td><td><strong>' +
+                    '</small></button><small class="customer-address">' +
+                    esc(
+                      [c.shippingAddress, c.city].filter(Boolean).join(', ') ||
+                        'Address unavailable'
+                    ) +
+                    '</small></td><td><strong>' +
                     c.orderCount +
                     ' ' +
                     (c.orderCount === 1 ? 'order' : 'orders') +
@@ -1177,7 +1498,7 @@
             listData = data;
             page = data.page;
             renderRows();
-            ['customers', 'never', 'due'].forEach(
+            ['customers', 'never', 'followedUp', 'due'].forEach(
               (k) =>
                 ($('stat-' + k).textContent = Number(
                   data.summary[k] || 0
@@ -1258,6 +1579,11 @@
           $('workspace').classList.add('has-detail');
           $('customer-name').textContent = data.name;
           $('customer-phone').textContent = data.phone;
+          $('customer-address').textContent =
+            [data.customerInfo.shippingAddress, data.customerInfo.city]
+              .filter(Boolean)
+              .join(', ') ||
+            'No saved address. Add it when creating the order.';
           $('customer-orders').textContent = data.orderCount;
           $('customer-spent').textContent = money(data.totalSpent);
           $('contact-actions').innerHTML = blocked
@@ -1406,7 +1732,7 @@
           if (!saving) closeDrawer();
         };
         document.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape' && !saving) {
+          if (e.key === 'Escape' && !saving && !$('order-dialog').open) {
             closeDrawer();
             $('navigation').classList.remove('open');
           }
@@ -1479,7 +1805,8 @@
         };
         $('menu').onclick = () => $('navigation').classList.toggle('open');
         $('logout').onclick = () => {
-          if (saving) return;
+          if (saving || creatingOrder) return;
+          if ($('order-dialog').open) $('order-dialog').close();
           if (listController) listController.abort();
           if (detailController) detailController.abort();
           localStorage.removeItem('co_admin_token');
@@ -1488,7 +1815,7 @@
           listData = null;
           $('rows').innerHTML =
             '<tr><td colspan="5" class="empty">Sign in to view customers.</td></tr>';
-          ['customers', 'never', 'due'].forEach(
+          ['customers', 'never', 'followedUp', 'due'].forEach(
             (k) => ($('stat-' + k).textContent = '—')
           );
           $('login').hidden = false;
@@ -1524,6 +1851,237 @@
           } finally {
             $('login-button').disabled = false;
           }
+        };
+        let orderItems = [],
+          orderProducts = [],
+          orderRequestId = '',
+          orderCustomer = null,
+          creatingOrder = false,
+          orderCreated = false,
+          productController = null;
+        function renderOrderItems() {
+          $('order-status').textContent = '';
+          $('order-items').innerHTML = orderItems.length
+            ? orderItems
+                .map(
+                  (item, index) =>
+                    '<div class="order-item"><strong>' +
+                    esc(item.name) +
+                    '<small style="display:block;margin-top:5px">' +
+                    money(item.price) +
+                    ' each</small></strong><input aria-label="Quantity for ' +
+                    esc(item.name) +
+                    '" type="number" min="1" max="100" step="1" data-order-qty="' +
+                    index +
+                    '" value="' +
+                    item.quantity +
+                    '"><span>' +
+                    money(item.price * item.quantity) +
+                    '</span><button type="button" aria-label="Remove ' +
+                    esc(item.name) +
+                    '" data-order-remove="' +
+                    index +
+                    '">×</button></div>'
+                )
+                .join('')
+            : '<p class="empty">No products added yet.</p>';
+          updateOrderTotals();
+        }
+        function updateOrderTotals() {
+          const subtotal = orderItems.reduce(
+            (sum, item) => sum + item.price * item.quantity,
+            0
+          );
+          const delivery = Number($('order-delivery').value) || 0;
+          $('order-subtotal').textContent = money(subtotal);
+          $('order-delivery-total').textContent = money(delivery);
+          $('order-total').textContent = money(subtotal + delivery);
+        }
+        function lockOrderForm(locked) {
+          $('order-form')
+            .querySelectorAll('input,select,textarea,button')
+            .forEach((el) => (el.disabled = locked));
+        }
+        function openOrder() {
+          if (!selected || saving || creatingOrder) return;
+          orderCustomer = selected;
+          orderItems = [];
+          orderProducts = [];
+          orderCreated = false;
+          lockOrderForm(false);
+          orderRequestId = 'crm-' + crypto.randomUUID();
+          const info = selected.customerInfo;
+          $('order-form').reset();
+          $('order-name').value = info.name || '';
+          $('order-phone').value = selected.phone;
+          $('order-address').value = info.shippingAddress || '';
+          $('order-city').value = info.city || '';
+          $('order-email').value = info.email || '';
+          $('order-delivery').value = info.deliveryCharge || 0;
+          $('order-payment').value = [
+            'cash_on_delivery',
+            'bkash',
+            'nagad',
+            'card',
+            'online_payment',
+          ].includes(info.paymentType)
+            ? info.paymentType
+            : 'cash_on_delivery';
+          $('order-source').value =
+            $('channel').value === 'whatsapp' ? 'whatsapp' : 'phone';
+          $('order-search-results').innerHTML = '';
+          $('order-status').textContent = '';
+          $('order-success').hidden = true;
+          $('order-submit').disabled = false;
+          renderOrderItems();
+          $('order-dialog').showModal();
+          $('order-search').focus();
+        }
+        async function searchOrderProducts() {
+          if (creatingOrder || orderCreated) return;
+          const query = $('order-search').value.trim();
+          if (productController) productController.abort();
+          if (query.length < 2) {
+            $('order-search-results').textContent =
+              'Enter at least two characters.';
+            return;
+          }
+          productController = new AbortController();
+          $('order-search-results').textContent = 'Searching…';
+          try {
+            orderProducts = await request(
+              '/api/customer-manager/products/search?q=' +
+                encodeURIComponent(query),
+              { signal: productController.signal }
+            );
+            $('order-search-results').innerHTML = orderProducts.length
+              ? orderProducts
+                  .map(
+                    (product, index) =>
+                      '<button class="product-result" type="button" data-order-add="' +
+                      index +
+                      '"><span>' +
+                      esc(product.name) +
+                      '</span><strong>' +
+                      money(product.price) +
+                      ' · Add</strong></button>'
+                  )
+                  .join('')
+              : 'No products found.';
+          } catch (error) {
+            if (error.name !== 'AbortError')
+              $('order-search-results').textContent = error.message;
+          }
+        }
+        $('create-order').onclick = openOrder;
+        $('order-close').onclick = () => {
+          if (!creatingOrder) {
+            if (productController) productController.abort();
+            $('order-dialog').close();
+          }
+        };
+        $('order-dialog').addEventListener('cancel', (event) => {
+          if (creatingOrder) event.preventDefault();
+          else if (productController) productController.abort();
+        });
+        $('order-search-button').onclick = searchOrderProducts;
+        $('order-search').addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            searchOrderProducts();
+          }
+        });
+        $('order-search-results').onclick = (event) => {
+          const button = event.target.closest('[data-order-add]');
+          if (!button || creatingOrder || orderCreated) return;
+          const product = orderProducts[Number(button.dataset.orderAdd)];
+          if (!product) return;
+          const existing = orderItems.find(
+            (item) => item.product === product._id
+          );
+          if (existing)
+            existing.quantity = Math.min(100, existing.quantity + 1);
+          else
+            orderItems.push({
+              product: product._id,
+              name: product.name,
+              price: product.price,
+              quantity: 1,
+            });
+          renderOrderItems();
+        };
+        $('order-items').addEventListener('change', (event) => {
+          const input = event.target.closest('[data-order-qty]');
+          if (!input || creatingOrder || orderCreated) return;
+          orderItems[Number(input.dataset.orderQty)].quantity = Math.max(
+            1,
+            Math.min(100, Math.floor(Number(input.value) || 1))
+          );
+          renderOrderItems();
+        });
+        $('order-items').onclick = (event) => {
+          const button = event.target.closest('[data-order-remove]');
+          if (button && !creatingOrder && !orderCreated) {
+            orderItems.splice(Number(button.dataset.orderRemove), 1);
+            renderOrderItems();
+          }
+        };
+        $('order-delivery').oninput = updateOrderTotals;
+        $('order-form').onsubmit = async (event) => {
+          event.preventDefault();
+          if (creatingOrder || orderCreated || !orderCustomer) return;
+          if (!orderItems.length) {
+            $('order-status').textContent = 'Add at least one product.';
+            return;
+          }
+          creatingOrder = true;
+          lockOrderForm(true);
+          $('order-submit').disabled = true;
+          $('order-close').disabled = true;
+          $('order-status').textContent = 'Creating order…';
+          $('order-status').className = 'form-status';
+          const body = {
+            name: $('order-name').value,
+            shippingAddress: $('order-address').value,
+            city: $('order-city').value,
+            email: $('order-email').value,
+            deliveryCharge: Number($('order-delivery').value),
+            paymentType: $('order-payment').value,
+            source: $('order-source').value,
+            requestId: orderRequestId,
+            items: orderItems.map((item) => ({
+              product: item.product,
+              quantity: item.quantity,
+            })),
+          };
+          try {
+            const result = await request(
+              '/api/customer-manager/' + orderCustomer.phone + '/orders',
+              { method: 'POST', body: JSON.stringify(body) }
+            );
+            orderCreated = true;
+            $('order-status').textContent = '';
+            $('order-success').hidden = false;
+            $('order-success').innerHTML =
+              '<strong>Order #' +
+              esc(result.orderId) +
+              ' created.</strong><a href="custom-orders.html" target="_blank" rel="noopener noreferrer">View Amolbooks Orders →</a>';
+            $('outcome').value = 'ordered';
+          } catch (error) {
+            $('order-status').className = 'form-status error';
+            $('order-status').textContent =
+              error.message +
+              ' If the request was interrupted, retry this order.';
+          } finally {
+            creatingOrder = false;
+            $('order-close').disabled = false;
+            lockOrderForm(orderCreated);
+          }
+        };
+        $('followed-up-card').onclick = () => {
+          $('status').value = 'contacted';
+          page = 1;
+          load();
         };
         roleMode();
         if (token()) load();

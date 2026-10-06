@@ -29,6 +29,20 @@ export class CustomerManagerController {
   }
 
   @Version(VERSION_NEUTRAL)
+  @Get('products/search')
+  @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN, AdminRoles.SALESMAN)
+  products(@Query('q') query: string) {
+    return this.service.searchProducts(query);
+  }
+
+  @Version(VERSION_NEUTRAL)
+  @Post(':phone/orders')
+  @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN, AdminRoles.SALESMAN)
+  order(@Param('phone') phone: string, @Body() body: any, @Req() request: any) {
+    return this.service.createOrder(phone, body, request.user || request.admin);
+  }
+
+  @Version(VERSION_NEUTRAL)
   @Get(':phone')
   @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN, AdminRoles.SALESMAN)
   detail(@Param('phone') phone: string) {

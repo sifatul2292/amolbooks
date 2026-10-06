@@ -4,7 +4,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
+import { OrderService } from '../sales/order/order.service';
+import { UtilsService } from '../../shared/utils/utils.service';
+import { AddOrderDto } from '../../dto/order.dto';
 import { OrderStatus } from '../../enum/order.enum';
 
 export const CONTACT_OUTCOMES = [
@@ -32,6 +35,8 @@ export class CustomerManagerService {
     @InjectModel('Order') private readonly orders: Model<any>,
     @InjectModel('CustomerContact') private readonly contacts: Model<any>,
     @InjectModel('Product') private readonly products: Model<any>,
+    private readonly orderService: OrderService,
+    private readonly utils: UtilsService,
   ) {}
 
   private base(): any[] {
@@ -118,6 +123,8 @@ export class CustomerManagerService {
         $project: {
           crmPhone: 1,
           name: 1,
+          shippingAddress: 1,
+          city: 1,
           createdAt: 1,
           grandTotal: 1,
           'orderedItems._id': 1,
@@ -130,6 +137,8 @@ export class CustomerManagerService {
         $group: {
           _id: '$crmPhone',
           name: { $first: '$name' },
+          shippingAddress: { $first: '$shippingAddress' },
+          city: { $first: '$city' },
           lastPurchase: { $first: '$createdAt' },
           orderCount: { $sum: 1 },
           totalSpent: { $sum: '$grandTotal' },
@@ -246,12 +255,14 @@ export class CustomerManagerService {
       'latestContact.outcome': { $ne: 'dont_contact' },
     };
     if (query.status === 'never') match['latestContact'] = { $exists: false };
+    else if (query.status === 'contacted')
+      match.latestContact = { $exists: true };
     else if (query.status === 'due') Object.assign(match, due);
     else if (CONTACT_OUTCOMES.includes(query.status))
       match['latestContact.outcome'] = query.status;
     else if (query.status)
       throw new BadRequestException('Invalid contact status');
-    if (query.status !== 'dont_contact')
+    if (!['dont_contact', 'contacted'].includes(query.status))
       match['latestContact.outcome'] = match['latestContact.outcome'] || {
         $ne: 'dont_contact',
       };
@@ -273,6 +284,11 @@ export class CustomerManagerService {
                 $group: {
                   _id: null,
                   customers: { $sum: 1 },
+                  followedUp: {
+                    $sum: {
+                      $cond: [{ $ifNull: ['$latestContact', false] }, 1, 0],
+                    },
+                  },
                   never: {
                     $sum: { $cond: [{ $not: ['$latestContact'] }, 1, 0] },
                   },
@@ -309,6 +325,8 @@ export class CustomerManagerService {
                   _id: 0,
                   phone: 1,
                   name: 1,
+                  shippingAddress: 1,
+                  city: 1,
                   orderCount: 1,
                   totalSpent: 1,
                   lastPurchase: 1,
@@ -328,7 +346,12 @@ export class CustomerManagerService {
         total: result[0].count[0]?.value || 0,
         page,
         pageSize: 20,
-        summary: result[0].summary[0] || { customers: 0, never: 0, due: 0 },
+        summary: result[0].summary[0] || {
+          customers: 0,
+          followedUp: 0,
+          never: 0,
+          due: 0,
+        },
       },
     };
   }
@@ -361,6 +384,14 @@ export class CustomerManagerService {
             name: 1,
             createdAt: 1,
             grandTotal: 1,
+            shippingAddress: 1,
+            city: 1,
+            email: 1,
+            division: 1,
+            area: 1,
+            zone: 1,
+            deliveryCharge: 1,
+            paymentType: 1,
             'orderedItems.name': 1,
             'orderedItems.quantity': 1,
             'orderedItems.category.name': 1,
@@ -378,12 +409,128 @@ export class CustomerManagerService {
       data: {
         phone,
         name: orders[0].name,
+        customerInfo: {
+          name: orders[0].name,
+          phoneNo: phone,
+          email: orders[0].email || '',
+          shippingAddress: orders[0].shippingAddress || '',
+          city: orders[0].city || '',
+          division: orders[0].division,
+          area: orders[0].area,
+          zone: orders[0].zone,
+          deliveryCharge: orders[0].deliveryCharge || 0,
+          paymentType: orders[0].paymentType || 'cash_on_delivery',
+        },
         orderCount: customer[0].orderCount,
         totalSpent: customer[0].totalSpent,
         orders,
         history,
       },
     };
+  }
+
+  async searchProducts(query: string) {
+    const term = String(query || '')
+      .trim()
+      .slice(0, 120);
+    if (term.length < 2) return { success: true, data: [] };
+    const regex = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    const products = await this.products
+      .find({ $or: [{ name: regex }, { nameEn: regex }, { sku: regex }] })
+      .select(
+        'name nameEn salePrice discountType discountAmount images quantity stock',
+      )
+      .sort({ name: 1, _id: 1 })
+      .limit(12)
+      .lean();
+    return {
+      success: true,
+      data: products.map((product: any) => ({
+        _id: String(product._id),
+        name: product.name,
+        price: this.utils.transform(product, 'salePrice'),
+      })),
+    };
+  }
+
+  async createOrder(rawPhone: string, body: any, admin: any) {
+    if (!body || typeof body !== 'object')
+      throw new BadRequestException('Invalid order details');
+    const detail = (await this.detail(rawPhone)).data;
+    const info = detail.customerInfo;
+    const text = (key: string, fallback: string, limit: number) => {
+      const value = body[key] === undefined ? fallback : body[key];
+      if (typeof value !== 'string' || value.length > limit)
+        throw new BadRequestException('Invalid ' + key);
+      return value.trim();
+    };
+    const name = text('name', info.name, 200),
+      shippingAddress = text('shippingAddress', info.shippingAddress, 2000);
+    const city = text('city', info.city, 200),
+      email = text('email', info.email, 200);
+    if (!name || !shippingAddress)
+      throw new BadRequestException('Customer name and address are required');
+    if (
+      !Array.isArray(body.items) ||
+      !body.items.length ||
+      body.items.length > 50 ||
+      body.items.some(
+        (item: any) =>
+          !item ||
+          !Types.ObjectId.isValid(item.product) ||
+          !Number.isInteger(item.quantity) ||
+          item.quantity < 1 ||
+          item.quantity > 100,
+      )
+    )
+      throw new BadRequestException('Choose products with valid quantities');
+    const deliveryCharge =
+      body.deliveryCharge === undefined
+        ? Number(info.deliveryCharge)
+        : body.deliveryCharge;
+    if (
+      !Number.isFinite(deliveryCharge) ||
+      deliveryCharge < 0 ||
+      deliveryCharge > 10000
+    )
+      throw new BadRequestException('Invalid delivery charge');
+    if (
+      ![
+        'cash_on_delivery',
+        'bkash',
+        'nagad',
+        'card',
+        'online_payment',
+      ].includes(body.paymentType)
+    )
+      throw new BadRequestException('Choose a valid payment type');
+    if (!['phone', 'whatsapp'].includes(body.source))
+      throw new BadRequestException('Choose a valid order source');
+    if (
+      typeof body.requestId !== 'string' ||
+      !/^crm-[a-zA-Z0-9-]{16,80}$/.test(body.requestId)
+    )
+      throw new BadRequestException('Invalid order request ID');
+    const payload = {
+      name,
+      phoneNo: detail.phone,
+      shippingAddress,
+      city,
+      email,
+      division: info.division,
+      area: info.area,
+      zone: info.zone,
+      paymentType: body.paymentType,
+      paymentStatus: 'unpaid',
+      deliveryCharge,
+      manualOrderRequestId: body.requestId,
+      cartData: body.items.map((item: any) => ({
+        product: String(item.product),
+        selectedQty: item.quantity,
+      })),
+    } as unknown as AddOrderDto;
+    // Shared catalog pricing, order numbering, idempotency and bookkeeping.
+    return this.orderService.addAiAssistOrderAdmin(admin, payload, body.source);
   }
 
   async save(rawPhone: string, body: any, admin: any) {

@@ -6,7 +6,10 @@ const root = path.resolve(__dirname, '..');
 const deps = path.join(root, 'api/node_modules');
 require(path.join(deps, 'reflect-metadata'));
 const mongoose = require(path.join(deps, 'mongoose'));
-const { Module, VersioningType } = require(path.join(deps, '@nestjs/common'));
+const { Module, VersioningType, Logger } = require(path.join(
+  deps,
+  '@nestjs/common'
+));
 const { NestFactory } = require(path.join(deps, '@nestjs/core'));
 const { PassportModule } = require(path.join(deps, '@nestjs/passport'));
 const jwt = require(path.join(deps, 'jsonwebtoken'));
@@ -27,6 +30,9 @@ const {
 const {
   customerManagerPages,
 } = require('../api/dist/pages/customer-manager/customer-manager-pages');
+const { OrderService } = require('../api/dist/pages/sales/order/order.service');
+const { UtilsService } = require('../api/dist/shared/utils/utils.service');
+const { OrderSchema } = require('../api/dist/schema/order.schema');
 const secret = 'isolated-customer-manager-fixture-secret';
 const uri =
   process.env.CRM_TEST_MONGO ||
@@ -48,10 +54,7 @@ let connection, app, browser;
   new Function(html.match(/<script>([\s\S]*?)<\/script>/)[1]);
   connection = await mongoose.createConnection(uri).asPromise();
   await connection.dropDatabase();
-  const Orders = connection.model(
-    'Order',
-    new mongoose.Schema({}, { strict: false })
-  );
+  const Orders = connection.model('Order', OrderSchema);
   const Products = connection.model(
     'Product',
     new mongoose.Schema({}, { strict: false })
@@ -62,12 +65,25 @@ let connection, app, browser;
     adminId = new mongoose.Types.ObjectId();
   await Products.collection.insertOne({
     _id: product,
+    name: 'Fixture Book',
+    salePrice: 500,
+    discountType: 2,
+    discountAmount: 50,
+    costPrice: 200,
+    stock: 50,
+    quantity: 50,
+    sku: 'CRM-FIXTURE',
     category: [{ name: 'Self development' }],
   });
   const fixture = (phone, amount, age, extra = {}) => ({
     orderId: new mongoose.Types.ObjectId().toString(),
     name: 'Fixture Reader',
     phoneNo: phone,
+    shippingAddress: 'House 12, Road 3',
+    city: 'Dhaka',
+    email: 'fixture@example.test',
+    deliveryCharge: 60,
+    paymentType: 'cash_on_delivery',
     grandTotal: amount,
     orderStatus: 5,
     createdAt: new Date(Date.now() - age * 86400000),
@@ -95,7 +111,51 @@ let connection, app, browser;
     fixture('01711123456', 9999, 1, { orderStatus: 1 }),
     fixture('bad phone', 9999, 1),
   ]);
-  const service = new CustomerManagerService(Orders, Contacts, Products);
+  await Orders.init();
+  const Admins = connection.model(
+    'Admin',
+    new mongoose.Schema({}, { strict: false })
+  );
+  const Users = connection.model(
+    'User',
+    new mongoose.Schema({}, { strict: false })
+  );
+  const UniqueIds = connection.model(
+    'UniqueId',
+    new mongoose.Schema({ orderId: Number })
+  );
+  const StockMovements = connection.model(
+    'StockMovement',
+    new mongoose.Schema({}, { strict: false })
+  );
+  await Admins.collection.insertOne({
+    _id: adminId,
+    username: 'fixture-sales',
+    name: 'Fixture Sales',
+  });
+  const utils = new UtilsService(Products);
+  const orderService = Object.create(OrderService.prototype);
+  Object.assign(orderService, {
+    orderModel: Orders,
+    productModel: Products,
+    adminModel: Admins,
+    userModel: Users,
+    uniqueIdModel: UniqueIds,
+    stockMovementModel: StockMovements,
+    utilsService: utils,
+    logger: new Logger('Order fixture'),
+  });
+  // Exercise actual order persistence/stock methods while suppressing external notifications.
+  orderService.sendManualOrderToMeta = async () => {};
+  orderService.processOrderBackgroundTasks = async (order) =>
+    orderService.decreaseProductStock(order._id, order.orderedItems);
+  const service = new CustomerManagerService(
+    Orders,
+    Contacts,
+    Products,
+    orderService,
+    utils
+  );
   class FixtureModule {}
   Module({
     imports: [PassportModule],
@@ -243,6 +303,97 @@ let connection, app, browser;
     22
   );
   await Orders.collection.deleteMany({ phoneNo: /^019/ });
+  const followupStats = (await call('/api/customer-manager?status=contacted'))
+    .body.data;
+  assert.equal(followupStats.summary.followedUp, 1);
+  assert.equal(followupStats.total, 1);
+  assert.equal(
+    (await call('/api/customer-manager/01711123456')).body.data.customerInfo
+      .shippingAddress,
+    'House 12, Road 3'
+  );
+  assert.equal(
+    (await call('/api/customer-manager/products/search?q=Fixture')).body.data[0]
+      .price,
+    450
+  );
+  assert.equal(
+    (await call('/api/customer-manager/products/search?q=Fixture', 'editor'))
+      .status,
+    401
+  );
+  const createBody = {
+    items: [{ product: product.toString(), quantity: 2 }],
+    paymentType: 'cash_on_delivery',
+    source: 'phone',
+    requestId: 'crm-fixture-repeat-order-0001',
+    grandTotal: 1,
+    orderStatus: 5,
+    phoneNo: '01999999999',
+  };
+  const create = (body, role = 'salesman') =>
+    call('/api/customer-manager/01711123456/orders', role, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  assert.equal((await create(createBody, 'editor')).status, 401);
+  assert.equal(
+    (await create({ ...createBody, shippingAddress: '' })).status,
+    400
+  );
+  assert.equal((await create({ ...createBody, items: [] })).status, 400);
+  assert.equal(
+    (
+      await create({
+        ...createBody,
+        items: [{ product: product.toString(), quantity: 0 }],
+      })
+    ).status,
+    400
+  );
+  assert.equal(
+    (await create({ ...createBody, deliveryCharge: -1 })).status,
+    400
+  );
+  assert.equal(
+    (
+      await create({
+        ...createBody,
+        items: [
+          { product: new mongoose.Types.ObjectId().toString(), quantity: 1 },
+        ],
+      })
+    ).status,
+    400
+  );
+  const created = await create(createBody);
+  assert.equal(created.status, 201, JSON.stringify(created.body));
+  const persisted = await Orders.findById(created.body.data._id).lean();
+  assert.equal(persisted.phoneNo, '01711123456');
+  assert.equal(persisted.shippingAddress, 'House 12, Road 3');
+  assert.equal(persisted.city, 'Dhaka');
+  assert.equal(persisted.email, 'fixture@example.test');
+  assert.equal(persisted.orderStatus, 1);
+  assert.equal(persisted.paymentStatus, 'unpaid');
+  assert.equal(persisted.manualOrderSource, 'phone');
+  assert.equal(persisted.grandTotal, 960);
+  assert.equal(persisted.orderedItems[0].costPriceAtOrder, 200);
+  const replay = await create(createBody);
+  assert.equal(replay.body.data.orderId, created.body.data.orderId);
+  assert.equal(
+    await Orders.countDocuments({ manualOrderRequestId: createBody.requestId }),
+    1
+  );
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  assert.equal((await Products.findById(product).lean()).stock, 48);
+  assert.equal((await Products.findById(product).lean()).totalSold, 2);
+  assert.equal(
+    (await call('/api/customer-manager')).body.data.summary.customers,
+    2
+  );
+  console.log(
+    'PASS: prefilled addresses, distinct followed-up counts, protected catalog search, server-priced order persistence, validation, stock and duplicate protection.'
+  );
   const page = await fetch(
     'http://127.0.0.1:3019/upload/static/customer-manager.html'
   );
@@ -339,6 +490,66 @@ let connection, app, browser;
       () =>
         document.querySelector('#customer-name').textContent === 'Nusrat Jahan'
     );
+    assert.match(
+      await page.locator('#customer-address').textContent(),
+      /House 12/
+    );
+    await page.locator('#create-order').click();
+    assert.equal(
+      await page.locator('#order-name').inputValue(),
+      'Nusrat Jahan'
+    );
+    assert.equal(
+      await page.locator('#order-phone').inputValue(),
+      '01811123456'
+    );
+    assert.equal(
+      await page.locator('#order-address').inputValue(),
+      'House 12, Road 3'
+    );
+    assert.equal(await page.locator('#order-delivery').inputValue(), '60');
+    await page.locator('#order-submit').click();
+    assert.match(
+      await page.locator('#order-status').textContent(),
+      /Add at least one product/
+    );
+    await page.locator('#order-search').fill('Fixture');
+    await page.locator('#order-search-button').click();
+    await page.waitForSelector('[data-order-add="0"]');
+    await page.locator('[data-order-add="0"]').click();
+    await page.locator('[data-order-qty="0"]').fill('2');
+    await page.locator('[data-order-qty="0"]').blur();
+    assert.equal(await page.locator('#order-total').textContent(), '৳960');
+    for (const width of [1440, 768, 390, 320]) {
+      await page.setViewportSize({ width, height: 900 });
+      assert.equal(
+        await page.evaluate(
+          () =>
+            document.querySelector('#order-dialog').scrollWidth <=
+            document.querySelector('#order-dialog').clientWidth
+        ),
+        true,
+        'Order dialog fits at ' + width
+      );
+    }
+    await page.setViewportSize({ width: 1200, height: 1000 });
+    await page.screenshot({
+      path: path.join(root, 'tmp/customer-manager-create-order.png'),
+      fullPage: true,
+    });
+    await page.locator('#order-submit').click();
+    await page.waitForSelector('#order-success:not([hidden])');
+    assert.match(
+      await page.locator('#order-success').textContent(),
+      /Order #.* created/
+    );
+    assert.equal(
+      await Orders.countDocuments({ phoneNo: '01811123456', orderStatus: 1 }),
+      1
+    );
+    assert.equal(await page.locator('#order-submit').isDisabled(), true);
+    await page.locator('#order-close').click();
+    assert.equal(await page.locator('#stat-followedUp').textContent(), '2');
     await page.setViewportSize({ width: 1600, height: 1000 });
     await page.locator('[data-tab="contact"]').click();
     await page.screenshot({
