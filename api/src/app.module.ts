@@ -1,3 +1,4 @@
+import { CustomerManagerModule } from './pages/customer-manager/customer-manager.module';
 import { ProductModule } from './pages/product/product.module';
 import { BannerCaroselModule } from './pages/customization/banner/banner-carosel.module';
 import { CacheModule, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
@@ -75,6 +76,7 @@ import { PreOrderModule } from './pages/pre-order/pre-order.module';
 import { MetaAdsModule } from './pages/meta-ads/meta-ads.module';
 @Module({
   imports: [
+    CustomerManagerModule,
     ServeStaticModule.forRoot(
       {
         rootPath: join(__dirname, '..', 'upload', 'invoice'),

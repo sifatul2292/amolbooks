@@ -1,3 +1,4 @@
+import { customerManagerPages } from './pages/customer-manager/customer-manager-pages';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger, VersioningType } from '@nestjs/common';
@@ -75,6 +76,8 @@ async function bootstrap() {
       return redirectMiddlewareRef.use(req, res, next);
     }
   );
+
+  app.use(customerManagerPages(join(__dirname, '../..')));
 
   app.use(
     '/upload/static',
