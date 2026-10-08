@@ -10,6 +10,8 @@
     host.slice(-18) === '.trycloudflare.com';
   var cachedImages = {};
   var reviewRecords = {};
+  var fullReviews = [];
+  var fullReviewSlug = "";
   var activeUploads = 0;
   var failedReviewSlug = '';
   var repairTimer = 0;
@@ -32,7 +34,49 @@
   function paginateReviews() {
     var root = document.querySelector('app-product-details app-all-reviews');
     if (!root) return;
-    var cards = root.querySelectorAll('.user-review');
+    var nativeCard = root.querySelector('.user-review:not([data-arr-card])');
+    if (nativeCard && fullReviewSlug === slug() && fullReviews.length) {
+      var list = root.querySelector('.arr-full-reviews');
+      if (!list) {
+        list = document.createElement('div');
+        list.className = 'arr-full-reviews';
+        nativeCard.parentNode.insertBefore(list, nativeCard);
+      }
+      if (list.__arrRecords !== fullReviews) {
+        list.__arrRecords = fullReviews;
+        list.textContent = '';
+        for (var r = 0; r < fullReviews.length; r++) {
+          var record = fullReviews[r];
+          var clone = nativeCard.cloneNode(true);
+          clone.setAttribute('data-arr-card', 'true');
+          clone.classList.remove('arr-review-hidden');
+          var name = clone.querySelector('.user-name span');
+          if (name) name.textContent = (record.user && record.user.name) || record.userName || record.name || '';
+          var text = clone.querySelector('.user-review-data > p');
+          if (text) text.textContent = record.review || '';
+          var rating = Math.max(0, Math.min(5, Number(record.rating) || 0));
+          var score = clone.querySelector('.user-review-rating > span');
+          if (score) score.textContent = rating.toFixed(1);
+          var stars = clone.querySelectorAll('.user-review-rating li i');
+          for (var k = 0; k < stars.length; k++) stars[k].className = k < Math.round(rating) ? 'fa-star fas' : 'fa-star far';
+          var photos = clone.querySelector('.review-product-img-main');
+          if (photos) { photos.textContent = ''; photos.removeAttribute('data-arr-signature'); }
+          var reply = clone.querySelector('.replay-review-area');
+          if (reply) reply.parentNode.removeChild(reply);
+          if (record.reply) {
+            reply = document.createElement('div');
+            reply.className = 'replay-review-area';
+            reply.textContent = 'Amol Books: ' + record.reply;
+            clone.appendChild(reply);
+          }
+          list.appendChild(clone);
+        }
+        renderReviewImages();
+      }
+      root.classList.add('arr-has-full-reviews');
+    }
+    var cards = root.querySelectorAll('.arr-full-reviews .user-review');
+    if (!cards.length) cards = root.querySelectorAll('.user-review');
     if (!cards.length) return;
     var pages = Math.ceil(cards.length / 5);
     var page = root.__arrSlug === slug() ? (root.__arrPage || 0) : 0;
@@ -85,6 +129,8 @@
     return normalizeReviewPart(name) + '\u001f' + normalizeReviewPart(review);
   }
   function cacheReviewRecords(list) {
+    fullReviews = list;
+    fullReviewSlug = slug();
     var next = {};
     for (var i = 0; i < list.length; i++) {
       var record = list[i] || {};
@@ -149,7 +195,8 @@
     repairTimer = 0;
     window._riuMap = {};
     window._riuInject = scheduleReviewImageRepair;
-    var cards = document.querySelectorAll('.user-review');
+    var cards = document.querySelectorAll('.arr-full-reviews .user-review');
+    if (!cards.length) cards = document.querySelectorAll('.user-review');
     var positions = {};
     for (var i = 0; i < cards.length; i++) {
       var card = cards[i];
@@ -401,6 +448,7 @@
 })();
 </script>
 <style>
+  app-all-reviews.arr-has-full-reviews .user-review:not([data-arr-card]),
   app-product-details app-all-reviews .user-img-rev,
   app-product-details app-all-reviews .arr-review-hidden { display: none !important; }
   .arr-review-pages { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 20px 0; }

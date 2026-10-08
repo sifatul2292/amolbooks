@@ -40,7 +40,7 @@ const enforceReviewImageLimit = new Function('document', 'DataTransfer', 'showRe
 enforceReviewImageLimit({ target: limitInput });
 assert.strictEqual(limitInput.files.length, 3, 'two existing photos must leave room for only three more');
 
-const cacheSource = browserJs.match(/function cacheReviewRecords\(list\) \{[\s\S]*?\n  \}/)[0];
+const cacheSource = browserJs.match(/function cacheReviewRecords\(list\) \{[\s\S]*?\n  \}/)[0].replace('fullReviewSlug = slug();', 'fullReviewSlug = "book";');
 const renderSource = browserJs.match(/function renderReviewImages\(\) \{[\s\S]*?\n  \}/)[0];
 function fakeTarget(initialHref) {
   return {
@@ -184,7 +184,7 @@ const reviewCards = Array.from({ length: 18 }, () => ({ hidden: false, classList
 reviewCards.forEach(card => { card.classList.card = card; });
 const nav = { __arrCount: 18, __arrPage: 0 };
 const reviewRoot = { __arrSlug: 'book', __arrPage: 0, querySelectorAll: () => reviewCards, querySelector: () => nav };
-const paginate = new Function('document', 'slug', paginateSource + '; return paginateReviews;')({ querySelector: () => reviewRoot }, () => 'book');
+const paginate = new Function('document', 'slug', 'var fullReviews = [], fullReviewSlug = \"\";' + paginateSource + '; return paginateReviews;')({ querySelector: () => reviewRoot }, () => 'book');
 for (let page = 0; page < 4; page++) {
   reviewRoot.__arrPage = nav.__arrPage = page;
   paginate();
@@ -193,3 +193,7 @@ for (let page = 0; page < 4; page++) {
 }
 assert.match(snippet, /app-product-details app-all-reviews \.user-img-rev/);
 console.log('Review pagination checks passed (18 reviews: 5/5/5/3).');
+
+assert.match(browserJs, /nativeCard\.cloneNode\(true\)/, 'must render records beyond Angular allReviews.slice(0,5)');
+assert.match(browserJs, /r < fullReviews\.length/, 'render every approved API review');
+assert.match(snippet, /arr-has-full-reviews \.user-review:not\(\[data-arr-card\]\)/, 'hide truncated native list');

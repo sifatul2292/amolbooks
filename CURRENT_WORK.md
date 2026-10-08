@@ -1,5 +1,10 @@
 # CURRENT_WORK
 
+## Review pagination rendering correction (2026-10-08)
+
+- Live browser inspection revealed Angular hardcodes `allReviews.slice(0,5)`, so fetching all reviews alone left five DOM cards and an empty pager. The snippet now builds the complete list from approved API records using the native card template, hides the truncated native list, and paginates the injected cards. Review text/names/replies use safe text insertion; review attachments remain supported.
+- Browser fixture reproducing five native cards plus 18 API records confirms four numbered buttons, five reviews on page 1, and reviews 16–18 after clicking page 4. Focused checks and API build pass; lint remains blocked by the existing ignored-glob configuration. Production deployment remains pending.
+
 ## Review pagination (2026-10-08)
 
 - Load all approved product reviews and show five native cards per page with numbered controls; hide reviewer profile photos while preserving review attachments and replies. Homepage queries remain unchanged.
