@@ -1,5 +1,10 @@
 # CURRENT_WORK
 
+## Review pagination (2026-10-08)
+
+- Load all approved product reviews and show five native cards per page with numbered controls; hide reviewer profile photos while preserving review attachments and replies. Homepage queries remain unchanged.
+- Production review API remains https://apisub.amolbooks.com/api. Focused reliability and 18-review pagination checks pass; rebuild the API on the VPS before restarting to avoid stale compiled Customer Manager dependencies.
+
 ## Customer delivery ratio and purchased-book search (2026-10-06)
 
 - Added each customer's delivered/total recorded order ratio and percentage to the customer table and details panel. Total includes pending, cancelled, refunded, returned and partial orders; spending, purchased-book filters, dates, addresses and delivered-history eligibility remain based on delivered orders. Order creation refreshes the ratio after success.

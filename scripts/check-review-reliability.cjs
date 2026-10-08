@@ -156,7 +156,7 @@ expect(/সর্বোচ্চ ৫টি ছবি যোগ করা যা�
 assert.match(reviewDto, /@IsArray\(\)\s*@ArrayMaxSize\(5\)\s*@IsString\(\{ each: true \}\)\s*images: string\[\]/, 'the review API must reject more than five photos');
 expect(/removeLegacyImageStrips\(card\)/, 'legacy unclassed image strips must be removed');
 expect(/window\._riuMap = \{\}/, 'legacy name-only image cache must be neutralized');
-expect(/clearTimeout\(repairTimer\);\s*repairTimer = setTimeout\(renderReviewImages, 60\)/, 'legacy image repairs must be debounced');
+expect(/clearTimeout\(repairTimer\);\s*repairTimer = setTimeout\(function \(\) \{ renderReviewImages\(\); paginateReviews\(\); \}, 60\)/, 'legacy image repairs must be debounced');
 expect(/else \{\s*if \(failedReviewSlug === xhr\.__arrSlug\) failedReviewSlug = '';\s*cacheReviewRecords\(payload\.data\)/, 'only valid review-list payloads may replace the exact-card cache');
 expect(/role', 'status'/, 'successful review submission needs an accessible status toast');
 expect(/আপনার রিভিউ অনুমোদনের জন্য পাঠানো হয়েছে।/, 'successful review submission needs the approval message');
@@ -170,3 +170,26 @@ if (!/storefrontSnippetFiles\s*=\s*\[[\s\S]*?'review-reliability\.html'/.test(ma
 }
 
 console.log('review reliability checks passed');
+
+const fullRequestSource = browserJs.match(/function fullProductReviewRequest\(body\) \{[\s\S]*?\n  \}/)[0];
+const fullRequest = new Function('slug', fullRequestSource + '; return fullProductReviewRequest;')(() => 'productive%20muslim');
+const productQuery = { filter: { 'product._id': 'book-id', status: true }, pagination: { pageSize: 5, currentPage: 0 }, select: { review: 1 } };
+assert.strictEqual(JSON.parse(fullRequest(JSON.stringify(productQuery))).pagination, undefined);
+assert.deepStrictEqual(JSON.parse(fullRequest(JSON.stringify(productQuery))).filter, productQuery.filter);
+assert.strictEqual(fullRequest('{broken'), '{broken');
+const homeQuery = JSON.stringify({ filter: { isReview: true }, pagination: { pageSize: 6, currentPage: 0 } });
+assert.strictEqual(fullRequest(homeQuery), homeQuery, 'homepage review requests stay unchanged');
+const paginateSource = browserJs.match(/function paginateReviews\(\) \{[\s\S]*?\n  \}/)[0];
+const reviewCards = Array.from({ length: 18 }, () => ({ hidden: false, classList: { toggle(name, hidden) { this.card.hidden = hidden; } } }));
+reviewCards.forEach(card => { card.classList.card = card; });
+const nav = { __arrCount: 18, __arrPage: 0 };
+const reviewRoot = { __arrSlug: 'book', __arrPage: 0, querySelectorAll: () => reviewCards, querySelector: () => nav };
+const paginate = new Function('document', 'slug', paginateSource + '; return paginateReviews;')({ querySelector: () => reviewRoot }, () => 'book');
+for (let page = 0; page < 4; page++) {
+  reviewRoot.__arrPage = nav.__arrPage = page;
+  paginate();
+  assert.strictEqual(reviewCards.filter(card => !card.hidden).length, page === 3 ? 3 : 5);
+  assert.strictEqual(reviewCards[page * 5].hidden, false);
+}
+assert.match(snippet, /app-product-details app-all-reviews \.user-img-rev/);
+console.log('Review pagination checks passed (18 reviews: 5/5/5/3).');
