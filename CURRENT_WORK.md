@@ -1,5 +1,22 @@
 # CURRENT_WORK
 
+## Reset-password placeholder (2026-10-08)
+
+- Set the reset-password mobile field placeholder to আপনার মোবাইল নম্বর দিন through the existing auth snippet. Input handling and API routing remain unchanged.
+
+## Google sign-in temporarily hidden (2026-10-08)
+
+- Hide the Google/Gmail sign-in option and adjacent অথবা divider on customer login and registration through the existing google-auth GTM snippet. Password login and registration remain available; the existing identity loader remains compatible with compiled auth components. No API_BASE changes. Local browser confirms Google and divider hidden with password login visible; API build passes. Lint remains blocked by the existing ignored-glob configuration.
+
+## Immediate product rating stars (2026-10-08)
+
+- Replaced product-heading rating star glyphs with embedded SVG backgrounds in the existing GTM snippet, removing their dependency on the Font Awesome download. Full, half and empty stars retain their original state; score and review counts remain unchanged. API_BASE routing is unchanged. Local browser confirms all five stars use embedded SVG and suppress font glyphs; focused checks pass. Lint remains blocked by the existing ignored-glob configuration.
+
+## Collapsible author biography (2026-10-08)
+
+- The author toggle spans the card grid and keeps its label on one line.
+- Reused the summary expand/collapse control for long author biographies in the product-detail GTM snippet. Descriptions start at a 14rem preview with আরও দেখুন / কম দেখুন and accessible expanded state; short biographies remain fully visible. Local browser expand/collapse, product-detail checks and API build pass; lint remains blocked by the existing ignored-glob configuration. API routing stays unchanged (production https://apisub.amolbooks.com/api).
+
 ## Review pagination rendering correction (2026-10-08)
 
 - Live browser inspection revealed Angular hardcodes `allReviews.slice(0,5)`, so fetching all reviews alone left five DOM cards and an empty pager. The snippet now builds the complete list from approved API records using the native card template, hides the truncated native list, and paginates the injected cards. Review text/names/replies use safe text insertion; review attachments remain supported.

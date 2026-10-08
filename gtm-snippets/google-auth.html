@@ -1,3 +1,10 @@
+<!-- Temporarily hide Google sign-in on both customer authentication pages. -->
+<style>
+  app-login .social-area,
+  app-login .social-area + .or,
+  app-registration .social-area,
+  app-registration .social-area + .or { display: none !important; }
+</style>
 <script>
 (function () {
   'use strict';
@@ -19,6 +26,12 @@
   }
 
   function clarifyEmailLogin() {
+    if (location.pathname === '/reset-password') {
+      var phone = document.querySelector('form .form-input input');
+      if (phone && phone.getAttribute('placeholder') !== 'আপনার মোবাইল নম্বর দিন') {
+        phone.setAttribute('placeholder', 'আপনার মোবাইল নম্বর দিন');
+      }
+    }
     if (!isAuthPage()) return;
     ensureGoogleIdentity();
 
