@@ -18,6 +18,59 @@
     var match = location.pathname.match(/^\/product-details\/([^/?#]+)/);
     return match ? match[1] : '';
   }
+  function fullProductReviewRequest(body) {
+    try {
+      var data = JSON.parse(body);
+      if (slug() && data.filter && data.filter['product._id'] && data.filter.status === true) {
+        // Angular otherwise requests only its first page and has no page controls.
+        delete data.pagination;
+        return JSON.stringify(data);
+      }
+    } catch (_) {}
+    return body;
+  }
+  function paginateReviews() {
+    var root = document.querySelector('app-product-details app-all-reviews');
+    if (!root) return;
+    var cards = root.querySelectorAll('.user-review');
+    if (!cards.length) return;
+    var pages = Math.ceil(cards.length / 5);
+    var page = root.__arrSlug === slug() ? (root.__arrPage || 0) : 0;
+    page = Math.min(page, pages - 1);
+    root.__arrSlug = slug();
+    root.__arrPage = page;
+    for (var i = 0; i < cards.length; i++) {
+      cards[i].classList.toggle('arr-review-hidden', Math.floor(i / 5) !== page);
+    }
+    var nav = root.querySelector('.arr-review-pages');
+    if (nav && nav.__arrCount === cards.length && nav.__arrPage === page) return;
+    if (!nav) {
+      nav = document.createElement('nav');
+      nav.className = 'arr-review-pages';
+      nav.setAttribute('aria-label', 'রিভিউ পৃষ্ঠা');
+      cards[cards.length - 1].parentNode.appendChild(nav);
+    }
+    nav.__arrCount = cards.length;
+    nav.__arrPage = page;
+    nav.textContent = '';
+    if (pages < 2) return;
+    for (var j = 0; j < pages; j++) {
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = String(j + 1);
+      button.setAttribute('aria-label', 'রিভিউ পৃষ্ঠা ' + (j + 1));
+      button.setAttribute('aria-current', j === page ? 'page' : 'false');
+      button.__arrPage = j;
+      button.addEventListener('click', function () {
+        root.__arrPage = this.__arrPage;
+        paginateReviews();
+        root.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        var selected = root.querySelector('[aria-current="page"]');
+        if (selected) selected.focus({ preventScroll: true });
+      });
+      nav.appendChild(button);
+    }
+  }
   function requestPath(url) {
     var link = document.createElement('a');
     try { link.href = String(url); return link.pathname; } catch (_) { return ''; }
@@ -142,7 +195,7 @@
   }
   function scheduleReviewImageRepair() {
     clearTimeout(repairTimer);
-    repairTimer = setTimeout(renderReviewImages, 60);
+    repairTimer = setTimeout(function () { renderReviewImages(); paginateReviews(); }, 60);
   }
   function markReviewDialog() {
     var app = document.querySelector('app-rating-and-review');
@@ -273,6 +326,7 @@
       });
     };
     XMLHttpRequest.prototype.send = function (body) {
+      if (this.__arrReviewList && typeof body === 'string') body = fullProductReviewRequest(body);
       if (this.__arrUpload && body instanceof FormData) {
         if (!body.has('convert')) body.append('convert', 'yes');
         if (!body.has('width')) body.append('width', '300');
@@ -347,6 +401,13 @@
 })();
 </script>
 <style>
+  app-product-details app-all-reviews .user-img-rev,
+  app-product-details app-all-reviews .arr-review-hidden { display: none !important; }
+  .arr-review-pages { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 20px 0; }
+  .arr-review-pages button { min-width: 44px; min-height: 44px; border: 1px solid #087a34; border-radius: 6px; background: #fff; color: #087a34; cursor: pointer; }
+  .arr-review-pages button[aria-current="page"] { background: #087a34; color: #fff; }
+  .arr-review-pages button:focus-visible { outline: 2px solid #222; outline-offset: 3px; }
+
   .arr-review-toast {
     position: fixed; left: 50%; bottom: 24px; z-index: 100000;
     max-width: calc(100vw - 32px); padding: 12px 18px; border-radius: 8px;

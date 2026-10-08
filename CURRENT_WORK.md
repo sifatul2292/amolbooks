@@ -1,5 +1,14 @@
 # CURRENT_WORK
 
+## Review pagination (2026-10-08)
+
+- Confirmed Productive Muslim has 18 approved reviews in the production API; the storefront only requests its initial page.
+- Updated `gtm-snippets/review-reliability.html` to load the full approved product review list and paginate the native cards in groups of five with accessible numbered controls. Hides reviewer profile photos while preserving review attachment photos and replies. Other review queries remain unchanged.
+- Uses the native review API URL (production `https://apisub.amolbooks.com/api`); existing preview upload routing remains intact. No compiled storefront files edited.
+- Verification: review reliability and 18-review pagination checks pass; API build passes. Lint is blocked by the existing all-files-ignored configuration. Full browser visual QA was not run.
+- Deployment pending: publish the updated GTM snippet or deploy through `scripts/vps-safe-pull.sh` and restart the API to serve the updated injected snippet.
+
+
 ## Customer Manager (2026-10-06)
 
 - Added the purple Customer Manager design as a tracked custom page at `gtm-snippets/customer-manager.html`, served at `/upload/static/customer-manager.html`; the existing order sidebar receives its link at response time. Runtime uploads and compiled admin/storefront files are not edited.
