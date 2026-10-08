@@ -1,4 +1,42 @@
+## Matching compact purchase bar (2026-10-08)
+
+- Mobile sticky Buy Now/Add to Cart bar uses the same 52px base height as bottom navigation, with 44px buttons and device safe-area padding. API_BASE unchanged.
+
+## Shorter mobile bottom navigation (2026-10-08)
+
+- Reduced bottom navigation padding, SVG icons and label size below 768px. Retains 44px minimum tap targets and device bottom safe-area padding. Verified at 465px: bar height reduced from about 66px to 52px. Product snippet checks pass. API_BASE unchanged.
+
+## Three-line author preview (2026-10-08)
+
+- Collapsed author biography now clamps to three lines on desktop and mobile. Existing see-more/less control reveals the full biography; book summary behavior and API_BASE unchanged.
+
+## Compact mobile reviews and embedded stars (2026-10-08)
+
+- Shared desktop card styling with mobile: inline name/verification, tighter body spacing, 12px card gap and reduced mobile padding. Review ratings and verification stars now use inline SVG instead of the Font Awesome font; five-star scores retain filled/outline states. API_BASE unchanged. Verified at 492px: first two cards are 240px/128px tall with 12px gaps and five embedded SVG stars each. Focused checks and API build pass; lint remains blocked by the existing ignored-files configuration.
+
+## Compact desktop product cards (2026-10-08)
+
+- Desktop delivery estimate now uses a 460px maximum width, smaller truck icon and tighter padding/type; still shrinks within its parent.
+- Desktop reviews use a centered 920px reading width, tighter card spacing, inline name/verification, smaller stars and thumbnails, and a subtle green-tinted surface. Verified at 1456px and 492px: desktop delivery width is 460px and first review height is 226px; mobile retains its existing spacing. Snippet checks/API build pass; lint remains blocked by existing ignored-files configuration. Mobile styles are unchanged. API_BASE remains https://apisub.amolbooks.com/api.
+
 # CURRENT_WORK
+
+## Converted review image URL repair (2026-10-08)
+
+- Confirmed the reported review stores a JPEG URL returning 404 while its corresponding WebP returns 200 image/webp. Converted v2 uploads now return the actual WebP filename alongside their URL.
+- Review upload bridge maps legacy filenames to the returned URL before submission; preview/review images retry the converted WebP when an old JPEG/PNG path fails. Gallery links follow the recovered image. No review content or uploaded files are deleted; production API remains https://apisub.amolbooks.com/api.
+
+- Verification: local converted upload returns a matching WebP filename and serves image/webp; browser confirms the existing review thumbnail and enlarged photo load (300px). Focused snippet checks and API build pass. API lint remains blocked by the existing all-files-ignored ESLint configuration. No test review was published.
+
+## Show more reviews (2026-10-08)
+
+- Replaced numbered review pages with Show more reviews. Starts with five, reveals five more beneath the existing reviews per click, and hides the button when all reviews are visible. New product routes reset to five; profile photos remain hidden and review attachments/replies stay available. API_BASE unchanged. Local browser verifies 5 → 10 → 15 → 18 visible reviews and the button disappearing at the end; focused checks pass. Lint remains blocked by the existing ignored-glob configuration.
+
+## Product delivery date estimate (2026-10-08)
+
+- Desktop/tablet uses slightly larger text, icon and padding; the card follows its product column width with wrapping text.
+- Reduced the estimate card padding, truck icon and text spacing for a compact layout.
+- Added a bordered সম্ভাব্য ডেলিভারি card immediately below the product price with an inline truck icon and Bengali date/weekday lines matching the supplied reference. Uses 2 calendar days inside Dhaka and 4 outside, based on Bangladesh time, refreshing as the date changes. Out-of-stock products omit the estimate. Browser verification confirms expected October 10/12 dates and no mobile overflow; date tests cover Dhaka midnight/year rollover and API build passes. Lint remains blocked by the existing ignored-glob configuration. No holiday/cutoff rules or API changes; existing production API_BASE remains https://apisub.amolbooks.com/api.
 
 ## Reset-password placeholder (2026-10-08)
 

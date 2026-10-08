@@ -21,18 +21,38 @@
   app-product-details.ab-no-ratings .product-rating { display: none !important; }
   app-product-details.ab-no-ratings app-all-reviews .review-rating-main { display: none !important; }
   app-product-details.ab-no-ratings app-all-reviews .review-main-area::before { content: 'এখনো কোনো রিভিউ নেই।'; color: #666; }
-  #ab-product-sections .ab-author-description[data-ab-summary-collapsed="true"],
   #ab-product-sections .ab-summary-section .ab-rich-text[data-ab-summary-collapsed="true"] { max-height: 14rem; overflow: hidden; }
+  #ab-product-sections .ab-author-description[data-ab-summary-collapsed="true"] { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; }
   #ab-product-sections .ab-summary-toggle { margin-top: 12px; padding: 0; border: 0; background: transparent; color: #16833b; font: 600 16px/1.4 sans-serif; cursor: pointer; }
   #ab-product-sections .ab-author-card > .ab-summary-toggle { grid-column: 1 / -1; justify-self: start; width: max-content; white-space: nowrap; text-align: left; }
   #ab-product-sections .ab-summary-toggle:focus-visible { outline: 2px solid #16833b; outline-offset: 3px; }
   .view-all-link i.ab-menu-icon { font-family: Arial, sans-serif !important; font-style: normal !important; font-size: 28px !important; line-height: 1 !important; }
   @media (max-width: 767px) {
+    #ab-sticky-product-actions { padding: 4px 10px calc(4px + env(safe-area-inset-bottom, 0px)) !important; min-height: 52px !important; box-sizing: border-box; }
+    #ab-sticky-product-actions button { height: 44px !important; min-height: 44px !important; padding: 8px 12px !important; font-size: 15px !important; line-height: 20px !important; box-sizing: border-box; }
+    app-header .bottom-nav { padding: 4px 10px calc(4px + env(safe-area-inset-bottom, 0px)) !important; }
+    app-header .bottom-nav ul { margin: 0 !important; }
+    app-header .bottom-nav li { min-width: 44px; min-height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+    app-header .bottom-nav li > span { font-size: 12px !important; line-height: 14px !important; }
+    app-header .bottom-nav .ab-bottom-nav-icon,
+    app-header .bottom-nav .ab-bottom-nav-icon svg { width: 22px !important; height: 22px !important; }
     body.ab-cart-enhanced app-cart-information .cart-area .cart-area-bottom { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; gap: 12px !important; padding: 16px !important; }
     body.ab-cart-enhanced app-cart-information .cart-area .cart-area-bottom > a,
     body.ab-cart-enhanced app-cart-information .cart-area .cart-area-bottom > button { display: flex !important; align-items: center !important; justify-content: center !important; width: 100% !important; min-height: 48px !important; padding: 12px !important; box-sizing: border-box !important; border: 1px solid #16833b !important; border-radius: 5px !important; background: #fff !important; color: #16833b !important; font: 600 16px/1.4 sans-serif !important; text-decoration: none !important; }
     body.ab-cart-enhanced app-cart-information .cart-area .cart-area-bottom > button.order { background: #16833b !important; color: #fff !important; }
   }
+  app-product-details .ab-delivery-estimate { display: flex; align-items: center; gap: 10px; margin: 10px 0; padding: 10px 12px; border: 1px solid #c5e2be; border-radius: 8px; color: #333; box-sizing: border-box; width: 100%; min-width: 0; }
+  app-product-details .ab-delivery-estimate > svg { flex: 0 0 28px; width: 28px; height: 28px; color: #16833b; }
+  app-product-details .ab-delivery-estimate strong { display: block; margin-bottom: 2px; font-size: 14px; }
+  app-product-details .ab-delivery-estimate p { margin: 2px 0 !important; font-size: 13px !important; line-height: 1.45 !important; }
+  app-product-details .ab-delivery-estimate > div { min-width: 0; }
+  @media (min-width: 768px) {
+    app-product-details .ab-delivery-estimate { gap: 8px; padding: 8px 10px; max-width: 460px; }
+    app-product-details .ab-delivery-estimate > svg { flex-basis: 24px; width: 24px; height: 24px; }
+    app-product-details .ab-delivery-estimate strong { font-size: 14px; }
+    app-product-details .ab-delivery-estimate p { font-size: 13px !important; line-height: 1.4 !important; }
+  }
+  @media (max-width: 480px) { app-product-details .ab-delivery-estimate { gap: 8px; padding: 8px 10px; } app-product-details .ab-delivery-estimate > svg { flex-basis: 24px; width: 24px; height: 24px; } }
 </style>
 <script>
 (function () {
@@ -65,6 +85,32 @@
       section.appendChild(button);
     });
   }
+  function deliveryDate(days, now) {
+    var date = new Date(now + (6 * 60 * 60 * 1000) + days * 86400000);
+    var dayMonth = new Intl.DateTimeFormat('bn-BD', { calendar: 'gregory', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(date);
+    var weekday = new Intl.DateTimeFormat('bn-BD', { weekday: 'long', timeZone: 'UTC' }).format(date);
+    return dayMonth + ', ' + weekday + 'ের মধ্যে পৌঁছাবে';
+  }
+  function updateDeliveryEstimate() {
+    var price = document.querySelector('app-product-details .section-middle .product-price');
+    if (!price || !product) return;
+    var box = document.querySelector('app-product-details .ab-delivery-estimate');
+    if (Number(product.quantity) <= 0) { if (box) box.remove(); return; }
+    if (!box) {
+      box = document.createElement('section');
+      box.className = 'ab-delivery-estimate';
+      box.setAttribute('aria-label', 'সম্ভাব্য ডেলিভারি');
+      box.innerHTML = '<svg viewBox="0 0 48 40" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 8h24v23H9M33 17h7l6 9v5h-5M33 31H19M2 15h15M0 21h13M4 27h9"/><circle cx="14" cy="32" r="4" fill="white"/><circle cx="37" cy="32" r="4" fill="white"/></svg><div><strong>সম্ভাব্য ডেলিভারি</strong><p data-ab-delivery-inside></p><p data-ab-delivery-outside></p></div>';
+      price.parentNode.insertBefore(box, price.nextSibling);
+    }
+    var now = Date.now();
+    var inside = 'ঢাকার ভেতরে : ' + deliveryDate(2, now);
+    var outside = 'ঢাকার বাইরে : ' + deliveryDate(4, now);
+    var insideLabel = box.querySelector('[data-ab-delivery-inside]');
+    var outsideLabel = box.querySelector('[data-ab-delivery-outside]');
+    if (insideLabel.textContent !== inside) insideLabel.textContent = inside;
+    if (outsideLabel.textContent !== outside) outsideLabel.textContent = outside;
+  }
   function update() {
     updateSummaries();
     document.querySelectorAll('.title-area .view-all-link i.material-symbols-outlined').forEach(function (icon) {
@@ -93,6 +139,7 @@
       if (desired && text !== desired) label.textContent = desired;
     });
     if (!product) return;
+    updateDeliveryEstimate();
     var ratingTotal = Math.max(0, Number(product.ratingTotal) || 0);
     var reviewTotal = Math.max(0, Number(product.reviewTotal) || 0);
     var page = document.querySelector('app-product-details');

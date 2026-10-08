@@ -123,7 +123,7 @@ const rating = { querySelector: () => counts, appendChild: node => { counts = no
 const context = {
   window: { setInterval: fn => { interval = fn; } },
   location: { hostname: 'localhost', origin: 'http://localhost:3000', pathname: '/product-details/book' },
-  document: { documentElement: {}, querySelectorAll: selector => selector === 'app-product-details .delivery-area p' ? deliveryLabels : [], querySelector: selector => selector === 'app-product-details' ? { classList: { toggle: (name, value) => { noRatings = value; } } } : rating, createElement: () => ({}) },
+  document: { documentElement: {}, querySelectorAll: selector => selector === 'app-product-details .delivery-area p' ? deliveryLabels : [], querySelector: selector => selector === 'app-product-details .section-middle .product-price' ? null : selector === 'app-product-details' ? { classList: { toggle: (name, value) => { noRatings = value; } } } : rating, createElement: () => ({}) },
   MutationObserver: class { observe() {} },
   fetch: async url => {
     assert.equal(url, 'http://localhost:3000/storefront-catalog/product/get-by-slug/book');
@@ -148,3 +148,11 @@ setImmediate(() => {
   assert.equal(counts, null, 'Unrated products must not get zero counts');
   console.log('Product detail polish checks passed');
 });
+
+const deliverySnippet = fs.readFileSync(path.join(root, 'gtm-snippets/product-detail-polish.html'), 'utf8');
+const deliverySource = deliverySnippet.match(/function deliveryDate\(days, now\) \{[\s\S]*?\n  \}/)[0];
+const deliveryDate = new Function(deliverySource + '; return deliveryDate;')();
+assert.match(deliveryDate(2, Date.parse('2026-10-08T08:00:00Z')), /১০ অক্টোবর, শনিবার/);
+assert.match(deliveryDate(4, Date.parse('2026-10-08T08:00:00Z')), /১২ অক্টোবর, সোমবার/);
+assert.match(deliveryDate(2, Date.parse('2026-12-30T18:01:00Z')), /২ জানুয়ার[িী]/);
+console.log('Dhaka delivery date checks passed.');

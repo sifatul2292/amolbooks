@@ -182,18 +182,50 @@ assert.strictEqual(fullRequest(homeQuery), homeQuery, 'homepage review requests 
 const paginateSource = browserJs.match(/function paginateReviews\(\) \{[\s\S]*?\n  \}/)[0];
 const reviewCards = Array.from({ length: 18 }, () => ({ hidden: false, classList: { toggle(name, hidden) { this.card.hidden = hidden; } } }));
 reviewCards.forEach(card => { card.classList.card = card; });
-const nav = { __arrCount: 18, __arrPage: 0 };
-const reviewRoot = { __arrSlug: 'book', __arrPage: 0, querySelectorAll: () => reviewCards, querySelector: () => nav };
-const paginate = new Function('document', 'slug', 'var fullReviews = [], fullReviewSlug = \"\";' + paginateSource + '; return paginateReviews;')({ querySelector: () => reviewRoot }, () => 'book');
-for (let page = 0; page < 4; page++) {
-  reviewRoot.__arrPage = nav.__arrPage = page;
+const nav = {};
+const reviewRoot = { __arrSlug: 'book', __arrShown: 5, querySelectorAll: () => reviewCards, querySelector: () => nav };
+const paginate = new Function('document', 'slug', 'var fullReviews = [], fullReviewSlug = "";' + paginateSource + '; return paginateReviews;')({ querySelector: () => reviewRoot }, () => 'book');
+for (const shown of [5, 10, 15, 20]) {
+  reviewRoot.__arrShown = shown;
   paginate();
-  assert.strictEqual(reviewCards.filter(card => !card.hidden).length, page === 3 ? 3 : 5);
-  assert.strictEqual(reviewCards[page * 5].hidden, false);
+  assert.strictEqual(reviewCards.filter(card => !card.hidden).length, Math.min(shown, 18));
+  assert.strictEqual(reviewCards[0].hidden, false, 'earlier reviews remain visible');
+  assert.strictEqual(nav.hidden, shown >= 18, 'hide Show more after the last review');
 }
+reviewRoot.__arrSlug = 'previous-book';
+paginate();
+assert.strictEqual(reviewCards.filter(card => !card.hidden).length, 5, 'new product resets visible reviews');
+assert.match(browserJs, /button.textContent = 'Show more reviews'/);
 assert.match(snippet, /app-product-details app-all-reviews \.user-img-rev/);
-console.log('Review pagination checks passed (18 reviews: 5/5/5/3).');
+console.log('Show more reviews checks passed (5 → 10 → 15 → 18).');
 
 assert.match(browserJs, /nativeCard\.cloneNode\(true\)/, 'must render records beyond Angular allReviews.slice(0,5)');
 assert.match(browserJs, /r < fullReviews\.length/, 'render every approved API review');
 assert.match(snippet, /arr-has-full-reviews \.user-review:not\(\[data-arr-card\]\)/, 'hide truncated native list');
+
+const recoverSource = browserJs.match(/function recoverConvertedReviewImage\(event\) \{[\s\S]*?\n  \}/)[0];
+const recover = new Function('uploadedImageUrls', recoverSource + '; return recoverConvertedReviewImage;')({});
+const photoLink = {};
+const photo = {
+  tagName: 'IMG', attrs: { src: 'https://example.com/api/upload/images/photo.jpeg' },
+  closest(selector) { return selector === '.arr-review-image' ? photoLink : {}; },
+  getAttribute(key) { return this.attrs[key]; },
+  setAttribute(key, value) { this.attrs[key] = value; },
+  set src(value) { this.attrs.src = value; },
+  get src() { return this.attrs.src; }
+};
+let stopped = 0;
+recover({ target: photo, stopImmediatePropagation() { stopped++; } });
+assert.strictEqual(photo.src, 'https://example.com/api/upload/images/photo.webp');
+assert.strictEqual(photoLink.href, photo.src, 'lightbox must open repaired URL');
+recover({ target: photo, stopImmediatePropagation() { stopped++; } });
+assert.strictEqual(stopped, 1, 'failed WebP must not retry endlessly');
+assert.match(uploadController, /filename: newFilename/, 'converted response must name the actual WebP file');
+console.log('Converted review photo recovery checks passed.');
+
+const starSource = browserJs.match(/function reviewStar\(filled\) \{[\s\S]*?\n  \}/)[0];
+const starsSource = browserJs.match(/function reviewStars\(rating\) \{[\s\S]*?\n  \}/)[0];
+const reviewStars = new Function(starSource + starsSource + '; return reviewStars;')();
+assert.strictEqual((reviewStars(5).match(/<svg/g) || []).length, 5);
+assert.strictEqual((reviewStars(3).match(/fill="none"/g) || []).length, 2);
+console.log('Embedded review star checks passed.');

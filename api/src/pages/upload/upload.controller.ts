@@ -138,7 +138,7 @@ export class UploadController {
 
       return {
         originalname: file.originalname,
-        filename: file.filename,
+        filename: newFilename,
         url,
       };
     } else {

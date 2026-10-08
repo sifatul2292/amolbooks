@@ -9,6 +9,7 @@
     /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host) ||
     host.slice(-18) === '.trycloudflare.com';
   var cachedImages = {};
+  var uploadedImageUrls = {};
   var reviewRecords = {};
   var fullReviews = [];
   var fullReviewSlug = "";
@@ -30,6 +31,14 @@
       }
     } catch (_) {}
     return body;
+  }
+  function reviewStar(filled) {
+    return '<svg class="arr-star" viewBox="0 0 24 24" aria-hidden="true" fill="' + (filled ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="1.5"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.2-6.2 3.2L7 14.2 2 9.3l6.9-1Z"/></svg>';
+  }
+  function reviewStars(rating) {
+    var html = '';
+    for (var i = 0; i < 5; i++) html += '<li>' + reviewStar(i < Math.round(rating)) + '</li>';
+    return html;
   }
   function paginateReviews() {
     var root = document.querySelector('app-product-details app-all-reviews');
@@ -57,8 +66,13 @@
           var rating = Math.max(0, Math.min(5, Number(record.rating) || 0));
           var score = clone.querySelector('.user-review-rating > span');
           if (score) score.textContent = rating.toFixed(1);
-          var stars = clone.querySelectorAll('.user-review-rating li i');
-          for (var k = 0; k < stars.length; k++) stars[k].className = k < Math.round(rating) ? 'fa-star fas' : 'fa-star far';
+          var stars = clone.querySelector('.user-review-rating ul');
+          if (stars) {
+            stars.innerHTML = reviewStars(rating);
+            stars.setAttribute('aria-label', rating.toFixed(1) + ' out of 5');
+          }
+          var verifiedStar = clone.querySelector('.user-name small i');
+          if (verifiedStar) verifiedStar.outerHTML = reviewStar(true);
           var photos = clone.querySelector('.review-product-img-main');
           if (photos) { photos.textContent = ''; photos.removeAttribute('data-arr-signature'); }
           var reply = clone.querySelector('.replay-review-area');
@@ -78,43 +92,30 @@
     var cards = root.querySelectorAll('.arr-full-reviews .user-review');
     if (!cards.length) cards = root.querySelectorAll('.user-review');
     if (!cards.length) return;
-    var pages = Math.ceil(cards.length / 5);
-    var page = root.__arrSlug === slug() ? (root.__arrPage || 0) : 0;
-    page = Math.min(page, pages - 1);
+    var shown = root.__arrSlug === slug() ? (root.__arrShown || 5) : 5;
+    shown = Math.min(shown, cards.length);
     root.__arrSlug = slug();
-    root.__arrPage = page;
+    root.__arrShown = shown;
     for (var i = 0; i < cards.length; i++) {
-      cards[i].classList.toggle('arr-review-hidden', Math.floor(i / 5) !== page);
+      cards[i].classList.toggle('arr-review-hidden', i >= shown);
     }
     var nav = root.querySelector('.arr-review-pages');
-    if (nav && nav.__arrCount === cards.length && nav.__arrPage === page) return;
     if (!nav) {
-      nav = document.createElement('nav');
+      nav = document.createElement('div');
       nav.className = 'arr-review-pages';
-      nav.setAttribute('aria-label', 'রিভিউ পৃষ্ঠা');
-      cards[cards.length - 1].parentNode.appendChild(nav);
-    }
-    nav.__arrCount = cards.length;
-    nav.__arrPage = page;
-    nav.textContent = '';
-    if (pages < 2) return;
-    for (var j = 0; j < pages; j++) {
       var button = document.createElement('button');
       button.type = 'button';
-      button.textContent = String(j + 1);
-      button.setAttribute('aria-label', 'রিভিউ পৃষ্ঠা ' + (j + 1));
-      button.setAttribute('aria-current', j === page ? 'page' : 'false');
-      button.__arrPage = j;
+      button.textContent = 'Show more reviews';
       button.addEventListener('click', function () {
-        root.__arrPage = this.__arrPage;
+        root.__arrShown += 5;
         paginateReviews();
-        root.scrollIntoView({ block: 'start', behavior: 'smooth' });
-        var selected = root.querySelector('[aria-current="page"]');
-        if (selected) selected.focus({ preventScroll: true });
       });
       nav.appendChild(button);
+      cards[cards.length - 1].parentNode.appendChild(nav);
     }
+    nav.hidden = shown >= cards.length;
   }
+
   function requestPath(url) {
     var link = document.createElement('a');
     try { link.href = String(url); return link.pathname; } catch (_) { return ''; }
@@ -244,6 +245,19 @@
     clearTimeout(repairTimer);
     repairTimer = setTimeout(function () { renderReviewImages(); paginateReviews(); }, 60);
   }
+  function recoverConvertedReviewImage(event) {
+    var img = event.target;
+    if (!img || img.tagName !== 'IMG' || !img.closest('#riu-preview, .review-product-img-main, .arr-review-image')) return;
+    var src = img.getAttribute('src') || '';
+    if (!/\/upload\/images\/[^?#]+\.(?:jpe?g|png)(?:[?#]|$)/i.test(src) || img.getAttribute('data-arr-webp-retry') === src) return;
+    img.setAttribute('data-arr-webp-retry', src);
+    // Older upload responses named the deleted original instead of the converted file.
+    event.stopImmediatePropagation();
+    img.src = uploadedImageUrls[src] || src.replace(/\.(?:jpe?g|png)(?=[?#]|$)/i, '.webp');
+    var link = img.closest('.arr-review-image');
+    if (link) link.href = img.src;
+  }
+  window.addEventListener('error', recoverConvertedReviewImage, true);
   function markReviewDialog() {
     var app = document.querySelector('app-rating-and-review');
     if (!app) return;
@@ -353,6 +367,13 @@
           updateSubmit();
           if (xhr.status < 200 || xhr.status >= 300) uploadError();
         }
+        if (xhr.__arrUpload && xhr.status >= 200 && xhr.status < 300) {
+          var uploaded = responsePayload(xhr);
+          if (uploaded && uploaded.url && uploaded.filename) {
+            var oldUrl = uploaded.url.replace(/[^/]+$/, uploaded.filename);
+            uploadedImageUrls[oldUrl] = uploaded.url;
+          }
+        }
         var sameReviewPage = xhr.__arrSlug === slug();
         var payload = (xhr.__arrReviewList || xhr.__arrReviewKey) ? responsePayload(xhr) : null;
         if (xhr.__arrReviewList && sameReviewPage) {
@@ -389,6 +410,7 @@
         try {
           var data = JSON.parse(body);
           var key = this.__arrSlug;
+          if (Array.isArray(data.images)) data.images = data.images.map(function (url) { return uploadedImageUrls[url] || url; });
           if (data.images && data.images.length) cachedImages[key] = data.images.slice();
           else if (cachedImages[key] && cachedImages[key].length) data.images = cachedImages[key].slice();
           this.__arrReviewKey = key;
@@ -453,7 +475,8 @@
   app-product-details app-all-reviews .arr-review-hidden { display: none !important; }
   .arr-review-pages { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 20px 0; }
   .arr-review-pages button { min-width: 44px; min-height: 44px; border: 1px solid #087a34; border-radius: 6px; background: #fff; color: #087a34; cursor: pointer; }
-  .arr-review-pages button[aria-current="page"] { background: #087a34; color: #fff; }
+  .arr-review-pages[hidden] { display: none !important; }
+  .arr-review-pages button { padding: 8px 18px; font: inherit; }
   .arr-review-pages button:focus-visible { outline: 2px solid #222; outline-offset: 3px; }
 
   .arr-review-toast {
@@ -477,6 +500,28 @@
     font: 400 34px/40px Arial, sans-serif; cursor: pointer;
   }
   #riu-status[data-arr-limit]::after { content: attr(data-arr-limit); display: block; color: #b42318; }
+
+  /* Shared compact cards; mobile only reduces the outer padding below. */
+  @media (min-width: 0px) {
+    app-product-details .arr-full-reviews { max-width: 920px; margin: 0 auto; }
+    app-product-details .arr-full-reviews .user-review { padding: 16px 20px !important; margin-bottom: 14px !important; border: 1px solid #e2e8e2; border-radius: 10px; background: #fafcf9; box-sizing: border-box; }
+    app-product-details .arr-full-reviews .user-data { margin-bottom: 8px !important; }
+    app-product-details .arr-full-reviews .user-name { width: 100%; }
+    app-product-details .arr-full-reviews .user-name > a { flex-direction: row !important; flex-wrap: wrap; align-items: center; gap: 10px !important; font-weight: 600; }
+    app-product-details .arr-full-reviews .user-name small { font-weight: 400; color: #42704c; }
+    app-product-details .arr-full-reviews .user-review-rating { margin-top: 6px; }
+    app-product-details .arr-full-reviews .arr-star { display: inline-block; width: 18px; height: 18px; vertical-align: middle; }
+    app-product-details .arr-full-reviews .user-review-rating ul { display: flex; gap: 3px; color: #f59b00; }
+    app-product-details .arr-full-reviews .user-name small .arr-star { width: 14px; height: 14px; color: #087a34; }
+    app-product-details app-all-reviews .arr-full-reviews .user-review .user-review-data > p { margin: 0 0 8px !important; font-size: 15px; line-height: 1.6; }
+    app-product-details .arr-full-reviews .review-product-image-area { margin-bottom: 0 !important; }
+    app-product-details .arr-full-reviews .arr-review-image img { height: 64px; }
+  }
+
+  @media (max-width: 767px) {
+    app-product-details .arr-full-reviews .user-review { padding: 12px 14px !important; margin-bottom: 12px !important; }
+    app-product-details .arr-full-reviews .user-name > a { gap: 6px 10px !important; }
+  }
 
   @media (max-width: 430px) {
     .cdk-overlay-pane.arr-review-dialog { width: calc(100vw - 16px) !important; max-width: calc(100vw - 16px) !important; }
