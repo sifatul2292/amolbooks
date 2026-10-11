@@ -4887,8 +4887,26 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
 
   function normalizeCartOfferConfig(config) {
     if (!config) return null;
-    config.giftMinAmount = CART_OFFER_FALLBACK_THRESHOLD;
+    config.giftMinAmount = Math.max(0, Number(config.giftMinAmount) || 0);
     return config;
+  }
+
+  function cartHasBookGift(items, products) {
+    if (!cartOfferConfig || !cartOfferConfig.giftEnabled) return false;
+    var offers = (cartOfferConfig.giftBookOffers || []).slice();
+    if (cartOfferConfig.giftBuyXProductSlug && cartOfferConfig.giftBuyXQty) {
+      offers.push({ bookSlug: cartOfferConfig.giftBuyXProductSlug, quantity: cartOfferConfig.giftBuyXQty, enabled: true });
+    }
+    return offers.some(function (offer) {
+      if (!offer.enabled || !(Number(offer.quantity) >= 1)) return false;
+      var quantity = (items || []).reduce(function (sum, item) {
+        if (item && item.specialPackage) return sum;
+        var product = (products || []).find(function (p) { return String(p._id) === cartPageProductId(item); });
+        var slug = product && product.slug || item.slug || item.product && item.product.slug;
+        return slug === offer.bookSlug ? sum + Math.max(1, Number(item.selectedQty || item.quantity) || 1) : sum;
+      }, 0);
+      return quantity >= Number(offer.quantity);
+    });
   }
 
   function imageUrl(value, fallback) {
@@ -6049,7 +6067,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       }
       var row = injected;
       if (!row) {
-        var template = area.querySelector('.cart-card:not(.ab-live-cart-page-item)');
+        var template = area.querySelector('.cart-card:not(.ab-cart-gift-row)');
         if (!template) {
           area.insertAdjacentHTML('beforeend', cartMirrorRowHtml(item, product));
           return;
@@ -6113,7 +6131,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     if (!notebook._id && !notebook.name) return;
     var row = existing;
     if (!row) {
-      var template = area.querySelector('.cart-card:not(.ab-live-cart-page-item)');
+      var template = area.querySelector('.cart-card:not(.ab-cart-gift-row)');
       if (!template) return;
       row = template.cloneNode(true);
       row.classList.remove('ab-cart-native-stale');
@@ -6956,7 +6974,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     replaceIcon(methodImage, '/assets/images/logo/cod-small.svg', 'Cash on Delivery');
     if (!cartOfferConfig && !cartOfferConfigPending) {
       cartOfferConfigPending = true;
-      fetchJson('/order-offer/get', null, API_BASE).then(function (result) {
+      fetchJson('/order-offer/get', null, isLocalPreviewHost() ? window.location.origin + '/api' : API_BASE).then(function (result) {
         cartOfferConfigPending = false;
         cartOfferConfig = normalizeCartOfferConfig(result && result.data);
         warmCartOfferNotebook();
@@ -7022,19 +7040,19 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         removeCheckoutGift();
         return;
       }
-      var renderKey = cartItemsSignature(items) + '|' + String(cartOfferConfig.giftMinAmount || '') + '|' + String(cartOfferConfig.giftProduct && cartOfferConfig.giftProduct.slug || '');
+      var renderKey = cartItemsSignature(items) + '|' + String(cartOfferConfig.giftMinAmount || '') + '|' + String(cartOfferConfig.giftProduct && cartOfferConfig.giftProduct.slug || '') + '|' + JSON.stringify(cartOfferConfig.giftBookOffers || []);
       if (checkoutGiftRenderKey === renderKey && document.getElementById('ab-checkout-gift')) return;
       if (checkoutGiftPendingKey === renderKey) return;
       checkoutGiftPendingKey = renderKey;
       fetchCartProducts(items).then(function (products) {
         checkoutGiftPendingKey = '';
-        var threshold = Number(cartOfferConfig.giftMinAmount) || CART_OFFER_FALLBACK_THRESHOLD;
+        var threshold = Number(cartOfferConfig.giftMinAmount) || 0;
         var giftSlug = cartOfferConfig.giftProduct && cartOfferConfig.giftProduct.slug;
         var paidProducts = products.filter(function (product) {
           return product && String(product.slug || '') !== String(giftSlug || '');
         });
         var total = cartTotalFromProducts(items, paidProducts);
-        var earned = threshold > 0 && total >= threshold;
+        var earned = cartOfferConfig.giftEnabled && ((threshold > 0 && total >= threshold) || cartHasBookGift(items, products));
         if (!earned) {
           checkoutGiftRenderKey = '';
           removeCheckoutGift();
@@ -7449,10 +7467,10 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   }
 
   function renderCartOffer(items, products) {
-    if (!cartOfferConfig) return;
+    if (!cartOfferConfig || !cartOfferConfig.giftEnabled) return;
     var anchor = cartOfferAnchor();
     if (!anchor) return;
-    var threshold = Number(cartOfferConfig.giftMinAmount) || CART_OFFER_FALLBACK_THRESHOLD;
+    var threshold = Number(cartOfferConfig.giftMinAmount) || 0;
     var calculatedTotal = cartTotalFromProducts(items || [], products || []);
     var hasCartProducts = (items || []).length && (items || []).every(function (item) {
       return (products || []).some(function (product) { return String(product._id) === cartPageProductId(item); });
@@ -7472,11 +7490,11 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     var notebookCover = notebook.image || Array.isArray(notebook.images) && notebook.images[0] || '';
     var notebookPages = String(NOTEBOOK_PAGE_COUNT).replace(/\\d/g, function (digit) { return String.fromCharCode(0x09e6 + Number(digit)); });
     var notebookImage = notebookCover ? '<a class="ab-cart-offer-notebook-link" href="/product-details/' + encodeURIComponent(notebook.slug || cartOfferConfig.giftProduct && cartOfferConfig.giftProduct.slug || '') + '" aria-label="' + escapeHtml((notebook.name || 'ফ্রি নোটবুক') + ' দেখুন') + '"><img class="ab-cart-offer-notebook" src="' + escapeHtml(imageUrl(notebookCover)) + '" alt="' + escapeHtml(notebook.name || 'ফ্রি নোটবুক') + '"></a>' : '<span class="ab-cart-offer-icon" aria-hidden="true">🎁</span>';
-    var earned = remaining === 0;
+    var earned = cartOfferConfig.giftEnabled && ((threshold > 0 && remaining === 0) || cartHasBookGift(items, products));
     var progressMarkup = notebookImage + '<p>' +
       (earned ? '<strong>অভিনন্দন!</strong> আপনার অর্ডারের সঙ্গে <strong>' + escapeHtml(notebookPages) + ' পৃষ্ঠার ফ্রি নোটবুক</strong> উপহার হিসেবে যুক্ত হয়েছে।' : 'আর মাত্র <strong>' + money(remaining) + '</strong> টাকার বই যোগ করুন — পেয়ে যান <strong>' + escapeHtml(notebookPages) + ' পৃষ্ঠার ফ্রি নোটবুক</strong>!') +
       '</p><div class="ab-cart-offer-bar"><div class="ab-cart-offer-fill" style="width:' + Math.min(100, threshold ? Math.round(total * 100 / threshold) : 0) + '%"></div></div>';
-    var progressRenderKey = [threshold, total, remaining, notebookCover, notebookPages].join('|');
+    var progressRenderKey = [threshold, total, remaining, earned, notebookCover, notebookPages].join('|');
     if (progress.getAttribute('data-render-key') !== progressRenderKey) {
       progress.innerHTML = progressMarkup;
       progress.setAttribute('data-render-key', progressRenderKey);
@@ -7627,10 +7645,8 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     repairCartPopularProducts();
     if (!cartOfferConfig && !cartOfferConfigPending) {
       cartOfferConfigPending = true;
-      // Offers are centrally managed in the published order service.  Keep this
-      // endpoint on that source even for localhost previews so the cart badge
-      // always mirrors the checkout promise and server-side gift rule.
-      fetchJson('/order-offer/get', null, API_BASE).then(function (result) {
+      // Read the same offer configuration used by this environment’s order API.
+      fetchJson('/order-offer/get', null, isLocalPreviewHost() ? window.location.origin + '/api' : API_BASE).then(function (result) {
         cartOfferConfigPending = false;
         cartOfferConfig = normalizeCartOfferConfig(result && result.data);
         warmCartOfferNotebook();

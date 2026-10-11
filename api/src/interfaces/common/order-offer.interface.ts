@@ -1,5 +1,6 @@
 export interface OrderOffer {
   _id?: string;
+  giftBookOffers?: { bookSlug: string; quantity: number; enabled: boolean }[];
   firstOrderDiscountAmount?: number;
   firstOrderDiscountType?: number;
   firstOrderMinAmount?: number;

@@ -31,6 +31,14 @@ export class OrderOfferController {
 
   constructor(private orderOfferService: OrderOfferService) {}
 
+  @Version(VERSION_NEUTRAL)
+  @Post('/book-gifts')
+  @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @UseGuards(AdminJwtAuthGuard, AdminRolesGuard)
+  async saveBookGifts(@Body() body: any): Promise<ResponsePayload> {
+    return this.orderOfferService.saveBookGifts(body);
+  }
+
   /**
    * addOrderOffer
    * insertManyOrderOffer

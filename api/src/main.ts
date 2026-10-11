@@ -522,6 +522,7 @@ ${storefrontPurchaseExternalIdHelper}
     'catalogue-local-requests.html',
     'cart-page-navigation.html',
     'product-detail-polish.html',
+    'book-gift-card.html',
     'homepage-redesign.html',
   ];
   const storefrontSnippetsPattern =

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   InternalServerErrorException,
@@ -24,6 +25,7 @@ export class OrderOfferService {
   constructor(
     @InjectModel('OrderOffer')
     private readonly orderOfferModel: Model<OrderOffer>,
+    @InjectModel('Product') private readonly productModel: Model<any>,
     @InjectModel('Order')
     private readonly orderModel: Model<Order>,
     @InjectModel('User')
@@ -31,6 +33,43 @@ export class OrderOfferService {
     private configService: ConfigService,
     private utilsService: UtilsService,
   ) {}
+
+  async saveBookGifts(body: any): Promise<ResponsePayload> {
+    if (!body || !Array.isArray(body.offers) || body.offers.length > 50)
+      throw new BadRequestException('Provide up to 50 book offers');
+    const offers = body.offers.map((offer: any) => {
+      if (!offer || typeof offer.bookSlug !== 'string' || !offer.bookSlug.trim() ||
+          offer.bookSlug.length > 300 || !Number.isInteger(offer.quantity) ||
+          offer.quantity < 1 || offer.quantity > 100 || typeof offer.enabled !== 'boolean')
+        throw new BadRequestException('Invalid book offer');
+      return { bookSlug: offer.bookSlug.trim(), quantity: offer.quantity, enabled: offer.enabled };
+    });
+    if (new Set(offers.map((o) => o.bookSlug)).size !== offers.length)
+      throw new BadRequestException('Each book can have one offer');
+    const config = await this.orderOfferModel.findOne();
+    let giftProduct = (config as any)?.giftProduct;
+    if (body.notebookSlug !== undefined) {
+      if (typeof body.notebookSlug !== 'string' || !body.notebookSlug.trim() || body.notebookSlug.length > 300)
+        throw new BadRequestException('Invalid notebook product');
+      const notebook = await this.productModel.findOne({ slug: body.notebookSlug.trim() }).select('_id name slug images').lean();
+      if (!notebook) throw new BadRequestException('Notebook product was not found');
+      giftProduct = { _id: String(notebook._id), name: notebook.name, slug: notebook.slug, image: notebook.images?.[0] || '' };
+    }
+    if (!giftProduct?._id)
+      throw new BadRequestException('Choose the notebook gift product first');
+    const slugs = offers.map((o) => o.bookSlug);
+    const books = await this.productModel.find({ slug: { $in: slugs } }).select('slug').lean();
+    if (books.length !== slugs.length)
+      throw new BadRequestException('One or more books were not found');
+    if (offers.some((o) => o.bookSlug === giftProduct.slug))
+      throw new BadRequestException('The notebook cannot qualify as its own gift');
+    if (config) {
+      await this.orderOfferModel.updateOne({ _id: config._id }, { $set: { giftBookOffers: offers, ...(body.notebookSlug !== undefined ? { giftProduct } : {}) } });
+    } else {
+      await this.orderOfferModel.create({ giftEnabled: true, giftProduct, giftBookOffers: offers });
+    }
+    return { success: true, message: 'Book gift offers saved', data: offers } as ResponsePayload;
+  }
 
   /**
    * addOrderOffer

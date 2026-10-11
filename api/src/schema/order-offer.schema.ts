@@ -112,6 +112,11 @@ export const OrderOfferSchema = new mongoose.Schema(
       type: Number,
       required: false,
     },
+    // Independent book triggers share the configured notebook; [] disables all.
+    giftBookOffers: {
+      type: [{ bookSlug: String, quantity: Number, enabled: Boolean }],
+      default: () => [{ bookSlug: 'productive muslim', quantity: 1, enabled: true }],
+    },
     giftLabel: {
       type: String,
       required: false,

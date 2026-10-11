@@ -36,7 +36,7 @@ assert.match(source, /operation === 'remove'[\s\S]*?cartRow\.classList\.add\('ab
 assert.match(source, /function setGuestCartItems\(items\) \{\s*cartPageRenderVersion \+= 1;/, 'Persisting a cart change invalidates older cart renders');
 assert.match(source, /function syncGuestCartUi\(\) \{\s*var pageVersion = \+\+cartPageRenderVersion;[\s\S]*?fetchCartProducts\(items\)\.then\(function \(products\) \{\s*if \(pageVersion !== cartPageRenderVersion\) return;/, 'A stale guest cart fetch cannot redraw a removed product');
 assert.match(source, /function repairCartPage\(\) \{[\s\S]*?var pageVersion = cartPageRenderVersion;[\s\S]*?cartPageItems\(\)\.then\(function \(items\) \{\s*if \(pageVersion !== cartPageRenderVersion\) return;[\s\S]*?if \(!cartPageOpen\(\) \|\| pageVersion !== cartPageRenderVersion\) return;/, 'A stale page repair cannot redraw a removed product');
-assert.match(source, /config\.giftMinAmount = CART_OFFER_FALLBACK_THRESHOLD;/, 'Free notebook keeps the ৳799 storefront threshold');
+assert.match(source, /config\.giftMinAmount = Math\.max\(0, Number\(config\.giftMinAmount\) \|\| 0\);/, 'Free notebook respects the saved offer threshold');
 const cartTotalHelpers = ['banglaNumber', 'cartDisplayedTotal'].map(name => {
   const start = source.indexOf('  function ' + name + '(');
   return source.slice(start, source.indexOf('\n  function ', start + 1));

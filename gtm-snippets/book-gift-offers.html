@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Book Gift Offers · Amolbooks</title>
+    <style>
+      :root {
+        font: 14px system-ui, sans-serif;
+        color: #1e293b;
+        background: #f0f2f8;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+      header {
+        padding: 20px;
+        background: linear-gradient(110deg, #6d28d9, #4338ca);
+        color: white;
+        display: flex;
+        gap: 16px;
+        align-items: center;
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0;
+      }
+      header a {
+        color: white;
+        text-decoration: none;
+      }
+      main {
+        max-width: 1000px;
+        margin: 24px auto;
+        padding: 0 16px;
+      }
+      .card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 20px;
+        margin-bottom: 16px;
+      }
+      h2 {
+        font-size: 16px;
+        margin: 0 0 10px;
+      }
+      p {
+        line-height: 1.6;
+        color: #64748b;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+        padding: 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        background: white;
+        color: inherit;
+      }
+      button {
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      .primary {
+        background: #7c3aed;
+        color: white;
+        border-color: #7c3aed;
+      }
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 12px;
+        color: #64748b;
+      }
+      .rule {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 110px 110px 85px;
+        gap: 12px;
+        align-items: end;
+        padding: 16px 0;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .rule input,
+      .rule select {
+        width: 100%;
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+      }
+      #status {
+        min-height: 22px;
+        white-space: pre-wrap;
+      }
+      a {
+        color: #7c3aed;
+      }
+      :focus-visible {
+        outline: 3px solid #a78bfa;
+        outline-offset: 2px;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .gift {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .gift img {
+        width: 45px;
+        height: 58px;
+        object-fit: contain;
+      }
+      @media (max-width: 600px) {
+        .rule {
+          grid-template-columns: minmax(0, 1fr) 85px;
+        }
+        .book {
+          grid-column: 1/-1;
+        }
+        header {
+          flex-wrap: wrap;
+        }
+        .card {
+          padding: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a href="custom-orders.html">← Orders</a>
+      <h1>Book Gift Offers</h1>
+    </header>
+    <main>
+      <section class="card">
+        <h2>Notebook gift</h2>
+        <div class="gift">
+          <img id="gift-image" alt="Notebook" /><strong id="gift-name"
+            >Loading…</strong
+          >
+        </div>
+        <p>
+          Each enabled book rule below earns one of the configured notebooks.
+          Existing spending and two-copy offers remain unchanged. Qualifying for
+          multiple rules still earns one notebook.
+        </p>
+        <label for="notebook"
+          >Notebook product link or slug (shared by all gift offers)</label
+        >
+        <input id="notebook" placeholder="Amol Notebook" style="width: 100%" />
+        <p id="legacy"></p>
+      </section>
+      <form class="card" id="form">
+        <h2>Book-specific offers</h2>
+        <p>
+          Select a book, set the minimum copies and turn the offer on or off.
+          Use the product link or exact slug. The gift card appears below
+          delivery information on that book’s page.
+        </p>
+        <div id="rules"></div>
+        <div class="actions">
+          <button type="button" id="add">+ Add book offer</button
+          ><button class="primary" id="save" disabled>Save offers</button
+          ><button type="button" id="reload">Reload saved offers</button>
+        </div>
+        <p id="status" role="status" aria-live="polite"></p>
+      </form>
+      <section class="card" id="login" hidden>
+        <h2>Admin sign in</h2>
+        <p>Sign in using your admin account to manage offers.</p>
+        <form id="login-form">
+          <label for="username">Username</label
+          ><input id="username" autocomplete="username" required /><label
+            for="password"
+            >Password</label
+          ><input
+            id="password"
+            type="password"
+            autocomplete="current-password"
+            required
+          /><button class="primary">Sign in</button>
+        </form>
+      </section>
+    </main>
+    <script>
+      (function () {
+        'use strict';
+        const $ = (id) => document.getElementById(id),
+          API_BASE = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(
+            location.hostname,
+          )
+            ? location.origin
+            : 'https://apisub.amolbooks.com';
+        let busy = false,
+          savedNotebook = '';
+        function slug(value) {
+          value = value.trim();
+          if (/^https?:\/\//.test(value)) {
+            const url = new URL(value);
+            value = url.pathname.split('/product-details/')[1] || '';
+          }
+          try {
+            return decodeURIComponent(value).replace(/\/$/, '');
+          } catch (_) {
+            return value;
+          }
+        }
+        function add(offer = { bookSlug: '', quantity: 1, enabled: true }) {
+          const row = document.createElement('div');
+          row.className = 'rule';
+          const book = document.createElement('div');
+          book.className = 'book';
+          const label = document.createElement('label');
+          label.textContent = 'Book product link or slug';
+          const input = document.createElement('input');
+          input.value = offer.bookSlug;
+          input.placeholder = 'https://www.amolbooks.com/product-details/…';
+          input.required = true;
+          input.maxLength = 600;
+          input.setAttribute('aria-label', 'Qualifying book');
+          label.appendChild(input);
+          book.appendChild(label);
+          row.appendChild(book);
+          const qtyLabel = document.createElement('label');
+          qtyLabel.textContent = 'Copies';
+          const qty = document.createElement('input');
+          qty.type = 'number';
+          qty.min = 1;
+          qty.max = 100;
+          qty.value = offer.quantity;
+          qty.required = true;
+          qty.setAttribute('aria-label', 'Minimum copies');
+          qtyLabel.appendChild(qty);
+          row.appendChild(qtyLabel);
+          const enabledLabel = document.createElement('label');
+          enabledLabel.textContent = 'Status';
+          const enabled = document.createElement('select');
+          enabled.innerHTML =
+            '<option value="true">Enabled</option><option value="false">Disabled</option>';
+          enabled.value = String(offer.enabled);
+          enabled.setAttribute('aria-label', 'Offer status');
+          enabledLabel.appendChild(enabled);
+          row.appendChild(enabledLabel);
+          const remove = document.createElement('button');
+          remove.type = 'button';
+          remove.textContent = 'Remove';
+          remove.onclick = () => row.remove();
+          row.appendChild(remove);
+          $('rules').appendChild(row);
+        }
+        async function request(path, options = {}) {
+          const r = await fetch(API_BASE + path, {
+            ...options,
+            headers: {
+              'Content-Type': 'application/json',
+              administrator: localStorage.getItem('co_admin_token') || '',
+              ...options.headers,
+            },
+          });
+          const data = await r.json();
+          if (!r.ok || data.success === false) {
+            if (r.status === 401) $('login').hidden = false;
+            throw Error(data.message || 'Request failed');
+          }
+          return data.data || data;
+        }
+        async function load() {
+          if (busy) return;
+          busy = true;
+          $('save').disabled = true;
+          $('status').textContent = 'Loading saved offers…';
+          try {
+            const c = await request('/api/order-offer/get');
+            $('rules').replaceChildren();
+            (
+              c.giftBookOffers ||
+              (!c.giftProduct
+                ? [
+                    {
+                      bookSlug: 'productive muslim',
+                      quantity: 1,
+                      enabled: true,
+                    },
+                  ]
+                : [])
+            ).forEach(add);
+            savedNotebook = c.giftProduct?.slug || '';
+            $('notebook').value = savedNotebook || 'Amol Notebook';
+            $('gift-name').textContent =
+              c.giftProduct?.name || 'No gift product configured';
+            const image = c.giftProduct?.image || '';
+            $('gift-image').hidden = !/^https?:\/\//.test(image);
+            if (/^https?:\/\//.test(image)) $('gift-image').src = image;
+            $('legacy').textContent =
+              'Existing spending offer: ' +
+              (c.giftEnabled ? '৳' + c.giftMinAmount : 'disabled') +
+              '. Existing book trigger: ' +
+              (c.giftBuyXProductSlug || 'none') +
+              ' (' +
+              (c.giftBuyXQty || 0) +
+              ' copies).';
+            $('status').textContent = 'Saved offers loaded.';
+            $('save').disabled = false;
+          } catch (e) {
+            $('status').textContent = e.message;
+          } finally {
+            busy = false;
+          }
+        }
+        $('add').onclick = () => {
+          if (!busy) add();
+        };
+        $('reload').onclick = load;
+        $('form').onsubmit = async (event) => {
+          event.preventDefault();
+          if (busy) return;
+          busy = true;
+          $('save').disabled = true;
+          $('add').disabled = true;
+          $('reload').disabled = true;
+          try {
+            const offers = Array.from($('rules').children).map((row) => ({
+              bookSlug: slug(row.querySelector('input').value),
+              quantity: Number(row.querySelector('input[type="number"]').value),
+              enabled: row.querySelector('select').value === 'true',
+            }));
+            const data = await request('/api/order-offer/book-gifts', {
+              method: 'POST',
+              body: JSON.stringify({
+                offers,
+                ...(slug($('notebook').value) !== savedNotebook ||
+                !savedNotebook
+                  ? { notebookSlug: slug($('notebook').value) }
+                  : {}),
+              }),
+            });
+            $('rules').replaceChildren();
+            data.forEach(add);
+            savedNotebook = slug($('notebook').value);
+            $('status').textContent =
+              'Offers saved. Product pages and new orders now use these rules.';
+          } catch (e) {
+            $('status').textContent = e.message;
+          } finally {
+            busy = false;
+            $('save').disabled = false;
+            $('add').disabled = false;
+            $('reload').disabled = false;
+          }
+        };
+        $('login-form').onsubmit = async (event) => {
+          event.preventDefault();
+          try {
+            const result = await request('/api/admin/login', {
+              method: 'POST',
+              body: JSON.stringify({
+                username: $('username').value,
+                password: $('password').value,
+              }),
+            });
+            const token = result.token || result.accessToken;
+            if (!token) throw Error('Sign in did not return a token');
+            localStorage.setItem('co_admin_token', token);
+            $('password').value = '';
+            $('login').hidden = true;
+            load();
+          } catch (e) {
+            $('status').textContent = e.message;
+          }
+        };
+        load();
+      })();
+    </script>
+  </body>
+</html>

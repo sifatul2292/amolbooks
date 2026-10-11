@@ -6,14 +6,25 @@ import { join } from 'path';
 export function customerManagerPages(root: string) {
   return (req: Request, res: Response, next: NextFunction) => {
     if (req.method !== 'GET') return next();
-    if (req.path === '/upload/static/customer-manager.html') {
+    if (
+      [
+        '/upload/static/customer-manager.html',
+        '/upload/static/book-gift-offers.html',
+      ].includes(req.path)
+    ) {
       try {
         res.setHeader('Cache-Control', 'no-store');
         return res
           .type('html')
           .send(
             readFileSync(
-              join(root, 'gtm-snippets/customer-manager.html'),
+              join(
+                root,
+                'gtm-snippets',
+                req.path.endsWith('/book-gift-offers.html')
+                  ? 'book-gift-offers.html'
+                  : 'customer-manager.html',
+              ),
               'utf8',
             ),
           );
@@ -37,6 +48,10 @@ export function customerManagerPages(root: string) {
           if (!page.includes('id="navCustomerManager"'))
             page = page.replace('</nav>', link + '</nav>');
         }
+        page = page.replace(
+          '</nav>',
+          '<a href="book-gift-offers.html" class="nav-item" data-salesman-hidden><i class="fas fa-gift"></i> Book Gift Offers</a></nav>',
+        );
         res.setHeader('Cache-Control', 'no-store');
         return res.type('html').send(page);
       } catch (_error) {

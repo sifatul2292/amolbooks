@@ -5004,6 +5004,13 @@ export class OrderService {
         }
       }
 
+      if (!eligible) {
+        eligible = (cfg.giftBookOffers || []).some((offer) =>
+          offer.enabled && Number(offer.quantity) >= 1 &&
+          products.filter((p) => p.slug === offer.bookSlug && String(p._id) !== giftId)
+            .reduce((sum, p) => sum + Number(p.quantity || 0), 0) >= Number(offer.quantity),
+        );
+      }
       const existing = products.find((p) => String(p._id) === giftId);
 
       if (!eligible) {

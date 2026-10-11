@@ -1,0 +1,224 @@
+<!-- Book-specific gift promise, driven by the same OrderOffer rules as checkout. -->
+<style>
+  #ab-book-gift-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    padding: 10px 12px;
+    margin: 10px 0;
+    border: 1px solid #dfd8a8;
+    border-left: 4px solid #16833b;
+    border-radius: 8px;
+    background: linear-gradient(110deg, #fff9e6, #f0faee);
+    box-shadow: 0 2px 8px rgba(22, 131, 59, 0.08);
+    color: #333;
+    box-sizing: border-box;
+    font: inherit;
+    line-height: 1.45;
+  }
+  #ab-book-gift-card img {
+    width: 72px;
+    height: 92px;
+    padding: 2px;
+    border-radius: 4px;
+    background: #fff;
+    box-sizing: border-box;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+  #ab-book-gift-card div {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  #ab-book-gift-card strong {
+    display: inline-block;
+    margin-bottom: 4px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: #16833b;
+    color: #fff;
+    line-height: 1.4;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  #ab-book-gift-card p {
+    margin: 2px 0 !important;
+    font-size: 13px !important;
+    line-height: 1.45 !important;
+  }
+  #ab-book-gift-card a {
+    color: #126c31;
+    font-weight: 600;
+    font-size: inherit !important;
+    text-decoration: none;
+  }
+  @media (min-width: 768px) {
+    #ab-book-gift-card { gap: 8px; padding: 8px 10px; max-width: 460px; }
+    #ab-book-gift-card p { line-height: 1.4 !important; }
+  }
+  @media (max-width: 480px) {
+    #ab-book-gift-card { gap: 8px; padding: 8px 10px; }
+  }
+</style>
+<script>
+  (function () {
+    'use strict';
+    if (window.__abBookGiftCard) return;
+    window.__abBookGiftCard = true;
+    var local = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname);
+    var API_BASE = local
+      ? location.origin + '/api'
+      : 'https://apisub.amolbooks.com/api';
+    var config = null,
+      pending = false,
+      loadedAt = 0;
+    function render() {
+      var card = document.getElementById('ab-book-gift-card');
+      var slug = '';
+      try {
+        slug = decodeURIComponent(
+          location.pathname.split('/product-details/')[1] || '',
+        ).replace(/\/$/, '');
+      } catch (_) {}
+      var offer =
+        config &&
+        config.giftEnabled &&
+        config.giftProduct &&
+        (config.giftBookOffers || []).find(function (o) {
+          return o.enabled && o.bookSlug === slug && o.quantity >= 1;
+        });
+      if (!offer) {
+        if (card) card.remove();
+        return;
+      }
+      var page = document.querySelector('app-product-details');
+      if (!page) return;
+      var estimate = page.querySelector('[data-ab-delivery-inside]');
+      var delivery =
+        estimate && estimate.offsetParent !== null
+          ? estimate.parentElement.parentElement
+          : Array.prototype.slice
+              .call(page.querySelectorAll('.delivery-area'))
+              .find(function (node) {
+                return node.offsetParent !== null;
+              });
+      var stock = Array.prototype.slice
+        .call(page.querySelectorAll('.stock, .stock-out'))
+        .find(function (node) {
+          return node.offsetParent !== null;
+        });
+      if (!delivery && !stock) return;
+      var key = JSON.stringify([offer, config.giftProduct]);
+      if (card && card.getAttribute('data-offer') !== key) {
+        card.remove();
+        card = null;
+      }
+      if (!card) {
+        card = document.createElement('section');
+        card.id = 'ab-book-gift-card';
+        card.setAttribute('data-offer', key);
+        card.setAttribute('aria-label', 'এই বইয়ের সঙ্গে ফ্রি উপহার');
+        var image = document.createElement('img');
+        image.width = 72;
+        image.height = 92;
+        image.alt = config.giftProduct.name || 'ফ্রি নোটবুক';
+        image.onerror = function () {
+          image.hidden = true;
+        };
+        var src = config.giftProduct.image || '';
+        if (/^https?:\/\//.test(src) || src.charAt(0) === '/')
+          image.src =
+            src.charAt(0) === '/' ? 'https://apisub.amolbooks.com' + src : src;
+        else image.hidden = true;
+        var copy = document.createElement('div'),
+          title = document.createElement('strong'),
+          text = document.createElement('p'),
+          link = document.createElement('a');
+        title.textContent = 'ফ্রি উপহার';
+        var qty = String(offer.quantity).replace(/\d/g, function (d) {
+          return '০১২৩৪৫৬৭৮৯'[Number(d)];
+        });
+        text.appendChild(
+          document.createTextNode(
+            offer.quantity === 1
+              ? 'এই বইটি আজকে অর্ডার করলে সাথে পাবেন '
+              : 'এই বইয়ের ' + qty + ' কপি কিনলে পাবেন ',
+          ),
+        );
+        link.href =
+          '/product-details/' +
+          encodeURIComponent(config.giftProduct.slug || 'Amol Notebook');
+        link.textContent =
+          config.giftProduct.slug === 'Amol Notebook'
+            ? 'আকর্ষণীয় ৭২ পৃষ্ঠার এই নোটবুকটি'
+            : (config.giftProduct.name || 'নোটবুক') + ' একদম ফ্রি।';
+        text.appendChild(link);
+        copy.appendChild(title);
+        copy.appendChild(text);
+        card.appendChild(image);
+        card.appendChild(copy);
+      }
+      if (delivery) {
+        if (delivery.nextElementSibling !== card)
+          delivery.insertAdjacentElement('afterend', card);
+      } else if (stock.previousElementSibling !== card)
+        stock.insertAdjacentElement('beforebegin', card);
+    }
+    function tick() {
+      if (location.pathname.indexOf('/product-details/') !== 0) {
+        render();
+        return;
+      }
+      if (!pending && Date.now() - loadedAt > 60000) {
+        pending = true;
+        loadedAt = Date.now();
+        fetch(API_BASE + '/order-offer/get')
+          .then(function (r) {
+            if (!r.ok) throw Error('Offer unavailable');
+            return r.json();
+          })
+          .then(function (r) {
+            config = r.data || null;
+            render();
+            if (config && config.giftProduct && config.giftProduct.slug) {
+              var snapshot = config;
+              fetch(
+                API_BASE +
+                  '/product/get-by-slug/' +
+                  encodeURIComponent(config.giftProduct.slug),
+              )
+                .then(function (response) {
+                  if (!response.ok) return null;
+                  return response.json();
+                })
+                .then(function (result) {
+                  var product = result && result.data;
+                  if (
+                    config !== snapshot ||
+                    !product ||
+                    !product.images ||
+                    !product.images[0]
+                  )
+                    return;
+                  config.giftProduct.image = product.images[0];
+                  render();
+                })
+                .catch(function () {});
+            }
+          })
+          .catch(function () {
+            config = null;
+            render();
+          })
+          .finally(function () {
+            pending = false;
+          });
+      }
+      render();
+    }
+    setInterval(tick, 800);
+    tick();
+  })();
+</script>

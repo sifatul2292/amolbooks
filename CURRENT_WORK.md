@@ -1865,3 +1865,23 @@ count even when tracking is perfect.
 - Filters update automatically (400 ms typing debounce); order-product search responds as you type (300 ms). Existing Apply/Search buttons remain. Requests cancel previous work and ignore obsolete results; refresh errors retain loaded rows. Customer selection toggles row highlighting without repainting the table; full histories render only when opened. No external UI libraries added.
 - Default list aggregation skips purchase-item arrays and catalog joins when those filters are absent. Detail narrows phone candidates before normalization, scans orders once for counts/history, and loads contacts in parallel. Contact logging validates customer existence without fetching full history. Purchased-book search prefilters matching item names. Phone normalization and delivered-only rules retained.
 - API build and isolated Mongo/HTTP/Chrome checks pass, including automatic filtering, sales-role access, mobile layout and repeat-order persistence/stock/idempotency. Optional 10,000-order fixture benchmark: median detail 45→8 ms, list 221→217 ms, category 225→288 ms (local measurements, not production guarantees). Lint still fails because all matching source files are ignored by existing ESLint configuration.
+
+## Book-specific notebook gifts — 11 October 2026 (Sunday rollback)
+
+- Added Productive Muslim → one free Amol Notebook rule, configurable through `/upload/static/book-gift-offers.html` (Admin/SuperAdmin only). Shared gift product and existing spending/two-copy rules are retained; saving an empty book-rule list disables book-specific offers.
+- New GTM gift card appears directly below the existing “সম্ভাব্য ডেলিভারি” estimate for qualifying books. SPA navigation removes it elsewhere; notebook metadata refresh avoids stale images. Local API_BASE uses the current host `/api`; published pages use `https://apisub.amolbooks.com/api`.
+- Backend order pricing and cart eligibility honor book rules without duplicate notebook gifts. Storefront now honors the saved spending threshold rather than overriding it with 799.
+- Initialized nonproduction development offer settings, preserving published legacy offer values. Added missing Productive Muslim and Amol Notebook development catalogue fixtures from public read-only catalogue responses. Previous offer document backed up in ignored `tmp/`. No production settings changed or deployment performed.
+- API build passes. Gift eligibility/validation/HTTP role checks, responsive card/admin checks, existing cart-state and product-detail checks pass. Actual localhost Productive Muslim page verified at 320/375/414/768/1440px: card follows delivery estimate, image loads, unrelated book excluded. Lint remains blocked by existing all-files-ignored ESLint configuration.
+- Dev server runs from `codex/rollback-sunday-20260927` checkout on port 3001. Existing unrelated working-tree changes preserved.
+
+- Gift card copy updated to “এই বইটি আজকে অর্ডার করলে সাথে পাবেন আকর্ষণীয় ৭২ পৃষ্ঠার এই নোটবুকটি”; notebook link and quantity-specific wording retained.
+
+- Gift card responsiveness now matches the delivery estimate: 14px heading, 13px body, matching padding/breakpoints/460px desktop cap, and compact notebook thumbnail. Existing offer text retained.
+
+- Gift card visibility improved with a warm cream/green background, green edge, compact “ফ্রি উপহার” badge, stronger notebook link and subtle shadow. Responsive layout and small body text preserved; no animation added.
+
+- Enlarged gift notebook thumbnail from 40×52 to 72×92px with less internal padding, preserving small copy and responsive card layout.
+
+- Fixed blank cart gift offer: Sunday cart eligibility referenced an undefined package helper; now checks the existing specialPackage field directly. Included eligibility in the render key so equal-value cart changes refresh the offer correctly.
+- Gift row now clones any ordinary cart row, including locally generated rows, rather than requiring an Angular-native row.
