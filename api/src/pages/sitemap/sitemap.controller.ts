@@ -1,11 +1,21 @@
 // src/sitemap/sitemap.controller.ts
-import { Controller, Get, Res, Version, VERSION_NEUTRAL } from '@nestjs/common';
-import { Response } from 'express';
+import { Controller, Get, Req, Res, Version, VERSION_NEUTRAL } from '@nestjs/common';
+import { Request, Response } from 'express';
+import { StorefrontDocumentService } from './storefront-document.service';
 import { SitemapService } from './sitemap.service';
 
 @Controller()
 export class SitemapController {
-  constructor(private readonly sitemapService: SitemapService) {}
+  constructor(
+    private readonly sitemapService: SitemapService,
+    private readonly storefrontDocumentService: StorefrontDocumentService,
+  ) {}
+
+  @Version(VERSION_NEUTRAL)
+  @Get('storefront-document/*')
+  async getStorefrontDocument(@Req() req: Request, @Res() res: Response) {
+    return this.storefrontDocumentService.send(req.params[0] || '', res);
+  }
 
   @Version(VERSION_NEUTRAL)
   @Get('sitemap.xml')

@@ -1,18 +1,8 @@
-# Search and social crawler routing for the www.amolbooks.com nginx virtual host.
-#
-# 1. Put the `map` block in nginx's `http` context (for example in a file under
-#    /etc/nginx/conf.d/).
-# 2. Put the `location` blocks in the www.amolbooks.com `server` block, before
-#    its generic `location /` SPA fallback.
-# 3. Validate with `nginx -t` before reloading nginx.
+# Include these locations in the active www.amolbooks.com HTTPS server.
+# All visitors receive the same server-rendered content inside the existing
+# Angular host. Preserve the server's SSL, assets, uploads and feed locations.
+# Replace existing product/package detail locations rather than duplicating them.
 
-# http context
-map $http_user_agent $amol_seo_crawler {
-    default 0;
-    ~*(Googlebot|Google-InspectionTool|bingbot|Slurp|DuckDuckBot|YandexBot|Applebot|facebookexternalhit|facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Discordbot|Slackbot|redditbot|pinterest) 1;
-}
-
-# www.amolbooks.com server context
 location = /robots.txt {
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-Proto $scheme;
@@ -25,43 +15,69 @@ location = /sitemap.xml {
     proxy_pass http://127.0.0.1:3000/api/sitemap.xml;
 }
 
-location ~ ^/product-details/([^/]+)/?$ {
-    # Caches must keep crawler HTML separate from the interactive storefront.
-    add_header Vary User-Agent always;
-    set $amol_product_seo_slug $1;
-    error_page 418 = @amol_product_seo;
-
-    if ($amol_seo_crawler) {
-        return 418;
-    }
-
-    try_files $uri $uri/ /index.html;
-}
-
-location @amol_product_seo {
-    add_header Vary User-Agent always;
+location = / {
     proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_pass http://127.0.0.1:3000/api/product/og/$amol_product_seo_slug;
+    proxy_pass http://127.0.0.1:3000/api/storefront-document/;
 }
 
-location ~ ^/special-package-details/([a-fA-F0-9]{24})/?$ {
-    set $amol_special_package_seo_id $1;
-    error_page 418 = @amol_special_package_seo;
-
-    if ($amol_seo_crawler) {
-        return 418;
-    }
-
-    try_files $uri $uri/ /index.html;
-}
-
-location @amol_special_package_seo {
+location = /product-list {
     proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_pass http://127.0.0.1:3000/api/special-package/og/$amol_special_package_seo_id;
+    proxy_pass http://127.0.0.1:3000/api/storefront-document/product-list;
+}
+
+location = /category-list {
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_pass http://127.0.0.1:3000/api/storefront-document/category-list;
+}
+
+location = /author-list {
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_pass http://127.0.0.1:3000/api/storefront-document/author-list;
+}
+
+location = /publisher-list {
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_pass http://127.0.0.1:3000/api/storefront-document/publisher-list;
+}
+
+location = /blogs {
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_pass http://127.0.0.1:3000/api/storefront-document/blogs;
+}
+
+location = /offers {
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_pass http://127.0.0.1:3000/api/storefront-document/offers;
+}
+
+location = /contact-us {
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_pass http://127.0.0.1:3000/api/storefront-document/contact-us;
+}
+
+location ^~ /product-details/ {
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_pass http://127.0.0.1:3000/api/storefront-document/product-details/;
+}
+
+location ^~ /special-package-details/ {
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_pass http://127.0.0.1:3000/api/storefront-document/special-package-details/;
+}
+
+# Metadata refresh after Angular navigation; robots.txt already excludes /api/.
+location ^~ /api/storefront-document/ {
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_pass http://127.0.0.1:3000;
 }

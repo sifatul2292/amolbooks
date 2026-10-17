@@ -30,7 +30,7 @@ export class SitemapService {
     const products = await this.productService.findAllPublished();
     products.forEach((product) =>
       smStream.write({
-        url: `/product-details/${product.slug}`,
+        url: `/product-details/${encodeURIComponent(product.slug)}`,
         lastmod: product.updatedAt,
         changefreq: 'weekly',
         priority: 0.9,
