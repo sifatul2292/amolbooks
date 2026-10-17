@@ -1,5 +1,5 @@
 // Read-only production routing checks. Requires Node 18+.
-// Usage: node scripts/check-live-seo.cjs [storefront-origin] [--all]
+// Usage: node scripts/check-live-seo.cjs [storefront-origin] [--all] [--private]
 const assert = require('node:assert/strict');
 
 const origin = new URL(process.argv.find((arg) => /^https?:/.test(arg)) || 'https://www.amolbooks.com').origin;
@@ -8,10 +8,11 @@ const slug = 'tinii-amar-rob-2-98';
 const productPath = `/product-details/${slug}`;
 const failures = [];
 let sitemapUrls = [];
+let coverImage;
 
 async function check(label, path, verify, userAgent = 'Googlebot') {
   try {
-    const response = await fetch(`${origin}${path}`, {
+    const response = await fetch(/^https?:/.test(path) ? path : `${origin}${path}`, {
       headers: { 'User-Agent': userAgent, Accept: 'text/html,application/xml;q=0.9,*/*;q=0.8' },
       signal: AbortSignal.timeout(20000),
     });
@@ -34,6 +35,7 @@ async function main() {
     const urls = [...body.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => new URL(match[1]));
     assert.ok(urls.length > 0, 'No sitemap URLs');
     sitemapUrls = urls;
+    coverImage = body.match(/<image:loc>([^<]+)<\/image:loc>/)?.[1]?.replace(/&amp;/g, '&');
     assert.ok(urls.every((url) => !/%(?![a-f0-9]{2})/i.test(url.pathname)), 'Malformed percent encoding in sitemap');
     assert.ok(urls.every((url) => url.origin === canonicalOrigin), 'Non-storefront sitemap URLs');
     assert.ok(urls.some((url) => url.pathname === productPath), 'Book missing from sitemap');
@@ -68,6 +70,21 @@ async function main() {
         assert.ok(!/noindex/i.test(response.headers.get('x-robots-tag') || ''), 'Unexpected noindex header');
         assert.ok(!/<meta[^>]*name="robots"[^>]*content="[^"]*noindex/i.test(body), 'Unexpected noindex meta');
       }, 'Mozilla/5.0');
+    }
+  }
+  if (process.argv.includes('--private')) {
+    if (coverImage) await check('public book image remains indexable', coverImage, (body, response) => {
+      assert.match(response.headers.get('content-type') || '', /^image\//i, 'Cover is not an image');
+      assert.ok(!/noindex/i.test(response.headers.get('x-robots-tag') || ''), 'Book image incorrectly excluded');
+    });
+    for (const host of ['apisub.amolbooks.com', 'adminsub.amolbooks.com']) {
+      await check(`private HTML: ${host}`, `https://${host}/`, (body, response) => {
+        assert.match(response.headers.get('x-robots-tag') || '', /noindex/i, 'Private homepage lacks noindex');
+      });
+      await check(`private robots: ${host}`, `https://${host}/robots.txt`, (body) => {
+        assert.ok(!/Disallow:\s*\/\s*$/mi.test(body), 'Crawlers cannot read the noindex header');
+        assert.ok(!/Sitemap:/i.test(body), 'Private host advertises a sitemap');
+      });
     }
   }
   if (failures.length) process.exitCode = 1;

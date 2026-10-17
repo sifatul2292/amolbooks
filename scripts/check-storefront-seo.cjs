@@ -61,6 +61,8 @@ async function main() {
     assert.match(result.body, /application\/ld\+json/);
   }
   assert.deepEqual(receivedSlugs, books.map((book) => book.slug));
+  assert.equal((await render('product-details/' + books[0].slug + '/')).code, 200);
+  assert.equal((await render('product-details/' + books[1].slug)).code, 200);
   const missing = await render('product-details/missing');
   assert.equal(missing.code, 404);
   assert.match(missing.body, /noindex/);
@@ -69,6 +71,8 @@ async function main() {
   assert.ok((await render('offers')).body.includes('/special-package-details/' + offers[0]._id));
   const pkg = await render('special-package-details/' + offers[0]._id);
   assert.match(pkg.body, /<app-root><h1>Package<\/h1>/);
+  const pkgWithSlash = await render('special-package-details/' + offers[0]._id + '/');
+  assert.ok(pkgWithSlash.body.includes('href="https://www.amolbooks.com/special-package-details/' + offers[0]._id + '"'));
   const sitemap = await new SitemapService(products, {findAllPublished: async () => []}, packages).generateSitemapXml();
   assert.ok(sitemap.includes('/500%20shobder%20kuraner%2075%25'));
   assert.ok(sitemap.includes('/quraner-shounorjo%2F'));

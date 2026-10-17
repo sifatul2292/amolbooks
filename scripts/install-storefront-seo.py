@@ -55,20 +55,69 @@ def patch(text, locations):
     return text[:start] + body + text[end:]
 
 
+def patch_private(text, hostname):
+    marker = '# AMOL private HTML indexing policy'
+    if marker in text:
+        return text
+    candidates = []
+    for match in re.finditer(r'(?m)^\s*server\s*\{', text):
+        end = block_end(text, match.start())
+        body = text[match.start():end]
+        if re.search(r'server_name\s+' + re.escape(hostname) + r'\s*;', body) and re.search(r'listen\s+443\b', body):
+            candidates.append((match.start(), end, body))
+    if len(candidates) != 1:
+        raise ValueError('Expected one HTTPS server for ' + hostname)
+    start, end, body = candidates[0]
+    # Keep crawlers able to read noindex, without advertising the old API sitemap.
+    for match in reversed(list(re.finditer(r'(?m)^\s*location\s+=\s+/robots\.txt\s*\{', body))):
+        body = body[:match.start()] + body[block_end(body, match.start()):]
+    header = '\n    add_header X-Robots-Tag $amol_private_seo_robots always;\n'
+    # nginx locations with their own add_header do not inherit server headers.
+    for match in reversed(list(re.finditer(r'(?m)^\s*location\s+[^\n{]+\{', body))):
+        location = body[match.end() - 1:block_end(body, match.start())]
+        depth = 0
+        own_headers = False
+        for token in re.finditer(r'''\#[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[{}]|\badd_header\b''', location):
+            if token.group() == '{':
+                depth += 1
+            elif token.group() == '}':
+                depth -= 1
+            elif token.group() == 'add_header' and depth == 1:
+                own_headers = True
+        if own_headers:
+            body = body[:match.end()] + header + body[match.end():]
+    opening = body.index('{') + 1
+    robots = '\n    location = /robots.txt {\n        default_type text/plain;\n        return 200 "User-agent: *\\nAllow: /\\n";\n    }\n'
+    body = body[:opening] + '\n    ' + marker + header + robots + body[opening:]
+    result = text[:start] + body + text[end:]
+    if hostname == 'apisub.amolbooks.com':
+        result = 'map $sent_http_content_type $amol_private_seo_robots {\n    default "";\n    ~*text/html "noindex";\n}\n' + result
+    return result
+
+
 if __name__ == '__main__':
-    config = Path('/etc/nginx/sites-enabled/amolbooks.com').resolve()
+    directory = Path('/etc/nginx/sites-enabled')
     locations = Path(__file__).with_name('nginx-product-social-seo.conf.example').read_text()
-    original = config.read_text()
-    updated = patch(original, locations)
-    backup = Path('/root/nginx-storefront-seo-' + datetime.now().strftime('%Y%m%d-%H%M%S') + '.bak')
-    shutil.copy2(config, backup)
-    config.write_text(updated)
-    if subprocess.run(['nginx', '-t']).returncode:
-        config.write_text(original)
-        raise SystemExit('nginx validation failed; original restored. Backup: ' + str(backup))
-    if subprocess.run(['systemctl', 'reload', 'nginx']).returncode:
-        config.write_text(original)
+    changes = []
+    for host in ('amolbooks.com', 'apisub.amolbooks.com', 'adminsub.amolbooks.com'):
+        config = (directory / host).resolve()
+        original = config.read_text()
+        updated = patch(original, locations) if host == 'amolbooks.com' else patch_private(original, host)
+        changes.append((config, original, updated))
+    stamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+    for config, original, updated in changes:
+        backup = Path('/root/nginx-seo-' + config.name + '-' + stamp + '.bak')
+        shutil.copy2(config, backup)
+        print('Backup:', backup)
+    try:
+        for config, original, updated in changes:
+            config.write_text(updated)
         subprocess.run(['nginx', '-t'], check=True)
         subprocess.run(['systemctl', 'reload', 'nginx'], check=True)
-        raise SystemExit('Reload failed; original restored. Backup: ' + str(backup))
-    print('SEO routing installed. Backup:', backup)
+    except BaseException:
+        for config, original, updated in changes:
+            config.write_text(original)
+        subprocess.run(['nginx', '-t'], check=True)
+        subprocess.run(['systemctl', 'reload', 'nginx'], check=True)
+        raise
+    print('Storefront SEO and private-host noindex installed.')

@@ -36,9 +36,14 @@ cd /home/amolbooks
 python3 scripts/install-storefront-seo.py
 ```
 
-The installer targets `/etc/nginx/sites-enabled/amolbooks.com`, makes a backup
-under `/root`, replaces only the matching SEO locations and validates before
-reload. SSL, generic fallback, assets, feed and upload configuration are retained.
+The installer targets the existing `amolbooks.com`, `apisub.amolbooks.com`
+and `adminsub.amolbooks.com` files under `/etc/nginx/sites-enabled`. It backs
+up all three under `/root`, prepares all changes before writing, validates
+nginx and reloads; any failure restores the originals. Private-host HTML
+receives `X-Robots-Tag: noindex`, including index.html locations with their own
+headers, while images receive no exclusion header. Existing security-header
+inheritance is preserved. Their robots.txt allows recrawling to read noindex
+and removes the old API sitemap advertisement. SSL, generic fallback, assets, feed and upload configuration are retained.
 IPv6 listeners are added to this file so the older uisub host cannot serve a
 conflicting canonical storefront over IPv6. The legacy host may still produce
 conflicting-name warnings; consolidating that separate host is not required here.
@@ -49,11 +54,12 @@ Purge Cloudflare cache for robots.txt, sitemap.xml and affected storefront HTML.
 Then, with Node 18+, run:
 
 ```bash
-node scripts/check-live-seo.cjs --all
+node scripts/check-live-seo.cjs --all --private
 ```
 
 The checks cover crawl directives, valid sitemap encoding, visitor homepage and
-catalogue content/canonicals, crawler metadata and every product/package URL.
+catalogue content/canonicals, crawler metadata, every product/package URL,
+private-host exclusion and a representative public book cover.
 Open a book in a browser and follow another book link to check the interactive
 page and navigation. No install, database migration or upload edits are required.
 
@@ -64,7 +70,11 @@ homepage, product-list and a representative book with URL Inspection, confirm
 Google sees their own canonical URL, and request indexing. Inspect Google's
 stored report again after recrawling; the report need not change immediately.
 Do not validate or remove intentional admin/private exclusions indiscriminately.
-The private hosts should return noindex for HTML only, preserving public images.
+Private hosts return noindex for HTML only. In Search Console, use URL
+Inspection to confirm this after deployment; keep intentional private-page
+exclusions. A temporary removal request for an exact private URL or its private
+host prefix can hide existing results while Google reprocesses the noindex.
+Never submit the public www host for removal.
 
 Google requires accessible pages, HTTP 200 and indexable content; satisfying
 these makes a page eligible, but does not guarantee indexing or ranking:

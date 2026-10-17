@@ -84,9 +84,15 @@ export class StorefrontDocumentService {
         path.slice('product-details/'.length),
         capture,
       );
+      if (status === 404 && path.endsWith('/')) {
+        await this.products.getProductOgHtml(
+          path.slice('product-details/'.length, -1),
+          capture,
+        );
+      }
     } else if (path.startsWith('special-package-details/')) {
       await this.packages.getSpecialPackageOgHtml(
-        path.slice('special-package-details/'.length),
+        path.slice('special-package-details/'.length).replace(/\/$/, ''),
         capture as any,
       );
     } else if (Object.prototype.hasOwnProperty.call(PAGE_TITLES, path)) {
