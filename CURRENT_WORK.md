@@ -1,3 +1,10 @@
+## Public SEO routing diagnosis (2026-10-17)
+
+- Confirmed the live API already returns canonical storefront sitemap URLs and product-specific HTML for `tinii-amar-rob-2-98`, including Bengali/English title and BDT Product structured data. The public `www` host still serves the 2024 API-host sitemap and homepage metadata/canonical to Googlebot. The production nginx routing is the remaining blocker; no catalogue/database edits are needed.
+- Added `scripts/check-live-seo.cjs`, a read-only check for public robots, canonical sitemap/book inclusion, crawler title/heading/canonical and Product offers. All three checks pass against the live API routes; all three fail against the public storefront, reproducing the incident.
+- Added User-Agent cache variation to the existing nginx example and an operational runbook in `scripts/SEO_DEPLOY.md`. No compiled storefront/admin files were edited. Production SSH host/user requested because no SSH alias is configured; nginx changes remain pending access. Search Console is already configured and the sitemap submitted (43 discovered pages); reprocessing and book URL inspection remain pending the live fix.
+- Validation: API build passes; focused diff whitespace checks pass. Lint remains blocked by the existing all-files-ignored configuration.
+
 ## Matching compact purchase bar (2026-10-08)
 
 - Mobile sticky Buy Now/Add to Cart bar uses the same 52px base height as bottom navigation, with 44px buttons and device safe-area padding. API_BASE unchanged.

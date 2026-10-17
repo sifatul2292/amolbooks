@@ -26,6 +26,8 @@ location = /sitemap.xml {
 }
 
 location ~ ^/product-details/([^/]+)/?$ {
+    # Caches must keep crawler HTML separate from the interactive storefront.
+    add_header Vary User-Agent always;
     set $amol_product_seo_slug $1;
     error_page 418 = @amol_product_seo;
 
@@ -37,6 +39,7 @@ location ~ ^/product-details/([^/]+)/?$ {
 }
 
 location @amol_product_seo {
+    add_header Vary User-Agent always;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
