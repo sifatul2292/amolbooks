@@ -222,7 +222,8 @@ export class UserController {
 
   @Version(VERSION_NEUTRAL)
   @Put('/reset-user-password')
-  @UsePipes(ValidationPipe)
+  @Throttle(5, 60)
+  @UsePipes(new ValidationPipe({ whitelist: true }))
   async resetUserPassword(
     @Body() resetPasswordDto: ResetPasswordDto,
   ): Promise<ResponsePayload> {

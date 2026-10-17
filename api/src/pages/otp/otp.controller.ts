@@ -7,6 +7,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 
+import { Throttle } from '@nestjs/throttler';
 import { OtpService } from './otp.service';
 import { AddOtpDto, ValidateOtpDto } from '../../dto/otp.dto';
 import { ResponsePayload } from '../../interfaces/core/response-payload.interface';
@@ -22,6 +23,7 @@ export class OtpController {
    * insertManyOtp
    */
   @Post('/generate-otp')
+  @Throttle(3, 60)
   @UsePipes(ValidationPipe)
   async generateOtpWithPhoneNo(
     @Body()
@@ -31,6 +33,7 @@ export class OtpController {
   }
 
   @Post('/generate-otp-with-email')
+  @Throttle(3, 60)
   @UsePipes(ValidationPipe)
   async generateOtpWithEmail(
     @Body()
@@ -40,6 +43,7 @@ export class OtpController {
   }
 
   @Post('/validate-otp')
+  @Throttle(10, 60)
   @UsePipes(ValidationPipe)
   async validateOtpWithPhoneNo(
     @Body()
@@ -49,6 +53,7 @@ export class OtpController {
   }
 
   @Post('/validate-otp-with-email')
+  @Throttle(10, 60)
   @UsePipes(ValidationPipe)
   async validateOtpWithEmail(
     @Body()

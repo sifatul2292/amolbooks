@@ -516,6 +516,8 @@ ${storefrontPurchaseExternalIdHelper}
   const staticAssetPattern =
     /\.(js|css|map|json|xml|txt|ico|svg|png|jpg|jpeg|gif|webp|woff2?|ttf|eot)$/i;
   const storefrontSnippetFiles = [
+    'product-startup-fallback.html',
+    'password-reset-security.html',
     'google-auth.html',
     'customer-account-mobile.html',
     'review-reliability.html',

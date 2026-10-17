@@ -15,6 +15,9 @@ export const OtpSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    attempts: { type: Number, default: 0 },
+    resetTokenHash: { type: String },
+    resetTokenExpiresAt: { type: Date },
     count: {
       type: Number,
       default: 0,

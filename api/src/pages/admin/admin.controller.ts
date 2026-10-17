@@ -53,12 +53,9 @@ export class AdminController {
    */
 
   @Post('/signup')
-  @UsePipes(ValidationPipe)
-  // @AdminMetaRoles(AdminRoles.SUPER_ADMIN)
-  // @UseGuards(AdminRolesGuard)
-  // @AdminMetaPermissions(AdminPermissions.CREATE)
-  // @UseGuards(AdminPermissionGuard)
-  // @UseGuards(AdminJwtAuthGuard)
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  @AdminMetaRoles(AdminRoles.SUPER_ADMIN)
+  @UseGuards(AdminJwtAuthGuard, AdminRolesGuard)
   async adminSignup(
     @Body()
     createAdminDto: CreateAdminDto,

@@ -3,6 +3,7 @@ import {
   ArrayMinSize,
   IsArray,
   IsBoolean,
+  IsEmail,
   IsIn,
   IsNotEmpty,
   IsNotEmptyObject,
@@ -58,6 +59,18 @@ export class CreateAdminDto {
   @IsString()
   @IsIn([GenderTypes.MALE, GenderTypes.FEMALE, GenderTypes.OTHER])
   gender: string;
+
+  @IsOptional()
+  @IsString()
+  phoneNo: string;
+
+  @IsOptional()
+  @IsEmail()
+  email: string;
+
+  @IsOptional()
+  @IsBoolean()
+  hasAccess: boolean;
 }
 
 export class AuthAdminDto {

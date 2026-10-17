@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { UserController } from './user.controller';
+import { OtpModule } from '../otp/otp.module';
 import { UserService } from './user.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
@@ -14,6 +15,7 @@ import { AddressSchema } from "../../schema/address.schema";
 
 @Module({
   imports: [
+    OtpModule,
     PassportModule.register({
       defaultStrategy: PASSPORT_USER_TOKEN_TYPE,
       property: 'user',
