@@ -2,7 +2,9 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  UnauthorizedException,
 } from '@nestjs/common';
+import { createHash, randomBytes, randomInt } from 'crypto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { AddOtpDto, ValidateOtpDto } from '../../dto/otp.dto';
@@ -42,29 +44,30 @@ export class OtpService {
           _id: otpData._id,
         };
 
-        const code = this.utilsService.getRandomOtpCode6();
+        const code = randomInt(100000, 1000000).toString();
         const expireTime = this.utilsService.addMinuteInCurrentTime(5);
 
         await this.otpModel.findByIdAndUpdate(otpData._id, {
           $set: {
             code,
+            attempts: 0,
             expireTime,
             createdAt: new Date(),
           },
+          $unset: { resetTokenHash: 1, resetTokenExpiresAt: 1 },
           $inc: {
             count: 1,
           },
         });
         // Sent Bulk Sms
         this.bulkSmsService.sentSingleSms(phoneNo, `Your otp code is ${code}`);
-        console.log('code ', code);
         return {
           success: true,
           message: `Success! OTP code has been sent to your phone number.`,
           data,
         } as ResponsePayload;
       } else {
-        const code = this.utilsService.getRandomOtpCode6();
+        const code = randomInt(100000, 1000000).toString();
         const expireTime = this.utilsService.addMinuteInCurrentTime(5);
 
         const newData = new this.otpModel({
@@ -80,7 +83,6 @@ export class OtpService {
         };
         // Sent Bulk Sms
         this.bulkSmsService.sentSingleSms(phoneNo, `Your otp code is ${code}`);
-        console.log('code ', code);
 
         return {
           success: true,
@@ -104,15 +106,17 @@ export class OtpService {
           _id: otpData._id,
         };
 
-        const code = this.utilsService.getRandomOtpCode6();
+        const code = randomInt(100000, 1000000).toString();
         const expireTime = this.utilsService.addMinuteInCurrentTime(5);
 
         await this.otpModel.findByIdAndUpdate(otpData._id, {
           $set: {
             code,
+            attempts: 0,
             expireTime,
             createdAt: new Date(),
           },
+          $unset: { resetTokenHash: 1, resetTokenExpiresAt: 1 },
           $inc: {
             count: 1,
           },
@@ -122,14 +126,13 @@ export class OtpService {
         <p>Your otp code is ${code} </p>
         `;
         this.emailService.sendEmail(email, 'Amol Books OTP', html);
-        console.log('code ', code);
         return {
           success: true,
           message: `Success! OTP code has been sent to your email.`,
           data,
         } as ResponsePayload;
       } else {
-        const code = this.utilsService.getRandomOtpCode6();
+        const code = randomInt(100000, 1000000).toString();
         const expireTime = this.utilsService.addMinuteInCurrentTime(5);
 
         const newData = new this.otpModel({
@@ -148,7 +151,6 @@ export class OtpService {
         <p>Your otp code is <strong>${code}</strong> </p>
         `;
         this.emailService.sendEmail(email, 'Amol Books OTP', html);
-        console.log('code ', code);
 
         return {
           success: true,
@@ -161,101 +163,54 @@ export class OtpService {
     }
   }
 
-  async validateOtpWithPhoneNo(
-    ValidateOtpDto: ValidateOtpDto,
-  ): Promise<ResponsePayload> {
-    try {
-      const { phoneNo } = ValidateOtpDto;
-      const { code } = ValidateOtpDto;
-
-      const otpData = await this.otpModel.findOne({ phoneNo });
-
-      if (otpData) {
-        const isExpired = this.utilsService.getDateDifference(
-          new Date(),
-          new Date(otpData.expireTime),
-          'seconds',
-        );
-
-        if (isExpired <= 0) {
-          return {
-            success: false,
-            message: 'Sorry! Invalid OTP',
-            data: null,
-          } as ResponsePayload;
-        } else {
-          if (code === otpData.code) {
-            return {
-              success: true,
-              message: 'Success! OTP matched',
-              data: null,
-            } as ResponsePayload;
-          } else {
-            return {
-              success: false,
-              message: 'Sorry! Invalid OTP',
-              data: null,
-            } as ResponsePayload;
-          }
-        }
-      } else {
-        return {
-          success: false,
-          message: 'Sorry! Invalid OTP',
-          data: null,
-        } as ResponsePayload;
-      }
-    } catch (error) {
-      throw new InternalServerErrorException(error.message);
-    }
+  async validateOtpWithPhoneNo(dto: ValidateOtpDto): Promise<ResponsePayload> {
+    return this.validateOtp(dto.phoneNo, dto.code);
   }
 
-  async validateOtpWithEmail(
-    ValidateOtpDto: ValidateOtpDto,
-  ): Promise<ResponsePayload> {
-    try {
-      const { email } = ValidateOtpDto;
-      const { code } = ValidateOtpDto;
+  async validateOtpWithEmail(dto: ValidateOtpDto): Promise<ResponsePayload> {
+    return this.validateOtp(dto.email, dto.code);
+  }
 
-      const otpData = await this.otpModel.findOne({ phoneNo: email });
-
-      if (otpData) {
-        const isExpired = this.utilsService.getDateDifference(
-          new Date(),
-          new Date(otpData.expireTime),
-          'seconds',
-        );
-
-        if (isExpired <= 0) {
-          return {
-            success: false,
-            message: 'Sorry! Invalid OTP',
-            data: null,
-          } as ResponsePayload;
-        } else {
-          if (code === otpData.code) {
-            return {
-              success: true,
-              message: 'Success! OTP matched',
-              data: null,
-            } as ResponsePayload;
-          } else {
-            return {
-              success: false,
-              message: 'Sorry! Invalid OTP',
-              data: null,
-            } as ResponsePayload;
-          }
-        }
-      } else {
-        return {
-          success: false,
-          message: 'Sorry! Invalid OTP',
-          data: null,
-        } as ResponsePayload;
-      }
-    } catch (error) {
-      throw new InternalServerErrorException(error.message);
+  private async validateOtp(identity: string, code: string): Promise<ResponsePayload> {
+    const invalid = { success: false, message: 'Sorry! Invalid OTP', data: null };
+    if (typeof identity !== 'string' || !identity || !/^\d{6}$/.test(code)) {
+      return invalid;
     }
+    // Count attempts atomically, including concurrent guesses and legacy records.
+    const otp = await this.otpModel.findOneAndUpdate(
+      { phoneNo: identity, $or: [{ attempts: { $lt: 5 } }, { attempts: { $exists: false } }] },
+      { $inc: { attempts: 1 } },
+      { new: true },
+    );
+    if (!otp || otp.code !== code || !(new Date(otp.expireTime).getTime() > Date.now())) {
+      return invalid;
+    }
+    const resetToken = randomBytes(32).toString('hex');
+    const consumed = await this.otpModel.findOneAndUpdate(
+      { _id: otp._id, code, expireTime: otp.expireTime, attempts: { $lte: 5 } },
+      { $set: {
+        code: randomBytes(32).toString('hex'),
+        resetTokenHash: createHash('sha256').update(resetToken).digest('hex'),
+        resetTokenExpiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      } },
+    );
+    if (!consumed) return invalid;
+    return { success: true, message: 'Success! OTP matched', data: { resetToken } };
+  }
+
+  async consumePasswordResetToken(username: string, resetToken: string): Promise<void> {
+    if (typeof username !== 'string' || !username ||
+        typeof resetToken !== 'string' || !/^[a-f0-9]{64}$/.test(resetToken)) {
+      throw new UnauthorizedException('Invalid or expired password reset token');
+    }
+    const consumed = await this.otpModel.findOneAndUpdate(
+      {
+        phoneNo: username,
+        resetTokenHash: createHash('sha256').update(resetToken).digest('hex'),
+        resetTokenExpiresAt: { $gt: new Date() },
+      },
+      { $unset: { resetTokenHash: 1, resetTokenExpiresAt: 1 } },
+    );
+    if (!consumed) throw new UnauthorizedException('Invalid or expired password reset token');
   }
 }

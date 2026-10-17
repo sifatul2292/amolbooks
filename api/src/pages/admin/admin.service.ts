@@ -50,13 +50,20 @@ export class AdminService {
     const salt = await bcrypt.genSalt();
     const hashedPass = await bcrypt.hash(password, salt);
 
-    const defaultData = {
+    const mData = {
+      name: createAdminDto.name,
+      username: createAdminDto.username,
+      role: createAdminDto.role,
+      permissions: createAdminDto.permissions,
+      gender: createAdminDto.gender,
+      phoneNo: createAdminDto.phoneNo,
+      email: createAdminDto.email,
       password: hashedPass,
+      hasAccess: createAdminDto.hasAccess ?? true,
       readOnly: false,
       registrationAt: this.utilsService.getDateString(new Date()),
       lastLoggedIn: null,
     };
-    const mData = { ...createAdminDto, ...defaultData };
     const newUser = new this.adminModel(mData);
     try {
       const saveData = await newUser.save();

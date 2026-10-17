@@ -8,6 +8,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { OtpService } from '../otp/otp.service';
 import { Model, Types } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import {
@@ -60,6 +61,7 @@ export class UserService {
     private configService: ConfigService,
     private utilsService: UtilsService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private otpService: OtpService,
   ) {}
 
   /**
@@ -755,32 +757,21 @@ export class UserService {
   async resetUserPassword(
     resetPasswordDto: ResetPasswordDto,
   ): Promise<ResponsePayload> {
-    const { password, username } = resetPasswordDto;
-    let user;
-    try {
-      user = await this.userModel
-        .findOne({ username: username })
-        .select('password');
-    } catch (err) {
-      throw new InternalServerErrorException();
-    }
+    const { password, username, resetToken } = resetPasswordDto;
+    const user = await this.userModel.findOne({ username }).select('password');
     if (!user) {
       throw new NotFoundException('No User found!');
     }
-    try {
-      const salt = await bcrypt.genSalt();
-      const hashedPass = await bcrypt.hash(password, salt);
-      await this.userModel.findByIdAndUpdate(user._id, {
-        $set: { password: hashedPass },
-      });
-      return {
-        success: true,
-        message: 'Password reset success',
-      } as ResponsePayload;
-    } catch (err) {
-      console.log(err);
-      throw new InternalServerErrorException();
-    }
+    const salt = await bcrypt.genSalt();
+    const hashedPass = await bcrypt.hash(password, salt);
+    await this.otpService.consumePasswordResetToken(username, resetToken);
+    await this.userModel.findByIdAndUpdate(user._id, {
+      $set: { password: hashedPass },
+    });
+    return {
+      success: true,
+      message: 'Password reset success',
+    } as ResponsePayload;
   }
 
   async updateUserById(

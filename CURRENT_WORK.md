@@ -1,5 +1,35 @@
 # CURRENT_WORK
 
+## Security and startup fixes release (2026-10-17)
+
+- Prepared the admin signup, password reset and product startup flash fixes for `codex/prod-release-20260926`. Unrelated working changes and generated API output are excluded; VPS deployment must rebuild the API from source. Use `AMOL_DEPLOY_BRANCH=codex/prod-release-20260926 bash scripts/vps-safe-pull.sh`, then build in `api/` and restart `amolbooks-api`.
+
+## Product startup SEO-content flash (2026-10-17)
+
+- Confirmed a normal desktop request to the production Quran product page returns the plain SEO `<main><article>` inside `<app-root>`, including the large cover and order link seen in the screenshot. It paints before Angular replaces the root contents; the observed transition does not itself imply a second navigation. The production response does not include the local password-reset bridge, so that bridge cannot cause the production flash.
+- Added `gtm-snippets/product-startup-fallback.html` to the existing before-Angular snippet injection. A JavaScript-added document class hides only the direct fallback article while `app-root` lacks Angular's `ng-version`; normal Angular content and no-JavaScript fallback content stay visible. No API_BASE is used (presentation only); compiled storefront/admin files are untouched.
+- Validation: `scripts/check-product-startup-fallback.cjs` reproduces the unpatched article visibility and verifies suppression during startup at 375/1440px in Chrome, normal visibility after Angular bootstrap, and readable fallback with JavaScript disabled. API build and `git diff --check` pass; lint remains blocked by the existing all-files-ignored configuration.
+- Not deployed. Deploy the snippet and API injection change together using `scripts/vps-safe-pull.sh`, rebuild and restart the API. Production HTML was inspected read-only; the stopped localhost:3117 preview could not be inspected directly.
+
+
+## Password reset verification (2026-10-17)
+
+- `PUT /api/user/reset-user-password` now requires a username and a backend-issued reset token. Successful phone/email OTP verification returns a cryptographically random, account-bound token with a five-minute expiry. Only its SHA-256 hash is stored; an atomic MongoDB update consumes it before the password is changed, preventing replay and concurrent reuse. Invalid password/username input is rejected before token consumption.
+- OTP verification consumes each valid code once and permits at most five guesses per issued code. Codes use cryptographic randomness and are no longer printed to logs. Resending an OTP resets attempts and invalidates earlier reset tokens. Added endpoint throttles for generation, verification and password reset. Existing OTP records work without a data migration.
+- Added `gtm-snippets/password-reset-security.html`, injected before Angular by the existing storefront mechanism. Carries the verification response token into the compiled form's reset request, scoped to API origin and username and held only in memory. Production API base is `https://apisub.amolbooks.com/api`; localhost uses its origin, with compatibility for the compiled bundle's production API calls. No compiled storefront/admin files were hand-edited.
+- Validation: API build, `node scripts/check-password-reset-security.cjs`, `node scripts/check-admin-signup-security.cjs` and `git diff --check` pass. Password-reset checks launch their own disposable MongoDB and isolated HTTP app; cover missing/invalid/expired/replayed tokens, wrong-account tokens, concurrent reset/OTP verification, OTP expiry/attempt limits/resends, phone/email recovery, legacy records, validation, bcrypt hashing and the storefront bridge. A separate headless Chrome check confirms the real XHR event handoff for phone and email with mock responses. No real SMS/email or production database writes. Lint remains blocked by the existing all-files-ignored ESLint configuration.
+- Not deployed. Deploy backend and snippet together through `scripts/vps-safe-pull.sh`, rebuild API and restart. Already-open recovery pages must reload to receive the bridge. If password persistence fails after token consumption, the customer must request a fresh OTP. Other audit findings remain outside this fix.
+
+
+## Admin signup security (2026-10-17)
+
+- Protected `POST /api/admin/signup` with admin JWT authentication followed by the existing Super Admin role guard. Anonymous callers and every other staff role are denied before the signup service runs.
+- Added route-local DTO whitelisting and an explicit persistence allowlist. Server-owned IDs, read-only flags and timestamps cannot be supplied through signup; passwords remain bcrypt-hashed. Preserved the compiled admin form's email, phone and boolean access toggle with validation; access defaults to enabled when omitted by an authorized Super Admin.
+- Verification: `node scripts/check-admin-signup-security.cjs` passes using an isolated HTTP app, real JWT/role guards and fake persistence (no database writes). Covers missing/invalid/expired tokens, all denied staff roles, permitted Super Admin creation, invalid role/access/email, field injection and password hashing. API build and `git diff --check` pass. `npm run lint` remains blocked by the existing all-files-ignored ESLint configuration.
+- Not deployed. Deploy via `scripts/vps-safe-pull.sh`, rebuild the API and restart its process. Existing accounts are unchanged; review administrator accounts separately for unexpected registrations. Other security findings from the audit remain outside this fix.
+
+
+
 ## Review pagination (2026-10-08)
 
 - Confirmed Productive Muslim has 18 approved reviews in the production API; the storefront only requests its initial page.

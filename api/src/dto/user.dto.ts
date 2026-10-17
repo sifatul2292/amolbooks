@@ -295,11 +295,16 @@ export class UpdateAddressDto {
 export class ResetPasswordDto {
   @IsNotEmpty()
   @IsString()
+  @Matches(/^[a-f0-9]{64}$/)
+  resetToken: string;
+
+  @IsNotEmpty()
+  @IsString()
   @MinLength(5)
   @MaxLength(20)
   password: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
   @MinLength(5)
   @MaxLength(100)
