@@ -5,6 +5,10 @@ import { join } from 'path';
 import { ProductService } from '../product/product.service';
 import { SpecialPackageService } from '../offers/special-package/special-package.service';
 
+// Hide only the server fallback; Angular removes this wrapper when it renders.
+export const STOREFRONT_SEO_FALLBACK_HEAD = `<script>document.documentElement.classList.add('ab-js-startup');</script>
+<style>html.ab-js-startup #amol-seo-fallback { display: none; }</style>`;
+
 const ORIGIN = 'https://www.amolbooks.com';
 const PAGE_TITLES = {
   '': 'আমল বুকস — ইসলামিক বইয়ের অনলাইন বইঘর',
@@ -148,11 +152,11 @@ export class StorefrontDocumentService {
         /<script\b[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi,
         '',
       )
-      .replace('</head>', () => `${head}${STOREFRONT_SEO_NAVIGATION}</head>`)
+      .replace('</head>', () => `${STOREFRONT_SEO_FALLBACK_HEAD}${head}${STOREFRONT_SEO_NAVIGATION}</head>`)
       // Angular replaces its host contents at bootstrap; without JS the content remains usable.
       .replace(
         /<app-root\b[^>]*>[\s\S]*?<\/app-root>/i,
-        () => `<app-root>${body}</app-root>`,
+        () => `<app-root><div id="amol-seo-fallback">${body}</div></app-root>`,
       );
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.status(200).type('html').send(html);

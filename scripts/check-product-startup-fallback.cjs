@@ -1,14 +1,10 @@
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
 const { chromium } = require('playwright');
 
 async function main() {
-  const root = path.resolve(__dirname, '..');
-  const snippet = fs.readFileSync(path.join(root, 'gtm-snippets/product-startup-fallback.html'), 'utf8');
-  assert.ok(fs.readFileSync(path.join(root, 'api/src/main.ts'), 'utf8').includes("'product-startup-fallback.html'"));
+  const { STOREFRONT_SEO_FALLBACK_HEAD: snippet } = require('../api/dist/pages/sitemap/storefront-document.service');
   const article = '<main><article><h1>Product</h1><img width="468" height="710" alt="Cover"><p>Price</p></article></main>';
-  const fixture = '<!doctype html><html><head>' + snippet + '</head><body><app-root>' + article + '</app-root></body></html>';
+  const fixture = '<!doctype html><html><head>' + snippet + '</head><body><app-root>' + '<div id="amol-seo-fallback">' + article + '</div></app-root></body></html>';
   const browser = await chromium.launch({ channel: 'chrome', headless: true });
   try {
     for (const width of [375, 1440]) {
@@ -20,12 +16,17 @@ async function main() {
       assert.equal(await page.locator('article').isVisible(), false);
       await page.waitForTimeout(300);
       assert.equal(await page.locator('article').isVisible(), false, 'No flash while bundles load');
+      await page.evaluate(() => document.querySelector('app-root').setAttribute('ng-version', '16.0.1'));
+      assert.equal(await page.locator('article').isVisible(), false, 'An early ng-version attribute must not expose fallback');
       await page.evaluate(() => {
         const root = document.querySelector('app-root');
-        root.setAttribute('ng-version', '14.2.0');
         root.innerHTML = '<main><article>Normal storefront</article></main>';
       });
       assert.equal(await page.locator('article').isVisible(), true, 'Bootstrapped storefront stays visible');
+      await page.setContent(fixture.replace(article, '<main><h1>Core page</h1></main>'));
+      assert.equal(await page.locator('h1').isVisible(), false);
+      await page.setContent(fixture.replace(article, '<h1>Package page</h1>'));
+      assert.equal(await page.locator('h1').isVisible(), false);
       await page.close();
     }
     const noJs = await browser.newContext({ javaScriptEnabled: false });

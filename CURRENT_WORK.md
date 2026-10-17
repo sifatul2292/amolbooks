@@ -1,3 +1,11 @@
+## SEO fallback visibility refinement (2026-10-17)
+
+- Continued in the authoritative `codex/rollback-sunday-20260927` worktree. Current production product sampling confirms the previously deployed snippet hides the article, but that rule relies on `ng-version` timing and only matches article-shaped product content; core and package fallback shapes were uncovered.
+- Moved suppression to `StorefrontDocumentService`, which wraps the exact initial server content in `#amol-seo-fallback` and includes its JavaScript-conditional hiding rule in the same response. The wrapper stays hidden regardless of early Angular attributes and disappears when Angular replaces its host contents. Without JavaScript the initial content remains readable. Metadata, canonical URLs, JSON-LD and catalogue links remain in the response.
+- Removed the redundant startup GTM snippet and its registration. No API_BASE or compiled storefront/admin source changes. This supersedes the earlier product-only startup snippet.
+- Validation: API build, desktop/mobile Chrome visibility tests (including early ng-version, delayed render, core/package shapes and JavaScript disabled), renderer/slug/SEO metadata/SPA tests, real Nest HTTP routing checks and diff whitespace checks pass. Lint remains blocked by the existing all-files-ignored configuration.
+- Production was inspected read-only. Deploy this refinement through `AMOL_DEPLOY_BRANCH=codex/rollback-sunday-20260927 bash scripts/vps-safe-pull.sh`, rebuild API and restart `amolbooks-api`.
+
 ## SEO release completion checks (2026-10-17)
 
 - Added private-host HTML exclusion to the reviewed nginx installer for both apisub and adminsub. Uses a content-type map so product images remain indexable, preserves server security-header inheritance, and repeats the directive only in locations already defining their own headers. Private robots responses permit recrawling and stop advertising the old API sitemap. All three virtual hosts are prepared and backed up before modification; failed validation/reload restores all originals.

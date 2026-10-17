@@ -33,7 +33,7 @@ async function main() {
     const base = await app.getUrl();
     const home = await fetch(base+'/api/storefront-document/');
     assert.equal(home.status, 200);
-    assert.match(await home.text(), /<app-root><main>/);
+    assert.match(await home.text(), /<app-root><div id="amol-seo-fallback"><main>/);
     const book = await fetch(base+'/api/storefront-document/product-details/50%25%20%2F%20book');
     assert.equal(book.status, 200);
     assert.equal(seen[0], '50% / book');

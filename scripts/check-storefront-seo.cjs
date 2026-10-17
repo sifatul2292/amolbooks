@@ -50,7 +50,7 @@ async function main() {
   assert.ok(home.body.includes('/500%20shobder%20kuraner%2075%25'));
   assert.ok(home.body.includes('/quraner-shounorjo%2F'));
   assert.ok(home.body.includes('বই &lt;unsafe&gt; $&'));
-  assert.match(home.body, /<app-root><main>/);
+  assert.match(home.body, /<app-root><div id="amol-seo-fallback"><main>/);
   assert.match(home.body, /src="main\.[^"]+\.js"/);
   for (const book of books) {
     const result = await render('product-details/' + book.slug);
@@ -70,7 +70,7 @@ async function main() {
   assert.equal((await render('unknown')).code, 404);
   assert.ok((await render('offers')).body.includes('/special-package-details/' + offers[0]._id));
   const pkg = await render('special-package-details/' + offers[0]._id);
-  assert.match(pkg.body, /<app-root><h1>Package<\/h1>/);
+  assert.match(pkg.body, /<app-root><div id="amol-seo-fallback"><h1>Package<\/h1>/);
   const pkgWithSlash = await render('special-package-details/' + offers[0]._id + '/');
   assert.ok(pkgWithSlash.body.includes('href="https://www.amolbooks.com/special-package-details/' + offers[0]._id + '"'));
   const sitemap = await new SitemapService(products, {findAllPublished: async () => []}, packages).generateSitemapXml();
