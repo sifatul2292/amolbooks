@@ -78,3 +78,23 @@ https://pagespeed.web.dev/analysis/https-amolbooks-com/78hpo5tbwr?form_factor=mo
 
 Rollback snapshots live under /home/amolbooks/source-snapshots/pagespeed-* and
 uploads have separate snapshots from the mandatory safe-pull workflow.
+
+## Mobile bar and icon-font follow-up
+
+Restores the green mobile bottom bar: white SVG icons were invisible after the
+previous contrast patch made the background white. Icon fonts now use local
+WOFF2 subsets (3964 + 2212 bytes) for known storefront codepoints, with Unicode
+range fallback to the original vendor faces for other icons. Both local-font
+selection and an actual unlisted-character fallback are covered by browser tests.
+
+Regenerate using scripts/build-storefront-icon-fonts.py with the official Font
+Awesome 6.2.0 solid TTF, brands TTF and CSS paths as its three arguments, using
+FontTools/Brotli in a development virtualenv. The sources are available under
+https://github.com/FortAwesome/Font-Awesome/tree/6.2.0/webfonts and the upstream
+6.2.0 css/all.min.css. Update the URLs/ranges in pagespeed-runtime.html from the
+new icon-fonts.json after regeneration. Licensing is retained in the fonts and
+assets/font-awesome-LICENSE.txt. No runtime font-conversion dependency.
+
+The p3vpeiqndv report's field assessment still includes the preceding 28 days
+(LCP 5s, CLS 0.3). Lab CLS is already 0.039, while lab LCP 8.8s still needs work.
+Do not promise a passing assessment or an automatic pass after 28 days.

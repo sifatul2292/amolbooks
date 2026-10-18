@@ -1,3 +1,11 @@
+## Mobile bottom bar and Core Web Vitals follow-up (2026-10-18)
+
+- Reproduced the reported missing navigation icons: the earlier accessibility patch made the bar white while native CSS/SVG icons stayed white. Restored a dark green background with explicitly white labels/icons/links, retaining the existing SVG replacements, click selectors, layout and mobile sizing. This was a color regression; icons were already present.
+- Added focused regression proof at 375, 390 and 430px with external font requests blocked. It reproduces white-on-white icons before the fix and verifies all four SVGs, contrasting background/labels and Angular redraws afterward.
+- Report p3vpeiqndv shows historical field LCP 5s and CLS 0.3 over the previous 28 days, versus lab CLS 0.039 and still-slow lab LCP 8.8s. The Core Web Vitals field assessment is not fixed or passed merely by deploying code; it needs good real-user measurements. Original Angular bootstrap/vendor cost remains material, and the user's no-change instruction for server.amolbooks.com remains in force.
+- Reduced the icon-font path in that report from about 254KiB to 6176 bytes of local WOFF2 subsets covering storefront classes/common social icons. Unicode ranges retain the vendor face for unlisted characters, with a CDN URL fallback if local fonts fail. Preserve font license metadata and include the upstream Font Awesome 6.2.0 license. No runtime dependency; regeneration uses temporary FontTools/Brotli tooling and official upstream TTF/CSS files.
+- Runtime browser checks verify small-font use despite the late vendor stylesheet and actual fallback loading for an unlisted character. API build and focused checks pass; lint remains blocked by existing ignored-file config. Source changes are limited to snippets, font assets and checks; compiled UI/admin bundles are not hand-edited or staged.
+
 ## PageSpeed live verification (2026-10-18)
 
 - First-paint follow-up c0f8f255 is deployed. Live font returns 200 with 87,976 bytes; homepage emits two responsive preload hints matching the actual first covers. Product/cart/home endpoints remain healthy and storefront screenshot confirms correct Bengali shaping and artwork.

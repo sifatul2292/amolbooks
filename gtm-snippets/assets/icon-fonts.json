@@ -1,0 +1,14 @@
+{
+  "solid": {
+    "file": "font-awesome-6-solid.73704f99ff43.woff2",
+    "bytes": 3964,
+    "originalBytes": 397728,
+    "unicodeRange": "U+21,U+2B,U+F002,U+F004,U+F005,U+F007,U+F00C,U+F00D,U+F015,U+F02E,U+F036,U+F041,U+F04B,U+F057,U+F058,U+F061,U+F064,U+F068,U+F06B,U+F06E,U+F070,U+F078,U+F07A,U+F089,U+F08B,U+F09D,U+F0AC,U+F0C9,U+F0CA,U+F0D7,U+F0EE,U+F0F3,U+F104,U+F105,U+F106,U+F107,U+F10D,U+F110,U+F126,U+F133,U+F1B9,U+F1E0,U+F1F8,U+F274,U+F290,U+F291,U+F2BD,U+F2ED,U+F5C0,U+F879"
+  },
+  "brands": {
+    "file": "font-awesome-6-brands.7be3a540b68b.woff2",
+    "bytes": 2212,
+    "originalBytes": 186112,
+    "unicodeRange": "U+21,U+2B,U+E07B,U+F08C,U+F099,U+F09A,U+F0D2,U+F0E1,U+F167,U+F16D,U+F1A0,U+F232,U+F2C6,U+F39E"
+  }
+}

@@ -13,14 +13,16 @@
   font-style: normal;
   font-weight: 900;
   font-display: swap;
-  src: url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/webfonts/fa-solid-900.woff2') format('woff2');
+  src: url('https://apisub.amolbooks.com/api/storefront-assets/font-awesome-6-solid.73704f99ff43.woff2') format('woff2'), url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/webfonts/fa-solid-900.woff2') format('woff2');
+  unicode-range: U+21,U+2B,U+F002,U+F004,U+F005,U+F007,U+F00C,U+F00D,U+F015,U+F02E,U+F036,U+F041,U+F04B,U+F057,U+F058,U+F061,U+F064,U+F068,U+F06B,U+F06E,U+F070,U+F078,U+F07A,U+F089,U+F08B,U+F09D,U+F0AC,U+F0C9,U+F0CA,U+F0D7,U+F0EE,U+F0F3,U+F104,U+F105,U+F106,U+F107,U+F10D,U+F110,U+F126,U+F133,U+F1B9,U+F1E0,U+F1F8,U+F274,U+F290,U+F291,U+F2BD,U+F2ED,U+F5C0,U+F879;
 }
 @font-face {
   font-family: 'Font Awesome 6 Brands';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/webfonts/fa-brands-400.woff2') format('woff2');
+  src: url('https://apisub.amolbooks.com/api/storefront-assets/font-awesome-6-brands.7be3a540b68b.woff2') format('woff2'), url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/webfonts/fa-brands-400.woff2') format('woff2');
+  unicode-range: U+21,U+2B,U+E07B,U+F08C,U+F099,U+F09A,U+F0D2,U+F0E1,U+F167,U+F16D,U+F1A0,U+F232,U+F2C6,U+F39E;
 }
 /* Keep drawer/hover state changes; animate only compositor-supported properties. */
 app-header header,
@@ -74,11 +76,21 @@ app-footer .footer-social a {
     });
   }).observe(document.documentElement, { childList: true, subtree: true });
   tuneLogos(document);
+  function keepFontStylesLast() {
+    var style = document.getElementById('ab-pagespeed-runtime');
+    if (style && document.head.lastElementChild !== style) document.head.appendChild(style);
+  }
+  new MutationObserver(function (records) {
+    records.forEach(function (record) {
+      Array.prototype.forEach.call(record.addedNodes || [], function (node) {
+        if (node.tagName === 'LINK' && /font-awesome\/6\.2\.0\/css\/all\.min\.css/.test(node.href || '')) keepFontStylesLast();
+      });
+    });
+  }).observe(document.head, { childList: true });
   document.addEventListener('load', function (event) {
     var link = event.target;
     if (!link || link.tagName !== 'LINK' || !/font-awesome\/6\.2\.0\/css\/all\.min\.css/.test(link.href)) return;
-    var style = document.getElementById('ab-pagespeed-runtime');
-    if (style) document.head.appendChild(style);
+    keepFontStylesLast();
   }, true);
 })();
 </script>

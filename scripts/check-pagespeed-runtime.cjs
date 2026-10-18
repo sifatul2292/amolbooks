@@ -55,14 +55,31 @@ async function main() {
     assert.equal(results.candidate.badge, '0');
 
     const page = await browser.newPage();
-    await page.route('**/all.min.css', route => route.fulfill({ contentType: 'text/css', body: '@font-face{font-family:"Font Awesome 6 Free";font-weight:900;src:url(data:font/woff2;base64,AA==);font-display:auto}' }));
+    const fontRequests = [];
+    page.on('request', request => { if (/\.woff2/.test(request.url())) fontRequests.push(request.url()); });
+    await page.route('**/api/storefront-assets/*.woff2', route => route.fulfill({contentType:'font/woff2',headers:{'Access-Control-Allow-Origin':'*'},body:fs.readFileSync(path.join(__dirname,'../gtm-snippets/assets',new URL(route.request().url()).pathname.split('/').pop()))}));
+    await page.route('**/original.woff2', route => route.fulfill({contentType:'font/woff2',headers:{'Access-Control-Allow-Origin':'*'},body:font}));
+    await page.route('**/all.min.css', route => route.fulfill({ contentType: 'text/css', body: '@font-face{font-family:"Font Awesome 6 Free";font-weight:900;src:url(https://cdnjs.cloudflare.com/original.woff2) format("woff2");font-display:auto}.fas{font-family:"Font Awesome 6 Free";font-weight:900}.fas::before{content:"\\f002"}' }));
     const runtime = fs.readFileSync(path.join(__dirname, '../gtm-snippets/pagespeed-runtime.html'), 'utf8');
-    await page.setContent('<head><style>app-footer a{transition:color 1s,border-color 1s}</style>' + runtime + '</head><body><app-footer><div class="footer-link"><a>Footer</a></div></app-footer></body>');
+    await page.setContent('<head><style>app-footer a{transition:color 1s,border-color 1s}</style>' + runtime + '</head><body><i class="fas" id="test-glyph"></i><app-footer><div class="footer-link"><a>Footer</a></div></app-footer></body>');
     await page.evaluate(() => new Promise(resolve => { const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css'; link.onload = resolve; document.head.appendChild(link); }));
     assert.equal(await page.locator('head').evaluate(head => head.lastElementChild.id), 'ab-pagespeed-runtime');
     assert.equal(await page.locator('app-footer a').evaluate(link => getComputedStyle(link).transitionProperty), 'transform, opacity');
     const faces = await page.locator('#ab-pagespeed-runtime').evaluate(style => [...style.sheet.cssRules].filter(rule => rule.type === CSSRule.FONT_FACE_RULE).map(rule => rule.style.fontDisplay));
     assert.deepEqual(faces, ['swap', 'swap', 'swap']);
+    await page.evaluate(() => document.fonts.ready);
+    const manifest = JSON.parse(fs.readFileSync(path.join(__dirname,'../gtm-snippets/assets/icon-fonts.json'),'utf8'));
+    assert.ok(fontRequests.some(url => url.includes(manifest.solid.file)), 'Known icons use the small local font');
+    assert.equal(fontRequests.some(url => url.endsWith('/original.woff2')), false, 'Late vendor CSS must not load the full font for known glyphs');
+    await page.locator('#test-glyph').evaluate(icon => {icon.textContent='A';});
+    await page.evaluate(() => document.fonts.ready);
+    assert.ok(fontRequests.some(url => url.endsWith('/original.woff2')), 'Unlisted codepoints retain the original font fallback');
+    for (const item of Object.values(manifest)) {
+      const bytes=fs.readFileSync(path.join(__dirname,'../gtm-snippets/assets',item.file));
+      assert.equal(bytes.toString('ascii',0,4),'wOF2');
+      assert.equal(bytes.length,item.bytes);
+    }
+
     console.log('Runtime performance checks passed:', JSON.stringify(results), 'late font stylesheet, compositor transitions, Ads fallback, brand updates and script-data preservation.');
   } finally { await browser.close(); }
 }
