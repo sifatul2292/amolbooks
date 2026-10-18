@@ -1,0 +1,39 @@
+# Review against the active nginx configuration; these are context-specific additions.
+# Validate with nginx -t, then reload. Do not replace the complete server configuration.
+# Keep the canonical www host used by the sitemap and product metadata.
+
+# In the EXISTING HTTPS amolbooks.com (apex) server block, terminate the
+# redirect here, before proxying to Nest/Mongo. Prefer an equivalent Cloudflare
+# Single Redirect rule at the edge: preserve path and query, status 301.
+#     return 301 https://www.amolbooks.com$request_uri;
+# The PageSpeed report attributed 7088ms to this hop; rerun on both apex and www.
+# An edge redirect still costs one network hop; internal links should use www.
+
+# In the www server block, ensure the existing catalogue proxy is reachable
+# before the SPA fallback. This is needed by Angular and the homepage fetch.
+location ^~ /storefront-catalog/ {
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_pass http://127.0.0.1:3000;
+}
+
+# In the apisub server block, this must reach Nest before a static /api/ location.
+location ^~ /api/storefront-images/ {
+    proxy_set_header Host $host;
+    proxy_pass http://127.0.0.1:3000;
+}
+
+# In the www server block, merge these settings into any EXISTING asset
+# location rather than introducing a competing regex. Only content-hashed
+# Angular assets qualify for immutable caching; HTML and unversioned JS do not.
+location ~* \.[a-f0-9]{16,}\.(?:js|css)$ {
+    try_files $uri =404;
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+}
+
+# In http context, merge with the existing gzip settings (do not duplicate).
+# gzip on;
+# gzip_vary on;
+# gzip_min_length 1024;
+# gzip_types text/css application/javascript application/json image/svg+xml;

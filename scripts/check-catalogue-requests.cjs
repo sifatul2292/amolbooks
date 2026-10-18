@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
 const script = fs.readFileSync(path.join(root, 'gtm-snippets/catalogue-local-requests.html'), 'utf8').match(/<script>([\s\S]*?)<\/script>/)[1];
 const remote = 'https://apisub.amolbooks.com';
-for (const hostname of ['localhost', '127.0.0.1', '[::1]', '192.168.1.5', '10.0.0.2', '172.31.2.3', 'amolbooks.com', '172.32.0.1']) {
+for (const hostname of ['localhost', '127.0.0.1', '[::1]', '192.168.1.5', '10.0.0.2', '172.31.2.3', 'amolbooks.com', 'www.amolbooks.com', '172.32.0.1']) {
   const calls = [];
   class XHR { open(...args) { calls.push(args); } }
   const origin = 'http://' + hostname + ':3000';
@@ -20,7 +20,7 @@ for (const hostname of ['localhost', '127.0.0.1', '[::1]', '192.168.1.5', '10.0.
   xhr.open('POST', remote + '/api/product/get-products-by-ids?select=name', true);
   xhr.open('POST', remote + '/api/category/get-all/', true);
   xhr.open('GET', remote + '/api/product/get-all-data?status=publish', true);
-  const local = !['amolbooks.com', '172.32.0.1'].includes(hostname);
+  const local = hostname !== '172.32.0.1';
   assert.equal(calls[0][1], local ? origin + '/storefront-catalog/product/get-all?q=book' : remote + '/api/product/get-all?q=book');
   assert.equal(calls[1][1], local ? origin + '/storefront-catalog/product/get-products-by-ids?select=name' : remote + '/api/product/get-products-by-ids?select=name');
   assert.equal(calls[2][1], local ? origin + '/storefront-catalog/category/get-all/' : remote + '/api/category/get-all/');

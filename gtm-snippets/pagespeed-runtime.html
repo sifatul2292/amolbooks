@@ -1,0 +1,77 @@
+<!-- All Pages. Presentation only; no API_BASE or analytics changes. -->
+<style id="ab-pagespeed-runtime">
+/* Match the existing Font Awesome faces while avoiding invisible icons during loading. */
+@font-face {
+  font-family: 'Font Awesome 6 Free';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/webfonts/fa-solid-900.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Font Awesome 6 Brands';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/webfonts/fa-brands-400.woff2') format('woff2');
+}
+/* Keep drawer/hover state changes; animate only compositor-supported properties. */
+app-header header,
+app-header .header-main,
+app-header .nav-link,
+app-header .side-nav,
+app-header .category-slide,
+app-footer .footer-link a,
+app-footer .footer-social a {
+  transition-property: transform, opacity !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ab-header-ticker-track,
+  .cart-icon-bounce,
+  .cart-icon-loop { animation: none !important; }
+}
+</style>
+
+<script>
+(function () {
+  if (window.__amolPerformanceStyles) return;
+  window.__amolPerformanceStyles = true;
+  // The legacy Font Awesome stylesheet arrives after load; keep the swap
+  // declarations after it so its original font-display:auto does not win.
+  function tuneLogos(root) {
+    if (!root.querySelectorAll) return;
+    var images = root.tagName === 'IMG' ? [root] : root.querySelectorAll('app-header .logo img');
+    Array.prototype.forEach.call(images, function (image) {
+      if (image.hasAttribute('data-ab-responsive-logo') || !image.closest('app-header .logo')) return;
+      var url;
+      try { url = new URL(image.getAttribute('src') || '', location.href); } catch (_) { return; }
+      if (url.origin !== 'https://apisub.amolbooks.com' || !/^\/api\/upload\/images\/amolbook-logo-removebg-preview-[^/]+\.png$/.test(url.pathname)) return;
+      var file = url.pathname.split('/').pop();
+      var local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+      var base = (local ? location.origin : url.origin) + '/api/storefront-images/';
+      image.setAttribute('data-ab-responsive-logo', 'true');
+      image.setAttribute('sizes', '140px');
+      image.setAttribute('srcset', base + '160/' + file + ' 160w, ' + base + '320/' + file + ' 320w');
+    });
+  }
+  document.addEventListener('error', function (event) {
+    var image = event.target;
+    if (image && image.tagName === 'IMG' && image.hasAttribute('data-ab-responsive-logo') && image.hasAttribute('srcset')) {
+      event.stopImmediatePropagation();
+      image.removeAttribute('srcset');
+    }
+  }, true);
+  new MutationObserver(function (records) {
+    records.forEach(function (record) {
+      Array.prototype.forEach.call(record.addedNodes || [], tuneLogos);
+    });
+  }).observe(document.documentElement, { childList: true, subtree: true });
+  tuneLogos(document);
+  document.addEventListener('load', function (event) {
+    var link = event.target;
+    if (!link || link.tagName !== 'LINK' || !/font-awesome\/6\.2\.0\/css\/all\.min\.css/.test(link.href)) return;
+    var style = document.getElementById('ab-pagespeed-runtime');
+    if (style) document.head.appendChild(style);
+  }, true);
+})();
+</script>

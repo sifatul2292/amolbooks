@@ -1,3 +1,13 @@
+## Production PageSpeed fixes (2026-10-18)
+
+- Continued the PageSpeed work in the authoritative Sunday checkout, preserving the existing commerce bridge and unpublished review-video fix. The original chat checkout differs substantially from production and must not be deployed wholesale.
+- Added responsive 320/640px homepage covers and 160/320px header logos through a fixed-size, local-file-only WebP endpoint. Four conversion workers queue normal shelf bursts; input pixels, pending jobs and cached bytes/entries are bounded. Original images recover on derivative failures; uploads are never rewritten. First shelf covers load eagerly.
+- Enabled the existing allowlisted catalogue proxy for the production storefront and remapped Angular/homepage catalogue reads. Production nginx currently sends /storefront-catalog/ to the SPA fallback; deploy requires a prefix proxy to Nest. API_BASE is same-origin /storefront-catalog on production/local storefronts; other hosts retain https://apisub.amolbooks.com/api.
+- Fixed repeated body scans and unchanged cart-badge writes. Focused Chrome fixture reproduces nine whole-body scans in 1.2s before the patch and one after; new content still receives brand replacement while scripts/data/textarea content stays untouched. Homepage mutation updates are batched and route polling avoids rescanning unchanged pages.
+- Added icon font swap, compositor-only transitions, reduced-motion support, accessibility repairs and a main landmark. Document processing removes a known broken banner preload and prevents a duplicate standalone Ads library load after GTM is ready, preserving configuration/conversion commands and the fallback.
+- Verified API build, focused image/browser/runtime checks and existing homepage, catalogue, product/cart and detail checks. Lint remains blocked by the pre-existing all-files-ignored ESLint config. No compiled UI/admin files are hand-edited or staged.
+- VPS inspection confirms the canonical redirect is already an nginx return, measured at about 30ms internally and 86ms through Cloudflare; the old report's 7.1s delay was not reproduced. All resources in its cache-lifetime warning are third-party owned. Original Angular tree-shaking, vendor cache headers and active GTM configuration cannot be fixed by changing nginx asset TTLs. See scripts/PAGESPEED.md for remaining constraints.
+
 ## Product review YouTube embeds (2026-10-18)
 
 - Confirmed the Dua Bishwokosh record stores a youtu.be share URL and the compiled Angular safeUrl pipe passes it straight into an iframe. It redirects to the watch page, which returns X-Frame-Options SAMEORIGIN. YouTube oEmbed confirms the video exists and supports embedding.

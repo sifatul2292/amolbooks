@@ -1,0 +1,60 @@
+<!-- All Pages; no API_BASE: semantics only. Runs through the existing snippet installer. -->
+<style>
+app-header .bottom-nav { background: #fff !important; }
+app-header .bottom-nav li, app-header .bottom-nav li span { color: #175c36 !important; }
+.ab-book-quiz-submit { background: #175c36 !important; color: #fff !important; }
+app-footer .footer-bottom-copyright { background: #175c36 !important; }
+app-footer .footer-bottom-copyright h3 { color: #fff !important; }
+</style>
+<script>
+(function () {
+  if (window.__amolAccessibilityInstalled) return;
+  window.__amolAccessibilityInstalled = true;
+  var scheduled = false;
+  var routes = { 'Home': '/', 'About Us': '/pages/about-us', 'Categories': '/category-list', 'Blog': '/blogs', 'Contact Us': '/pages/contact-us' };
+  function repair() {
+    scheduled = false;
+    document.querySelectorAll('app-header button.search-icon:not([aria-label])').forEach(function (button) {
+      button.setAttribute('aria-label', 'বই খুঁজুন');
+    });
+    document.querySelectorAll('img:not([alt])').forEach(function (image) {
+      // Category icons repeat their adjacent text and are decorative.
+      if (image.closest('li a span')) image.setAttribute('alt', '');
+    });
+    document.querySelectorAll('.side-nav-middle a:not([href])').forEach(function (link) {
+      var route = routes[link.textContent.trim()];
+      if (route) link.setAttribute('href', route);
+    });
+    document.querySelectorAll('.footer-social a').forEach(function (link) {
+      var href = link.getAttribute('href') || '';
+      if (!href.trim()) {
+        // No configured destination: do not expose a nonfunctional link.
+        link.removeAttribute('href');
+        link.removeAttribute('target');
+        link.setAttribute('aria-hidden', 'true');
+        return;
+      }
+      var label = /facebook\.com/i.test(href) ? 'Amol Books Facebook' :
+        /youtube\.com/i.test(href) ? 'Amol Books YouTube' : '';
+      if (/^\+?[\d\s()-]+$/.test(href)) {
+        label = 'ফোন করুন ' + href;
+        link.setAttribute('href', 'tel:' + href.replace(/[\s()-]/g, ''));
+        link.removeAttribute('target');
+      } else if (href.indexOf('tel:') === 0) label = 'ফোন করুন ' + href.slice(4);
+      if (label && link.getAttribute('aria-label') !== label) link.setAttribute('aria-label', label);
+    });
+    document.querySelectorAll('.download-app-area img[tabindex][alt=""]').forEach(function (image) {
+      image.setAttribute('alt', 'অ্যাপ ডাউনলোড');
+    });
+    var content = document.querySelector('app-home');
+    if (content && !document.querySelector('main, [role="main"]')) content.setAttribute('role', 'main');
+  }
+  function schedule() {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(repair);
+  }
+  new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true });
+  schedule();
+})();
+</script>

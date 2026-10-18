@@ -5303,7 +5303,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     }
     var badge = bar.querySelector('.ab-sticky-cart-count');
     if (!badge) return;
-    badge.textContent = String(count);
+    if (badge.textContent !== String(count)) badge.textContent = String(count);
     badge.classList.toggle('has-items', count > 0);
   }
 
@@ -5317,7 +5317,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       badge = document.createElement('small');
       navItem.appendChild(badge);
     }
-    if (badge) badge.textContent = String(count);
+    if (badge && badge.textContent !== String(count)) badge.textContent = String(count);
   }
 
   function pulseStickyCart() {
@@ -8026,20 +8026,25 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   }
 
   function scheduleMount() {
-    window.clearTimeout(timer);
+    if (timer !== null) return;
     timer = window.setTimeout(function () {
-      replaceLegacyBrand(document.body);
+      timer = null;
       mount();
       repairReviewImages(document);
     }, 120);
   }
 
   function replaceLegacyBrand(root) {
-    var walker = document.createTreeWalker(root || document.body, NodeFilter.SHOW_TEXT);
-    var node;
-    while ((node = walker.nextNode())) {
-      node.nodeValue = brandedText(node.nodeValue);
+    if (!root) return;
+    function updateText(node) {
+      if (node.parentElement && node.parentElement.closest('script, style, noscript, textarea')) return;
+      var value = brandedText(node.nodeValue);
+      if (value !== node.nodeValue) node.nodeValue = value;
     }
+    if (root.nodeType === 3) return updateText(root);
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    var node;
+    while ((node = walker.nextNode())) updateText(node);
   }
 
   function brandedText(value) {
@@ -8507,6 +8512,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   });
   window.dispatchEvent(new Event('ab-commerce-bridge-ready'));
   reconcileAuthenticatedCartFromLocal();
+  replaceLegacyBrand(document.body);
   scheduleMount();
   window.addEventListener('scroll', mountStickyCommerce, { passive: true });
   window.addEventListener('scroll', mountStickyProductActions, { passive: true });
@@ -8553,8 +8559,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   observer = new MutationObserver(function (records) {
     records.forEach(function (record) {
       Array.prototype.forEach.call(record.addedNodes || [], function (node) {
-        if (node.nodeType === 3) node.nodeValue = brandedText(node.nodeValue);
-        else if (node.nodeType === 1 || node.nodeType === 11) replaceLegacyBrand(node);
+        if (node.nodeType === 1 || node.nodeType === 3 || node.nodeType === 11) replaceLegacyBrand(node);
       });
     });
     scheduleMount();

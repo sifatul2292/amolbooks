@@ -239,7 +239,8 @@ body.ab-home-redesign app-home { display: none !important; }
   var cataloguePromise = null;
   var coverDataRequested = false;
   var localHost = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname) || /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(location.hostname);
-  var API_BASE = localHost ? location.origin + '/storefront-catalog' : 'https://apisub.amolbooks.com/api';
+  var sameOriginCatalogue = localHost || /^(www\.)?amolbooks\.com$/.test(location.hostname);
+  var API_BASE = sameOriginCatalogue ? location.origin + '/storefront-catalog' : 'https://apisub.amolbooks.com/api';
   var goals = [
     { label: 'কুরআন বুঝতে', match: 'কুরআন বিষয়ক আলোচনা', fallback: '/product-list?categories=' + encodeURIComponent('কুরআন বিষয়ক আলোচনা') },
     { label: 'নামাজ সুন্দর করতে', match: 'দোয়া, দরূদ ও যিকর', fallback: '/product-list?categories=' + encodeURIComponent('দোয়া, দরূদ ও যিকর') },
@@ -324,6 +325,16 @@ body.ab-home-redesign app-home { display: none !important; }
       });
       return entities;
     }, []).slice(0, 18);
+  }
+  function responsiveImage(product) {
+    var original = imageUrl(product);
+    var url = new URL(original, location.origin);
+    if (url.origin !== 'https://apisub.amolbooks.com' || !/^\/api\/upload\/images\/[^/]+$/.test(url.pathname)) {
+      return 'src="' + escapeHtml(original) + '"';
+    }
+    var base = (localHost ? location.origin : url.origin) + '/api/storefront-images/';
+    var file = url.pathname.split('/').pop();
+    return 'src="' + escapeHtml(original) + '" srcset="' + escapeHtml(base + '320/' + file) + ' 320w, ' + escapeHtml(base + '640/' + file) + ' 640w" sizes="(max-width: 767px) 44vw, 242px" onerror="event.stopImmediatePropagation();this.removeAttribute(\'srcset\');this.onerror=null;"';
   }
   function imageUrl(product) {
     var image = product && Array.isArray(product.images) && product.images[0] || '';
@@ -479,7 +490,9 @@ body.ab-home-redesign app-home { display: none !important; }
     }
     return fallback;
   }
+  var renderedCards = 0;
   function productCard(product, listName) {
+    var priority = renderedCards++ < 2;
     var price = finalPrice(product);
     var regular = number(product && product.salePrice);
     var discount = discountPercent(product);
@@ -488,7 +501,7 @@ body.ab-home-redesign app-home { display: none !important; }
         '<div class="ab-home-card-media ab-cover-badge-host">' +
           (discount ? '<span class="ab-home-discount">' + escapeHtml(discount) + '% ছাড়</span>' : '') +
           '<span class="ab-cover-peek-badge">একটু পড়ে দেখুন</span>' +
-          '<img src="' + escapeHtml(imageUrl(product)) + '" alt="' + escapeHtml(product.name || 'বই') + '" width="320" height="426" loading="lazy" decoding="async">' +
+          '<img ' + responsiveImage(product) + ' alt="' + escapeHtml(product.name || 'বই') + '" width="320" height="426" loading="' + (priority ? 'eager' : 'lazy') + '" fetchpriority="' + (priority ? 'high' : 'low') + '" decoding="async">' +
         '</div>' +
         '<h3>' + escapeHtml(product.name || '') + '</h3>' +
         '<p class="ab-home-author">' + escapeHtml(authorName(product)) + '</p>' +
@@ -524,7 +537,7 @@ body.ab-home-redesign app-home { display: none !important; }
         return cataloguePromise;
       }
     } catch (error) { /* Fetch when storage is unavailable. */ }
-    var request = localHost ? fetch(API_BASE + '/library', { credentials: 'omit' }).then(function (response) {
+    var request = sameOriginCatalogue ? fetch(API_BASE + '/library', { credentials: 'omit' }).then(function (response) {
       if (!response.ok) throw new Error('Catalogue unavailable');
       return response.json();
     }) : fetch(API_BASE + '/product/get-all', {
@@ -565,7 +578,8 @@ body.ab-home-redesign app-home { display: none !important; }
     var authorsHtml = nameStripHtml('ab-home-authors', 'জনপ্রিয় লেখক', uniqueEntities(products, 'author'), 'author', '/author-list');
     var publishersHtml = nameStripHtml('ab-home-publishers', 'জনপ্রিয় প্রকাশনী', uniqueEntities(products, 'publisher'), 'publisher', '/publisher-list');
     var goalsHtml = '<section class="ab-home-goals" aria-labelledby="ab-home-goals-title"><div class="ab-home-shell"><div class="ab-home-section-head"><h2 id="ab-home-goals-title">আপনার প্রয়োজন অনুযায়ী</h2><a class="ab-home-all-link" href="/category-list">সব বিষয়</a></div><div class="ab-home-goal-grid">' + goalLinks + '</div></div></section>';
-    var root = document.createElement('div');
+    renderedCards = 0;
+    var root = document.createElement('main');
     root.id = ROOT_ID;
     root.innerHTML = shelfData.map(function (entry, index) {
       var shelfHtml = sectionHtml('ab-home-' + entry.shelf.id, entry.shelf.title, entry.products, '/product-list');
@@ -674,9 +688,26 @@ body.ab-home-redesign app-home { display: none !important; }
     if (queue.length) pendingCarts[id] = queue;
     else delete pendingCarts[id];
   });
-  new MutationObserver(update).observe(document.documentElement, { childList: true, subtree: true });
-  window.addEventListener('popstate', update);
-  window.setInterval(update, 1000);
+  var updateScheduled = false;
+  function scheduleUpdate() {
+    if (updateScheduled) return;
+    updateScheduled = true;
+    requestAnimationFrame(function () {
+      updateScheduled = false;
+      update();
+    });
+  }
+  new MutationObserver(scheduleUpdate).observe(document.documentElement, { childList: true, subtree: true });
+  window.addEventListener('popstate', scheduleUpdate);
+  // History updates can change the route without adding any DOM nodes.
+  var lastRoute = location.pathname + location.search;
+  window.setInterval(function () {
+    var route = location.pathname + location.search;
+    if (route !== lastRoute) {
+      lastRoute = route;
+      scheduleUpdate();
+    }
+  }, 1000);
   update();
 })();
 </script>

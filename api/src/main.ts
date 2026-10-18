@@ -1,3 +1,5 @@
+import { optimizeStorefrontHtml } from './storefront-performance';
+import { storefrontImages } from './storefront-images';
 import { customerManagerPages } from './pages/customer-manager/customer-manager-pages';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -76,6 +78,8 @@ async function bootstrap() {
       return redirectMiddlewareRef.use(req, res, next);
     }
   );
+
+  app.use('/api/storefront-images', storefrontImages(join(__dirname, '..', 'upload/images')));
 
   app.use(customerManagerPages(join(__dirname, '../..')));
 
@@ -526,6 +530,8 @@ ${storefrontPurchaseExternalIdHelper}
     'product-review-video.html',
     'book-gift-card.html',
     'homepage-redesign.html',
+    'pagespeed-accessibility.html',
+    'pagespeed-runtime.html',
   ];
   const storefrontSnippetsPattern =
     /<!-- amol-storefront-snippets:start -->[\s\S]*?<!-- amol-storefront-snippets:end -->/g;
@@ -547,7 +553,7 @@ ${storefrontPurchaseExternalIdHelper}
       )
       .join('');
     const block = `<!-- amol-storefront-snippets:start -->${snippets}<!-- amol-storefront-snippets:end -->`;
-    const cleanedHtml = indexHtml.replace(storefrontSnippetsPattern, '');
+    const cleanedHtml = optimizeStorefrontHtml(indexHtml).replace(storefrontSnippetsPattern, '');
     return cleanedHtml.includes('</head>')
       ? cleanedHtml.replace('</head>', `${block}</head>`)
       : `${block}${cleanedHtml}`;
@@ -1150,7 +1156,8 @@ ${storefrontPurchaseExternalIdHelper}
       res: express.Response,
       next: express.NextFunction
     ) => {
-      if (!isLocalStorefrontHost(req.hostname)) return next();
+      if (!['amolbooks.com', 'www.amolbooks.com'].includes(req.hostname) &&
+          !isLocalStorefrontHost(req.hostname)) return next();
       const isLibraryRequest = req.method === 'GET' && req.path === '/library';
       const allowedCatalogueRequest =
         isLibraryRequest ||
