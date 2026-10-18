@@ -80,6 +80,7 @@ async function bootstrap() {
   );
 
   app.use('/api/storefront-images', storefrontImages(join(__dirname, '..', 'upload/images')));
+  app.use('/api/storefront-assets', express.static(join(__dirname, '../..', 'gtm-snippets/assets'), { maxAge: '1y', immutable: true }));
 
   app.use(customerManagerPages(join(__dirname, '../..')));
 

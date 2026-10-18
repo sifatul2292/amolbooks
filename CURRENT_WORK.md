@@ -1,3 +1,11 @@
+## PageSpeed first-paint follow-up (2026-10-18)
+
+- Deployed bbbb358e through safe pull, rebuilt and restarted only amolbooks-api. Nginx now proxies /storefront-catalog/ to Nest and caches WebP/AVIF. Live catalogue returns 104 products as JSON; sampled cover shrank from 34,974 to 9,880 bytes. Code/nginx rollback snapshot: /home/amolbooks/source-snapshots/pagespeed-20261018-213247. Uploads have a separate safe-pull snapshot.
+- Fresh mobile audit 37jv2ahujg: performance 37, accessibility 97, best practices 92, SEO 100. Main-thread work fell from 9.8s to 5.7s and product injection CPU from 1686ms to 92ms, but TBT increased and first render remains slow. Image opportunity fell from 563KiB to 68KiB; font-display and non-composited animation warnings disappeared. This is not an improved performance score.
+- Follow-up: losslessly converted the existing 247,356-byte Bengali TTF to an 87,976-byte WOFF2, retaining all 427 codepoints. A hashed public asset replaces the font through the injected stylesheet. FontTools/Brotli were used in a temporary virtualenv only; no runtime dependency or compiled UI edits.
+- Added dynamic responsive preloads for the two current best-selling published/in-stock homepage covers through the existing cached product reader. Hints match homepage srcset/sizes and fail open; they avoid waiting for Angular before requesting LCP artwork. Existing no-JS fallback/product metadata remain intact.
+- API build, real-Nest document HTTP checks, SEO/navigation and runtime/browser checks pass. Lint remains blocked by the existing ignored-files config. Deployment and a second fresh audit will verify this follow-up.
+
 ## Production PageSpeed fixes (2026-10-18)
 
 - Continued the PageSpeed work in the authoritative Sunday checkout, preserving the existing commerce bridge and unpublished review-video fix. The original chat checkout differs substantially from production and must not be deployed wholesale.

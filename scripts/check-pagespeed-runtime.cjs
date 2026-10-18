@@ -6,7 +6,7 @@ const ts = require('../api/node_modules/typescript');
 const { chromium } = require('playwright');
 const { optimizeStorefrontHtml } = require('../api/dist/storefront-performance');
 const candidate = require('../api/dist/storefront-product-sections-script').STOREFRONT_PRODUCT_SECTIONS_SCRIPT;
-const baselineSource = cp.execFileSync('git', ['show', 'HEAD:api/src/storefront-product-sections-script.ts'], { cwd: path.join(__dirname, '..'), encoding: 'utf8' });
+const baselineSource = cp.execFileSync('git', ['show', 'a9a4b748:api/src/storefront-product-sections-script.ts'], { cwd: path.join(__dirname, '..'), encoding: 'utf8' });
 const baselineExports = {};
 new Function('exports', ts.transpileModule(baselineSource, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2017 } }).outputText)(baselineExports);
 
@@ -18,6 +18,9 @@ async function main() {
   assert.match(optimized, /amol-ads-loader-dedup/);
   assert.match(optimized, /gtag\('config', 'AW-18176858056'\)/, 'Ads configuration remains queued');
   assert.match(optimized, /send_to.*AW-18176858056/, 'Purchase conversion destination is preserved');
+  const font = fs.readFileSync(path.join(__dirname, '../gtm-snippets/assets/hind-siliguri-regular.3bbbe5e258da.woff2'));
+  assert.equal(font.toString('ascii', 0, 4), 'wOF2');
+  assert.ok(font.length < 90000);
   const browser = await chromium.launch({ channel: 'chrome', headless: true });
   try {
     const results = {};
@@ -59,7 +62,7 @@ async function main() {
     assert.equal(await page.locator('head').evaluate(head => head.lastElementChild.id), 'ab-pagespeed-runtime');
     assert.equal(await page.locator('app-footer a').evaluate(link => getComputedStyle(link).transitionProperty), 'transform, opacity');
     const faces = await page.locator('#ab-pagespeed-runtime').evaluate(style => [...style.sheet.cssRules].filter(rule => rule.type === CSSRule.FONT_FACE_RULE).map(rule => rule.style.fontDisplay));
-    assert.deepEqual(faces, ['swap', 'swap']);
+    assert.deepEqual(faces, ['swap', 'swap', 'swap']);
     console.log('Runtime performance checks passed:', JSON.stringify(results), 'late font stylesheet, compositor transitions, Ads fallback, brand updates and script-data preservation.');
   } finally { await browser.close(); }
 }

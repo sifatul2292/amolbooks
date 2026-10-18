@@ -14,6 +14,11 @@ const { StorefrontDocumentService } = require('../api/dist/pages/sitemap/storefr
 const seen = [];
 const products = {
   findAllPublished: async () => [{name:'Test book', slug:'50% / book'}],
+  getAllProducts: async query => {
+    assert.equal(query.filter.status, 'publish');
+    assert.equal(query.pagination.pageSize, 2);
+    return { data: [{ images: ['https://apisub.amolbooks.com/api/upload/images/cover-test.webp'] }] };
+  },
   getProductOgHtml: async (slug, res) => {
     seen.push(slug);
     res.status(slug === '50% / book' ? 200 : 404).send('<html><head><title>Test</title><meta name="robots" content="noindex"></head><body><h1>Test</h1></body></html>');
@@ -33,7 +38,12 @@ async function main() {
     const base = await app.getUrl();
     const home = await fetch(base+'/api/storefront-document/');
     assert.equal(home.status, 200);
-    assert.match(await home.text(), /<app-root><div id="amol-seo-fallback"><main>/);
+    const homeHtml = await home.text();
+    assert.match(homeHtml, /<app-root><div id="amol-seo-fallback"><main>/);
+    assert.match(homeHtml, /rel="preload" as="image"[^>]*storefront-images\/320\/cover-test.webp/);
+    products.getAllProducts = async () => { throw new Error('Unavailable'); };
+    const withoutHints = await fetch(base+'/api/storefront-document/');
+    assert.equal(withoutHints.status, 200, 'Image hints must fail open');
     const book = await fetch(base+'/api/storefront-document/product-details/50%25%20%2F%20book');
     assert.equal(book.status, 200);
     assert.equal(seen[0], '50% / book');

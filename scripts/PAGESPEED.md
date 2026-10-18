@@ -49,3 +49,14 @@ Production work still required:
 Verification: build, focused image/API and browser fixture checks, existing
 homepage/catalogue regression checks. Run a new mobile PageSpeed audit after
 production deployment; no improved production score has been measured locally.
+
+## First deployment and first-paint follow-up
+
+Commit bbbb358e is live. The first fresh mobile report is
+https://pagespeed.web.dev/analysis/https-amolbooks-com/37jv2ahujg?form_factor=mobile
+(performance 37, accessibility 97, best practices 92, SEO 100). It confirms reduced
+image waste and product-script CPU, but first render and TBT remain slow.
+
+Follow-up: responsive cover preloads and a lossless WOFF2 Bengali font
+(247356 -> 87976 bytes, all 427 codepoints retained). Conversion used FontTools
+4.60.2/Brotli 1.2.0 in a temporary virtualenv, without runtime dependencies.

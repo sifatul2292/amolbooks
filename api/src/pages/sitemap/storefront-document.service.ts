@@ -95,6 +95,31 @@ export class StorefrontDocumentService {
     private readonly packages: SpecialPackageService,
   ) {}
 
+  private async homepageImagePreloads(path: string): Promise<string> {
+    if (path !== '') return '';
+    try {
+      const result = await this.products.getAllProducts({
+        filter: { status: 'publish', quantity: { $gt: 0 } },
+        pagination: { pageSize: 2, currentPage: 0 },
+        sort: { totalSold: -1, priority: -1 },
+        select: { images: 1 },
+      } as any);
+      return (Array.isArray(result.data) ? result.data : []).map(book => {
+        const image = Array.isArray(book.images) ? book.images[0] : '';
+        const url = new URL(image || '', 'https://apisub.amolbooks.com/api/');
+        if (url.origin !== 'https://apisub.amolbooks.com') return '';
+        const match = url.pathname.match(/^\/api\/upload\/images\/([\w-][\w .()-]*\.(?:jpe?g|png|webp))$/i);
+        if (!match) return '';
+        const base = 'https://apisub.amolbooks.com/api/storefront-images/';
+        const file = encodeURIComponent(decodeURIComponent(match[1]));
+        return `<link rel="preload" as="image" href="${base}320/${file}" imagesrcset="${base}320/${file} 320w, ${base}640/${file} 640w" imagesizes="(max-width: 767px) 44vw, 242px" fetchpriority="high">`;
+      }).join('');
+    } catch (_) {
+      // Optional hints must never prevent the storefront from loading.
+      return '';
+    }
+  }
+
   async send(path: string, res: Response): Promise<void> {
     let page = '';
     let status = 200;
@@ -168,6 +193,7 @@ export class StorefrontDocumentService {
     );
     const head = page.match(/<head>([\s\S]*?)<\/head>/i)?.[1] || '';
     const body = page.match(/<body>([\s\S]*?)<\/body>/i)?.[1] || '';
+    const imagePreloads = await this.homepageImagePreloads(path);
     const html = shell
       .replace(/<title>[\s\S]*?<\/title>/gi, '')
       .replace(
@@ -179,7 +205,7 @@ export class StorefrontDocumentService {
         /<script\b[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi,
         '',
       )
-      .replace('</head>', () => `${STOREFRONT_SEO_FALLBACK_HEAD}${head}${STOREFRONT_SEO_NAVIGATION}</head>`)
+      .replace('</head>', () => `${imagePreloads}${STOREFRONT_SEO_FALLBACK_HEAD}${head}${STOREFRONT_SEO_NAVIGATION}</head>`)
       // Angular replaces its host contents at bootstrap; without JS the content remains usable.
       .replace(
         /<app-root\b[^>]*>[\s\S]*?<\/app-root>/i,
