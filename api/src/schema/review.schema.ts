@@ -70,3 +70,5 @@ export const ReviewSchema = new mongoose.Schema(
     versionKey: false,
   },
 );
+
+ReviewSchema.index({ 'product._id': 1, status: 1 });

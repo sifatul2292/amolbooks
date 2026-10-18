@@ -1,0 +1,1589 @@
+{
+  "checkedAt": "2026-10-18T07:37:40.147Z",
+  "count": 104,
+  "unreadable": [],
+  "note": "Stored catalogue values only. Missing identifiers and edition differences require book/imprint verification; no database writes.",
+  "products": [
+    {
+      "url": "https://www.amolbooks.com/product-details/islami-orthonity-o-uddokta-47",
+      "name": "ইসলামি অর্থনীতি ও সফল উদ্যোক্তার মাইন্ডম্যাপ",
+      "publisher": "আমল বুকস",
+      "edition": null,
+      "pages": 240,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn",
+        "edition"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/the-barakah-effect",
+      "name": "দ্য বারাকাহ ইফেক্ট",
+      "publisher": "আমল বুকস",
+      "edition": "1st Edition 2026",
+      "pages": 288,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/bipod-jokhon-niyamot-2-91",
+      "name": "বিপদ যখন নিয়ামাত ২",
+      "publisher": "সন্দীপন প্রকাশন",
+      "edition": null,
+      "pages": null,
+      "isbn": null,
+      "language": [
+        "English"
+      ],
+      "missing": [
+        "isbn",
+        "edition",
+        "totalPages"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/500%20shobder%20kuraner%2075%25",
+      "name": "৫০০ শব্দে কুরআনের ৭৫% (নতুন সংস্করণ)",
+      "publisher": "আমল বুকস",
+      "edition": "দ্বিতীয় সংস্করণ, ২০২৬",
+      "pages": 256,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/productive%20muslim",
+      "name": "প্রোডাক্টিভ মুসলিম",
+      "publisher": "আমল বুকস",
+      "edition": "1st Edition 2026",
+      "pages": 256,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Amol%20Notebook",
+      "name": "Amol Notebook",
+      "publisher": null,
+      "edition": null,
+      "pages": 80,
+      "isbn": null,
+      "language": [],
+      "missing": [
+        "isbn",
+        "edition",
+        "publisher",
+        "author",
+        "language"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Kajer%20Majhe%20Rober%20Khoje",
+      "name": "কাজের মাঝে রবের খোঁজে",
+      "publisher": "সমকালীন",
+      "edition": "1st Published, 2020",
+      "pages": 88,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/sompodgorarkoushol",
+      "name": "সম্পদ গড়ার কৌশল",
+      "publisher": "সন্দীপন প্রকাশন",
+      "edition": "1st Published 2024",
+      "pages": 220,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/yourmustdobusiness",
+      "name": "ইউ মাস্ট ডু বিজনেস",
+      "publisher": "সমকালীন",
+      "edition": "1st Published, 2022",
+      "pages": 32,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Jibonpaltano4books",
+      "name": "জীবন পাল্টে দেওয়ার মত ৪ টি বই",
+      "publisher": "আমল বুকস",
+      "edition": "দ্বিতীয় সংস্করণ, ২০২৬",
+      "pages": 256,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/hisnulmuslim",
+      "name": "হিসনুল মুসলিম",
+      "publisher": "সন্দীপন প্রকাশন",
+      "edition": null,
+      "pages": 224,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn",
+        "edition"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/productive-barakah",
+      "name": "প্রোডাক্টিভ মুসলিম + দ্য বারাকাহ ইফেক্ট",
+      "publisher": "আমল বুকস",
+      "edition": "1st Edition 2026",
+      "pages": 544,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Tinie-Amar-Rob",
+      "name": "তিনিই আমার রব সিরিজ",
+      "publisher": "সমকালীন",
+      "edition": "1st published 2023",
+      "pages": 660,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Jibon%20Jodi%20hoto%20nari%20sahabir%20moto",
+      "name": "জীবন যদি হতো নারী সাহাবীর মত",
+      "publisher": "সমকালীন",
+      "edition": " 1st Published, 2020",
+      "pages": 128,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn",
+        "author"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Tinii%20Amar%20Rob",
+      "name": "তিনিই আমার রব",
+      "publisher": "সমকালীন",
+      "edition": null,
+      "pages": 164,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn",
+        "edition"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/rukaiyah",
+      "name": "রুকইয়াহ",
+      "publisher": "সন্দীপন প্রকাশন",
+      "edition": "1st Published,2024",
+      "pages": 312,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/amolbissokosh",
+      "name": "আমল বিশ্বকোষ - ৩৬৫ দিনের আমল একসাথে",
+      "publisher": "দারুল ফালাহ",
+      "edition": "1st published, 2026",
+      "pages": 624,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Uddesshohin%20ar%20kotodin",
+      "name": "উদ্দেশ্যহীন আর কত দিন?",
+      "publisher": "পথিক প্রকাশন",
+      "edition": "1st Edition, 2023, ভাষা : বাংলা",
+      "pages": 304,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/reclaimyourheart",
+      "name": "রিক্লেইম ইয়োর হার্ট",
+      "publisher": "সমকালীন",
+      "edition": "New Edition 2022",
+      "pages": 168,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/olosotajibonershotru",
+      "name": "অলসতা : জীবনের শত্রু",
+      "publisher": "সন্দীপন প্রকাশন",
+      "edition": "1st Published, 2021",
+      "pages": 152,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Attar%20Osudh",
+      "name": "আত্মার ওষুধ",
+      "publisher": "সন্দীপন প্রকাশন",
+      "edition": "1st published March 2021",
+      "pages": 224,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/nari-sahabider-islam-grohon-29",
+      "name": "নারী সাহাবিদের ইসলাম গ্রহণ",
+      "publisher": "Ihdah Publication",
+      "edition": "1st Published, 2025",
+      "pages": 144,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Jibon%20Jekhane%20Jemon",
+      "name": "জীবন যেখানে যেমন",
+      "publisher": "সমকালীন",
+      "edition": "1st Published, 2021",
+      "pages": 152,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/are-rahikul-makhtum",
+      "name": "আর রাহিকুল মাখতুম (তাহকিক সংস্করণ)",
+      "publisher": "পথিক প্রকাশন",
+      "edition": "1st Published, 2025",
+      "pages": 864,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/mohimannitoquran6set",
+      "name": "মহিমান্বিত কুরআন (৬ খণ্ড সেট)",
+      "publisher": "সিয়ান পাবলিকেশন",
+      "edition": "সর্বশেষ সংস্করণ অক্টোবর, ২০২২",
+      "pages": 960,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/billiondollarmuslim",
+      "name": "বিলিয়ন ডলার মুসলিম",
+      "publisher": "সমকালীন",
+      "edition": "1st Published, 2022",
+      "pages": null,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn",
+        "totalPages"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/khushu-khuju-96",
+      "name": "খুশু-খুযু",
+      "publisher": "সমকালীন",
+      "edition": "1st Published, 2022",
+      "pages": null,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn",
+        "totalPages"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Islame%20Namajer%20Gurutto",
+      "name": "ইসলামে নামাজের গুরুত্ব",
+      "publisher": "Ihdah Publication",
+      "edition": "1st Published, 2026",
+      "pages": 72,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/narir-swondorjo-hijabe-94",
+      "name": "নারীর সৌন্দর্য হিজাবে",
+      "publisher": "Ihdah Publication",
+      "edition": "1st Published, 2026",
+      "pages": 56,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/quran-bojhar-moja",
+      "name": "কুরআন বোঝার মজা",
+      "publisher": "দারুল ফালাহ",
+      "edition": "২০২১",
+      "pages": 160,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Ebar%20Bhinno%20kichu%20hok",
+      "name": "এবার ভিন্ন কিছু হোক",
+      "publisher": "সমকালীন",
+      "edition": "1st Published, 2022",
+      "pages": 200,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/al-adabul-mufrad",
+      "name": "আল-আদাবুল মুফরাদ (দুই খণ্ড)",
+      "publisher": "পথিক প্রকাশন",
+      "edition": "1st Published, 2021",
+      "pages": 768,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/bipod%20jokhon%20niyamot",
+      "name": "বিপদ যখন নিয়ামাত",
+      "publisher": "সন্দীপন প্রকাশন",
+      "edition": null,
+      "pages": null,
+      "isbn": null,
+      "language": [
+        "English"
+      ],
+      "missing": [
+        "isbn",
+        "edition",
+        "totalPages"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Time%20Management",
+      "name": "টাইম ম্যানেজমেন্ট",
+      "publisher": "সিয়ান পাবলিকেশন",
+      "edition": null,
+      "pages": 120,
+      "isbn": " 978-984-91681-7-1",
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "edition"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/mohimannito-quran-1-khondo",
+      "name": "মহিমান্বিত কুরআন (হার্ডকভার)",
+      "publisher": "সিয়ান পাবলিকেশন",
+      "edition": "সর্বশেষ সংস্করণ অক্টোবর, ২০২২",
+      "pages": 960,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/quraner-shounorjo%2F",
+      "name": "কুরআনের সৌন্দর্য",
+      "publisher": "সন্দীপন প্রকাশন",
+      "edition": "1st Published, 2022",
+      "pages": 144,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/kuranul-karim-30th-para",
+      "name": "কুরআনুল কারিম ৩০তম পারা",
+      "publisher": "দারুল ফালাহ",
+      "edition": null,
+      "pages": 272,
+      "isbn": null,
+      "language": [
+        "Bangla",
+        "English"
+      ],
+      "missing": [
+        "isbn",
+        "edition"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/duwa%20bishhokosh",
+      "name": "দুআ বিশ্বকোষ (আরবি উচ্চারণসহ) ~ ১২০০ দুআ দেয়া আছে",
+      "publisher": "দারুল ফালাহ",
+      "edition": null,
+      "pages": 672,
+      "isbn": null,
+      "language": null,
+      "missing": [
+        "isbn",
+        "edition",
+        "language"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/the-story-of-muhammad",
+      "name": "দ্য স্টোরি অব মুহাম্মাদ (সা.)",
+      "publisher": "আমল বুকস",
+      "edition": "1st Edition 2026",
+      "pages": 288,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Poro%20Collection",
+      "name": "পড়ো কালেকশন (১, ২, ৩, ৪, ৫)",
+      "publisher": "সমকালীন",
+      "edition": null,
+      "pages": null,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn",
+        "edition",
+        "totalPages"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Quran%20Bojhar%20Mulniti",
+      "name": "কুরআন বোঝার মূলনীতি",
+      "publisher": "সিয়ান পাবলিকেশন",
+      "edition": null,
+      "pages": 308,
+      "isbn": "9789849168218",
+      "language": [],
+      "missing": [
+        "edition",
+        "language"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/moner%20moto%20salat",
+      "name": "মনের মতো সালাত",
+      "publisher": "সন্দীপন প্রকাশন",
+      "edition": "1st Published, 2021",
+      "pages": 184,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/shamayele-tirmiji",
+      "name": "শামায়েলে তিরমিজি [নবিজি এমন ছিলেন] (দুই খণ্ড)",
+      "publisher": "পথিক প্রকাশন",
+      "edition": "1st Published, 2022",
+      "pages": 688,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/fera-1-73",
+      "name": "Fera",
+      "publisher": "সমকালীন",
+      "edition": "1st published 2017",
+      "pages": 120,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Biyer%20Epith%20Opith",
+      "name": "বিয়ের এপিঠ ওপিঠ",
+      "publisher": "সন্দীপন প্রকাশন",
+      "edition": "1st Published, 2024",
+      "pages": 208,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Adhunik%20Fitna",
+      "name": "আধুনিক ফিতনা",
+      "publisher": "Ihdah Publication",
+      "edition": " 1st Published, 2025",
+      "pages": 208,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/amar-nobi-muhammad-sa",
+      "name": "আমার নবি মুহাম্মাদ (স)",
+      "publisher": "সন্দীপন প্রকাশন",
+      "edition": "1st Published in 2024",
+      "pages": 504,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/tumio-hobe-prithibir-sofol-purush-61",
+      "name": "তুমিও হবে পৃথিবীর একজন সফল পুরুষ",
+      "publisher": "পথিক প্রকাশন",
+      "edition": "1st Published, 2021, ভাষা : বাংলা",
+      "pages": 160,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Kitabulfitan",
+      "name": "কিতাবুল ফিতান (তিন খণ্ড একত্রে)",
+      "publisher": "পথিক প্রকাশন",
+      "edition": null,
+      "pages": 1152,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn",
+        "edition"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/hijab-amar-porichoy-93",
+      "name": "হিজাব আমার পরিচয়",
+      "publisher": "সন্দীপন প্রকাশন",
+      "edition": "New Edition 2022",
+      "pages": 168,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/riyadus-salihin",
+      "name": "রিয়াদুস সালিহীন (প্রথম ও দ্বিতীয় খণ্ড)",
+      "publisher": "পথিক প্রকাশন",
+      "edition": "1st Edition, 2023",
+      "pages": 1152,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Quran%20Sonkoloner%20Itihash",
+      "name": "কুরআন সংকলনের ইতিহাস",
+      "publisher": "সমকালীন",
+      "edition": "1st Published, 2023,",
+      "pages": 464,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Omuslimder%20sathe%20jemon%20chilen%20Rasul%20(SA)",
+      "name": "অমুসলিমদের সাথে যেমন ছিলেন রাসূল (সাঃ) (হার্ডকভার)",
+      "publisher": "পথিক প্রকাশন",
+      "edition": "1st Edition, 2018",
+      "pages": 172,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Ma%2C%20Ma%2C%20Ma%20abong%20Baba",
+      "name": "মা, মা, মা এবং বাবা",
+      "publisher": "সমকালীন",
+      "edition": "1st Published, 2018",
+      "pages": 176,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Nobobi%20Akhlak%20Nobobi",
+      "name": "নববি আখলাক",
+      "publisher": "Ihdah Publication",
+      "edition": " 1st Published, 2025",
+      "pages": 272,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Narir%20Islami%20Jibon",
+      "name": "নারীর ইসলামি জীবন",
+      "publisher": "Ihdah Publication",
+      "edition": "1st Published, 2025",
+      "pages": 254,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/jibon-porichalona-18",
+      "name": "জীবন পরিচালনা",
+      "publisher": "Ihdah Publication",
+      "edition": " 1st Published, 2025",
+      "pages": 195,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/islami-bichar-babosthar-itihash-61",
+      "name": "ইসলামি বিচারব্যবস্থার ইতিহাস",
+      "publisher": "সন্দীপন প্রকাশন",
+      "edition": "1st Published, 2023, ভাষা : বাংলা",
+      "pages": 597,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Jobab",
+      "name": "জবাব",
+      "publisher": "সমকালীন",
+      "edition": null,
+      "pages": 216,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn",
+        "edition"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Nobi%20Jiboner%20Golpo",
+      "name": "নবি জীবনের গল্প",
+      "publisher": "সমকালীন",
+      "edition": "1st Published, 2021",
+      "pages": 144,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/poro-5-97",
+      "name": "পড়ো ৫",
+      "publisher": "সমকালীন",
+      "edition": "1st Published 2022",
+      "pages": 160,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/poro-4-56",
+      "name": "পড়ো ৪",
+      "publisher": "সমকালীন",
+      "edition": "1st Published 2022",
+      "pages": 168,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/poro-3-85",
+      "name": "পড়ো ৩",
+      "publisher": "সমকালীন",
+      "edition": "1st Published 2017",
+      "pages": 184,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/poro-2-89",
+      "name": "পড়ো ২",
+      "publisher": "সমকালীন",
+      "edition": "1st Published 2017",
+      "pages": 184,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/poro",
+      "name": "পড়ো",
+      "publisher": "সমকালীন",
+      "edition": "1st Published 2017",
+      "pages": 184,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Majlum%20Nari%20Sahabi",
+      "name": "মজলুম নারী সাহাবি",
+      "publisher": "Ihdah Publication",
+      "edition": "1st Published, 2024",
+      "pages": 144,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Bela%20Furabar%20Age",
+      "name": "বেলা ফুরাবার আগে",
+      "publisher": "সমকালীন",
+      "edition": "1st Published, 2020",
+      "pages": 192,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Obaddhotar%20Itihash",
+      "name": "অবাধ্যতার ইতিহাস",
+      "publisher": "সমকালীন",
+      "edition": "1st Published, 2022",
+      "pages": 256,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/choritro-shongsodhon-96",
+      "name": "চরিত্র সংশোধন",
+      "publisher": "Ihdah Publication",
+      "edition": " 1st Published, 2025",
+      "pages": 248,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/tinii-amar-rob-4-39",
+      "name": "তিনিই আমার রব - [চতুর্থ খণ্ড]",
+      "publisher": "সমকালীন",
+      "edition": "1st published 2023",
+      "pages": 152,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/tinii-amar-rob-3-14",
+      "name": "তিনিই আমার রব (৩য় খণ্ড)",
+      "publisher": "সমকালীন",
+      "edition": "1st published 2023",
+      "pages": 176,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/tinii-amar-rob-2-98",
+      "name": "তিনিই আমার রব (২য় খণ্ড)",
+      "publisher": "সমকালীন",
+      "edition": "1st published 2020",
+      "pages": 168,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/sonali-juger-mayera-17",
+      "name": "সোনালী যুগের মায়েরা",
+      "publisher": "সন্দীপন প্রকাশন",
+      "edition": "New Edition 2024",
+      "pages": 168,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/fera-2-36",
+      "name": "Fera 2",
+      "publisher": "সমকালীন",
+      "edition": "1st published 2020",
+      "pages": 120,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Emotional%20Intelligence",
+      "name": "ইমোশনাল ইন্টেলিজেন্স (নববি দর্পণে সমকালীন ধারণা)",
+      "publisher": "সন্দীপন প্রকাশন",
+      "edition": "1st Published, 2023",
+      "pages": 176,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Prottaborton",
+      "name": "প্রত্যাবর্তন",
+      "publisher": "সমকালীন",
+      "edition": "1st Published, 2018",
+      "pages": 224,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Paradoxical%20Sajid%202",
+      "name": "প্যারাডক্সিক্যাল সাজিদ ২",
+      "publisher": "সমকালীন",
+      "edition": "New Edition, 2020,",
+      "pages": 224,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Aroj%20Ali%20Somipe",
+      "name": "আরজ আলী সমীপে",
+      "publisher": "সমকালীন",
+      "edition": "1st Published, 2018",
+      "pages": 149,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Islami%20Ortho%20Bebosthar%20Itihash",
+      "name": "ইসলামি অর্থব্যবস্থার ইতিহাস",
+      "publisher": "সন্দীপন প্রকাশন",
+      "edition": "1st Published, 2023, ভাষা : বাংলা",
+      "pages": 504,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Jibon",
+      "name": "জীবন ও চরিত্র গঠন বান্ডেল",
+      "publisher": "Ihdah Publication",
+      "edition": " 1st Published, 2025",
+      "pages": 443,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/rasuler-proti-valobasha-1",
+      "name": "রাসুলের প্রতি ভালোবাসা",
+      "publisher": "Ihdah Publication",
+      "edition": " 1st Published, 2025",
+      "pages": 272,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/kostipathor-2-manshangko",
+      "name": "কষ্টিপাথর-২ (মানসাঙ্ক)",
+      "publisher": "সন্দীপন প্রকাশন",
+      "edition": "1st Published. 2021",
+      "pages": 224,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/kathgora%20koshtipathor%203",
+      "name": "কাঠগড়া (কষ্টিপাথর-৩)",
+      "publisher": "সন্দীপন প্রকাশন",
+      "edition": "1st Published, 2021",
+      "pages": 176,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Double%20Standard%203",
+      "name": "ডাবল স্ট্যান্ডার্ড ৩",
+      "publisher": "সন্দীপন প্রকাশন",
+      "edition": "New Edition, 2023",
+      "pages": 184,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Double%20Standard%202",
+      "name": "ডাবল স্ট্যান্ডার্ড ২.০",
+      "publisher": "সন্দীপন প্রকাশন",
+      "edition": "1st Published, 2020",
+      "pages": 280,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Shikorer%20Shondhane",
+      "name": "শিকড়ের সন্ধানে",
+      "publisher": "সমকালীন",
+      "edition": "1st Published, 2020",
+      "pages": 296,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Islami%20Shikkha%20Bebosthar%20Itihash",
+      "name": "ইসলামি শিক্ষাব্যবস্থার ইতিহাস",
+      "publisher": "সন্দীপন প্রকাশন",
+      "edition": "1st Published, 2023, ভাষা : বাংলা",
+      "pages": 408,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/muslimjatirItihash",
+      "name": "মুসলিম জাতির ইতিহাস",
+      "publisher": "সমকালীন",
+      "edition": null,
+      "pages": 464,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn",
+        "edition"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/naseehah",
+      "name": "নাসীহাহ : আপনার খিদমতে একগুচ্ছ উপদেশ",
+      "publisher": "সন্দীপন প্রকাশন",
+      "edition": "1st Published, 2022",
+      "pages": 184,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Ful%20Hoye%20Futo",
+      "name": "ফুল হয়ে ফোটো",
+      "publisher": "পথিক প্রকাশন",
+      "edition": "1st Published, 2020, ভাষা : বাংলা",
+      "pages": 240,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/nobijir-hadiser-dorse",
+      "name": "নবিজির হাদিসের দরসে (১ম ও ২য় খণ্ড একত্রে)",
+      "publisher": "পথিক প্রকাশন",
+      "edition": "1st edition, 2024",
+      "pages": 984,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/adorsho-muslimah-21",
+      "name": "আদর্শ মুসলিমাহ",
+      "publisher": "Ihdah Publication",
+      "edition": "1st Published, 2026",
+      "pages": 144,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/narir-farj-ilm-70",
+      "name": "নারীর ফরজ ইলম",
+      "publisher": "Ihdah Publication",
+      "edition": "1st Published, 2025",
+      "pages": 288,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/reflection-from-sura-yusuf-28",
+      "name": "রিফ্লেকশন ফ্রম সূরা ইউসুফ",
+      "publisher": "গার্ডিয়ান পাবলিকেশন্স",
+      "edition": "1st Published, 2023",
+      "pages": 160,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/message",
+      "name": "ম্যাসেজ",
+      "publisher": "গার্ডিয়ান পাবলিকেশন্স",
+      "edition": "1st Published, 2022",
+      "pages": 296,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Ahban",
+      "name": "আহ্বান - আধুনিক মননে আলোর পরশ",
+      "publisher": "গার্ডিয়ান পাবলিকেশন্স",
+      "edition": "1st Published, 2022",
+      "pages": null,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn",
+        "totalPages"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Adorsho%20Muslim",
+      "name": "আদর্শ মুসলিম",
+      "publisher": "Ihdah Publication",
+      "edition": null,
+      "pages": 172,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn",
+        "edition"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/umar-ibn-al-khattab-two-part-31",
+      "name": "উমার ইবন আল-খাত্তাব (দুই খণ্ড একত্রে)",
+      "publisher": "সিয়ান পাবলিকেশন",
+      "edition": null,
+      "pages": 834,
+      "isbn": "9789848046036",
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "edition"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Roufur%20Rohim%20Seerat",
+      "name": "রউফুর রহীম (নবিজীবনের বিশুদ্ধ সীরাত) (৩ খণ্ড একত্রে)",
+      "publisher": "সিয়ান পাবলিকেশন",
+      "edition": null,
+      "pages": 1504,
+      "isbn": "978-984-8046-04-3, 978-984-8046-05-0, 978-984-8046-06-7",
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "edition"
+      ],
+      "multipleIsbnsRequireEditionCheck": true
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Roufur%20Rohim%20Seerat%203rd%20part",
+      "name": "রউফুর রহীম (নবিজীবনের বিশুদ্ধ সীরাত) (৩য় খণ্ড)",
+      "publisher": "সিয়ান পাবলিকেশন",
+      "edition": null,
+      "pages": 520,
+      "isbn": "978-984-8046-04-3, 978-984-8046-05-0, 978-984-8046-06-7",
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "edition"
+      ],
+      "multipleIsbnsRequireEditionCheck": true
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Roufur%20Rohim%20Seerat%202nd%20part",
+      "name": "রউফুর রহীম (নবিজীবনের বিশুদ্ধ সীরাত) (২য় খণ্ড)",
+      "publisher": "সিয়ান পাবলিকেশন",
+      "edition": null,
+      "pages": 504,
+      "isbn": "978-984-8046-04-3, 978-984-8046-05-0, 978-984-8046-06-7",
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "edition"
+      ],
+      "multipleIsbnsRequireEditionCheck": true
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Roufur%20Rohim%20Seerat%201st%20part",
+      "name": "রউফুর রহীম (নবিজীবনের বিশুদ্ধ সীরাত) (১ম খণ্ড)",
+      "publisher": "সিয়ান পাবলিকেশন",
+      "edition": null,
+      "pages": 480,
+      "isbn": "978-984-8046-04-3, 978-984-8046-05-0, 978-984-8046-06-7",
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "edition"
+      ],
+      "multipleIsbnsRequireEditionCheck": true
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Mizanur%20Rahman%20Ajharir%203%20ti%20boi%20akotre",
+      "name": "মিজানুর রহমান আজহারির তিনটি বই একত্রে",
+      "publisher": "গার্ডিয়ান পাবলিকেশন্স",
+      "edition": "1st Published, 2023",
+      "pages": null,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn",
+        "totalPages"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    },
+    {
+      "url": "https://www.amolbooks.com/product-details/Islam-a-complete-course-for-beginners",
+      "name": "ইসলাম : অ্যা কমপ্লিট কোর্স ফর বিগানারস (খণ্ড ১ -৫)",
+      "publisher": "গার্ডিয়ান পাবলিকেশন্স",
+      "edition": " 1st Published, 2022",
+      "pages": 968,
+      "isbn": null,
+      "language": [
+        "Bangla"
+      ],
+      "missing": [
+        "isbn"
+      ],
+      "multipleIsbnsRequireEditionCheck": false
+    }
+  ]
+}
