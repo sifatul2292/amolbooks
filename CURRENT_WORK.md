@@ -1,3 +1,10 @@
+## GA4 title space-encoding correction (2026-10-18)
+
+- Reproduced the reported literal-plus titles in a production homepage page-view request. The previous title bridge used URLSearchParams setters/serialization, turning spaces into form-encoded `+`; inspecting requests with URLSearchParams hid that defect by translating plus back into spaces during verification.
+- Replaced only the raw `dt` query/body field using encodeURIComponent so spaces are `%20`, literal plus signs remain `%2B`, percent signs remain `%25`, and unrelated parameters retain their original bytes. The title authority, metadata waits and exactly-once forwarding behavior are unchanged.
+- Added a failing-before/fixed-after raw percent-decoding regression assertion plus body/query checks for Bengali text, literal plus/percent characters and preservation of other fields. API build, title-sync, SEO renderer/SPA and HTTP tests pass; lint remains blocked by the existing ignored-glob configuration. Chrome response-patch previews for the live homepage and product each show exactly one intercepted GA4 page view with `%20` spaces, no literal `+`, and a percent-decoded title matching document.title. No production analytics settings were modified.
+- Corrective patch is on the authoritative Sunday rollback branch; requires safe pull, API rebuild and restart. Already-recorded incorrect Analytics titles cannot be rewritten by the patch.
+
 ## Stable SEO and analytics page titles (2026-10-18)
 
 - Continued on the authoritative Sunday rollback branch. Production investigation confirmed server-rendered descriptive titles were overwritten by Angular's shorter titles, while existing GA4 page views sometimes collected the earlier format and sometimes the later format.

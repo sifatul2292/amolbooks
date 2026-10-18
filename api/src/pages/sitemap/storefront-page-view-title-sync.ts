@@ -17,9 +17,12 @@ export const STOREFRONT_PAGE_VIEW_TITLE_SYNC = `
       if(!state||pathKey(state.path)!==pathKey(page.pathname)||!['www.amolbooks.com','amolbooks.com',location.hostname].includes(page.hostname))return null;
       return {state:state,apply:function(){
         if(!state.title)return {url:String(input),body:body};
-        var nextBody=body;
-        if(params&&params.has('dt')){params.set('dt',state.title);nextBody=params.toString();}
-        if(url.searchParams.has('dt')||!params||!params.has('dt'))url.searchParams.set('dt',state.title);
+        // GA4 uses percent encoding, not form encoding: spaces must stay %20.
+        var encoded=encodeURIComponent(state.title),nextBody=body;
+        function replaceTitle(value){return value.replace(/(^|&)dt=[^&]*/g,function(_,prefix){return prefix+'dt='+encoded;});}
+        if(params&&params.has('dt'))nextBody=replaceTitle(body);
+        if(url.searchParams.has('dt'))url.search=replaceTitle(url.search.slice(1));
+        else if(!params||!params.has('dt'))url.search+=(url.search?'&':'?')+'dt='+encoded;
         return {url:url.href,body:nextBody};
       }};
     }catch(_){return null;}

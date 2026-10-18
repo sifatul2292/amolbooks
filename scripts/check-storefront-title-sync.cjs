@@ -32,6 +32,8 @@ async function main() {
     const collect = (pathname, title, event = 'page_view') => 'https://www.google-analytics.com/g/collect?' + new URLSearchParams({ en: event, dl: 'https://www.amolbooks.com' + pathname, dt: title });
     await w.fetch(collect('/', 'Wrong title'), { method: 'POST' });
     assert.equal(new URL(sent[0].url).searchParams.get('dt'), 'Home | Amolbooks');
+    const rawTitle = sent[0].url.match(/[?&]dt=([^&]*)/)[1];
+    assert.equal(decodeURIComponent(rawTitle), 'Home | Amolbooks', 'GA4 percent decoding must preserve spaces without form-decoding');
 
     w.history.pushState({}, '', '/product-details/book');
     w.document.title = 'Angular book';
@@ -62,6 +64,7 @@ async function main() {
     const body = new URLSearchParams({ en: 'page_view', dl: w.location.href, dt: 'Wrong' }).toString();
     await w.fetch('https://server.amolbooks.com/g/collect', { method: 'POST', body });
     assert.equal(new URLSearchParams(sent[3].body).get('dt'), 'Home | Amolbooks');
+    assert.equal(decodeURIComponent(sent[3].body.match(/(?:^|&)dt=([^&]*)/)[1]), 'Home | Amolbooks');
     await w.fetch(collect('/', 'Unchanged', 'purchase'));
     assert.equal(new URL(sent[4].url).searchParams.get('dt'), 'Unchanged', 'Purchase events are untouched');
     await w.fetch('https://example.com/g/collect?en=page_view&dt=Unchanged');
@@ -85,6 +88,16 @@ async function main() {
     const batch = 'en=page_view&dt=Original\nen=scroll';
     await w.fetch(collect('/blogs', 'Original'), { method: 'POST', body: batch });
     assert.equal(sent[8].body, batch, 'Batched analytics payloads are not reserialized');
+    w.__amolSeoTitleState.title = 'প্রোডাক্টিভ মুসলিম + 75% | Amolbooks';
+    const originalQuery = 'en=page_view&dl=https%3A%2F%2Fwww.amolbooks.com%2Fblogs&dt=Old%20title&custom=keep%20space%2Bplus';
+    await w.fetch('https://www.google-analytics.com/g/collect?' + originalQuery);
+    const encodedTitle = sent[9].url.match(/[?&]dt=([^&]*)/)[1];
+    assert.equal(decodeURIComponent(encodedTitle), w.__amolSeoTitleState.title);
+    assert.ok(encodedTitle.includes('%20') && encodedTitle.includes('%2B') && encodedTitle.includes('%25'));
+    assert.ok(sent[9].url.endsWith('&custom=keep%20space%2Bplus'), 'Other query fields retain their original encoding');
+    await w.fetch('https://server.amolbooks.com/g/collect', { method: 'POST', body: originalQuery });
+    assert.equal(decodeURIComponent(sent[10].body.match(/(?:^|&)dt=([^&]*)/)[1]), w.__amolSeoTitleState.title);
+    assert.ok(sent[10].body.endsWith('&custom=keep%20space%2Bplus'), 'Other body fields retain their original encoding');
     await tick();
     console.log('PASS: stable reload/route titles, direct DOM correction, one GA4 request, encoded paths, fetch/beacon, metadata failure and unmanaged routes');
   } finally { dom.window.close(); }
