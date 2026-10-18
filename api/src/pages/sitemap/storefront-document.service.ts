@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Response } from 'express';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { STOREFRONT_PAGE_VIEW_TITLE_SYNC } from './storefront-page-view-title-sync';
 import { ProductService } from '../product/product.service';
 import { SpecialPackageService } from '../offers/special-package/special-package.service';
 
@@ -34,23 +35,49 @@ export const STOREFRONT_SEO_NAVIGATION = `<script>
   if(window.__amolSeoNavigation)return;
   window.__amolSeoNavigation=true;
   var path=location.pathname, revision=0;
+  var titleDescriptor=Object.getOwnPropertyDescriptor(Document.prototype,'title');
+  var titleState={path:path,title:document.title,ready:Promise.resolve()};
+  window.__amolSeoTitleState=titleState;
+  function applyTitle(){
+    if(titleState.path===location.pathname&&titleState.title&&document.head.querySelector('title')){
+      titleDescriptor.set.call(document,titleState.title);
+    }
+  }
+  if(titleDescriptor&&titleDescriptor.get&&titleDescriptor.set){
+    Object.defineProperty(document,'title',{
+      configurable:true,
+      get:function(){return titleState.path===location.pathname&&titleState.title||titleDescriptor.get.call(document);},
+      set:function(value){
+        titleDescriptor.set.call(document,titleState.path===location.pathname&&titleState.title||value);
+      }
+    });
+    new MutationObserver(function(){
+      if(!window.document||!window.location)return;
+      if(titleState.path===location.pathname&&titleState.title&&titleDescriptor.get.call(document)!==titleState.title)applyTitle();
+    }).observe(document.head,{subtree:true,childList:true,characterData:true});
+  }
+  ${STOREFRONT_PAGE_VIEW_TITLE_SYNC}
   var selector='title,link[rel="canonical"],meta[name="description"],meta[name="robots"],meta[property^="og:"],meta[property^="product:"],meta[name^="twitter:"],script[type="application/ld+json"]';
   function update(){
     if(path===location.pathname)return;
     path=location.pathname;
     var current=++revision;
+    var state={path:path,title:null,ready:Promise.resolve()};
+    titleState=state;window.__amolSeoTitleState=state;
     document.querySelectorAll('script[type="application/ld+json"]').forEach(function(node){node.remove();});
     var canonical=document.querySelector('link[rel="canonical"]');
     if(canonical)canonical.href='https://www.amolbooks.com'+path;
     if(!/^\\/(?:$|product-list$|category-list$|author-list$|publisher-list$|blogs$|offers$|contact-us$|product-details\\/|special-package-details\\/)/.test(path))return;
-    fetch('/api/storefront-document'+path).then(function(response){
+    state.ready=fetch('/api/storefront-document'+path).then(function(response){
       if(!response.ok)throw new Error('SEO document unavailable');
       return response.text();
     }).then(function(html){
       if(current!==revision)return;
       var parsed=new DOMParser().parseFromString(html,'text/html');
+      state.title=parsed.title;
       document.head.querySelectorAll(selector).forEach(function(node){node.remove();});
       parsed.head.querySelectorAll(selector).forEach(function(node){document.head.appendChild(document.importNode(node,true));});
+      applyTitle();
     }).catch(function(){});
   }
   ['pushState','replaceState'].forEach(function(name){

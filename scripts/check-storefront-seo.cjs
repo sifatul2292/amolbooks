@@ -12,6 +12,7 @@ function load(file) {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, experimentalDecorators: true },
   }).outputText;
   const context = { exports: {}, __dirname: path.dirname(filename), require: (name) => {
+    if (name === './storefront-page-view-title-sync') return load('api/src/pages/sitemap/storefront-page-view-title-sync.ts');
     if (name.includes('product.service') || name.includes('special-package.service') || name.includes('blog.service')) return {};
     return apiRequire(name);
   }};
