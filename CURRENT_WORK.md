@@ -1,3 +1,11 @@
+## PageSpeed live verification (2026-10-18)
+
+- First-paint follow-up c0f8f255 is deployed. Live font returns 200 with 87,976 bytes; homepage emits two responsive preload hints matching the actual first covers. Product/cart/home endpoints remain healthy and storefront screenshot confirms correct Bengali shaping and artwork.
+- Final fresh mobile audit: https://pagespeed.web.dev/analysis/https-amolbooks-com/78hpo5tbwr?form_factor=mobile — performance 55, accessibility 97, best practices 96, SEO 100; FCP 5.0s, LCP 7.1s, TBT 300ms, Speed Index 5.7s, CLS 0.04. Original supplied report was 43 / 78 / 88 / 85 with FCP 7.0s, LCP 10.9s and Speed Index 17.4s. PSI resolved the new run to canonical www; lab variability and redirect handling mean this is not a controlled attribution experiment. Rolling 28-day field data will not update immediately.
+- The new audit exposed a hydration race in the accessibility patch: an initially empty footer destination stayed aria-hidden after Angular populated href. Valid destinations now clear aria-hidden, and href changes trigger repair. Chrome regression covers the delayed empty-to-YouTube transition. This focused follow-up does not claim a new accessibility score before rerunning the audit.
+- User explicitly requested leaving server.amolbooks.com unchanged. Its Tagioo loader transferred about 475,715 bytes without Content-Encoding in a GET probe and is not configured on this VPS. Further vendor/Angular bundle work and unused CSS are unresolved; original compiled storefront/admin bundles remain untouched. No claim that every PageSpeed warning is fixed.
+- Deployment uses safe pull and saved code/upload snapshots. Nginx validation passes with existing duplicate-host warnings; only the Amol Books API process was restarted. Lint is still blocked by existing config, while API build and focused checks pass.
+
 ## PageSpeed first-paint follow-up (2026-10-18)
 
 - Deployed bbbb358e through safe pull, rebuilt and restarted only amolbooks-api. Nginx now proxies /storefront-catalog/ to Nest and caches WebP/AVIF. Live catalogue returns 104 products as JSON; sampled cover shrank from 34,974 to 9,880 bytes. Code/nginx rollback snapshot: /home/amolbooks/source-snapshots/pagespeed-20261018-213247. Uploads have a separate safe-pull snapshot.

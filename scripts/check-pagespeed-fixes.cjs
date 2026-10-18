@@ -49,6 +49,9 @@ async function main() {
     assert.equal(await page.locator('img').getAttribute('alt'), '');
     assert.equal(await page.locator('.footer-social a').first().getAttribute('href'), 'tel:+8801893058682');
     assert.equal(await page.locator('app-home').getAttribute('role'), 'main');
+    await page.locator('.footer-social a').last().evaluate(link => link.setAttribute('href', 'https://www.youtube.com/@amolbooks'));
+    await page.waitForFunction(() => document.querySelector('.footer-social a:last-child').getAttribute('aria-label') === 'Amol Books YouTube');
+    assert.equal(await page.locator('.footer-social a').last().getAttribute('aria-hidden'), null, 'An initially empty social link becomes accessible after Angular hydrates href');
     await page.evaluate(() => {
       const button = document.createElement('button'); button.className = 'search-icon'; document.querySelector('app-header').appendChild(button);
     });

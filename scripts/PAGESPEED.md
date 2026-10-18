@@ -48,7 +48,7 @@ Production work still required:
 
 Verification: build, focused image/API and browser fixture checks, existing
 homepage/catalogue regression checks. Run a new mobile PageSpeed audit after
-production deployment; no improved production score has been measured locally.
+production deployment; measured production results are recorded below.
 
 ## First deployment and first-paint follow-up
 
@@ -60,3 +60,21 @@ image waste and product-script CPU, but first render and TBT remain slow.
 Follow-up: responsive cover preloads and a lossless WOFF2 Bengali font
 (247356 -> 87976 bytes, all 427 codepoints retained). Conversion used FontTools
 4.60.2/Brotli 1.2.0 in a temporary virtualenv, without runtime dependencies.
+
+## Final production verification
+
+Deployed c0f8f255. Final mobile report:
+https://pagespeed.web.dev/analysis/https-amolbooks-com/78hpo5tbwr?form_factor=mobile
+
+- Performance 55; accessibility 97; best practices 96; SEO 100.
+- FCP 5.0s; LCP 7.1s; TBT 300ms; Speed Index 5.7s; CLS 0.04.
+- PSI resolved this run to canonical www; lab variability/redirect handling mean
+  comparison with the original report is not a controlled attribution test.
+- Last follow-up repairs social destinations populated after Angular hydration;
+  no new accessibility score is claimed for that change without another audit.
+- At the user's explicit request, server.amolbooks.com remains unchanged.
+  Vendor/Angular bundle work, unused CSS and large DOM remain open; every warning
+  is not fixed. Existing nginx duplicate-host warnings remain outside this patch.
+
+Rollback snapshots live under /home/amolbooks/source-snapshots/pagespeed-* and
+uploads have separate snapshots from the mandatory safe-pull workflow.
