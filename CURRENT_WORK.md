@@ -1,3 +1,9 @@
+## Product review YouTube embeds (2026-10-18)
+
+- Confirmed the Dua Bishwokosh record stores a youtu.be share URL and the compiled Angular safeUrl pipe passes it straight into an iframe. It redirects to the watch page, which returns X-Frame-Options SAMEORIGIN. YouTube oEmbed confirms the video exists and supports embedding.
+- Added `gtm-snippets/product-review-video.html` through the existing storefront injection. On product routes, recognized YouTube share/watch/shorts/live links become canonical embed URLs; existing embed parameters and unrelated hosts/frames remain untouched. Dynamic iframe/src changes are handled and the iframe sends an origin referrer for YouTube compatibility. No API_BASE is used. No compiled UI/admin edits or catalogue writes.
+- Verification: desktop/mobile browser regression checks pass for the reported URL, supported forms, existing embeds, invalid IDs/lookalike hosts, delayed iframe changes and SPA route changes. API build passes. Lint remains blocked by existing ignored-files configuration. Not deployed; local changes are on the Sunday rollback worktree.
+
 ## Product metadata improvements and catalogue audit (2026-10-18)
 
 - Completed a read-only audit of all 104 current sitemap product records. Saved the records and a review summary under `docs/seo-catalogue-audit-2026-10-18.*`; missing fields are flags, not automatic corrections. Preserved the store's edition facts, including its Amol Books Productive Muslim edition. Flagged 97 absent ISBNs and four ambiguous comma-separated ISBN lists for factual review; no catalogue writes or competitor metadata copies.

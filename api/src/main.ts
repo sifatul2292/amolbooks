@@ -523,6 +523,7 @@ ${storefrontPurchaseExternalIdHelper}
     'catalogue-local-requests.html',
     'cart-page-navigation.html',
     'product-detail-polish.html',
+    'product-review-video.html',
     'book-gift-card.html',
     'homepage-redesign.html',
   ];

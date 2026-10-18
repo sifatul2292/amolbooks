@@ -1,0 +1,31 @@
+<script>
+(function () {
+  if (window.__amolReviewVideoFix) return;
+  window.__amolReviewVideoFix = true;
+
+  function fix(frame) {
+    if (!/^\/product-details\//.test(location.pathname)) return;
+    var raw = frame.getAttribute('src'), url, id;
+    try { url = new URL(raw, location.href); } catch (_) { return; }
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return;
+    var host = url.hostname.toLowerCase();
+    if (host === 'youtu.be') id = url.pathname.slice(1).split('/')[0];
+    else if (['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtube-nocookie.com', 'www.youtube-nocookie.com'].indexOf(host) !== -1) {
+      if (url.pathname === '/watch') id = url.searchParams.get('v');
+      else if (/^\/(?:shorts|live|embed)\//.test(url.pathname)) id = url.pathname.split('/')[2];
+    }
+    if (!/^[\w-]{11}$/.test(id || '')) return;
+    frame.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+    frame.setAttribute('allowfullscreen', '');
+    var embed = /^\/embed\//.test(url.pathname) && host !== 'youtu.be'
+      ? raw : 'https://www.youtube.com/embed/' + id;
+    if (embed !== raw) frame.setAttribute('src', embed);
+  }
+
+  function scan() { document.querySelectorAll('iframe[src]').forEach(fix); }
+  new MutationObserver(scan).observe(document.documentElement, {
+    childList: true, subtree: true, attributes: true, attributeFilter: ['src']
+  });
+  scan();
+})();
+</script>
