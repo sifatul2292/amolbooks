@@ -1,3 +1,10 @@
+## Homepage special packages and sales ordering (2026-10-26)
+
+- Added a focused storefront snippet above the existing bestselling combo shelf. Four package banners appear in a 2×2 page, with horizontal touch/keyboard scrolling and previous/next controls for additional groups. Uses the same package IDs, artwork and detail routes as Offers; the Offers list uses the same sorted records. No compiled UI edits or package/catalogue writes.
+- Added opt-in `totalSold` sorting to special-package get-all. It sums delivered order quantities by the retained package ID, excludes gift lines, defaults unsold packages to zero and uses deterministic date/ID ties. Counts are cached for one minute with concurrent query reuse; existing callers keep their prior behavior. Component-book sales are not used as package sales.
+- Added `scripts/dev-storefront.cjs`: serves current snippets and compiled storefront at localhost:3000 with read-only remote catalogue proxying, without a database connection or scheduled jobs. Dev server left running for the user's review.
+- API build and homepage/package regression checks pass. Lint remains blocked by the existing ignored-files configuration. Browser checks cover homepage placement, four-banner 2×2 phone/desktop layout, Offers rendering, loaded artwork and no page overflow. Live sales ordering cannot be verified against production until this API change is deployed; the current public API has no package totals. No deployment performed.
+
 ## Blog reading layout (2026-10-26)
 
 - Updated the published top-ten article through the blog API: Noto Serif Bengali, 18/19px text, generous paragraph/heading spacing, 760px reading width, a responsive comparison table, and ten real catalogue covers linking to their books. Kept the full article and FAQ text. Backed up the original record in the local SEO research folder before the update; verified the live article at phone and desktop widths with no page overflow.

@@ -27,6 +27,7 @@ import {
   withCalculatedSpecialPackageSubtotal,
 } from '../../../shared/utils/special-package-price.util';
 import { DiscountTypeEnum } from '../../../enum/product.enum';
+import { OrderStatus } from '../../../enum/order.enum';
 import { Response } from 'express';
 import * as sharp from 'sharp';
 import { basename, join } from 'path';
@@ -45,6 +46,32 @@ export class SpecialPackageService {
     private utilsService: UtilsService,
     private jobSchedulerService: JobSchedulerService,
   ) {}
+
+  private packageSalesCache: { expires: number; rows: any[] } | null = null;
+  private packageSalesRequest: Promise<any[]> | null = null;
+
+  private async getPackageSales(): Promise<any[]> {
+    if (this.packageSalesCache?.expires > Date.now()) {
+      return this.packageSalesCache.rows;
+    }
+    if (this.packageSalesRequest) return this.packageSalesRequest;
+    this.packageSalesRequest = this.specialPackageModel.db.collection('orders')
+      .aggregate([
+        { $match: { orderStatus: OrderStatus.DELIVERED } },
+        { $unwind: '$orderedItems' },
+        { $match: { 'orderedItems.isGift': { $ne: true } } },
+        { $group: {
+          _id: '$orderedItems._id',
+          totalSold: { $sum: { $max: [0, { $convert: {
+            input: '$orderedItems.quantity', to: 'double', onError: 0, onNull: 0,
+          } }] } },
+        } },
+      ]).toArray().then((rows) => {
+        this.packageSalesCache = { expires: Date.now() + 60000, rows };
+        return rows;
+      }).finally(() => { this.packageSalesRequest = null; });
+    return this.packageSalesRequest;
+  }
 
   private async getPackageImageDimensions(
     imageUrl?: string,
@@ -474,6 +501,17 @@ export class SpecialPackageService {
       aggregateStages.push({ $match: mFilter });
     }
 
+    if (Object.prototype.hasOwnProperty.call(sort || {}, 'totalSold')) {
+      // Historical package orders retain the package ID in orderedItems._id.
+      // Rank delivered package quantities, never the sales of its component books.
+      const sales = await this.getPackageSales();
+      const branches = sales.filter((row) => row._id).map((row) => ({
+        case: { $eq: ['$_id', row._id] }, then: row.totalSold,
+      }));
+      aggregateStages.push({ $addFields: { totalSold: branches.length
+        ? { $switch: { branches, default: 0 } } : 0 } });
+      mSort = { ...mSort, createdAt: -1, _id: 1 };
+    }
     if (Object.keys(mSort).length) {
       aggregateStages.push({ $sort: mSort });
     }

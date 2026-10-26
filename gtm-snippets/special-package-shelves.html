@@ -1,0 +1,126 @@
+<style>
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V4 · existing Amol commerce shelf */
+.ab-package-track { display:flex; gap:16px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:thin; padding:2px 2px 16px; }
+.ab-package-page { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; flex:0 0 100%; min-width:0; scroll-snap-align:start; }
+.ab-package-banner { display:block; min-width:0; border-radius:12px; overflow:hidden; }
+.ab-package-banner img { display:block; width:100%; height:auto; aspect-ratio:16/9; object-fit:contain; background:#faf7f0; }
+.ab-package-banner:focus-visible,.ab-package-controls button:focus-visible { outline:3px solid #175c36; outline-offset:3px; }
+.ab-package-banner:hover { opacity:.94; }
+.ab-package-controls { display:flex; gap:8px; align-items:center; }
+.ab-package-controls button { width:36px; height:36px; border:1px solid #dce5de; border-radius:50%; background:white; color:#175c36; cursor:pointer; font:20px/1 sans-serif; }
+.ab-package-controls button:disabled { opacity:.35; cursor:default; }
+.ab-ranked-offers { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; margin:20px 0 40px; }
+.special-packages-main.ab-ranked-ready > swiper { display:none!important; }
+@media(max-width:600px) {
+ .ab-package-page { gap:12px; }
+ .ab-package-track { gap:12px; }
+ .ab-package-banner { border-radius:8px; }
+ .ab-ranked-offers { grid-template-columns:minmax(0,1fr); gap:20px; }
+}
+@media(prefers-reduced-motion:reduce) { .ab-package-track { scroll-behavior:auto; } }
+</style>
+<script>
+(function () {
+  'use strict';
+  if (window.__amolPackageShelves) return;
+  window.__amolPackageShelves = true;
+  var API_BASE = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname)
+    ? location.origin + '/api' : 'https://apisub.amolbooks.com/api';
+  var packages = null;
+  var request = null;
+  var failedAt = 0;
+  var resizeObserver = null;
+  function escapeHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (c) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function rankPackages(items) {
+    return items.filter(function (item) {
+      return /^[a-f\d]{24}$/i.test(item._id || '') && /^https?:\/\//.test(item.image || '');
+    }).sort(function (a,b) {
+      return (Number(b.totalSold) || 0) - (Number(a.totalSold) || 0) ||
+        String(b.createdAt || '').localeCompare(String(a.createdAt || '')) ||
+        String(a._id).localeCompare(String(b._id));
+    });
+  }
+  function loadPackages() {
+    if (packages) return Promise.resolve(packages);
+    if (request) return request;
+    if (Date.now() - failedAt < 30000) return Promise.resolve([]);
+    request = fetch(API_BASE + '/special-package/get-all', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ sort:{totalSold:-1}, select:{name:1,image:1,totalSold:1,createdAt:1} })
+    }).then(function (response) {
+      if (!response.ok) throw new Error('Packages unavailable');
+      return response.json();
+    }).then(function (result) {
+      if (!Array.isArray(result.data)) throw new Error('Invalid packages');
+      packages = rankPackages(result.data);
+      return packages;
+    }).catch(function () { failedAt = Date.now(); return []; })
+      .finally(function () { request = null; });
+    return request;
+  }
+  function banner(item) {
+    return '<a class="ab-package-banner" data-package-id="' + escapeHtml(item._id) + '" href="/special-package-details/' + encodeURIComponent(item._id) + '" aria-label="' + escapeHtml(item.name) + '"><img src="' + escapeHtml(item.image) + '" alt="' + escapeHtml(item.name) + '" width="800" height="450" loading="lazy" decoding="async"></a>';
+  }
+  function mountHome(items) {
+    var combo = document.querySelector('#ab-home-combo');
+    if (!combo || document.getElementById('ab-home-special-packages') || !items.length) return;
+    var section = document.createElement('section');
+    section.id = 'ab-home-special-packages';
+    section.className = 'ab-home-products';
+    section.setAttribute('aria-labelledby','ab-home-special-packages-title');
+    var pages = '';
+    for (var i=0;i<items.length;i+=4) pages += '<div class="ab-package-page">' + items.slice(i,i+4).map(banner).join('') + '</div>';
+    section.innerHTML = '<div class="ab-home-shell"><div class="ab-home-section-head"><h2 id="ab-home-special-packages-title">স্পেশাল প্যাকেজ</h2><div class="ab-package-controls"><a class="ab-home-all-link" href="/offers">সব দেখুন</a><button type="button" data-direction="-1" aria-label="আগের প্যাকেজ">←</button><button type="button" data-direction="1" aria-label="পরের প্যাকেজ">→</button></div></div><div class="ab-package-track" tabindex="0" role="region" aria-label="স্পেশাল প্যাকেজ, পাশে স্ক্রল করুন">' + pages + '</div></div>';
+    var comboSection = combo.closest('section');
+    comboSection.parentNode.insertBefore(section,comboSection);
+    var track = section.querySelector('.ab-package-track');
+    function updateButtons() {
+      section.querySelector('[data-direction="-1"]').disabled = track.scrollLeft <= 2;
+      section.querySelector('[data-direction="1"]').disabled = track.scrollLeft + track.clientWidth >= track.scrollWidth - 2;
+    }
+    section.addEventListener('click',function (event) {
+      var button = event.target.closest('button[data-direction]');
+      if (!button) return;
+      track.scrollBy({left:Number(button.dataset.direction) * (track.clientWidth + 16),behavior:matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth'});
+    });
+    track.addEventListener('scroll',updateButtons,{passive:true});
+    if (resizeObserver) resizeObserver.disconnect();
+    resizeObserver = new ResizeObserver(updateButtons);
+    resizeObserver.observe(track);
+    updateButtons();
+  }
+  function mountOffers(items) {
+    var holder = document.querySelector('app-special-package .special-packages-main');
+    if (!holder || holder.querySelector('.ab-ranked-offers') || !items.length) return;
+    var list = document.createElement('div');
+    list.className = 'ab-ranked-offers';
+    list.innerHTML = items.map(banner).join('');
+    holder.appendChild(list);
+    holder.classList.add('ab-ranked-ready');
+  }
+  var scheduled = false;
+  function update() {
+    scheduled = false;
+    if (location.pathname !== '/' && resizeObserver) { resizeObserver.disconnect(); resizeObserver = null; }
+    if (location.pathname !== '/' && location.pathname !== '/offers') return;
+    if (location.pathname === '/' && (!document.querySelector('#ab-home-combo') || document.getElementById('ab-home-special-packages'))) return;
+    if (location.pathname === '/offers' && (!document.querySelector('app-special-package .special-packages-main') || document.querySelector('.ab-ranked-offers'))) return;
+    loadPackages().then(function (items) {
+      if (location.pathname === '/') mountHome(items);
+      else if (location.pathname === '/offers') mountOffers(items);
+    });
+  }
+  function schedule() {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(update);
+  }
+  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
+  window.addEventListener('popstate',schedule);
+  update();
+}());
+</script>
