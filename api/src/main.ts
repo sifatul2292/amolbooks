@@ -532,6 +532,7 @@ ${storefrontPurchaseExternalIdHelper}
     'cart-page-navigation.html',
     'product-detail-polish.html',
     'product-review-video.html',
+    'blog-reading.html',
     'book-gift-card.html',
     'homepage-redesign.html',
     'pagespeed-accessibility.html',

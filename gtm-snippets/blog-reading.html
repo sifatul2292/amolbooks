@@ -1,0 +1,102 @@
+<style id="amol-blog-reading">
+@font-face {
+  font-family: 'Noto Serif Bengali';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: normal;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/notoserifbengali/v31/hYkuPvggTvnzO14VSXltirUdnnkt1pwmWrprmO7RjE0a5BtdATYU1crFaM_5JfcAHnqn.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Noto Serif Bengali';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: normal;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/notoserifbengali/v31/hYkuPvggTvnzO14VSXltirUdnnkt1pwmWrprmO7RjE0a5BtdATYU1crFaM_5JffeGXqn.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Noto Serif Bengali';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: normal;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/notoserifbengali/v31/hYkuPvggTvnzO14VSXltirUdnnkt1pwmWrprmO7RjE0a5BtdATYU1crFaM_5JffnGXqn.ttf) format('truetype');
+}
+
+/* Hallmark · pre-emit critique: P5 H5 E4 S5 R5 V4
+   Editorial reading layout; preserve the storefront's green brand and routes. */
+app-blog-details { --ab-blog-ink:#24332b; --ab-blog-accent:#175c36; display:block; color:var(--ab-blog-ink); }
+app-blog-details .main-container { max-width:960px!important; margin:32px auto 64px!important; padding:0 24px!important; }
+app-blog-details .bottom-section,app-blog-details .container { width:100%!important; max-width:100%!important; margin:0!important; padding:0!important; }
+app-blog-details .main-container > .bottom-section:first-child img { width:100%!important; height:auto!important; max-height:340px; object-fit:contain; border-radius:8px; display:block; margin:0 auto 32px!important; }
+app-blog-details .top-section { display:block!important; width:100%!important; max-width:760px; margin:0 auto 36px!important; padding:0 0 24px!important; border-bottom:1px solid #dce5de; text-align:left!important; }
+app-blog-details .title h1 { font-family:'Noto Serif Bengali',serif!important; font-size:clamp(28px,3.2vw,40px)!important; font-weight:700!important; line-height:1.6!important; text-align:left!important; margin:0 0 16px!important; color:#173d29!important; }
+app-blog-details .title h4,app-blog-details .date { font-size:15px!important; line-height:1.8!important; color:#59675e!important; margin:8px 0!important; }
+app-blog-details .description { display:block!important; max-width:760px!important; margin:0 auto!important; font-family:'Noto Serif Bengali',serif!important; font-size:19px!important; font-weight:400!important; line-height:2!important; color:var(--ab-blog-ink)!important; text-align:left!important; overflow-wrap:anywhere; }
+app-blog-details .description :is(p,li,strong,em,a,th,td,figcaption) { font-family:inherit!important; }
+app-blog-details .description p,app-blog-details .description li { font:inherit!important; text-align:left!important; word-spacing:normal!important; line-height:2!important; margin:0 0 22px!important; }
+app-blog-details .description h2 { font-family:inherit!important; font-size:27px!important; line-height:1.65!important; color:#173d29!important; margin:44px 0 20px!important; font-weight:700!important; clear:both; }
+app-blog-details .description h3 { font-family:inherit!important; font-size:22px!important; line-height:1.75!important; margin:32px 0 12px!important; font-weight:600!important; }
+app-blog-details .description ul,app-blog-details .description ol { padding-left:28px!important; margin:20px 0 28px!important; }
+app-blog-details .description a { color:var(--ab-blog-accent)!important; text-decoration:underline!important; text-underline-offset:5px; }
+app-blog-details .description a:hover { color:#0b3e22!important; }
+app-blog-details a:focus-visible { outline:3px solid #9b6d0b; outline-offset:4px; }
+app-blog-details .description table { display:block; max-width:100%; overflow-x:auto; border-collapse:collapse; margin:24px 0 36px; font-size:17px; line-height:1.9; }
+app-blog-details .description th,app-blog-details .description td { padding:14px 18px!important; border:1px solid #dce5de!important; vertical-align:top; text-align:left; min-width:145px; }
+app-blog-details .description th { background:#edf4ee; font-weight:600; }
+app-blog-details .ab-book-section { display:flex; align-items:flex-start; gap:28px; padding:36px 0; border-bottom:1px solid #dce5de; }
+app-blog-details .ab-book-section h2 { margin-top:0!important; }
+app-blog-details .ab-book-copy { flex:1; min-width:0; }
+app-blog-details .ab-book-cover { flex:0 0 135px; margin:8px 0 0!important; text-align:center; }
+app-blog-details .ab-book-cover img { width:135px!important; height:205px!important; object-fit:contain!important; display:block; margin:auto; }
+app-blog-details .ab-book-cover figcaption { font-size:13px; line-height:1.7; color:#59675e; margin-top:12px; }
+body:has(app-blog-details) #ab-sticky-product-actions { display:none!important; }
+@media(max-width:600px) {
+ app-blog-details .main-container { margin-top:20px!important; padding:0 20px!important; }
+ app-blog-details .description { font-size:18px!important; line-height:2!important; }
+ app-blog-details .description h2 { font-size:24px!important; }
+ app-blog-details .description h3 { font-size:21px!important; }
+ app-blog-details .ab-book-section { flex-direction:column; gap:24px; padding:32px 0; }
+ app-blog-details .ab-book-cover { flex-basis:auto; align-self:center; }
+ app-blog-details .ab-book-cover img { width:140px!important; height:210px!important; }
+ app-blog-details .description th,app-blog-details .description td { padding:12px!important; min-width:125px; }
+}
+</style>
+<script>
+
+(function () {
+  if (window.__amolBlogMenu) return;
+  window.__amolBlogMenu = true;
+  function addBlogLink() {
+    var menu = document.querySelector('app-header ul.nav-list');
+    if (!menu || menu.querySelector('a[href="/blogs"]')) return;
+    var item = document.createElement('li');
+    item.className = 'nav-item';
+    var link = document.createElement('a');
+    link.className = 'nav-link';
+    link.href = '/blogs';
+    link.textContent = 'ব্লগ';
+    Array.prototype.forEach.call(menu.attributes, function (attribute) {
+      if (attribute.name.indexOf('_ngcontent-') !== 0) return;
+      item.setAttribute(attribute.name, '');
+      link.setAttribute(attribute.name, '');
+    });
+    item.appendChild(link);
+    menu.appendChild(item);
+  }
+  function watchHeader() {
+    var header = document.querySelector('app-header');
+    if (!header) return false;
+    addBlogLink();
+    new MutationObserver(addBlogLink).observe(header, { childList:true, subtree:true });
+    return true;
+  }
+  if (!watchHeader()) {
+    var ready = new MutationObserver(function () {
+      if (watchHeader()) ready.disconnect();
+    });
+    ready.observe(document.documentElement, { childList:true, subtree:true });
+  }
+}());
+</script>

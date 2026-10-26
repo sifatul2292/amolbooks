@@ -1,3 +1,9 @@
+## Blog reading layout (2026-10-26)
+
+- Updated the published top-ten article through the blog API: Noto Serif Bengali, 18/19px text, generous paragraph/heading spacing, 760px reading width, a responsive comparison table, and ten real catalogue covers linking to their books. Kept the full article and FAQ text. Backed up the original record in the local SEO research folder before the update; verified the live article at phone and desktop widths with no page overflow.
+- Added `gtm-snippets/blog-reading.html` through the existing startup injection for future article styling and an idempotent desktop Blog menu link. Existing mobile-drawer/footer links remain; the header observer restores Blog after the current navigation script redraws it. Scoped article styles hide the unrelated product purchase bar. No compiled UI files edited, no API_BASE or catalogue writes.
+- API build passes. Lint remains blocked by the existing all-files-ignored ESLint configuration. Live article content is updated; shared styling and the desktop menu require safe pull, API rebuild and restart on the VPS.
+
 ## SEO nginx fallback alignment (2026-10-26)
 
 - Reviewed the user's actual www nginx configuration: core/product pages use the existing document renderer, but private/unknown routes use static index.html and bypass the prepared noindex/404 middleware.
