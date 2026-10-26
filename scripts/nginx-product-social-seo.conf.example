@@ -3,6 +3,31 @@
 # Angular host. Preserve the server's SSL, assets, uploads and feed locations.
 # Replace existing product/package detail locations rather than duplicating them.
 
+# Unknown and private frontend routes must reach the backend's 404/noindex policy.
+# Keep static asset locations in this server; missing assets must remain real 404s.
+location / {
+    try_files $uri @amol_storefront;
+}
+
+location @amol_storefront {
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_intercept_errors off;
+    proxy_pass http://127.0.0.1:3000;
+}
+
+location = /home {
+    return 301 https://www.amolbooks.com/$is_args$args;
+}
+
+location = /home/ {
+    return 301 https://www.amolbooks.com/$is_args$args;
+}
+
+location = /index.html {
+    return 301 https://www.amolbooks.com/$is_args$args;
+}
+
 location = /robots.txt {
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-Proto $scheme;

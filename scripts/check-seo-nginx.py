@@ -23,13 +23,27 @@ server {
  location = /robots.txt { return 200 "old"; }
  include /etc/nginx/snippets/amolbooks-fb-feed.conf;
  location / { try_files $uri /index.html; }
+ location /index.html { add_header Cache-Control "no-cache"; }
+ location ~* \\.(?:css|js|png|webp)$ { try_files $uri =404; expires 6M; }
+ error_page 404 /index.html;
+ gzip on;
  location /uploads/ { proxy_pass http://127.0.0.1:3000/api/upload/; }
 }
 '''
 output = patch(fixture, locations)
 assert 'ssl_certificate /existing/cert.pem;' in output
 assert 'include /etc/nginx/snippets/amolbooks-fb-feed.conf;' in output
-assert 'location / { try_files $uri /index.html; }' in output
+assert 'try_files $uri @amol_storefront;' in output
+assert 'location @amol_storefront {' in output
+assert 'proxy_intercept_errors off;' in output
+assert 'try_files $uri /index.html;' not in output
+assert 'error_page 404 /index.html;' not in output
+assert 'location /index.html {' not in output
+assert 'location ~* \\.(?:css|js|png|webp)$ { try_files $uri =404; expires 6M; }' in output
+assert 'gzip on;' in output
+for route in ['/home', '/home/', '/index.html']:
+    assert output.count('location = ' + route + ' {') == 1
+assert output.count('https://www.amolbooks.com/$is_args$args') == 3
 assert 'location /uploads/ { proxy_pass http://127.0.0.1:3000/api/upload/; }' in output
 assert 'location ~ ^/product-details/' not in output
 for route in ['location = / {', 'location ^~ /product-details/ {', 'location = /robots.txt {', 'location ^~ /api/storefront-document/ {']:
@@ -42,7 +56,7 @@ try:
     raise AssertionError('Ambiguous servers should be rejected')
 except ValueError:
     pass
-print('PASS: nginx merge, IPv6, preserved SSL/uploads/feed/fallback, repeat install, ambiguity refusal')
+print('PASS: nginx merge, backend fallback, alias redirects, real asset 404s, preserved SSL/uploads/feed/gzip, IPv6, repeat install, ambiguity refusal')
 
 patch_private = runpy.run_path(str(root / 'install-storefront-seo.py'))['patch_private']
 for host in ('apisub.amolbooks.com', 'adminsub.amolbooks.com'):

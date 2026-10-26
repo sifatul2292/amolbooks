@@ -42,14 +42,17 @@ def patch(text, locations):
     if locations in body:
         return text
     targets = ('robots.txt', 'sitemap.xml', 'product-details', 'special-package-details',
-               'api/storefront-document', 'product-list', 'category-list', 'author-list', 'publisher-list', 'blogs', 'offers', 'contact-us')
+               'api/storefront-document', 'product-list', 'category-list', 'author-list', 'publisher-list', 'blogs', 'offers', 'contact-us', 'home', 'index.html')
     removals = []
     for match in re.finditer(r'(?m)^\s*location\s+([^\n{]+)\{', body):
         selector = match.group(1).strip()
-        if selector == '= /' or any(re.search(r'(?<![\w-])/' + re.escape(route) + r'(?![\w-])', selector) for route in targets):
+        if selector in ('= /', '/', '@amol_storefront') or any(re.search(r'(?<![\w-])/' + re.escape(route) + r'(?![\w-])', selector) for route in targets):
             removals.append((match.start(), block_end(body, match.start())))
     for left, right in reversed(removals):
         body = body[:left] + body[right:]
+    # A server-wide Angular error page also catches missing assets and discards
+    # the backend's useful 404 body. The backend now owns document fallbacks.
+    body = re.sub(r'(?m)^[ \t]*error_page\s+404\s+/index\.html\s*;[^\n]*\n?', '', body)
     opening = body.index('{') + 1
     body = body[:opening] + '\n' + locations + '\n' + body[opening:]
     return text[:start] + body + text[end:]

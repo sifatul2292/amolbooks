@@ -1,3 +1,10 @@
+## SEO nginx fallback alignment (2026-10-26)
+
+- Reviewed the user's actual www nginx configuration: core/product pages use the existing document renderer, but private/unknown routes use static index.html and bypass the prepared noindex/404 middleware.
+- Updated the existing nginx template/installer to send the generic document fallback through a named Nest proxy, add query-preserving homepage alias redirects, and remove the server-wide Angular 404 replacement. Preserve existing document routes, SSL, gzip, assets/cache, catalogue and feed behavior. The installer already backs up config, validates before reload and restores originals on validation/reload failure. Private/API host configs keep their existing policy; server.amolbooks.com is untouched.
+- Python regression checks pass for the legacy fixture and the complete user-supplied active storefront config, including repeat installation, named fallback uniqueness, preserved unrelated routes and real missing-asset 404 configuration. Local routing checks and API build pass; lint remains blocked by the existing ignored-files configuration. A local nginx executable is unavailable; actual nginx syntax validation is performed by the installer on the VPS before reload.
+- Prepared as a focused follow-up on the Sunday branch. Deployment sequence is safe pull, API build, nginx installer, then API restart. Production is not changed by this local work; verify live private-page headers, aliases, unknown 404s, products, assets and checkout afterward.
+
 ## SEO audit repair on Sunday rollback (2026-10-26)
 
 - Continued the SEO repair in this authoritative checkout on `codex/rollback-sunday-20260927`. The initial edits in the separate prod-release checkout are not a release source; its unrelated work and previous draft remain untouched.
