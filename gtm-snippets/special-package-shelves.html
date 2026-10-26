@@ -12,8 +12,8 @@
 .ab-ranked-offers { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; margin:20px 0 40px; }
 .special-packages-main.ab-ranked-ready > swiper { display:none!important; }
 @media(max-width:600px) {
- .ab-package-page { gap:12px; }
- .ab-package-track { gap:12px; }
+ .ab-package-page { gap:12px; flex-basis:150%; }
+ .ab-package-track { gap:12px; scroll-snap-type:none; }
  .ab-package-banner { border-radius:8px; }
  .ab-ranked-offers { grid-template-columns:minmax(0,1fr); gap:20px; }
 }
@@ -85,7 +85,8 @@
     section.addEventListener('click',function (event) {
       var button = event.target.closest('button[data-direction]');
       if (!button) return;
-      track.scrollBy({left:Number(button.dataset.direction) * (track.clientWidth + 16),behavior:matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth'});
+      var step = matchMedia('(max-width:600px)').matches ? (track.querySelector('.ab-package-page').clientWidth + 12) / 2 : track.clientWidth + 16;
+      track.scrollBy({left:Number(button.dataset.direction) * step,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth'});
     });
     track.addEventListener('scroll',updateButtons,{passive:true});
     if (resizeObserver) resizeObserver.disconnect();

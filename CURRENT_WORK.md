@@ -1,3 +1,9 @@
+## Larger homepage package banners on mobile (2026-10-26)
+
+- Increased the package page width to 150% below 600px, keeping the two-row layout while making each banner about 50% wider. A partial next column signals horizontal swiping; mobile arrow navigation advances by a column. Disabled page snapping at this breakpoint so the wider page does not snap back before readers can view the right column. Desktop stays 2×2. Compact free-delivery/notebook badge and all package links remain.
+- Uses only the existing special-package shelf snippet; no API_BASE change or compiled UI edits. Dev preview remains running at localhost:3000.
+- API build and package regression check pass; lint remains blocked by the existing ignored-files configuration. Browser at 393px confirms 262px-wide covers, no page overflow and working next/previous scrolling that stays at the chosen column. Prepared for the Sunday rollback branch; not deployed.
+
 ## Bundle free delivery (2026-10-26)
 
 - User chose permanent free delivery for সফল উদ্যোক্তা বান্ডেল (`6abe2123b1f44997b7ca5950`), including other books in the same order. No expiry, countdown or limited-time claim.
