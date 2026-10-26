@@ -95,6 +95,11 @@ async function main() {
   assert.ok([...result.doc.querySelectorAll('a')].some(link => link.getAttribute('href').endsWith('related%20%25%20book')), [...result.doc.querySelectorAll('a')].map(link => link.getAttribute('href')).join('\n'));
   assert.ok(result.doc.body.textContent.includes('Related <book>'));
   result.close();
+  result = await render({ name: 'দ্য বারাকাহ ইফেক্ট', seoDescription: 'সময় ও জীবনে **বরকত** খোঁজার বই।', description: 'Copied summary about Productive Muslim' });
+  assert.equal(result.schema.description, 'সময় ও জীবনে বরকত খোঁজার বই।');
+  assert.equal(result.doc.querySelector('meta[name="description"]').content, result.schema.description);
+  assert.ok(result.doc.body.textContent.includes('Copied summary'), 'The stored full summary remains available for separate catalogue review');
+  result.close();
   result = await render({ seoTitle: 'A carefully written title | Amolbooks', seoDescription: 'A complete custom description.', isbn: '123', totalPages: 0, language: [], edition: '' });
   assert.equal(result.doc.title, 'A carefully written title | Amolbooks');
   assert.equal(result.doc.querySelector('meta[name="description"]').content, 'A complete custom description.');

@@ -37,14 +37,6 @@ export class SitemapController {
     res.status(200).send(`User-agent: *
 Allow: /
 Disallow: /api/
-Disallow: /account
-Disallow: /cart
-Disallow: /checkout
-Disallow: /login
-Disallow: /order-details
-Disallow: /payment
-Disallow: /registration
-Disallow: /reset-password
 
 Sitemap: https://www.amolbooks.com/sitemap.xml
 `);

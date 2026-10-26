@@ -2,7 +2,7 @@ const ORIGIN = 'https://www.amolbooks.com';
 const SHOP = 'Amolbooks';
 
 function text(value: any): string {
-  return String(value || '').replace(/<[^>]*>/g, ' ')
+  return String(value || '').replace(/<[^>]*>/g, ' ').replace(/(\*\*|__)(.*?)\1/g, '$2')
     .replace(/&(nbsp|amp|quot|apos|lt|gt);/gi, (_, entity) =>
       ({ nbsp: ' ', amp: '&', quot: '"', apos: "'", lt: '<', gt: '>' })[entity.toLowerCase()])
     .replace(/&#(x[0-9a-f]+|[0-9]+);/gi, (_, entity) => {
@@ -58,7 +58,7 @@ export function renderProductSeo(book: any, ratings: any[] = [], related: any[] 
   const inStock = Number(book.quantity || 0) > 0;
   const product: any = {
     '@context': 'https://schema.org', '@type': ['Product', 'Book'], name,
-    description: fullDescription, image: images, url,
+    description: text(book.seoDescription) || fullDescription, image: images, url,
     category: categories.map((category: any) => text(category.name)).join(', ') || 'Books',
     sku: book.sku || String(book._id || book.slug),
     brand: { '@type': 'Brand', name: publisher || SHOP },

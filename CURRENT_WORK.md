@@ -1,3 +1,12 @@
+## SEO audit repair on Sunday rollback (2026-10-26)
+
+- Continued the SEO repair in this authoritative checkout on `codex/rollback-sunday-20260927`. The initial edits in the separate prod-release checkout are not a release source; its unrelated work and previous draft remain untouched.
+- Adapted the fix to the existing Sunday `StorefrontDocumentService` and pure product SEO renderer instead of copying the older branch's crawler/bootstrap changes. Preserve all current metadata, approved-review, related-book, title-sync and performance work.
+- Added host-scoped routing before the local storefront fallback: redirect API-host storefront documents to canonical www, consolidate `/home/` and `/index.html`, return real unknown-route 404/noindex responses, mark private frontend documents noindex, and correct canonical response HTML. Preserve API/assets/uploads/admin hosts and POST requests. Allow private frontend crawling in robots.txt so Google can see noindex.
+- Product JSON-LD now prefers the saved book-specific SEO description over a potentially copied catalogue summary, strips Markdown emphasis, and retains the full stored summary in the visible fallback for separate factual catalogue review. Added a focused Barakah Effect regression to the existing metadata checks.
+- API build, focused routing/metadata checks and existing renderer/HTTP checks pass. Lint remains blocked by the existing all-files-ignored configuration. No compiled storefront/admin files were hand-edited; pre-existing user changes are preserved.
+- Prepared for a focused commit/push on the Sunday branch; production remains undeployed. SSH to root and amolbooks users at the supplied VPS host rejected the available key. Production nginx/API-host redirects, fallback handling, rate limiting and individual GSC error examples still need live inspection/verification; current prepared Express routing only applies to traffic that reaches Nest. No production data or Search Console settings changed. Deploy a focused Sunday release via `scripts/vps-safe-pull.sh` after access is restored.
+
 ## Mobile bottom bar and Core Web Vitals follow-up (2026-10-18)
 
 - Reproduced the reported missing navigation icons: the earlier accessibility patch made the bar white while native CSS/SVG icons stayed white. Restored a dark green background with explicitly white labels/icons/links, retaining the existing SVG replacements, click selectors, layout and mobile sizing. This was a color regression; icons were already present.

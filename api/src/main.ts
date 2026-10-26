@@ -15,6 +15,7 @@ import { request as httpsRequest } from 'https';
 import multer = require('multer');
 import * as sharp from 'sharp';
 import { RedirectUrlMiddleware } from './middleware/redirect-url.middleware';
+import { storefrontSeoHtml, storefrontSeoRouting } from './middleware/storefront-seo-routing';
 import { STOREFRONT_PRICE_SCRIPT } from './storefront-price-script';
 import { STOREFRONT_SPECIAL_PACKAGE_SCRIPT } from './storefront-special-package-script';
 import { ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT } from './admin-incomplete-order-editor-script';
@@ -78,6 +79,8 @@ async function bootstrap() {
       return redirectMiddlewareRef.use(req, res, next);
     }
   );
+
+  app.use(storefrontSeoRouting);
 
   app.use('/api/storefront-images', storefrontImages(join(__dirname, '..', 'upload/images')));
   app.use('/api/storefront-assets', express.static(join(__dirname, '../..', 'gtm-snippets/assets'), { maxAge: '1y', immutable: true }));
@@ -814,7 +817,7 @@ ${storefrontPurchaseExternalIdHelper}
           )
         : html;
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.type('html').send(responseHtml);
+      res.type('html').send(storefrontSeoHtml(req, responseHtml));
     } catch (error) {
       res.sendFile(storefrontIndexPath);
     }
