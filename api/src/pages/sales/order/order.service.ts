@@ -1,3 +1,4 @@
+import { hasFreeDeliveryPackage } from '../../../shared/utils/package-free-delivery.util';
 import {
   BadRequestException,
   ConflictException,
@@ -4887,12 +4888,16 @@ export class OrderService {
       orderData?.zone?.name,
     );
 
+    // Only trust resolved package records, never a client-supplied free-delivery flag.
+    const deliveryCharge = hasFreeDeliveryPackage(finalData)
+      ? 0 : Number(orderData?.deliveryCharge || 0);
+
     // Grand Total
     // Note: orderData?.deliveryCharge already includes weight-based charge from frontend
     // So we don't add weightBasedDeliveryCharge again to avoid double counting
     const grandTotal =
       cartSubTotal +
-      orderData?.deliveryCharge -
+      deliveryCharge -
       couponDiscount -
       cartDiscountAmount -
       orderDiscount;
@@ -4916,7 +4921,7 @@ export class OrderService {
       orderStatus: OrderStatus.PENDING,
       orderedItems: products,
       subTotal: cartSubTotal,
-      deliveryCharge: orderData?.deliveryCharge || 0,
+      deliveryCharge,
       weightBasedDeliveryCharge: weightBasedDeliveryCharge,
       discount: cartDiscountAmount.toFixed(2),
       totalSave: cartDiscountAmount,

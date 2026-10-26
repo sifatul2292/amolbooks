@@ -536,6 +536,7 @@ ${storefrontPurchaseExternalIdHelper}
     'book-gift-card.html',
     'homepage-redesign.html',
     'special-package-shelves.html',
+    'package-free-delivery.html',
     'pagespeed-accessibility.html',
     'pagespeed-runtime.html',
   ];

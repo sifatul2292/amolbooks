@@ -1,0 +1,183 @@
+<style>
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V4 · factual double offer */
+.ab-package-free-delivery { display:block; margin:0; padding:12px; color:#153b26!important; background:#fff0bb; border-top:2px solid #d7a52b; font:600 17px/1.55 hind-siliguri,sans-serif; text-align:center; }
+.ab-package-free-delivery strong { display:block; color:#153b26!important; font:700 20px/1.5 hind-siliguri,sans-serif; }
+.ab-double-offer-kicker { display:block; margin-bottom:4px; color:#71500c; font:700 12px/1.5 hind-siliguri,sans-serif; letter-spacing:.02em; }
+.ab-package-banner:has(> .ab-package-free-delivery) { box-shadow:0 0 0 2px #d7a52b,0 5px 14px #7353151a; }
+.ab-package-free-delivery small,.ab-checkout-free-delivery small { display:block; margin-top:6px; font-size:14px; font-weight:400; }
+.ab-offer-summary > .ab-package-free-delivery { margin-bottom:20px; padding:16px; border:2px solid #d7a52b; border-radius:8px; text-align:left; }
+.ab-checkout-free-delivery { padding:14px 16px; margin:16px 0; border:1px solid #cbdccb; border-radius:8px; color:#11532d; background:#edf6ed; font:500 17px/1.7 hind-siliguri,sans-serif; }
+.ab-checkout-free-delivery strong { display:block; font-weight:700; }
+.ab-delivery-waived { position:relative; }
+.ab-delivery-waived > [formcontrolname="deliveryOptions"] { filter:blur(1.5px); opacity:.35; pointer-events:none; user-select:none; }
+.ab-delivery-waived-message { position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:4px; padding:12px; text-align:center; background:#f1f7f1b3; color:#14562e; font:600 18px/1.6 hind-siliguri,sans-serif; }
+.ab-delivery-waived-message small { font-size:14px; font-weight:400; }
+@media(max-width:600px) { .ab-package-free-delivery { font-size:14px; padding:10px 8px; } .ab-package-free-delivery strong { font-size:18px; } .ab-package-free-delivery small,.ab-checkout-free-delivery small { font-size:12px; } }
+.ab-package-free-delivery.ab-package-offer-compact { padding:7px 6px; font:600 clamp(12px,2.8vw,15px)/1.5 hind-siliguri,sans-serif; }
+</style>
+<script>
+(function () {
+  'use strict';
+  if (window.__amolPackageFreeDelivery) return;
+  window.__amolPackageFreeDelivery = true;
+  var PACKAGE_ID = '6abe2123b1f44997b7ca5950';
+  var checkoutEligible = false;
+  var deliveryChoiceStates = new WeakMap();
+  function qualifies(items) {
+    return (Array.isArray(items) ? items : []).some(function (item) {
+      return item && item.cartType === 1 && item.product &&
+        String(item.product._id || '').toLowerCase() === PACKAGE_ID &&
+        Number.isFinite(Number(item.selectedQty)) && Number(item.selectedQty) > 0;
+    });
+  }
+  function notice(className, detail) {
+    var node = document.createElement('p');
+    node.className = className;
+    if (!detail) {
+      node.classList.add('ab-package-offer-compact');
+      node.textContent = 'ফ্রি ডেলিভারি + ফ্রি নোটবুক';
+      return node;
+    }
+    var kicker = document.createElement('span');
+    kicker.className = 'ab-double-offer-kicker';
+    kicker.textContent = 'ডাবল অফার';
+    node.appendChild(kicker);
+    var title = document.createElement('strong');
+    title.textContent = 'ফ্রি ডেলিভারি + ফ্রি নোটবুক';
+    node.appendChild(title);
+    if (detail) {
+      var small = document.createElement('small');
+      small.textContent = 'সঙ্গে অন্য বই নিলেও পুরো অর্ডারের ডেলিভারি ফ্রি।';
+      node.appendChild(small);
+    }
+    return node;
+  }
+  function findCheckout(host) {
+    var context = host && host.__ngContext__;
+    if (!context || typeof context.length !== 'number') return null;
+    for (var i=0;i<context.length;i++) {
+      var value = context[i];
+      if (value && value.formData && Array.isArray(value.carts) && typeof value.calculateDeliveryCharge === 'function') return value;
+    }
+    return null;
+  }
+  function patchCheckout(component) {
+    if (component.calculateDeliveryCharge.__abPackageFreeDelivery) return;
+    var original = component.calculateDeliveryCharge;
+    component.calculateDeliveryCharge = function () {
+      var eligible = qualifies(this.carts);
+      if (checkoutEligible !== eligible) { checkoutEligible = eligible; schedule(); }
+      return eligible ? 0 : original.apply(this,arguments);
+    };
+    component.calculateDeliveryCharge.__abPackageFreeDelivery = true;
+  }
+  // Production Angular stores numeric view IDs on some hosts. Patch the lazy
+  // checkout class through its exported module metadata before it is instantiated.
+  function inspectCheckout(value, depth, seen) {
+    if (!value || depth > 16 || seen.indexOf(value) !== -1) return;
+    seen.push(value);
+    if (typeof value === 'function' && value.prototype && typeof value.prototype.calculateDeliveryCharge === 'function') patchCheckout(value.prototype);
+    if (Array.isArray(value)) value.forEach(function (child) { inspectCheckout(child,depth+1,seen); });
+    else {
+      if (value.ɵinj) inspectCheckout(value.ɵinj.imports,depth+1,seen);
+      ['providers','useValue','component','children'].forEach(function (key) {
+        if (value[key]) inspectCheckout(value[key],depth+1,seen);
+      });
+    }
+  }
+  function wrapChunk(chunk) {
+    var factories = chunk && chunk[1];
+    if (!factories || typeof factories !== 'object') return;
+    Object.keys(factories).forEach(function (key) {
+      var original = factories[key];
+      if (typeof original !== 'function' || original.__abDeliveryFactory) return;
+      function factory(module) {
+        var result = original.apply(this,arguments);
+        if (module.exports && module.exports.CheckoutModule) {
+          try { inspectCheckout(module.exports.CheckoutModule,0,[]); } catch (_) { /* Server eligibility remains authoritative. */ }
+        }
+        return result;
+      }
+      factory.__abDeliveryFactory = true;
+      factories[key] = factory;
+    });
+  }
+  var chunks = window.webpackChunkangular_ui = window.webpackChunkangular_ui || [];
+  chunks.forEach(wrapChunk);
+  function wrapPush(push) {
+    return function () {
+      for (var i=0;i<arguments.length;i++) wrapChunk(arguments[i]);
+      return push.apply(this,arguments);
+    };
+  }
+  var chunkPush = wrapPush(chunks.push);
+  Object.defineProperty(chunks,'push',{
+    configurable:true,
+    get:function () { return chunkPush; },
+    set:function (push) { chunkPush = wrapPush(push); }
+  });
+  function setDeliveryChoices(host, eligible) {
+    var group = host.querySelector('[formcontrolname="deliveryOptions"]');
+    if (!group || !group.parentElement) return;
+    var box = group.parentElement;
+    var message = box.querySelector('.ab-delivery-waived-message');
+    if (eligible) {
+      if (!deliveryChoiceStates.has(group)) deliveryChoiceStates.set(group, { inert:group.getAttribute('inert'), aria:group.getAttribute('aria-disabled') });
+      group.setAttribute('inert','');
+      group.setAttribute('aria-disabled','true');
+      box.classList.add('ab-delivery-waived');
+      if (!message) {
+        message = document.createElement('div');
+        message.className = 'ab-delivery-waived-message';
+        message.textContent = 'এই অর্ডারের ডেলিভারি ফ্রি';
+        var detail = document.createElement('small');
+        detail.textContent = 'ডেলিভারি চার্জ বেছে নেওয়ার প্রয়োজন নেই';
+        message.appendChild(detail);
+        box.appendChild(message);
+      }
+    } else {
+      var state = deliveryChoiceStates.get(group);
+      if (state) {
+        if (state.inert === null) group.removeAttribute('inert');
+        else group.setAttribute('inert',state.inert);
+        if (state.aria === null) group.removeAttribute('aria-disabled');
+        else group.setAttribute('aria-disabled',state.aria);
+        deliveryChoiceStates.delete(group);
+      }
+      box.classList.remove('ab-delivery-waived');
+      if (message) message.remove();
+    }
+  }
+  function update() {
+    document.querySelectorAll('.ab-package-banner[data-package-id="' + PACKAGE_ID + '"]').forEach(function (link) {
+      if (!link.querySelector('.ab-package-free-delivery')) link.appendChild(notice('ab-package-free-delivery',false));
+    });
+    if (location.pathname === '/special-package-details/' + PACKAGE_ID) {
+      var summary = document.querySelector('app-special-package-details .ab-offer-summary');
+      if (summary && !summary.querySelector('.ab-package-free-delivery')) summary.insertBefore(notice('ab-package-free-delivery',true),summary.firstChild);
+    }
+    var host = document.querySelector('app-checkout');
+    var component = findCheckout(host);
+    if (!host) { checkoutEligible = false; return; }
+    if (component) patchCheckout(component);
+    var existing = host.querySelector('.ab-checkout-free-delivery');
+    var eligible = component ? qualifies(component.carts) : checkoutEligible;
+    setDeliveryChoices(host,eligible);
+    if (eligible && !existing) {
+      var message = notice('ab-checkout-free-delivery',true);
+      var summary = host.querySelector('.order-summary, .checkout-summary, .cart-summary') || host;
+      summary.insertBefore(message,summary.firstChild);
+    } else if (!eligible && existing) existing.remove();
+  }
+  var scheduled = false;
+  function schedule() {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(function () { scheduled = false; update(); });
+  }
+  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
+  window.addEventListener('popstate',schedule);
+  window.addEventListener('amol-cart-added',schedule);
+  update();
+}());
+</script>
