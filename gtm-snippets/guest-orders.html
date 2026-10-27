@@ -1,0 +1,189 @@
+<style>
+/* Guest order access inherits Amol's existing typography and green. */
+#ab-guest-orders { width:min(760px,calc(100% - 24px)); max-height:90vh; max-height:90dvh; margin:auto; padding:0; border:1px solid #d7e2da; border-radius:14px; background:#fff; color:#23372b; font:17px/1.8 hind-siliguri,sans-serif; }
+#ab-guest-orders::backdrop { background:#10251bb3; }
+#ab-guest-orders * { box-sizing:border-box; }
+[data-ab-guest-orders] { background:none; border:0; cursor:pointer; font:inherit; color:inherit; }
+aside.side-nav [data-ab-guest-orders] { display:block; padding:12px 0; text-align:left; }
+app-login > .ab-guest-orders-entry { display:block; width:calc(100% - 32px); max-width:500px; margin:20px auto; text-align:center; padding:16px; background:#edf5ef; }
+#ab-guest-orders .go-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #d7e2da; }
+#ab-guest-orders h2 { margin:0; font:700 24px/1.5 hind-siliguri,sans-serif; }
+#ab-guest-orders .go-content { padding:20px; overflow-y:auto; max-height:calc(90vh - 82px); max-height:calc(90dvh - 82px); }
+#ab-guest-orders p { margin:0 0 14px; }
+#ab-guest-orders label { display:block; margin-bottom:6px; font-weight:600; }
+#ab-guest-orders input,#ab-guest-orders textarea { width:100%; padding:12px; font:inherit; color:inherit; background:#fff; border:1px solid #809889; border-radius:7px; margin-bottom:14px; }
+#ab-guest-orders button { cursor:pointer; padding:10px 16px; font:600 16px/1.6 hind-siliguri,sans-serif; border-radius:7px; border:1px solid #175c36; color:#175c36; background:#fff; min-height:44px; }
+#ab-guest-orders button.go-primary { background:#175c36; color:white; }
+#ab-guest-orders button.go-danger { background:#a32727; border-color:#a32727; color:white; }
+#ab-guest-orders button:disabled { opacity:.5; cursor:wait; }
+#ab-guest-orders button:focus-visible,#ab-guest-orders input:focus-visible,#ab-guest-orders textarea:focus-visible { outline:3px solid #c99525; outline-offset:3px; }
+#ab-guest-orders .go-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+#ab-guest-orders .go-message { padding:12px; border-radius:7px; margin-bottom:14px; background:#edf5ef; }
+#ab-guest-orders .go-message:empty { display:none; }
+#ab-guest-orders .go-message[data-error="true"] { color:#882121; background:#fff0ed; }
+#ab-guest-orders .go-card { border:1px solid #d7e2da; border-radius:10px; padding:16px; margin:16px 0; }
+#ab-guest-orders .go-card h3 { margin:0 0 8px; font:700 20px/1.5 hind-siliguri,sans-serif; }
+#ab-guest-orders .go-card ul { padding-left:22px; margin:12px 0; }
+#ab-guest-orders .go-card li { margin:4px 0; }
+#ab-guest-orders .go-card a { display:inline; color:#175c36; text-decoration:underline; }
+#ab-guest-orders .go-status { display:inline-block; padding:3px 9px; border-radius:5px; background:#edf5ef; font-weight:600; }
+#ab-guest-orders .go-confirm { padding:14px; margin-top:12px; background:#fff5ed; border:1px solid #ddc3af; border-radius:8px; }
+.ab-guest-orders-entry { display:inline-block; margin:8px 0; color:#175c36!important; text-decoration:underline; text-underline-offset:4px; cursor:pointer; font:500 16px/1.6 hind-siliguri,sans-serif; }
+@media(max-width:600px) { #ab-guest-orders .go-content { padding:16px; } #ab-guest-orders .go-header { padding:12px 16px; } #ab-guest-orders h2 { font-size:22px; } }
+</style>
+<script>
+(function () {
+  'use strict';
+  if (window.__amolGuestOrders) return;
+  window.__amolGuestOrders = true;
+  var LOCAL_PREVIEW = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname);
+  var API_BASE = LOCAL_PREVIEW ? location.origin + '/api' : 'https://apisub.amolbooks.com/api';
+  var SESSION_KEY = 'amol-guest-order-session-v1';
+  var session = null;
+  var phone = '';
+  var phase = 'phone';
+  var orders = [];
+  var nextCursor = null;
+  var sending = false;
+  var loading = false;
+  var retryAt = 0;
+  var timer = null;
+  var lastFocus = null;
+  var dialog;
+  var statuses = {0:'অপেক্ষমাণ',1:'অর্ডার গ্রহণ করা হয়েছে',2:'অর্ডার নিশ্চিত',3:'প্রস্তুত করা হচ্ছে',4:'পাঠানো হয়েছে',5:'ডেলিভারি সম্পন্ন',6:'বাতিল হয়েছে',7:'রিফান্ড',8:'কুরিয়ার প্রক্রিয়ায়',9:'ফেরত এসেছে',10:'অপেক্ষায় রাখা হয়েছে'};
+  function esc(value) { return String(value == null ? '' : value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function money(value) { return '৳' + Math.max(0,Number(value)||0).toLocaleString('en-BD'); }
+  function clearSession() { session=null; try { sessionStorage.removeItem(SESSION_KEY); } catch (_) {} }
+  try { session=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null'); } catch (_) {}
+  if (!session || !/^[a-f0-9]{64}$/.test(session.token||'') || !(Date.parse(session.expiresAt)>Date.now())) clearSession();
+  function message(text,error) {
+    var box=dialog.querySelector('.go-message');
+    if (!box) return;
+    box.textContent=text||''; box.dataset.error=String(Boolean(error));
+    box.setAttribute('role',error?'alert':'status');
+  }
+  function request(path,body,method) {
+    var headers={'Content-Type':'application/json'};
+    var sentToken=session&&session.token;
+    if (session) headers.Authorization='Bearer '+session.token;
+    return fetch(API_BASE+'/guest-orders'+path,{method:method||(body?'POST':'GET'),headers:headers,body:body?JSON.stringify(body):undefined,cache:'no-store'})
+      .then(function(response){return response.json().catch(function(){return {};}).then(function(result){
+        if (!response.ok || !result.success) {
+          if (response.status===401 && !/verify-code/.test(path) && session&&session.token===sentToken) { clearSession();phase='phone';render(); }
+          var text=typeof result.message==='string'&&/[\u0980-\u09ff]/.test(result.message)?result.message:(response.status===429?'অনেকবার চেষ্টা হয়েছে। কিছুক্ষণ পরে আবার চেষ্টা করুন':'অনুরোধ সম্পন্ন হয়নি। নম্বর ও কোড যাচাই করে আবার চেষ্টা করুন');
+          var failure=new Error(text);failure.userMessage=true;throw failure;
+        }
+        return result;
+      });}).catch(function(error){if(error.userMessage)throw error;throw new Error('ইন্টারনেট সংযোগে সমস্যা হচ্ছে। আবার চেষ্টা করুন');});
+  }
+  function orderHtml(order) {
+    var date=new Date(order.createdAt);
+    var when=Number.isFinite(date.getTime())?date.toLocaleDateString('bn-BD',{timeZone:'Asia/Dhaka'}):'';
+    var refund=order.refundReviewRequired?'<p>পেমেন্টের রিফান্ড যাচাইয়ের জন্য সহায়তা টিমের সঙ্গে যোগাযোগ করুন। রিফান্ড এখনো নিশ্চিত হয়নি।</p>':'';
+    return '<article class="go-card" data-order-id="'+esc(order._id)+'"><h3>অর্ডার #'+esc(order.orderId)+'</h3><p>'+esc(when)+' · <span class="go-status">'+esc(statuses[order.orderStatus]||'অবস্থা যাচাই হচ্ছে')+'</span></p><ul>'+order.items.map(function(item){return '<li>'+esc(item.name)+' × '+esc(item.quantity)+'</li>';}).join('')+'</ul><p>ডেলিভারি: '+esc(money(order.deliveryCharge))+' · সর্বমোট: <strong>'+esc(money(order.grandTotal))+'</strong></p>'+refund+(order.canCancel?'<button type="button" data-go="ask-cancel">অর্ডার বাতিল করুন</button>':(order.orderStatus===6?'':'<p>এই অর্ডার অনলাইনে বাতিল করা যাচ্ছে না। <a href="/pages/contact-us">সহায়তায় যোগাযোগ করুন</a>।</p>'))+'</article>';
+  }
+  function render(keepScroll) {
+    if(!dialog.open)return;
+    var content=dialog.querySelector('.go-content');
+    var previousScroll=content.scrollTop;
+    var html='<div class="go-message" role="status" aria-live="polite"></div>';
+    if (session) {
+      html+='<p>যাচাইকৃত নম্বর: '+esc(session.phoneNo)+'</p><p>কুরিয়ার বুকিংয়ের আগে অর্ডার বাতিল করতে পারবেন।</p><div class="go-actions"><button type="button" data-go="refresh">আবার দেখুন</button><button type="button" data-go="logout">নম্বর পরিবর্তন / লগ আউট</button></div><div class="go-orders">'+(orders.length?orders.map(orderHtml).join(''):'<p>এই নম্বরে কোনো অর্ডার পাওয়া যায়নি। অর্ডারে অন্য নম্বর দিয়ে থাকলে সেটি যাচাই করুন।</p>')+'</div>'+(nextCursor?'<button type="button" data-go="more">আগের অর্ডারগুলো দেখুন</button>':'');
+    } else if (phase==='code') {
+      html+='<p>'+esc(phone)+' নম্বরে পাঠানো ৬ সংখ্যার কোড দিন। কোডটি ৫ মিনিটের জন্য কার্যকর।</p><form data-go-form="verify"><label for="go-code">যাচাই কোড</label><input id="go-code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9০-৯]{6}" required><button class="go-primary" type="submit">যাচাই করে অর্ডার দেখুন</button></form><div class="go-actions"><button type="button" data-go="resend">আবার কোড পাঠান</button><button type="button" data-go="change">নম্বর পরিবর্তন</button></div>';
+    } else {
+      html+='<p>অ্যাকাউন্ট ছাড়াই আপনার অর্ডার দেখুন। অর্ডার দেওয়ার সময় ব্যবহার করা মোবাইল নম্বরটি SMS কোড দিয়ে যাচাই করুন।</p><form data-go-form="phone"><label for="go-phone">মোবাইল নম্বর</label><input id="go-phone" name="phoneNo" type="tel" inputmode="tel" autocomplete="tel" maxlength="32" value="'+esc(phone)+'" placeholder="01XXXXXXXXX" required><button class="go-primary" type="submit">যাচাই কোড পাঠান</button></form><p>কোডটি কাউকে দেবেন না। যাচাইয়ের মেয়াদ ৩০ মিনিট।</p>';
+    }
+    content.innerHTML=html;
+    content.scrollTop=keepScroll?previousScroll:0;
+    updateResend();
+  }
+  function updateResend() {
+    var button=dialog.querySelector('[data-go="resend"]');
+    if (!button) return;
+    var remaining=Math.max(0,Math.ceil((retryAt-Date.now())/1000));
+    button.disabled=sending||remaining>0;
+    button.textContent=remaining?'আবার কোড পাঠান ('+remaining+' সেকেন্ড)':'আবার কোড পাঠান';
+  }
+  function sendCode() {
+    if (sending) return;
+    sending=true;
+    dialog.querySelectorAll('form button,[data-go="resend"]').forEach(function(button){button.disabled=true;});
+    message('কোড পাঠানো হচ্ছে…');
+    request('/request-code',{phoneNo:phone}).then(function(result){phase='code';retryAt=Date.now()+60000;render();if(dialog.open)dialog.querySelector('#go-code').focus();if(LOCAL_PREVIEW&&/^\d{6}$/.test(result.developmentCode||''))message('পরীক্ষামূলক প্রিভিউ — SMS পাঠানো হয়নি। পরীক্ষার কোড: '+result.developmentCode);})
+      .catch(function(error){message(error.message,true);})
+      .finally(function(){sending=false;dialog.querySelectorAll('form button').forEach(function(button){button.disabled=false;});updateResend();});
+  }
+  function loadOrders(more) {
+    if (loading || !session || !dialog.open) return;
+    var loadingToken=session.token;
+    loading=true;message('অর্ডার লোড হচ্ছে…');
+    var buttons=dialog.querySelectorAll('[data-go="more"],[data-go="refresh"]');buttons.forEach(function(button){button.disabled=true;});
+    request(more&&nextCursor?'?cursor='+encodeURIComponent(nextCursor):'').then(function(result){if(!session||session.token!==loadingToken||!dialog.open)return;orders=more?orders.concat(result.data):result.data;nextCursor=result.nextCursor;render(more);})
+      .catch(function(error){message(error.message,true);})
+      .finally(function(){loading=false;buttons.forEach(function(button){button.disabled=false;});});
+  }
+  function createDialog() {
+    dialog=document.createElement('dialog');dialog.id='ab-guest-orders';dialog.setAttribute('aria-labelledby','go-title');
+    dialog.innerHTML='<div class="go-header"><h2 id="go-title">আমার অর্ডার</h2><button type="button" data-go="close" aria-label="বন্ধ করুন">✕</button></div><div class="go-content"></div>';
+    document.body.appendChild(dialog);
+    dialog.addEventListener('close',function(){clearInterval(timer);timer=null;orders=[];dialog.querySelector('.go-content').innerHTML='';if(lastFocus&&lastFocus.isConnected)lastFocus.focus();});
+    dialog.addEventListener('submit',function(event){
+      var form=event.target.closest('form[data-go-form]');if(!form)return;event.preventDefault();
+      if (sending) return;
+      if(form.dataset.goForm==='phone'){phone=form.elements.phoneNo.value.trim();sendCode();return;}
+      var code=form.elements.code.value.replace(/[০-৯]/g,function(digit){return String('০১২৩৪৫৬৭৮৯'.indexOf(digit));});
+      sending=true;form.querySelector('button').disabled=true;message('যাচাই হচ্ছে…');
+      request('/verify-code',{phoneNo:phone,code:code}).then(function(result){session=result.data;orders=[];try{sessionStorage.setItem(SESSION_KEY,JSON.stringify(session));}catch(_){}render();loadOrders(false);})
+        .catch(function(error){message(error.message,true);}).finally(function(){sending=false;if(form.isConnected)form.querySelector('button').disabled=false;});
+    });
+    dialog.addEventListener('click',function(event){
+      var button=event.target.closest('button[data-go]');if(!button)return;
+      var action=button.dataset.go;
+      if(sending&&(action==='change'||action==='resend'))return;
+      if(action==='close'){dialog.close();return;}
+      if(action==='change'){phase='phone';render();return;}
+      if(action==='resend'){sendCode();return;}
+      if(action==='refresh'||action==='more'){loadOrders(action==='more');return;}
+      if(action==='logout'){
+        button.disabled=true;request('/logout',{}).catch(function(){}).finally(function(){clearSession();orders=[];phone='';phase='phone';render();});return;
+      }
+      var card=button.closest('[data-order-id]');if(!card)return;
+      if(action==='ask-cancel'){
+        if(card.querySelector('.go-confirm'))return;
+        var box=document.createElement('div');box.className='go-confirm';
+        var paid=orders.some(function(order){return String(order._id)===card.dataset.orderId&&order.paymentStatus==='paid';});
+        box.innerHTML='<p>আপনি কি অর্ডার #'+esc(card.querySelector('h3').textContent.replace('অর্ডার #',''))+' বাতিল করতে চান?</p>'+ (paid?'<p>বাতিল করলেই টাকা স্বয়ংক্রিয়ভাবে ফেরত যাবে না। রিফান্ডের জন্য সহায়তা টিমের যাচাই প্রয়োজন।</p>':'') +'<label>কারণ (ঐচ্ছিক)<textarea maxlength="300" rows="2" aria-label="বাতিলের কারণ"></textarea></label><div class="go-actions"><button class="go-danger" type="button" data-go="confirm-cancel">হ্যাঁ, অর্ডার বাতিল করুন</button><button type="button" data-go="back">ফিরে যান</button></div>';
+        card.appendChild(box);box.querySelector('textarea').focus();return;
+      }
+      if(action==='back'){card.querySelector('.go-confirm').remove();return;}
+      if(action==='confirm-cancel'){
+        button.disabled=true;var reason=card.querySelector('textarea').value;var cancelToken=session&&session.token;
+        request('/'+encodeURIComponent(card.dataset.orderId)+'/cancel',{reason:reason}).then(function(result){
+          if(!session||session.token!==cancelToken||!dialog.open)return;
+          orders.forEach(function(order){if(String(order._id)===card.dataset.orderId){order.orderStatus=6;order.canCancel=false;order.refundReviewRequired=Boolean(result.data&&result.data.refundReviewRequired)||order.paymentStatus==='paid';}});
+          render();message(result.message+'।'+(result.data&&result.data.refundReviewRequired?' রিফান্ডের জন্য সহায়তায় যোগাযোগ করুন।':''));
+        }).catch(function(error){message(error.message,true);button.disabled=false;});
+      }
+    });
+  }
+  function openOrders(event) {
+    event.preventDefault();lastFocus=event.target;
+    if(!dialog)createDialog();
+    if(session&&!(Date.parse(session.expiresAt)>Date.now()))clearSession();
+    dialog.showModal();render();
+    if(session)loadOrders(false);else dialog.querySelector('input').focus();
+    clearInterval(timer);timer=setInterval(function(){updateResend();if(session&&!(Date.parse(session.expiresAt)>Date.now())){clearSession();orders=[];phase='phone';render();message('সেশনের মেয়াদ শেষ। আবার মোবাইল নম্বর যাচাই করুন',true);}},1000);
+  }
+  function addEntry(host,nav) {
+    if(!host||host.querySelector('[data-ab-guest-orders]'))return;
+    var link=document.createElement('button');link.type='button';link.dataset.abGuestOrders='1';link.textContent='আমার অর্ডার দেখুন';link.addEventListener('click',openOrders);
+    link.className=nav?'nav-link':'ab-guest-orders-entry';
+    if(nav){var li=document.createElement('li');li.className='nav-item';Array.prototype.forEach.call(host.attributes,function(attr){if(attr.name.indexOf('_ngcontent-')===0){li.setAttribute(attr.name,'');link.setAttribute(attr.name,'');}});li.appendChild(link);host.appendChild(li);}else if(host.tagName==='APP-LOGIN'||host.tagName==='APP-ORDER-SUCCESS')host.insertBefore(link,host.firstChild);else host.appendChild(link);
+  }
+  var scheduled=false;
+  function updateEntries(){scheduled=false;addEntry(document.querySelector('app-header ul.nav-list'),true);addEntry(document.querySelector('aside.side-nav ul'),true);addEntry(document.querySelector('app-login'),false);if(/\/checkout\/order-success\//.test(location.pathname))addEntry(document.querySelector('app-order-success'),false);}
+  new MutationObserver(function(){if(!scheduled){scheduled=true;requestAnimationFrame(updateEntries);}}).observe(document.documentElement,{childList:true,subtree:true});
+  updateEntries();
+}());
+</script>

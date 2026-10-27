@@ -537,6 +537,8 @@ ${storefrontPurchaseExternalIdHelper}
     'homepage-redesign.html',
     'special-package-shelves.html',
     'package-free-delivery.html',
+    'guest-orders.html',
+    'mobile-browsing.html',
     'pagespeed-accessibility.html',
     'pagespeed-runtime.html',
   ];

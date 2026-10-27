@@ -402,6 +402,11 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       display: none !important;
     }
 
+    .ab-library-retry {
+      min-height: 44px; padding: 10px 18px; border: 1px solid #175c36;
+      border-radius: 6px; background: #fff; color: #175c36; font: inherit; cursor: pointer;
+    }
+
     #ab-sticky-commerce,
     #ab-sticky-product-actions,
     #ab-cart-sticky-checkout {
@@ -4809,6 +4814,10 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     }
   }
 
+  // Install layout rules before Angular's async data arrives, not after the
+  // mutation debounce paints an intermediate native layout.
+  installStyle();
+
   function isProductPage() {
     return location.pathname.indexOf('/product-details/') !== -1 ||
       location.pathname.indexOf('/product-detail/') !== -1;
@@ -7707,6 +7716,11 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   }
 
   function categoryLibraryProducts() {
+    // Use the same curated, same-origin catalogue as the homepage. Direct
+    // catalogue POSTs can fail during a product page's concurrent requests.
+    if (isLocalPreviewHost() || /^(www\\.)?amolbooks\\.com$/.test(location.hostname)) {
+      return fetchJson('/library', null, window.location.origin + '/storefront-catalog');
+    }
     return fetchJson('/product/get-all', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -7728,7 +7742,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     if (!product || !nativeSection || !nativeSection.parentNode) return;
     var existing = document.getElementById(CATEGORY_LIBRARY_ID);
     if (existing && existing.getAttribute('data-product-slug') === String(product.slug || currentSlug)) {
-      nativeSection.classList.add('ab-category-library-source');
+      nativeSection.classList.toggle('ab-category-library-source', !!existing.querySelector('.ab-library-shelves .ab-library-grid'));
       return;
     }
     removeCategoryLibrary();
@@ -7743,26 +7757,38 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       '<h2 class="ab-library-heading" id="' + CATEGORY_LIBRARY_ID + '-heading">বিষয়ভিত্তিক জনপ্রিয় বই</h2>' +
       '<div class="ab-library-shelves" role="status" aria-live="polite">বইগুলো সাজানো হচ্ছে…</div>';
     nativeSection.parentNode.insertBefore(library, nativeSection);
-    nativeSection.classList.add('ab-category-library-source');
     var requestVersion = categoryLibraryVersion;
     var requestSlug = library.getAttribute('data-product-slug');
-    Promise.all([
-      categoryLibraryProducts(),
-      publisherProducts(product),
-    ]).then(function (results) {
-      var activeLibrary = document.getElementById(CATEGORY_LIBRARY_ID);
-      if (!activeLibrary || requestVersion !== categoryLibraryVersion || activeLibrary.getAttribute('data-product-slug') !== requestSlug) return;
-      var result = results[0];
-      var products = result && Array.isArray(result.data) ? result.data : [];
-      var publisherList = results[1] || [];
-      var publisherTarget = activeLibrary.querySelector('.ab-publisher-products');
-      var shelves = activeLibrary.querySelector('.ab-library-shelves');
-      if (publisherTarget) publisherTarget.innerHTML = publisherShelfHtml(publisherList);
-      var nativeRelated = document.querySelector('app-product-details app-related-product');
-      if (nativeRelated && publisherList.length) nativeRelated.classList.add('ab-publisher-products-source');
-      var html = categoryShelvesHtml(products, product) || fallbackLibraryHtml(products, product);
-      if (shelves) shelves.innerHTML = html || '<p class="ab-library-status">বিষয়ভিত্তিক বই পাওয়া যায়নি।</p>';
-    });
+    function loadLibrary() {
+      var shelves = library.querySelector('.ab-library-shelves');
+      if (shelves) shelves.textContent = 'বইগুলো সাজানো হচ্ছে…';
+      Promise.all([
+        categoryLibraryProducts(),
+        publisherProducts(product),
+      ]).then(function (results) {
+        var activeLibrary = document.getElementById(CATEGORY_LIBRARY_ID);
+        if (!activeLibrary || requestVersion !== categoryLibraryVersion || activeLibrary.getAttribute('data-product-slug') !== requestSlug) return;
+        var result = results[0];
+        var publisherList = results[1] || [];
+        var publisherTarget = activeLibrary.querySelector('.ab-publisher-products');
+        if (publisherTarget) publisherTarget.innerHTML = publisherShelfHtml(publisherList);
+        var nativeRelated = document.querySelector('app-product-details app-related-product');
+        if (nativeRelated && publisherList.length) nativeRelated.classList.add('ab-publisher-products-source');
+        var target = activeLibrary.querySelector('.ab-library-shelves');
+        if (!target) return;
+        if (!result || result.success === false || !Array.isArray(result.data)) {
+          nativeSection.classList.remove('ab-category-library-source');
+          target.innerHTML = '<p class="ab-library-status">বইগুলো লোড করা যায়নি। আবার চেষ্টা করুন।</p><button type="button" class="ab-library-retry">আবার চেষ্টা করুন</button>';
+          target.querySelector('.ab-library-retry').onclick = loadLibrary;
+          return;
+        }
+        var products = result.data;
+        var html = categoryShelvesHtml(products, product) || fallbackLibraryHtml(products, product);
+        nativeSection.classList.toggle('ab-category-library-source', !!html);
+        target.innerHTML = html || '<p class="ab-library-status">এই মুহূর্তে বিষয়ভিত্তিক বই পাওয়া যাচ্ছে না।</p>';
+      });
+    }
+    loadLibrary();
   }
 
   function findOverviewSection() {

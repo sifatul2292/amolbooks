@@ -1,0 +1,120 @@
+<!-- Mobile presentation only. Existing Angular/cart handlers own all purchases. No API calls. -->
+<style>
+/* Async product sections must not make the browser jump to a moved card. */
+html:has(app-product-details) { overflow-anchor: none; }
+@media (max-width: 767px) {
+  html { scroll-padding-top: 76px; scroll-padding-bottom: 100px; }
+  body { padding-bottom: calc(61px + env(safe-area-inset-bottom)) !important; }
+  body:has(#ab-sticky-product-actions.is-visible) { padding-bottom: calc(53px + env(safe-area-inset-bottom)) !important; }
+  app-header .header-main-content { gap: 12px !important; padding-block: 10px !important; }
+  app-header .header-left, app-header .header-left .logo { width: 52px !important; min-width: 52px !important; height: 64px !important; }
+  app-header .header-left .logo img { width: 52px !important; height: 64px !important; object-fit: contain; }
+  app-header .header-middle { flex: 1 !important; min-width: 0 !important; }
+  app-header .header-middle-top { width: 100% !important; min-height: 46px; border-radius: 8px !important; }
+  app-header .search-bar { position: relative; flex: 1; min-width: 0; width: auto !important; }
+  app-header #searchInput { font-size: 16px !important; height: 44px !important; width: 100%; }
+  app-header .search-bar:has(#searchInput:placeholder-shown)::before { content: "বই বা লেখক খুঁজুন"; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #59685e; font-size: 16px; pointer-events: none; }
+  app-header #searchInput::placeholder { color: transparent !important; }
+  app-header button.search-icon { min-width: 46px; min-height: 44px; }
+  /* One bottom action surface: keep navigation out of sight and keyboard focus
+     while the product purchase bar owns the bottom edge. */
+  body:has(#ab-sticky-product-actions.is-visible) app-header .bottom-nav { visibility: hidden !important; pointer-events: none !important; }
+  app-product-details .product-image-box { aspect-ratio: 1; }
+  app-product-details .product-image-box > img { object-fit: contain; }
+  app-header .bottom-nav { padding-bottom: env(safe-area-inset-bottom) !important; }
+  app-header .bottom-nav ul { display: grid !important; grid-template-columns: repeat(4,minmax(0,1fr)); }
+  app-header .bottom-nav li { min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; }
+  app-header .bottom-nav li span { font-size: 13px !important; line-height: 1.3 !important; }
+  app-header .bottom-nav li[aria-current="page"] { background: #ffffff20; border-radius: 8px; }
+  app-header .side-nav { max-width: min(88vw,360px); max-height: 100dvh; overflow-y: auto; overscroll-behavior: contain; padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  app-header .side-nav-middle a { min-height: 46px; display: flex; align-items: center; }
+  .ab-home-section-head { gap: 10px !important; margin-bottom: 18px !important; }
+  .ab-home-section-head h2 { font-size: 23px !important; line-height: 1.4 !important; }
+  .ab-home-section-head a, .ab-package-nav button, .ab-add-cart-button { min-height: 44px; }
+  .ab-home-card .ab-add-cart-button { font-size: 15px !important; }
+  app-cart-information .section { padding-top: 18px !important; }
+  app-cart-information .cart-card { padding: 14px 12px !important; }
+  body.ab-cart-enhanced app-cart-information .cart-card.ab-live-cart-page-item .cart-text-info h3 { font-size: 18px !important; line-height: 1.5 !important; }
+  body.ab-cart-enhanced app-cart-information .cart-card.ab-live-cart-page-item .cart-text-info p { font-size: 14px !important; line-height: 1.5; }
+  app-cart-information .quantity button, app-cart-information .quantity input { min-width: 44px; min-height: 44px; font-size: 17px !important; }
+  app-cart-information .ab-cart-remove { min-width: 44px; min-height: 44px; border: 1px solid #e6d7d7; border-radius: 6px; color: #a22b2b; }
+  app-cart-information .cart-area-bottom > ul { display: grid !important; grid-template-columns: 1fr !important; gap: 12px; }
+  app-cart-information .cart-area-bottom > ul > li { width: 100% !important; margin: 0 !important; }
+  body.ab-cart-enhanced app-cart-information .cart-area-bottom button,
+  body.ab-cart-enhanced #ab-cart-sticky-checkout button { min-height: 48px; font-size: 17px !important; border: 1px solid #175c36 !important; border-radius: 8px !important; background: #175c36 !important; color: #fff !important; }
+  body.ab-cart-enhanced app-cart-information .cart-area-bottom [data-ab-cart-continue] { background: #fff !important; border: 1px solid #175c36 !important; color: #175c36 !important; }
+  body.ab-cart-enhanced #ab-cart-sticky-checkout { padding-bottom: max(10px,env(safe-area-inset-bottom)) !important; }
+  app-checkout input:not([type="radio"]):not([type="checkbox"]), app-checkout textarea { font-size: 16px !important; line-height: 1.6 !important; scroll-margin-block: 100px; }
+  app-checkout .ab-mobile-field-label { display: block; margin: 0 0 7px; color: #24392c; font: 600 16px/1.5 hind-siliguri,"Hind Siliguri",sans-serif; }
+  app-checkout .ab-mobile-field .mdc-floating-label { visibility: hidden; }
+  app-checkout .ab-mobile-field .mdc-notched-outline__notch { width: 0 !important; padding: 0 !important; border-top-color: inherit !important; }
+  app-checkout .confirm-order button, app-checkout .promo-input-area button { min-height: 48px; font-size: 16px !important; }
+  app-checkout .promo-input-area { gap: 8px; }
+  app-checkout .promo-input-area input { min-width: 0; }
+  app-checkout .mat-mdc-radio-button label, app-checkout .mat-mdc-checkbox label { line-height: 1.6; }
+  body.ab-mobile-keyboard app-header .bottom-nav,
+  body.ab-mobile-keyboard #ab-sticky-commerce,
+  body.ab-mobile-keyboard #ab-sticky-product-actions,
+  body.ab-mobile-keyboard #ab-cart-sticky-checkout { visibility: hidden !important; pointer-events: none !important; }
+  a:focus-visible, button:focus-visible, [tabindex="0"]:focus-visible { outline: 3px solid #26754b; outline-offset: 3px; }
+}
+@media (min-width: 768px) { .ab-mobile-field-label { display: none !important; } }
+@media (prefers-reduced-motion: reduce) {
+  #ab-header-ticker *, #ab-sticky-commerce, .ab-package-track { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+</style>
+<script>
+(function () {
+  if (window.__abMobileBrowsing) return;
+  window.__abMobileBrowsing = true;
+  var fields = {
+    name: ['আপনার নাম', 'name'],
+    phoneNo: ['মোবাইল নম্বর', 'tel'],
+    address: ['সম্পূর্ণ ডেলিভারি ঠিকানা', 'street-address'],
+    note: ['অর্ডার সম্পর্কে কিছু জানাতে চান? (ঐচ্ছিক)', 'off']
+  };
+  var scheduled = false;
+  function repair() {
+    scheduled = false;
+    Object.keys(fields).forEach(function (key) {
+      document.querySelectorAll('app-checkout [formcontrolname="' + key + '"]').forEach(function (input) {
+        input.setAttribute('autocomplete', fields[key][1]);
+        if (key === 'phoneNo') input.setAttribute('inputmode', 'tel');
+        var field = input.closest('mat-form-field');
+        if (!field || field.classList.contains('ab-mobile-field') || !input.id) return;
+        var label = document.createElement('label');
+        label.className = 'ab-mobile-field-label';
+        label.htmlFor = input.id;
+        label.textContent = fields[key][0] + (input.required ? ' *' : '');
+        field.classList.add('ab-mobile-field');
+        field.parentNode.insertBefore(label, field);
+      });
+    });
+    var search = document.querySelector('app-header #searchInput');
+    if (search) { search.setAttribute('aria-label', 'বই, লেখক বা প্রকাশনী খুঁজুন'); search.setAttribute('enterkeyhint', 'search'); }
+    var nav = document.querySelector('app-header .bottom-nav');
+    if (nav) {
+      nav.setAttribute('aria-label', 'মূল নেভিগেশন');
+      nav.querySelectorAll('li').forEach(function (item) {
+        var path = item.querySelector('.fa-home') ? '/' : item.querySelector('.fa-shopping-bag') ? '/cart' : item.querySelector('.fa-bars') ? '/category-list' : '/login';
+        item.setAttribute('aria-label', item.textContent.trim());
+        if (location.pathname === path) item.setAttribute('aria-current', 'page');
+        else item.removeAttribute('aria-current');
+      });
+    }
+  }
+  function schedule() { if (!scheduled) { scheduled = true; requestAnimationFrame(repair); } }
+  new MutationObserver(schedule).observe(document.documentElement, {childList:true,subtree:true});
+  // Hide fixed controls only while a text field and the software keyboard occupy the screen.
+  function keyboard() {
+    var active = document.activeElement;
+    var editing = active && active.matches('input:not([type="radio"]):not([type="checkbox"]),textarea');
+    var viewport = window.visualViewport;
+    document.body.classList.toggle('ab-mobile-keyboard', !!(editing && viewport && window.innerHeight - viewport.height > 150));
+  }
+  document.addEventListener('focusin', keyboard);
+  document.addEventListener('focusout', keyboard);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', keyboard);
+  schedule();
+})();
+</script>

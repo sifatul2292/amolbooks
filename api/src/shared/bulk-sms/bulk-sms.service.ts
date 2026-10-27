@@ -1,3 +1,5 @@
+import { firstValueFrom } from 'rxjs';
+import { ServiceUnavailableException } from '@nestjs/common';
 import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
@@ -73,6 +75,23 @@ export class BulkSmsService {
   //     },
   //   );
   // }
+  // Authentication SMS must acknowledge failure; never log OTPs or gateway bodies.
+  async sendOrderAccessOtp(phoneNo: string, message: string): Promise<void> {
+    const token = this.configService.get<string>('greenwebsmsToken');
+    if (!token) throw new ServiceUnavailableException('SMS unavailable');
+    const params = new URLSearchParams({ token, to: phoneNo, message });
+    try {
+      const response = await firstValueFrom(this.httpService.post(
+        'https://api.bdbulksms.net/api.php', params.toString(),
+        { timeout: 10000, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
+      ));
+      let result = response.data;
+      if (typeof result === 'string') result = JSON.parse(result);
+      const rows = Array.isArray(result) ? result : [result];
+      if (!rows.length || rows.some(row => String(row?.status).toUpperCase() !== 'SENT')) throw new Error();
+    } catch (_) { throw new ServiceUnavailableException('SMS unavailable'); }
+  }
+
   public sentSingleSms(phoneNo: string, message: string) {
     try {
       const token = this.configService.get<string>('greenwebsmsToken');

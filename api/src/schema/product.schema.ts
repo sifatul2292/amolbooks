@@ -120,6 +120,7 @@ export const ProductSchema = new mongoose.Schema(
       required: false,
       default: null,
     },
+    inventoryRestockKeys: { type: [String], default: undefined, select: false },
     lowStockThreshold: {
       type: Number,
       required: false,

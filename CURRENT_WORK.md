@@ -1,3 +1,56 @@
+## Sunday release preparation (2026-10-27)
+
+- Prepared the verified guest-order access/cancellation flow and reviewed storefront fixes for the Sunday rollback branch. All focused guest-order, category-library, mobile, package hydration, product/cart, free-delivery, homepage and package-shelf checks pass. API build passes; lint remains blocked by the existing ignored-files configuration. Generated builds, local preview files and unrelated ISBN work are excluded from the release commit.
+- Deployment requires safe pull, API rebuild and `pm2 restart amolbooks-api`. No dependency install or nginx change is needed. Live SMS still needs a real-phone delivery check after deployment; duplicate-checkout prevention and the diagnosed local multi-tab empty-cart issue are not part of this batch.
+
+## Editorial blog-card refresh (2026-10-27)
+
+- Restyled the existing `app-blog-card-one` in `gtm-snippets/blog-reading.html`: light paper, thin border, restrained corner radius, clear Bengali serif title, simpler metadata and a plain green reading link. Removed the decorative bookmark badge, glowing gradients/shadows and image zoom. Preserved the existing cover, author/view data, article title, Angular ownership and detail route.
+- Scoped component tokens and hover/focus/pressed styles to the card; kept the reading link at a 44px minimum tap height with no wrapping. It uses a text arrow so it does not depend on a late icon font. Article reading styles and site navigation remain unchanged.
+- Browser checked 320/375/414/768px with no horizontal overflow; also inspected desktop at 1280px. Confirmed the link opens the original article and the full description/title loads. Snippet syntax and API build pass; lint remains blocked by the existing ignored-files configuration. Local preview refreshed; not pushed or deployed.
+
+## Remove below-footer order button and excess clearance (2026-10-27)
+
+- Removed the guest-order entry appended after the footer copyright and its 80px bottom margin. Order access remains in the existing menu, login and order-success locations.
+- Mobile document clearance now matches the existing bottom navigation (61px) or active purchase bar (53px), plus the device safe area. This removes the extra white strip without placing the footer under fixed controls. No order, cart or API behavior changes.
+- Browser verified at 501px: no footer order entry; at the bottom, the footer ends at y=980.95 and the purchase bar starts at y=981, with no extra gap or covered copyright. Snippet syntax/mobile checks and API build pass. Lint remains blocked by its existing ignored-files configuration. Local preview updated; not deployed.
+
+## Subject-library loading recovery (2026-10-27)
+
+- Product subject shelves now use the existing same-origin `/storefront-catalog/library` endpoint on localhost and the public storefront, matching the homepage catalogue path. The former direct catalogue POST returned 404 during some full product-page loads despite returning 104 records in isolated requests. Other hosts retain their existing direct-API path.
+- Loading failure is no longer presented as an empty catalogue. The shelf offers a retry button; native recommendations remain visible until real replacement cards are ready, including on repeated mounts. Publisher shelves remain independent of subject-catalogue success. No fabricated recommendations or catalogue writes.
+- Added `scripts/check-category-library.cjs` for host routing, failed-response messaging, retry success and native fallback preservation. Category, product cart and homepage checks pass. API build passes; lint remains blocked by the existing all-files-ignored configuration.
+- Browser verified subject shelves for `sompodgorarkoushol` (37 books/seven subjects), `Jibon` (41 books) and `the-barakah-effect` (41 books). Local dev preview updated; not pushed or deployed. The upstream cause of the direct POST's intermittent 404 is not established; this uses the existing working catalogue path and handles future failures explicitly.
+
+## Product bottom-bar ownership and loading stability (2026-10-27)
+
+- Mobile navigation is now hidden (including keyboard/accessibility focus) while the product purchase bar is active, and returns when that bar closes. Uses the existing active-bar class, with no purchase-handler changes. Product cover containers reserve square space and the product route opts out of browser scroll anchoring that could jump to asynchronously moved recommendation cards.
+- Product runtime installs its layout CSS immediately, before the first debounced mount. Local preview now injects storefront snippets into the head, matching the existing production injection order instead of applying layout styles after body content. No compiled storefront edits or artificial loading delay/blank-page overlay.
+- Browser verification on `/product-details/Jibon` at 501px: purchase bar active/navigation hidden at scrollY 413.5, scroll remains 413.5 after async content settles, navigation visible again at scrollY 0, no horizontal overflow. Mobile, product cart, homepage and package hydration checks pass. API build passes; lint remains blocked by the existing all-files-ignored configuration.
+- Dev server restarted on localhost:3000; changes remain local. Phone hardware/network throttling and production rollout have not been checked.
+
+## Cached special-package pricing correction (2026-10-27)
+
+- Fixed the package detail hydration cache path: cached full-book data previously overwrote the package copy quantity with warehouse inventory. Repeat/cross-package hydration could therefore inflate list price, offer price and savings. Both fresh and cached hydration now use the same merge with package quantity and variation taking precedence, preserving catalogue descriptions/previews.
+- Added `scripts/check-package-hydration.cjs`: first load, repeated cache hits, different bundle copy counts, selected variations and retained book details. Focused hydration and free-delivery checks pass; API build passes. Local browser shows the successful entrepreneur bundle at ৳1,570 list / ৳934 offer / ৳636 saving. Lint is blocked by the existing ignored-files configuration. The older package-redesign check also fails on unchanged HEAD at its unrelated silent-cart-feedback assertion.
+- Dev preview serves the corrected source. No package records or checkout prices changed; not pushed or deployed.
+
+## Mobile browsing comfort (2026-10-26)
+
+- Added `gtm-snippets/mobile-browsing.html` through the existing storefront injection. Below 768px, the header has a compact logo/search layout and a stable Bengali search prompt, clearer section headings, larger cart titles and 44px quantity/remove targets. Cart actions use the existing Amol green with a distinct secondary continue-shopping button; existing cart handlers/prices remain authoritative.
+- Added persistent Bengali labels above checkout name/phone/address/note fields plus appropriate autofill and phone keyboard hints. Mobile text fields use 16px text to avoid focus zoom. Bottom navigation includes active-page cues and safe-area spacing; fixed controls hide when a focused text field and a reduced visual viewport indicate an open software keyboard. Reduced-motion preferences stop the targeted ticker/transitions. No API calls, dependency additions or compiled UI edits.
+- Browser review at 393px verified no horizontal overflow, 18px cart titles, 44px cart tap areas, search-result navigation, cart-to-checkout navigation and labelled checkout fields. Software-keyboard visibility logic is covered by `scripts/check-mobile-browsing.cjs`; physical iOS/Android keyboard behavior still needs a device check. Homepage and package regressions pass. API build passes; lint remains blocked by the existing all-files-ignored ESLint configuration.
+- Dev server remains at localhost:3000. Prepared locally on the Sunday rollback branch; not pushed or deployed. This is a mobile presentation change, not duplicate-order prevention or a redesigned success screen.
+
+## Verified guest order history and cancellation (2026-10-26)
+
+- Added purpose-scoped SMS verification and a 30-minute guest-order session. Customers can enter their checkout number from the menu, mobile drawer, login screen, footer or success page, verify it, view paginated history and confirm cancellation without creating an account. Existing login/password-reset OTPs remain separate. New endpoints enforce verified phone ownership and return a limited order projection with no addresses or internal notes.
+- OTPs expire in five minutes, allow five guesses, are single-use, and are limited by normalized phone/hour and IP. Only hashes are stored; SMS acknowledgement is awaited and failures do not return success. The local review sandbox uses disposable test orders and an explicitly labelled code, with no production bypass or real SMS.
+- Customer cancellation is an atomic status transition before courier booking, with time/verified-phone/reason audit and retained history. Booking and inventory processing gates prevent races; cancelled orders cannot be reopened by stale staff updates. Staff may still record the existing refund status without reopening fulfillment; refund messaging never claims an automatic transfer. Per-product opaque retry keys make restoration idempotent and a minute job recovers interrupted restocks; raw order IDs are not exposed through catalogue markers.
+- Local database/Nest checks cover ownership, OTP replay/expiry/rate limits, HTTP validation, pagination, logout, simultaneous cancellation/booking, stock restoration and crash recovery. Related homepage/package/free-delivery regressions and customer-manager backend regressions pass. Mobile browser review exercised the labelled sandbox OTP, history, confirmation and cancellation/refund state. No real order, courier or SMS was changed.
+- API build and focused regression checks pass. Lint remains blocked by the existing all-files-ignored ESLint configuration.
+- Dev preview remains at localhost:3000 with a separate local sandbox on 3012. Live SMS delivery still requires deployment and an owner-approved phone test with the existing gateway configuration. Operational notes and local commands: `scripts/GUEST_ORDERS.md`. No compiled UI/admin edits or dependency additions.
+
 ## Larger homepage package banners on mobile (2026-10-26)
 
 - Increased the package page width to 150% below 600px, keeping the two-row layout while making each banner about 50% wider. A partial next column signals horizontal swiping; mobile arrow navigation advances by a column. Disabled page snapping at this breakpoint so the wider page does not snap back before readers can view the right column. Desktop stays 2×2. Compact free-delivery/notebook badge and all package links remain.

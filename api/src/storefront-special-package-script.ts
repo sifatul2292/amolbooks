@@ -1305,12 +1305,21 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
     relatedRequest.then(function (packages) { renderRelatedOffers(root, id, packages); });
   }
 
+  function mergePackageBook(product, detail) {
+    // Bundle quantity/variation must win over the catalogue's stock quantity.
+    return Object.assign({}, detail, product, {
+      pdfFile: detail.pdfFile,
+      description: detail.description,
+      shortDescription: detail.shortDescription,
+    });
+  }
+
   function hydrateProducts(data) {
     var products = data && Array.isArray(data.products) ? data.products : [];
     return Promise.all(products.map(function (product) {
       var slug = product && product.slug;
       if (!slug) return Promise.resolve(product);
-      if (productCache[slug]) return Promise.resolve(Object.assign({}, product, productCache[slug]));
+      if (productCache[slug]) return Promise.resolve(mergePackageBook(product, productCache[slug]));
       return fetch(API_BASE + '/api/product/get-by-slug/' + encodeURIComponent(slug), {
         headers: { Accept: 'application/json' },
       }).then(function (response) {
@@ -1319,11 +1328,7 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
       }).then(function (response) {
         var detail = response && response.success && response.data ? response.data : {};
         productCache[slug] = detail;
-        return Object.assign({}, detail, product, {
-          pdfFile: detail.pdfFile,
-          description: detail.description,
-          shortDescription: detail.shortDescription,
-        });
+        return mergePackageBook(product, detail);
       }).catch(function () { return product; });
     })).then(function (details) {
       return Object.assign({}, data, { products: details });

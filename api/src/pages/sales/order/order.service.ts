@@ -1,3 +1,4 @@
+import { orderPhoneAliases, unbookedOrderFilter } from '../../guest-orders/guest-orders.policy';
 import { hasFreeDeliveryPackage } from '../../../shared/utils/package-free-delivery.util';
 import {
   BadRequestException,
@@ -131,6 +132,9 @@ export class OrderService {
     this.checkAndUpdateCourierStatus();
     this.scheduleManualMetaPurchaseRetries();
     this.scheduleWebsitePurchaseGapFill();
+    schedule.scheduleJob('*/1 * * * *', () => {
+      this.reconcileCustomerCancellationStock().catch(() => this.logger.error('Customer cancellation stock reconciliation failed'));
+    });
   }
 
   private getSteadfastDeliveryCharge(payload: any): number | undefined {
@@ -643,18 +647,17 @@ export class OrderService {
     addOrderDto: AddOrderDto,
   ): Promise<void> {
     try {
-      // 0) Manual stock decrement (custom-orders.html). Only products with a
-      // non-null `stock` are affected; others are ignored.
-      const stockDecremented = await this.decreaseProductStock(
-        saveData._id,
-        saveData?.orderedItems,
-      );
-      if (stockDecremented) {
-        await this.orderModel.updateOne(
-          { _id: saveData._id },
-          { $set: { stockDecremented: true } },
-        );
-      }
+      // Cancellation cannot race inventory deduction. A cancelled order is never deducted later.
+      const stockClaim = await this.orderModel.findOneAndUpdate({
+        _id: saveData._id, orderStatus: { $nin: [6, 7, 9] },
+        customerCancelledAt: { $exists: false }, stockDecremented: { $ne: true },
+        stockOperationInProgress: { $ne: true },
+      }, { $set: { stockOperationInProgress: true } }, { new: true });
+      if (!stockClaim) return;
+      const stockDecremented = await this.decreaseProductStock(saveData._id, stockClaim.orderedItems);
+      await this.orderModel.updateOne({ _id: saveData._id }, {
+        $set: { stockDecremented }, $unset: { stockOperationInProgress: 1 },
+      });
 
       // 1) Fraud Checker Call + Order Update
       if (addOrderDto.phoneNo) {
@@ -2673,61 +2676,94 @@ export class OrderService {
    * silently skipped, same as on the way down.
    */
   private async restockProducts(
-    orderId: string,
-    items: any[],
-    reason: 'cancel_restock' | 'return_restock',
-  ): Promise<void> {
+    orderId: string, items: any[], reason: 'cancel_restock' | 'return_restock',
+  ): Promise<boolean> {
     try {
-      if (!Array.isArray(items) || !items.length) return;
-      const parsed = items
-        .map((it) => {
-          const id = it?._id || it?.product || it?.productId;
-          const qty = Math.max(1, Math.floor(Number(it?.quantity)) || 1);
-          if (!id) return null;
-          return { id, qty };
-        })
-        .filter(Boolean) as { id: string; qty: number }[];
-      if (!parsed.length) return;
-
-      const ops = parsed.map(({ id, qty }) => ({
-        updateOne: {
-          filter: { _id: id, stock: { $ne: null } },
-          update: { $inc: { stock: qty } },
-        },
-      }));
-      await this.productModel.bulkWrite(ops as any);
-
-      const trackedIds = parsed.map((p) => p.id);
-      const trackedProducts = await this.productModel
-        .find({ _id: { $in: trackedIds } })
-        .select('sku stock')
-        .lean();
-      const trackedById = new Map(
-        trackedProducts.map((p: any) => [String(p._id), p]),
-      );
-
-      const movements = parsed
-        .filter(({ id }) => trackedById.has(String(id)))
-        .map(({ id, qty }) => {
-          const product = trackedById.get(String(id));
-          return {
-            product: id,
-            sku: product?.sku,
-            qtyChange: qty,
-            stockAfter: product?.stock,
-            reason,
-            referenceType: 'order',
-            referenceId: orderId,
-          };
-        });
-      if (movements.length) {
-        await this.stockMovementModel.insertMany(movements);
+      // Store an opaque retry key on products, never expose customer order IDs through catalogue data.
+      let ledger: any = await this.orderModel.findOneAndUpdate({ _id: orderId, inventoryRestockKey: { $exists: false } },
+        { $set: { inventoryRestockKey: crypto.randomBytes(16).toString('hex') } }, { new: true }).select('+inventoryRestockKey').lean();
+      if (!ledger) ledger = await this.orderModel.findById(orderId).select('+inventoryRestockKey').lean();
+      if (!ledger?.inventoryRestockKey) return false;
+      const restockKey = ledger.inventoryRestockKey;
+      const quantities = new Map<string, number>();
+      for (const item of items || []) {
+        const id = String(item?._id || item?.product || item?.productId || '');
+        const quantity = Math.floor(Number(item?.quantity));
+        if (!ObjectId.isValid(id) || !Number.isFinite(quantity) || quantity <= 0) continue;
+        quantities.set(id, (quantities.get(id) || 0) + quantity);
       }
-    } catch (err) {
-      this.logger.warn(
-        `restockProducts failed for order ${orderId}: ${err?.message || err}`,
-      );
+      for (const [id, quantity] of quantities) {
+        const product: any = await this.productModel.findOneAndUpdate({
+          _id: id, stock: { $ne: null }, inventoryRestockKeys: { $ne: restockKey },
+        }, { $inc: { stock: quantity }, $addToSet: { inventoryRestockKeys: restockKey } },
+        { new: true }).select('sku stock').lean();
+        if (!product) continue;
+        try {
+          await this.stockMovementModel.create({ product: id, sku: product.sku, qtyChange: quantity,
+            stockAfter: product.stock, reason, referenceType: 'order', referenceId: orderId });
+        } catch (_) { this.logger.warn(`Stock restored for order ${orderId}; movement log unavailable`); }
+      }
+      return true;
+    } catch (_) {
+      this.logger.error(`Stock restoration pending for order ${orderId}`);
+      return false;
     }
+  }
+
+  private async restoreCustomerCancellationStock(order: any): Promise<void> {
+    if (!order.customerCancelledAt || !order.stockDecremented || order.customerRestockCompletedAt) return;
+    if (await this.restockProducts(String(order._id), order.orderedItems, 'cancel_restock')) {
+      await this.orderModel.updateOne({ _id: order._id, customerCancelledAt: { $exists: true } },
+        { $set: { stockRestocked: true, customerRestockCompletedAt: new Date() } });
+    }
+  }
+
+  async reconcileCustomerCancellationStock(): Promise<void> {
+    const orders = await this.orderModel.find({ customerCancelledAt: { $exists: true },
+      stockDecremented: true, customerRestockCompletedAt: { $exists: false } }).limit(20).lean();
+    for (const order of orders) await this.restoreCustomerCancellationStock(order);
+  }
+
+  async cancelVerifiedCustomerOrder(id: string, phone: string, reason = ''): Promise<ResponsePayload> {
+    if (!/^[a-f0-9]{24}$/i.test(id)) throw new NotFoundException('অর্ডারটি পাওয়া যায়নি');
+    const ownership = { _id: id, phoneNo: { $in: orderPhoneAliases(phone) } };
+    const order: any = await this.orderModel.findOne(ownership).lean();
+    if (!order) throw new NotFoundException('অর্ডারটি পাওয়া যায়নি');
+    if (order.customerCancelledAt) {
+      await this.restoreCustomerCancellationStock(order);
+      return { success: true, message: 'অর্ডারটি ইতিমধ্যে বাতিল হয়েছে' };
+    }
+    const now = new Date();
+    const cleanReason = String(reason || '').replace(/[\r\n]/g, ' ').trim().slice(0, 300);
+    const cancelled: any = await this.orderModel.findOneAndUpdate({
+      ...ownership, ...unbookedOrderFilter(), orderStatus: { $in: [1, 2, 3] },
+      ...(order.updatedAt ? { updatedAt: order.updatedAt } : {}),
+    }, { $set: {
+      orderStatus: OrderStatus.CANCEL, customerCancelledAt: now, hasOrderTimeline: true,
+      customerCancellationPhone: phone, customerCancellationReason: cleanReason,
+      orderTimeline: { ...(order.orderTimeline || {}), canceled: { success: true, date: now, expectedDate: null } },
+      adminNote: `${order.adminNote || ''}\nCustomer cancelled after phone verification: ${now.toISOString()}. ${cleanReason}`.trim(),
+    } }, { new: true }).lean();
+    if (!cancelled) {
+      const latest: any = await this.orderModel.findOne(ownership).lean();
+      if (latest?.customerCancelledAt) {
+        await this.restoreCustomerCancellationStock(latest);
+        return { success: true, message: 'অর্ডারটি ইতিমধ্যে বাতিল হয়েছে' };
+      }
+      throw new ConflictException('অর্ডারটির অবস্থা বদলেছে অথবা কুরিয়ার প্রক্রিয়া শুরু হয়েছে। আবার দেখুন বা সহায়তায় যোগাযোগ করুন');
+    }
+    await this.restoreCustomerCancellationStock(cancelled);
+    return { success: true, message: 'আপনার অর্ডারটি বাতিল হয়েছে',
+      data: { orderId: cancelled.orderId, refundReviewRequired: Boolean(cancelled.paymentStatus === 'paid' || (cancelled.paymentType && cancelled.paymentType !== 'cash_on_delivery')) } };
+  }
+
+  private async claimCourierBooking(id: string): Promise<any> {
+    const order = await this.orderModel.findOneAndUpdate({
+      _id: id, ...unbookedOrderFilter(), orderStatus: { $in: [1, 2, 3, 4, 8, 10] },
+    }, { $set: { courierBookingStartedAt: new Date() } }, { new: true });
+    // Keep this marker on uncertain failures: never send a cancelled order or blindly rebook a parcel.
+    if (!order) throw new ConflictException('Order cancelled, already booked, or processing. Check its current status.');
+    return order;
   }
 
   private normalizeOrderItems(items: any[]): any[] {
@@ -3897,13 +3933,14 @@ export class OrderService {
       throw new NotFoundException('No Data found!');
     }
     try {
-      await this.orderModel.findByIdAndUpdate(
-        id,
+      const updated = await this.orderModel.findOneAndUpdate(
+        { _id: id, customerCancelledAt: { $exists: false } },
         {
           $set: updateOrderDto,
         },
         { strict: false },
       );
+      if (!updated) throw new ConflictException('Customer-cancelled orders cannot be reopened');
 
       // Setting Data
       const fSetting: any = await this.settingModel
@@ -3966,11 +4003,12 @@ export class OrderService {
       );
     }
 
-    await this.orderModel.findByIdAndUpdate(
-      id,
+    const updated = await this.orderModel.findOneAndUpdate(
+      { _id: id, customerCancelledAt: { $exists: false } },
       { $set: updateData },
       { strict: false },
     );
+    if (!updated) throw new ConflictException('Customer-cancelled orders cannot be edited');
 
     if (
       Array.isArray(updateData.orderedItems) &&
@@ -4006,7 +4044,7 @@ export class OrderService {
 
     try {
       await this.orderModel.updateMany(
-        { _id: { $in: mIds } },
+        { _id: { $in: mIds }, customerCancelledAt: { $exists: false } },
         { $set: updateOrderDto },
       );
       const fSetting = await this.settingModel
@@ -4083,6 +4121,7 @@ export class OrderService {
   }) {
     const { orderStatus, courierMethod, id } = data;
     if (orderStatus === 8 && courierMethod) {
+      const fOrder = await this.claimCourierBooking(id);
       const courierApiConfig: CourierApiConfig = {
         providerName: courierMethod?.providerName,
         apiKey: courierMethod?.apiKey,
@@ -4098,7 +4137,6 @@ export class OrderService {
         specialInstruction: courierMethod?.specialInstruction,
         storeId: courierMethod?.storeId,
       };
-      const fOrder = await this.orderModel.findById(id);
       const mdata = {};
       if (courierMethod?.providerName === 'Steadfast Courier') {
         if (fOrder?.courierData && fOrder?.courierData?.consignmentId) {
@@ -4302,7 +4340,9 @@ export class OrderService {
         storeId: courierMethod?.storeId,
       };
       for (const id of mIds) {
-        const fOrder = await this.orderModel.findById(id);
+        let fOrder: any;
+        try { fOrder = await this.claimCourierBooking(String(id)); }
+        catch (error) { if (error instanceof ConflictException) continue; throw error; }
 
         if (courierMethod?.providerName === 'Steadfast Courier') {
           if (fOrder?.courierData && fOrder?.courierData?.consignmentId) {
@@ -4610,9 +4650,10 @@ export class OrderService {
       if (shouldRestock) {
         mData.stockRestocked = true;
       }
-      await this.orderModel.findByIdAndUpdate(id, {
+      const updated = await this.orderModel.findOneAndUpdate({ _id: id, ...(orderStatus === OrderStatus.REFUND ? {} : { customerCancelledAt: { $exists: false } }) }, {
         $set: mData,
       });
+      if (!updated) throw new ConflictException('Customer-cancelled orders cannot be reopened');
 
       if (shouldRestock) {
         const restockReason =

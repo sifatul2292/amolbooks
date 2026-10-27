@@ -37,6 +37,18 @@ function proxy(req, res) {
   request.on('error', () => res.status(502).end('Catalogue unavailable'));
   request.end(body);
 }
+// Guest order preview can only reach the explicitly configured local sandbox.
+app.use('/api/guest-orders', (req,res) => {
+  const port=Number(process.env.GUEST_ORDERS_PREVIEW_PORT);
+  if (!Number.isInteger(port)||port<1024||port>65535) return res.status(503).json({success:false,message:'পরীক্ষার অর্ডার API চালু নেই'});
+  if (!['GET','POST'].includes(req.method)) return res.sendStatus(405);
+  const body=req.method==='POST'?JSON.stringify(req.body||{}):'';
+  const request=require('node:http').request({hostname:'127.0.0.1',port,path:'/api/guest-orders'+req.url,method:req.method,
+    headers:{'Content-Type':'application/json',...(req.headers.authorization?{Authorization:req.headers.authorization}:{}),...(body?{'Content-Length':Buffer.byteLength(body)}:{})}},upstream=>{
+      res.status(upstream.statusCode||502).set('Cache-Control','no-store').type('application/json');upstream.pipe(res);
+    });
+  request.on('error',()=>res.status(503).json({success:false,message:'পরীক্ষার অর্ডার API চালু নেই'}));request.end(body);
+});
 app.use('/api', proxy);
 app.use('/storefront-catalog', proxy);
 const ui = path.join(root, 'ui/dist/angular-ui/browser');
@@ -45,7 +57,8 @@ app.get('*', (req, res, next) => {
   let html = fs.readFileSync(path.join(ui, 'index.html'), 'utf8');
   html = html.replace(/<!-- amol-storefront-snippets:start -->[\s\S]*?<!-- amol-storefront-snippets:end -->/g, '');
   const snippets = snippetNames.map(name => fs.readFileSync(path.join(root, 'gtm-snippets', name), 'utf8')).join('\n');
-  res.type('html').send(html.replace('</body>', snippets + '</body>'));
+  // Match production: presentation styles must precede the first Angular paint.
+  res.type('html').send(html.replace('</head>', snippets + '</head>'));
 });
 app.use(express.static(ui));
 app.listen(process.env.PORT || 3000, '127.0.0.1', () => console.log('Storefront preview: http://localhost:' + (process.env.PORT || 3000)));

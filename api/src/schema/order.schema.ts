@@ -397,6 +397,13 @@ export const OrderSchema = new mongoose.Schema(
       type: Number,
       required: false,
     },
+    customerCancelledAt: { type: Date },
+    customerCancellationReason: { type: String },
+    customerCancellationPhone: { type: String },
+    customerRestockCompletedAt: { type: Date },
+    inventoryRestockKey: { type: String, select: false },
+    courierBookingStartedAt: { type: Date },
+    stockOperationInProgress: { type: Boolean },
     stockDecremented: {
       type: Boolean,
       required: false,
@@ -415,3 +422,8 @@ export const OrderSchema = new mongoose.Schema(
 );
 
 OrderSchema.index({ phoneNo: 1, createdAt: 1 });
+
+OrderSchema.index({ customerCancelledAt: 1, customerRestockCompletedAt: 1 }, {
+  name: 'customer_cancellation_recovery',
+  partialFilterExpression: { customerCancelledAt: { $exists: true }, stockDecremented: true },
+});
