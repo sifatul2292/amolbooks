@@ -86,9 +86,11 @@ export class UtilsService {
   }
 
   getClientIp(req: Request): string | undefined {
-    const xff = (req.headers['x-forwarded-for'] ||
-      req.headers['cf-connecting-ip'] ||
-      '') as string;
+    // Cloudflare's header is the visitor's real address (IPv6 when they use it);
+    // the first X-Forwarded-For entry can be supplied by the client.
+    const cloudflareIp = String(req.headers['cf-connecting-ip'] || '').trim();
+    if (cloudflareIp && !this.isPrivateOrLoopback(cloudflareIp)) return cloudflareIp;
+    const xff = (req.headers['x-forwarded-for'] || '') as string;
     const remote = (req.socket?.remoteAddress || '') as string;
 
     const candidates = String(xff || remote)

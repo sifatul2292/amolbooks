@@ -104,6 +104,19 @@ html.ab-home-redesign,
 body.ab-home-redesign { overflow-x: clip !important; }
 body.ab-home-redesign { background: var(--color-paper) !important; color: var(--color-ink); }
 body.ab-home-redesign app-home { display: none !important; }
+/* Until the redesign mounts or gives up, keep the app's own home out of sight
+   so it does not flash and then get replaced. Its space stays reserved so the
+   footer does not jump, and it shows anyway after 6s if nothing replaces it. */
+html.ab-home-pending app-home {
+  visibility: hidden;
+  animation: ab-home-reveal 0s linear 6s forwards;
+}
+html.ab-home-pending app-pages > .page-render { min-height: 100vh; }
+@keyframes ab-home-reveal { to { visibility: visible; } }
+/* The app's home shows briefly before the redesign replaces it. Its first
+   section's 30px top margin (meant for the hidden hero banner) collapsed into
+   a gap under the header, and the page jumped up when it went away. */
+app-home .super-deal-section { margin-top: 0 !important; }
 
 #ab-homepage-redesign {
   background: var(--color-paper);
@@ -202,7 +215,9 @@ body.ab-home-redesign app-home { display: none !important; }
 }
 @media (min-width: 67rem) {
   app-header .header-main-content { gap: var(--space-lg) !important; padding-block: 0 !important; }
-  app-header .logo img { width: auto !important; max-width: 8rem !important; max-height: 5rem !important; margin-block: 0.5rem !important; object-fit: contain; }
+  /* Fixed box: Angular swaps the bundled 56x69 logo for the uploaded 325x415
+     one after load, and an auto width made the whole header grow 8px. */
+  app-header .logo img { width: 4rem !important; height: 5rem !important; max-width: none !important; max-height: none !important; margin-block: 0.5rem !important; object-fit: contain; }
   app-header .header-right { gap: var(--space-sm) !important; }
   app-header .header-right-top,
   app-header .services { padding-top: 0 !important; }
@@ -239,6 +254,14 @@ body.ab-home-redesign app-home { display: none !important; }
   var cataloguePromise = null;
   var coverDataRequested = false;
   var localHost = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname) || /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(location.hostname);
+  function wantsRedesign() {
+    return location.pathname === '/' && new URLSearchParams(location.search).get('home') !== 'legacy';
+  }
+  function setPending(pending) {
+    document.documentElement.classList.toggle('ab-home-pending', pending);
+  }
+  // Set while the head parses, before Angular paints its own home.
+  if (wantsRedesign()) setPending(true);
   var sameOriginCatalogue = localHost || /^(www\.)?amolbooks\.com$/.test(location.hostname);
   var API_BASE = sameOriginCatalogue ? location.origin + '/storefront-catalog' : 'https://apisub.amolbooks.com/api';
   var goals = [
@@ -329,7 +352,8 @@ body.ab-home-redesign app-home { display: none !important; }
   function responsiveImage(product) {
     var original = imageUrl(product);
     var url = new URL(original, location.origin);
-    if (url.origin !== 'https://apisub.amolbooks.com' || !/^\/api\/upload\/images\/[^/]+$/.test(url.pathname)) {
+    // Local worktrees do not contain the production upload library.
+    if (localHost || url.origin !== 'https://apisub.amolbooks.com' || !/^\/api\/upload\/images\/[^/]+$/.test(url.pathname)) {
       return 'src="' + escapeHtml(original) + '"';
     }
     var base = (localHost ? location.origin : url.origin) + '/api/storefront-images/';
@@ -482,6 +506,22 @@ body.ab-home-redesign app-home { display: none !important; }
         items: items
       }
     });
+    if (event !== 'view_item_list') return;
+    // GTM's GA4 view_item_list tag listens for view_collection_stape and reads collection_id.
+    window.dataLayer.push({ ecommerce: null });
+    window.dataLayer.push({
+      event: 'view_collection_stape',
+      event_id: 'amol_view_collection_stape_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+      __stape: true,
+      ecommerce: {
+        currency: 'BDT',
+        value: items.reduce(function (total, item) { return total + item.price; }, 0),
+        item_list_id: listName,
+        item_list_name: listName,
+        collection_id: listName,
+        items: items
+      }
+    });
   }
   function categoryUrl(match, fallback) {
     var links = document.querySelectorAll('a[href*="/product-list"]');
@@ -528,6 +568,31 @@ body.ab-home-redesign app-home { display: none !important; }
       }).join('') + '</div>' +
     '</div></section>';
   }
+  function requestCatalogue() {
+    var request = sameOriginCatalogue ? fetch(API_BASE + '/library', { credentials: 'omit' }) : fetch(API_BASE + '/product/get-all', {
+      method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filter: { status: 'publish', quantity: { $gt: 0 } },
+        pagination: { pageSize: 180, currentPage: 0 },
+        sort: { totalSold: -1, priority: -1 },
+        select: { _id: 1, name: 1, slug: 1, images: 1, salePrice: 1, afterDiscountPrice: 1, discountAmount: 1, discountType: 1, totalSold: 1, author: 1, publisher: 1, category: 1, ratingCount: 1, ratingTotal: 1, reviewTotal: 1 }
+      })
+    });
+    return request.then(function (response) {
+      if (!response.ok) throw new Error('Catalogue unavailable');
+      return response.json();
+    });
+  }
+  /* The live API's nginx answers some requests in a page-load burst with 404,
+     so retry briefly before falling back to the app's own home. */
+  function withRetries(load, delays) {
+    return load().catch(function (error) {
+      if (!delays.length) throw error;
+      return new Promise(function (resolve) { setTimeout(resolve, delays[0]); }).then(function () {
+        return withRetries(load, delays.slice(1));
+      });
+    });
+  }
   function fetchProducts() {
     if (cataloguePromise) return cataloguePromise;
     try {
@@ -537,22 +602,7 @@ body.ab-home-redesign app-home { display: none !important; }
         return cataloguePromise;
       }
     } catch (error) { /* Fetch when storage is unavailable. */ }
-    var request = sameOriginCatalogue ? fetch(API_BASE + '/library', { credentials: 'omit' }).then(function (response) {
-      if (!response.ok) throw new Error('Catalogue unavailable');
-      return response.json();
-    }) : fetch(API_BASE + '/product/get-all', {
-      method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        filter: { status: 'publish', quantity: { $gt: 0 } },
-        pagination: { pageSize: 180, currentPage: 0 },
-        sort: { totalSold: -1, priority: -1 },
-        select: { _id: 1, name: 1, slug: 1, images: 1, salePrice: 1, afterDiscountPrice: 1, discountAmount: 1, discountType: 1, totalSold: 1, author: 1, publisher: 1, category: 1, ratingCount: 1, ratingTotal: 1, reviewTotal: 1 }
-      })
-    }).then(function (response) {
-      if (!response.ok) throw new Error('Catalogue unavailable');
-      return response.json();
-    });
-    cataloguePromise = request.then(function (result) {
+    cataloguePromise = withRetries(requestCatalogue, [700, 2000]).then(function (result) {
       try { sessionStorage.setItem('ab-home-catalogue-v3', JSON.stringify(result)); } catch (error) { /* Cache is optional. */ }
       return result;
     }).catch(function (error) {
@@ -589,6 +639,7 @@ body.ab-home-redesign app-home { display: none !important; }
     nativeHome.parentNode.insertBefore(root, nativeHome);
     document.documentElement.classList.add('ab-home-redesign');
     document.body.classList.add('ab-home-redesign');
+    setPending(false);
     mountedPath = location.pathname;
     decorateCovers();
     root.addEventListener('click', function (event) {
@@ -625,6 +676,7 @@ body.ab-home-redesign app-home { display: none !important; }
     if (root) root.remove();
     document.documentElement.classList.remove('ab-home-redesign');
     if (document.body) document.body.classList.remove('ab-home-redesign');
+    setPending(false);
     mountedPath = '';
     loading = false;
     productsById = {};
@@ -642,14 +694,20 @@ body.ab-home-redesign app-home { display: none !important; }
       }).catch(function () { /* Badges work without rating data. */ });
     }
     var routeKey = location.pathname + location.search;
-    if (location.pathname !== '/' || new URLSearchParams(location.search).get('home') === 'legacy') {
+    if (!wantsRedesign()) {
       failedRoute = '';
+      setPending(false);
       if (mountedPath || document.getElementById(ROOT_ID)) cleanup();
       return;
     }
-    if (failedRoute === routeKey || document.getElementById(ROOT_ID) || loading) return;
+    if (failedRoute === routeKey || document.getElementById(ROOT_ID)) {
+      setPending(false);
+      return;
+    }
+    if (loading) return;
     var nativeHome = document.querySelector('app-home');
     if (!nativeHome || !nativeHome.parentNode) return;
+    setPending(true);
     loading = true;
     var serial = ++requestSerial;
     fetchProducts().then(function (result) {
@@ -697,7 +755,11 @@ body.ab-home-redesign app-home { display: none !important; }
       update();
     });
   }
-  new MutationObserver(scheduleUpdate).observe(document.documentElement, { childList: true, subtree: true });
+  new MutationObserver(function () {
+    // Hide the app's home in the same task Angular adds it, before it can paint.
+    if (wantsRedesign() && !document.getElementById(ROOT_ID) && failedRoute !== location.pathname + location.search) setPending(true);
+    scheduleUpdate();
+  }).observe(document.documentElement, { childList: true, subtree: true });
   window.addEventListener('popstate', scheduleUpdate);
   // History updates can change the route without adding any DOM nodes.
   var lastRoute = location.pathname + location.search;

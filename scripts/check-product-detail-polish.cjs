@@ -25,9 +25,9 @@ assert.equal(catalogueBaseFor({ location: { hostname: 'amolbooks.com', origin: '
 
 const mountLibrarySource = emittedFunction('mountCategoryLibrary');
 const categoryLibraryProductsSource = emittedFunction('categoryLibraryProducts');
-const publisherProductsSource = emittedFunction('publisherProducts');
+const publisherProductsSource = emittedFunction('publisherIdOf') + emittedFunction('publisherProducts');
 let categoryLibraryRequest;
-const categoryLibraryProducts = new Function('fetchJson', `${categoryLibraryProductsSource}; var CATALOG_API_BASE = '/catalogue'; return categoryLibraryProducts;`)(
+const categoryLibraryProducts = new Function('fetchJsonWithRetry', `${categoryLibraryProductsSource}; var CATALOG_API_BASE = '/catalogue'; var location = { hostname: 'legacy.example' }; function isLocalPreviewHost() { return false; } return categoryLibraryProducts;`)(
   async (path, options, base) => {
     categoryLibraryRequest = { path, method: options.method, body: JSON.parse(options.body), base };
     return { data: [] };
@@ -42,7 +42,7 @@ categoryLibraryProducts().then(() => {
   assert.equal(categoryLibraryRequest.body.select.category, 1);
 });
 let publisherRequest;
-const publisherProducts = new Function('fetchJson', `${publisherProductsSource}; var CATALOG_API_BASE = '/catalogue'; return publisherProducts;`)(
+const publisherProducts = new Function('fetchJsonWithRetry', `${publisherProductsSource}; var CATALOG_API_BASE = '/catalogue'; return publisherProducts;`)(
   async (path, options, base) => {
     publisherRequest = { path, body: JSON.parse(options.body), base };
     return { data: [
@@ -59,9 +59,9 @@ publisherProducts({ _id: 'current', slug: 'current-book', publisher: { _id: 'pub
   assert.deepEqual(products.map(product => product._id), ['other']);
 });
 function mountLibrary(existingSlug, productSlug) {
-  const calls = { fetch: 0, insert: 0, mark: 0, remove: 0 };
+  const calls = { fetch: 0, insert: 0, remove: 0 };
   const nativeSection = {
-    classList: { add: value => { assert.equal(value, 'ab-category-library-source'); calls.mark += 1; } },
+    classList: { add() {}, remove() {}, toggle() {} },
     parentNode: { insertBefore: () => { calls.insert += 1; } },
   };
   const existing = {
@@ -72,6 +72,7 @@ function mountLibrary(existingSlug, productSlug) {
   const library = {
     setAttribute(name, value) { this[name] = value; },
     getAttribute(name) { return this[name]; },
+    querySelector: () => null,
   };
   const document = {
     querySelector: () => nativeSection,
@@ -86,19 +87,20 @@ function mountLibrary(existingSlug, productSlug) {
     var categoryLibraryVersion = 0;
     var CATALOG_API_BASE = '/storefront-catalog';
     function removeCategoryLibrary() { calls.remove += 1; }
-    function fetchJson() { calls.fetch += 1; return { then: function () {} }; }
-    function categoryLibraryProducts() { return fetchJson(); }
+    function categoryLibraryProducts() { calls.fetch += 1; return new Promise(function () {}); }
     function publisherProducts() { return Promise.resolve([]); }
     function publisherShelfHtml() { return ''; }
+    function recentShelfProducts() { return []; }
+    function recentShelfHtml() { return ''; }
     mountCategoryLibrary(product);
   `);
   run(document, calls, library, { slug: productSlug });
   return calls;
 }
-assert.deepEqual(mountLibrary('same-book', 'same-book'), { fetch: 0, insert: 0, mark: 1, remove: 0 });
-assert.deepEqual(mountLibrary('old-book', 'new-book'), { fetch: 1, insert: 1, mark: 1, remove: 1 });
+assert.deepEqual(mountLibrary('same-book', 'same-book'), { fetch: 0, insert: 0, remove: 0 });
+assert.deepEqual(mountLibrary('old-book', 'new-book'), { fetch: 1, insert: 1, remove: 1 });
 const menuSource = source.slice(source.indexOf('  function handleMenuTap(event) {'), source.indexOf("  document.addEventListener('pointerdown', rememberFastNavStart"));
-const handleMenuTap = new Function(menuSource + '; return handleMenuTap;')();
+const handleMenuTap = new Function('function isLocalPreviewHost() { return false; }\n' + menuSource + '; return handleMenuTap;')();
 for (const type of ['click', 'pointerup', 'touchend']) {
   // Popup headers must never enter the global header-button fast-tap handler.
   assert.equal(handleMenuTap({ type, target: { closest: selector => selector === '#ab-added-cart-modal' ? {} : null } }), false);

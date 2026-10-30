@@ -259,6 +259,11 @@ export class ProductController {
 
   @Version(VERSION_NEUTRAL)
   @Get('/get-by-slug/:slug')
+  // A product page reads its book several times (app, page sections, gift
+  // offer). At the global 120/min, a few quick reloads (or many shoppers behind
+  // one mobile-carrier IP) got 429 and the page rendered empty. Same headroom
+  // as the catalogue listing.
+  @Throttle(300, 60)
   async getProductBySlug(
     @Param('slug') slug: string,
     @Query() select: string,

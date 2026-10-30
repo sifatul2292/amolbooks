@@ -1,3 +1,7 @@
+## Rollback cancelled: release 1dc94569 stays on production (2026-10-30)
+
+- Owner decided to keep the new version live and fix issues on top of it. A reapply commit restores the 1dc94569 code on `codex/rollback-sunday-20260927` (code identical to 1dc94569), so a later safe pull keeps the new version. The VPS rollback steps below were not needed if they had not been run; if they were, redeploy (safe pull, `npm run build`, `pm2 restart amolbooks-api`).
+
 ## Production rolled back to 064aade1 (2026-10-30)
 
 - Owner asked to roll back the 1dc94569 release ("more correction before deploying"). A revert commit on `codex/rollback-sunday-20260927` restores every code file (api/src, gtm-snippets, scripts) to `064aade1`; this notes file keeps its history. The 1dc94569 changes are restored in the local worktree as uncommitted edits so corrections continue on localhost:3001; re-apply them later by committing again.

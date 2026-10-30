@@ -1,6 +1,11 @@
 <!-- All Pages. No API calls: cart and catalogue stay on the current host. -->
 <style>
   app-cart-slide { display: none !important; }
+  /* Promo/voucher entry hidden for now (owner's request, 2026-10-30): the
+     checkout box and the cart's "apply it on the next page" line. Delete this
+     rule to show both again. Specific enough to beat the checkout styling. */
+  html body app-checkout .summery-area > .promo-code-area,
+  html body app-cart-information .cart-area-bottom > p { display: none !important; }
 </style>
 <script>
 (function () {

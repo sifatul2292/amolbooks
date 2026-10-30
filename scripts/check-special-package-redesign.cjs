@@ -33,14 +33,16 @@ assert.match(source, /event\.target\.closest[\s\S]*?'\.ab-pdf-dialog-close'[\s\S
 assert.doesNotMatch(source, /ab-pdf-dialog-frame|createElement\('iframe'/, 'The blocked iframe implementation is removed');
 assert.match(source, /আরও দেখুন[\s\S]*?aria-expanded/, 'Long book descriptions have an accessible see-more control');
 assert.match(source, /বইগুলোর মোট মূল্য[\s\S]*?অফার মূল্য/, 'The hero separates combined list price from package offer price');
-assert.match(source, /এই প্যাকেজে মোট সাশ্রয়/, 'The hero leads with the real computed package saving');
+assert.doesNotMatch(source, /এই প্যাকেজে মোট সাশ্রয়/, 'The hero omits the removed package saving callout');
 assert.match(source, /function runPackagePurchase[\s\S]*?bridge\.addSpecialPackageToCart\(id, source\)/, 'Hero Add to Cart uses the shared product-page commerce bridge');
 assert.match(source, /bridge\.addSpecialPackageToCart\(id, null\)[\s\S]*?bridge\.goToCheckout\(\)/, 'Buy Now adds the package before using the shared checkout route');
 assert.match(source, /'Add to Cart'[\s\S]*?'Buy Now'/, 'Package purchase actions use the requested English labels');
 assert.match(productSectionsSource, /function addSpecialPackageToCart[\s\S]*?specialPackage: packageId[\s\S]*?cartType: 1/, 'The shared commerce bridge persists a valid package cart entry');
 assert.match(productSectionsSource, /__abCommerceBridge[\s\S]*?addSpecialPackageToCart[\s\S]*?goToCheckout/, 'The package page reuses the product-page cart and checkout pipeline');
 assert.match(productSectionsSource, /specialPackage: specialPackage && specialPackage\._id \|\| specialPackage[\s\S]*?filter\(function \(item\) \{ return cartEntryKey\(item\); \}\)/, 'Authenticated cart refresh preserves package entries');
-assert.match(productSectionsSource, /function fetchCartProducts[\s\S]*?\/special-package\/[\s\S]*?packageAsCartProduct/, 'Cart hydration loads package details alongside normal products');
+assert.match(productSectionsSource, /function fetchCartPackage[\s\S]*?\/special-package\/[\s\S]*?packageAsCartProduct/, 'Cart hydration loads package details');
+assert.match(productSectionsSource, /function fetchCartProducts[\s\S]*?packageIds\.map\(fetchCartPackage\)/, 'Cart hydration loads package details alongside normal products');
+assert.match(productSectionsSource, /function fetchCartPackage[\s\S]*?cartPackageFetchPromises\[id\][\s\S]*?fetchJsonWithRetry[\s\S]*?saved \? packageAsCartProduct\(saved\)/, 'A refused package request is shared, retried and falls back to the saved copy');
 assert.match(productSectionsSource, /function syncGuestCartUi[\s\S]*?fetchCartProducts\(items\)/, 'The visible cart renderer includes package-type entries');
 assert.match(source, /amolbooks-notebook-8ddd\.webp[\s\S]*?সাথে ফ্রি নোটবুক/, 'The free notebook uses its real catalogue cover');
 assert.match(source, /Object\.assign\(\{\}, detail, product/, 'Package quantities win over hydrated inventory quantities');

@@ -60,6 +60,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   var cartOfferNotebookPending = false;
   var cartProductCache = {};
   var cartPackageCache = {};
+  var cartPackageFetchPromises = {};
   var cartProductCacheHydrated = false;
   var cartProductFetchPromises = {};
   var cartCatalogProducts = null;
@@ -69,9 +70,15 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   var cartNativeProducts = [];
   var cartViewTrackingSent = false;
   var cartMigrationScheduled = false;
+  var localCartControlTapAt = 0;
+  var LOCAL_CART_ADOPT_MS = 4000;
   var authenticatedCartMergePending = false;
   var authenticatedCartMergeFinished = false;
   var recentlyViewedStorageKey = 'ab-recently-viewed-products';
+  var nativeRecentlyViewedStorageKey = 'recentViewedProducts';
+  /* The live API's nginx answers some requests in a page-load burst with 404,
+     so shelf data retries shortly instead of leaving the shelf out. */
+  var SHELF_RETRY_DELAYS_MS = [700, 2000, 5000];
   var cartRecentRequestSignature = '';
   var cartRecentRequestVersion = 0;
   var checkoutGiftRenderKey = '';
@@ -648,6 +655,10 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       display: none !important;
     }
 
+    app-product-details app-recent-view.ab-recent-view-source {
+      display: none !important;
+    }
+
     #\${CATEGORY_LIBRARY_ID} {
       width: 100%;
       max-width: var(--ab-product-content-max);
@@ -686,6 +697,21 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       margin-block-end: var(--ab-product-space-lg);
       padding-block-end: var(--ab-product-space-lg);
       border-block-end: 1px solid var(--ab-product-rule);
+    }
+
+    /* Tinted panel sets the visitor's own history apart from the catalogue
+       shelves; green, not cream, so it does not run into the footer. */
+    #\${CATEGORY_LIBRARY_ID} .ab-recent-shelf {
+      margin-block-start: var(--ab-product-space-lg);
+      padding: var(--ab-product-space-md) var(--ab-product-space-xs);
+      background: color-mix(in oklab, var(--ab-product-accent) 9%, var(--ab-product-surface));
+      border-radius: 0.75rem;
+    }
+
+    #\${CATEGORY_LIBRARY_ID} .ab-recent-shelf .ab-library-card {
+      padding: var(--ab-product-space-2xs);
+      background: var(--ab-product-surface);
+      border-radius: 0.5rem;
     }
 
     #\${CATEGORY_LIBRARY_ID} .ab-library-shelf {
@@ -1306,6 +1332,10 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     @media (min-width: 48rem) {
       #\${CATEGORY_LIBRARY_ID} .ab-library-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      #\${CATEGORY_LIBRARY_ID} .ab-recent-shelf {
+        padding: var(--ab-product-space-lg);
       }
 
       #\${ROOT_ID} .ab-author-card {
@@ -4894,6 +4924,18 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     });
   }
 
+  function fetchJsonWithRetry(path, options, baseUrl, attempt) {
+    attempt = attempt || 0;
+    return fetchJson(path, options, baseUrl).then(function (result) {
+      if (result || attempt >= SHELF_RETRY_DELAYS_MS.length) return result;
+      return new Promise(function (resolve) {
+        window.setTimeout(resolve, SHELF_RETRY_DELAYS_MS[attempt]);
+      }).then(function () {
+        return fetchJsonWithRetry(path, options, baseUrl, attempt + 1);
+      });
+    });
+  }
+
   function normalizeCartOfferConfig(config) {
     if (!config) return null;
     config.giftMinAmount = Math.max(0, Number(config.giftMinAmount) || 0);
@@ -5011,6 +5053,18 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       var tabItems = [];
       var sourceItems = [];
       try { localItems = JSON.parse(localStorage.getItem(localKey) || '[]') || []; } catch (_) { localItems = []; }
+      /* Angular's own cart controls (drawer, checkout stepper/trash) write only
+         the native key. Right after such a tap, adopt that write instead of
+         restoring the stale local copy over it. */
+      if (Date.now() - localCartControlTapAt < LOCAL_CART_ADOPT_MS) {
+        var nativeItems = null;
+        try { nativeItems = JSON.parse(localStorage.getItem(storefrontKey) || 'null'); } catch (_) { nativeItems = null; }
+        if (Array.isArray(nativeItems) && cartItemsSignature(nativeItems) !== cartItemsSignature(localItems)) {
+          localStorage.setItem(localKey, JSON.stringify(nativeItems));
+          setTabCartItems(nativeItems);
+          return localKey;
+        }
+      }
       if (Array.isArray(localItems) && localItems.length) {
         localStorage.setItem(storefrontKey, JSON.stringify(localItems));
         setTabCartItems(localItems);
@@ -6570,11 +6624,28 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     });
   }
 
-  function publisherProducts(product) {
+  function publisherIdOf(product) {
     var publisher = Array.isArray(product && product.publisher) ? product.publisher[0] : product && product.publisher;
-    var publisherId = publisher && publisher._id;
+    return publisher && publisher._id ? String(publisher._id) : '';
+  }
+
+  function publisherProducts(product, library) {
+    var publisherId = publisherIdOf(product);
     if (!publisherId) return Promise.resolve([]);
-    return fetchJson('/product/get-all', {
+    function others(products) {
+      return products.filter(function (entry) {
+        return entry && String(entry._id || '') !== String(product._id || '') && entry.slug !== product.slug;
+      }).slice(0, 8);
+    }
+    /* The library already holds the whole in-stock catalogue in the same order,
+       so while the catalogue fits in it the shelf needs no request of its own. */
+    var catalogue = library && Array.isArray(library.data) ? library.data : null;
+    if (catalogue && catalogue.length && Number(library.count) <= catalogue.length) {
+      return Promise.resolve(others(catalogue.filter(function (entry) {
+        return publisherIdOf(entry) === publisherId;
+      })));
+    }
+    return fetchJsonWithRetry('/product/get-all', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -6587,10 +6658,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         },
       }),
     }, CATALOG_API_BASE).then(function (result) {
-      var products = result && Array.isArray(result.data) ? result.data : [];
-      return products.filter(function (entry) {
-        return entry && String(entry._id || '') !== String(product._id || '') && entry.slug !== product.slug;
-      }).slice(0, 8);
+      return others(result && Array.isArray(result.data) ? result.data : []);
     });
   }
 
@@ -6648,6 +6716,41 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     return '<section class="ab-publisher-shelf" aria-labelledby="ab-publisher-shelf-heading">' +
       '<h2 class="ab-library-heading" id="ab-publisher-shelf-heading">এই প্রকাশনীর অন্যান্য বই</h2>' +
       '<div class="ab-library-grid" role="region" aria-label="এই প্রকাশনীর অন্যান্য বই">' +
+        products.map(function (product) { return libraryProductHtml(product, ''); }).join('') +
+      '</div></section>';
+  }
+
+  /* The app's own recently-viewed carousel squeezes four covers into a phone
+     row. Its stored products (newest first) feed a shelf like the others,
+     with current catalogue prices where the library has the book. */
+  function recentShelfProducts(product, library) {
+    var current = {};
+    (library && Array.isArray(library.data) ? library.data : []).forEach(function (entry) {
+      if (entry && entry._id) current[String(entry._id)] = entry;
+    });
+    var viewed = [];
+    try { viewed = JSON.parse(localStorage.getItem(nativeRecentlyViewedStorageKey) || '[]'); } catch (_) { viewed = []; }
+    if (!Array.isArray(viewed) || !viewed.length) {
+      var ids = [];
+      try { ids = JSON.parse(localStorage.getItem(recentlyViewedStorageKey) || '[]'); } catch (_) { ids = []; }
+      viewed = (Array.isArray(ids) ? ids : []).map(function (id) { return current[String(id)]; });
+    }
+    var seen = {};
+    return viewed.filter(function (entry) {
+      var id = entry && String(entry._id || '');
+      if (!id || seen[id] || id === String(product._id || '') || entry.slug === product.slug) return false;
+      seen[id] = true;
+      return true;
+    }).map(function (entry) {
+      return current[String(entry._id)] || entry;
+    }).slice(0, 6);
+  }
+
+  function recentShelfHtml(products) {
+    if (!products.length) return '';
+    return '<section class="ab-recent-shelf" aria-labelledby="ab-recent-shelf-heading">' +
+      '<h2 class="ab-library-heading" id="ab-recent-shelf-heading">সর্বশেষ দেখা বই</h2>' +
+      '<div class="ab-library-grid" role="region" aria-label="সর্বশেষ দেখা বই">' +
         products.map(function (product) { return libraryProductHtml(product, ''); }).join('') +
       '</div></section>';
   }
@@ -6942,8 +7045,12 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
 
     if (window.innerWidth >= 768) {
       var restoreBefore = paymentArea.querySelector('.condition-area, .confirm-order');
-      paymentArea.insertBefore(heading, restoreBefore);
-      paymentArea.insertBefore(radioBox, restoreBefore);
+      if (radioBox.parentNode !== paymentArea || radioBox.nextElementSibling !== restoreBefore) {
+        paymentArea.insertBefore(radioBox, restoreBefore);
+      }
+      if (heading.parentNode !== paymentArea || heading.nextElementSibling !== radioBox) {
+        paymentArea.insertBefore(heading, radioBox);
+      }
       if (card) card.remove();
       return;
     }
@@ -6958,8 +7065,9 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       card.setAttribute('aria-label', 'ডেলিভারি চার্জ');
     }
     if (nativeHeading && card.firstElementChild && card.firstElementChild !== nativeHeading) card.innerHTML = '';
-    card.appendChild(heading);
-    card.appendChild(radioBox);
+    // Keep native controls stationary once placed so a tap is not interrupted.
+    if (heading.parentNode !== card) card.appendChild(heading);
+    if (radioBox.parentNode !== card) card.appendChild(radioBox);
     if (card.nextElementSibling !== summary) section.insertBefore(card, summary);
   }
 
@@ -7138,7 +7246,8 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       items = Array.isArray(items) ? items : [];
       var ids = items.map(cartPageProductId).filter(Boolean);
       if (!ids.length) return;
-      var mirrorKey = cartItemsSignature(items);
+      var delivery = document.querySelector('app-checkout #ab-checkout-delivery-card input:checked, app-checkout mat-radio-group[formcontrolname="deliveryOptions"] input:checked');
+      var mirrorKey = cartItemsSignature(items) + '|' + (delivery ? delivery.value : '');
       if (checkoutCartMirrorRenderKey === mirrorKey || checkoutCartMirrorPendingKey === mirrorKey) return;
       checkoutCartMirrorPendingKey = mirrorKey;
       fetchCartProducts(items).then(function (products) {
@@ -7250,6 +7359,28 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     });
   }
 
+  function fetchCartPackage(id) {
+    if (cartPackageCache[id]) return Promise.resolve(cartPackageCache[id]);
+    if (cartPackageFetchPromises[id]) return cartPackageFetchPromises[id];
+    hydrateCartProductCache();
+    var saved = cartProductCache[id];
+    /* The published API answers a burst of requests with 404, and a cart page
+       loads many at once; the package then vanished from the cart and checkout.
+       Share one request per package, retry it when no copy is saved, and fall
+       back to the saved copy (as books already do). */
+    var path = '/special-package/' + encodeURIComponent(id);
+    var request = saved ? fetchJson(path, null, RECOMMENDATION_API_BASE) : fetchJsonWithRetry(path, null, RECOMMENDATION_API_BASE);
+    cartPackageFetchPromises[id] = request.then(function (result) {
+      delete cartPackageFetchPromises[id];
+      var product = packageAsCartProduct(result && result.data);
+      if (!product) return saved ? packageAsCartProduct(saved) : null;
+      cartPackageCache[id] = product;
+      rememberCartProducts([product]);
+      return product;
+    });
+    return cartPackageFetchPromises[id];
+  }
+
   function fetchCartProducts(items) {
     items = Array.isArray(items) ? items : [];
     var productIds = items.filter(function (item) { return item && item.product; }).map(function (item) {
@@ -7262,14 +7393,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     }).filter(Boolean);
     return Promise.all([
       fetchProductsByIds(productIds),
-      Promise.all(packageIds.map(function (id) {
-        if (cartPackageCache[id]) return Promise.resolve(cartPackageCache[id]);
-        return fetchJson('/special-package/' + encodeURIComponent(id), null, RECOMMENDATION_API_BASE).then(function (result) {
-          var product = packageAsCartProduct(result && result.data);
-          if (product) cartPackageCache[id] = product;
-          return product;
-        });
-      })),
+      Promise.all(packageIds.map(fetchCartPackage)),
     ]).then(function (results) {
       var byId = {};
       results[0].concat(results[1]).filter(Boolean).forEach(function (product) {
@@ -7709,6 +7833,9 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     document.querySelectorAll('app-product-details app-related-product.ab-publisher-products-source').forEach(function (nativeSection) {
       nativeSection.classList.remove('ab-publisher-products-source');
     });
+    document.querySelectorAll('app-product-details app-recent-view.ab-recent-view-source').forEach(function (nativeSection) {
+      nativeSection.classList.remove('ab-recent-view-source');
+    });
     categoryLibraryPage = 0;
     categoryLibraryLoading = false;
     categoryLibraryDone = false;
@@ -7719,9 +7846,9 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     // Use the same curated, same-origin catalogue as the homepage. Direct
     // catalogue POSTs can fail during a product page's concurrent requests.
     if (isLocalPreviewHost() || /^(www\\.)?amolbooks\\.com$/.test(location.hostname)) {
-      return fetchJson('/library', null, window.location.origin + '/storefront-catalog');
+      return fetchJsonWithRetry('/library', null, window.location.origin + '/storefront-catalog');
     }
-    return fetchJson('/product/get-all', {
+    return fetchJsonWithRetry('/product/get-all', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -7743,6 +7870,8 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     var existing = document.getElementById(CATEGORY_LIBRARY_ID);
     if (existing && existing.getAttribute('data-product-slug') === String(product.slug || currentSlug)) {
       nativeSection.classList.toggle('ab-category-library-source', !!existing.querySelector('.ab-library-shelves .ab-library-grid'));
+      var nativeRecentView = document.querySelector('app-product-details app-recent-view');
+      if (nativeRecentView) nativeRecentView.classList.toggle('ab-recent-view-source', !!existing.querySelector('.ab-recent-products .ab-library-grid'));
       return;
     }
     removeCategoryLibrary();
@@ -7755,17 +7884,19 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     library.innerHTML =
       '<div class="ab-publisher-products"></div>' +
       '<h2 class="ab-library-heading" id="' + CATEGORY_LIBRARY_ID + '-heading">বিষয়ভিত্তিক জনপ্রিয় বই</h2>' +
-      '<div class="ab-library-shelves" role="status" aria-live="polite">বইগুলো সাজানো হচ্ছে…</div>';
+      '<div class="ab-library-shelves" role="status" aria-live="polite">বইগুলো সাজানো হচ্ছে…</div>' +
+      '<div class="ab-recent-products"></div>';
     nativeSection.parentNode.insertBefore(library, nativeSection);
     var requestVersion = categoryLibraryVersion;
     var requestSlug = library.getAttribute('data-product-slug');
     function loadLibrary() {
       var shelves = library.querySelector('.ab-library-shelves');
       if (shelves) shelves.textContent = 'বইগুলো সাজানো হচ্ছে…';
-      Promise.all([
-        categoryLibraryProducts(),
-        publisherProducts(product),
-      ]).then(function (results) {
+      categoryLibraryProducts().then(function (result) {
+        return publisherProducts(product, result).then(function (publisherList) {
+          return [result, publisherList];
+        });
+      }).then(function (results) {
         var activeLibrary = document.getElementById(CATEGORY_LIBRARY_ID);
         if (!activeLibrary || requestVersion !== categoryLibraryVersion || activeLibrary.getAttribute('data-product-slug') !== requestSlug) return;
         var result = results[0];
@@ -7774,6 +7905,11 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         if (publisherTarget) publisherTarget.innerHTML = publisherShelfHtml(publisherList);
         var nativeRelated = document.querySelector('app-product-details app-related-product');
         if (nativeRelated && publisherList.length) nativeRelated.classList.add('ab-publisher-products-source');
+        var recentList = recentShelfProducts(product, result);
+        var recentTarget = activeLibrary.querySelector('.ab-recent-products');
+        if (recentTarget) recentTarget.innerHTML = recentShelfHtml(recentList);
+        var nativeRecent = document.querySelector('app-product-details app-recent-view');
+        if (nativeRecent) nativeRecent.classList.toggle('ab-recent-view-source', !!recentTarget && recentList.length > 0);
         var target = activeLibrary.querySelector('.ab-library-shelves');
         if (!target) return;
         if (!result || result.success === false || !Array.isArray(result.data)) {
@@ -7818,7 +7954,9 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     if (!overview.querySelector('app-all-reviews')) return;
     overview.classList.add('ab-review-section');
     var heading = overview.querySelector(':scope > .section-title h3');
-    if (heading) heading.textContent = 'রিভিউ ও রেটিং';
+    // Only when it differs: every DOM change re-runs this, so an unconditional
+    // write re-triggered it and kept the page busy indefinitely.
+    if (heading && heading.textContent !== 'রিভিউ ও রেটিং') heading.textContent = 'রিভিউ ও রেটিং';
     repairReviewImages(overview);
     window.setTimeout(function () { repairReviewImages(overview); }, 300);
   }
@@ -8281,6 +8419,14 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     return false;
   }
 
+  if (isLocalPreviewHost()) {
+    document.addEventListener('click', function (event) {
+      var target = event.target;
+      if (target && target.closest && target.closest('.ab-corow, .cart-slide-area, app-checkout .cart-product-item')) {
+        localCartControlTapAt = Date.now();
+      }
+    }, true);
+  }
   document.addEventListener('pointerdown', rememberFastNavStart, true);
   document.addEventListener('touchstart', rememberFastNavStart, true);
   document.addEventListener('pointerup', handleFastCartTap, true);

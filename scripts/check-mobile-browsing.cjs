@@ -20,4 +20,6 @@ context.keyboard(); assert.equal(hidden, false, 'radio or button focus restores 
 context.window.visualViewport = undefined;
 context.document.activeElement.matches = () => true;
 context.keyboard(); assert.equal(hidden, false, 'unsupported viewport keeps navigation available');
-console.log('Mobile browsing syntax and keyboard visibility checks pass');
+assert.match(html, /app-footer \.footer-bottom-copyright \{ margin-bottom: 0 !important; \}/, 'body padding alone clears the bottom nav, so no empty strip under the footer');
+assert.match(html, /body\.ab-cart-enhanced:has\(#ab-cart-sticky-checkout:not\(\[hidden\]\)\) \{ padding-bottom:/, 'cart page clears its taller checkout bar');
+console.log('Mobile browsing syntax, keyboard visibility and footer spacing checks pass');
