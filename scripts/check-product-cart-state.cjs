@@ -24,7 +24,7 @@ assert.match(source, /if \(!template\) \{\s*area\.insertAdjacentHTML\('beforeend
 assert.match(source, /li\.ab-summary-hidden,[\s\S]*?li\.ab-hide-discount-row\s*\{\s*display: none !important;/, 'Mobile checkout keeps both discount-row classes hidden');
 assert.match(source, /@media \(min-width: 768px\) \{[\s\S]*?app-header \.ab-header-search-results \{[\s\S]*?position: absolute;[\s\S]*?app-header \.ab-sticky-search-item img \{[\s\S]*?width: 2\.7rem;[\s\S]*?height: 3\.45rem;/, 'Desktop header search results keep compact product rows');
 assert.match(source, /function repairCheckoutDeliveryPlacement\(\)[\s\S]*?section\.insertBefore\(card, summary\)/, 'Mobile checkout places delivery options before its summary');
-assert.match(source, /window\.innerWidth >= 768[\s\S]*?paymentArea\.insertBefore\(heading, radioBox\)/, 'Desktop checkout restores delivery options to the payment card');
+assert.match(source, /window\.innerWidth >= 768[\s\S]*?paymentArea\.insertBefore\(heading, restoreBefore\)/, 'Desktop checkout restores delivery options to the payment card');
 assert.match(source, /quantityArea\.classList\.add\('ab-native-cart-quantity'\)/, 'Published native cart rows receive the horizontal quantity selector');
 assert.match(source, /\.ab-native-cart-quantity \{[\s\S]*?grid-template-columns: 2\.7rem 3rem 2\.7rem[\s\S]*?\.q-icon:first-child \{ order: 3; \}[\s\S]*?\.q-icon:last-child \{ order: 1; \}/, 'Published mobile selector matches the local minus, quantity, plus order');
 assert.match(source, /row\.classList\.add\('ab-native-cart-row'\)/, 'Published native cart rows receive the mobile layout marker');
@@ -247,51 +247,3 @@ assert.equal(quantityInput.value, '1', 'Native quantity displays a decrease');
 assert.equal(quantityMinus.disabled, true, 'Native decrement stops at one');
 assert.match(source, /if \(image.getAttribute\('src'\) !== notebookCover\) image.setAttribute\('src', notebookCover\)/, 'Repeated gift repairs do not reload an unchanged image');
 assert.match(source, /if \(giftRow\) area.appendChild\(giftRow\)/, 'Local cart rebuild retains the existing gift row');
-
-// Local preview: Angular's own cart-control writes are adopted instead of being overwritten.
-function sourceFunction(name) {
-  const start = source.indexOf('  function ' + name + '(');
-  const end = source.indexOf('\n  function ', start + 1);
-  return source.slice(start, end);
-}
-assert.match(source, /if \(isLocalPreviewHost\(\)\) \{\s*document\.addEventListener\('click', function \(event\) \{[\s\S]*?'\.ab-corow, \.cart-slide-area, app-checkout \.cart-product-item'[\s\S]*?localCartControlTapAt = Date\.now\(\);/, 'Only local preview records taps on native cart controls');
-function localCartHarness() {
-  const store = {};
-  const localStorage = {
-    getItem: (key) => (Object.prototype.hasOwnProperty.call(store, key) ? store[key] : null),
-    setItem: (key, value) => { store[key] = String(value); },
-    removeItem: (key) => { delete store[key]; },
-  };
-  const window = { name: '' };
-  const api = new Function('localStorage', 'window', 'isLocalPreviewHost',
-    'var localCartControlTapAt = 0; var LOCAL_CART_ADOPT_MS = 4000; var cartMigrationScheduled = false;' +
-    ['cartStorageKey', 'tabCartItems', 'setTabCartItems', 'cartItemsSignature', 'cartPageProductId'].map(sourceFunction).join('\n') +
-    '; return { cartStorageKey: cartStorageKey, tabCartItems: tabCartItems, tap: function (at) { localCartControlTapAt = at; } };'
-  )(localStorage, window, () => true);
-  return { store, api };
-}
-const lineA = { product: 'a', selectedQty: 1, cartType: 0 };
-const lineB = { product: 'b', selectedQty: 2, cartType: 0 };
-let harness = localCartHarness();
-harness.store.Amolbooks_LOCAL_USER_CART_1 = JSON.stringify([lineA, lineB]);
-harness.store.Amolbooks_USER_CART_1 = JSON.stringify([lineA]);
-harness.api.cartStorageKey();
-assert.deepEqual(JSON.parse(harness.store.Amolbooks_USER_CART_1), [lineA, lineB], 'Without a cart tap the local copy still restores a reset native cart');
-harness.api.tap(Date.now());
-harness.store.Amolbooks_USER_CART_1 = JSON.stringify([lineA]);
-harness.api.cartStorageKey();
-assert.deepEqual(JSON.parse(harness.store.Amolbooks_LOCAL_USER_CART_1), [lineA], 'A native removal right after a cart tap updates the local copy');
-assert.deepEqual(harness.api.tabCartItems(), [lineA], 'The tab copy follows the adopted removal');
-assert.deepEqual(JSON.parse(harness.store.Amolbooks_USER_CART_1), [lineA], 'The adopted removal is not overwritten');
-harness.store.Amolbooks_USER_CART_1 = '[]';
-harness.api.cartStorageKey();
-harness.api.tap(Date.now() - 5000);
-harness.api.cartStorageKey();
-assert.deepEqual(JSON.parse(harness.store.Amolbooks_USER_CART_1), [], 'Removing the last item leaves every copy empty');
-assert.deepEqual(harness.api.tabCartItems(), [], 'An emptied cart is not resurrected from the tab copy');
-harness = localCartHarness();
-harness.store.Amolbooks_LOCAL_USER_CART_1 = JSON.stringify([lineA, lineB]);
-harness.store.Amolbooks_USER_CART_1 = JSON.stringify([lineA]);
-harness.api.tap(Date.now() - 5000);
-harness.api.cartStorageKey();
-assert.deepEqual(JSON.parse(harness.store.Amolbooks_USER_CART_1), [lineA, lineB], 'Stale taps do not adopt native resets');

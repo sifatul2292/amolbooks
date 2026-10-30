@@ -45,31 +45,3 @@ const model = {
   assert.equal(salesRequests,1,'Existing callers do not query order history');
   console.log('Package sales, cache, ordering and 2×2 shelf checks pass');
 })().catch(error=>{console.error(error);process.exitCode=1;});
-
-// A failed package load (the live nginx 404s some page-load bursts) retries soon instead of hiding the shelf.
-(async () => {
-  const loadSource = script.slice(script.indexOf('var RETRY_DELAYS_MS'), script.indexOf('var resizeObserver')) +
-    script.slice(script.indexOf('function rankPackages'), script.indexOf('function banner'));
-  const responses = [{ ok: false }, { ok: false }, { ok: true, json: async () => ({ data: [item(9, 1, '2026-10-01')] }) }];
-  const timers = [];
-  let scheduled = 0;
-  const harness = new Function('fetch', 'window', 'schedule', 'API_BASE',
-    'var packages = null; var request = null;' + loadSource + '; return { loadPackages: loadPackages };')(
-    async () => responses.shift(),
-    { setTimeout: (fn, delay) => { timers.push({ fn, delay }); return timers.length; } },
-    () => { scheduled += 1; },
-    'https://api.test'
-  );
-  assert.deepEqual(await harness.loadPackages(), [], 'First failure shows nothing yet');
-  assert.equal(timers[0].delay, 700, 'First retry is quick');
-  assert.deepEqual(await harness.loadPackages(), [], 'No duplicate request while a retry is pending');
-  timers[0].fn();
-  assert.equal(scheduled, 1, 'Retry re-runs the shelf mount');
-  assert.deepEqual(await harness.loadPackages(), []);
-  assert.equal(timers[1].delay, 2000, 'Second retry backs off');
-  timers[1].fn();
-  const loaded = await harness.loadPackages();
-  assert.equal(loaded.length, 1, 'Shelf loads once the API answers');
-  assert.doesNotMatch(script, /30000/, 'No 30-second blackout after a failure');
-  console.log('Package shelf retry checks passed');
-})().catch((error) => { console.error(error); process.exit(1); });

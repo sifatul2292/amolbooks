@@ -16,8 +16,6 @@ async function main() {
   assert.equal(optimizeStorefrontHtml(optimized), optimized, 'Document optimization is idempotent');
   assert.doesNotMatch(optimized, /<link\b[^>]*amolbooks-banner-24ee\.webp/);
   assert.match(optimized, /amol-ads-loader-dedup/);
-  assert.equal(optimizeStorefrontHtml('<link rel="stylesheet" href="styles.1a2b.css" media="print" onload="this.media=\'all\'">'), '<link rel="stylesheet" href="styles.1a2b.css">');
-  assert.doesNotMatch(optimized, /<link rel="stylesheet" href="styles\.[a-f0-9]+\.css" media="print"/, 'Global stylesheet loads before first paint, so the page does not jump');
   assert.match(optimized, /gtag\('config', 'AW-18176858056'\)/, 'Ads configuration remains queued');
   assert.match(optimized, /send_to.*AW-18176858056/, 'Purchase conversion destination is preserved');
   const font = fs.readFileSync(path.join(__dirname, '../gtm-snippets/assets/hind-siliguri-regular.3bbbe5e258da.woff2'));

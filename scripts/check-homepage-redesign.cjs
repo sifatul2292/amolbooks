@@ -139,7 +139,7 @@ assert.match(html, /app-header \.logo img/);
 assert.match(html, /@media \(min-width: 75rem\)[\s\S]*?\.ab-home-grid \{ grid-template-columns: repeat\(6, minmax\(0, 1fr\)\); \}/);
 assert.match(html, /@media \(min-width: 67rem\)[\s\S]*?app-header \.header-main-content/);
 assert.doesNotMatch(html, /body\.ab-home-redesign app-header/);
-assert.match(html, /app-header \.logo img \{[^}]*width: 4rem !important; height: 5rem !important;/, 'Logo box is fixed so the late logo swap does not move the header');
+assert.match(html, /app-header \.logo img \{[^}]*max-width: 8rem[^}]*max-height: 5rem/);
 assert.match(html, /app-header \.logo img \{[^}]*margin-block: 0\.5rem !important/);
 assert.match(html, /id = 'ab-header-ticker'/);
 assert.match(html, /বিশেষ অফার/);
@@ -177,10 +177,5 @@ assert.match(html, /pendingCarts\[id\]/);
 assert.match(html, /window\.addEventListener\('click',[\s\S]*?\}, true\);/);
 assert.match(html, /prefers-reduced-motion/);
 assert.ok(main.includes("'homepage-redesign.html'"), 'The API must inject the homepage preview');
-// The app's own home stays hidden until the redesign mounts, with a timed reveal and a cleanup on failure.
-assert.match(html, /html\.ab-home-pending app-home \{\s*visibility: hidden;\s*animation: ab-home-reveal 0s linear 6s forwards;/);
-assert.match(html, /\/\/ Set while the head parses[^\n]*\n\s*if \(wantsRedesign\(\)\) setPending\(true\);/);
-assert.match(html, /function cleanup\(\) \{[\s\S]*?setPending\(false\);[\s\S]*?\n  \}/);
-assert.match(html, /cataloguePromise = withRetries\(requestCatalogue, \[700, 2000\]\)/);
 
 console.log('Homepage redesign checks passed');

@@ -28,11 +28,7 @@
     ? location.origin + '/api' : 'https://apisub.amolbooks.com/api';
   var packages = null;
   var request = null;
-  /* The live API's nginx answers some requests in a page-load burst with 404,
-     so a failed load retries shortly instead of hiding the shelf. */
-  var RETRY_DELAYS_MS = [700, 2000, 5000, 10000];
-  var failures = 0;
-  var retryTimer = 0;
+  var failedAt = 0;
   var resizeObserver = null;
   function escapeHtml(value) {
     return String(value == null ? '' : value).replace(/[&<>"']/g, function (c) {
@@ -51,7 +47,7 @@
   function loadPackages() {
     if (packages) return Promise.resolve(packages);
     if (request) return request;
-    if (retryTimer || failures > RETRY_DELAYS_MS.length) return Promise.resolve([]);
+    if (Date.now() - failedAt < 30000) return Promise.resolve([]);
     request = fetch(API_BASE + '/special-package/get-all', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({ sort:{totalSold:-1}, select:{name:1,image:1,totalSold:1,createdAt:1} })
@@ -62,13 +58,8 @@
       if (!Array.isArray(result.data)) throw new Error('Invalid packages');
       packages = rankPackages(result.data);
       return packages;
-    }).catch(function () {
-      if (failures < RETRY_DELAYS_MS.length) {
-        retryTimer = window.setTimeout(function () { retryTimer = 0; schedule(); }, RETRY_DELAYS_MS[failures]);
-      }
-      failures += 1;
-      return [];
-    }).finally(function () { request = null; });
+    }).catch(function () { failedAt = Date.now(); return []; })
+      .finally(function () { request = null; });
     return request;
   }
   function banner(item) {

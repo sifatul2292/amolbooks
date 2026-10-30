@@ -1138,6 +1138,13 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
     var summary = createElement('section', 'ab-offer-summary');
     summary.setAttribute('aria-label', 'প্যাকেজের সংক্ষিপ্ত তথ্য');
     summary.appendChild(createElement('p', 'ab-offer-kicker', 'বিশেষ প্যাকেজ'));
+    var saving = Math.max(0, packageListPrice(data) - packagePrice(data));
+    if (saving) {
+      var savingBlock = createElement('div', 'ab-offer-saving');
+      savingBlock.appendChild(createElement('strong', '', formatMoney(saving)));
+      savingBlock.appendChild(createElement('span', '', 'এই প্যাকেজে মোট সাশ্রয়'));
+      summary.appendChild(savingBlock);
+    }
     summary.appendChild(createElement('h1', '', data.name || 'বিশেষ বইয়ের প্যাকেজ'));
     var description = plainText(data.shortDescription || data.description, 420);
     if (description) summary.appendChild(createElement('p', 'ab-offer-description', description));

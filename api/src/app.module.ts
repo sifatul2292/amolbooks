@@ -3,8 +3,7 @@ import { CustomerManagerModule } from './pages/customer-manager/customer-manager
 import { ProductModule } from './pages/product/product.module';
 import { BannerCaroselModule } from './pages/customization/banner/banner-carosel.module';
 import { CacheModule, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { ThrottlerModule } from '@nestjs/throttler';
-import { ClientIpThrottlerGuard } from './guards/client-ip-throttler.guard';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -195,7 +194,7 @@ import { MetaAdsModule } from './pages/meta-ads/meta-ads.module';
     AppService,
     SeoBotMiddleware,
     RedirectUrlMiddleware,
-    { provide: APP_GUARD, useClass: ClientIpThrottlerGuard },
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })
 export class AppModule implements NestModule {

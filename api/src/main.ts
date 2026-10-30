@@ -30,8 +30,6 @@ async function bootstrap() {
     helmet.default({
       crossOriginResourcePolicy: { policy: 'cross-origin' },
       crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
-      // require-corp blocks third-party tags (Clarity) and images that lack CORP headers.
-      crossOriginEmbedderPolicy: false,
       referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
       contentSecurityPolicy: false,
     })
@@ -159,7 +157,7 @@ async function bootstrap() {
     function blocked(value){
       try{
         var u=new URL(String(value||''),w.location.href),host=u.hostname.toLowerCase(),path=u.pathname;
-        if((u.origin===w.location.origin||host==='apisub.amolbooks.com')&&/^\/api\/(?:gtag|gtm)\//.test(path))return true;
+        if(u.origin===w.location.origin&&/^\/api\/(?:gtag|gtm)\//.test(path))return true;
         return /(^|\.)(?:googletagmanager\.com|google-analytics\.com|googleadservices\.com|doubleclick\.net|facebook\.com|facebook\.net|posthog\.com)$/.test(host)||
           host==='server.amolbooks.com'||host==='load.server.amolbooks.com'||host.indexOf('posthog')!==-1||/tagioo-loader/i.test(path);
       }catch(_){return false;}
@@ -330,23 +328,6 @@ async function bootstrap() {
     dl.push({ecommerce:null});
     dl.push({event:'begin_checkout_stape',ecommerce:{currency:'BDT',value:val,items:items},__stape:true});
   }`;
-  const storefrontBeginCheckoutPushCode =
-    "dl.push({event:'begin_checkout_stape',ecommerce:{currency:'BDT',value:val,items:items},__stape:true});";
-  const storefrontClarityBeginCheckoutMarker = '/* amol-clarity-begin-checkout */';
-  // Clarity's queue stub is safe before its tag loads; queued events replay on start.
-  const storefrontClarityBeginCheckoutCode = `${storefrontBeginCheckoutPushCode}
-    ${storefrontClarityBeginCheckoutMarker}
-    try{window.clarity=window.clarity||function(){(window.clarity.q=window.clarity.q||[]).push(arguments);};window.clarity('event','begin_checkout');}catch(e){}`;
-  const storefrontSharedCartStateMarker = '/* ── Shared cart state ── */';
-  const storefrontTrackingApiMarker = '/* amol-tracking-api */';
-  // Read-only cart/price access for gtm-snippets/commerce-events.html; tracking state stays private.
-  const storefrontTrackingApiCode = `${storefrontTrackingApiMarker}
-  window.__amolTracking={
-    cartItems:function(){return getCartItems().map(function(item){return Object.assign({},item);});},
-    priceOf:function(id){id=String(id||'');return Object.prototype.hasOwnProperty.call(_trackingPriceById,id)?_trackingPriceById[id]:null;},
-    finalPrice:finalTrackingPrice
-  };
-  ${storefrontSharedCartStateMarker}`;
   const legacyStorefrontSuccessfulResponseCode = 'if(!d||!d.success)return;';
   const storefrontSuccessfulResponseCode = `${legacyStorefrontSuccessfulResponseCode}
         ${storefrontProductResponseCacheMarker}
@@ -543,8 +524,6 @@ ${storefrontPurchaseExternalIdHelper}
   const staticAssetPattern =
     /\.(js|css|map|json|xml|txt|ico|svg|png|jpg|jpeg|gif|webp|woff2?|ttf|eot)$/i;
   const storefrontSnippetFiles = [
-    'meta-match-data.html',
-    'header-stability.html',
     'password-reset-security.html',
     'google-auth.html',
     'customer-account-mobile.html',
@@ -559,7 +538,6 @@ ${storefrontPurchaseExternalIdHelper}
     'special-package-shelves.html',
     'package-free-delivery.html',
     'guest-orders.html',
-    'commerce-events.html',
     'mobile-browsing.html',
     'pagespeed-accessibility.html',
     'pagespeed-runtime.html',
@@ -612,11 +590,6 @@ ${storefrontPurchaseExternalIdHelper}
             `<head>${storefrontLocalAnalyticsGuard}`
           );
     }
-    // Local preview must not send the storefront's Meta calls to the live API either.
-    patchedTrackingHtml = patchedTrackingHtml.replace(
-      "if(u.origin===w.location.origin&&/^\\/api\\/(?:gtag|gtm)\\//.test(path))return true;",
-      "if((u.origin===w.location.origin||host==='apisub.amolbooks.com')&&/^\\/api\\/(?:gtag|gtm)\\//.test(path))return true;"
-    );
     if (!patchedTrackingHtml.includes(storefrontGtmLocalhostGuardMarker)) {
       patchedTrackingHtml = patchedTrackingHtml.replace(
         '(function(){\n    if(window.__amolGtmBootstrapScheduled)return;',
@@ -676,18 +649,6 @@ ${storefrontPurchaseExternalIdHelper}
       patchedTrackingHtml = patchedTrackingHtml.replace(
         legacyStorefrontBeginCheckoutCode,
         storefrontBeginCheckoutCode
-      );
-    }
-    if (!patchedTrackingHtml.includes(storefrontTrackingApiMarker)) {
-      patchedTrackingHtml = patchedTrackingHtml.replace(
-        storefrontSharedCartStateMarker,
-        storefrontTrackingApiCode
-      );
-    }
-    if (!patchedTrackingHtml.includes(storefrontClarityBeginCheckoutMarker)) {
-      patchedTrackingHtml = patchedTrackingHtml.replace(
-        storefrontBeginCheckoutPushCode,
-        storefrontClarityBeginCheckoutCode
       );
     }
     patchedTrackingHtml = patchedTrackingHtml

@@ -1,6 +1,5 @@
 <!-- All Pages. Mobile-only account navigation; existing Angular account actions remain authoritative. -->
 <style>
-  body.ab-guest-checkout app-checkout .address-form-area .form > .radio-area { display: none !important; }
   /* Hallmark · pre-emit critique: P5 H5 E4 S5 R5 V4
    */
   /* Hallmark · macrostructure: Account Hub · tone: utilitarian · anchor hue: Amol green
@@ -698,7 +697,6 @@
   }
   function mount() {
     scheduled = false;
-    document.body.classList.toggle('ab-guest-checkout', location.pathname === '/checkout' && !checkoutAuthenticated());
     var shell = document.querySelector('.ab-account-hub');
     var dialog = document.getElementById('ab-account-sheet');
     mountCheckoutAddresses();
