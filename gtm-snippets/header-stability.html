@@ -1,0 +1,98 @@
+<!-- All Pages. Keeps the header still while the page loads: the store menu is drawn in the same task Angular creates the menu row, and late labels/icons have their space from the first paint. Navigation only; no API calls. -->
+<style>
+/* Fallback if the script below cannot run: hide Angular's own menu until the
+   index.html "Custom Nav Rewrite" replaces it, and show it anyway after 3s. */
+app-header .main-nav .nav-list:not([data-amol-nav]) {
+  visibility: hidden;
+  animation: ab-nav-reveal 0s linear 3s forwards;
+}
+@keyframes ab-nav-reveal { to { visibility: visible; } }
+/* Desktop cart/login labels come from Angular's translations a moment after
+   the header paints, and the lazy bag icon has no size until it loads; both
+   widened the right block and pushed the search box 33px. Show the same
+   label text until Angular fills it in, and size the icons (their SVG
+   proportions) before they load so nothing grows or jumps. */
+app-header .menu-cart .header-action-label:empty::before { content: 'ক্রয় তালিকা'; }
+app-header a[href="/login"] .header-action-label:empty::before { content: 'লগইন'; }
+app-header .header-action-icon img { width: 32px !important; }
+app-header .menu-cart .header-action-icon img { aspect-ratio: 112 / 150; }
+app-header .services .service-icon img { width: 33px !important; aspect-ratio: 143 / 150; }
+/* Bottom bar: the Font Awesome icons are empty until the product-sections
+   script swaps in its SVG icons (.ab-bottom-nav-icon, 1.55rem), which pushed
+   the labels down 11px. Give the icons that box from the first paint. */
+app-header .bottom-nav li i.fa { display: inline-grid; width: 1.55rem; height: 1.55rem; place-items: center; font-size: 0; }
+/* Its labels also arrive with the translations; show the same words meanwhile
+   (or at least keep the line where :has() is unsupported). */
+app-header .bottom-nav li > span:empty::before { content: '\200b'; }
+app-header .bottom-nav li:has(> i.fa-home) > span:empty::before { content: 'মূলপাতা'; }
+app-header .bottom-nav li:has(> i.fa-shopping-bag) > span:empty::before { content: 'ক্রয় তালিকা'; }
+app-header .bottom-nav li:has(> i.fa-user-circle) > span:empty::before { content: 'লগইন'; }
+/* Tablet: the app sets the logo to 90px wide, but the bundled 56x69 logo
+   shows first and the uploaded 325x415 one replaces it, changing its box. */
+@media (min-width: 768px) and (max-width: 66.99rem) {
+  app-header .logo img { width: 90px !important; height: 115px !important; object-fit: contain; }
+}
+</style>
+<script>
+(function () {
+  'use strict';
+  if (window.__amolHeaderMenu) return;
+  window.__amolHeaderMenu = true;
+
+  /* Same items as the "Custom Nav Rewrite" script in index.html. That script
+     waits for Angular's translated labels (DOMContentLoaded + 400ms), so the
+     row stayed empty, then popped in. It skips a menu marked data-amol-nav. */
+  var MENU = [
+    { text: 'হোমপেজ', href: '/' },
+    { text: 'অফার', href: '/offers' },
+    { text: 'সকল বই', href: '/product-list' },
+    { text: 'কোরআন', href: '/product-list?categories=%E0%A6%95%E0%A7%81%E0%A6%B0%E0%A6%86%E0%A6%A8-%E0%A6%B6%E0%A7%87%E0%A6%96%E0%A6%BE' },
+    { text: 'সিরাত', href: '/product-list?categories=%E0%A6%B8%E0%A7%80%E0%A6%B0%E0%A6%BE%E0%A6%A4%E0%A7%87-%E0%A6%B0%E0%A6%BE%E0%A6%B8%E0%A7%82%E0%A6%B2-(%E0%A6%B8%E0%A6%BE.)' },
+    { text: 'হাদিস', href: '/product-list?tags=besthadisbooks' },
+    { text: 'ব্লগ', href: '/blogs' }
+  ];
+
+  function decoded(value) {
+    try { return decodeURIComponent(value); } catch (_) { return value; }
+  }
+
+  function isActive(href) {
+    var path = decoded(location.pathname + location.search);
+    var target = decoded(href);
+    if (target === '/') return path === '/' || path === '';
+    if (target.indexOf('?') !== -1) return path === target;
+    return path === target || path.indexOf(target + '/') === 0 || path.indexOf(target + '?') === 0;
+  }
+
+  function drawMenu() {
+    var list = document.querySelector('app-header .main-nav .nav-list:not([data-amol-nav])');
+    if (!list) return;
+    var scope = Array.prototype.filter.call(list.attributes, function (attribute) {
+      return attribute.name.indexOf('_ngcontent-') === 0;
+    }).map(function (attribute) { return attribute.name; });
+    var items = document.createDocumentFragment();
+    MENU.forEach(function (entry) {
+      var active = isActive(entry.href);
+      var item = document.createElement('li');
+      item.className = active ? 'nav-item active' : 'nav-item';
+      var link = document.createElement('a');
+      link.className = active ? 'nav-link active' : 'nav-link';
+      link.setAttribute('href', entry.href);
+      link.textContent = entry.text;
+      scope.forEach(function (name) {
+        item.setAttribute(name, '');
+        link.setAttribute(name, '');
+      });
+      item.appendChild(link);
+      items.appendChild(item);
+    });
+    list.textContent = '';
+    list.appendChild(items);
+    list.setAttribute('data-amol-nav', '1');
+  }
+
+  // A MutationObserver callback runs before the browser paints the change.
+  new MutationObserver(drawMenu).observe(document.documentElement, { childList: true, subtree: true });
+  drawMenu();
+})();
+</script>

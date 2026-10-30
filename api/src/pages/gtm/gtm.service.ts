@@ -16,6 +16,21 @@ import { AnalyticsService } from '../../shared/analytics/analytics.service';
 import { PosthogService } from '../../shared/posthog/posthog.service';
 import { Setting } from '../customization/setting/interface/setting.interface';
 
+// The compiled storefront fills unknown visitors with stand-in values
+// (8801700000000, noemail@gmail.com, global, Mr, Unknown, 1200, 19970216,
+// gender m, state bd). Sent to Meta they give every visitor one fake identity.
+const META_PLACEHOLDER_USER_DATA: Record<string, string> = {
+  ph: '12c84ad04eb79fc11a96dc89aa966423ff15513b1257bcacacdd93db3c509112',
+  em: '273b992af6be87f42c417f5bc2e8e2e1547668d9e1d11b22fdf467d252facb62',
+  ct: '8001c27439650c5c5a6b4ed94163b5ddeb4476362c71380e613fa20dfffcef50',
+  fn: '7820f1b6fd39bb5b0c5e597637fbdd1c08741651302f45e48116a18fda4b4f75',
+  ln: 'b764cdc0eab7137467211272fa539f1260d1bf2e71bcf6ff3bdc960f5c16aa14',
+  zp: '15197cf7214b58e67cae565e573ffd9aa44bcb81f8ee5d7185dfe8da0a16ef43',
+  db: '01acdbf6ec7b4f478a225f1a246e5d6767eeab1a7ffa17f025265b5b94f40f0c',
+};
+const META_PLACEHOLDER_GENDER = '62c66a7a5dd70c3146618063c344e531e6d4b59e379808443ce962b3abd63c5a';
+const META_PLACEHOLDER_STATE = '5e657ff6158d3e2a6d23e2a523917a2305acee9423365e268695c4b7b8919f4c';
+
 @Injectable()
 export class GtmService {
   private logger = new Logger(GtmService.name);
@@ -27,6 +42,20 @@ export class GtmService {
     private readonly utilsService: UtilsService,
     private readonly posthogService: PosthogService,
   ) {}
+
+  private cleanMetaUserData(userData: any): void {
+    const placeholderVisitor =
+      userData.ph === META_PLACEHOLDER_USER_DATA.ph ||
+      userData.em === META_PLACEHOLDER_USER_DATA.em;
+    Object.keys(META_PLACEHOLDER_USER_DATA).forEach((key) => {
+      if (userData[key] === META_PLACEHOLDER_USER_DATA[key]) delete userData[key];
+    });
+    if (placeholderVisitor && userData.ge === META_PLACEHOLDER_GENDER) delete userData.ge;
+    if (userData.st === META_PLACEHOLDER_STATE) delete userData.st;
+    ['fbc', 'fbp', 'external_id'].forEach((key) => {
+      if (typeof userData[key] === 'string' && !userData[key].trim()) delete userData[key];
+    });
+  }
 
   /**
    * Derive a stable distinct ID for PostHog from available user data.
@@ -116,6 +145,7 @@ export class GtmService {
 
         fbApiPayload.user_data.client_ip_address = clientIpAddress || undefined;
         fbApiPayload.user_data.client_user_agent = clientUserAgent || undefined;
+        this.cleanMetaUserData(fbApiPayload.user_data);
 
         let payloadData = {};
         if (
@@ -215,6 +245,7 @@ export class GtmService {
             : undefined;
         fbApiPayload.user_data.client_ip_address = clientIpAddress || undefined;
         fbApiPayload.user_data.client_user_agent = clientUserAgent || undefined;
+        this.cleanMetaUserData(fbApiPayload.user_data);
 
         let payloadData = {};
         if (
@@ -316,6 +347,7 @@ export class GtmService {
 
         fbApiPayload.user_data.client_ip_address = clientIpAddress || undefined;
         fbApiPayload.user_data.client_user_agent = clientUserAgent || undefined;
+        this.cleanMetaUserData(fbApiPayload.user_data);
 
         let payloadData = {};
         if (
@@ -418,6 +450,7 @@ export class GtmService {
 
         fbApiPayload.user_data.client_ip_address = clientIpAddress || undefined;
         fbApiPayload.user_data.client_user_agent = clientUserAgent || undefined;
+        this.cleanMetaUserData(fbApiPayload.user_data);
 
         let payloadData = {};
         if (
