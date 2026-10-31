@@ -156,6 +156,36 @@
   }
   window.__amolEnrichMetaUserData = enrichUserData;
 
+  /* Checkout events carry this visitor's saved hashes for the Data Tags (and
+     from there the server Meta tags). They are cleared straight after, because
+     GA4's purchase tag sends user_data to Google as raw user-provided data. */
+  var CHECKOUT_FIELDS = { ph: 'phone_number', em: 'email_address', fn: 'first_name', ln: 'last_name' };
+  window.__amolPushWithCustomer = function (message) {
+    window.dataLayer = window.dataLayer || [];
+    var customer = savedCustomer();
+    var userData = {};
+    var added = [];
+    Object.keys(CHECKOUT_FIELDS).forEach(function (key) {
+      if (customer[key]) {
+        userData[CHECKOUT_FIELDS[key]] = customer[key];
+        added.push(CHECKOUT_FIELDS[key]);
+      }
+    });
+    if (!added.length) {
+      window.dataLayer.push(message);
+      return;
+    }
+    userData.country = COUNTRY_BD;
+    added.push('country');
+    var id = anonymousId();
+    if (id) userData.customer_id = id;
+    message.user_data = userData;
+    window.dataLayer.push(message);
+    var cleared = {};
+    added.forEach(function (name) { cleared[name] = undefined; });
+    window.dataLayer.push({ user_data: cleared });
+  };
+
   /* Installed first, so it runs last: it sees the final body just before sending. */
   var openRequest = XMLHttpRequest.prototype.open;
   var sendRequest = XMLHttpRequest.prototype.send;

@@ -337,6 +337,10 @@ async function bootstrap() {
   const storefrontClarityBeginCheckoutCode = `${storefrontBeginCheckoutPushCode}
     ${storefrontClarityBeginCheckoutMarker}
     try{window.clarity=window.clarity||function(){(window.clarity.q=window.clarity.q||[]).push(arguments);};window.clarity('event','begin_checkout');}catch(e){}`;
+  const storefrontBeginCheckoutCustomerMarker = '/* amol-checkout-customer */';
+  // A returning customer's saved hashes ride on begin_checkout (meta-match-data.html).
+  const storefrontBeginCheckoutCustomerCode = `var _beginCheckoutMessage={event:'begin_checkout_stape',ecommerce:{currency:'BDT',value:val,items:items},__stape:true};${storefrontBeginCheckoutCustomerMarker}
+    if(typeof window.__amolPushWithCustomer==='function')window.__amolPushWithCustomer(_beginCheckoutMessage);else dl.push(_beginCheckoutMessage);`;
   const storefrontSharedCartStateMarker = '/* ── Shared cart state ── */';
   const storefrontTrackingApiMarker = '/* amol-tracking-api */';
   // Read-only cart/price access for gtm-snippets/commerce-events.html; tracking state stays private.
@@ -488,6 +492,34 @@ async function bootstrap() {
       window.dataLayer.push({ecommerce:null});
       window.dataLayer.push(payload);
       sessionStorage.removeItem('_pendingPurchase');`;
+  // One-word names: the purchase handler copied the first name into last_name,
+  // so Meta received ln = fn. Leave last_name unset, as the server event does.
+  const legacyStorefrontPurchaseLastNameCode =
+    "ud.last_name=(parts.length>1?parts.slice(1).join(' '):parts[0]).toLowerCase();";
+  const storefrontPurchaseLastNameCode =
+    "if(parts.length>1)ud.last_name=parts.slice(1).join(' ').toLowerCase();";
+  // The thank-you script searches the whole page. Its WhatsApp button went
+  // beside the first "দেখুন" control, now the header's guest-orders link, and
+  // pushed the category menu out of view; its confirmation text replaced the
+  // header ticker, which mentions ডেলিভারি. Search only the thank-you card.
+  const storefrontThankYouScopeFixes: Array<[string, string]> = [
+    [
+      "var hs = document.querySelectorAll('h1,h2,h3,h4');",
+      "var hs = document.querySelectorAll('app-order-success h1,app-order-success h2,app-order-success h3,app-order-success h4');",
+    ],
+    [
+      "var all = document.querySelectorAll('p,div,span,h5,h6');",
+      "var all = document.querySelectorAll('app-order-success p,app-order-success div,app-order-success span,app-order-success h5,app-order-success h6');",
+    ],
+    [
+      "var all = document.querySelectorAll('p,div,span');",
+      "var all = document.querySelectorAll('app-order-success p,app-order-success div,app-order-success span');",
+    ],
+    [
+      "var bs = document.querySelectorAll('button,a'), cta = null;",
+      "var bs = document.querySelectorAll('app-order-success .action-buttons button'), cta = null;",
+    ],
+  ];
   const storefrontPurchaseExternalIdHelperMarker =
     'window.__amolEnsurePurchaseExternalId=function(payload){';
   const storefrontPurchaseExternalIdHelper = `
@@ -690,6 +722,12 @@ ${storefrontPurchaseExternalIdHelper}
         storefrontClarityBeginCheckoutCode
       );
     }
+    if (!patchedTrackingHtml.includes(storefrontBeginCheckoutCustomerMarker)) {
+      patchedTrackingHtml = patchedTrackingHtml.replace(
+        storefrontBeginCheckoutPushCode,
+        storefrontBeginCheckoutCustomerCode
+      );
+    }
     patchedTrackingHtml = patchedTrackingHtml
       .replace(legacyStorefrontAddToCartPriceCode, storefrontAddToCartPriceCode)
       .replace(
@@ -708,7 +746,14 @@ ${storefrontPurchaseExternalIdHelper}
         legacyStorefrontGuestCartPriceCode,
         storefrontGuestCartPriceCode
       )
-      .replace(legacyStorefrontViewCartCode, storefrontViewCartCode);
+      .replace(legacyStorefrontViewCartCode, storefrontViewCartCode)
+      .replace(
+        legacyStorefrontPurchaseLastNameCode,
+        storefrontPurchaseLastNameCode
+      );
+    for (const [legacy, scoped] of storefrontThankYouScopeFixes) {
+      patchedTrackingHtml = patchedTrackingHtml.replace(legacy, scoped);
+    }
     if (!patchedTrackingHtml.includes(storefrontGtmBootstrapMarker)) {
       patchedTrackingHtml = patchedTrackingHtml.replace(
         legacyStorefrontGtmBootstrapCode,

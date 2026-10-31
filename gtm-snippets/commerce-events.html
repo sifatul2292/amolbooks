@@ -14,15 +14,18 @@
   // so order placement, login merges and other tabs do not look like removals.
   var REMOVAL_WINDOW_MS = 8000;
 
-  function push(event, ecommerce) {
+  function push(event, ecommerce, withCustomer) {
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push({ ecommerce: null });
-    window.dataLayer.push({
+    var message = {
       event: event,
       ecommerce: ecommerce,
       event_id: 'amol_' + event + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
       __stape: true
-    });
+    };
+    // The checkout's typed details, hashed, for the Data Tag and Meta tags.
+    if (withCustomer && typeof window.__amolPushWithCustomer === 'function') window.__amolPushWithCustomer(message);
+    else window.dataLayer.push(message);
   }
 
   function tracking() {
@@ -189,9 +192,10 @@
   /* Hand the typed details to meta-match-data.html, which keeps only hashes,
      so this visitor's later Meta events can be matched. */
   function rememberCustomer() {
-    if (typeof window.__amolRememberMetaCustomer !== 'function') return;
+    if (typeof window.__amolRememberMetaCustomer !== 'function') return Promise.resolve();
     var email = document.getElementById('ab-email-input');
-    window.__amolRememberMetaCustomer({ name: field('name'), phone: field('phoneNo'), email: email ? email.value : '' });
+    return window.__amolRememberMetaCustomer({ name: field('name'), phone: field('phoneNo'), email: email ? email.value : '' })
+      .catch(function () {});
   }
 
   function trackShipping() {
@@ -206,14 +210,14 @@
 
   function trackPayment() {
     if (location.pathname !== '/checkout' || !shippingComplete()) return;
-    rememberCustomer();
+    var remembered = rememberCustomer();
     if (paymentTracked) return;
     var method = document.querySelector(PAYMENT);
     var value = method ? method.value : 'cash_on_delivery';
     var ecommerce = cartEcommerce({ payment_type: PAYMENT_TYPES[value] || value });
     if (!ecommerce.items.length) return;
     paymentTracked = true;
-    push('add_payment_info_stape', ecommerce);
+    remembered.then(function () { push('add_payment_info_stape', ecommerce, true); });
   }
 
   function isConfirmOrder(element) {

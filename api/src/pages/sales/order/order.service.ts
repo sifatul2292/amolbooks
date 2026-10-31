@@ -1739,6 +1739,14 @@ export class OrderService {
             page_location: 'https://amolbooks.com/',
             page_path: '/',
             manual_order_source: manualOrderSource,
+            // Stape's Data Client fills ip_override and user_agent from this
+            // server-to-server request (the API host) when they are missing.
+            // The installed Meta tag reads the click and browser IDs only from
+            // _fbc/_fbp (and invents a random _fbp when that is absent).
+            ip_override: tagiooUserData.client_ip_address,
+            user_agent: tagiooUserData.client_user_agent,
+            _fbc: tagiooUserData.fbc,
+            _fbp: tagiooUserData.fbp,
           });
 
         if (!tagiooResult?.accepted) {
@@ -2126,6 +2134,14 @@ export class OrderService {
             page_location: eventSourceUrl,
             page_path: '/',
             order_source: 'website',
+            // Stape's Data Client fills ip_override and user_agent from this
+            // server-to-server request (the API host) when they are missing.
+            // The installed Meta tag reads the click and browser IDs only from
+            // _fbc/_fbp (and invents a random _fbp when that is absent).
+            ip_override: userData.client_ip_address,
+            user_agent: userData.client_user_agent,
+            _fbc: userData.fbc,
+            _fbp: userData.fbp,
           });
 
         if (!tagiooResult?.accepted) {

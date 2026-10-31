@@ -22,6 +22,27 @@ confirm the browser Meta Purchase tag shows `{{dlv - event_id}}` instead of
 `{{Unique Event ID}}` and `[Stape] DT - purchase` is paused; then publish. Keep
 the GA4 Purchase tag enabled. Do not import this file into the server container.
 
+## Checkout customer data for Meta
+
+`GTM-NNZV54QJ_checkout-customer-data.json` is a focused Web GTM merge import
+(built from workspace 23). It adds `phone_number` and `country` rows, from the
+existing `dlv - user_data.*` variables, to `[Stape] DT - begin_checkout` and
+`[Stape] DT - add_payment_info`. The server Meta tags already map those keys.
+It bundles the installed Data Tag template, the two triggers and the folder.
+
+The storefront supplies the values: `meta-match-data.html` puts the visitor's
+saved hashes (phone, email, name, country) on `add_payment_info_stape` (from the
+details typed at checkout) and on `begin_checkout_stape` (returning customers),
+then clears them, because the GA4 purchase tag sends `user_data` to Google as
+raw user-provided data.
+
+Import it into Web container `GTM-NNZV54QJ`, choose **Merge**, then
+**Overwrite** for the two conflicting Data Tags. In Preview, on checkout, the
+`add_payment_info` Data Tag should list `phone_number` and `country`. Then
+publish. Either order with the site deploy is safe: until the site sends the
+values, the new rows are empty and skipped. Do not import into the server
+container.
+
 ## GA4 website-purchase fallback
 
 `GTM-PZPN8VW3_ga4-purchase-fallback.json` is a minimal corrected

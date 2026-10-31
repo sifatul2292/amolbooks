@@ -46,6 +46,35 @@ const placeholders = {
   assert.equal(userData.ge, exact('m'), 'server keeps gender for known customers');
   assert.equal(userData.fbc, 'fb.1.1.abc');
   assert.equal(utils.getClientIp({ headers: { 'x-forwarded-for': '198.51.100.9' }, socket: {} }), '198.51.100.9', 'forwarded address still used without Cloudflare');
+  assert.equal(utils.getClientIp({ headers: { 'cf-connecting-ip': '240.16.0.1', 'cf-connecting-ipv6': '2001:db8::9' }, socket: {} }), '2001:db8::9', "Cloudflare's real IPv6 wins over its pseudo IPv4");
+
+  // Server Purchase via the tagging server: Stape's Data Client fills a missing IP and agent from the
+  // API's own request, and the installed Meta tag reads the click and browser IDs only from _fbc/_fbp.
+  const { OrderService } = require('../api/dist/pages/sales/order/order.service');
+  const touch = { fbc: 'fb.1.1761800000000.AdClick', fbp: 'fb.1.1761800000000.9', landingPage: 'https://www.amolbooks.com/?fbclid=AdClick' };
+  const order = {
+    _id: '6a00000000000000000000cc', orderId: 'T1', name: 'Rahim', phoneNo: '01822222222', grandTotal: 560, createdAt: new Date(),
+    orderedItems: [{ _id: '6a00000000000000000000dd', name: 'Book', quantity: 1, salePrice: 560 }],
+    attribution: { lastTouch: touch, anonymousId: 'anon-1', clientIpAddress: '2001:db8::7', clientUserAgent: 'Shopper UA' },
+  };
+  const tagged = [];
+  const orders = Object.assign(Object.create(OrderService.prototype), {
+    logger: { log() {}, warn() {}, error() {} },
+    orderModel: { findOneAndUpdate: async () => order, updateOne: async () => ({}) },
+    settingModel: { findOne: () => ({ select: async () => ({ analytics: { IsManageFbPixelByTagManager: true } }) }) },
+    analyticsService: { trackServerContainerEvent: async (name, data) => { tagged.push(data); return { accepted: true }; } },
+    isGapFillDisabled: () => false,
+    isDuplicateMetaPurchase: async () => false,
+  });
+  await orders.sendWebsiteOrderToMeta(order);
+  await orders.sendManualOrderToMeta(order, 'phone_call');
+  for (const purchase of tagged) {
+    assert.equal(purchase.ip_override, '2001:db8::7', 'Purchase carries the shopper IP');
+    assert.equal(purchase.user_agent, 'Shopper UA', 'Purchase carries the shopper user agent');
+    assert.equal(purchase._fbc, touch.fbc, 'Purchase carries the click ID where the tag reads it');
+    assert.equal(purchase._fbp, touch.fbp, 'Purchase carries the browser ID, so the tag does not invent one');
+  }
+  assert.equal(tagged.length, 2, 'website and manual Purchases both reach the tagging server');
 
   // Browser.
   const browser = await chromium.launch({ channel: 'chrome', headless: true });
@@ -106,6 +135,17 @@ const placeholders = {
     assert.equal(body.user_data.em, sha('test@example.com'));
     assert.equal(body.user_data.fn, sha('রহিম'));
     assert.equal(body.user_data.external_id, anonymousId, 'external ID stays the same across pages');
+    // Checkout events carry the hashes for the Data Tags, then clear them so GA4's
+    // purchase tag (raw user-provided data) never sees hashes.
+    const checkout = await page.evaluate(() => {
+      const start = window.dataLayer.length;
+      window.__amolPushWithCustomer({ event: 'add_payment_info_stape' });
+      const pushed = window.dataLayer.slice(start);
+      return { message: pushed[0], cleared: Object.keys(pushed[1].user_data).filter((key) => pushed[1].user_data[key] === undefined), count: pushed.length };
+    });
+    assert.equal(checkout.count, 2, 'event plus one clearing push');
+    assert.deepEqual(checkout.message.user_data, { phone_number: sha('8801712345678'), email_address: sha('test@example.com'), first_name: sha('রহিম'), last_name: sha('উদ্দিনআহমেদ'), country: sha('bd'), customer_id: anonymousId });
+    assert.deepEqual(checkout.cleared.sort(), ['country', 'email_address', 'first_name', 'last_name', 'phone_number'], 'hashes are cleared after the event, customer_id stays');
 
     // 4. Real (logged-in) values are never overwritten; gender kept for them.
     await post('gtag/track-theme-initial-checkout', { event_name: 'InitiateCheckout', user_data: { ph: sha('8801998887777'), fn: sha('karim'), ge: exact('m'), external_id: 'x' } });

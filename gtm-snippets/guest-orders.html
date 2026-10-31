@@ -6,6 +6,8 @@
 [data-ab-guest-orders] { background:none; border:0; cursor:pointer; font:inherit; color:inherit; }
 aside.side-nav [data-ab-guest-orders] { display:block; padding:12px 0; text-align:left; }
 app-login > .ab-guest-orders-entry { display:block; width:calc(100% - 32px); max-width:500px; margin:20px auto; text-align:center; padding:16px; background:#edf5ef; }
+/* Thank-you page: a centred link under the card's buttons. */
+.order-success-card > .ab-guest-orders-entry { display:block; margin:18px auto 0; text-align:center; }
 #ab-guest-orders .go-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #d7e2da; }
 #ab-guest-orders h2 { margin:0; font:700 24px/1.5 hind-siliguri,sans-serif; }
 #ab-guest-orders .go-content { padding:20px; overflow-y:auto; max-height:calc(90vh - 82px); max-height:calc(90dvh - 82px); }
@@ -179,10 +181,10 @@ app-login > .ab-guest-orders-entry { display:block; width:calc(100% - 32px); max
     if(!host||host.querySelector('[data-ab-guest-orders]'))return;
     var link=document.createElement('button');link.type='button';link.dataset.abGuestOrders='1';link.textContent='আমার অর্ডার দেখুন';link.addEventListener('click',openOrders);
     link.className=nav?'nav-link':'ab-guest-orders-entry';
-    if(nav){var li=document.createElement('li');li.className='nav-item';Array.prototype.forEach.call(host.attributes,function(attr){if(attr.name.indexOf('_ngcontent-')===0){li.setAttribute(attr.name,'');link.setAttribute(attr.name,'');}});li.appendChild(link);host.appendChild(li);}else if(host.tagName==='APP-LOGIN'||host.tagName==='APP-ORDER-SUCCESS')host.insertBefore(link,host.firstChild);else host.appendChild(link);
+    if(nav){var li=document.createElement('li');li.className='nav-item';Array.prototype.forEach.call(host.attributes,function(attr){if(attr.name.indexOf('_ngcontent-')===0){li.setAttribute(attr.name,'');link.setAttribute(attr.name,'');}});li.appendChild(link);host.appendChild(li);}else if(host.tagName==='APP-LOGIN')host.insertBefore(link,host.firstChild);else host.appendChild(link);
   }
   var scheduled=false;
-  function updateEntries(){scheduled=false;addEntry(document.querySelector('app-header ul.nav-list'),true);addEntry(document.querySelector('aside.side-nav ul'),true);addEntry(document.querySelector('app-login'),false);if(/\/checkout\/order-success\//.test(location.pathname))addEntry(document.querySelector('app-order-success'),false);}
+  function updateEntries(){scheduled=false;addEntry(document.querySelector('app-header ul.nav-list'),true);addEntry(document.querySelector('aside.side-nav ul'),true);addEntry(document.querySelector('app-login'),false);if(/\/checkout\/order-success\//.test(location.pathname))addEntry(document.querySelector('app-order-success .order-success-card'),false);}
   new MutationObserver(function(){if(!scheduled){scheduled=true;requestAnimationFrame(updateEntries);}}).observe(document.documentElement,{childList:true,subtree:true});
   updateEntries();
 }());

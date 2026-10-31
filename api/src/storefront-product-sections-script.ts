@@ -7072,7 +7072,14 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   }
 
   function repairCheckoutJourney() {
-    if (location.pathname.indexOf('/checkout') !== 0 || location.pathname.indexOf('order-success') !== -1) return;
+    if (location.pathname.indexOf('/checkout') !== 0 || location.pathname.indexOf('order-success') !== -1) {
+      /* The step bar sits beside app-checkout, so it and the checkout styling
+         outlived the in-app move to the thank-you page. */
+      document.body.classList.remove('ab-checkout-enhanced');
+      var staleJourney = document.getElementById('ab-checkout-journey');
+      if (staleJourney) staleJourney.remove();
+      return;
+    }
     document.body.classList.add('ab-checkout-enhanced');
     var existing = document.getElementById('ab-checkout-journey');
     if (!existing) {

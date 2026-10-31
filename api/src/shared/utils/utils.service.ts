@@ -87,7 +87,10 @@ export class UtilsService {
 
   getClientIp(req: Request): string | undefined {
     // Cloudflare's header is the visitor's real address (IPv6 when they use it);
-    // the first X-Forwarded-For entry can be supplied by the client.
+    // the first X-Forwarded-For entry can be supplied by the client. With
+    // Cloudflare's Pseudo IPv4 set to overwrite, the real IPv6 moves here.
+    const cloudflareIpv6 = String(req.headers['cf-connecting-ipv6'] || '').trim();
+    if (cloudflareIpv6 && !this.isPrivateOrLoopback(cloudflareIpv6)) return cloudflareIpv6;
     const cloudflareIp = String(req.headers['cf-connecting-ip'] || '').trim();
     if (cloudflareIp && !this.isPrivateOrLoopback(cloudflareIp)) return cloudflareIp;
     const xff = (req.headers['x-forwarded-for'] || '') as string;
