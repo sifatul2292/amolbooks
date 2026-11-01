@@ -21,6 +21,7 @@ import { STOREFRONT_SPECIAL_PACKAGE_SCRIPT } from './storefront-special-package-
 import { ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT } from './admin-incomplete-order-editor-script';
 import { STOREFRONT_ATTRIBUTION_SCRIPT } from './storefront-attribution-script';
 import { STOREFRONT_PRODUCT_SECTIONS_SCRIPT } from './storefront-product-sections-script';
+import { patchViewCartPrices } from './storefront-view-cart-tracking';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule, { cors: true });
@@ -728,6 +729,7 @@ ${storefrontPurchaseExternalIdHelper}
         storefrontBeginCheckoutCustomerCode
       );
     }
+    patchedTrackingHtml = patchViewCartPrices(patchedTrackingHtml);
     patchedTrackingHtml = patchedTrackingHtml
       .replace(legacyStorefrontAddToCartPriceCode, storefrontAddToCartPriceCode)
       .replace(
