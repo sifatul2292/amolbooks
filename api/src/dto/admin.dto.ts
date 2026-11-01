@@ -100,7 +100,7 @@ export class FilterAdminDto {
 
   @IsOptional()
   @IsString()
-  @IsIn([AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN, AdminRoles.EDITOR])
+  @IsIn(Object.values(AdminRoles))
   role: string;
 
   @IsOptional()
@@ -162,6 +162,7 @@ export class UpdateAdminDto {
   @MaxLength(20)
   password: string;
 
+  // Every role an account can have, so editing (e.g. a password change) works for all of them.
   @IsOptional()
   @IsNotEmpty()
   @IsString()
@@ -169,6 +170,8 @@ export class UpdateAdminDto {
     AdminRoles.SUPER_ADMIN,
     AdminRoles.ADMIN,
     AdminRoles.EDITOR,
+    AdminRoles.ACCOUNTANT,
+    AdminRoles.SALESMAN,
     AdminRoles.Collector,
   ])
   role: string;
