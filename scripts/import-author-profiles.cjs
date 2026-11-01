@@ -13,7 +13,10 @@ const { createRequire } = require('node:module');
 
 const root = path.resolve(__dirname, '..');
 const req = createRequire(path.join(root, 'api/package.json'));
-const { MongoClient, ObjectId } = req('mongodb');
+// The driver comes with mongoose; use mongoose's copy if npm did not hoist it.
+let driver;
+try { driver = req('mongodb'); } catch (_error) { driver = req('mongoose').mongo; }
+const { MongoClient, ObjectId } = driver;
 
 const args = process.argv.slice(2);
 const option = (name, fallback) => {
