@@ -24,8 +24,8 @@ export class CustomerManagerController {
   @Version(VERSION_NEUTRAL)
   @Get()
   @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN, AdminRoles.SALESMAN)
-  list(@Query() query: any) {
-    return this.service.list(query);
+  list(@Query() query: any, @Req() request: any) {
+    return this.service.list(query, request.user || request.admin);
   }
 
   @Version(VERSION_NEUTRAL)

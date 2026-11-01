@@ -1,36 +1,52 @@
 import { Request, Response, NextFunction } from 'express';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import {
+  renderAdminNav,
+  SharedSidebarPage,
+  withSharedSidebar,
+} from './admin-sidebar';
 
-// Tracked custom-page source; runtime uploads and compiled admin stay untouched.
+// Custom admin pages, each served with the one shared sidebar. Tracked sources
+// only; runtime uploads and the compiled admin stay untouched.
+const PAGES: Record<string, { file: string; sidebar: SharedSidebarPage }> = {
+  '/upload/static/customer-manager.html': {
+    file: 'gtm-snippets/customer-manager.html',
+    sidebar: { active: 'customer-manager.html', asideId: 'navigation', breakpoint: 768, offset: '.main', addMenuButton: false },
+  },
+  '/upload/static/staff-performance.html': {
+    file: 'gtm-snippets/staff-performance.html',
+    sidebar: { active: 'staff-performance.html', asideId: 'navigation', breakpoint: 900, offset: '.workspace', addMenuButton: false },
+  },
+  '/upload/static/book-gift-offers.html': {
+    file: 'gtm-snippets/book-gift-offers.html',
+    sidebar: { active: 'book-gift-offers.html', asideId: 'navigation', breakpoint: 768, offset: 'body', addMenuButton: true },
+  },
+  '/upload/static/profit-dashboard.html': {
+    file: 'api/upload/static/profit-dashboard.html',
+    sidebar: { active: 'profit-dashboard.html', asideId: 'sidebar', breakpoint: 992, offset: '.main', addMenuButton: false },
+  },
+  '/upload/static/import-woo-orders.html': {
+    file: 'api/upload/static/import-woo-orders.html',
+    sidebar: { active: 'import-woo-orders.html', asideId: 'sidebar', breakpoint: 700, offset: '.main', addMenuButton: true },
+  },
+};
+
 export function customerManagerPages(root: string) {
   return (req: Request, res: Response, next: NextFunction) => {
     if (req.method !== 'GET') return next();
-    if (
-      [
-        '/upload/static/customer-manager.html',
-        '/upload/static/book-gift-offers.html',
-      ].includes(req.path)
-    ) {
+    const config = PAGES[req.path];
+    if (config) {
+      let page: string;
       try {
-        res.setHeader('Cache-Control', 'no-store');
-        return res
-          .type('html')
-          .send(
-            readFileSync(
-              join(
-                root,
-                'gtm-snippets',
-                req.path.endsWith('/book-gift-offers.html')
-                  ? 'book-gift-offers.html'
-                  : 'customer-manager.html',
-              ),
-              'utf8',
-            ),
-          );
+        page = readFileSync(join(root, config.file), 'utf8');
       } catch (_error) {
-        return res.status(503).send('Customer Manager page is unavailable.');
+        return config.file.startsWith('api/upload/')
+          ? next()
+          : res.status(503).send('This page is unavailable.');
       }
+      res.setHeader('Cache-Control', 'no-store');
+      return res.type('html').send(withSharedSidebar(page, config.sidebar));
     }
     if (req.path === '/upload/static/custom-orders.html') {
       try {
@@ -38,20 +54,25 @@ export function customerManagerPages(root: string) {
           join(root, 'api/upload/static/custom-orders.html'),
           'utf8',
         );
-        const link =
-          '<a href="customer-manager.html" class="nav-item" id="navCustomerManager"><i class="fas fa-users"></i> Customer Manager</a>';
-        if (!page.includes('id="navCustomerManager"')) {
-          page = page.replace(
-            /(<div class="nav-label"[^>]*>Inventory<\/div>)/i,
-            link + '$1',
-          );
-          if (!page.includes('id="navCustomerManager"'))
-            page = page.replace('</nav>', link + '</nav>');
-        }
+        // Keep the page's own sidebar (snapshot widget, view switching) but
+        // replace its menu items with the shared menu.
         page = page.replace(
-          '</nav>',
-          '<a href="book-gift-offers.html" class="nav-item" data-salesman-hidden><i class="fas fa-gift"></i> Book Gift Offers</a></nav>',
+          /<nav class="sidebar-nav">[\s\S]*?<\/nav>/,
+          () => `<nav class="sidebar-nav">${renderAdminNav('orders')}</nav>`,
         );
+        // "Sent by" / note-author labels on the order rows.
+        try {
+          const attribution = readFileSync(
+            join(root, 'gtm-snippets', 'staff-attribution.html'),
+            'utf8',
+          );
+          const end = page.lastIndexOf('</body>');
+          if (end !== -1 && !page.includes('id="ab-staff-attribution"')) {
+            page = page.slice(0, end) + attribution + page.slice(end);
+          }
+        } catch (_error) {
+          // The order page still works without the labels.
+        }
         res.setHeader('Cache-Control', 'no-store');
         return res.type('html').send(page);
       } catch (_error) {

@@ -15,9 +15,11 @@ import { ShopInformationSchema } from '../../../schema/shop-information.schema';
 import { SettingSchema } from '../../customization/setting/schema/setting.schema';
 import { AdminSchema } from '../../../schema/admin.schema';
 import { StockMovementSchema } from '../../../schema/stock-movement.schema';
+import { StaffActivityModule } from '../../staff-activity/staff-activity.module';
 
 @Module({
   imports: [
+    StaffActivityModule,
     MongooseModule.forFeature([
       { name: 'Order', schema: OrderSchema },
       { name: 'IncompleteOrder', schema: IncompleteOrderSchema },

@@ -317,8 +317,14 @@ export class OrderController {
   async updateOrderById(
     @Param('id', MongoIdValidationPipe) id: string,
     @Body() updateOrderDto: UpdateOrderDto,
+    @Headers('administrator') adminToken: string,
   ): Promise<ResponsePayload> {
-    return await this.orderService.updateOrderById(id, updateOrderDto);
+    // Unguarded route: a valid admin token is used only for staff attribution.
+    return await this.orderService.updateOrderById(
+      id,
+      updateOrderDto,
+      adminToken,
+    );
   }
 
   @Version(VERSION_NEUTRAL)
@@ -343,10 +349,12 @@ export class OrderController {
   @UseGuards(AdminJwtAuthGuard)
   async updateMultipleOrderById(
     @Body() updateOrderDto: UpdateOrderDto,
+    @GetAdmin() admin: Admin,
   ): Promise<ResponsePayload> {
     return await this.orderService.updateMultipleOrderById(
       updateOrderDto.ids,
       updateOrderDto,
+      admin,
     );
   }
 
@@ -365,8 +373,9 @@ export class OrderController {
   @UseGuards(AdminJwtAuthGuard)
   async sendToCourier(
     @Param('id', MongoIdValidationPipe) id: string,
+    @GetAdmin() admin: Admin,
   ): Promise<ResponsePayload> {
-    return await this.orderService.sendToCourier(id);
+    return await this.orderService.sendToCourier(id, admin);
   }
 
   @Version(VERSION_NEUTRAL)
@@ -380,8 +389,13 @@ export class OrderController {
   async changeOrderStatus(
     @Param('id', MongoIdValidationPipe) id: string,
     @Body() updateOrderStatusDto: UpdateOrderStatusDto,
+    @GetAdmin() admin: Admin,
   ): Promise<ResponsePayload> {
-    return await this.orderService.changeOrderStatus(id, updateOrderStatusDto);
+    return await this.orderService.changeOrderStatus(
+      id,
+      updateOrderStatusDto,
+      admin,
+    );
   }
 
   /**
@@ -513,10 +527,12 @@ export class OrderController {
   async updateIncompleteOrderByAdmin(
     @Param('id', MongoIdValidationPipe) id: string,
     @Body() updateIncompleteOrderDto: UpdateIncompleteOrderDto,
+    @GetAdmin() admin: Admin,
   ): Promise<ResponsePayload> {
     return await this.orderService.updateIncompleteOrderByAdmin(
       id,
       updateIncompleteOrderDto,
+      admin,
     );
   }
 

@@ -1,2181 +1,1041 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Customer Manager · Amolbooks</title>
-    <style>
-      :root {
-        font-family: Inter, system-ui, -apple-system, sans-serif;
-        color: #182039;
-        background: #f3f1fc;
-        font-size: 14px;
-        --purple: #7135e8;
-        --muted: #667697;
-        --border: #e3e6f1;
-      }
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-      }
-      button,
-      input,
-      select,
-      textarea {
-        font: inherit;
-      }
-      button,
-      a,
-      input,
-      select,
-      textarea {
-        touch-action: manipulation;
-      }
-      button,
-      a {
-        cursor: pointer;
-      }
-      a {
-        color: inherit;
-        text-decoration: none;
-      }
-      button,
-      input,
-      select,
-      textarea,
-      .action {
-        border: 1px solid var(--border);
-        border-radius: 9px;
-        padding: 10px 12px;
-        background: #fff;
-        color: inherit;
-      }
-      button:hover,
-      .action:hover {
-        border-color: var(--purple);
-      }
-      :focus-visible {
-        outline: 3px solid #bba0fa;
-        outline-offset: 2px;
-      }
-      button:disabled {
-        opacity: 0.5;
-        cursor: default;
-      }
-      h1,
-      h2,
-      h3,
-      p {
-        margin: 0;
-      }
-      h1 {
-        font-size: 28px;
-        letter-spacing: -0.8px;
-      }
-      h2 {
-        font-size: 19px;
-      }
-      h3 {
-        font-size: 14px;
-      }
-      .muted,
-      small {
-        color: var(--muted);
-      }
-      small {
-        font-size: 12px;
-      }
-      aside.nav {
-        position: fixed;
-        inset: 0 auto 0 0;
-        width: 230px;
-        background: #141426;
-        color: #a4adc3;
-        display: flex;
-        flex-direction: column;
-        z-index: 20;
-      }
-      .brand {
-        display: flex;
-        gap: 13px;
-        padding: 25px 20px;
-        border-bottom: 1px solid #2a293d;
-        align-items: center;
-      }
-      .logo {
-        display: grid;
-        place-items: center;
-        background: var(--purple);
-        width: 48px;
-        height: 48px;
-        border-radius: 14px;
-        font-size: 25px;
-      }
-      .brand strong {
-        color: #fff;
-        font-size: 19px;
-      }
-      .brand small {
-        display: block;
-        margin-top: 4px;
-      }
-      .nav-label {
-        padding: 25px 22px 10px;
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 1.4px;
-      }
-      .nav a {
-        display: block;
-        padding: 14px 22px;
-        font-weight: 600;
-        font-size: 13px;
-      }
-      .nav a:hover {
-        background: #25213e;
-      }
-      .nav a.active {
-        background: #302046;
-        color: #b899ff;
-        border-left: 3px solid #9958ff;
-        padding-left: 19px;
-      }
-      .nav footer {
-        margin-top: auto;
-        padding-bottom: 20px;
-      }
-      .workspace {
-        margin-left: 230px;
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
-        min-height: 100vh;
-      }
-      .workspace.has-detail {
-        grid-template-columns: minmax(0, 1fr) 360px;
-      }
-      main {
-        min-width: 0;
-        padding: 28px 24px;
-      }
-      .heading {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        margin-bottom: 24px;
-      }
-      .heading p {
-        margin-top: 7px;
-      }
-      .primary {
-        background: var(--purple);
-        border-color: var(--purple);
-        color: #fff;
-        font-weight: 650;
-      }
-      .green {
-        background: #179c43;
-        border-color: #179c43;
-        color: #fff;
-      }
-      .pale {
-        background: #f2ebff;
-        color: #6933d4;
-      }
-      .stats {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 12px;
-        margin-bottom: 18px;
-      }
-      .card {
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        background: #fff;
-        padding: 19px;
-      }
-      .stat {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-      .stat-icon {
-        background: #efe9ff;
-        color: #7135e8;
-        border-radius: 12px;
-        width: 46px;
-        height: 46px;
-        display: grid;
-        place-items: center;
-        font-size: 21px;
-      }
-      .stat:nth-child(2) .stat-icon {
-        background: #fff2df;
-        color: #ae6500;
-      }
-      .stat:nth-child(3) .stat-icon {
-        background: #e9fbef;
-        color: #138638;
-      }
-      .stat strong {
-        display: block;
-        font-size: 24px;
-        margin-top: 4px;
-      }
-      .filters input,
-      .filters select {
-        width: 100%;
-        min-width: 0;
-      }
-      .filter-grid {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 12px;
-        margin-top: 14px;
-      }
-      label {
-        display: block;
-        font-size: 12px;
-        color: var(--muted);
-        margin-bottom: 6px;
-      }
-      .more {
-        margin-top: 14px;
-      }
-      .more summary {
-        cursor: pointer;
-        color: #6933d4;
-      }
-      .more .filter-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-      }
-      .chips {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin: 18px 0;
-        flex-wrap: wrap;
-      }
-      .chips button.active {
-        background: var(--purple);
-        color: #fff;
-        border-color: var(--purple);
-      }
-      .chips select {
-        margin-left: auto;
-      }
-      .table-card {
-        padding: 18px 10px 0;
-      }
-      .table-title {
-        padding: 0 8px 16px;
-      }
-      .table-title p {
-        margin-top: 5px;
-      }
-      .table-scroll {
-        overflow: auto;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 13px;
-        white-space: nowrap;
-      }
-      th {
-        background: #f5f4fc;
-        color: var(--muted);
-        font-size: 10px;
-        letter-spacing: 0.5px;
-        text-align: left;
-        padding: 14px 10px;
-      }
-      td {
-        padding: 17px 10px;
-        border-bottom: 1px solid #edf0f6;
-      }
-      td strong,
-      td small {
-        display: block;
-      }
-      td small {
-        margin-top: 5px;
-      }
-      tbody tr.selected {
-        background: #f0e8ff;
-      }
-      .customer-button {
-        padding: 0;
-        border: 0;
-        text-align: left;
-        background: transparent;
-        font-weight: 650;
-      }
-      .badge {
-        display: inline-block;
-        padding: 7px 10px;
-        border-radius: 20px;
-        background: #f0f3f8;
-        color: #52627e;
-        font-size: 11px;
-      }
-      .badge.interested,
-      .badge.ordered {
-        background: #e7faee;
-        color: #16763b;
-      }
-      .badge.due,
-      .badge.follow_up {
-        background: #fff1db;
-        color: #965000;
-      }
-      .badge.no_answer,
-      .badge.dont_contact {
-        background: #fff0f0;
-        color: #a73535;
-      }
-      .row-actions {
-        display: flex;
-        gap: 6px;
-      }
-      .action {
-        padding: 8px;
-        color: #7135e8;
-        background: #f6f1ff;
-        font-size: 12px;
-      }
-      .action.whatsapp {
-        color: #12813a;
-        background: #effbf3;
-      }
-      .pagination {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 8px;
-        padding: 18px 8px;
-      }
-      .pager {
-        display: flex;
-        gap: 6px;
-        align-items: center;
-      }
-      .notice {
-        color: #a12c38;
-        margin-bottom: 12px;
-        min-height: 20px;
-      }
-      .empty {
-        padding: 40px 15px;
-        text-align: center;
-        color: var(--muted);
-      }
-      .drawer {
-        background: #fff;
-        border-left: 1px solid var(--border);
-        padding: 24px 20px;
-        min-width: 0;
-      }
-      .drawer[hidden] {
-        display: none;
-      }
-      .drawer-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-      }
-      .drawer-head p {
-        margin-top: 6px;
-      }
-      .close {
-        border: 0;
-        font-size: 24px;
-        padding: 0 5px;
-        color: var(--muted);
-      }
-      .contact-actions {
-        display: flex;
-        gap: 10px;
-        margin: 18px 0;
-      }
-      .contact-actions a {
-        flex: 1;
-        text-align: center;
-      }
-      .mini-stats {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 14px;
-        gap: 12px;
-      }
-      .mini-stats strong {
-        display: block;
-        margin-top: 5px;
-        font-size: 19px;
-      }
-      .tabs {
-        display: flex;
-        margin: 18px 0;
-        border-bottom: 1px solid var(--border);
-      }
-      .tabs button {
-        flex: 1;
-        border: 0;
-        border-radius: 0;
-        background: transparent;
-        color: var(--muted);
-        padding: 12px 0;
-      }
-      .tabs button.active {
-        color: var(--purple);
-        border-bottom: 2px solid var(--purple);
-        font-weight: 650;
-      }
-      .purchase,
-      .history-entry {
-        background: #fafafe;
-        border: 1px solid var(--border);
-        border-radius: 9px;
-        padding: 12px;
-        margin-top: 9px;
-        font-size: 13px;
-        overflow-wrap: anywhere;
-      }
-      .purchase small,
-      .history-entry small {
-        display: block;
-        margin-top: 6px;
-      }
-      .section {
-        margin-top: 20px;
-      }
-      .section h3 {
-        margin-bottom: 12px;
-      }
-      .drawer select,
-      .drawer input,
-      .drawer textarea {
-        width: 100%;
-        min-width: 0;
-      }
-      .drawer textarea {
-        resize: vertical;
-        line-height: 1.6;
-      }
-      .drawer .wide {
-        width: 100%;
-        margin-top: 10px;
-      }
-      .log-form {
-        border-top: 1px solid var(--border);
-        padding-top: 20px;
-      }
-      .form-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        margin-bottom: 12px;
-      }
-      .form-status {
-        margin-top: 10px;
-        min-height: 18px;
-        font-size: 12px;
-      }
-      .form-status.error {
-        color: #a12c38;
-      }
-      .form-status.success {
-        color: #137537;
-      }
-      .login {
-        position: fixed;
-        inset: 0;
-        background: #141426e8;
-        z-index: 100;
-        display: grid;
-        place-items: center;
-        padding: 20px;
-      }
-      .login[hidden] {
-        display: none;
-      }
-      .login form {
-        width: min(400px, 100%);
-        background: #fff;
-        padding: 30px;
-        border-radius: 18px;
-      }
-      .login input {
-        width: 100%;
-        margin-bottom: 18px;
-      }
-      .login h2 {
-        margin-bottom: 8px;
-      }
-      .login p {
-        margin-bottom: 22px;
-      }
-      .login button {
-        width: 100%;
-      }
-      .menu {
-        display: none;
-      }
-      [hidden] {
-        display: none !important;
-      }
-      .footnote {
-        margin-top: 12px;
-        font-size: 11px;
-        line-height: 1.6;
-        color: var(--muted);
-      }
-      @media (min-width: 1700px) {
-        main {
-          padding: 30px 36px;
-        }
-        .workspace.has-detail {
-          grid-template-columns: minmax(0, 1fr) 390px;
-        }
-      }
-      @media (max-width: 1250px) {
-        .workspace.has-detail {
-          grid-template-columns: minmax(0, 1fr);
-        }
-        .drawer {
-          position: fixed;
-          right: 0;
-          top: 0;
-          bottom: 0;
-          width: 390px;
-          max-width: 100%;
-          overflow: auto;
-          z-index: 40;
-          box-shadow: -30px 0 70px #14142644;
-        }
-        .filter-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-      }
-      @media (max-width: 900px) {
-        aside.nav {
-          transform: translateX(-100%);
-        }
-        aside.nav.open {
-          transform: none;
-          box-shadow: 20px 0 60px #14142666;
-        }
-        .workspace {
-          margin-left: 0;
-        }
-        .menu {
-          display: inline-block;
-        }
-        .heading h1 {
-          font-size: 24px;
-        }
-        main {
-          padding: 20px 16px;
-        }
-      }
-      @media (max-width: 520px) {
-        main {
-          padding: 18px 12px;
-        }
-        .heading {
-          align-items: flex-start;
-        }
-        .heading p {
-          font-size: 12px;
-        }
-        .heading .logout {
-          padding: 8px;
-          font-size: 11px;
-        }
-        .stats {
-          gap: 7px;
-        }
-        .stat {
-          padding: 12px 8px;
-          display: block;
-        }
-        .stat-icon {
-          display: none;
-        }
-        .stat small {
-          font-size: 10px;
-        }
-        .stat strong {
-          font-size: 22px;
-        }
-        .filter-grid,
-        .more .filter-grid {
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-        }
-        .card.filters {
-          padding: 14px;
-        }
-        .chips {
-          gap: 7px;
-        }
-        .chips button {
-          font-size: 11px;
-          padding: 9px;
-        }
-        .chips select {
-          margin-left: 0;
-          width: 100%;
-        }
-        .pagination {
-          font-size: 11px;
-        }
-        .drawer {
-          width: 100%;
-          padding: 20px;
-        }
-        .heading {
-          gap: 7px;
-        }
-        .menu {
-          padding: 8px;
-        }
-        .heading-actions {
-          display: flex;
-          gap: 6px;
-        }
-      }
-      .stat-button {
-        text-align: left;
-        width: 100%;
-        font: inherit;
-        cursor: pointer;
-      }
-      .customer-address {
-        max-width: 230px;
-        white-space: normal;
-        font-weight: 400;
-        line-height: 1.5;
-        overflow-wrap: anywhere;
-      }
-      .address-card {
-        margin: 16px 0;
-        padding: 12px;
-        background: #fafafe;
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        font-size: 13px;
-        line-height: 1.6;
-        overflow-wrap: anywhere;
-        white-space: pre-line;
-      }
-      .create-order-button {
-        width: 100%;
-        margin-bottom: 16px;
-      }
-      .order-dialog {
-        width: min(760px, calc(100% - 24px));
-        max-height: 92vh;
-        border: 0;
-        border-radius: 16px;
-        padding: 0;
-        color: inherit;
-        box-shadow: 0 24px 80px #14142666;
-      }
-      .order-dialog::backdrop {
-        background: #14142699;
-      }
-      .order-header {
-        position: sticky;
-        top: 0;
-        background: #fff;
-        z-index: 1;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 20px 24px;
-        border-bottom: 1px solid var(--border);
-      }
-      .order-body {
-        padding: 24px;
-      }
-      .order-dialog input,
-      .order-dialog select,
-      .order-dialog textarea {
-        width: 100%;
-      }
-      .order-fields {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 14px;
-        margin: 16px 0;
-      }
-      .order-fields .full {
-        grid-column: 1/-1;
-      }
-      .product-search {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 8px;
-      }
-      .product-results {
-        margin-top: 10px;
-        max-height: 210px;
-        overflow: auto;
-      }
-      .product-result {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        width: 100%;
-        text-align: left;
-        margin-bottom: 6px;
-      }
-      .product-result span {
-        min-width: 0;
-        overflow-wrap: anywhere;
-      }
-      .product-result strong {
-        white-space: nowrap;
-      }
-      .order-item {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 76px 85px 36px;
-        gap: 10px;
-        align-items: center;
-        padding: 12px 0;
-        border-bottom: 1px solid var(--border);
-      }
-      .order-item strong {
-        overflow-wrap: anywhere;
-      }
-      .order-item input {
-        padding: 8px;
-      }
-      .order-item button {
-        padding: 7px;
-      }
-      .order-totals {
-        display: flex;
-        justify-content: space-between;
-        gap: 15px;
-        padding: 18px 0;
-      }
-      .order-totals strong {
-        display: block;
-        margin-top: 5px;
-      }
-      .order-footer {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-        margin-top: 16px;
-      }
-      .order-footer button {
-        margin-left: auto;
-      }
-      .order-success {
-        padding: 14px;
-        border-radius: 10px;
-        background: #e7faee;
-        color: #16763b;
-        margin-top: 12px;
-      }
-      .order-success a {
-        text-decoration: underline;
-        display: block;
-        margin-top: 8px;
-      }
-      @media (max-width: 600px) {
-        .stats {
-          grid-template-columns: repeat(2, 1fr);
-        }
-        .order-body,
-        .order-header {
-          padding: 16px;
-        }
-        .order-fields {
-          grid-template-columns: 1fr;
-        }
-        .order-item {
-          grid-template-columns: minmax(0, 1fr) 64px 72px 30px;
-          font-size: 12px;
-          gap: 6px;
-        }
-        .order-footer {
-          align-items: flex-start;
-        }
-        .order-footer small {
-          max-width: 50%;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <aside class="nav" id="navigation" aria-label="Admin navigation">
-      <div class="brand">
-        <span class="logo">📚</span>
-        <div><strong>Amolbooks</strong><small>Order Management</small></div>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Manager · Amolbooks</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    /* Same look as custom-orders.html (Amolbooks Orders). */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --p: #7c3aed; --p-light: #ede9fe; --blue: #2563eb;
+      --g50: #f8fafc; --g100: #f1f5f9; --g200: #e2e8f0; --g300: #cbd5e1;
+      --g400: #94a3b8; --g500: #64748b; --g700: #334155; --g900: #0f172a;
+      --radius: 14px;
+    }
+    html, body { min-height: 100%; overflow-x: clip; font-family: 'Inter', 'Segoe UI', sans-serif; background: #f0f2f8; color: #1e293b; -webkit-font-smoothing: antialiased; }
+    button, input, select, textarea { font-family: inherit; }
+    a { color: inherit; }
+    [hidden] { display: none !important; }
+    .main { min-width: 0; }
+
+    /* Topbar */
+    .topbar { background: linear-gradient(135deg, #6d28d9 0%, #4338ca 100%); color: #fff; padding: 0 24px; display: flex; align-items: center; gap: 14px; height: 62px; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 0 rgba(255,255,255,.08), 0 4px 20px rgba(109,40,217,.4); }
+    .hamburger { display: none; background: none; border: none; color: #fff; font-size: 18px; cursor: pointer; padding: 4px; border-radius: 6px; }
+    .topbar-title { font-size: 17px; font-weight: 800; letter-spacing: -.02em; white-space: nowrap; }
+    .topbar-title i { margin-right: 8px; opacity: .8; }
+    .topbar-spacer { flex: 1; }
+    .search-wrap { display: flex; align-items: center; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); border-radius: 100px; padding: 0 14px; gap: 8px; min-width: 280px; }
+    .search-wrap:focus-within { background: rgba(255,255,255,.2); border-color: rgba(255,255,255,.4); }
+    .search-wrap i { color: rgba(255,255,255,.6); font-size: 12px; }
+    .search-wrap input { background: none; border: none; outline: none; color: #fff; font-size: 13px; font-weight: 500; width: 100%; padding: 9px 0; }
+    .search-wrap input::placeholder { color: rgba(255,255,255,.55); }
+    .topbar-btn { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 100px; font-size: 12px; font-weight: 700; border: 1px solid rgba(255,255,255,.25); cursor: pointer; color: #fff; background: rgba(255,255,255,.12); white-space: nowrap; }
+    .topbar-btn:hover { background: rgba(255,255,255,.22); }
+    .topbar-btn.danger { background: rgba(239,68,68,.2); border-color: rgba(239,68,68,.4); }
+    .topbar-btn.spin i { animation: spin .7s linear infinite; }
+
+    .content { padding: 22px 24px; }
+
+    /* Date range */
+    .date-row { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; align-items: stretch; }
+    .date-box { display: flex; align-items: center; gap: 10px; background: #fff; border: 1.5px solid var(--g200); border-radius: var(--radius); padding: 10px 14px; flex: 1; min-width: 240px; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+    .date-box:focus-within { border-color: var(--p); box-shadow: 0 0 0 3px rgba(124,58,237,.1); }
+    .date-box-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; background: #ede9fe; color: #7c3aed; }
+    .date-box-icon.o { background: #fff7ed; color: #d97706; }
+    .date-box label { display: block; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--g400); margin-bottom: 4px; }
+    .date-inputs { display: flex; align-items: center; gap: 6px; flex: 1; }
+    .date-inputs input { border: none; outline: none; font-size: 12.5px; font-weight: 500; color: #1e293b; background: none; cursor: pointer; flex: 1; min-width: 0; }
+    .date-inputs span { color: var(--g300); font-size: 11px; }
+    .date-clear { border: none; background: none; color: var(--g300); cursor: pointer; padding: 4px; border-radius: 4px; }
+    .date-clear:hover { color: var(--g500); }
+    .quick-ranges { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .quick-ranges button { border: 1px solid var(--g200); background: var(--g50); color: var(--g700); border-radius: 100px; padding: 5px 10px; font-size: 11.5px; font-weight: 600; cursor: pointer; }
+    .quick-ranges button:hover { border-color: var(--p); color: var(--p); }
+    .quick-ranges button.active { background: var(--p); border-color: var(--p); color: #fff; }
+    .btn-today { display: flex; align-items: center; gap: 7px; background: linear-gradient(135deg, var(--p), #4f46e5); color: #fff; border: none; border-radius: var(--radius); padding: 0 20px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 8px rgba(124,58,237,.35); min-height: 58px; }
+    .btn-today:hover { opacity: .9; }
+
+    /* Stats */
+    .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 18px; }
+    .stat-card { border-radius: 16px; padding: 18px 20px; display: flex; align-items: center; gap: 14px; box-shadow: 0 4px 24px rgba(0,0,0,.12); color: #fff; position: relative; overflow: hidden; border: none; text-align: left; font: inherit; transition: transform .2s, box-shadow .2s; }
+    button.stat-card { cursor: pointer; }
+    button.stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,.18); }
+    .stat-card::before { content: ''; position: absolute; right: -16px; top: -16px; width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,.12); }
+    .stat-card::after { content: ''; position: absolute; right: 16px; bottom: -24px; width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,.08); }
+    .stat-card.c1 { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+    .stat-card.c2 { background: linear-gradient(135deg, #d97706, #b45309); }
+    .stat-card.c3 { background: linear-gradient(135deg, #059669, #047857); }
+    .stat-card.c4 { background: linear-gradient(135deg, #7c3aed, #5b21b6); }
+    .stat-icon { width: 46px; height: 46px; border-radius: 12px; background: rgba(255,255,255,.2); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; position: relative; z-index: 1; }
+    .stat-info { position: relative; z-index: 1; min-width: 0; }
+    .stat-info label { font-size: 10px; font-weight: 700; opacity: .8; text-transform: uppercase; letter-spacing: .07em; display: block; }
+    .stat-info .val { font-size: 26px; font-weight: 900; line-height: 1.1; margin-top: 3px; letter-spacing: -.02em; }
+    .stat-info small { display: block; font-size: 11px; opacity: .8; margin-top: 2px; }
+
+    /* Tabs */
+    .status-tabs { display: flex; border-bottom: 2px solid var(--g100); margin-bottom: 14px; flex-wrap: wrap; background: #fff; border-radius: 10px 10px 0 0; padding: 0 4px; }
+    .status-tab { padding: 10px 12px; font-size: 13px; font-weight: 600; color: var(--g400); cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -2px; white-space: nowrap; }
+    .status-tab:hover { color: var(--p); }
+    .status-tab.active { color: var(--p); border-bottom-color: var(--p); }
+    .status-tab .tab-count { font-size: 11px; font-weight: 700; background: var(--g100); color: var(--g500); border-radius: 10px; padding: 1px 7px; margin-left: 5px; }
+    .status-tab.active .tab-count { background: var(--p); color: #fff; }
+
+    /* Filter bar */
+    .filter-bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+    .dd-wrap { position: relative; }
+    .filter-btn { display: flex; align-items: center; gap: 7px; background: #fff; border: 1.5px solid var(--g200); border-radius: 10px; padding: 8px 13px; font-size: 12.5px; font-weight: 600; color: var(--g700); cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.05); max-width: 260px; }
+    .filter-btn:hover { border-color: var(--p); color: var(--p); }
+    .filter-btn.active { background: var(--p); color: #fff; border-color: var(--p); }
+    .filter-btn i { font-size: 11px; }
+    .filter-btn .chev { font-size: 9px; opacity: .6; }
+    .filter-btn .val { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dropdown { position: absolute; top: calc(100% + 6px); left: 0; background: #fff; border: 1px solid var(--g200); border-radius: 12px; min-width: 210px; box-shadow: 0 12px 32px rgba(0,0,0,.14); z-index: 300; display: none; overflow: hidden; }
+    .dropdown.open { display: block; }
+    .dropdown-item { padding: 10px 16px; font-size: 13px; font-weight: 500; color: var(--g700); cursor: pointer; display: flex; align-items: center; gap: 9px; width: 100%; border: none; background: none; text-align: left; }
+    .dropdown-item:hover { background: var(--g50); }
+    .dropdown-item.sel { color: var(--p); font-weight: 700; }
+    .dropdown-panel { padding: 14px; display: grid; gap: 10px; min-width: 260px; }
+    .dropdown-panel label { font-size: 11px; font-weight: 700; color: var(--g500); text-transform: uppercase; letter-spacing: .05em; }
+    .dropdown-panel input { width: 100%; border: 1.5px solid var(--g200); border-radius: 8px; padding: 8px 10px; font-size: 13px; outline: none; }
+    .dropdown-panel input:focus { border-color: var(--p); }
+    .panel-row { display: flex; gap: 8px; }
+    .panel-actions { display: flex; justify-content: flex-end; gap: 8px; }
+    .suggestions { display: grid; max-height: 180px; overflow-y: auto; }
+    .suggestions button { border: none; background: none; text-align: left; padding: 7px 8px; border-radius: 6px; font-size: 12.5px; cursor: pointer; color: var(--g700); }
+    .suggestions button:hover { background: var(--p-light); color: var(--p); }
+    .btn-sm { border: 1.5px solid var(--g200); background: #fff; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; color: var(--g700); }
+    .btn-sm.primary { background: var(--p); border-color: var(--p); color: #fff; }
+    .per-page-select { border: 1.5px solid var(--g200); border-radius: 10px; padding: 8px 12px; font-size: 12.5px; font-weight: 600; color: var(--g700); background: #fff; cursor: pointer; outline: none; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+    .spacer { flex: 1; }
+    .btn-reset { display: flex; align-items: center; gap: 6px; background: #fff; border: 1.5px solid var(--g200); border-radius: 10px; padding: 8px 13px; font-size: 12.5px; font-weight: 600; color: var(--g500); cursor: pointer; }
+    .btn-reset:hover { border-color: var(--g400); color: var(--g700); }
+    .btn-export { display: flex; align-items: center; gap: 7px; background: #13111e; color: #fff; border: none; border-radius: 10px; padding: 8px 15px; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+    .btn-export:hover { background: #2d2b42; }
+    .notice { margin: -4px 0 12px; font-size: 12.5px; color: #b42318; font-weight: 600; }
+    .notice:empty { display: none; }
+
+    /* Table */
+    .table-card { background: #fff; border-radius: 16px; box-shadow: 0 2px 16px rgba(0,0,0,.07); overflow: hidden; border: 1px solid var(--g100); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 1320px; }
+    thead { background: linear-gradient(135deg, #6d28d9, #4338ca); }
+    thead th { padding: 13px 10px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #fff; white-space: nowrap; text-align: left; }
+    thead th:first-child, tbody td:first-child { padding-left: 18px; }
+    tbody tr { border-bottom: 1px solid var(--g100); cursor: pointer; }
+    tbody tr:nth-child(even) { background: #fafbff; }
+    tbody tr:hover { background: #f5f3ff !important; }
+    tbody td { padding: 11px 10px; vertical-align: middle; color: #334155; font-weight: 500; }
+    tr.st-never { border-left: 3px solid var(--g300); }
+    tr.st-due { border-left: 3px solid #dc2626; }
+    tr.st-interested, tr.st-ordered { border-left: 3px solid #059669; }
+    tr.st-follow_up { border-left: 3px solid #2563eb; }
+    tr.st-no_answer { border-left: 3px solid #d97706; }
+    tr.st-not_interested { border-left: 3px solid #94a3b8; }
+    tr.st-dont_contact { border-left: 3px solid #0f172a; opacity: .75; }
+    .cust-name { font-weight: 700; color: #1e293b; font-size: 13px; background: none; border: none; cursor: pointer; text-align: left; padding: 0; }
+    .cust-name:hover { color: var(--p); text-decoration: underline; }
+    .cell-sub { display: block; font-size: 11px; color: var(--g400); margin-top: 3px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+    .phone-link { font-weight: 600; font-size: 12px; color: #0284c7; text-decoration: none; white-space: nowrap; }
+    .phone-link:hover { text-decoration: underline; }
+    .addr { min-width: 170px; max-width: 230px; font-size: 12px; line-height: 1.5; word-break: break-word; }
+    .date-cell { font-size: 11.5px; line-height: 1.5; white-space: nowrap; }
+    .date-cell .ago { color: var(--g400); font-size: 11px; }
+    .num { font-weight: 800; color: var(--p); white-space: nowrap; }
+    .ratio-chip { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 10.5px; font-weight: 700; line-height: 1.6; white-space: nowrap; background: var(--g100); color: var(--g700); }
+    .ratio-chip.low { background: #d1fae5; color: #065f46; }
+    .ratio-chip.mid { background: #fef3c7; color: #92400e; }
+    .ratio-chip.high { background: #fee2e2; color: #991b1b; }
+    .muted { color: var(--g400); font-size: 11px; }
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; }
+    .b-never { background: var(--g100); color: #475569; }
+    .b-due { background: #fee2e2; color: #991b1b; }
+    .b-interested { background: #d1fae5; color: #065f46; }
+    .b-ordered { background: #ede9fe; color: #5b21b6; }
+    .b-follow_up { background: #dbeafe; color: #1e40af; }
+    .b-no_answer { background: #fef3c7; color: #92400e; }
+    .b-not_interested { background: #f1f5f9; color: #64748b; }
+    .b-dont_contact { background: #1e293b; color: #fff; }
+    .fu { font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+    .fu.overdue { color: #dc2626; }
+    .fu.today { color: #d97706; }
+    .row-actions { display: flex; gap: 6px; }
+    .btn-action { display: inline-flex; align-items: center; gap: 5px; border: none; border-radius: 7px; padding: 5px 10px; font-size: 11px; font-weight: 700; cursor: pointer; text-decoration: none; white-space: nowrap; }
+    .btn-call { background: #dbeafe; color: #1d4ed8; }
+    .btn-wa { background: #dcfce7; color: #15803d; }
+    .btn-open { background: #ede9fe; color: #6d28d9; }
+    .btn-action:hover { filter: brightness(.95); }
+    .empty-row td { text-align: center; padding: 56px 20px; color: var(--g500); font-size: 14px; cursor: default; }
+    .skel { height: 14px; border-radius: 6px; background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .pagination-bar { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-top: 1px solid var(--g100); flex-wrap: wrap; gap: 10px; }
+    .pagination-info { font-size: 12.5px; color: var(--g500); font-weight: 500; }
+    .pagination-controls { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+    .page-btn { border: 1.5px solid var(--g200); background: #fff; border-radius: 8px; padding: 6px 12px; font-size: 12.5px; font-weight: 600; color: var(--g700); cursor: pointer; min-width: 36px; }
+    .page-btn:hover:not(:disabled) { border-color: var(--p); color: var(--p); }
+    .page-btn.active { background: var(--p); color: #fff; border-color: var(--p); }
+    .page-btn:disabled { opacity: .35; cursor: not-allowed; }
+    .page-ellipsis { padding: 0 4px; color: var(--g400); }
+    .footnote { margin-top: 12px; font-size: 11.5px; color: var(--g400); }
+
+    /* Customer popup */
+    dialog { border: none; padding: 0; margin: auto; background: #fff; color: inherit; border-radius: 18px; box-shadow: 0 24px 64px rgba(15,23,42,.35); }
+    dialog::backdrop { background: rgba(15,23,42,.55); backdrop-filter: blur(3px); }
+    .cm-modal { width: min(1080px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow: hidden; }
+    .cm-modal[open] { display: flex; flex-direction: column; }
+    .cm-head { background: linear-gradient(135deg, #6d28d9 0%, #4338ca 100%); color: #fff; padding: 18px 22px; display: flex; gap: 12px; align-items: center; }
+    .avatar { width: 48px; height: 48px; border-radius: 14px; background: rgba(255,255,255,.2); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 17px; flex-shrink: 0; }
+    .cm-head h2 { font-size: 18px; font-weight: 800; letter-spacing: -.01em; }
+    .cm-head .sub { font-size: 12.5px; opacity: .9; margin-top: 3px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .cm-head .sub a { color: #fff; font-weight: 700; text-decoration: none; }
+    .icon-btn { border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.12); color: #fff; width: 36px; height: 36px; border-radius: 10px; cursor: pointer; font-size: 15px; flex-shrink: 0; }
+    .icon-btn:hover:not(:disabled) { background: rgba(255,255,255,.24); }
+    .icon-btn:disabled { opacity: .35; cursor: default; }
+    .cm-body { overflow-y: auto; padding: 18px 22px 22px; display: flex; flex-direction: column; gap: 16px; }
+    .cm-body > * { flex-shrink: 0; }
+    .cm-quick { display: flex; gap: 8px; flex-wrap: wrap; min-height: 34px; }
+    .cm-quick .btn-action { font-size: 12.5px; padding: 8px 14px; border-radius: 9px; }
+    .btn-order { background: linear-gradient(135deg, var(--p), #4f46e5); color: #fff; }
+    .mini-stats { display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 10px; }
+    .mini { background: var(--g50); border: 1px solid var(--g100); border-radius: 12px; padding: 10px 12px; min-width: 0; }
+    .mini label { display: block; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--g400); }
+    .mini > strong { display: block; margin-top: 4px; font-size: 15px; font-weight: 800; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mini .ratio-chip, .mini .muted { margin-top: 4px; display: inline-block; }
+    .cm-cols { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+    .panel { border: 1px solid var(--g100); border-radius: 14px; padding: 16px; background: #fff; min-width: 0; }
+    .panel h3 { font-size: 13px; font-weight: 800; color: #1e293b; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+    .panel h3 i { color: var(--p); }
+    .field-label { display: block; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--g500); margin: 12px 0 6px; }
+    .chip-group { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip-group input { position: absolute; opacity: 0; pointer-events: none; }
+    .chip-group label { display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid var(--g200); border-radius: 100px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--g700); background: #fff; }
+    .chip-group label:hover { border-color: var(--p); }
+    .chip-group input:checked + label { background: var(--p); border-color: var(--p); color: #fff; }
+    .chip-group input:focus-visible + label { outline: 3px solid #c4b5fd; }
+    textarea, .text-input { width: 100%; border: 1.5px solid var(--g200); border-radius: 10px; padding: 9px 11px; font-size: 13px; outline: none; resize: vertical; color: #1e293b; background: #fff; }
+    textarea:focus, .text-input:focus { border-color: var(--p); box-shadow: 0 0 0 3px rgba(124,58,237,.1); }
+    .text-input:disabled { background: var(--g50); color: var(--g400); }
+    .fu-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .fu-row input { max-width: 180px; }
+    .fu-hint { font-size: 11.5px; color: var(--g500); }
+    .fu-hint strong { color: var(--p); }
+    .save-row { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; align-items: center; }
+    .btn-primary { background: linear-gradient(135deg, var(--p), #4f46e5); color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .btn-primary:disabled, .btn-secondary:disabled { opacity: .5; cursor: wait; }
+    .btn-secondary { background: #fff; border: 1.5px solid var(--g200); color: var(--g700); border-radius: 10px; padding: 9px 16px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .btn-secondary:hover { border-color: var(--p); color: var(--p); }
+    .form-status { font-size: 12.5px; font-weight: 600; min-height: 18px; margin-top: 8px; color: var(--g500); }
+    .form-status.ok { color: #047857; }
+    .form-status.error { color: #b42318; }
+    details.msg { margin-top: 10px; border-top: 1px dashed var(--g200); padding-top: 12px; }
+    details.msg summary { cursor: pointer; font-size: 12.5px; font-weight: 700; color: var(--p); }
+    .msg-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .seg { display: flex; gap: 4px; background: var(--g100); padding: 3px; border-radius: 10px; margin-bottom: 12px; width: max-content; }
+    .seg button { border: none; background: none; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; color: var(--g500); cursor: pointer; }
+    .seg button.active { background: #fff; color: var(--p); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .list { display: grid; gap: 8px; max-height: 440px; overflow-y: auto; }
+    .order-line { border: 1px solid var(--g100); border-radius: 10px; padding: 10px 12px; display: grid; gap: 4px; }
+    .order-line .top { display: flex; justify-content: space-between; gap: 8px; align-items: center; font-size: 12.5px; }
+    .order-line .items { font-size: 12px; color: var(--g700); }
+    .order-line .when { font-size: 11px; color: var(--g400); }
+    .st { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
+    .st.ok { background: #d1fae5; color: #065f46; }
+    .st.bad { background: #fee2e2; color: #991b1b; }
+    .st.open { background: #ede9fe; color: #5b21b6; }
+    .timeline-item { border-left: 3px solid var(--p-light); padding: 4px 0 8px 12px; }
+    .timeline-item p { font-size: 12.5px; color: var(--g700); margin-top: 5px; white-space: pre-wrap; }
+    .timeline-item small { display: block; font-size: 11px; color: var(--g400); margin-top: 4px; }
+    .empty-note { font-size: 12.5px; color: var(--g400); padding: 8px 0; }
+    .blocked-note { background: #fff7ed; color: #9a3412; border-radius: 10px; padding: 10px 12px; font-size: 12.5px; font-weight: 600; margin-top: 10px; }
+
+    /* Order dialog */
+    .order-modal { width: min(720px, calc(100vw - 32px)); max-height: calc(100vh - 32px); }
+    .order-modal[open] { display: flex; flex-direction: column; }
+    .order-body { overflow-y: auto; padding: 8px 22px 22px; display: grid; gap: 4px; }
+    .order-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+    .order-grid .full { grid-column: 1 / -1; }
+    .product-search { display: flex; gap: 8px; }
+    .product-results { display: grid; gap: 6px; margin-top: 8px; font-size: 12.5px; color: var(--g500); }
+    .product-result { display: flex; justify-content: space-between; gap: 10px; border: 1px solid var(--g200); border-radius: 9px; padding: 8px 10px; background: #fff; cursor: pointer; text-align: left; font-size: 12.5px; }
+    .product-result:hover { border-color: var(--p); }
+    .order-items { display: grid; gap: 6px; margin-top: 10px; }
+    .order-item { display: grid; grid-template-columns: minmax(0,1fr) 70px 80px 32px; gap: 8px; align-items: center; border: 1px solid var(--g100); border-radius: 9px; padding: 8px 10px; font-size: 12.5px; }
+    .order-item input { width: 100%; border: 1.5px solid var(--g200); border-radius: 7px; padding: 5px; }
+    .order-item button { border: none; background: #fee2e2; color: #991b1b; border-radius: 7px; height: 28px; cursor: pointer; }
+    .order-totals { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 12px; }
+    .order-success { background: #ecfdf5; color: #065f46; border-radius: 10px; padding: 12px; font-size: 13px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .order-success a { color: #065f46; font-weight: 700; }
+
+    /* Login */
+    .login { position: fixed; inset: 0; background: rgba(20,17,38,.8); display: grid; place-items: center; z-index: 500; padding: 16px; }
+    .login form { background: #fff; border-radius: 18px; padding: 26px; width: min(360px, 100%); display: grid; gap: 4px; }
+    .login h2 { font-size: 18px; }
+    .login .btn-primary { margin-top: 12px; }
+
+    @media(max-width:1100px) {
+      .mini-stats { grid-template-columns: repeat(3, minmax(0,1fr)); }
+      .cm-cols { grid-template-columns: minmax(0,1fr); }
+    }
+    @media(max-width:900px) { .stats-row { grid-template-columns: repeat(2,1fr); } }
+    @media(max-width:768px) {
+      .hamburger { display: flex; align-items: center; justify-content: center; }
+      .topbar { padding: 0 14px; gap: 10px; }
+      .topbar-title { font-size: 14px; }
+      .search-wrap { min-width: 0; flex: 1; }
+      .topbar-btn .btn-label { display: none; }
+      .topbar-btn { padding: 8px 10px; }
+      .content { padding: 12px; }
+      .date-row { display: grid; grid-template-columns: minmax(0,1fr); }
+      .btn-today { min-height: 44px; justify-content: center; }
+      .date-box { min-width: 0; flex-wrap: wrap; }
+      .filter-bar { gap: 6px; }
+      .filter-btn, .per-page-select, .btn-reset, .btn-export { font-size: 12px; padding: 7px 11px; }
+      .dropdown { position: fixed; left: 12px; right: 12px; top: auto; min-width: 0; }
+      .cm-modal, .order-modal { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; border-radius: 0; }
+      .cm-head { padding: 14px; }
+      .cm-body, .order-body { padding-left: 14px; padding-right: 14px; }
+      .mini-stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .order-grid { grid-template-columns: minmax(0,1fr); }
+      .order-totals { grid-template-columns: minmax(0,1fr); }
+      .pagination-bar { padding: 10px 14px; flex-direction: column; align-items: flex-start; }
+    }
+    @media(max-width:480px) {
+      .stat-card { padding: 12px 14px; gap: 10px; border-radius: 12px; }
+      .stat-icon { width: 36px; height: 36px; font-size: 16px; border-radius: 9px; }
+      .stat-info .val { font-size: 20px; }
+      .topbar-title span { display: none; }
+      .avatar { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <!-- AB_ADMIN_SIDEBAR -->
+  <div class="main">
+    <div class="topbar">
+      <button class="hamburger" id="menu" aria-label="Open navigation"><i class="fas fa-bars"></i></button>
+      <div class="topbar-title"><i class="fas fa-address-book"></i><span>Customer Manager</span></div>
+      <div class="topbar-spacer"></div>
+      <label class="search-wrap"><i class="fas fa-search"></i><input id="search" type="search" placeholder="Search name / phone…" autocomplete="off" aria-label="Search customers"></label>
+      <button class="topbar-btn" id="refresh" title="Reload with the latest orders"><i class="fas fa-rotate"></i><span class="btn-label">Refresh</span></button>
+      <button class="topbar-btn danger" id="logout"><i class="fas fa-right-from-bracket"></i><span class="btn-label">Logout</span></button>
+    </div>
+
+    <div class="content">
+      <div class="date-row">
+        <div class="date-box">
+          <div class="date-box-icon"><i class="fas fa-calendar-check"></i></div>
+          <div style="flex:1;min-width:200px">
+            <label for="lastFrom">Last delivered purchase</label>
+            <div class="date-inputs"><input type="date" id="lastFrom" aria-label="Last purchase from"><span>—</span><input type="date" id="lastTo" aria-label="Last purchase to"></div>
+          </div>
+          <button class="date-clear" id="clear-dates" title="Clear dates" aria-label="Clear dates"><i class="fas fa-xmark"></i></button>
+        </div>
+        <div class="date-box">
+          <div class="date-box-icon o"><i class="fas fa-bolt"></i></div>
+          <div style="flex:1">
+            <label>Quick select</label>
+            <div class="quick-ranges" id="quick-ranges">
+              <button data-range="0-30">Bought in last 30 days</button>
+              <button data-range="30-90">30–90 days ago</button>
+              <button data-range="90-">No purchase 90+ days</button>
+            </div>
+          </div>
+        </div>
+        <button class="btn-today" id="due-today"><i class="fas fa-bell"></i> Follow-ups due</button>
       </div>
-      <nav>
-        <div class="nav-label">SALES</div>
-        <a href="https://adminsub.amolbooks.com/dashboard"
-          >☷ &nbsp; Orders (Angular)</a
-        ><a href="custom-orders.html">☷ &nbsp; Amolbooks Orders</a
-        ><a href="custom-orders.html?view=incomplete"
-          >◷ &nbsp; Incomplete Order</a
-        ><a href="import-woo-orders.html" data-admin-only
-          >⇥ &nbsp; Import WooCommerce</a
-        ><a class="active" href="customer-manager.html" aria-current="page"
-          >♧ &nbsp; Customer Manager</a
-        >
-        <div class="nav-label">INVENTORY</div>
-        <a href="custom-orders.html?view=stock">▣ &nbsp; Stock Management</a>
-        <div class="nav-label" data-admin-only>ANALYTICS</div>
-        <a href="profit-dashboard.html" data-admin-only
-          >↗ &nbsp; Profit Dashboard</a
-        >
-      </nav>
-      <footer><a href="custom-orders.html">← &nbsp; Back to Orders</a></footer>
-    </aside>
-    <div class="workspace" id="workspace">
-      <main>
-        <header class="heading">
-          <div>
-            <h1>Customer Manager</h1>
-            <p class="muted">Turn previous buyers into repeat customers</p>
-          </div>
-          <div class="heading-actions">
-            <button class="menu" id="menu" aria-label="Toggle navigation">
-              ☰</button
-            ><button class="logout" id="logout">Sign out</button>
-          </div>
-        </header>
-        <div class="stats">
-          <div class="card stat">
-            <span class="stat-icon">♧</span>
-            <div>
-              <small>Delivered customers</small
-              ><strong id="stat-customers">—</strong>
-            </div>
-          </div>
-          <div class="card stat">
-            <span class="stat-icon">♧</span>
-            <div>
-              <small>Never contacted</small><strong id="stat-never">—</strong>
-            </div>
-          </div>
-          <button
-            class="card stat stat-button"
-            id="followed-up-card"
-            type="button"
-            aria-label="View customers followed up"
-          >
-            <span class="stat-icon">✓</span>
-            <div>
-              <small>Customers followed up</small
-              ><strong id="stat-followedUp">—</strong
-              ><small>Unique customers · contact logged</small>
-            </div>
-          </button>
-          <div class="card stat">
-            <span class="stat-icon">▦</span>
-            <div>
-              <small>Follow-ups due</small><strong id="stat-due">—</strong>
-            </div>
+
+      <div class="stats-row">
+        <div class="stat-card c1"><div class="stat-icon"><i class="fas fa-users"></i></div><div class="stat-info"><label>Delivered customers</label><div class="val" id="stat-customers">—</div><small id="stat-repeat">&nbsp;</small></div></div>
+        <div class="stat-card c2"><div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div><div class="stat-info"><label>Delivered sales</label><div class="val" id="stat-spent">—</div><small>From these customers</small></div></div>
+        <button class="stat-card c3" data-tab="due"><div class="stat-icon"><i class="fas fa-bell"></i></div><div class="stat-info"><label>Follow-ups due</label><div class="val" id="stat-due">—</div><small>Due today or overdue</small></div></button>
+        <button class="stat-card c4" data-tab="never"><div class="stat-icon"><i class="fas fa-phone-slash"></i></div><div class="stat-info"><label>Never contacted</label><div class="val" id="stat-never">—</div><small id="stat-followed">&nbsp;</small></div></button>
+      </div>
+
+      <div class="status-tabs" id="tabs" role="tablist"></div>
+
+      <div class="filter-bar" id="filter-bar">
+        <div class="dd-wrap">
+          <button class="filter-btn" data-dd="book"><i class="fas fa-book"></i><span class="val" data-label="book">Book / package</span><i class="fas fa-chevron-down chev"></i></button>
+          <div class="dropdown" id="dd-book"><form class="dropdown-panel" data-panel="product">
+            <label for="f-product">Bought this book / package</label>
+            <input id="f-product" placeholder="Type a book name…" autocomplete="off">
+            <div class="suggestions" id="book-suggestions"></div>
+            <div class="panel-actions"><button type="button" class="btn-sm" data-clear="product">Clear</button><button class="btn-sm primary">Apply</button></div>
+          </form></div>
+        </div>
+        <div class="dd-wrap">
+          <button class="filter-btn" data-dd="category"><i class="fas fa-tags"></i><span class="val" data-label="category">Category</span><i class="fas fa-chevron-down chev"></i></button>
+          <div class="dropdown" id="dd-category"><form class="dropdown-panel" data-panel="category">
+            <label for="f-category">Bought from category</label>
+            <input id="f-category" placeholder="e.g. Islamic, Self development" autocomplete="off">
+            <div class="panel-actions"><button type="button" class="btn-sm" data-clear="category">Clear</button><button class="btn-sm primary">Apply</button></div>
+          </form></div>
+        </div>
+        <div class="dd-wrap">
+          <button class="filter-btn" data-dd="spent"><i class="fas fa-coins"></i><span class="val" data-label="spent">Total spent</span><i class="fas fa-chevron-down chev"></i></button>
+          <div class="dropdown" id="dd-spent"><form class="dropdown-panel" data-panel="spent">
+            <label>Total delivered spending (৳)</label>
+            <div class="panel-row"><input id="f-minSpent" type="number" min="0" placeholder="From" aria-label="Spending from"><input id="f-maxSpent" type="number" min="0" placeholder="To" aria-label="Spending to"></div>
+            <label for="f-minOrderValue">Any single order worth at least (৳)</label>
+            <input id="f-minOrderValue" type="number" min="0" placeholder="Any">
+            <div class="panel-actions"><button type="button" class="btn-sm" data-clear="spent">Clear</button><button class="btn-sm primary">Apply</button></div>
+          </form></div>
+        </div>
+        <div class="dd-wrap">
+          <button class="filter-btn" data-dd="frequency"><i class="fas fa-repeat"></i><span class="val" data-label="frequency">Buyers</span><i class="fas fa-chevron-down chev"></i></button>
+          <div class="dropdown" id="dd-frequency">
+            <button class="dropdown-item" data-set="frequency" data-value="">All buyers</button>
+            <button class="dropdown-item" data-set="frequency" data-value="repeat">Repeat buyers (2+ delivered)</button>
+            <button class="dropdown-item" data-set="frequency" data-value="once">One-time buyers</button>
           </div>
         </div>
-        <form class="card filters" id="filters">
-          <label for="search">Search customers</label
-          ><input
-            id="search"
-            name="q"
-            placeholder="Customer name or phone number…"
-            autocomplete="off"
-          />
-          <div class="filter-grid">
-            <div>
-              <label for="product">Purchased book / package</label
-              ><input
-                list="purchased-book-suggestions"
-                autocomplete="off"
-                id="product"
-                name="product"
-                placeholder="Search purchased books…"
-              /><datalist id="purchased-book-suggestions"></datalist>
-              <small>Type a book name, then apply filters.</small>
-            </div>
-            <div>
-              <label for="category">Product category</label
-              ><input
-                id="category"
-                name="category"
-                placeholder="Any category"
-              />
-            </div>
-            <div>
-              <label for="days">Last purchase</label
-              ><select id="days" name="days">
-                <option value="">Any time</option>
-                <option value="7">Over 7 days ago</option>
-                <option value="30">Over 30 days ago</option>
-                <option value="60">Over 60 days ago</option>
-                <option value="90">Over 90 days ago</option>
-              </select>
-            </div>
-            <div>
-              <label for="status">Contact status</label
-              ><select id="status" name="status">
-                <option value="">All contactable customers</option>
-                <option value="never">Never contacted</option>
-                <option value="contacted">Already followed up</option>
-                <option value="due">Follow-up due</option>
-                <option value="interested">Interested</option>
-                <option value="no_answer">No answer</option>
-                <option value="follow_up">Follow up later</option>
-                <option value="ordered">Ordered</option>
-                <option value="dont_contact">Don't contact</option>
-              </select>
-            </div>
-          </div>
-          <details class="more">
-            <summary>Spending &amp; purchase frequency</summary>
-            <div class="filter-grid">
-              <div>
-                <label for="minSpent">Total spent from (৳)</label
-                ><input
-                  id="minSpent"
-                  name="minSpent"
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                />
-              </div>
-              <div>
-                <label for="maxSpent">Total spent up to (৳)</label
-                ><input
-                  id="maxSpent"
-                  name="maxSpent"
-                  type="number"
-                  min="0"
-                  placeholder="Any amount"
-                />
-              </div>
-              <div>
-                <label for="minOrderValue">Any order worth at least (৳)</label
-                ><input
-                  id="minOrderValue"
-                  name="minOrderValue"
-                  type="number"
-                  min="0"
-                  placeholder="Any order value"
-                />
-              </div>
-              <div>
-                <label for="frequency">Purchase frequency</label
-                ><select id="frequency" name="frequency">
-                  <option value="">All buyers</option>
-                  <option value="once">One-time buyers</option>
-                  <option value="repeat">Repeat buyers</option>
-                </select>
-              </div>
-            </div>
-          </details>
-          <div style="display: flex; gap: 8px; margin-top: 14px">
-            <button class="primary" type="submit">Apply filters</button
-            ><button type="button" id="reset-filters">Reset</button>
-          </div>
-        </form>
-        <div class="chips">
-          <button data-status="" class="active">All customers</button
-          ><button data-status="contacted">Already followed up</button
-          ><button data-status="never">Never contacted</button
-          ><button data-status="due">Follow-up due</button
-          ><select id="sort" aria-label="Sort customers">
-            <option value="recent">Latest purchase first</option>
-            <option value="spent">Highest spending first</option>
-          </select>
-        </div>
-        <p id="notice" class="notice" role="status" aria-live="polite"></p>
-        <section class="card table-card">
-          <div class="table-title">
-            <h2 id="list-title">Customers</h2>
-            <p class="muted">
-              Based on delivered orders · One row per phone number
-            </p>
-          </div>
-          <div class="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>CUSTOMER</th>
-                  <th>ORDERS / SPENT</th>
-                  <th>LAST PURCHASE</th>
-                  <th>CONTACT STATUS</th>
-                  <th>ACTIONS</th>
-                </tr>
-              </thead>
-              <tbody id="rows">
-                <tr>
-                  <td colspan="5" class="empty">Loading customers…</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="pagination">
-            <span id="range">—</span>
-            <div class="pager">
-              <button id="previous" aria-label="Previous page">‹</button
-              ><span id="page">1</span
-              ><button id="next" aria-label="Next page">›</button>
-            </div>
-          </div>
-        </section>
-        <p class="footnote">
-          Cancelled, returned, refunded and partial deliveries are excluded.
-          Category filters use saved order categories, with current catalog
-          categories as a fallback. Invalid phone numbers are excluded.
-        </p>
-      </main>
-      <section class="drawer" id="drawer" aria-label="Customer details" hidden>
-        <div class="drawer-head">
-          <div>
-            <h2 id="customer-name"></h2>
-            <p class="muted" id="customer-phone"></p>
-          </div>
-          <button class="close" id="close" aria-label="Close customer details">
-            ×
-          </button>
-        </div>
-        <div class="contact-actions" id="contact-actions"></div>
-        <div class="address-card">
-          <small>Customer address</small>
-          <div id="customer-address"></div>
-        </div>
-        <button
-          class="primary create-order-button"
-          id="create-order"
-          type="button"
-        >
-          ＋ Create Order
-        </button>
-        <div class="mini-stats">
-          <div>
-            <small>Delivered orders</small
-            ><strong id="customer-orders"></strong>
-          </div>
-          <div>
-            <small>Total spent</small><strong id="customer-spent"></strong>
+        <div class="dd-wrap">
+          <button class="filter-btn" data-dd="ratio"><i class="fas fa-percent"></i><span class="val" data-label="ratio">Order ratio</span><i class="fas fa-chevron-down chev"></i></button>
+          <div class="dropdown" id="dd-ratio">
+            <button class="dropdown-item" data-set="ratio" data-value="">Any order ratio</button>
+            <button class="dropdown-item" data-set="ratio" data-value="good"><span class="ratio-chip low">80%+</span> Reliable</button>
+            <button class="dropdown-item" data-set="ratio" data-value="mid"><span class="ratio-chip mid">50–79%</span> Mixed</button>
+            <button class="dropdown-item" data-set="ratio" data-value="low"><span class="ratio-chip high">&lt;50%</span> Risky</button>
           </div>
         </div>
-        <p class="footnote" id="customer-ratio"></p>
-        <div class="tabs" role="tablist">
-          <button role="tab" data-tab="history" aria-selected="false">
-            History</button
-          ><button
-            role="tab"
-            data-tab="contact"
-            class="active"
-            aria-selected="true"
-          >
-            Contact</button
-          ><button role="tab" data-tab="followup" aria-selected="false">
-            Follow-up
-          </button>
+        <div class="dd-wrap">
+          <button class="filter-btn" data-dd="sort"><i class="fas fa-arrow-down-wide-short"></i><span class="val" data-label="sort">Latest purchase</span><i class="fas fa-chevron-down chev"></i></button>
+          <div class="dropdown" id="dd-sort">
+            <button class="dropdown-item" data-set="sort" data-value="recent">Latest purchase first</button>
+            <button class="dropdown-item" data-set="sort" data-value="spent">Highest spending first</button>
+            <button class="dropdown-item" data-set="sort" data-value="orders">Most delivered orders</button>
+            <button class="dropdown-item" data-set="sort" data-value="ratio">Best order ratio</button>
+            <button class="dropdown-item" data-set="sort" data-value="followup">Next follow-up first</button>
+          </div>
         </div>
-        <div id="tab-history" role="tabpanel" hidden>
-          <h3>Delivered order history</h3>
-          <div id="orders"></div>
-          <h3 class="section">Contact history</h3>
-          <div id="history"></div>
-          <p class="footnote">
-            Showing the latest 50 orders and contact entries.
-          </p>
+        <select class="per-page-select" id="page-size" aria-label="Customers per page">
+          <option value="20">20 / page</option><option value="50">50 / page</option><option value="100">100 / page</option>
+        </select>
+        <div class="spacer"></div>
+        <button class="btn-reset" id="reset"><i class="fas fa-rotate-left"></i> Reset</button>
+        <button class="btn-export" id="export" hidden><i class="fas fa-file-export"></i> Export</button>
+      </div>
+      <p class="notice" id="notice" role="status" aria-live="polite"></p>
+
+      <div class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Customer</th><th>Phone</th><th>Address</th><th>Last purchase</th><th>Delivered</th><th>Total spent</th><th>Order ratio</th><th>Courier ratio</th><th>Status</th><th>Next follow-up</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
         </div>
-        <div id="tab-contact" role="tabpanel">
-          <h3>Recent purchases</h3>
-          <div id="purchases"></div>
-          <div class="section">
-            <label for="template">Message template</label
-            ><select id="template">
+        <div class="pagination-bar"><span class="pagination-info" id="range">—</span><div class="pagination-controls" id="pager"></div></div>
+      </div>
+      <p class="footnote" id="footnote"></p>
+    </div>
+  </div>
+
+  <dialog class="cm-modal" id="customer-dialog" aria-labelledby="cm-name">
+    <div class="cm-head">
+      <div class="avatar" id="cm-avatar">—</div>
+      <div style="flex:1;min-width:0">
+        <h2 id="cm-name">Customer</h2>
+        <div class="sub"><a id="cm-phone" href="#"></a><span id="cm-address"></span><span id="cm-status"></span></div>
+      </div>
+      <button class="icon-btn" id="cm-prev" title="Previous customer" aria-label="Previous customer"><i class="fas fa-chevron-left"></i></button>
+      <button class="icon-btn" id="cm-next" title="Next customer" aria-label="Next customer"><i class="fas fa-chevron-right"></i></button>
+      <button class="icon-btn" id="cm-close" title="Close" aria-label="Close"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="cm-body">
+      <div class="cm-quick" id="cm-quick"></div>
+      <div class="mini-stats">
+        <div class="mini"><label>Delivered orders</label><strong id="cm-orders">—</strong></div>
+        <div class="mini"><label>Total spent</label><strong id="cm-spent">—</strong></div>
+        <div class="mini"><label>Average order</label><strong id="cm-avg">—</strong></div>
+        <div class="mini"><label>Last purchase</label><strong id="cm-last">—</strong></div>
+        <div class="mini"><label>Order ratio</label><div id="cm-ratio">—</div></div>
+        <div class="mini"><label>Courier ratio</label><div id="cm-courier">—</div></div>
+      </div>
+      <div class="cm-cols">
+        <form class="panel" id="contact-form">
+          <h3><i class="fas fa-headset"></i> Log this contact</h3>
+          <div id="cm-blocked" class="blocked-note" hidden>This customer asked not to be contacted. Choose another outcome only if they agreed again.</div>
+          <span class="field-label">What happened?</span>
+          <div class="chip-group" id="outcomes"></div>
+          <span class="field-label">Channel</span>
+          <div class="chip-group" id="channels">
+            <input type="radio" name="channel" id="ch-call" value="call" checked><label for="ch-call"><i class="fas fa-phone"></i> Call</label>
+            <input type="radio" name="channel" id="ch-whatsapp" value="whatsapp"><label for="ch-whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</label>
+            <input type="radio" name="channel" id="ch-other" value="other"><label for="ch-other"><i class="fas fa-ellipsis"></i> Other</label>
+          </div>
+          <label class="field-label" for="note">Note</label>
+          <textarea id="note" rows="3" maxlength="2000" placeholder="What did the customer say?"></textarea>
+          <label class="field-label" for="followup">Next follow-up</label>
+          <div class="fu-row"><input class="text-input" type="date" id="followup"><span class="fu-hint" id="fu-hint"></span></div>
+          <div class="save-row">
+            <button class="btn-primary" id="save" type="submit"><i class="fas fa-check"></i> Save</button>
+            <button class="btn-secondary" id="save-next" type="button">Save &amp; next customer <i class="fas fa-arrow-right"></i></button>
+          </div>
+          <p class="form-status" id="save-status" role="status" aria-live="polite"></p>
+          <details class="msg" id="msg-box">
+            <summary><i class="fab fa-whatsapp"></i> WhatsApp message templates</summary>
+            <select class="text-input" id="template" style="margin-top:10px" aria-label="Message template">
               <option value="related">Related book recommendation</option>
               <option value="arrival">New arrival</option>
-              <option value="offer">Repeat-customer offer</option></select
-            ><label for="message" style="margin-top: 12px"
-              >Review and personalize your message</label
-            ><textarea
-              id="message"
-              rows="6"
-              maxlength="4000"
-              lang="bn"
-            ></textarea
-            ><a
-              class="action whatsapp"
-              id="open-whatsapp"
-              target="_blank"
-              rel="noopener noreferrer"
-              style="display: block; text-align: center; margin-top: 12px"
-              >Open in WhatsApp</a
-            ><button class="wide" id="copy" type="button">Copy message</button>
-            <p class="footnote">
-              Review before sending. Opening WhatsApp does not send or log a
-              message.
-            </p>
-          </div>
-        </div>
-        <div id="tab-followup" role="tabpanel" hidden>
-          <h3>Next follow-up</h3>
-          <p class="muted" id="followup-summary"></p>
-        </div>
-        <form class="section log-form" id="contact-form">
-          <h3>Log this contact</h3>
-          <div class="form-grid">
-            <div>
-              <label for="outcome">Outcome</label
-              ><select id="outcome" required>
-                <option value="interested">Interested</option>
-                <option value="no_answer">No answer</option>
-                <option value="follow_up">Follow up later</option>
-                <option value="ordered">Ordered</option>
-                <option value="dont_contact">Don't contact</option>
-              </select>
+              <option value="offer">Repeat-customer offer</option>
+            </select>
+            <textarea id="message" rows="5" maxlength="4000" lang="bn" style="margin-top:8px" aria-label="Message"></textarea>
+            <div class="msg-actions">
+              <a class="btn-action btn-wa" id="open-whatsapp" target="_blank" rel="noopener noreferrer"><i class="fab fa-whatsapp"></i> Open in WhatsApp</a>
+              <button class="btn-action btn-open" id="copy" type="button"><i class="fas fa-copy"></i> Copy</button>
             </div>
-            <div>
-              <label for="channel">Channel</label
-              ><select id="channel">
-                <option value="call">Call</option>
-                <option value="whatsapp">WhatsApp</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-          </div>
-          <label for="note">Notes</label
-          ><textarea
-            id="note"
-            rows="2"
-            maxlength="2000"
-            placeholder="What did the customer say?"
-          ></textarea
-          ><label for="followup" style="margin-top: 12px"
-            >Next follow-up (optional)</label
-          ><input id="followup" type="date" /><button
-            class="wide primary"
-            id="save"
-            type="submit"
-          >
-            Save contact &amp; follow-up
-          </button>
-          <p
-            class="form-status"
-            id="save-status"
-            role="status"
-            aria-live="polite"
-          ></p>
-          <p class="footnote" id="last-contact"></p>
+            <p class="fu-hint" style="margin-top:6px">Opening WhatsApp does not send or log anything. Save the contact after you talk.</p>
+          </details>
         </form>
-      </section>
-    </div>
-    <div class="login" id="login" hidden>
-      <form id="login-form">
-        <h2>Amolbooks Customer Manager</h2>
-        <p class="muted">Sign in with your admin or Sales Man account.</p>
-        <label for="username">Username</label
-        ><input id="username" autocomplete="username" required /><label
-          for="password"
-          >Password</label
-        ><input
-          id="password"
-          type="password"
-          autocomplete="current-password"
-          required
-        /><button id="login-button" class="primary">Sign in</button>
-        <p id="login-status" class="form-status" role="status"></p>
-      </form>
-    </div>
-    <dialog
-      class="order-dialog"
-      id="order-dialog"
-      aria-labelledby="order-title"
-    >
-      <div class="order-header">
-        <div>
-          <h2 id="order-title">Create customer order</h2>
-          <p class="muted" style="margin-top: 5px">
-            Customer details are prefilled. Add products to continue.
-          </p>
+        <div class="panel">
+          <div class="seg" role="tablist">
+            <button type="button" class="active" data-pane="orders">Orders</button>
+            <button type="button" data-pane="contacts">Contact history</button>
+          </div>
+          <div class="list" id="pane-orders"></div>
+          <div class="list" id="pane-contacts" hidden></div>
         </div>
-        <button
-          id="order-close"
-          class="close"
-          type="button"
-          aria-label="Close order form"
-        >
-          ×
-        </button>
       </div>
-      <form id="order-form" class="order-body">
-        <div class="order-fields">
-          <div>
-            <label for="order-name">Customer name</label
-            ><input id="order-name" maxlength="200" required />
-          </div>
-          <div>
-            <label for="order-phone">Phone</label
-            ><input id="order-phone" readonly />
-          </div>
-          <div class="full">
-            <label for="order-address">Delivery address</label
-            ><textarea
-              id="order-address"
-              rows="2"
-              maxlength="2000"
-              required
-            ></textarea>
-          </div>
-          <div>
-            <label for="order-city">City / area</label
-            ><input id="order-city" maxlength="200" />
-          </div>
-          <div>
-            <label for="order-email">Email (optional)</label
-            ><input id="order-email" type="email" maxlength="200" />
-          </div>
-        </div>
-        <h3>Add products</h3>
-        <label for="order-search" style="margin-top: 12px"
-          >Search by book name or SKU</label
-        >
-        <div class="product-search">
-          <input
-            id="order-search"
-            placeholder="Type at least two characters…"
-            autocomplete="off"
-          /><button id="order-search-button" type="button">Search</button>
-        </div>
-        <div
-          id="order-search-results"
-          class="product-results"
-          aria-live="polite"
-        ></div>
-        <div id="order-items"><p class="empty">No products added yet.</p></div>
-        <div class="order-fields">
-          <div>
-            <label for="order-delivery">Delivery charge (৳)</label
-            ><input
-              id="order-delivery"
-              type="number"
-              min="0"
-              max="10000"
-              step="0.01"
-              required
-            /><small
-              >Copied from the last delivered order. Adjust if needed.</small
-            >
-          </div>
-          <div>
-            <label for="order-payment">Payment type</label
-            ><select id="order-payment">
-              <option value="cash_on_delivery">Cash on Delivery</option>
-              <option value="bkash">bKash</option>
-              <option value="nagad">Nagad</option>
-              <option value="card">Card</option>
-              <option value="online_payment">Online payment</option>
-            </select>
-          </div>
-          <div>
-            <label for="order-source">Order received through</label
-            ><select id="order-source">
-              <option value="phone">Phone call</option>
-              <option value="whatsapp">WhatsApp</option>
-            </select>
-          </div>
-        </div>
-        <div class="order-totals">
-          <div>
-            <small>Products</small><strong id="order-subtotal">৳0</strong>
-          </div>
-          <div>
-            <small>Delivery</small><strong id="order-delivery-total">৳0</strong>
-          </div>
-          <div>
-            <small>Estimated total</small><strong id="order-total">৳0</strong>
-          </div>
-        </div>
-        <div class="order-footer">
-          <small class="muted"
-            >Creates a new unpaid order in Amolbooks Orders.</small
-          ><button id="order-submit" class="primary" type="submit">
-            Create Order
-          </button>
-        </div>
-        <p
-          id="order-status"
-          class="form-status"
-          role="status"
-          aria-live="polite"
-        ></p>
-        <div id="order-success" class="order-success" hidden></div>
-      </form>
-    </dialog>
-    <script>
-      (function () {
-        'use strict';
-        // Same-origin on local previews; production uses the current API environment.
-        const API_BASE = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(
-          location.hostname
-        )
-          ? location.origin
-          : 'https://apisub.amolbooks.com';
-        const $ = (id) => document.getElementById(id),
-          esc = (v) =>
-            String(v == null ? '' : v).replace(
-              /[&<>"']/g,
-              (c) =>
-                ({
-                  '&': '&amp;',
-                  '<': '&lt;',
-                  '>': '&gt;',
-                  '"': '&quot;',
-                  "'": '&#39;',
-                }[c])
-            );
-        const money = (v) => '৳' + Number(v || 0).toLocaleString('en-BD'),
-          date = (v) =>
-            v
-              ? new Date(
-                  v.length === 10 ? v + 'T12:00:00+06:00' : v
-                ).toLocaleDateString('en-GB', {
-                  timeZone: 'Asia/Dhaka',
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric',
-                })
-              : '—';
-        const today = () =>
-          new Date(Date.now() + 21600000).toISOString().slice(0, 10);
-        const labels = {
-          interested: 'Interested',
-          no_answer: 'No answer',
-          follow_up: 'Follow up later',
-          ordered: 'Ordered',
-          dont_contact: "Don't contact",
-          never: 'Never contacted',
-          due: 'Follow-up due',
-        };
-        let page = 1,
-          listData = null,
-          selected = null,
-          listController = null,
-          detailController = null,
-          saving = false;
-        function token() {
-          return localStorage.getItem('co_admin_token') || '';
+    </div>
+  </dialog>
+
+  <dialog class="order-modal" id="order-dialog" aria-labelledby="order-title">
+    <div class="cm-head">
+      <div class="avatar"><i class="fas fa-cart-plus"></i></div>
+      <div style="flex:1"><h2 id="order-title">Create order</h2><div class="sub">Customer details are prefilled from the last delivered order.</div></div>
+      <button class="icon-btn" id="order-close" type="button" aria-label="Close order form"><i class="fas fa-xmark"></i></button>
+    </div>
+    <form class="order-body" id="order-form">
+      <div class="order-grid">
+        <div><label class="field-label" for="order-name">Customer name</label><input class="text-input" id="order-name" maxlength="200" required></div>
+        <div><label class="field-label" for="order-phone">Phone</label><input class="text-input" id="order-phone" readonly></div>
+        <div class="full"><label class="field-label" for="order-address">Delivery address</label><textarea id="order-address" rows="2" maxlength="2000" required></textarea></div>
+        <div><label class="field-label" for="order-city">City / area</label><input class="text-input" id="order-city" maxlength="200"></div>
+        <div><label class="field-label" for="order-email">Email (optional)</label><input class="text-input" id="order-email" type="email" maxlength="200"></div>
+      </div>
+      <label class="field-label" for="order-search">Add products</label>
+      <div class="product-search"><input class="text-input" id="order-search" placeholder="Search book name or SKU…" autocomplete="off"><button class="btn-secondary" id="order-search-button" type="button">Search</button></div>
+      <div class="product-results" id="order-search-results" aria-live="polite"></div>
+      <div class="order-items" id="order-items"></div>
+      <div class="order-grid">
+        <div><label class="field-label" for="order-delivery">Delivery charge (৳)</label><input class="text-input" id="order-delivery" type="number" min="0" max="10000" step="0.01" required></div>
+        <div><label class="field-label" for="order-payment">Payment type</label><select class="text-input" id="order-payment">
+          <option value="cash_on_delivery">Cash on Delivery</option><option value="bkash">bKash</option><option value="nagad">Nagad</option><option value="card">Card</option><option value="online_payment">Online payment</option>
+        </select></div>
+        <div><label class="field-label" for="order-source">Order received through</label><select class="text-input" id="order-source"><option value="phone">Phone call</option><option value="whatsapp">WhatsApp</option></select></div>
+      </div>
+      <div class="order-totals">
+        <div class="mini"><label>Products</label><strong id="order-subtotal">৳0</strong></div>
+        <div class="mini"><label>Delivery</label><strong id="order-delivery-total">৳0</strong></div>
+        <div class="mini"><label>Estimated total</label><strong id="order-total">৳0</strong></div>
+      </div>
+      <div class="save-row"><button class="btn-primary" id="order-submit" type="submit"><i class="fas fa-check"></i> Create order</button><span class="fu-hint">Creates a new unpaid order in Amolbooks Orders.</span></div>
+      <p class="form-status" id="order-status" role="status" aria-live="polite"></p>
+      <div class="order-success" id="order-success" hidden></div>
+    </form>
+  </dialog>
+
+  <div class="login" id="login" hidden>
+    <form id="login-form">
+      <h2>Customer Manager</h2>
+      <p class="fu-hint">Sign in with your admin or Sales Man account.</p>
+      <label class="field-label" for="username">Username</label><input class="text-input" id="username" autocomplete="username" required>
+      <label class="field-label" for="password">Password</label><input class="text-input" id="password" type="password" autocomplete="current-password" required>
+      <button class="btn-primary" id="login-button">Sign in</button>
+      <p class="form-status error" id="login-status" role="status"></p>
+    </form>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+      // Same-origin on local previews; production uses the current API environment.
+      const API_BASE = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) ? location.origin : 'https://apisub.amolbooks.com';
+      const $ = (id) => document.getElementById(id);
+      const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+      const money = (v) => '৳' + Math.round(Number(v || 0)).toLocaleString('en-US');
+      const today = () => new Date(Date.now() + 21600000).toISOString().slice(0, 10);
+      const addDays = (day, n) => { const d = new Date(day + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+      const fmtDate = (v) => v ? new Date(String(v).length === 10 ? v + 'T12:00:00+06:00' : v).toLocaleDateString('en-GB', { timeZone: 'Asia/Dhaka', day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+      const daysAgo = (v) => { if (!v) return ''; const n = Math.floor((Date.now() - new Date(v).getTime()) / 86400000); return n <= 0 ? 'today' : n === 1 ? 'yesterday' : n + ' days ago'; };
+      const OUTCOMES = [
+        ['interested', 'Interested', 'fa-face-smile'], ['not_interested', 'Not interested', 'fa-face-meh'],
+        ['no_answer', 'No answer', 'fa-phone-slash'], ['follow_up', 'Follow up later', 'fa-clock'],
+        ['ordered', 'Ordered', 'fa-bag-shopping'], ['dont_contact', "Don't contact", 'fa-ban'],
+      ];
+      const LABELS = Object.fromEntries(OUTCOMES.map(([v, l]) => [v, l]));
+      LABELS.never = 'Never contacted'; LABELS.due = 'Follow-up due';
+      const TABS = [['', 'All'], ['never', 'Never contacted'], ['due', 'Follow-up due'], ['interested', 'Interested'], ['follow_up', 'Follow up later'], ['no_answer', 'No answer'], ['ordered', 'Ordered'], ['not_interested', 'Not interested'], ['dont_contact', "Don't contact"]];
+      const ORDER_STATUS = { 0: 'Pending', 1: 'Pending', 2: 'Confirmed', 3: 'Processing', 4: 'Shipping', 5: 'Completed', 6: 'Cancelled', 7: 'Refunded', 8: 'Courier', 9: 'Returned', 10: 'Trash' };
+      const SORT_LABELS = { recent: 'Latest purchase', spent: 'Highest spending', orders: 'Most orders', ratio: 'Best ratio', followup: 'Next follow-up' };
+      const FILTERS = ['q', 'status', 'lastFrom', 'lastTo', 'product', 'category', 'minSpent', 'maxSpent', 'minOrderValue', 'frequency', 'ratio', 'sort', 'pageSize', 'page'];
+      const DEFAULTS = { q: '', status: '', lastFrom: '', lastTo: '', product: '', category: '', minSpent: '', maxSpent: '', minOrderValue: '', frequency: '', ratio: '', sort: 'recent', pageSize: '20', page: '1' };
+      // Filters live in the address bar, so a reload or shared link keeps them.
+      const state = Object.assign({}, DEFAULTS);
+      new URLSearchParams(location.search).forEach((value, key) => { if (key in DEFAULTS) state[key] = value; });
+      let data = null, rules = { no_answer: 1, interested: 2, follow_up: 7, ordered: 30, not_interested: 90 };
+      let current = null, listController = null, detailController = null, saving = false, searchTimer = null, followupTouched = false;
+
+      function token() { return localStorage.getItem('co_admin_token') || ''; }
+      function role() { try { return JSON.parse(atob(token().split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).role || ''; } catch (_) { return ''; } }
+      async function request(path, options = {}) {
+        const response = await fetch(API_BASE + path, { ...options, headers: { 'Content-Type': 'application/json', administrator: token(), ...(options.headers || {}) } });
+        let payload;
+        try { payload = await response.json(); } catch (_) { throw new Error('The server did not answer. Please try again.'); }
+        if (!response.ok || payload.success === false) {
+          if (response.status === 401) { closeDialogs(); $('login').hidden = false; $('login-status').textContent = 'Please sign in again.'; }
+          throw new Error((Array.isArray(payload.message) ? payload.message.join(' ') : payload.message) || 'Request failed');
         }
-        function roleMode() {
-          let role = '';
+        return payload.data || payload;
+      }
+      function query(extra) {
+        const params = new URLSearchParams();
+        FILTERS.forEach((key) => { if (state[key] !== '') params.set(key, state[key]); });
+        Object.entries(extra || {}).forEach(([k, v]) => params.set(k, v));
+        return params;
+      }
+      function syncUrl() {
+        const params = new URLSearchParams();
+        FILTERS.forEach((key) => { if (state[key] !== DEFAULTS[key]) params.set(key, state[key]); });
+        history.replaceState(null, '', location.pathname + (params.toString() ? '?' + params : ''));
+      }
+      function contactStatus(contact) {
+        if (!contact) return 'never';
+        if (contact.outcome === 'dont_contact') return 'dont_contact';
+        return contact.nextFollowUp && contact.nextFollowUp <= today() ? 'due' : contact.outcome;
+      }
+      function statusBadge(contact) { const s = contactStatus(contact); return '<span class="badge b-' + esc(s) + '">' + esc(LABELS[s] || s) + '</span>'; }
+      function ratioChip(delivered, total, failed, ratio) {
+        const cls = ratio >= 80 ? 'low' : ratio >= 50 ? 'mid' : 'high';
+        return '<span class="ratio-chip ' + cls + '" title="' + delivered + ' delivered of ' + total + (failed ? ', ' + failed + ' cancelled/returned' : '') + '">All:<strong>' + total + '</strong> ✓<strong>' + delivered + '</strong> ✗<strong>' + failed + '</strong><br><strong>' + Number(ratio).toFixed(1) + '%</strong></span>';
+      }
+      function storeRatio(c) { return ratioChip(c.orderCount, c.totalOrderCount, c.failedCount || 0, c.ratio != null ? c.ratio : (c.orderCount / c.totalOrderCount) * 100); }
+      function courierRatio(r) { return r ? ratioChip(r.delivered, r.total, r.returned, r.ratio) : '<span class="muted">Not checked</span>'; }
+      function followupCell(contact) {
+        if (!contact || !contact.nextFollowUp || contact.outcome === 'dont_contact') return '<span class="muted">—</span>';
+        const d = contact.nextFollowUp, t = today();
+        return '<span class="fu ' + (d < t ? 'overdue' : d === t ? 'today' : '') + '">' + (d === t ? 'Today' : fmtDate(d)) + '</span>';
+      }
+      const waNumber = (phone) => '880' + phone.slice(1);
+
+      /* ── List ── */
+      function skeleton() {
+        $('rows').innerHTML = Array.from({ length: 6 }, () => '<tr>' + Array.from({ length: 11 }, () => '<td><div class="skel"></div></td>').join('') + '</tr>').join('');
+      }
+      async function load(options = {}) {
+        if (listController) listController.abort();
+        const controller = (listController = new AbortController());
+        if (!data || options.skeleton) skeleton();
+        $('notice').textContent = '';
+        syncUrl();
+        renderControls();
+        try {
+          const result = await request('/api/customer-manager?' + query(options.refresh ? { refresh: '1' } : null), { signal: controller.signal });
+          if (controller !== listController) return;
+          data = result;
+          rules = result.followUpRules || rules;
+          state.page = String(result.page);
+          render();
+        } catch (error) {
+          if (error.name === 'AbortError' || controller !== listController) return;
+          $('notice').textContent = error.message;
+          if (!data) $('rows').innerHTML = '<tr class="empty-row"><td colspan="11">Could not load customers. Press Refresh to try again.</td></tr>';
+        } finally {
+          if (controller === listController) $('refresh').classList.remove('spin');
+        }
+      }
+      function render() {
+        const s = data.summary;
+        $('stat-customers').textContent = s.customers.toLocaleString();
+        $('stat-repeat').textContent = s.repeat.toLocaleString() + ' repeat buyers';
+        $('stat-spent').textContent = money(s.spent);
+        $('stat-due').textContent = s.due.toLocaleString();
+        $('stat-never').textContent = s.never.toLocaleString();
+        $('stat-followed').textContent = s.followedUp.toLocaleString() + ' already contacted';
+        $('tabs').innerHTML = TABS.map(([value, label]) => {
+          const count = value ? data.tabs[value] || 0 : data.tabs.all;
+          return '<button class="status-tab' + (state.status === value ? ' active' : '') + '" role="tab" aria-selected="' + (state.status === value) + '" data-tab="' + value + '">' + esc(label) + '<span class="tab-count">' + count.toLocaleString() + '</span></button>';
+        }).join('');
+        $('rows').innerHTML = data.rows.length ? data.rows.map(rowHtml).join('') : '<tr class="empty-row"><td colspan="11"><i class="fas fa-users-slash" style="font-size:22px;display:block;margin-bottom:8px;color:#cbd5e1"></i>No customers match these filters.</td></tr>';
+        const size = data.pageSize, page = data.page, total = data.total, pages = Math.max(1, Math.ceil(total / size));
+        $('range').textContent = total ? 'Showing ' + ((page - 1) * size + 1).toLocaleString() + ' – ' + Math.min(page * size, total).toLocaleString() + ' of ' + total.toLocaleString() + ' customers' : 'No customers';
+        let pager = '<button class="page-btn" data-page="' + (page - 1) + '"' + (page <= 1 ? ' disabled' : '') + ' aria-label="Previous page"><i class="fas fa-chevron-left"></i></button>';
+        const start = Math.max(1, page - 2), end = Math.min(pages, page + 2);
+        if (start > 1) pager += '<button class="page-btn" data-page="1">1</button>' + (start > 2 ? '<span class="page-ellipsis">…</span>' : '');
+        for (let p = start; p <= end; p++) pager += '<button class="page-btn' + (p === page ? ' active' : '') + '" data-page="' + p + '">' + p + '</button>';
+        if (end < pages) pager += (end < pages - 1 ? '<span class="page-ellipsis">…</span>' : '') + '<button class="page-btn" data-page="' + pages + '">' + pages + '</button>';
+        pager += '<button class="page-btn" data-page="' + (page + 1) + '"' + (page >= pages ? ' disabled' : '') + ' aria-label="Next page"><i class="fas fa-chevron-right"></i></button>';
+        $('pager').innerHTML = pager;
+        $('footnote').textContent = 'Only customers with at least one delivered order. Order ratio = delivered ÷ all orders from this phone (✗ = cancelled / returned). Courier ratio = the saved courier check across all couriers. Updated ' + new Date(data.updatedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + '.';
+      }
+      function rowHtml(c) {
+        const s = contactStatus(c.latestContact), blocked = s === 'dont_contact';
+        return '<tr class="st-' + esc(s) + '" data-phone="' + esc(c.phone) + '">' +
+          '<td><button class="cust-name" type="button">' + esc(c.name || 'Customer') + '</button>' + (c.books && c.books.length ? '<span class="cell-sub" title="' + esc(c.books.join(', ')) + '"><i class="fas fa-book"></i> ' + esc(c.books.join(', ')) + '</span>' : '') + '</td>' +
+          '<td><a class="phone-link" href="tel:' + esc(c.phone) + '"><i class="fas fa-phone" style="font-size:10px"></i> ' + esc(c.phone) + '</a></td>' +
+          '<td><div class="addr">' + esc([c.shippingAddress, c.city].filter(Boolean).join(', ') || '—') + '</div></td>' +
+          '<td class="date-cell">' + fmtDate(c.lastPurchase) + '<br><span class="ago">' + daysAgo(c.lastPurchase) + '</span></td>' +
+          '<td><span class="num">' + c.orderCount + '</span> <span class="muted">of ' + c.totalOrderCount + '</span></td>' +
+          '<td><span class="num">' + money(c.totalSpent) + '</span></td>' +
+          '<td>' + storeRatio(c) + '</td>' +
+          '<td>' + courierRatio(c.courierRatio) + '</td>' +
+          '<td>' + statusBadge(c.latestContact) + (c.latestContact && c.latestContact.contactedByName ? '<span class="cell-sub">by ' + esc(c.latestContact.contactedByName) + ' · ' + fmtDate(c.latestContact.createdAt) + '</span>' : '') + '</td>' +
+          '<td>' + followupCell(c.latestContact) + '</td>' +
+          '<td><div class="row-actions">' + (blocked ? '' : '<a class="btn-action btn-call" href="tel:' + esc(c.phone) + '" title="Call" aria-label="Call ' + esc(c.name) + '"><i class="fas fa-phone"></i></a><a class="btn-action btn-wa" href="https://wa.me/' + waNumber(c.phone) + '" target="_blank" rel="noopener noreferrer" title="WhatsApp" aria-label="WhatsApp ' + esc(c.name) + '"><i class="fab fa-whatsapp"></i></a>') + '<button class="btn-action btn-open" type="button"><i class="fas fa-pen-to-square"></i> Log</button></div></td></tr>';
+      }
+      function renderControls() {
+        if (document.activeElement !== $('search')) $('search').value = state.q;
+        $('lastFrom').value = state.lastFrom; $('lastTo').value = state.lastTo;
+        $('page-size').value = state.pageSize;
+        const set = (key, text, active) => { const el = document.querySelector('[data-label="' + key + '"]'); el.textContent = text; el.closest('.filter-btn').classList.toggle('active', active); };
+        set('book', state.product ? 'Book: ' + state.product : 'Book / package', !!state.product);
+        set('category', state.category ? 'Category: ' + state.category : 'Category', !!state.category);
+        const spent = state.minSpent || state.maxSpent ? '৳' + (state.minSpent || 0) + '–' + (state.maxSpent || '∞') : '';
+        const spentLabel = [spent, state.minOrderValue ? 'order ≥ ৳' + state.minOrderValue : ''].filter(Boolean).join(' · ');
+        set('spent', spentLabel || 'Total spent', !!spentLabel);
+        set('frequency', { repeat: 'Repeat buyers', once: 'One-time buyers' }[state.frequency] || 'Buyers', !!state.frequency);
+        set('ratio', { good: 'Ratio 80%+', mid: 'Ratio 50–79%', low: 'Ratio below 50%' }[state.ratio] || 'Order ratio', !!state.ratio);
+        set('sort', SORT_LABELS[state.sort] || SORT_LABELS.recent, false);
+        document.querySelectorAll('[data-set]').forEach((el) => el.classList.toggle('sel', state[el.dataset.set] === el.dataset.value));
+        document.querySelectorAll('#quick-ranges [data-range]').forEach((el) => el.classList.toggle('active', rangeOf(el.dataset.range).join() === [state.lastFrom, state.lastTo].join()));
+        $('export').hidden = !['super_admin', 'admin'].includes(role());
+      }
+      function rangeOf(spec) {
+        const [a, b] = spec.split('-');
+        return [b ? addDays(today(), -Number(b)) : '', a === '0' ? today() : addDays(today(), -Number(a))];
+      }
+      function apply(changes) { Object.assign(state, changes, { page: '1' }); closeDropdowns(); load(); }
+
+      /* ── Filter bar ── */
+      function closeDropdowns(except) { document.querySelectorAll('.dropdown.open').forEach((d) => { if (d !== except) d.classList.remove('open'); }); }
+      $('filter-bar').addEventListener('click', (event) => {
+        const toggle = event.target.closest('[data-dd]');
+        if (toggle) {
+          const dd = $('dd-' + toggle.dataset.dd);
+          closeDropdowns(dd);
+          dd.classList.toggle('open');
+          if (dd.classList.contains('open')) {
+            $('f-product').value = state.product; $('f-category').value = state.category;
+            $('f-minSpent').value = state.minSpent; $('f-maxSpent').value = state.maxSpent; $('f-minOrderValue').value = state.minOrderValue;
+            const input = dd.querySelector('input'); if (input) input.focus();
+          }
+          return;
+        }
+        const item = event.target.closest('[data-set]');
+        if (item) return apply({ [item.dataset.set]: item.dataset.value });
+        const clear = event.target.closest('[data-clear]');
+        if (clear) return apply(clear.dataset.clear === 'spent' ? { minSpent: '', maxSpent: '', minOrderValue: '' } : { [clear.dataset.clear]: '' });
+        const suggestion = event.target.closest('[data-book]');
+        if (suggestion) return apply({ product: suggestion.dataset.book });
+      });
+      $('filter-bar').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const panel = event.target.dataset.panel;
+        if (panel === 'product') apply({ product: $('f-product').value.trim() });
+        if (panel === 'category') apply({ category: $('f-category').value.trim() });
+        if (panel === 'spent') {
+          const min = $('f-minSpent').value, max = $('f-maxSpent').value;
+          if (min && max && Number(min) > Number(max)) { $('notice').textContent = 'Spending "From" must not be more than "To".'; return; }
+          apply({ minSpent: min, maxSpent: max, minOrderValue: $('f-minOrderValue').value });
+        }
+      });
+      document.addEventListener('click', (event) => { if (!event.target.closest('.dd-wrap')) closeDropdowns(); });
+      let bookTimer, bookController;
+      $('f-product').addEventListener('input', () => {
+        clearTimeout(bookTimer);
+        const term = $('f-product').value.trim();
+        if (term.length < 2) { $('book-suggestions').innerHTML = ''; return; }
+        bookTimer = setTimeout(async () => {
+          if (bookController) bookController.abort();
+          const controller = (bookController = new AbortController());
           try {
-            role = JSON.parse(
-              atob(token().split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))
-            ).role;
-          } catch (_) {}
-          document
-            .querySelectorAll('[data-admin-only]')
-            .forEach((el) => (el.hidden = role === 'salesman'));
+            const books = await request('/api/customer-manager/purchased-books/search?q=' + encodeURIComponent(term), { signal: controller.signal });
+            if (controller !== bookController) return;
+            $('book-suggestions').innerHTML = books.length ? books.map((b) => '<button type="button" data-book="' + esc(b.name) + '">' + esc(b.name) + '</button>').join('') : '<span class="fu-hint">No delivered book matches.</span>';
+          } catch (error) { if (error.name !== 'AbortError') $('book-suggestions').textContent = error.message; }
+        }, 200);
+      });
+      $('search').addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => apply({ q: $('search').value.trim() }), 350); });
+      $('search').addEventListener('keydown', (e) => { if (e.key === 'Enter') { clearTimeout(searchTimer); apply({ q: $('search').value.trim() }); } });
+      ['lastFrom', 'lastTo'].forEach((id) => $(id).addEventListener('change', () => {
+        if ($('lastFrom').value && $('lastTo').value && $('lastFrom').value > $('lastTo').value) { $('notice').textContent = 'The "from" date must be on or before the "to" date.'; return; }
+        apply({ lastFrom: $('lastFrom').value, lastTo: $('lastTo').value });
+      }));
+      $('clear-dates').onclick = () => apply({ lastFrom: '', lastTo: '' });
+      $('quick-ranges').onclick = (event) => {
+        const button = event.target.closest('[data-range]'); if (!button) return;
+        const [from, to] = rangeOf(button.dataset.range);
+        apply(button.classList.contains('active') ? { lastFrom: '', lastTo: '' } : { lastFrom: from, lastTo: to });
+      };
+      $('due-today').onclick = () => apply({ status: 'due', sort: 'followup' });
+      document.addEventListener('click', (event) => { const tab = event.target.closest('[data-tab]'); if (tab && !event.target.closest('dialog')) apply({ status: tab.dataset.tab }); });
+      $('page-size').onchange = () => apply({ pageSize: $('page-size').value });
+      $('pager').onclick = (event) => { const b = event.target.closest('[data-page]'); if (b && !b.disabled) { state.page = b.dataset.page; load(); window.scrollTo({ top: 0, behavior: 'smooth' }); } };
+      $('reset').onclick = () => { Object.assign(state, DEFAULTS); $('search').value = ''; closeDropdowns(); load({ skeleton: true }); };
+      $('refresh').onclick = () => { $('refresh').classList.add('spin'); load({ refresh: true }); };
+      $('export').onclick = async () => {
+        $('export').disabled = true;
+        try {
+          const result = await request('/api/customer-manager?' + query({ export: '1', page: '1' }));
+          const cell = (v) => { const t = v == null ? '' : String(v); return /[",\r\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
+          const lines = [['Name', 'Phone', 'Address', 'Delivered orders', 'All orders', 'Cancelled/returned', 'Order ratio %', 'Courier ratio %', 'Total spent', 'Last purchase', 'Status', 'Next follow-up']].concat(result.rows.map((c) => [c.name, c.phone, [c.shippingAddress, c.city].filter(Boolean).join(', '), c.orderCount, c.totalOrderCount, c.failedCount, c.ratio, c.courierRatio ? c.courierRatio.ratio : '', c.totalSpent, fmtDate(c.lastPurchase), LABELS[contactStatus(c.latestContact)], c.latestContact ? c.latestContact.nextFollowUp : '']));
+          const blob = new Blob(['﻿' + lines.map((l) => l.map(cell).join(',')).join('\n')], { type: 'text/csv;charset=utf-8;' });
+          const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'customers-' + today() + '.csv'; a.click(); URL.revokeObjectURL(a.href);
+        } catch (error) { $('notice').textContent = error.message; } finally { $('export').disabled = false; }
+      };
+      $('rows').addEventListener('click', (event) => {
+        if (event.target.closest('a')) return;
+        const row = event.target.closest('tr[data-phone]');
+        if (row) openCustomer(row.dataset.phone);
+      });
+
+      /* ── Customer popup ── */
+      $('outcomes').innerHTML = OUTCOMES.map(([value, label, icon]) => '<input type="radio" name="outcome" id="oc-' + value + '" value="' + value + '"><label for="oc-' + value + '"><i class="fas ' + icon + '"></i> ' + label + '</label>').join('');
+      const outcome = () => (document.querySelector('[name="outcome"]:checked') || {}).value || '';
+      const channel = () => (document.querySelector('[name="channel"]:checked') || {}).value || 'call';
+      // Picking an outcome fills in its suggested follow-up date; staff can still change it.
+      function suggestFollowup() {
+        const value = outcome(), days = rules[value];
+        $('followup').disabled = value === 'dont_contact';
+        if (value === 'dont_contact') { $('followup').value = ''; $('fu-hint').textContent = 'No follow-up — this customer will not be contacted.'; return; }
+        if (!value) { $('fu-hint').textContent = 'Choose what happened to get a suggested date.'; return; }
+        if (!followupTouched) $('followup').value = days ? addDays(today(), days) : '';
+        $('fu-hint').innerHTML = days ? 'Suggested for <strong>' + esc(LABELS[value]) + '</strong>: in ' + days + (days === 1 ? ' day' : ' days') + (followupTouched ? ' · <a href="#" id="fu-reset">use suggestion</a>' : '') : '';
+      }
+      $('outcomes').addEventListener('change', () => { followupTouched = false; suggestFollowup(); $('save-status').textContent = ''; });
+      $('followup').addEventListener('input', () => { followupTouched = true; suggestFollowup(); });
+      $('fu-hint').addEventListener('click', (event) => { if (event.target.id === 'fu-reset') { event.preventDefault(); followupTouched = false; suggestFollowup(); } });
+      function neighbours() {
+        const phones = data ? data.rows.map((r) => r.phone) : [];
+        const i = current ? phones.indexOf(current.phone) : -1;
+        return { prev: i > 0 ? phones[i - 1] : null, next: i >= 0 && i < phones.length - 1 ? phones[i + 1] : null };
+      }
+      function fillHeader(c, address) {
+        $('cm-avatar').textContent = (c.name || '').split(/\s+/).filter((w) => /^\p{L}/u.test(w)).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || '?';
+        $('cm-name').textContent = c.name || 'Customer';
+        $('cm-phone').textContent = c.phone; $('cm-phone').href = 'tel:' + c.phone;
+        $('cm-address').textContent = address || '';
+        $('cm-orders').textContent = c.orderCount + ' of ' + c.totalOrderCount;
+        $('cm-spent').textContent = money(c.totalSpent);
+        $('cm-avg').textContent = money(c.orderCount ? c.totalSpent / c.orderCount : 0);
+        $('cm-ratio').innerHTML = storeRatio(c);
+        $('cm-courier').innerHTML = courierRatio(c.courierRatio);
+        const n = neighbours(); $('cm-prev').disabled = !n.prev; $('cm-next').disabled = !n.next; $('save-next').hidden = !n.next;
+      }
+      function openCustomer(phone) {
+        if (saving) return;
+        const row = data && data.rows.find((r) => r.phone === phone);
+        current = { phone };
+        $('save-status').textContent = ''; $('save-status').className = 'form-status';
+        $('note').value = '';
+        document.querySelectorAll('[name="outcome"]').forEach((el) => (el.checked = false));
+        $('ch-call').checked = true; followupTouched = false; $('followup').value = ''; suggestFollowup();
+        $('msg-box').open = false; $('cm-blocked').hidden = true;
+        if (row) {
+          fillHeader(row, [row.shippingAddress, row.city].filter(Boolean).join(', '));
+          $('cm-status').innerHTML = statusBadge(row.latestContact);
+          $('cm-last').textContent = fmtDate(row.lastPurchase);
         }
-        async function request(path, options = {}) {
-          const response = await fetch(API_BASE + path, {
-            ...options,
-            headers: {
-              'Content-Type': 'application/json',
-              administrator: token(),
-              ...(options.headers || {}),
-            },
-          });
-          let payload;
-          try {
-            payload = await response.json();
-          } catch (_) {
-            throw new Error(
-              'The server did not return customer data. Please try again.'
-            );
-          }
-          if (!response.ok || payload.success === false) {
-            if (response.status === 401) {
-              if ($('order-dialog').open) $('order-dialog').close();
-              $('login').hidden = false;
-              $('login-status').textContent =
-                payload.message || 'Please sign in again.';
-            }
-            throw new Error(payload.message || 'Request failed');
-          }
-          return payload.data || payload;
+        $('pane-orders').innerHTML = $('pane-contacts').innerHTML = '<div class="skel" style="height:54px"></div><div class="skel" style="height:54px"></div>';
+        $('cm-quick').innerHTML = '';
+        if (!$('customer-dialog').open) $('customer-dialog').showModal();
+        loadDetail(phone);
+      }
+      async function loadDetail(phone, keepForm) {
+        if (detailController) detailController.abort();
+        const controller = (detailController = new AbortController());
+        try {
+          const detail = await request('/api/customer-manager/' + encodeURIComponent(phone), { signal: controller.signal });
+          if (controller !== detailController) return;
+          current = Object.assign({}, detail, { phone });
+          renderDetail(keepForm);
+        } catch (error) {
+          if (error.name === 'AbortError' || controller !== detailController) return;
+          $('pane-orders').innerHTML = '<p class="empty-note">' + esc(error.message) + '</p>';
+          $('pane-contacts').innerHTML = '';
         }
-        function status(contact) {
-          if (!contact) return 'never';
-          if (contact.outcome === 'dont_contact') return 'dont_contact';
-          return contact.nextFollowUp && contact.nextFollowUp <= today()
-            ? 'due'
-            : contact.outcome;
-        }
-        function badge(contact) {
-          const value = status(contact);
-          return (
-            '<span class="badge ' +
-            value +
-            '">' +
-            esc(labels[value] || value) +
-            '</span>'
-          );
-        }
-        function phoneLink(phone) {
-          return '880' + phone.slice(1);
-        }
-        function closeDrawer() {
-          $('drawer').hidden = true;
-          $('workspace').classList.remove('has-detail');
-          if (detailController) detailController.abort();
-          selected = null;
-          highlightSelectedRow();
-        }
-        function highlightSelectedRow() {
-          document.querySelectorAll('#rows [data-phone]').forEach((button) => {
-            button.closest('tr').classList.toggle('selected', Boolean(selected && selected.phone === button.dataset.phone));
-          });
-        }
-        function renderRows() {
-          if (!listData) return;
-          $('rows').innerHTML = listData.rows.length
-            ? listData.rows
-                .map(
-                  (c) =>
-                    '<tr class="' +
-                    (selected && selected.phone === c.phone ? 'selected' : '') +
-                    '"><td><button class="customer-button" data-phone="' +
-                    esc(c.phone) +
-                    '">' +
-                    esc(c.name) +
-                    '<small>' +
-                    esc(c.phone) +
-                    '</small></button><small class="customer-address">' +
-                    esc(
-                      [c.shippingAddress, c.city].filter(Boolean).join(', ') ||
-                        'Address unavailable'
-                    ) +
-                    '</small></td><td><strong>' +
-                    c.orderCount +
-                    ' ' +
-                    (c.orderCount === 1 ? 'order' : 'orders') +
-                    '</strong><small>' +
-                    money(c.totalSpent) +
-                    '</small><small title="Delivered orders / all recorded orders, including pending and cancelled">Delivery ratio: ' +
-                    c.orderCount +
-                    '/' +
-                    c.totalOrderCount +
-                    ' · ' +
-                    Math.round((c.orderCount / c.totalOrderCount) * 100) +
-                    '%</small></td><td>' +
-                    date(c.lastPurchase) +
-                    '</td><td>' +
-                    badge(c.latestContact) +
-                    '</td><td><div class="row-actions">' +
-                    (status(c.latestContact) === 'dont_contact'
-                      ? '<small>Contact disabled</small>'
-                      : '<a class="action" aria-label="Call ' +
-                        esc(c.name) +
-                        '" href="tel:' +
-                        esc(c.phone) +
-                        '">Call</a><a class="action whatsapp" aria-label="WhatsApp ' +
-                        esc(c.name) +
-                        '" href="https://wa.me/' +
-                        phoneLink(c.phone) +
-                        '" target="_blank" rel="noopener noreferrer">WhatsApp</a>') +
-                    '</div></td></tr>'
-                )
-                .join('')
-            : '<tr><td colspan="5" class="empty">No customers match these filters.</td></tr>';
-        }
-        let filterTimer, orderSearchTimer;
-        async function load() {
-          clearTimeout(filterTimer);
-          if (listController) listController.abort();
-          listController = new AbortController();
-          const controller = listController;
-          const params = new URLSearchParams(new FormData($('filters')));
-          params.set('page', page);
-          params.set('sort', $('sort').value);
-          $('notice').textContent = 'Loading customers…';
-          $('previous').disabled = $('next').disabled = true;
-          try {
-            const data = await request('/api/customer-manager?' + params, {
-              signal: controller.signal,
-            });
-            if (controller.signal.aborted || controller !== listController) return;
-            listData = data;
-            page = data.page;
-            renderRows();
-            ['customers', 'never', 'followedUp', 'due'].forEach(
-              (k) =>
-                ($('stat-' + k).textContent = Number(
-                  data.summary[k] || 0
-                ).toLocaleString())
-            );
-            $('list-title').textContent =
-              data.total.toLocaleString() +
-              (data.total === 1 ? ' customer' : ' customers');
-            $('range').textContent = data.total
-              ? 'Showing ' +
-                ((page - 1) * 20 + 1) +
-                '–' +
-                Math.min(page * 20, data.total) +
-                ' of ' +
-                data.total
-              : '0 customers';
-            $('page').textContent = page;
-            $('previous').disabled = page <= 1;
-            $('next').disabled = page * 20 >= data.total;
-            $('notice').textContent = '';
-            document
-              .querySelectorAll('[data-status]')
-              .forEach((el) =>
-                el.classList.toggle(
-                  'active',
-                  el.dataset.status === $('status').value
-                )
-              );
-          } catch (error) {
-            if (error.name === 'AbortError' || controller !== listController) return;
-            $('notice').textContent = error.message;
-            if (!listData) $('rows').innerHTML =
-              '<tr><td colspan="5" class="empty">Unable to load customers. Apply filters to retry.</td></tr>';
-          }
-        }
-        function renderHistory() {
-          if (!selected || $('orders').childElementCount) return;
-          const data = selected;
-          $('orders').innerHTML = data.orders
-            .map(
-              (o) =>
-                '<div class="purchase"><strong>Order #' +
-                esc(o.orderId) +
-                ' · ' +
-                money(o.grandTotal) +
-                '</strong><p style="margin-top:6px">' +
-                esc(
-                  (o.orderedItems || []).map((i) => i.name || 'Book').join(', ')
-                ) +
-                '</p><small>' +
-                date(o.createdAt) +
-                '</small></div>'
-            )
-            .join('');
-          $('history').innerHTML = data.history.length
-            ? data.history
-                .map(
-                  (c) =>
-                    '<div class="history-entry">' +
-                    '<span class="badge ' +
-                    esc(c.outcome) +
-                    '">' +
-                    esc(labels[c.outcome] || c.outcome) +
-                    '</span><p style="margin-top:8px;white-space:pre-wrap">' +
-                    esc(c.note) +
-                    '</p><small>' +
-                    esc(c.channel) +
-                    ' · ' +
-                    esc(c.contactedByName || 'Staff') +
-                    ' · ' +
-                    date(c.createdAt) +
-                    '</small>' +
-                    (c.nextFollowUp
-                      ? '<small>Follow-up: ' + date(c.nextFollowUp) + '</small>'
-                      : '') +
-                    '</div>'
-                )
-                .join('')
-            : '<p class="muted section">No contacts logged yet.</p>';
-        }
-        function switchTab(value) {
-          if (value === 'history') renderHistory();
-          ['history', 'contact', 'followup'].forEach(
-            (t) => ($('tab-' + t).hidden = t !== value)
-          );
-          document.querySelectorAll('[data-tab]').forEach((el) => {
-            el.classList.toggle('active', el.dataset.tab === value);
-            el.setAttribute('aria-selected', String(el.dataset.tab === value));
-          });
-        }
-        function updateMessage() {
-          if (!selected) return;
-          const name = selected.name || '';
-          const templates = {
-            related:
-              'আসসালামু আলাইকুম ' +
-              name +
-              '। আপনি আগে আমলবুকস থেকে বই নিয়েছিলেন। আপনার পছন্দের বিষয়ের আরও কিছু বই এসেছে। আপনি আগ্রহী হলে বইয়ের বিস্তারিত পাঠাতে পারি।\nhttps://amolbooks.com',
-            arrival:
-              'আসসালামু আলাইকুম ' +
-              name +
-              '। আমলবুকসে নতুন কিছু বই এসেছে। আপনার পছন্দের বিষয় জানালে কয়েকটি বই সাজেস্ট করতে পারি।\nhttps://amolbooks.com',
-            offer:
-              'আসসালামু আলাইকুম ' +
-              name +
-              '। আমাদের পূর্বের পাঠকদের জন্য কিছু বইয়ের অফার আছে। আপনি চাইলে বর্তমান অফারের বিস্তারিত পাঠাতে পারি।\nhttps://amolbooks.com',
-          };
-          $('message').value = templates[$('template').value];
-          updateWhatsApp();
-        }
-        function updateWhatsApp() {
-          if (!selected) return;
-          $('open-whatsapp').href =
-            'https://wa.me/' +
-            phoneLink(selected.phone) +
-            '?text=' +
-            encodeURIComponent($('message').value);
-        }
-        function renderDetail(data, preserveMessage) {
-          selected = data;
-          const contact = data.history[0],
-            blocked = contact && contact.outcome === 'dont_contact';
-          $('drawer').hidden = false;
-          $('workspace').classList.add('has-detail');
-          $('customer-name').textContent = data.name;
-          $('customer-phone').textContent = data.phone;
-          $('customer-address').textContent =
-            [data.customerInfo.shippingAddress, data.customerInfo.city]
-              .filter(Boolean)
-              .join(', ') ||
-            'No saved address. Add it when creating the order.';
-          $('customer-orders').textContent = data.orderCount;
-          $('customer-ratio').textContent =
-            'Delivery ratio: ' +
-            data.orderCount +
-            '/' +
-            data.totalOrderCount +
-            ' orders (' +
-            Math.round((data.orderCount / data.totalOrderCount) * 100) +
-            '%). Total includes pending, cancelled, returned and refunded orders.';
-          $('customer-spent').textContent = money(data.totalSpent);
-          $('contact-actions').innerHTML = blocked
-            ? '<p class="notice">This customer requested no contact.</p>'
-            : '<a class="action pale" href="tel:' +
-              data.phone +
-              '">Call</a><a class="action whatsapp" href="https://wa.me/' +
-              phoneLink(data.phone) +
-              '" target="_blank" rel="noopener noreferrer">WhatsApp</a>';
-          $('open-whatsapp').hidden = blocked;
-          $('copy').hidden = blocked;
-          $('purchases').innerHTML = data.orders
-            .slice(0, 2)
-            .map(
-              (o) =>
-                '<div class="purchase">' +
-                esc(
-                  (o.orderedItems || []).map((i) => i.name || 'Book').join(', ')
-                ) +
-                '<small>' +
-                date(o.createdAt) +
-                ' · ' +
-                money(o.grandTotal) +
-                '</small></div>'
-            )
-            .join('');
-          $('orders').innerHTML = $('history').innerHTML = '';
-          if (!$('tab-history').hidden) renderHistory();
-          $('followup-summary').textContent = blocked
-            ? 'Do not contact this customer.'
-            : contact && contact.nextFollowUp
-            ? 'Scheduled for ' + date(contact.nextFollowUp)
-            : 'No follow-up scheduled. Set a date below.';
-          $('last-contact').textContent = contact
-            ? 'Last contacted: ' +
-              date(contact.createdAt) +
-              ' · ' +
-              (labels[contact.outcome] || contact.outcome)
-            : 'Never contacted';
-          $('followup').value = (contact && contact.nextFollowUp) || '';
-          $('note').value = '';
-          $('outcome').value = blocked ? 'dont_contact' : 'interested';
-          $('followup').disabled = blocked;
-          if (!preserveMessage) {
-            $('template').value = 'related';
-            updateMessage();
-            $('save-status').textContent = '';
-          }
-          highlightSelectedRow();
-        }
-        async function openCustomer(phone) {
-          if (saving) return;
-          if (detailController) detailController.abort();
-          detailController = new AbortController();
-          const controller = detailController;
-          $('notice').textContent = 'Loading customer history…';
-          try {
-            const data = await request(
-              '/api/customer-manager/' + encodeURIComponent(phone),
-              { signal: controller.signal }
-            );
-            if (controller.signal.aborted || controller !== detailController) return;
-            renderDetail(data, false);
-            switchTab('contact');
-            $('notice').textContent = '';
-            $('close').focus();
-          } catch (error) {
-            if (error.name !== 'AbortError')
-              $('notice').textContent = error.message;
-          }
-        }
-        $('filters').addEventListener('input', (event) => {
-          if (event.target.tagName === 'SELECT') return;
-          clearTimeout(filterTimer);
-          filterTimer = setTimeout(() => { page = 1; load(); }, 400);
-        });
-        $('filters').addEventListener('change', () => { page = 1; load(); });
-        $('filters').addEventListener('submit', (event) => {
-          event.preventDefault();
-          page = 1;
-          load();
-        });
-        $('reset-filters').onclick = () => {
-          $('filters').reset();
-          $('sort').value = 'recent';
-          page = 1;
-          load();
-        };
-        document.querySelectorAll('[data-status]').forEach(
-          (el) =>
-            (el.onclick = () => {
-              $('status').value = el.dataset.status;
-              page = 1;
-              load();
-            })
-        );
-        $('sort').onchange = () => {
-          page = 1;
-          load();
-        };
-        $('previous').onclick = () => {
-          page--;
-          load();
-        };
-        $('next').onclick = () => {
-          page++;
-          load();
-        };
-        $('rows').onclick = (event) => {
-          const button = event.target.closest('[data-phone]');
-          if (button) openCustomer(button.dataset.phone);
-        };
-        $('close').onclick = () => {
-          if (!saving) closeDrawer();
-        };
-        document.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape' && !saving && !$('order-dialog').open) {
-            closeDrawer();
-            $('navigation').classList.remove('open');
-          }
-        });
-        document
-          .querySelectorAll('[data-tab]')
-          .forEach((el) => (el.onclick = () => switchTab(el.dataset.tab)));
-        $('template').onchange = updateMessage;
-        $('message').oninput = updateWhatsApp;
-        $('open-whatsapp').onclick = () => {
-          $('channel').value = 'whatsapp';
-        };
-        $('copy').onclick = async () => {
-          try {
-            await navigator.clipboard.writeText($('message').value);
-            $('copy').textContent = 'Copied';
-            setTimeout(() => ($('copy').textContent = 'Copy message'), 1600);
-          } catch (_) {
-            $('message').focus();
-            $('message').select();
-            $('save-status').textContent =
-              'Select and copy the message manually.';
-          }
-        };
-        $('outcome').onchange = () => {
-          $('followup').disabled = $('outcome').value === 'dont_contact';
-          if ($('followup').disabled) $('followup').value = '';
-        };
-        $('contact-form').onsubmit = async (event) => {
-          event.preventDefault();
-          if (!selected || saving) return;
-          const phone = selected.phone;
-          const body = {
-            outcome: $('outcome').value,
-            channel: $('channel').value,
-            note: $('note').value,
-            nextFollowUp: $('followup').value,
-          };
-          saving = true;
-          $('logout').disabled = true;
-          $('save').disabled = true;
-          $('close').disabled = true;
-          $('save-status').className = 'form-status';
-          $('save-status').textContent = 'Saving…';
-          try {
-            await request('/api/customer-manager/' + phone + '/contacts', {
-              method: 'POST',
-              body: JSON.stringify(body),
-            });
-            $('save-status').textContent = 'Contact saved. Refreshing history…';
-            try {
-              const data = await request('/api/customer-manager/' + phone);
-              renderDetail(data, true);
-              $('save-status').className = 'form-status success';
-              $('save-status').textContent = 'Contact saved.';
-            } catch (refreshError) {
-              $('save-status').textContent =
-                'Contact saved. Reopen this customer to refresh history.';
-            }
-            await load();
-          } catch (error) {
-            $('save-status').className = 'form-status error';
-            $('save-status').textContent = error.message;
-          } finally {
-            saving = false;
-            $('logout').disabled = false;
-            $('save').disabled = false;
-            $('close').disabled = false;
-          }
-        };
-        $('menu').onclick = () => $('navigation').classList.toggle('open');
-        $('logout').onclick = () => {
-          if (saving || creatingOrder) return;
-          if ($('order-dialog').open) $('order-dialog').close();
-          if (listController) listController.abort();
-          if (detailController) detailController.abort();
-          localStorage.removeItem('co_admin_token');
-          localStorage.removeItem('profit_admin_token');
-          closeDrawer();
-          listData = null;
-          $('rows').innerHTML =
-            '<tr><td colspan="5" class="empty">Sign in to view customers.</td></tr>';
-          ['customers', 'never', 'followedUp', 'due'].forEach(
-            (k) => ($('stat-' + k).textContent = '—')
-          );
-          $('login').hidden = false;
-        };
-        $('login-form').onsubmit = async (event) => {
-          event.preventDefault();
-          $('login-button').disabled = true;
-          $('login-status').textContent = 'Signing in…';
-          try {
-            const response = await fetch(API_BASE + '/api/admin/login', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                username: $('username').value,
-                password: $('password').value,
-              }),
-            });
-            const payload = await response.json();
-            const value =
-              payload.token ||
-              (payload.data &&
-                (payload.data.token || payload.data.accessToken));
-            if (!response.ok || !value)
-              throw new Error(payload.message || 'Sign in failed');
-            localStorage.setItem('co_admin_token', value);
-            $('password').value = '';
-            $('login').hidden = true;
-            roleMode();
-            page = 1;
-            await load();
-          } catch (error) {
-            $('login-status').textContent = error.message;
-          } finally {
-            $('login-button').disabled = false;
-          }
-        };
-        let orderItems = [],
-          orderProducts = [],
-          orderRequestId = '',
-          orderCustomer = null,
-          creatingOrder = false,
-          orderCreated = false,
-          productController = null;
-        function renderOrderItems() {
-          $('order-status').textContent = '';
-          $('order-items').innerHTML = orderItems.length
-            ? orderItems
-                .map(
-                  (item, index) =>
-                    '<div class="order-item"><strong>' +
-                    esc(item.name) +
-                    '<small style="display:block;margin-top:5px">' +
-                    money(item.price) +
-                    ' each</small></strong><input aria-label="Quantity for ' +
-                    esc(item.name) +
-                    '" type="number" min="1" max="100" step="1" data-order-qty="' +
-                    index +
-                    '" value="' +
-                    item.quantity +
-                    '"><span>' +
-                    money(item.price * item.quantity) +
-                    '</span><button type="button" aria-label="Remove ' +
-                    esc(item.name) +
-                    '" data-order-remove="' +
-                    index +
-                    '">×</button></div>'
-                )
-                .join('')
-            : '<p class="empty">No products added yet.</p>';
-          updateOrderTotals();
-        }
-        function updateOrderTotals() {
-          const subtotal = orderItems.reduce(
-            (sum, item) => sum + item.price * item.quantity,
-            0
-          );
-          const delivery = Number($('order-delivery').value) || 0;
-          $('order-subtotal').textContent = money(subtotal);
-          $('order-delivery-total').textContent = money(delivery);
-          $('order-total').textContent = money(subtotal + delivery);
-        }
-        function lockOrderForm(locked) {
-          $('order-form')
-            .querySelectorAll('input,select,textarea,button')
-            .forEach((el) => (el.disabled = locked));
-        }
-        function openOrder() {
-          if (!selected || saving || creatingOrder) return;
-          orderCustomer = selected;
-          orderItems = [];
-          orderProducts = [];
-          orderCreated = false;
-          lockOrderForm(false);
-          orderRequestId = 'crm-' + crypto.randomUUID();
-          const info = selected.customerInfo;
-          $('order-form').reset();
-          $('order-name').value = info.name || '';
-          $('order-phone').value = selected.phone;
-          $('order-address').value = info.shippingAddress || '';
-          $('order-city').value = info.city || '';
-          $('order-email').value = info.email || '';
-          $('order-delivery').value = info.deliveryCharge || 0;
-          $('order-payment').value = [
-            'cash_on_delivery',
-            'bkash',
-            'nagad',
-            'card',
-            'online_payment',
-          ].includes(info.paymentType)
-            ? info.paymentType
-            : 'cash_on_delivery';
-          $('order-source').value =
-            $('channel').value === 'whatsapp' ? 'whatsapp' : 'phone';
-          $('order-search-results').innerHTML = '';
-          $('order-status').textContent = '';
-          $('order-success').hidden = true;
-          $('order-submit').disabled = false;
-          renderOrderItems();
-          $('order-dialog').showModal();
-          $('order-search').focus();
-        }
-        async function searchOrderProducts() {
-          clearTimeout(orderSearchTimer);
-          if (creatingOrder || orderCreated) return;
-          const query = $('order-search').value.trim();
-          if (productController) productController.abort();
-          if (query.length < 2) {
-            $('order-search-results').textContent =
-              'Enter at least two characters.';
-            return;
-          }
-          productController = new AbortController();
-          const controller = productController;
-          $('order-search-results').textContent = 'Searching…';
-          try {
-            const products = await request(
-              '/api/customer-manager/products/search?q=' +
-                encodeURIComponent(query),
-              { signal: productController.signal }
-            );
-            if (controller.signal.aborted || controller !== productController) return;
-            orderProducts = products;
-            $('order-search-results').innerHTML = orderProducts.length
-              ? orderProducts
-                  .map(
-                    (product, index) =>
-                      '<button class="product-result" type="button" data-order-add="' +
-                      index +
-                      '"><span>' +
-                      esc(product.name) +
-                      '</span><strong>' +
-                      money(product.price) +
-                      ' · Add</strong></button>'
-                  )
-                  .join('')
-              : 'No products found.';
-          } catch (error) {
-            if (error.name !== 'AbortError')
-              $('order-search-results').textContent = error.message;
-          }
-        }
+      }
+      function renderDetail(keepForm) {
+        const c = current, last = c.history[0], blocked = !!last && last.outcome === 'dont_contact';
+        rules = c.followUpRules || rules;
+        fillHeader(c, [c.customerInfo.shippingAddress, c.customerInfo.city].filter(Boolean).join(', '));
+        $('cm-status').innerHTML = statusBadge(last);
+        $('cm-last').textContent = c.orders[0] ? fmtDate(c.orders[0].createdAt) : '—';
+        $('cm-blocked').hidden = !blocked;
+        $('cm-quick').innerHTML = (blocked ? '' : '<a class="btn-action btn-call" href="tel:' + esc(c.phone) + '"><i class="fas fa-phone"></i> Call ' + esc(c.phone) + '</a><a class="btn-action btn-wa" id="quick-wa" href="https://wa.me/' + waNumber(c.phone) + '" target="_blank" rel="noopener noreferrer"><i class="fab fa-whatsapp"></i> WhatsApp</a>') + '<button class="btn-action btn-order" id="create-order" type="button"><i class="fas fa-cart-plus"></i> Create order</button>' + (last && last.nextFollowUp && !blocked ? '<span class="fu-hint" style="align-self:center">Next follow-up: <strong>' + fmtDate(last.nextFollowUp) + '</strong></span>' : '');
+        $('pane-orders').innerHTML = (c.allOrders || []).map((o) => {
+          const cls = o.crmDelivered ? 'ok' : o.crmFailed ? 'bad' : 'open';
+          const label = o.crmDelivered ? 'Delivered' : ORDER_STATUS[o.orderStatus] || (o.courierStatus && o.courierStatus.status) || 'Order';
+          return '<div class="order-line"><div class="top"><strong>#' + esc(o.orderId) + ' · ' + money(o.grandTotal) + '</strong><span class="st ' + cls + '">' + esc(label) + '</span></div><div class="items">' + esc((o.orderedItems || []).map((i) => (i.name || 'Book') + (i.quantity > 1 ? ' ×' + i.quantity : '')).join(', ')) + '</div><div class="when">' + fmtDate(o.createdAt) + ' · ' + daysAgo(o.createdAt) + '</div></div>';
+        }).join('') || '<p class="empty-note">No orders.</p>';
+        $('pane-contacts').innerHTML = c.history.length ? c.history.map((h) => '<div class="timeline-item"><span class="badge b-' + esc(h.outcome) + '">' + esc(LABELS[h.outcome] || h.outcome) + '</span>' + (h.note ? '<p>' + esc(h.note) + '</p>' : '') + '<small>' + esc(h.channel) + ' · ' + esc(h.contactedByName || 'Staff') + ' · ' + fmtDate(h.createdAt) + (h.nextFollowUp ? ' · follow-up ' + fmtDate(h.nextFollowUp) : '') + '</small></div>').join('') : '<p class="empty-note">Not contacted yet.</p>';
+        if (!keepForm) { $('template').value = 'related'; updateMessage(); }
         $('create-order').onclick = openOrder;
-        $('order-close').onclick = () => {
-          if (!creatingOrder) {
-            if (productController) productController.abort();
-            $('order-dialog').close();
-          }
+      }
+      function closeDialogs() { ['order-dialog', 'customer-dialog'].forEach((id) => { if ($(id).open) $(id).close(); }); }
+      $('cm-close').onclick = () => { if (!saving) $('customer-dialog').close(); };
+      $('customer-dialog').addEventListener('click', (event) => { if (event.target === $('customer-dialog') && !saving) $('customer-dialog').close(); });
+      $('customer-dialog').addEventListener('cancel', (event) => { if (saving) event.preventDefault(); });
+      $('customer-dialog').addEventListener('close', () => { if (detailController) detailController.abort(); current = null; });
+      $('cm-prev').onclick = () => { const n = neighbours(); if (n.prev) openCustomer(n.prev); };
+      $('cm-next').onclick = () => { const n = neighbours(); if (n.next) openCustomer(n.next); };
+      document.querySelectorAll('.seg [data-pane]').forEach((b) => (b.onclick = () => {
+        document.querySelectorAll('.seg [data-pane]').forEach((x) => x.classList.toggle('active', x === b));
+        $('pane-orders').hidden = b.dataset.pane !== 'orders'; $('pane-contacts').hidden = b.dataset.pane !== 'contacts';
+      }));
+      function updateMessage() {
+        if (!current) return;
+        const name = current.name || '';
+        const templates = {
+          related: 'আসসালামু আলাইকুম ' + name + '। আপনি আগে আমলবুকস থেকে বই নিয়েছিলেন। আপনার পছন্দের বিষয়ের আরও কিছু বই এসেছে। আপনি আগ্রহী হলে বইয়ের বিস্তারিত পাঠাতে পারি।\nhttps://amolbooks.com',
+          arrival: 'আসসালামু আলাইকুম ' + name + '। আমলবুকসে নতুন কিছু বই এসেছে। আপনার পছন্দের বিষয় জানালে কয়েকটি বই সাজেস্ট করতে পারি।\nhttps://amolbooks.com',
+          offer: 'আসসালামু আলাইকুম ' + name + '। আমাদের পূর্বের পাঠকদের জন্য কিছু বইয়ের অফার আছে। আপনি চাইলে বর্তমান অফারের বিস্তারিত পাঠাতে পারি।\nhttps://amolbooks.com',
         };
-        $('order-dialog').addEventListener('cancel', (event) => {
-          if (creatingOrder) event.preventDefault();
-          else if (productController) productController.abort();
-        });
-        $('order-search').addEventListener('input', () => {
-          clearTimeout(orderSearchTimer);
-          if (productController) productController.abort();
-          orderSearchTimer = setTimeout(searchOrderProducts, 300);
-        });
-        $('order-dialog').addEventListener('close', () => clearTimeout(orderSearchTimer));
-        $('order-search-button').onclick = searchOrderProducts;
-        $('order-search').addEventListener('keydown', (event) => {
-          if (event.key === 'Enter') {
-            event.preventDefault();
-            searchOrderProducts();
-          }
-        });
-        $('order-search-results').onclick = (event) => {
-          const button = event.target.closest('[data-order-add]');
-          if (!button || creatingOrder || orderCreated) return;
-          const product = orderProducts[Number(button.dataset.orderAdd)];
-          if (!product) return;
-          const existing = orderItems.find(
-            (item) => item.product === product._id
-          );
-          if (existing)
-            existing.quantity = Math.min(100, existing.quantity + 1);
-          else
-            orderItems.push({
-              product: product._id,
-              name: product.name,
-              price: product.price,
-              quantity: 1,
-            });
-          renderOrderItems();
-        };
-        $('order-items').addEventListener('change', (event) => {
-          const input = event.target.closest('[data-order-qty]');
-          if (!input || creatingOrder || orderCreated) return;
-          orderItems[Number(input.dataset.orderQty)].quantity = Math.max(
-            1,
-            Math.min(100, Math.floor(Number(input.value) || 1))
-          );
-          renderOrderItems();
-        });
-        $('order-items').onclick = (event) => {
-          const button = event.target.closest('[data-order-remove]');
-          if (button && !creatingOrder && !orderCreated) {
-            orderItems.splice(Number(button.dataset.orderRemove), 1);
-            renderOrderItems();
-          }
-        };
-        $('order-delivery').oninput = updateOrderTotals;
-        $('order-form').onsubmit = async (event) => {
-          event.preventDefault();
-          if (creatingOrder || orderCreated || !orderCustomer) return;
-          if (!orderItems.length) {
-            $('order-status').textContent = 'Add at least one product.';
-            return;
-          }
-          creatingOrder = true;
-          lockOrderForm(true);
-          $('order-submit').disabled = true;
-          $('order-close').disabled = true;
-          $('order-status').textContent = 'Creating order…';
-          $('order-status').className = 'form-status';
-          const body = {
-            name: $('order-name').value,
-            shippingAddress: $('order-address').value,
-            city: $('order-city').value,
-            email: $('order-email').value,
-            deliveryCharge: Number($('order-delivery').value),
-            paymentType: $('order-payment').value,
-            source: $('order-source').value,
-            requestId: orderRequestId,
-            items: orderItems.map((item) => ({
-              product: item.product,
-              quantity: item.quantity,
-            })),
-          };
-          try {
-            const result = await request(
-              '/api/customer-manager/' + orderCustomer.phone + '/orders',
-              { method: 'POST', body: JSON.stringify(body) }
-            );
-            orderCreated = true;
-            $('order-status').textContent = '';
-            $('order-success').hidden = false;
-            $('order-success').innerHTML =
-              '<strong>Order #' +
-              esc(result.orderId) +
-              ' created.</strong><a href="custom-orders.html" target="_blank" rel="noopener noreferrer">View Amolbooks Orders →</a>';
-            try {
-              const fresh = await request(
-                '/api/customer-manager/' + orderCustomer.phone
-              );
-              renderDetail(fresh, true);
-              await load();
-            } catch (_) {
-              $('order-status').textContent =
-                'Order created. Refresh the customer details to update the delivery ratio.';
-            }
-            $('outcome').value = 'ordered';
-          } catch (error) {
-            $('order-status').className = 'form-status error';
-            $('order-status').textContent =
-              error.message +
-              ' If the request was interrupted, retry this order.';
-          } finally {
-            creatingOrder = false;
-            $('order-close').disabled = false;
-            lockOrderForm(orderCreated);
-          }
-        };
-        $('followed-up-card').onclick = () => {
-          $('status').value = 'contacted';
-          page = 1;
+        $('message').value = templates[$('template').value];
+        updateWhatsApp();
+      }
+      function updateWhatsApp() { if (current) $('open-whatsapp').href = 'https://wa.me/' + waNumber(current.phone) + '?text=' + encodeURIComponent($('message').value); }
+      $('template').onchange = updateMessage;
+      $('message').oninput = updateWhatsApp;
+      $('open-whatsapp').onclick = () => { $('ch-whatsapp').checked = true; };
+      $('cm-quick').addEventListener('click', (event) => { if (event.target.closest('#quick-wa')) $('ch-whatsapp').checked = true; });
+      $('copy').onclick = async () => {
+        try { await navigator.clipboard.writeText($('message').value); $('copy').innerHTML = '<i class="fas fa-check"></i> Copied'; setTimeout(() => ($('copy').innerHTML = '<i class="fas fa-copy"></i> Copy'), 1600); }
+        catch (_) { $('message').select(); $('save-status').textContent = 'Select and copy the message manually.'; }
+      };
+      async function saveContact(goNext) {
+        if (!current || saving) return;
+        if (!outcome()) { $('save-status').className = 'form-status error'; $('save-status').textContent = 'Choose what happened first.'; return; }
+        const phone = current.phone, next = neighbours().next, followup = $('followup').value;
+        saving = true; $('save').disabled = $('save-next').disabled = $('cm-close').disabled = true;
+        $('save-status').className = 'form-status'; $('save-status').textContent = 'Saving…';
+        try {
+          await request('/api/customer-manager/' + phone + '/contacts', { method: 'POST', body: JSON.stringify({ outcome: outcome(), channel: channel(), note: $('note').value, nextFollowUp: followup }) });
           load();
-        };
-        let purchasedSearchTimer, purchasedSearchController;
-        $('product').addEventListener('input', () => {
-          clearTimeout(purchasedSearchTimer);
-          if (purchasedSearchController) purchasedSearchController.abort();
-          $('purchased-book-suggestions').innerHTML = '';
-          const query = $('product').value.trim();
-          if (query.length < 2) return;
-          purchasedSearchTimer = setTimeout(async () => {
-            purchasedSearchController = new AbortController();
-            const controller = purchasedSearchController;
-            try {
-              const books = await request(
-                '/api/customer-manager/purchased-books/search?q=' +
-                  encodeURIComponent(query),
-                { signal: purchasedSearchController.signal }
-              );
-              if (controller.signal.aborted || controller !== purchasedSearchController) return;
-              $('purchased-book-suggestions').innerHTML = books
-                .map(
-                  (book) => '<option value="' + esc(book.name) + '"></option>'
-                )
-                .join('');
-            } catch (error) {
-              if (error.name !== 'AbortError')
-                $('notice').textContent = error.message;
-            }
-          }, 250);
-        });
-        roleMode();
-        if (token()) load();
-        else $('login').hidden = false;
-      })();
-    </script>
-  </body>
+          saving = false;
+          if (goNext && next) { openCustomer(next); return; }
+          $('save-status').className = 'form-status ok';
+          $('save-status').textContent = 'Saved' + (followup ? ' · next follow-up ' + fmtDate(followup) : '') + '.';
+          $('note').value = '';
+          await loadDetail(phone, true);
+        } catch (error) { $('save-status').className = 'form-status error'; $('save-status').textContent = error.message; }
+        finally { saving = false; $('save').disabled = $('save-next').disabled = $('cm-close').disabled = false; }
+      }
+      $('contact-form').onsubmit = (event) => { event.preventDefault(); saveContact(false); };
+      $('save-next').onclick = () => saveContact(true);
+
+      /* ── Create order ── */
+      let orderItems = [], orderProducts = [], orderRequestId = '', orderCustomer = null, creatingOrder = false, orderCreated = false, productController = null, orderSearchTimer;
+      function renderOrderItems() {
+        $('order-items').innerHTML = orderItems.length ? orderItems.map((item, i) => '<div class="order-item"><strong>' + esc(item.name) + '<span class="cell-sub">' + money(item.price) + ' each</span></strong><input aria-label="Quantity for ' + esc(item.name) + '" type="number" min="1" max="100" step="1" data-order-qty="' + i + '" value="' + item.quantity + '"><span class="num">' + money(item.price * item.quantity) + '</span><button type="button" aria-label="Remove ' + esc(item.name) + '" data-order-remove="' + i + '"><i class="fas fa-xmark"></i></button></div>').join('') : '<p class="empty-note">No products added yet.</p>';
+        const subtotal = orderItems.reduce((s, item) => s + item.price * item.quantity, 0), delivery = Number($('order-delivery').value) || 0;
+        $('order-subtotal').textContent = money(subtotal); $('order-delivery-total').textContent = money(delivery); $('order-total').textContent = money(subtotal + delivery);
+      }
+      function lockOrderForm(locked) { $('order-form').querySelectorAll('input,select,textarea,button').forEach((el) => (el.disabled = locked)); }
+      function openOrder() {
+        if (!current || !current.customerInfo || creatingOrder) return;
+        orderCustomer = current; orderItems = []; orderProducts = []; orderCreated = false; orderRequestId = 'crm-' + crypto.randomUUID();
+        lockOrderForm(false);
+        const info = current.customerInfo;
+        $('order-form').reset();
+        $('order-name').value = info.name || ''; $('order-phone').value = current.phone; $('order-address').value = info.shippingAddress || '';
+        $('order-city').value = info.city || ''; $('order-email').value = info.email || ''; $('order-delivery').value = info.deliveryCharge || 0;
+        $('order-payment').value = ['cash_on_delivery', 'bkash', 'nagad', 'card', 'online_payment'].includes(info.paymentType) ? info.paymentType : 'cash_on_delivery';
+        $('order-source').value = channel() === 'whatsapp' ? 'whatsapp' : 'phone';
+        $('order-search-results').innerHTML = ''; $('order-status').textContent = ''; $('order-success').hidden = true;
+        renderOrderItems();
+        $('order-dialog').showModal();
+        $('order-search').focus();
+      }
+      async function searchOrderProducts() {
+        clearTimeout(orderSearchTimer);
+        if (creatingOrder || orderCreated) return;
+        const term = $('order-search').value.trim();
+        if (productController) productController.abort();
+        if (term.length < 2) { $('order-search-results').textContent = 'Enter at least two characters.'; return; }
+        const controller = (productController = new AbortController());
+        $('order-search-results').textContent = 'Searching…';
+        try {
+          const products = await request('/api/customer-manager/products/search?q=' + encodeURIComponent(term), { signal: controller.signal });
+          if (controller !== productController) return;
+          orderProducts = products;
+          $('order-search-results').innerHTML = products.length ? products.map((p, i) => '<button class="product-result" type="button" data-order-add="' + i + '"><span>' + esc(p.name) + '</span><strong>' + money(p.price) + ' · Add</strong></button>').join('') : 'No products found.';
+        } catch (error) { if (error.name !== 'AbortError') $('order-search-results').textContent = error.message; }
+      }
+      $('order-close').onclick = () => { if (!creatingOrder) $('order-dialog').close(); };
+      $('order-dialog').addEventListener('cancel', (event) => { if (creatingOrder) event.preventDefault(); });
+      $('order-search').addEventListener('input', () => { clearTimeout(orderSearchTimer); orderSearchTimer = setTimeout(searchOrderProducts, 300); });
+      $('order-search').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); searchOrderProducts(); } });
+      $('order-search-button').onclick = searchOrderProducts;
+      $('order-search-results').onclick = (event) => {
+        const b = event.target.closest('[data-order-add]'); if (!b || creatingOrder || orderCreated) return;
+        const p = orderProducts[Number(b.dataset.orderAdd)]; if (!p) return;
+        const existing = orderItems.find((i) => i.product === p._id);
+        if (existing) existing.quantity = Math.min(100, existing.quantity + 1); else orderItems.push({ product: p._id, name: p.name, price: p.price, quantity: 1 });
+        renderOrderItems();
+      };
+      $('order-items').addEventListener('change', (event) => {
+        const input = event.target.closest('[data-order-qty]'); if (!input || creatingOrder || orderCreated) return;
+        orderItems[Number(input.dataset.orderQty)].quantity = Math.max(1, Math.min(100, Math.floor(Number(input.value) || 1)));
+        renderOrderItems();
+      });
+      $('order-items').onclick = (event) => { const b = event.target.closest('[data-order-remove]'); if (b && !creatingOrder && !orderCreated) { orderItems.splice(Number(b.dataset.orderRemove), 1); renderOrderItems(); } };
+      $('order-delivery').oninput = renderOrderItems;
+      $('order-form').onsubmit = async (event) => {
+        event.preventDefault();
+        if (creatingOrder || orderCreated || !orderCustomer) return;
+        if (!orderItems.length) { $('order-status').className = 'form-status error'; $('order-status').textContent = 'Add at least one product.'; return; }
+        creatingOrder = true; lockOrderForm(true); $('order-close').disabled = true;
+        $('order-status').className = 'form-status'; $('order-status').textContent = 'Creating order…';
+        try {
+          const result = await request('/api/customer-manager/' + orderCustomer.phone + '/orders', { method: 'POST', body: JSON.stringify({ name: $('order-name').value, shippingAddress: $('order-address').value, city: $('order-city').value, email: $('order-email').value, deliveryCharge: Number($('order-delivery').value), paymentType: $('order-payment').value, source: $('order-source').value, requestId: orderRequestId, items: orderItems.map((i) => ({ product: i.product, quantity: i.quantity })) }) });
+          orderCreated = true;
+          $('order-status').textContent = '';
+          $('order-success').hidden = false;
+          $('order-success').innerHTML = '<strong>Order #' + esc(result.orderId) + ' created.</strong><a href="custom-orders.html" target="_blank" rel="noopener noreferrer">View in Amolbooks Orders →</a>';
+          $('oc-ordered').checked = true; followupTouched = false; suggestFollowup();
+          if (current && current.phone === orderCustomer.phone) loadDetail(orderCustomer.phone, true);
+          load();
+        } catch (error) { $('order-status').className = 'form-status error'; $('order-status').textContent = error.message + ' If the request was interrupted, retry this order.'; }
+        finally { creatingOrder = false; $('order-close').disabled = false; lockOrderForm(orderCreated); }
+      };
+
+      /* ── Session ── */
+      $('menu').onclick = () => { const nav = $('navigation'); if (nav) nav.classList.toggle('open'); };
+      $('logout').onclick = () => {
+        if (saving || creatingOrder) return;
+        closeDialogs();
+        if (listController) listController.abort();
+        localStorage.removeItem('co_admin_token'); localStorage.removeItem('profit_admin_token');
+        data = null;
+        $('rows').innerHTML = '<tr class="empty-row"><td colspan="11">Sign in to view customers.</td></tr>';
+        $('login').hidden = false;
+      };
+      $('login-form').onsubmit = async (event) => {
+        event.preventDefault();
+        $('login-button').disabled = true; $('login-status').textContent = '';
+        try {
+          const response = await fetch(API_BASE + '/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: $('username').value, password: $('password').value }) });
+          const payload = await response.json();
+          const value = payload.token || (payload.data && (payload.data.token || payload.data.accessToken));
+          if (!response.ok || !value) throw new Error((Array.isArray(payload.message) ? payload.message.join(' ') : payload.message) || 'Sign in failed');
+          localStorage.setItem('co_admin_token', value);
+          $('password').value = ''; $('login').hidden = true;
+          load({ skeleton: true });
+        } catch (error) { $('login-status').textContent = error.message; }
+        finally { $('login-button').disabled = false; }
+      };
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeDropdowns(); });
+
+      if (token()) load({ skeleton: true }); else $('login').hidden = false;
+    })();
+  </script>
+</body>
 </html>

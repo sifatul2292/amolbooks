@@ -1,0 +1,163 @@
+<!-- Staff attribution labels for custom-orders.html (injected by customer-manager-pages.ts).
+     Orders: "Sent by <name>" under the courier cell and "Note by <name>" under the admin note.
+     Incomplete Orders: "by <name>" under the Converted badge, and the note author. -->
+<style id="ab-staff-attribution">
+  .ab-staff-by {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    line-height: 1.35;
+    color: #64748b;
+    font-weight: 500;
+    white-space: normal;
+  }
+  .ab-staff-by strong {
+    color: #5b21b6;
+    font-weight: 700;
+  }
+</style>
+<script>
+  (function () {
+    'use strict';
+    if (window.__abStaffAttribution) return;
+    window.__abStaffAttribution = true;
+    // Same API host as the order page's own requests (custom-orders.html `API`).
+    var API =
+      window.location.hostname === 'localhost'
+        ? 'http://localhost:3000'
+        : 'https://apisub.amolbooks.com';
+    var view = new URLSearchParams(window.location.search).get('view') || '';
+    if (view && view !== 'incomplete') return;
+    var kind = view === 'incomplete' ? 'incomplete' : 'order';
+    var MARK = 'ab-staff-by';
+    var cache = {};
+    var stale = {};
+    var timer = null;
+    var body = document.getElementById('ordersBody');
+    if (!body || !window.MutationObserver || !window.fetch) return;
+
+    function token() {
+      try {
+        return localStorage.getItem('co_admin_token') || '';
+      } catch (_) {
+        return '';
+      }
+    }
+    function rowId(row) {
+      var box = row && row.querySelector && row.querySelector('input.row-check');
+      return box ? String(box.value || '') : '';
+    }
+    function ours(node) {
+      return node.nodeType === 1 && node.classList.contains(MARK);
+    }
+    function when(at) {
+      var date = at ? new Date(at) : null;
+      if (!date || isNaN(date.getTime())) return '';
+      return date.toLocaleString('en-GB', {
+        timeZone: 'Asia/Dhaka',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      });
+    }
+    function label(prefix, stamp) {
+      var el = document.createElement('span');
+      var name = document.createElement('strong');
+      el.className = MARK;
+      el.appendChild(document.createTextNode(prefix + ' '));
+      name.textContent = stamp.name;
+      el.appendChild(name);
+      var time = when(stamp.at);
+      var role = String(stamp.role || '').replace(/_/g, ' ');
+      if (time || role) el.title = [time, role].filter(Boolean).join(' · ');
+      return el;
+    }
+    function decorate(row, entry) {
+      Array.prototype.forEach.call(row.querySelectorAll('.' + MARK), function (n) {
+        n.parentNode.removeChild(n);
+      });
+      if (!entry) return;
+      var courier = row.querySelector('.courier-cell');
+      if (entry.courierSentBy && courier) {
+        courier.appendChild(label('Sent by', entry.courierSentBy));
+      }
+      var note = row.querySelector('.admin-note-cell');
+      if (entry.adminNoteBy && note && note.querySelector('.admin-note-text')) {
+        note.appendChild(label('Note by', entry.adminNoteBy));
+      }
+      if (entry.convertedBy) {
+        var badge = Array.prototype.filter.call(row.querySelectorAll('.badge'), function (b) {
+          return b.textContent.trim() === 'Converted';
+        })[0];
+        if (badge) badge.parentNode.appendChild(label('by', entry.convertedBy));
+      }
+    }
+    function rows() {
+      return Array.prototype.filter.call(body.rows, rowId);
+    }
+    function load(ids) {
+      if (!ids.length || !token()) return;
+      fetch(API + '/api/staff-activity/attribution', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', administrator: token() },
+        body: JSON.stringify({ ids: ids, kind: kind }),
+      })
+        .then(function (r) {
+          return r.ok ? r.json() : null;
+        })
+        .then(function (resp) {
+          if (!resp || !resp.data) return;
+          ids.forEach(function (id) {
+            cache[id] = resp.data[id] || null;
+          });
+          rows().forEach(function (row) {
+            var id = rowId(row);
+            if (ids.indexOf(id) !== -1 && !stale[id]) decorate(row, cache[id]);
+          });
+        })
+        .catch(function () {});
+    }
+    function flush() {
+      timer = null;
+      var fetchIds = [];
+      rows().forEach(function (row) {
+        var id = rowId(row);
+        if (stale[id] || !(id in cache)) {
+          delete stale[id];
+          fetchIds.push(id);
+        } else if (cache[id] && !row.querySelector('.' + MARK)) {
+          decorate(row, cache[id]);
+        }
+      });
+      for (var i = 0; i < fetchIds.length; i += 200) load(fetchIds.slice(i, i + 200));
+    }
+    function schedule() {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(flush, 150);
+    }
+
+    new MutationObserver(function (records) {
+      var relevant = false;
+      records.forEach(function (record) {
+        var changed = Array.prototype.slice
+          .call(record.addedNodes)
+          .concat(Array.prototype.slice.call(record.removedNodes));
+        if (changed.length && changed.every(ours)) return;
+        relevant = true;
+        if (record.target === body) {
+          // Full re-render (list reload after send, status change, paging): refresh every row.
+          rows().forEach(function (row) {
+            stale[rowId(row)] = true;
+          });
+          return;
+        }
+        var cell = record.target.closest && record.target.closest('.admin-note-cell, .courier-cell');
+        if (cell) stale[rowId(cell.closest('tr'))] = true;
+      });
+      if (relevant) schedule();
+    }).observe(body, { childList: true, subtree: true });
+    schedule();
+  })();
+</script>

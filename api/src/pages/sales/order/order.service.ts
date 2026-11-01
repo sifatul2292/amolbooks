@@ -7,6 +7,7 @@ import {
   InternalServerErrorException,
   Logger,
   NotFoundException,
+  Optional,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -54,6 +55,7 @@ import { Admin } from '../../../interfaces/admin/admin.interface';
 import { AnalyticsService } from '../../../shared/analytics/analytics.service';
 import { StockMovement } from '../../../interfaces/common/stock-movement.interface';
 import { withCalculatedSpecialPackageSubtotal } from '../../../shared/utils/special-package-price.util';
+import { StaffActivityService } from '../../staff-activity/staff-activity.service';
 const ObjectId = Types.ObjectId;
 
 // Process-level TTL cache for the public recent-buyers feed. Caps DB load on a
@@ -128,6 +130,8 @@ export class OrderService {
     private bulkSmsService: BulkSmsService,
     private emailService: EmailService, // private pdfMakerService: TCreatedPdf,
     private analyticsService: AnalyticsService,
+    @Optional()
+    private readonly staffActivityService?: StaffActivityService,
   ) {
     this.checkAndUpdateCourierStatus();
     this.scheduleManualMetaPurchaseRetries();
@@ -170,6 +174,7 @@ export class OrderService {
         'Admin authentication failed: Admin data is missing',
       );
     }
+    this.stripStaffStamps(addOrderDto);
     const manualOrderRequestId = String(
       addOrderDto.manualOrderRequestId || '',
     ).trim();
@@ -225,7 +230,7 @@ export class OrderService {
       ObjectId.isValid(addOrderDto.incompleteOrderId)
         ? await this.incompleteOrderModel
             .findById(addOrderDto.incompleteOrderId)
-            .select('attribution')
+            .select('attribution adminNote adminNoteBy')
             .lean()
         : null;
 
@@ -246,6 +251,18 @@ export class OrderService {
     );
     mData = this.normalizeAdminOrderData(mData);
     mData.orderedItems = await this.attachCostSnapshots(mData.orderedItems);
+    const staffActor = await this.staffActor(admin);
+    // A note carried over from Incomplete Orders keeps its original author.
+    if (String(mData.adminNote || '').trim()) {
+      const carriedNote =
+        convertedIncomplete?.adminNoteBy?.name &&
+        String(convertedIncomplete.adminNote || '').trim() ===
+          String(mData.adminNote).trim();
+      const noteBy = carriedNote
+        ? convertedIncomplete.adminNoteBy
+        : staffActor && { ...staffActor, at: new Date() };
+      if (noteBy) mData.adminNoteBy = noteBy;
+    }
 
     const newData = new this.orderModel(mData);
 
@@ -272,7 +289,7 @@ export class OrderService {
 
       // Nothing after save may hold the admin response open. Conversion
       // marking and sales counters are durable follow-up work.
-      this.processAdminOrderBookkeeping(saveData, addOrderDto).catch(
+      this.processAdminOrderBookkeeping(saveData, addOrderDto, staffActor).catch(
         (error) => {
           this.logger.error(
             `Admin bookkeeping failed for order ${saveData.orderId}:`,
@@ -323,12 +340,20 @@ export class OrderService {
   private async processAdminOrderBookkeeping(
     saveData: any,
     addOrderDto: AddOrderDto,
+    staffActor: any = null,
   ): Promise<void> {
     if (addOrderDto.incompleteOrderId) {
       try {
         await this.markIncompleteOrderConverted(
           addOrderDto.incompleteOrderId,
           saveData.orderId,
+        );
+        await this.trackStaff((staff) =>
+          staff.incompleteConverted(
+            addOrderDto.incompleteOrderId,
+            saveData,
+            staffActor,
+          ),
         );
       } catch (error) {
         this.logger.warn(
@@ -3010,6 +3035,39 @@ export class OrderService {
     return Number.isFinite(numberValue) ? numberValue : fallback;
   }
 
+  // Staff attribution is bookkeeping only: it never fails or blocks an order action.
+  private async trackStaff(
+    task: (staff: StaffActivityService) => Promise<any>,
+  ): Promise<void> {
+    if (!this.staffActivityService) return;
+    try {
+      await task(this.staffActivityService);
+    } catch (error) {
+      this.logger.warn(`Staff attribution failed: ${error?.message || error}`);
+    }
+  }
+
+  /** Verified admin from a guarded route, or from an optional admin token. */
+  private async staffActor(admin?: any, token?: string): Promise<any> {
+    let actor = null;
+    await this.trackStaff(async (staff) => {
+      actor = admin
+        ? await staff.resolveActor(admin)
+        : await staff.actorFromToken(token);
+    });
+    return actor;
+  }
+
+  /** Attribution fields are server-owned; never accept them from a request body. */
+  private stripStaffStamps<T>(data: T): T {
+    if (data && typeof data === 'object') {
+      for (const key of ['adminNoteBy', 'courierSentBy', 'convertedBy']) {
+        delete (data as any)[key];
+      }
+    }
+    return data;
+  }
+
   private async markIncompleteOrderConverted(
     incompleteOrderId: string,
     orderId: string,
@@ -3937,7 +3995,9 @@ export class OrderService {
   async updateOrderById(
     id: string,
     updateOrderDto: UpdateOrderDto,
+    adminToken?: string,
   ): Promise<ResponsePayload> {
+    this.stripStaffStamps(updateOrderDto);
     const { name, orderStatus } = updateOrderDto;
     let data;
     try {
@@ -3957,6 +4017,18 @@ export class OrderService {
         { strict: false },
       );
       if (!updated) throw new ConflictException('Customer-cancelled orders cannot be reopened');
+      const staffActor = await this.staffActor(null, adminToken);
+      await this.trackStaff(async (staff) => {
+        if (orderStatus !== undefined) {
+          await staff.statusChanged(data, orderStatus, staffActor);
+        }
+        await staff.adminNoteChanged(
+          'order',
+          data,
+          updateOrderDto.adminNote,
+          staffActor,
+        );
+      });
 
       // Setting Data
       const fSetting: any = await this.settingModel
@@ -3992,6 +4064,7 @@ export class OrderService {
           orderStatus: orderStatus,
           courierMethod: courierMethod,
           id: id,
+          actor: staffActor,
         });
       }
       return {
@@ -4011,7 +4084,7 @@ export class OrderService {
     const order: any = await this.orderModel.findById(id);
     if (!order) throw new NotFoundException('No Data found!');
 
-    let updateData: any = { ...updateOrderDto };
+    let updateData: any = this.stripStaffStamps({ ...updateOrderDto });
     if (Array.isArray(updateOrderDto.orderedItems)) {
       updateData = this.normalizeAdminOrderData(updateData);
       updateData.orderedItems = await this.attachCostSnapshots(
@@ -4025,6 +4098,18 @@ export class OrderService {
       { strict: false },
     );
     if (!updated) throw new ConflictException('Customer-cancelled orders cannot be edited');
+    const staffActor = await this.staffActor(admin);
+    await this.trackStaff(async (staff) => {
+      if (updateData.orderStatus !== undefined) {
+        await staff.statusChanged(order, updateData.orderStatus, staffActor);
+      }
+      await staff.adminNoteChanged(
+        'order',
+        order,
+        updateData.adminNote,
+        staffActor,
+      );
+    });
 
     if (
       Array.isArray(updateData.orderedItems) &&
@@ -4048,7 +4133,9 @@ export class OrderService {
   async updateMultipleOrderById(
     ids: string[],
     updateOrderDto: UpdateOrderDto,
+    admin?: Admin,
   ): Promise<ResponsePayload> {
+    this.stripStaffStamps(updateOrderDto);
     const { orderStatus } = updateOrderDto;
     const mIds = ids.map((m) => new ObjectId(m));
 
@@ -4059,10 +4146,35 @@ export class OrderService {
     // const hasOrderStatus = !!orderStatusRaw;
 
     try {
+      const staffActor = await this.staffActor(admin);
+      const before: any[] =
+        this.staffActivityService &&
+        (orderStatus !== undefined || updateOrderDto.adminNote !== undefined)
+          ? await this.orderModel
+              .find({
+                _id: { $in: mIds },
+                customerCancelledAt: { $exists: false },
+              })
+              .select('orderId orderStatus adminNote')
+              .lean()
+          : [];
       await this.orderModel.updateMany(
         { _id: { $in: mIds }, customerCancelledAt: { $exists: false } },
         { $set: updateOrderDto },
       );
+      await this.trackStaff(async (staff) => {
+        for (const order of before) {
+          if (orderStatus !== undefined) {
+            await staff.statusChanged(order, orderStatus, staffActor);
+          }
+          await staff.adminNoteChanged(
+            'order',
+            order,
+            updateOrderDto.adminNote,
+            staffActor,
+          );
+        }
+      });
       const fSetting = await this.settingModel
         .findOne()
         .select(
@@ -4084,6 +4196,7 @@ export class OrderService {
         orderStatus: orderStatus,
         courierMethod: courierMethod,
         mIds: mIds,
+        actor: staffActor,
       });
       // // console.log('mIds', mIds);
       // for (const id of mIds) {
@@ -4106,15 +4219,26 @@ export class OrderService {
     }
   }
 
-  async sendToCourier(id: string): Promise<ResponsePayload> {
+  async sendToCourier(id: string, admin?: Admin): Promise<ResponsePayload> {
     try {
       const fSetting = await this.settingModel.findOne();
       const courierMethods = fSetting?.courierMethods ?? [];
       const courierMethod = courierMethods.find(
         (f: any) => f.status === 'active',
       );
-      await this.addSingleOrderToCourier({ orderStatus: 8, courierMethod, id });
-      await this.orderModel.findByIdAndUpdate(id, { $set: { orderStatus: 2 } });
+      const staffActor = await this.staffActor(admin);
+      await this.addSingleOrderToCourier({
+        orderStatus: 8,
+        courierMethod,
+        id,
+        actor: staffActor,
+      });
+      const before = await this.orderModel.findByIdAndUpdate(id, {
+        $set: { orderStatus: 2 },
+      });
+      await this.trackStaff((staff) =>
+        staff.statusChanged(before, 2, staffActor),
+      );
       return {
         success: true,
         message: 'Order sent to courier successfully',
@@ -4134,8 +4258,9 @@ export class OrderService {
     orderStatus: any;
     courierMethod: any;
     id: string;
+    actor?: any;
   }) {
-    const { orderStatus, courierMethod, id } = data;
+    const { orderStatus, courierMethod, id, actor } = data;
     if (orderStatus === 8 && courierMethod) {
       const fOrder = await this.claimCourierBooking(id);
       const courierApiConfig: CourierApiConfig = {
@@ -4233,6 +4358,9 @@ export class OrderService {
                 },
               },
             });
+            await this.trackStaff((staff) =>
+              staff.courierSent(fOrder, orderCourierData, actor),
+            );
           }
         }
       }
@@ -4262,6 +4390,9 @@ export class OrderService {
                 courierData: orderCourierData,
               },
             });
+            await this.trackStaff((staff) =>
+              staff.courierSent(fOrder, orderCourierData, actor),
+            );
           }
         }
       }
@@ -4319,6 +4450,9 @@ export class OrderService {
                 courierData: orderCourierData,
               },
             });
+            await this.trackStaff((staff) =>
+              staff.courierSent(fOrder, orderCourierData, actor),
+            );
           }
         }
       }
@@ -4337,8 +4471,9 @@ export class OrderService {
     orderStatus: any;
     courierMethod: any;
     mIds: any[];
+    actor?: any;
   }) {
-    const { orderStatus, courierMethod, mIds } = data;
+    const { orderStatus, courierMethod, mIds, actor } = data;
     if (orderStatus === 8 && courierMethod) {
       const courierApiConfig: CourierApiConfig = {
         providerName: courierMethod?.providerName,
@@ -4436,6 +4571,9 @@ export class OrderService {
                   },
                 },
               });
+              await this.trackStaff((staff) =>
+                staff.courierSent(fOrder, orderCourierData, actor),
+              );
             }
           }
         }
@@ -4462,6 +4600,9 @@ export class OrderService {
                   courierData: orderCourierData,
                 },
               });
+              await this.trackStaff((staff) =>
+                staff.courierSent(fOrder, orderCourierData, actor),
+              );
             }
           }
         }
@@ -4520,6 +4661,9 @@ export class OrderService {
                   courierData: orderCourierData,
                 },
               });
+              await this.trackStaff((staff) =>
+                staff.courierSent(fOrder, orderCourierData, actor),
+              );
             }
           }
         }
@@ -4548,6 +4692,7 @@ export class OrderService {
   async changeOrderStatus(
     id: string,
     updateOrderStatusDto: UpdateOrderStatusDto,
+    admin?: Admin,
   ): Promise<ResponsePayload> {
     const { orderStatus } = updateOrderStatusDto;
 
@@ -4670,6 +4815,10 @@ export class OrderService {
         $set: mData,
       });
       if (!updated) throw new ConflictException('Customer-cancelled orders cannot be reopened');
+      const staffActor = await this.staffActor(admin);
+      await this.trackStaff((staff) =>
+        staff.statusChanged(data, orderStatus, staffActor),
+      );
 
       if (shouldRestock) {
         const restockReason =
@@ -6007,8 +6156,14 @@ export class OrderService {
   async updateIncompleteOrderByAdmin(
     id: string,
     updateIncompleteOrderDto: UpdateIncompleteOrderDto,
+    admin?: Admin,
   ): Promise<ResponsePayload> {
-    return this.updateIncompleteOrderFields(id, updateIncompleteOrderDto, [
+    const before: any =
+      this.staffActivityService &&
+      typeof updateIncompleteOrderDto?.adminNote === 'string'
+        ? await this.incompleteOrderModel.findById(id).select('adminNote').lean()
+        : null;
+    const result = await this.updateIncompleteOrderFields(id, updateIncompleteOrderDto, [
       'name',
       'phoneNo',
       'email',
@@ -6028,6 +6183,18 @@ export class OrderService {
       'adminNote',
       'fraudChecker',
     ]);
+    if (before) {
+      const staffActor = await this.staffActor(admin);
+      await this.trackStaff((staff) =>
+        staff.adminNoteChanged(
+          'incomplete',
+          before,
+          updateIncompleteOrderDto.adminNote,
+          staffActor,
+        ),
+      );
+    }
+    return result;
   }
 
   private async updateIncompleteOrderFields(

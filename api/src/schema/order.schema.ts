@@ -372,6 +372,20 @@ export const OrderSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    // Staff who last wrote adminNote (staff-activity).
+    adminNoteBy: {
+      _id: { type: Schema.Types.ObjectId, ref: 'Admin' },
+      name: { type: String },
+      role: { type: String },
+      at: { type: Date },
+    },
+    // Staff whose action booked the courier parcel.
+    courierSentBy: {
+      _id: { type: Schema.Types.ObjectId, ref: 'Admin' },
+      name: { type: String },
+      role: { type: String },
+      at: { type: Date },
+    },
     user: {
       type: Schema.Types.ObjectId,
       ref: 'User',

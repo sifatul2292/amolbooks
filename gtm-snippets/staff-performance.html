@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Staff Performance · Amolbooks</title>
+    <style>
+      :root {
+        font-family: Inter, system-ui, -apple-system, sans-serif;
+        color: #182039;
+        background: #f3f1fc;
+        font-size: 14px;
+        --purple: #7135e8;
+        --muted: #667697;
+        --border: #e3e6f1;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 10px 12px;
+        background: #fff;
+        color: inherit;
+        touch-action: manipulation;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:hover {
+        border-color: var(--purple);
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      :focus-visible {
+        outline: 3px solid #bba0fa;
+        outline-offset: 2px;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      h1,
+      h2,
+      p {
+        margin: 0;
+      }
+      h1 {
+        font-size: 28px;
+        letter-spacing: -0.8px;
+      }
+      h2 {
+        font-size: 17px;
+      }
+      .muted,
+      small {
+        color: var(--muted);
+      }
+      small {
+        font-size: 12px;
+      }
+      label {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+      .workspace {
+        min-height: 100vh;
+      }
+      main {
+        min-width: 0;
+        padding: 28px 24px;
+        max-width: 1280px;
+      }
+      .heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      .heading p {
+        margin-top: 7px;
+      }
+      .heading-actions {
+        display: flex;
+        gap: 8px;
+        white-space: nowrap;
+      }
+      .menu {
+        display: none;
+      }
+      .primary {
+        background: var(--purple);
+        border-color: var(--purple);
+        color: #fff;
+        font-weight: 650;
+      }
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: #fff;
+        padding: 19px;
+      }
+      .filters {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+        gap: 12px;
+        align-items: end;
+        margin-bottom: 18px;
+      }
+      .filters input,
+      .filters select {
+        width: 100%;
+        min-width: 0;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+      .stat {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .stat-icon {
+        background: #efe9ff;
+        color: #7135e8;
+        border-radius: 12px;
+        width: 46px;
+        height: 46px;
+        flex: none;
+        display: grid;
+        place-items: center;
+        font-size: 21px;
+      }
+      .stat:nth-child(2) .stat-icon {
+        background: #fff2df;
+        color: #ae6500;
+      }
+      .stat:nth-child(3) .stat-icon {
+        background: #e9fbef;
+        color: #138638;
+      }
+      .stat:nth-child(4) .stat-icon {
+        background: #fde8f3;
+        color: #b4236b;
+      }
+      .stat strong {
+        display: block;
+        font-size: 24px;
+        margin-top: 4px;
+      }
+      .table-card {
+        padding: 18px 10px 0;
+        margin-bottom: 18px;
+      }
+      .table-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 12px;
+        flex-wrap: wrap;
+        padding: 0 8px 16px;
+      }
+      .table-title p {
+        margin-top: 5px;
+      }
+      .table-scroll {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+      th {
+        background: #f5f4fc;
+        color: var(--muted);
+        font-size: 10px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        text-align: left;
+        padding: 14px 10px;
+      }
+      th.num,
+      td.num {
+        text-align: right;
+      }
+      td {
+        padding: 15px 10px;
+        border-bottom: 1px solid #edf0f6;
+      }
+      td small {
+        display: block;
+        margin-top: 4px;
+      }
+      tbody tr.me {
+        background: #f7f2ff;
+      }
+      .rank {
+        display: inline-grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #f0f3f8;
+        color: #52627e;
+        font-weight: 700;
+        font-size: 12px;
+      }
+      .rank.top {
+        background: #7135e8;
+        color: #fff;
+      }
+      .staff-name {
+        font-weight: 650;
+      }
+      .badge {
+        display: inline-block;
+        margin-top: 4px;
+        padding: 3px 8px;
+        border-radius: 20px;
+        background: #f0f3f8;
+        color: #52627e;
+        font-size: 11px;
+      }
+      .points {
+        font-size: 16px;
+        font-weight: 750;
+        color: #5b21b6;
+      }
+      tfoot td {
+        font-weight: 700;
+        border-bottom: 0;
+        background: #fbfaff;
+      }
+      .empty {
+        text-align: center;
+        color: var(--muted);
+        padding: 36px 10px;
+        white-space: normal;
+      }
+      .points-form {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+        gap: 12px;
+        align-items: end;
+        margin-top: 16px;
+      }
+      .points-form input {
+        width: 100%;
+      }
+      .notice {
+        margin-top: 12px;
+        padding: 10px 12px;
+        border-radius: 9px;
+        background: #fff7e6;
+        color: #8a5300;
+        font-size: 13px;
+      }
+      .status {
+        min-height: 18px;
+        margin-top: 10px;
+        font-size: 13px;
+      }
+      .status.error {
+        color: #b42318;
+      }
+      .status.ok {
+        color: #16763b;
+      }
+      .rules {
+        margin: 14px 0 0;
+        padding-left: 18px;
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 13px;
+      }
+      .login {
+        position: fixed;
+        inset: 0;
+        background: #141426cc;
+        display: grid;
+        place-items: center;
+        z-index: 50;
+        padding: 16px;
+      }
+      .login[hidden] {
+        display: none;
+      }
+      .login form {
+        background: #fff;
+        border-radius: 16px;
+        padding: 26px;
+        width: min(360px, 100%);
+        display: grid;
+        gap: 12px;
+      }
+      .login input {
+        width: 100%;
+      }
+      @media (max-width: 1100px) {
+        .filters {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .stats {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 900px) {
+        .menu {
+          display: inline-block;
+        }
+        .heading h1 {
+          font-size: 24px;
+        }
+        main {
+          padding: 20px 16px;
+        }
+      }
+      @media (max-width: 600px) {
+        .heading {
+          align-items: flex-start;
+        }
+        .filters,
+        .points-form {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .stats {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
+        .stat {
+          padding: 14px;
+        }
+        .stat-icon {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- AB_ADMIN_SIDEBAR -->
+    <div class="workspace">
+      <main>
+        <header class="heading">
+          <div>
+            <h1>Staff Performance</h1>
+            <p class="muted" id="subtitle">
+              Points for parcels sent, Processing orders moved on and incomplete
+              orders recovered
+            </p>
+          </div>
+          <div class="heading-actions">
+            <button class="menu" id="menu" aria-label="Toggle navigation">☰</button
+            ><button id="logout">Sign out</button>
+          </div>
+        </header>
+
+        <form class="card filters" id="filters">
+          <div>
+            <label for="preset">Period</label>
+            <select id="preset">
+              <option value="today">Today</option>
+              <option value="yesterday">Yesterday</option>
+              <option value="7">Last 7 days</option>
+              <option value="month" selected>This month</option>
+              <option value="lastMonth">Last month</option>
+              <option value="custom">Custom dates</option>
+            </select>
+          </div>
+          <div>
+            <label for="from">From</label><input type="date" id="from" required />
+          </div>
+          <div>
+            <label for="to">To</label><input type="date" id="to" required />
+          </div>
+          <div>
+            <label for="role">Role</label>
+            <select id="role">
+              <option value="">All roles</option>
+            </select>
+          </div>
+          <button class="primary" id="apply">Show</button>
+        </form>
+
+        <div class="stats">
+          <div class="card stat">
+            <span class="stat-icon">🚚</span>
+            <div><small>Parcels sent to courier</small><strong id="total-courierSent">—</strong></div>
+          </div>
+          <div class="card stat">
+            <span class="stat-icon">➜</span>
+            <div><small>Moved from Processing</small><strong id="total-processingMoved">—</strong></div>
+          </div>
+          <div class="card stat">
+            <span class="stat-icon">↺</span>
+            <div><small>Incomplete orders converted</small><strong id="total-incompleteConverted">—</strong></div>
+          </div>
+          <div class="card stat">
+            <span class="stat-icon">★</span>
+            <div><small>Total points</small><strong id="total-points">—</strong></div>
+          </div>
+        </div>
+
+        <section class="card table-card">
+          <div class="table-title">
+            <div>
+              <h2>Leaderboard</h2>
+              <p class="muted" id="range-label">—</p>
+            </div>
+            <small id="scope-note"></small>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Staff</th>
+                  <th class="num">Parcels sent</th>
+                  <th class="num">Moved from Processing</th>
+                  <th class="num">Incomplete converted</th>
+                  <th class="num">Points</th>
+                </tr>
+              </thead>
+              <tbody id="rows">
+                <tr><td colspan="6" class="empty">Loading…</td></tr>
+              </tbody>
+              <tfoot id="foot"></tfoot>
+            </table>
+          </div>
+        </section>
+
+        <section class="card" id="points-card">
+          <h2>Points per action</h2>
+          <p class="muted" id="points-summary" style="margin-top: 6px">—</p>
+          <div class="notice" id="points-default" hidden>
+            These are proposed starting values and have not been confirmed yet.
+          </div>
+          <form class="points-form" id="points-form" hidden>
+            <div>
+              <label for="p-courierSent">Parcel sent to courier</label
+              ><input id="p-courierSent" type="number" min="0" max="1000" step="1" required />
+            </div>
+            <div>
+              <label for="p-processingMoved">Order moved from Processing</label
+              ><input id="p-processingMoved" type="number" min="0" max="1000" step="1" required />
+            </div>
+            <div>
+              <label for="p-incompleteConverted">Incomplete order converted</label
+              ><input id="p-incompleteConverted" type="number" min="0" max="1000" step="1" required />
+            </div>
+            <button class="primary" id="save-points">Save points</button>
+          </form>
+          <p class="status" id="points-status" role="status"></p>
+          <ul class="rules">
+            <li>Each order counts once per action, for the staff member who did it first. Re-sending, double clicks or switching a status back and forth never add points.</li>
+            <li>“Moved from Processing” means an order left the Processing tab (Pending, Processing, Shipping, Courier) to Confirmed, Completed, Cancelled, Returned, Refunded or Trash. Sending a parcel from Processing also moves the order to Confirmed.</li>
+            <li>“Incomplete converted” is the Incomplete Orders page’s Send / Add Order action.</li>
+            <li>Changing the points recalculates every period. Actions are recorded from the day this feature went live.</li>
+          </ul>
+        </section>
+      </main>
+    </div>
+
+    <div class="login" id="login" hidden>
+      <form id="login-form">
+        <h2>Sign in</h2>
+        <p class="muted">Use your admin username and password.</p>
+        <input id="username" autocomplete="username" placeholder="Username" required />
+        <input id="password" type="password" autocomplete="current-password" placeholder="Password" required />
+        <button id="login-button" class="primary">Sign in</button>
+        <p id="login-status" class="status error" role="status"></p>
+      </form>
+    </div>
+
+    <script>
+      (function () {
+        'use strict';
+        // Same-origin on local previews; production uses the current API environment.
+        const API_BASE = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)
+          ? location.origin
+          : 'https://apisub.amolbooks.com';
+        const $ = (id) => document.getElementById(id);
+        const esc = (v) =>
+          String(v == null ? '' : v).replace(
+            /[&<>"']/g,
+            (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
+          );
+        const ROLE_LABELS = {
+          super_admin: 'Super Admin',
+          admin: 'Admin',
+          salesman: 'Sales Man',
+          editor: 'Editor',
+          accountant: 'Accountant',
+          Collector: 'Collector',
+        };
+        const POINT_KEYS = ['courierSent', 'processingMoved', 'incompleteConverted'];
+        const roleLabel = (role) => ROLE_LABELS[role] || role || 'Staff';
+        const num = (v) => Number(v || 0).toLocaleString('en-US');
+        let data = null;
+        let loading = null;
+
+        function token() {
+          return localStorage.getItem('co_admin_token') || '';
+        }
+        function tokenPayload() {
+          try {
+            return JSON.parse(atob(token().split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+          } catch (_) {
+            return {};
+          }
+        }
+        function dhakaToday() {
+          return new Date(Date.now() + 21600000).toISOString().slice(0, 10);
+        }
+        function shift(day, days) {
+          const d = new Date(day + 'T00:00:00Z');
+          d.setUTCDate(d.getUTCDate() + days);
+          return d.toISOString().slice(0, 10);
+        }
+        function presetRange(preset) {
+          const today = dhakaToday();
+          if (preset === 'today') return [today, today];
+          if (preset === 'yesterday') return [shift(today, -1), shift(today, -1)];
+          if (preset === '7') return [shift(today, -6), today];
+          const monthStart = today.slice(0, 8) + '01';
+          if (preset === 'lastMonth') {
+            const end = shift(monthStart, -1);
+            return [end.slice(0, 8) + '01', end];
+          }
+          return [monthStart, today];
+        }
+        function showDates(from, to) {
+          return from === to ? fmtDay(from) : fmtDay(from) + ' – ' + fmtDay(to);
+        }
+        function fmtDay(day) {
+          return new Date(day + 'T12:00:00+06:00').toLocaleDateString('en-GB', {
+            timeZone: 'Asia/Dhaka',
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+          });
+        }
+        async function request(path, options = {}) {
+          const response = await fetch(API_BASE + path, {
+            ...options,
+            headers: { 'Content-Type': 'application/json', administrator: token() },
+          });
+          let payload = {};
+          try {
+            payload = await response.json();
+          } catch (_) {}
+          if (!response.ok || payload.success === false) {
+            if (response.status === 401 && !token()) $('login').hidden = false;
+            const error = new Error(
+              (Array.isArray(payload.message) ? payload.message.join(' ') : payload.message) ||
+                'Request failed. Please try again.'
+            );
+            error.status = response.status;
+            throw error;
+          }
+          return payload.data;
+        }
+
+        function render() {
+          const role = $('role').value;
+          const me = String(tokenPayload()._id || '');
+          const rows = data.rows.filter((r) => !role || r.role === role);
+          const totals = { courierSent: 0, processingMoved: 0, movedToConfirmed: 0, incompleteConverted: 0, points: 0 };
+          rows.forEach((r) => Object.keys(totals).forEach((k) => (totals[k] += r[k])));
+          Object.keys(totals).forEach((k) => {
+            if ($('total-' + k)) $('total-' + k).textContent = num(totals[k]);
+          });
+          $('range-label').textContent = showDates(data.from, data.to);
+          $('scope-note').textContent = data.scope === 'self' ? 'You can see your own score only.' : '';
+          $('rows').innerHTML = rows.length
+            ? rows
+                .map(
+                  (r, i) =>
+                    '<tr' + (r.adminId === me ? ' class="me"' : '') + '>' +
+                    '<td><span class="rank' + (i < 3 && r.points > 0 ? ' top' : '') + '">' + (i + 1) + '</span></td>' +
+                    '<td><div class="staff-name">' + esc(r.name) + (r.adminId === me ? ' <small style="display:inline">(you)</small>' : '') +
+                    '</div><span class="badge">' + esc(roleLabel(r.role)) + '</span></td>' +
+                    '<td class="num">' + num(r.courierSent) + '</td>' +
+                    '<td class="num">' + num(r.processingMoved) +
+                    (r.processingMoved ? '<small>' + num(r.movedToConfirmed) + ' confirmed</small>' : '') + '</td>' +
+                    '<td class="num">' + num(r.incompleteConverted) + '</td>' +
+                    '<td class="num"><span class="points">' + num(r.points) + '</span></td></tr>'
+                )
+                .join('')
+            : '<tr><td colspan="6" class="empty">No staff activity in this period.</td></tr>';
+          $('foot').innerHTML =
+            rows.length > 1
+              ? '<tr><td></td><td>Total</td><td class="num">' + num(totals.courierSent) +
+                '</td><td class="num">' + num(totals.processingMoved) +
+                '</td><td class="num">' + num(totals.incompleteConverted) +
+                '</td><td class="num">' + num(totals.points) + '</td></tr>'
+              : '';
+          const p = data.points;
+          $('points-summary').textContent =
+            p.courierSent + ' per parcel sent · ' + p.processingMoved + ' per order moved from Processing · ' +
+            p.incompleteConverted + ' per incomplete order converted' +
+            (data.pointsUpdatedBy ? ' (last changed by ' + data.pointsUpdatedBy + ')' : '');
+          $('points-default').hidden = !data.pointsAreDefault;
+          $('points-form').hidden = !data.canEditPoints;
+          if (data.canEditPoints && !$('points-form').contains(document.activeElement)) {
+            POINT_KEYS.forEach((k) => ($('p-' + k).value = p[k]));
+          }
+        }
+
+        function fillRoles() {
+          const current = $('role').value;
+          const roles = [...new Set(data.rows.map((r) => r.role).filter(Boolean))].sort();
+          $('role').innerHTML =
+            '<option value="">All roles</option>' +
+            roles.map((r) => '<option value="' + esc(r) + '">' + esc(roleLabel(r)) + '</option>').join('');
+          $('role').value = roles.includes(current) ? current : '';
+        }
+
+        async function load() {
+          if (!token()) {
+            $('login').hidden = false;
+            return;
+          }
+          const from = $('from').value;
+          const to = $('to').value;
+          const id = Symbol('load');
+          loading = id;
+          $('apply').disabled = true;
+          try {
+            const result = await request(
+              '/api/staff-activity/performance?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to)
+            );
+            if (loading !== id) return;
+            data = result;
+            fillRoles();
+            render();
+          } catch (error) {
+            if (loading !== id) return;
+            if (error.status === 401) {
+              $('login').hidden = false;
+              $('login-status').textContent = 'Please sign in again.';
+            }
+            $('rows').innerHTML = '<tr><td colspan="6" class="empty">' + esc(error.message) + '</td></tr>';
+            $('foot').innerHTML = '';
+          } finally {
+            if (loading === id) $('apply').disabled = false;
+          }
+        }
+
+        function applyPreset() {
+          if ($('preset').value === 'custom') return;
+          const [from, to] = presetRange($('preset').value);
+          $('from').value = from;
+          $('to').value = to;
+        }
+
+        $('preset').onchange = () => {
+          applyPreset();
+          if ($('preset').value !== 'custom') load();
+        };
+        ['from', 'to'].forEach((id) => ($(id).oninput = () => ($('preset').value = 'custom')));
+        $('role').onchange = () => data && render();
+        $('filters').onsubmit = (event) => {
+          event.preventDefault();
+          if ($('from').value > $('to').value) {
+            $('rows').innerHTML = '<tr><td colspan="6" class="empty">“From” must be on or before “To”.</td></tr>';
+            return;
+          }
+          load();
+        };
+        $('points-form').onsubmit = async (event) => {
+          event.preventDefault();
+          const body = {};
+          for (const k of POINT_KEYS) body[k] = Number($('p-' + k).value);
+          $('save-points').disabled = true;
+          $('points-status').className = 'status';
+          $('points-status').textContent = 'Saving…';
+          try {
+            await request('/api/staff-activity/points', { method: 'PUT', body: JSON.stringify(body) });
+            $('points-status').className = 'status ok';
+            $('points-status').textContent = 'Points saved. Scores below use the new values.';
+            await load();
+          } catch (error) {
+            $('points-status').className = 'status error';
+            $('points-status').textContent = error.message;
+          } finally {
+            $('save-points').disabled = false;
+          }
+        };
+        $('menu').onclick = () => $('navigation').classList.toggle('open');
+        $('logout').onclick = () => {
+          localStorage.removeItem('co_admin_token');
+          data = null;
+          $('rows').innerHTML = '<tr><td colspan="6" class="empty">Sign in to view staff performance.</td></tr>';
+          $('foot').innerHTML = '';
+          $('login').hidden = false;
+        };
+        $('login-form').onsubmit = async (event) => {
+          event.preventDefault();
+          $('login-button').disabled = true;
+          $('login-status').textContent = 'Signing in…';
+          try {
+            const response = await fetch(API_BASE + '/api/admin/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username: $('username').value, password: $('password').value }),
+            });
+            const payload = await response.json();
+            if (!response.ok || !payload.token) throw new Error(payload.message || 'Sign in failed');
+            localStorage.setItem('co_admin_token', payload.token);
+            $('password').value = '';
+            $('login-status').textContent = '';
+            $('login').hidden = true;
+            await load();
+          } catch (error) {
+            $('login-status').textContent = error.message;
+          } finally {
+            $('login-button').disabled = false;
+          }
+        };
+
+        applyPreset();
+        load();
+      })();
+    </script>
+  </body>
+</html>
