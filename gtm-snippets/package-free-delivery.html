@@ -21,18 +21,40 @@
   if (window.__amolPackageFreeDelivery) return;
   window.__amolPackageFreeDelivery = true;
   var PACKAGE_ID = '6abe2123b1f44997b7ca5950';
-  var checkoutEligible = false;
+  var checkoutOffer = '';
   var deliveryChoiceStates = new WeakMap();
-  function qualifies(items) {
-    return (Array.isArray(items) ? items : []).some(function (item) {
-      return item && item.cartType === 1 && item.product &&
-        String(item.product._id || '').toLowerCase() === PACKAGE_ID &&
-        Number.isFinite(Number(item.selectedQty)) && Number(item.selectedQty) > 0;
+  // All three books of the set (book-pair-offer.html offers the missing one); same ids as the server.
+  var BOOK_SET_IDS = ['6a04d8a16272179445d5efb9', '69d4d786f87b62b239b68d48', '6ac36c234a5f9c4fe4453004'];
+  // 'package', 'set' or '' (no free delivery). Whole copies only, like the server.
+  function freeDeliveryOffer(items) {
+    var ids = [];
+    var offer = '';
+    (Array.isArray(items) ? items : []).forEach(function (item) {
+      var qty = Number(item && item.selectedQty);
+      if (!item || !item.product || !Number.isInteger(qty) || qty <= 0) return;
+      var id = String(item.product._id || '').toLowerCase();
+      if (item.cartType === 1) { if (id === PACKAGE_ID) offer = 'package'; }
+      else ids.push(id);
     });
+    if (offer) return offer;
+    return BOOK_SET_IDS.every(function (id) { return ids.indexOf(id) !== -1; }) ? 'set' : '';
   }
-  function notice(className, detail) {
+  function notice(className, detail, offer) {
     var node = document.createElement('p');
     node.className = className;
+    if (offer === 'set') {
+      var setKicker = document.createElement('span');
+      setKicker.className = 'ab-double-offer-kicker';
+      setKicker.textContent = 'বিশেষ অফার';
+      node.appendChild(setKicker);
+      var setTitle = document.createElement('strong');
+      setTitle.textContent = 'ফ্রি ডেলিভারি';
+      node.appendChild(setTitle);
+      var setDetail = document.createElement('small');
+      setDetail.textContent = 'তিনটি বই একসাথে থাকায় পুরো অর্ডারের ডেলিভারি ফ্রি।';
+      node.appendChild(setDetail);
+      return node;
+    }
     if (!detail) {
       node.classList.add('ab-package-offer-compact');
       node.textContent = 'ফ্রি ডেলিভারি + ফ্রি নোটবুক';
@@ -65,9 +87,9 @@
     if (component.calculateDeliveryCharge.__abPackageFreeDelivery) return;
     var original = component.calculateDeliveryCharge;
     component.calculateDeliveryCharge = function () {
-      var eligible = qualifies(this.carts);
-      if (checkoutEligible !== eligible) { checkoutEligible = eligible; schedule(); }
-      return eligible ? 0 : original.apply(this,arguments);
+      var offer = freeDeliveryOffer(this.carts);
+      if (checkoutOffer !== offer) { checkoutOffer = offer; schedule(); }
+      return offer ? 0 : original.apply(this,arguments);
     };
     component.calculateDeliveryCharge.__abPackageFreeDelivery = true;
   }
@@ -158,16 +180,18 @@
     }
     var host = document.querySelector('app-checkout');
     var component = findCheckout(host);
-    if (!host) { checkoutEligible = false; return; }
+    if (!host) { checkoutOffer = ''; return; }
     if (component) patchCheckout(component);
     var existing = host.querySelector('.ab-checkout-free-delivery');
-    var eligible = component ? qualifies(component.carts) : checkoutEligible;
-    setDeliveryChoices(host,eligible);
-    if (eligible && !existing) {
-      var message = notice('ab-checkout-free-delivery',true);
+    var offer = component ? freeDeliveryOffer(component.carts) : checkoutOffer;
+    setDeliveryChoices(host,!!offer);
+    if (existing && existing.getAttribute('data-offer') !== offer) { existing.remove(); existing = null; }
+    if (offer && !existing) {
+      var message = notice('ab-checkout-free-delivery',true,offer);
+      message.setAttribute('data-offer',offer);
       var summary = host.querySelector('.order-summary, .checkout-summary, .cart-summary') || host;
       summary.insertBefore(message,summary.firstChild);
-    } else if (!eligible && existing) existing.remove();
+    }
   }
   var scheduled = false;
   function schedule() {

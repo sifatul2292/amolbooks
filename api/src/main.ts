@@ -591,6 +591,8 @@ ${storefrontPurchaseExternalIdHelper}
     'homepage-redesign.html',
     'special-package-shelves.html',
     'package-free-delivery.html',
+    // After package-free-delivery.html: both hook the app's chunk loading.
+    'book-pair-offer.html',
     'guest-orders.html',
     'commerce-events.html',
     'mobile-browsing.html',

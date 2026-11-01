@@ -1,0 +1,639 @@
+<!-- All Pages. "প্রোডাক্টিভ মুসলিম", "ইসলামি অর্থনীতি ও সফল উদ্যোক্তার মাইন্ডম্যাপ" and "দ্য বারাকাহ ইফেক্ট" form a set: all three in one order make the whole order's delivery free. While the cart holds exactly two of them, every add to the cart opens a popup offering the third (also once per visit at checkout, e.g. after Buy Now). The server (package-free-delivery.util.ts) and the checkout (package-free-delivery.html) apply the same rule with the same ids. -->
+<style>
+#ab-pair-offer { position:fixed; inset:0; z-index:2147483000; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(6,32,20,.58); font-family:hind-siliguri,ui-sans-serif,system-ui,sans-serif; color:#1f2937; animation:ab-po-fade .18s ease-out; }
+#ab-pair-offer *, #ab-pair-offer *::before, #ab-pair-offer *::after { box-sizing:border-box; }
+#ab-pair-offer .ab-po-card { position:relative; width:min(560px,100%); max-height:calc(100vh - 32px); max-height:calc(100dvh - 32px); overflow:auto; overscroll-behavior:contain; background:#fff; border-radius:14px; box-shadow:0 24px 60px rgba(0,0,0,.3); animation:ab-po-rise .22s ease-out; }
+#ab-pair-offer .ab-po-head { padding:16px 56px 14px 20px; background:#fff4cc; border-bottom:1px solid #ecd38a; }
+#ab-pair-offer .ab-po-added { display:flex; align-items:center; gap:6px; margin:0 0 8px; color:#0b5a33; font-size:14.5px; font-weight:600; line-height:1.5; }
+#ab-pair-offer .ab-po-added svg { width:18px; height:18px; flex:none; }
+#ab-pair-offer .ab-po-badge { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px; background:#075f3b; color:#fff; font-size:13px; font-weight:700; line-height:1.6; }
+#ab-pair-offer .ab-po-badge svg { width:16px; height:16px; flex:none; }
+#ab-pair-offer .ab-po-title { margin:8px 0 4px; color:#075f3b; font-size:22px; font-weight:700; line-height:1.4; }
+#ab-pair-offer .ab-po-lead { margin:0; color:#4b3b0a; font-size:15.5px; line-height:1.65; }
+#ab-pair-offer .ab-po-close { position:absolute; top:10px; right:10px; display:grid; place-items:center; width:38px; height:38px; padding:0; border:0; border-radius:50%; background:rgba(255,255,255,.85); color:#374151; font-size:24px; line-height:1; cursor:pointer; }
+#ab-pair-offer .ab-po-close:hover { background:#fff; color:#111; }
+#ab-pair-offer .ab-po-body { display:grid; grid-template-columns:136px 1fr; gap:6px 18px; padding:18px 20px 4px; }
+#ab-pair-offer .ab-po-cover { display:block; align-self:start; }
+#ab-pair-offer .ab-po-cover img { display:block; width:100%; height:auto; aspect-ratio:2/3; object-fit:cover; border-radius:6px; background:#eef2ef; box-shadow:0 6px 18px rgba(0,0,0,.18); }
+#ab-pair-offer .ab-po-name { margin:0; color:#111827; font-size:20px; font-weight:700; line-height:1.4; }
+#ab-pair-offer .ab-po-author { margin:0 0 8px; color:#075f3b; font-size:15px; line-height:1.5; }
+#ab-pair-offer .ab-po-facts { display:grid; grid-template-columns:auto 1fr; gap:2px 10px; margin:0 0 10px; font-size:14.5px; line-height:1.55; }
+#ab-pair-offer .ab-po-facts dt { color:#6b7280; }
+#ab-pair-offer .ab-po-facts dd { margin:0; color:#111827; font-weight:600; }
+#ab-pair-offer .ab-po-price { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; margin:0; }
+#ab-pair-offer .ab-po-now { color:#c41e1e; font-size:23px; font-weight:700; }
+#ab-pair-offer .ab-po-was { color:#6b7280; font-size:15px; text-decoration:line-through; }
+#ab-pair-offer .ab-po-save { color:#047a3e; font-size:14px; font-weight:600; }
+#ab-pair-offer .ab-po-about { grid-column:1 / -1; margin:10px 0 0; }
+#ab-pair-offer .ab-po-about h4 { margin:0 0 2px; color:#111827; font-size:15.5px; font-weight:700; }
+#ab-pair-offer .ab-po-desc { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:4; overflow:hidden; margin:0; color:#374151; font-size:15px; line-height:1.7; }
+#ab-pair-offer .ab-po-more { display:inline-block; margin-top:2px; color:#075f3b; font-size:14.5px; font-weight:600; text-decoration:underline; text-underline-offset:3px; }
+#ab-pair-offer .ab-po-free { display:flex; align-items:center; gap:10px; margin:14px 20px 0; padding:10px 14px; border:1px solid #cbe3d2; border-radius:10px; background:#edf7f0; color:#0b5a33; font-size:15px; font-weight:600; line-height:1.55; }
+#ab-pair-offer .ab-po-free svg { width:26px; height:26px; flex:none; }
+#ab-pair-offer .ab-po-actions { display:flex; flex-direction:column; gap:6px; padding:14px 20px 18px; }
+#ab-pair-offer .ab-po-primary { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; min-height:50px; padding:10px 16px; border:0; border-radius:8px; background:#15803d; color:#fff; font:700 17px/1.4 hind-siliguri,ui-sans-serif,system-ui,sans-serif; cursor:pointer; box-shadow:0 2px 0 #0f5c2c; }
+#ab-pair-offer .ab-po-primary:hover { background:#116b33; }
+#ab-pair-offer .ab-po-primary[disabled] { opacity:.75; cursor:progress; }
+#ab-pair-offer .ab-po-secondary { align-self:center; min-height:40px; padding:6px 14px; border:0; background:none; color:#4b5563; font:500 15px/1.4 hind-siliguri,ui-sans-serif,system-ui,sans-serif; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+#ab-pair-offer .ab-po-secondary:hover { color:#111827; }
+#ab-pair-offer .ab-po-error { margin:0; color:#b91c1c; font-size:14.5px; text-align:center; }
+#ab-pair-offer .ab-po-done { display:flex; gap:12px; align-items:flex-start; padding:12px 14px; border-radius:10px; background:#edf7f0; color:#0b5a33; }
+#ab-pair-offer .ab-po-done svg { width:28px; height:28px; flex:none; }
+#ab-pair-offer .ab-po-done strong { display:block; font-size:17px; line-height:1.5; }
+#ab-pair-offer .ab-po-done span { display:block; font-size:15px; line-height:1.55; }
+#ab-pair-offer button:focus-visible, #ab-pair-offer a:focus-visible { outline:3px solid #d7a52b; outline-offset:2px; }
+html.ab-pair-offer-open, html.ab-pair-offer-open body { overflow:hidden !important; }
+@keyframes ab-po-fade { from { opacity:0; } to { opacity:1; } }
+@keyframes ab-po-rise { from { transform:translateY(14px); opacity:.6; } to { transform:none; opacity:1; } }
+@media (max-width:600px) {
+  #ab-pair-offer { align-items:flex-end; padding:0; }
+  #ab-pair-offer .ab-po-card { width:100%; max-height:92vh; max-height:92dvh; border-radius:16px 16px 0 0; }
+  #ab-pair-offer .ab-po-head { padding:14px 52px 12px 16px; }
+  #ab-pair-offer .ab-po-title { font-size:19px; }
+  #ab-pair-offer .ab-po-lead { font-size:14.5px; }
+  #ab-pair-offer .ab-po-body { grid-template-columns:96px 1fr; gap:4px 14px; padding:14px 16px 2px; }
+  #ab-pair-offer .ab-po-name { font-size:18px; }
+  #ab-pair-offer .ab-po-facts { font-size:13.5px; }
+  #ab-pair-offer .ab-po-now { font-size:21px; }
+  #ab-pair-offer .ab-po-desc { -webkit-line-clamp:3; font-size:14.5px; }
+  #ab-pair-offer .ab-po-free { margin:12px 16px 0; font-size:14.5px; }
+  #ab-pair-offer .ab-po-actions { padding:12px 16px calc(14px + env(safe-area-inset-bottom)); }
+}
+@media (prefers-reduced-motion:reduce) { #ab-pair-offer, #ab-pair-offer .ab-po-card { animation:none; } }
+</style>
+<script>
+(function () {
+  'use strict';
+  if (window.__amolBookPairOffer) return;
+  window.__amolBookPairOffer = true;
+
+  // Same ids as FREE_DELIVERY_BOOK_SET_IDS in api/src/shared/utils/package-free-delivery.util.ts.
+  // The rest is used only if a book's live record cannot be read (no price is shown then).
+  var BOOKS = {
+    '6a04d8a16272179445d5efb9': { name: 'প্রোডাক্টিভ মুসলিম', slug: 'productive muslim', image: 'productive-muslim-7ca6.webp' },
+    '69d4d786f87b62b239b68d48': { name: 'ইসলামি অর্থনীতি ও সফল উদ্যোক্তার মাইন্ডম্যাপ', slug: 'islami-orthonity-o-uddokta-47', image: 'islamic-orthoniti-o-uddokta-a5ac.webp' },
+    '6ac36c234a5f9c4fe4453004': { name: 'দ্য বারাকাহ ইফেক্ট', slug: 'the-barakah-effect', image: 'the-barakah-effect-mohammad-faris-1be9.webp' }
+  };
+  var BOOK_IDS = Object.keys(BOOKS);
+  var IMAGE_BASE = 'https://apisub.amolbooks.com/api/upload/images/';
+  var CHECKOUT_SHOWN_KEY = 'ab_pair_offer_checkout';
+  var GUEST_CART_KEY = 'Amolbooks_USER_CART_1';
+  var LOCAL_PREVIEW_CART_KEY = 'Amolbooks_LOCAL_USER_CART_1';
+  var BUY_NOW = '[data-ab-action-label="buy-now"], .ab-sticky-product-buy';
+  var local = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname);
+  var API_BASE = local ? location.origin + '/api' : 'https://apisub.amolbooks.com/api';
+  var ROOT_ID = 'ab-pair-offer';
+
+  var services = { user: null, cart: null };
+  var memory = {};
+  var showTimer = 0;
+  var bookRequests = {};
+  var pendingAdded = [];
+  var addingOffer = false;
+  var buyNowAt = 0;
+  var hideSiteModalUntil = 0;
+  var lastFocus = null;
+
+  /* ── Storefront services ──
+     The compiled app's own UserService/CartService are patched while their modules load,
+     so Angular's add-to-cart paths are seen and the popup can refresh the app's cart. */
+  function wrapMethod(proto, name, before, after) {
+    var original = proto[name];
+    if (typeof original !== 'function' || original.__abPairOffer) return;
+    var wrapped = function () {
+      try { if (before) before(this, arguments); } catch (_) { /* Never break the app's own call. */ }
+      var result = original.apply(this, arguments);
+      if (after) {
+        try { var replaced = after(this, arguments, result); if (replaced !== undefined) result = replaced; } catch (_) { /* Same. */ }
+      }
+      return result;
+    };
+    wrapped.__abPairOffer = true;
+    proto[name] = wrapped;
+  }
+  // Calls onSuccess when the app's add-to-cart request succeeds, without a second request.
+  function onSuccessfulResponse(result, onSuccess) {
+    var Observable = result && result.constructor;
+    if (typeof Observable !== 'function' || typeof result.subscribe !== 'function') return undefined;
+    return new Observable(function (subscriber) {
+      return result.subscribe({
+        next: function (value) {
+          if (value && value.success !== false) { try { onSuccess(); } catch (_) { /* Ignore. */ } }
+          subscriber.next(value);
+        },
+        error: function (error) { subscriber.error(error); },
+        complete: function () { subscriber.complete(); }
+      });
+    });
+  }
+  function rememberUser(service) { services.user = service; }
+  function rememberCart(service) { services.cart = service; }
+  function patchUserService(proto) {
+    ['autoUserLoggedIn', 'getUserStatus', 'getUserToken'].forEach(function (name) { wrapMethod(proto, name, rememberUser); });
+  }
+  function patchCartService(proto) {
+    ['getCartItemFromLocalStorage', 'getCartByUser', 'updateCartList'].forEach(function (name) { wrapMethod(proto, name, rememberCart); });
+    wrapMethod(proto, 'addCartItemToLocalStorage', rememberCart, function (_service, args) { cartAdded([args[0]]); });
+    wrapMethod(proto, 'addComboCartItemToLocalStorage', rememberCart, function (_service, args) { cartAdded([args[0]]); });
+    wrapMethod(proto, 'addToCart', rememberCart, function (_service, args, result) {
+      var item = args[0];
+      return onSuccessfulResponse(result, function () { cartAdded([item]); });
+    });
+    wrapMethod(proto, 'addToCartMultiple', rememberCart, function (_service, args, result) {
+      var items = Array.isArray(args[0]) ? args[0] : [args[0]];
+      return onSuccessfulResponse(result, function () { cartAdded(items); });
+    });
+  }
+  function inspectExports(exports) {
+    if (!exports || typeof exports !== 'object') return;
+    Object.keys(exports).forEach(function (key) {
+      var value;
+      try { value = exports[key]; } catch (_) { return; }
+      var proto = typeof value === 'function' && value.prototype;
+      if (!proto) return;
+      if (typeof proto.getUserStatus === 'function' && typeof proto.autoUserLoggedIn === 'function') patchUserService(proto);
+      if (typeof proto.addCartItemToLocalStorage === 'function' && typeof proto.addToCart === 'function') patchCartService(proto);
+    });
+  }
+  function wrapChunk(chunk) {
+    var factories = chunk && chunk[1];
+    if (!factories || typeof factories !== 'object') return;
+    Object.keys(factories).forEach(function (key) {
+      var original = factories[key];
+      if (typeof original !== 'function' || original.__abPairOfferFactory) return;
+      function factory(module) {
+        var result = original.apply(this, arguments);
+        try { inspectExports(module && module.exports); } catch (_) { /* The app keeps working without the popup. */ }
+        return result;
+      }
+      factory.__abPairOfferFactory = true;
+      factories[key] = factory;
+    });
+  }
+  // package-free-delivery.html (injected earlier) also wraps push: keep its wrapper in the chain.
+  var chunks = window.webpackChunkangular_ui = window.webpackChunkangular_ui || [];
+  chunks.forEach(wrapChunk);
+  var priorPush = Object.getOwnPropertyDescriptor(chunks, 'push');
+  var ownPush = chunks.push;
+  function readPush() { return priorPush && priorPush.get ? priorPush.get.call(chunks) : ownPush; }
+  var basePush = null;
+  var chainedPush = null;
+  Object.defineProperty(chunks, 'push', {
+    configurable: true,
+    get: function () {
+      var base = readPush();
+      if (base !== basePush) {
+        basePush = base;
+        chainedPush = function () {
+          for (var i = 0; i < arguments.length; i++) wrapChunk(arguments[i]);
+          return base.apply(this, arguments);
+        };
+      }
+      return chainedPush;
+    },
+    set: function (push) {
+      if (priorPush && priorPush.set) priorPush.set.call(chunks, push);
+      else ownPush = push;
+    }
+  });
+
+  /* ── Cart state ── */
+  function productId(item) {
+    var product = item && item.product;
+    return String(product && typeof product === 'object' ? product._id || '' : product || '').toLowerCase();
+  }
+  function authorization() {
+    var value = String(window.__abCartAuthorization || '').trim();
+    if (value) return value;
+    try { value = String(localStorage.getItem('Amolbooks_TOKEN_1') || '').trim(); } catch (_) { value = ''; }
+    return value && !/^Bearer\s/i.test(value) ? 'Bearer ' + value : value;
+  }
+  function loggedIn() {
+    if (services.user) {
+      try { return !!services.user.getUserStatus(); } catch (_) { /* Fall through. */ }
+    }
+    return !!authorization();
+  }
+  function cartService() {
+    return services.cart || (services.user && services.user.cartService) || null;
+  }
+  function readJson(key) {
+    try {
+      var value = JSON.parse(localStorage.getItem(key) || '[]');
+      return Array.isArray(value) ? value : [];
+    } catch (_) { return []; }
+  }
+  // Ids of the books (not packages) in the cart; null when a signed-in cart is not known yet.
+  function cartProductIds() {
+    var items;
+    if (loggedIn()) {
+      var cart = cartService();
+      if (!cart || !Array.isArray(cart.cartList)) return null;
+      items = cart.cartList;
+    } else {
+      items = readJson(GUEST_CART_KEY);
+    }
+    return items.filter(function (item) { return item && item.cartType !== 1; }).map(productId);
+  }
+  function flag(key) {
+    if (memory[key]) return true;
+    try { return sessionStorage.getItem(key) === '1'; } catch (_) { return false; }
+  }
+  function setFlag(key) {
+    memory[key] = true;
+    try { sessionStorage.setItem(key, '1'); } catch (_) { /* The in-memory flag still applies. */ }
+  }
+  // Cart ids plus ids just added (a signed-in cart list may not have caught up yet); null if unknown.
+  function cartIds(extra) {
+    var ids = cartProductIds();
+    return ids ? ids.concat(extra || []) : null;
+  }
+  // The one book of the set still missing when exactly two are in the cart, else ''.
+  function missingBook(ids) {
+    if (!ids) return '';
+    var missing = BOOK_IDS.filter(function (id) { return ids.indexOf(id) === -1; });
+    return missing.length === 1 ? missing[0] : '';
+  }
+  function addedName(items) {
+    for (var i = 0; i < items.length; i++) {
+      var book = BOOKS[productId(items[i])];
+      var product = items[i].product;
+      if (book) return book.name;
+      if (product && typeof product === 'object' && product.name) return String(product.name);
+    }
+    return '';
+  }
+  // Any add (any book or package) re-checks the cart, so the offer comes back on every add
+  // while two of the three are in it.
+  function cartAdded(items) {
+    if (addingOffer) return;
+    var added = (items || []).filter(Boolean);
+    pendingAdded = pendingAdded.concat(added);
+    clearTimeout(showTimer);
+    // After the storefront's own cart update; Buy Now goes to checkout, which offers it there.
+    showTimer = setTimeout(function () {
+      var batch = pendingAdded;
+      pendingAdded = [];
+      if (Date.now() - buyNowAt < 4000) return;
+      var ids = batch.filter(function (item) { return item.cartType !== 1; }).map(productId).filter(Boolean);
+      maybeShow(ids, addedName(batch));
+    }, 450);
+  }
+  window.addEventListener('amol-cart-added', function (event) {
+    var detail = event && event.detail;
+    var id = detail && (detail.product || detail.productId);
+    cartAdded(id ? [{ product: id }] : []);
+  });
+  document.addEventListener('click', function (event) {
+    if (event.target && event.target.closest && event.target.closest(BUY_NOW)) buyNowAt = Date.now();
+  }, true);
+
+  /* ── The storefront's own "added to cart" modal ──
+     The offer popup says "added" itself, so that modal is not stacked under it. */
+  function hideSiteModal() {
+    var modal = document.getElementById('ab-added-cart-modal');
+    if (modal) modal.remove();
+    var toast = document.getElementById('amol-cart-toast');
+    if (toast) toast.classList.remove('amol-show');
+  }
+  function watchSiteModal() {
+    if (!document.body) return;
+    new MutationObserver(function () {
+      if ((isOpen() || Date.now() < hideSiteModalUntil) && document.getElementById('ab-added-cart-modal')) hideSiteModal();
+    }).observe(document.body, { childList: true });
+  }
+  if (document.body) watchSiteModal();
+  else document.addEventListener('DOMContentLoaded', watchSiteModal);
+
+  /* ── Offer product ── */
+  function fallback(id) {
+    var book = BOOKS[id];
+    return { _id: id, name: book.name, slug: book.slug, images: [IMAGE_BASE + book.image], fallback: true };
+  }
+  function loadBook(id) {
+    if (!bookRequests[id]) {
+      bookRequests[id] = fetch(API_BASE + '/product/get-by-slug/' + encodeURIComponent(BOOKS[id].slug), { credentials: 'omit' })
+        .then(function (response) { return response.ok ? response.json() : null; })
+        .then(function (body) {
+          var product = body && body.success && body.data;
+          if (!product || String(product._id) !== id) throw new Error('Offer product unavailable');
+          return product;
+        })
+        .catch(function () { delete bookRequests[id]; return fallback(id); });
+    }
+    return bookRequests[id];
+  }
+  function available(product) {
+    if (product.status && product.status !== 'publish') return false;
+    return !(typeof product.quantity === 'number' && product.quantity <= 0);
+  }
+  function finalPrice(product) {
+    var sale = Number(product.salePrice != null ? product.salePrice : product.regularPrice);
+    if (!isFinite(sale) || sale <= 0) return null;
+    var discount = Number(product.discountAmount) || 0;
+    var type = Number(product.discountType) || 0;
+    if (type === 1) return { now: Math.max(0, Math.floor(sale - sale * discount / 100)), was: sale };
+    if (type === 2) return { now: Math.max(0, Math.floor(sale - discount)), was: sale };
+    return { now: Math.floor(sale), was: sale };
+  }
+  function plainText(html) {
+    try {
+      var text = new DOMParser().parseFromString(String(html || ''), 'text/html').body.textContent || '';
+      return text.replace(/\s+/g, ' ').trim();
+    } catch (_) { return ''; }
+  }
+  function imageUrl(product) {
+    var src = product.images && product.images[0];
+    if (!src) return IMAGE_BASE + BOOKS[String(product._id)].image;
+    return /^https?:/i.test(src) ? src : 'https://apisub.amolbooks.com' + (src.charAt(0) === '/' ? '' : '/') + src;
+  }
+  function names(list) {
+    return (Array.isArray(list) ? list : [list]).map(function (entry) { return entry && entry.name; }).filter(Boolean).join(', ');
+  }
+
+  /* ── Popup ── */
+  function el(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+  function icon(markup) {
+    var holder = document.createElement('span');
+    holder.innerHTML = markup;
+    return holder.firstChild;
+  }
+  var TRUCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h11v9H3z"/><path d="M14 9h4l3 3v3h-7z"/><circle cx="7" cy="17" r="1.8"/><circle cx="17" cy="17" r="1.8"/></svg>';
+  var CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m7.5 12.5 3 3 6-6.5"/></svg>';
+
+  function isOpen() { return !!document.getElementById(ROOT_ID); }
+  function onCheckout() { return !!document.querySelector('app-checkout') || /^\/checkout(\/|$)/.test(location.pathname); }
+  function close() {
+    var root = document.getElementById(ROOT_ID);
+    if (!root) return;
+    root.remove();
+    document.documentElement.classList.remove('ab-pair-offer-open');
+    document.removeEventListener('keydown', onKeydown, true);
+    if (lastFocus && typeof lastFocus.focus === 'function' && document.contains(lastFocus)) {
+      try { lastFocus.focus({ preventScroll: true }); } catch (_) { /* Ignore. */ }
+    }
+  }
+  function onKeydown(event) {
+    var root = document.getElementById(ROOT_ID);
+    if (!root) return;
+    if (event.key === 'Escape') { event.preventDefault(); close(); return; }
+    if (event.key !== 'Tab') return;
+    var focusable = [].slice.call(root.querySelectorAll('button:not([disabled]), a[href]'));
+    if (!focusable.length) return;
+    var first = focusable[0];
+    var last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  }
+  // added: the name of what was just added ('' if unknown), or null when not opened by an add (checkout).
+  function maybeShow(extraIds, added) {
+    if (isOpen()) return;
+    var missing = missingBook(cartIds(extraIds));
+    if (!missing) return;
+    loadBook(missing).then(function (product) {
+      if (!available(product) || isOpen() || addingOffer || missingBook(cartIds(extraIds)) !== missing) return;
+      open(product, added);
+    });
+  }
+  // At checkout (e.g. after Buy Now), offer it once per visit while two of the three are in the cart.
+  function checkCheckout() {
+    if (!onCheckout() || isOpen() || addingOffer || flag(CHECKOUT_SHOWN_KEY)) return;
+    if (!missingBook(cartIds())) return;
+    setFlag(CHECKOUT_SHOWN_KEY);
+    maybeShow([], null);
+  }
+  window.setInterval(checkCheckout, 1000);
+
+  function open(product, added) {
+    lastFocus = document.activeElement;
+    hideSiteModal();
+    var id = String(product._id);
+    var name = product.name || BOOKS[id].name;
+    var link = '/product-details/' + encodeURIComponent(product.slug || BOOKS[id].slug);
+    var inCart = BOOK_IDS.filter(function (bookId) { return bookId !== id; }).map(function (bookId) { return '“' + BOOKS[bookId].name + '”'; });
+    var root = el('div');
+    root.id = ROOT_ID;
+    var card = el('div', 'ab-po-card');
+    card.setAttribute('role', 'dialog');
+    card.setAttribute('aria-modal', 'true');
+    card.setAttribute('aria-labelledby', 'ab-po-title');
+    card.setAttribute('aria-describedby', 'ab-po-lead');
+    root.appendChild(card);
+
+    var head = el('div', 'ab-po-head');
+    if (added != null) {
+      var addedLine = el('p', 'ab-po-added');
+      addedLine.appendChild(icon(CHECK));
+      addedLine.appendChild(document.createTextNode((added ? '“' + added + '”' : 'বইটি') + ' কার্টে যুক্ত হয়েছে'));
+      head.appendChild(addedLine);
+    }
+    var badge = el('span', 'ab-po-badge');
+    badge.appendChild(icon(TRUCK));
+    badge.appendChild(document.createTextNode('ফ্রি ডেলিভারি অফার'));
+    head.appendChild(badge);
+    var title = el('h2', 'ab-po-title', 'এই বইটি সাথে নিন, ডেলিভারি একদম ফ্রি!');
+    title.id = 'ab-po-title';
+    head.appendChild(title);
+    var lead = el('p', 'ab-po-lead', 'আপনার কার্টে ' + inCart.join(' ও ') + ' আছে। সাথে “' + name + '” যোগ করলেই পুরো অর্ডারের ডেলিভারি চার্জ লাগবে না।');
+    lead.id = 'ab-po-lead';
+    head.appendChild(lead);
+    var closeButton = el('button', 'ab-po-close', '×');
+    closeButton.type = 'button';
+    closeButton.setAttribute('aria-label', 'বন্ধ করুন');
+    closeButton.addEventListener('click', close);
+    card.appendChild(closeButton);
+    card.appendChild(head);
+
+    var body = el('div', 'ab-po-body');
+    var cover = el('a', 'ab-po-cover');
+    cover.href = link;
+    cover.setAttribute('aria-label', name + ' — বিস্তারিত দেখুন');
+    var image = el('img');
+    image.src = imageUrl(product);
+    image.alt = name;
+    image.width = 136;
+    image.height = 204;
+    cover.appendChild(image);
+    body.appendChild(cover);
+
+    var info = el('div');
+    info.appendChild(el('h3', 'ab-po-name', name));
+    var author = names(product.author);
+    if (author) info.appendChild(el('p', 'ab-po-author', author));
+    var facts = el('dl', 'ab-po-facts');
+    [['পৃষ্ঠা', product.totalPages ? String(product.totalPages) : ''],
+     ['প্রকাশনী', names(product.publisher)],
+     ['সংস্করণ', product.edition || ''],
+     ['ভাষা', (Array.isArray(product.language) ? product.language : [product.language]).filter(Boolean).map(function (lang) { return lang === 'Bangla' ? 'বাংলা' : lang; }).join(', ')]
+    ].forEach(function (fact) {
+      if (!fact[1]) return;
+      facts.appendChild(el('dt', '', fact[0]));
+      facts.appendChild(el('dd', '', fact[1]));
+    });
+    info.appendChild(facts);
+    var price = product.fallback ? null : finalPrice(product);
+    if (price) {
+      var priceRow = el('p', 'ab-po-price');
+      priceRow.appendChild(el('span', 'ab-po-now', 'Tk ' + price.now));
+      if (price.was > price.now) {
+        priceRow.appendChild(el('span', 'ab-po-was', 'Tk ' + price.was));
+        priceRow.appendChild(el('span', 'ab-po-save', 'সাশ্রয় Tk ' + (price.was - price.now)));
+      }
+      info.appendChild(priceRow);
+    }
+    body.appendChild(info);
+
+    var about = el('div', 'ab-po-about');
+    var description = plainText(product.shortDescription) || plainText(product.description);
+    if (description) {
+      about.appendChild(el('h4', '', 'বই সম্পর্কে'));
+      about.appendChild(el('p', 'ab-po-desc', description));
+    }
+    var more = el('a', 'ab-po-more', 'বিস্তারিত দেখুন →');
+    more.href = link;
+    about.appendChild(more);
+    body.appendChild(about);
+    card.appendChild(body);
+    [cover, more].forEach(function (anchor) { anchor.addEventListener('click', close); });
+
+    var free = el('div', 'ab-po-free');
+    free.appendChild(icon(TRUCK));
+    free.appendChild(el('span', '', 'তিনটি বই একসাথে অর্ডার করলে ডেলিভারি চার্জ Tk 0'));
+    card.appendChild(free);
+
+    var actions = el('div', 'ab-po-actions');
+    var add = el('button', 'ab-po-primary', 'কার্টে যোগ করুন — ফ্রি ডেলিভারি');
+    add.type = 'button';
+    var error = el('p', 'ab-po-error');
+    error.setAttribute('role', 'alert');
+    error.hidden = true;
+    var decline = el('button', 'ab-po-secondary', 'না, ধন্যবাদ');
+    decline.type = 'button';
+    decline.addEventListener('click', close);
+    add.addEventListener('click', function () {
+      add.disabled = true;
+      add.textContent = 'যোগ করা হচ্ছে…';
+      error.hidden = true;
+      addOffer(product).then(function () { showAdded(actions); }, function () {
+        add.disabled = false;
+        add.textContent = 'কার্টে যোগ করুন — ফ্রি ডেলিভারি';
+        error.textContent = 'দুঃখিত, বইটি যোগ করা যায়নি। আবার চেষ্টা করুন।';
+        error.hidden = false;
+      });
+    });
+    actions.appendChild(add);
+    actions.appendChild(error);
+    actions.appendChild(decline);
+    card.appendChild(actions);
+
+    root.addEventListener('click', function (event) { if (event.target === root) close(); });
+    document.body.appendChild(root);
+    document.documentElement.classList.add('ab-pair-offer-open');
+    document.addEventListener('keydown', onKeydown, true);
+    try { add.focus({ preventScroll: true }); } catch (_) { add.focus(); }
+  }
+  function showAdded(actions) {
+    actions.textContent = '';
+    var done = el('div', 'ab-po-done');
+    done.setAttribute('role', 'status');
+    done.appendChild(icon(CHECK));
+    var text = el('div');
+    text.appendChild(el('strong', '', 'বইটি কার্টে যোগ হয়েছে!'));
+    text.appendChild(el('span', '', 'এই অর্ডারে আপনার ডেলিভারি এখন ফ্রি।'));
+    done.appendChild(text);
+    actions.appendChild(done);
+    var atCheckout = onCheckout();
+    var next = el('button', 'ab-po-primary', atCheckout ? 'ঠিক আছে' : 'অর্ডার করুন');
+    next.type = 'button';
+    next.addEventListener('click', function () {
+      close();
+      if (!atCheckout) window.location.assign('/checkout');
+    });
+    actions.appendChild(next);
+    if (!atCheckout) {
+      var keep = el('button', 'ab-po-secondary', 'আরও বই দেখুন');
+      keep.type = 'button';
+      keep.addEventListener('click', close);
+      actions.appendChild(keep);
+    }
+    next.focus();
+  }
+
+  /* ── Adding the book ── */
+  function addGuestItem(product) {
+    var id = String(product._id);
+    var item = { product: id, selectedQty: 1, cartType: 0 };
+    var cart = cartService();
+    if (cart && typeof cart.addCartItemToLocalStorage === 'function') {
+      cart.addCartItemToLocalStorage(item);
+    } else {
+      var items = readJson(GUEST_CART_KEY);
+      var existing = items.filter(function (entry) { return entry && productId(entry) === id && entry.cartType !== 1; })[0];
+      if (existing) existing.selectedQty = Math.max(1, Number(existing.selectedQty) || 1) + 1;
+      else items.push(item);
+      localStorage.setItem(GUEST_CART_KEY, JSON.stringify(items));
+    }
+    // Local preview only: the product-page script keeps its own copy of the cart there.
+    if (local && localStorage.getItem(LOCAL_PREVIEW_CART_KEY) !== null) {
+      localStorage.setItem(LOCAL_PREVIEW_CART_KEY, localStorage.getItem(GUEST_CART_KEY) || '[]');
+    }
+    // Same event the product page sends; marked handled so no second "added" message shows.
+    var price = finalPrice(product);
+    var value = price ? price.now : 0;
+    window.dataLayer = window.dataLayer || [];
+    window.__amolCartUiEventHandled = true;
+    try {
+      window.dataLayer.push({ ecommerce: null });
+      window.dataLayer.push({ event: 'add_to_cart', __amolCartUiHandled: true, ecommerce: { currency: 'BDT', value: value, items: [{ item_id: id, item_name: product.name || BOOKS[id].name, price: value, quantity: 1 }] } });
+    } finally {
+      window.__amolCartUiEventHandled = false;
+    }
+  }
+  function addAccountItem(product) {
+    var item = { product: String(product._id), selectedQty: 1, cartType: 0 };
+    var cart = cartService();
+    if (cart && typeof cart.addToCart === 'function') {
+      return new Promise(function (resolve, reject) {
+        cart.addToCart(item).subscribe({
+          next: function (response) { if (response && response.success !== false) resolve(); else reject(new Error('Not added')); },
+          error: reject
+        });
+      });
+    }
+    return fetch(API_BASE + '/cart/add-to-cart', {
+      method: 'POST',
+      headers: { Authorization: authorization(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(item)
+    }).then(function (response) { return response.json(); }).then(function (response) {
+      if (!response || response.success === false) throw new Error('Not added');
+    });
+  }
+  function addOffer(product) {
+    addingOffer = true;
+    // A signed-in add is reported by the tracking script, which would reopen the site's modal.
+    hideSiteModalUntil = Date.now() + 5000;
+    var pending;
+    try {
+      pending = loggedIn() ? addAccountItem(product) : Promise.resolve(addGuestItem(product));
+    } catch (error) {
+      pending = Promise.reject(error);
+    }
+    return pending.then(function () {
+      addingOffer = false;
+      var reload = cartService() && cartService().reloadService;
+      // Header count and the checkout's own cart (and so its delivery charge) reload in place.
+      try { if (reload) reload.needRefreshCart$(false); } catch (_) { /* Next page shows it. */ }
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('ab-cart-updated', { detail: { product: String(product._id) } }));
+    }, function (error) {
+      addingOffer = false;
+      throw error;
+    });
+  }
+}());
+</script>

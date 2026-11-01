@@ -5,12 +5,13 @@ const root = path.resolve(__dirname,'..');
 const {FREE_DELIVERY_PACKAGE_ID:id,hasFreeDeliveryPackage:eligible} = require('../api/dist/shared/utils/package-free-delivery.util');
 const html=fs.readFileSync(path.join(root,'gtm-snippets/package-free-delivery.html'),'utf8');
 const script=html.match(/<script>([\s\S]*?)<\/script>/)[1];
-const client=new Function('PACKAGE_ID',script.slice(script.indexOf('function qualifies'),script.indexOf('function notice'))+';return qualifies;')(id);
+const freeDeliveryOffer=new Function('PACKAGE_ID',script.slice(script.indexOf('var BOOK_SET_IDS'),script.indexOf('function notice'))+';return freeDeliveryOffer;')(id);
+const client=items=>!!freeDeliveryOffer(items);
 assert.ok(script.includes("var PACKAGE_ID = '"+id+"'"));
 const make=(packageId=id,qty=1,type=1)=>({cartType:type,selectedQty:qty,product:{_id:packageId,salePrice:1000}});
 const cases=[[[],false],[[make()],true],[[make(),make('000000000000000000000001',1,0)],true],[[make(id,0)],false],[[make(id,-1)],false],[[make(id,'NaN')],false],[[make(id,1,0)],false],[[make('000000000000000000000001')],false],[[{cartType:1,specialPackage:id,selectedQty:1,freeDelivery:true}],false]];
 for(const [items,result] of cases){assert.equal(eligible(items),result);assert.equal(client(items),result);}
-const patch=new Function('qualifies','checkoutEligible','schedule',script.slice(script.indexOf('function patchCheckout'),script.indexOf('// Production Angular'))+';return patchCheckout;')(client,false,()=>{});
+const patch=new Function('freeDeliveryOffer','checkoutOffer','schedule',script.slice(script.indexOf('function patchCheckout'),script.indexOf('// Production Angular'))+';return patchCheckout;')(freeDeliveryOffer,'',()=>{});
 const component={carts:[make()],calculateDeliveryCharge(){return 75;}};
 patch(component);assert.equal(component.calculateDeliveryCharge(),0);
 component.carts=[];assert.equal(component.calculateDeliveryCharge(),75,'Removing bundle restores normal shipping');

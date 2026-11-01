@@ -1,5 +1,5 @@
 import { orderPhoneAliases, unbookedOrderFilter } from '../../guest-orders/guest-orders.policy';
-import { hasFreeDeliveryPackage } from '../../../shared/utils/package-free-delivery.util';
+import { hasFreeDelivery } from '../../../shared/utils/package-free-delivery.util';
 import {
   BadRequestException,
   ConflictException,
@@ -5094,8 +5094,8 @@ export class OrderService {
       orderData?.zone?.name,
     );
 
-    // Only trust resolved package records, never a client-supplied free-delivery flag.
-    const deliveryCharge = hasFreeDeliveryPackage(finalData)
+    // Only trust resolved package/product records, never a client-supplied free-delivery flag.
+    const deliveryCharge = hasFreeDelivery(finalData)
       ? 0 : Number(orderData?.deliveryCharge || 0);
 
     // Grand Total
