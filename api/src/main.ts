@@ -585,6 +585,7 @@ ${storefrontPurchaseExternalIdHelper}
     'catalogue-local-requests.html',
     'cart-page-navigation.html',
     'product-detail-polish.html',
+    'author-books-grid.html',
     'product-review-video.html',
     'blog-reading.html',
     'book-gift-card.html',

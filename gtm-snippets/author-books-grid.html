@@ -1,0 +1,70 @@
+<!-- Author page: every book by the author in a grid, instead of a carousel of the first 10. -->
+<style id="amol-author-books-grid">
+app-author-details .kids-book-main.carousel .swiper { overflow:visible!important; }
+app-author-details .kids-book-main.carousel .swiper-wrapper {
+  display:grid!important; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px 10px;
+  transform:none!important; transition:none!important; height:auto!important; box-sizing:border-box;
+}
+app-author-details .kids-book-main.carousel .swiper-slide { width:auto!important; margin:0!important; min-width:0; }
+/* Loop copies, arrows and "আরও দেখুন" (it opened the list of all books, not this author's). */
+app-author-details .kids-book-main.carousel .swiper-slide-duplicate,
+app-author-details .kids-book-main.carousel .swiper-button-prev,
+app-author-details .kids-book-main.carousel .swiper-button-next,
+app-author-details .kids-book-main.carousel .swiper-pagination,
+app-author-details .kids-book-contents .see-more-btn { display:none!important; }
+@media (max-width:359px) {
+  app-author-details .kids-book-main.carousel .swiper-wrapper { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (min-width:768px) {
+  app-author-details .kids-book-main.carousel .swiper-wrapper { grid-template-columns:repeat(4,minmax(0,1fr)); }
+}
+@media (min-width:1024px) {
+  app-author-details .kids-book-main.carousel .swiper-wrapper { grid-template-columns:repeat(5,minmax(0,1fr)); gap:20px; }
+}
+</style>
+<script>
+(function () {
+  'use strict';
+  if (window.__abAuthorBooksGrid || !window.XMLHttpRequest) return;
+  window.__abAuthorBooksGrid = true;
+  var ALL_BOOKS = 500;
+  var onAuthorPage = function () { return location.pathname.indexOf('/author-list/author-details/') === 0; };
+
+  // The page asks for this author's books with pagination.pageSize 10; ask for all of them.
+  var open = XMLHttpRequest.prototype.open;
+  var send = XMLHttpRequest.prototype.send;
+  XMLHttpRequest.prototype.open = function (method, url) {
+    this.__abAuthorBooksUrl = String(url || '');
+    return open.apply(this, arguments);
+  };
+  XMLHttpRequest.prototype.send = function (body) {
+    var args = Array.prototype.slice.call(arguments);
+    if (typeof body === 'string' && onAuthorPage() && /\/product\/get-all(\?|$)/.test(this.__abAuthorBooksUrl || '') &&
+        body.indexOf('author._id') !== -1) {
+      try {
+        var query = JSON.parse(body);
+        if (query && query.filter && query.filter['author._id'] && query.pagination && query.pagination.pageSize === 10) {
+          query.pagination.pageSize = ALL_BOOKS;
+          query.pagination.currentPage = 0;
+          args[0] = JSON.stringify(query);
+        }
+      } catch (_error) {}
+    }
+    return send.apply(this, args);
+  };
+
+  // Swiper still runs under the grid; stop its autoplay and dragging.
+  function settle() {
+    if (!onAuthorPage()) return;
+    var el = document.querySelector('app-author-details .kids-book-main.carousel .swiper');
+    var swiper = el && el.swiper;
+    if (!swiper || swiper.__abAuthorGrid) return;
+    swiper.__abAuthorGrid = true;
+    try {
+      if (swiper.autoplay && swiper.autoplay.running) swiper.autoplay.stop();
+      swiper.allowTouchMove = false;
+    } catch (_error) {}
+  }
+  if (window.MutationObserver) new MutationObserver(settle).observe(document.documentElement, { childList: true, subtree: true });
+})();
+</script>

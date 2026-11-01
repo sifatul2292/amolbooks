@@ -86,7 +86,9 @@ assert.equal(storageContext.storedGuestCartItems().length, 0, 'Removing the fina
 assert.match(main, /obj\.event==='add_to_cart'&&!window\.__amolCartUiEventHandled/, 'Tracking mirror avoids duplicating injected cart UI feedback');
 assert.match(main, /event:'view_cart',ecommerce:\{currency:'BDT',value:val,items:items\}/, 'Legacy cart tracking emits the standard event for mirroring');
 const trackingStart = source.indexOf('  function pushProductPageAddToCartTracking(');
-const trackingHelper = source.slice(trackingStart, source.indexOf('\n  function ', trackingStart + 1));
+const pushStart = source.indexOf('  function pushAddToCartTracking(');
+const trackingHelper = source.slice(trackingStart, source.indexOf('\n  function ', trackingStart + 1)) +
+  source.slice(pushStart, source.indexOf('\n  function ', pushStart + 1));
 const trackingContext = {
   isProductPage: () => true,
   cartProductCache: { p1: { _id: 'p1', name: 'Tracked book', afterDiscountPrice: 310 } },

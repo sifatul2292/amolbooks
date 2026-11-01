@@ -87,6 +87,8 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   var checkoutCartMirrorPendingKey = '';
   var stickySearchTimer = null;
   var stickySearchRequestVersion = 0;
+  var searchAuthorsPromise = null;
+  var SEARCH_BOOK_LIMIT = 8;
   var fastCartTapTarget = null;
   var fastCartTapAt = 0;
   var fastNavStartX = 0;
@@ -1534,6 +1536,105 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         font-size: 0.86rem;
         font-weight: 700;
       }
+    }
+
+    /* Search suggestions (header and sticky search): author rows, old/new price, add button. */
+    app-header .ab-header-search-results .ab-search-row,
+    #ab-sticky-commerce .ab-sticky-search-results .ab-search-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.35rem;
+      align-items: center;
+      padding-right: 0.72rem;
+    }
+
+    app-header .ab-header-search-results .ab-search-row + .ab-search-row,
+    app-header .ab-header-search-results .ab-sticky-search-item + .ab-search-row,
+    #ab-sticky-commerce .ab-sticky-search-results .ab-search-row + .ab-search-row,
+    #ab-sticky-commerce .ab-sticky-search-results .ab-sticky-search-item + .ab-search-row {
+      border-top: 1px solid var(--ab-product-rule);
+    }
+
+    app-header .ab-header-search-results .ab-search-author img,
+    app-header .ab-header-search-results .ab-search-author-photo,
+    #ab-sticky-commerce .ab-sticky-search-results .ab-search-author img,
+    #ab-sticky-commerce .ab-sticky-search-results .ab-search-author-photo {
+      width: 2.7rem;
+      height: 2.7rem;
+      max-width: 2.7rem;
+      border-radius: 50%;
+      object-fit: cover;
+      background: var(--ab-product-surface-muted);
+    }
+
+    app-header .ab-header-search-results .ab-search-author-photo,
+    #ab-sticky-commerce .ab-sticky-search-results .ab-search-author-photo {
+      display: grid;
+      place-items: center;
+      color: var(--ab-product-muted);
+      font-size: 1.05rem;
+    }
+
+    app-header .ab-header-search-results .ab-search-author-label,
+    #ab-sticky-commerce .ab-sticky-search-results .ab-search-author-label {
+      margin: 0.12rem 0 0;
+      color: var(--ab-product-accent-dark);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    app-header .ab-header-search-results .ab-sticky-search-price,
+    #ab-sticky-commerce .ab-sticky-search-results .ab-sticky-search-price {
+      display: grid;
+      justify-items: end;
+      gap: 0.05rem;
+    }
+
+    app-header .ab-header-search-results .ab-sticky-search-price s,
+    #ab-sticky-commerce .ab-sticky-search-results .ab-sticky-search-price s {
+      color: var(--ab-product-muted);
+      font-size: 0.74rem;
+      font-weight: 500;
+    }
+
+    app-header .ab-header-search-results .ab-search-add,
+    #ab-sticky-commerce .ab-sticky-search-results .ab-search-add {
+      min-height: 2.5rem;
+      padding: 0 0.8rem;
+      border: 0;
+      border-radius: 999px;
+      background: var(--ab-product-accent-dark);
+      color: #fff;
+      font: inherit;
+      font-size: 0.84rem;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    app-header .ab-header-search-results .ab-search-add:hover,
+    #ab-sticky-commerce .ab-sticky-search-results .ab-search-add:hover {
+      background: var(--ab-product-accent);
+    }
+
+    app-header .ab-header-search-results .ab-search-add:focus-visible,
+    #ab-sticky-commerce .ab-sticky-search-results .ab-search-add:focus-visible {
+      outline: 2px solid var(--ab-product-accent);
+      outline-offset: 2px;
+    }
+
+    app-header .ab-header-search-results .ab-search-add:disabled,
+    #ab-sticky-commerce .ab-sticky-search-results .ab-search-add:disabled {
+      cursor: default;
+      opacity: 0.8;
+    }
+
+    app-header .ab-header-search-results .ab-search-sold-out,
+    #ab-sticky-commerce .ab-sticky-search-results .ab-search-sold-out {
+      color: var(--ab-product-muted);
+      font-size: 0.78rem;
+      white-space: nowrap;
     }
 
     @media (max-width: 767px) {
@@ -5470,27 +5571,131 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     if (input) input.setAttribute('aria-expanded', 'true');
   }
 
-  function stickySearchProductHtml(product) {
-    var href = '/product-details/' + encodeURIComponent(product.slug || '');
-    var author = authorName(product);
-    return '<a class="ab-sticky-search-item" href="' + escapeHtml(href) + '">' +
-      '<img src="' + escapeHtml(imageUrl(product.images && product.images[0], '/assets/images/placeholder/test.png')) + '" alt="' + escapeHtml(product.name || 'বই') + '" loading="lazy" decoding="async">' +
+  /* Search suggestions, like Rokomari's: matching authors first (photo, name, "লেখক"),
+     then books with the old and new price and an add button. */
+  function searchKey(value) {
+    return String(value || '').normalize('NFC').toLowerCase()
+      .replace(/[()\\[\\]{}.,:;'"‘’“”!?।\\/_\\-–—]+/g, ' ')
+      .replace(/\\s+/g, ' ')
+      .trim();
+  }
+
+  function searchAuthorList() {
+    if (!searchAuthorsPromise) {
+      searchAuthorsPromise = fetchJson('/author/get-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ select: { name: 1, nameEn: 1, slug: 1, image: 1 } }),
+      }, RECOMMENDATION_API_BASE).then(function (result) {
+        var authors = result && Array.isArray(result.data) ? result.data : [];
+        if (!authors.length) searchAuthorsPromise = null;
+        return authors;
+      });
+    }
+    return searchAuthorsPromise;
+  }
+
+  // Bengali name or English name (nameEn); every typed word must start a word of the name.
+  function matchSearchAuthors(authors, query) {
+    var words = searchKey(query).split(' ').filter(Boolean);
+    if (!words.length) return [];
+    var phrase = words.join(' ');
+    var seen = {};
+    return (authors || []).map(function (author) {
+      var score = 0;
+      [author && author.name, author && author.nameEn].forEach(function (value) {
+        var name = searchKey(value);
+        if (!name) return;
+        var tokens = name.split(' ');
+        var atWordStart = words.every(function (word) {
+          return tokens.some(function (token) { return token.indexOf(word) === 0; });
+        });
+        if (!atWordStart) return;
+        score = Math.max(score, name.indexOf(phrase) === 0 ? 3 : 2);
+      });
+      return { author: author, score: score };
+    }).filter(function (entry) {
+      return entry.score > 0 && entry.author && entry.author.slug && entry.author.name;
+    }).sort(function (a, b) {
+      return b.score - a.score ||
+        (b.author.image ? 1 : 0) - (a.author.image ? 1 : 0) ||
+        String(a.author.name).length - String(b.author.name).length;
+    }).filter(function (entry) {
+      var key = searchKey(entry.author.name);
+      if (seen[key]) return false;
+      seen[key] = true;
+      return true;
+    }).slice(0, 3).map(function (entry) { return entry.author; });
+  }
+
+  function searchCatalogue(filter, query) {
+    return fetchJson('/product/get-all' + (query ? '?q=' + encodeURIComponent(query) : ''), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filter: filter,
+        pagination: { pageSize: SEARCH_BOOK_LIMIT, currentPage: 0 },
+        sort: { priority: -1, totalSold: -1 },
+        select: {
+          name: 1, slug: 1, images: 1, salePrice: 1, afterDiscountPrice: 1,
+          discountAmount: 1, discountType: 1, author: 1, quantity: 1,
+        },
+      }),
+    }, CATALOG_API_BASE).then(function (result) {
+      var products = result && Array.isArray(result.data) ? result.data : [];
+      return products.filter(function (product) { return product && product.slug && product.name; });
+    });
+  }
+
+  function searchAuthorHtml(author) {
+    var href = '/author-list/author-details/' + encodeURIComponent(author.slug || '');
+    var photo = author.image
+      ? '<img src="' + escapeHtml(imageUrl(author.image)) + '" alt="" loading="lazy" decoding="async">'
+      : '<span class="ab-search-author-photo" aria-hidden="true"><i class="fa fa-user"></i></span>';
+    return '<a class="ab-sticky-search-item ab-search-author" href="' + escapeHtml(href) + '">' + photo +
       '<span>' +
-        '<p class="ab-sticky-search-title">' + escapeHtml(product.name || '') + '</p>' +
-        (author ? '<p class="ab-sticky-search-author">' + escapeHtml(author) + '</p>' : '') +
+        '<p class="ab-sticky-search-title">' + escapeHtml(author.name || '') + '</p>' +
+        '<p class="ab-search-author-label">লেখক</p>' +
       '</span>' +
-      '<p class="ab-sticky-search-price">' + escapeHtml(money(finalPrice(product))) + '</p>' +
     '</a>';
   }
 
-  function renderSearchProducts(products, input, popular) {
+  function stickySearchProductHtml(product) {
+    var href = '/product-details/' + encodeURIComponent(product.slug || '');
+    var author = authorName(product);
+    var price = finalPrice(product);
+    var sale = Math.max(0, Number(product.salePrice) || 0);
+    var soldOut = product.quantity !== undefined && product.quantity !== null && Number(product.quantity) <= 0;
+    return '<div class="ab-search-row">' +
+      '<a class="ab-sticky-search-item" href="' + escapeHtml(href) + '">' +
+        '<img src="' + escapeHtml(imageUrl(product.images && product.images[0], '/assets/images/placeholder/test.png')) + '" alt="' + escapeHtml(product.name || 'বই') + '" loading="lazy" decoding="async">' +
+        '<span>' +
+          '<p class="ab-sticky-search-title">' + escapeHtml(product.name || '') + '</p>' +
+          (author ? '<p class="ab-sticky-search-author">' + escapeHtml(author) + '</p>' : '') +
+        '</span>' +
+        '<p class="ab-sticky-search-price">' +
+          (sale > price ? '<s>' + escapeHtml(money(sale)) + '</s>' : '') +
+          '<span>' + escapeHtml(money(price)) + '</span>' +
+        '</p>' +
+      '</a>' +
+      (soldOut
+        ? '<span class="ab-search-sold-out">স্টক শেষ</span>'
+        : '<button type="button" class="ab-search-add" data-product-id="' + escapeHtml(String(product._id || '')) + '" aria-label="' + escapeHtml((product.name || 'বই') + ' কার্টে যোগ করুন') + '">+ যোগ</button>') +
+    '</div>';
+  }
+
+  function renderSearchProducts(products, input, popular, authors) {
     var results = searchResults(input);
     if (!results) return;
-    if (!products.length) {
-      renderSearchState('কোনো বই পাওয়া যায়নি', input);
+    authors = authors || [];
+    if (!products.length && !authors.length) {
+      renderSearchState('কোনো বই বা লেখক পাওয়া যায়নি', input);
       return;
     }
-    results.innerHTML = (popular ? '<p class="ab-sticky-search-state">জনপ্রিয় বই</p>' : '') + products.map(stickySearchProductHtml).join('');
+    rememberCartProducts(products);
+    results.innerHTML = (popular ? '<p class="ab-sticky-search-state">জনপ্রিয় বই</p>' : '') +
+      authors.map(searchAuthorHtml).join('') +
+      products.map(stickySearchProductHtml).join('');
     results.hidden = false;
     if (input) input.setAttribute('aria-expanded', 'true');
   }
@@ -5504,25 +5709,51 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       return;
     }
     renderSearchState('খোঁজা হচ্ছে...', input);
-    fetchJson('/product/get-all' + (value ? '?q=' + encodeURIComponent(value) : ''), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        filter: { status: 'publish' },
-        pagination: { pageSize: 6, currentPage: 0 },
-        sort: { priority: -1, totalSold: -1 },
-        select: {
-          name: 1, slug: 1, images: 1, salePrice: 1, afterDiscountPrice: 1,
-          discountAmount: 1, discountType: 1, author: 1,
-        },
-      }),
-    }, CATALOG_API_BASE).then(function (result) {
-      if (version !== stickySearchRequestVersion) return;
-      var products = result && Array.isArray(result.data) ? result.data : [];
-      renderSearchProducts(products.filter(function (product) {
-        return product && product.slug && product.name;
-      }).slice(0, 6), input, popular && !value);
+    Promise.all([
+      searchCatalogue({ status: 'publish' }, value),
+      value ? searchAuthorList() : Promise.resolve([]),
+    ]).then(function (found) {
+      if (version !== stickySearchRequestVersion) return null;
+      var authors = value ? matchSearchAuthors(found[1], value) : [];
+      // Matched authors (also by English name, which book search can't see) bring their books first.
+      // One request per author: the API takes a single author._id.
+      return Promise.all(authors.map(function (author) {
+        return searchCatalogue({ status: 'publish', 'author._id': author._id }, '');
+      })).then(function (lists) {
+        if (version !== stickySearchRequestVersion) return;
+        var seen = {};
+        var products = [].concat.apply([], lists).concat(found[0]).filter(function (product) {
+          var key = String(product._id || product.slug);
+          if (seen[key]) return false;
+          seen[key] = true;
+          return true;
+        }).slice(0, SEARCH_BOOK_LIMIT);
+        renderSearchProducts(products, input, popular && !value, authors);
+      });
     });
+  }
+
+  function handleSearchAddTap(event) {
+    var button = event.target && event.target.closest && event.target.closest('.ab-search-add[data-product-id]');
+    if (!button) return false;
+    preventCartEvent(event);
+    var productId = button.getAttribute('data-product-id');
+    if (!productId || button.disabled) return true;
+    button.disabled = true;
+    button.textContent = 'যোগ হচ্ছে…';
+    Promise.resolve(addProductToCart(productId, null)).then(function () {
+      // addProductToCart reports add_to_cart only on product pages.
+      if (!isProductPage()) pushAddToCartTracking(productId);
+      button.textContent = '✓ যোগ হয়েছে';
+    }, function () {
+      button.textContent = '+ যোগ';
+    }).then(function () {
+      window.setTimeout(function () {
+        button.textContent = '+ যোগ';
+        button.disabled = false;
+      }, 1500);
+    });
+    return true;
   }
 
   function scheduleStickyProductSearch(value, input, popular) {
@@ -6252,6 +6483,10 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
 
   function pushProductPageAddToCartTracking(productId) {
     if (!isProductPage()) return;
+    pushAddToCartTracking(productId);
+  }
+
+  function pushAddToCartTracking(productId) {
     var product = cartProductCache[String(productId)] ||
       (currentProduct && String(currentProduct._id || '') === String(productId) ? currentProduct : null);
     if (!product) return;
@@ -8458,6 +8693,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
 
   document.addEventListener('click', function (event) {
     if (handleCheckoutCtaTap(event) || handleMenuTap(event)) return;
+    if (handleSearchAddTap(event)) return;
 
     var stickyCatalogue = event.target && event.target.closest && event.target.closest('.ab-sticky-catalogue');
     if (stickyCatalogue) {
