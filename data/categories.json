@@ -1,0 +1,8 @@
+[
+  {
+    "name": "শিশু-কিশোর",
+    "nameEn": "Kids and Teens",
+    "slug": "শিশু-কিশোর",
+    "note": "Owner asked 2026-11-02 for a children's category (Rokomari has age-based kids' categories). Created by scripts/import-books.cjs when a book uses it."
+  }
+]

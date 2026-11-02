@@ -4,6 +4,7 @@ export interface Publisher {
   nameEn?: string;
   slug?: string;
   image?: string;
+  description?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }

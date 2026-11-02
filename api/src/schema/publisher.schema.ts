@@ -21,6 +21,11 @@ export const PublisherSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    // About the publisher (HTML paragraphs), shown on its book list like Rokomari.
+    description: {
+      type: String,
+      required: false,
+    },
   },
   {
     versionKey: false,
