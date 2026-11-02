@@ -88,6 +88,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   var stickySearchTimer = null;
   var stickySearchRequestVersion = 0;
   var searchAuthorsPromise = null;
+  var searchPublishersPromise = null;
   var SEARCH_BOOK_LIMIT = 8;
   var fastCartTapTarget = null;
   var fastCartTapAt = 0;
@@ -1565,6 +1566,16 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       border-radius: 50%;
       object-fit: cover;
       background: var(--ab-product-surface-muted);
+    }
+
+    app-header .ab-header-search-results .ab-search-publisher img,
+    app-header .ab-header-search-results .ab-search-publisher .ab-search-author-photo,
+    #ab-sticky-commerce .ab-sticky-search-results .ab-search-publisher img,
+    #ab-sticky-commerce .ab-sticky-search-results .ab-search-publisher .ab-search-author-photo {
+      border-radius: 0.5rem;
+      object-fit: contain;
+      background: #fff;
+      border: 1px solid var(--ab-product-rule);
     }
 
     app-header .ab-header-search-results .ab-search-author-photo,
@@ -5153,7 +5164,11 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       var localItems = [];
       var tabItems = [];
       var sourceItems = [];
-      try { localItems = JSON.parse(localStorage.getItem(localKey) || '[]') || []; } catch (_) { localItems = []; }
+      var localSaved = null;
+      try {
+        localSaved = localStorage.getItem(localKey);
+        localItems = JSON.parse(localSaved || '[]') || [];
+      } catch (_) { localItems = []; }
       /* Angular's own cart controls (drawer, checkout stepper/trash) write only
          the native key. Right after such a tap, adopt that write instead of
          restoring the stale local copy over it. */
@@ -5171,7 +5186,11 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         setTabCartItems(localItems);
         return localKey;
       }
-      tabItems = tabCartItems();
+      /* A saved empty cart means its last book was removed, here or in another
+         tab. Only a missing key (storage wiped) restores this tab's copy; an
+         older copy in another tab must not bring the book back. */
+      tabItems = localSaved === null ? tabCartItems() : [];
+      if (localSaved !== null && tabCartItems().length) setTabCartItems([]);
       if (tabItems.length) {
         localStorage.setItem(localKey, JSON.stringify(tabItems));
         localStorage.setItem(storefrontKey, JSON.stringify(tabItems));
@@ -5249,8 +5268,14 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
 
   function storedGuestCartItems() {
     var items = [];
-    try { items = JSON.parse(localStorage.getItem(cartStorageKey()) || '[]') || []; } catch (_) { items = []; }
-    if ((!Array.isArray(items) || !items.length) && isLocalPreviewHost()) {
+    var saved = null;
+    var readable = true;
+    // Blocked storage (some private modes, in-app browsers) must not stop the whole script.
+    try {
+      saved = localStorage.getItem(cartStorageKey());
+      items = JSON.parse(saved || '[]') || [];
+    } catch (_) { items = []; readable = false; }
+    if ((!Array.isArray(items) || !items.length) && readable && saved === null && isLocalPreviewHost()) {
       items = tabCartItems();
       if (items.length) localStorage.setItem(cartStorageKey(), JSON.stringify(items));
     }
@@ -5571,8 +5596,9 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     if (input) input.setAttribute('aria-expanded', 'true');
   }
 
-  /* Search suggestions, like Rokomari's: matching authors first (photo, name, "লেখক"),
-     then books with the old and new price and an add button. */
+  /* Search suggestions, like Rokomari's: matching authors (photo, name, "লেখক") and
+     publishers (logo, name, "প্রকাশনী") first, then books with the old and new price and an
+     add button. */
   function searchKey(value) {
     return String(value || '').normalize('NFC').toLowerCase()
       .replace(/[()\\[\\]{}.,:;'"‘’“”!?।\\/_\\-–—]+/g, ' ')
@@ -5595,15 +5621,40 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     return searchAuthorsPromise;
   }
 
-  // Bengali name or English name (nameEn); every typed word must start a word of the name.
+  function searchPublisherList() {
+    if (!searchPublishersPromise) {
+      searchPublishersPromise = fetchJson('/publisher/get-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ select: { name: 1, nameEn: 1, slug: 1, image: 1 } }),
+      }, CATALOG_API_BASE).then(function (result) {
+        var publishers = result && Array.isArray(result.data) ? result.data : [];
+        if (!publishers.length) searchPublishersPromise = null;
+        return publishers;
+      });
+    }
+    return searchPublishersPromise;
+  }
+
   function matchSearchAuthors(authors, query) {
+    return matchSearchNames(authors, query, 3);
+  }
+
+  function matchSearchPublishers(publishers, query) {
+    return matchSearchNames(publishers, query, 2);
+  }
+
+  // Bengali name, English name (nameEn) or an English slug ("sottayon-prokashon"); every typed
+  // word must start a word of one of them.
+  function matchSearchNames(items, query, limit) {
     var words = searchKey(query).split(' ').filter(Boolean);
     if (!words.length) return [];
     var phrase = words.join(' ');
     var seen = {};
-    return (authors || []).map(function (author) {
+    return (items || []).map(function (author) {
       var score = 0;
-      [author && author.name, author && author.nameEn].forEach(function (value) {
+      var latinSlug = /^[a-z0-9-]+$/.test(String(author && author.slug || '')) ? String(author.slug).replace(/-/g, ' ') : '';
+      [author && author.name, author && author.nameEn, latinSlug].forEach(function (value) {
         var name = searchKey(value);
         if (!name) return;
         var tokens = name.split(' ');
@@ -5625,7 +5676,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       if (seen[key]) return false;
       seen[key] = true;
       return true;
-    }).slice(0, 3).map(function (entry) { return entry.author; });
+    }).slice(0, limit).map(function (entry) { return entry.author; });
   }
 
   function searchCatalogue(filter, query) {
@@ -5660,6 +5711,20 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     '</a>';
   }
 
+  // The storefront's publisher cards open the book list filtered by publisher (publisher-list module).
+  function searchPublisherHtml(publisher) {
+    var href = '/product-list?publisher=' + encodeURIComponent(publisher.slug || '') + '&publisherId=' + encodeURIComponent(String(publisher._id || ''));
+    var logo = publisher.image
+      ? '<img src="' + escapeHtml(imageUrl(publisher.image)) + '" alt="" loading="lazy" decoding="async">'
+      : '<span class="ab-search-author-photo" aria-hidden="true"><i class="fa fa-book"></i></span>';
+    return '<a class="ab-sticky-search-item ab-search-author ab-search-publisher" href="' + escapeHtml(href) + '">' + logo +
+      '<span>' +
+        '<p class="ab-sticky-search-title">' + escapeHtml(publisher.name || '') + '</p>' +
+        '<p class="ab-search-author-label">প্রকাশনী</p>' +
+      '</span>' +
+    '</a>';
+  }
+
   function stickySearchProductHtml(product) {
     var href = '/product-details/' + encodeURIComponent(product.slug || '');
     var author = authorName(product);
@@ -5684,17 +5749,19 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     '</div>';
   }
 
-  function renderSearchProducts(products, input, popular, authors) {
+  function renderSearchProducts(products, input, popular, authors, publishers) {
     var results = searchResults(input);
     if (!results) return;
     authors = authors || [];
-    if (!products.length && !authors.length) {
-      renderSearchState('কোনো বই বা লেখক পাওয়া যায়নি', input);
+    publishers = publishers || [];
+    if (!products.length && !authors.length && !publishers.length) {
+      renderSearchState('কোনো বই, লেখক বা প্রকাশনী পাওয়া যায়নি', input);
       return;
     }
     rememberCartProducts(products);
     results.innerHTML = (popular ? '<p class="ab-sticky-search-state">জনপ্রিয় বই</p>' : '') +
       authors.map(searchAuthorHtml).join('') +
+      publishers.map(searchPublisherHtml).join('') +
       products.map(stickySearchProductHtml).join('');
     results.hidden = false;
     if (input) input.setAttribute('aria-expanded', 'true');
@@ -5712,14 +5779,18 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     Promise.all([
       searchCatalogue({ status: 'publish' }, value),
       value ? searchAuthorList() : Promise.resolve([]),
+      value ? searchPublisherList().catch(function () { return []; }) : Promise.resolve([]),
     ]).then(function (found) {
       if (version !== stickySearchRequestVersion) return null;
       var authors = value ? matchSearchAuthors(found[1], value) : [];
-      // Matched authors (also by English name, which book search can't see) bring their books first.
-      // One request per author: the API takes a single author._id.
+      var publishers = value ? matchSearchPublishers(found[2], value) : [];
+      // Matched authors and publishers (also by English name, which book search can't see) bring
+      // their books first. One request each: the API takes a single author._id / publisher._id.
       return Promise.all(authors.map(function (author) {
         return searchCatalogue({ status: 'publish', 'author._id': author._id }, '');
-      })).then(function (lists) {
+      }).concat(publishers.map(function (publisher) {
+        return searchCatalogue({ status: 'publish', 'publisher._id': publisher._id }, '');
+      }))).then(function (lists) {
         if (version !== stickySearchRequestVersion) return;
         var seen = {};
         var products = [].concat.apply([], lists).concat(found[0]).filter(function (product) {
@@ -5728,7 +5799,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
           seen[key] = true;
           return true;
         }).slice(0, SEARCH_BOOK_LIMIT);
-        renderSearchProducts(products, input, popular && !value, authors);
+        renderSearchProducts(products, input, popular && !value, authors, publishers);
       });
     });
   }
@@ -6139,6 +6210,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     var ids = items.map(cartPageProductId).filter(Boolean);
     if (!items.length) {
       syncNativeCartPage([], []);
+      clearCartOffer();
       renderCartGiftRow(false);
       return Promise.resolve();
     }
@@ -7841,6 +7913,13 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     });
   }
 
+  /* An empty cart shows no notebook offer (as on a fresh load); removing the
+     last book must not leave the previous "আর মাত্র ৳… টাকার বই" box behind. */
+  function clearCartOffer() {
+    var progress = document.getElementById('ab-cart-offer-progress');
+    if (progress) progress.remove();
+  }
+
   function renderCartOffer(items, products) {
     if (!cartOfferConfig || !cartOfferConfig.giftEnabled) return;
     var anchor = cartOfferAnchor();
@@ -8037,7 +8116,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         cartNativeProductSignature = '';
         cartNativeProducts = [];
         syncNativeCartPage([], []);
-        renderCartOffer([], []);
+        clearCartOffer();
         renderCartRecentlyViewed([]);
         return;
       }
@@ -8524,6 +8603,9 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     if (event.type !== 'click' && !isStationaryTap(event)) return false;
     preventCartEvent(event);
     if (wasFastCartTap(cartOperation)) return true;
+    // A phone's click follows the handled tap at the same spot; once the tapped row is gone it lands
+    // on the next row's button (removing two books with one tap). Ignore it.
+    if (event.type === 'click' && fastCartTapAt && Date.now() - fastCartTapAt < 700) return true;
     if (cartOperation.getAttribute('data-ab-cart-busy') === 'true') return true;
     if (event.type !== 'click') markFastCartTap(cartOperation);
     var operation = cartOperation.getAttribute('data-ab-cart-op');
@@ -8616,7 +8698,9 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     var target = event.target;
     if (!target || !target.closest) return false;
     if (target.closest('#ab-added-cart-modal')) return false;
-    if (target.closest('.ab-sticky-search-wrap, input, textarea, select, [data-ab-cart-op], .ab-add-cart-button, .ab-native-cart-add')) return false;
+    /* The header search dropdown lives inside app-header; its add buttons are
+       not menu buttons (claiming them here swallowed the add). */
+    if (target.closest('.ab-sticky-search-wrap, input, textarea, select, [data-ab-cart-op], .ab-add-cart-button, .ab-native-cart-add, .ab-search-add')) return false;
 
     var stickyCatalogue = target.closest('.ab-sticky-catalogue');
     var stickyCartButton = target.closest('.ab-sticky-cart');

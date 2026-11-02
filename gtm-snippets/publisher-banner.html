@@ -1,0 +1,168 @@
+<!-- Publisher book list (/product-list?publisher=<slug>&publisherId=<id>, opened from the publisher
+     cards and the search): logo, name and description on top, like Rokomari's publisher pages. -->
+<style id="amol-publisher-banner">
+#ab-publisher-banner {
+  display:flex; gap:14px; align-items:flex-start; margin:6px 0 14px; padding:16px; border-radius:16px;
+  color:#fff; background:linear-gradient(120deg, oklch(34% 0.07 150), oklch(46% 0.1 150));
+  box-shadow:0 8px 24px oklch(30% 0.05 150 / 0.18); box-sizing:border-box; min-width:0;
+}
+#ab-publisher-banner .ab-publisher-logo {
+  flex:0 0 68px; width:68px; height:68px; border-radius:50%; background:#fff; object-fit:contain;
+  padding:7px; box-sizing:border-box; box-shadow:0 0 0 3px rgb(255 255 255 / 0.25);
+}
+#ab-publisher-banner .ab-publisher-text { min-width:0; flex:1 1 auto; }
+#ab-publisher-banner h2 { margin:0; color:#fff; font-size:1.2rem; line-height:1.35; font-weight:700; }
+#ab-publisher-banner .ab-publisher-en { margin:2px 0 0; color:rgb(255 255 255 / 0.78); font-size:0.82rem; }
+#ab-publisher-banner .ab-publisher-about {
+  margin-top:8px; font-size:0.92rem; line-height:1.65; max-height:calc(1.65em * 4); overflow:hidden; overflow-wrap:anywhere;
+}
+#ab-publisher-banner .ab-publisher-about p { margin:0 0 0.55em; color:inherit; }
+#ab-publisher-banner .ab-publisher-about ul { margin:0 0 0.55em; padding-left:1.2em; }
+#ab-publisher-banner.is-open .ab-publisher-about { max-height:none; }
+#ab-publisher-banner .ab-publisher-more {
+  margin-top:4px; padding:4px 0; border:0; background:none; color:#fff; font:inherit; font-size:0.88rem;
+  font-weight:700; text-decoration:underline; cursor:pointer;
+}
+#ab-publisher-banner .ab-publisher-more[hidden] { display:none; }
+@media (min-width:768px) {
+  #ab-publisher-banner { gap:22px; padding:22px 26px; margin:10px 0 18px; }
+  #ab-publisher-banner .ab-publisher-logo { flex-basis:104px; width:104px; height:104px; padding:10px; }
+  #ab-publisher-banner h2 { font-size:1.55rem; }
+  #ab-publisher-banner .ab-publisher-about { font-size:0.98rem; }
+}
+</style>
+<script>
+(function () {
+  'use strict';
+  if (window.__abPublisherBanner) return;
+  window.__abPublisherBanner = true;
+  var host = location.hostname;
+  var local = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(host) || /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
+  var API_BASE = local ? location.origin + '/storefront-catalog' : 'https://apisub.amolbooks.com/api';
+  var request = null;
+
+  function publishers() {
+    if (!request) {
+      request = fetch(API_BASE + '/publisher/get-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ select: { name: 1, nameEn: 1, slug: 1, image: 1, description: 1 } }),
+      }).then(function (response) { return response.ok ? response.json() : null; })
+        .then(function (body) { return body && Array.isArray(body.data) ? body.data : []; })
+        .catch(function () { return []; });
+      request.then(function (list) { if (!list.length) request = null; });
+    }
+    return request;
+  }
+
+  function wanted() {
+    if (location.pathname !== '/product-list') return null;
+    var query = new URLSearchParams(location.search);
+    var id = query.get('publisherId');
+    var slug = query.get('publisher');
+    return id || slug ? { id: id, slug: slug, key: id || slug } : null;
+  }
+
+  // The description comes from the database; rebuild it from text with a few plain tags only,
+  // never as raw HTML.
+  var ALLOWED = { P: 1, BR: 1, STRONG: 1, B: 1, EM: 1, I: 1, UL: 1, OL: 1, LI: 1 };
+  function copyNodes(from, to) {
+    Array.prototype.forEach.call(from.childNodes, function (node) {
+      if (node.nodeType === 3) { to.appendChild(document.createTextNode(node.nodeValue)); return; }
+      if (node.nodeType !== 1) return;
+      if (ALLOWED[node.tagName]) {
+        var el = document.createElement(node.tagName.toLowerCase());
+        copyNodes(node, el);
+        to.appendChild(el);
+      } else {
+        copyNodes(node, to);
+      }
+    });
+  }
+  function about(html) {
+    var box = document.createElement('div');
+    box.className = 'ab-publisher-about';
+    var parsed = new DOMParser().parseFromString('<div>' + String(html || '') + '</div>', 'text/html');
+    copyNodes(parsed.body.firstChild || parsed.body, box);
+    return box;
+  }
+
+  function banner(publisher, key) {
+    var section = document.createElement('section');
+    section.id = 'ab-publisher-banner';
+    section.setAttribute('data-key', key);
+    section.setAttribute('aria-label', 'প্রকাশনী পরিচিতি');
+    if (/^https?:\/\//.test(String(publisher.image || ''))) {
+      var logo = document.createElement('img');
+      logo.className = 'ab-publisher-logo';
+      logo.alt = publisher.name || '';
+      logo.decoding = 'async';
+      logo.src = publisher.image;
+      section.appendChild(logo);
+    }
+    var text = document.createElement('div');
+    text.className = 'ab-publisher-text';
+    var name = document.createElement('h2');
+    name.textContent = publisher.name || '';
+    text.appendChild(name);
+    if (publisher.nameEn && publisher.nameEn !== publisher.name) {
+      var en = document.createElement('p');
+      en.className = 'ab-publisher-en';
+      en.textContent = publisher.nameEn;
+      text.appendChild(en);
+    }
+    if (String(publisher.description || '').replace(/<[^>]*>/g, '').trim()) {
+      var body = about(publisher.description);
+      var more = document.createElement('button');
+      more.type = 'button';
+      more.className = 'ab-publisher-more';
+      more.textContent = 'আরও পড়ুন';
+      more.hidden = true;
+      more.addEventListener('click', function () {
+        var open = section.classList.toggle('is-open');
+        more.textContent = open ? 'কম দেখুন' : 'আরও পড়ুন';
+      });
+      text.appendChild(body);
+      text.appendChild(more);
+      // Offer "আরও পড়ুন" only when the text is cut off.
+      window.requestAnimationFrame(function () { more.hidden = body.scrollHeight <= body.clientHeight + 2; });
+    }
+    section.appendChild(text);
+    return section;
+  }
+
+  function render() {
+    var want = wanted();
+    var existing = document.getElementById('ab-publisher-banner');
+    var container = document.querySelector('app-product-list section.product-list > .container');
+    if (!want || !container) {
+      if (existing && !want) existing.remove();
+      return;
+    }
+    if (existing && existing.getAttribute('data-key') === want.key && container.contains(existing)) return;
+    publishers().then(function (list) {
+      var now = wanted();
+      if (!now || now.key !== want.key) return;
+      var publisher = list.filter(function (p) {
+        return p && ((want.id && String(p._id) === want.id) || (!want.id && p.slug === want.slug));
+      })[0];
+      var target = document.querySelector('app-product-list section.product-list > .container');
+      var old = document.getElementById('ab-publisher-banner');
+      if (old && old.getAttribute('data-key') === want.key && target && target.contains(old)) return;
+      if (old) old.remove();
+      if (!publisher || !target) return;
+      target.insertBefore(banner(publisher, want.key), target.firstChild);
+    });
+  }
+
+  var queued = false;
+  function schedule() {
+    if (queued) return;
+    queued = true;
+    window.requestAnimationFrame(function () { queued = false; render(); });
+  }
+  window.addEventListener('popstate', schedule);
+  if (window.MutationObserver) new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true });
+  schedule();
+})();
+</script>

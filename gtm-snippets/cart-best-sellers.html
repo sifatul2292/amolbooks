@@ -1,0 +1,126 @@
+<!-- Cart page, "জনপ্রিয় কিছু বই দেখুন": our best-selling books that are not already in the cart.
+     The compiled section (app-related-products) asks for every product, newest first, and shows the
+     first few of them; on the cart page that request now asks for published, in-stock books by
+     sales, and books already in the cart are left out (also after one is added from the row). -->
+<script>
+(function () {
+  'use strict';
+  if (window.__abCartBestSellers || !window.XMLHttpRequest) return;
+  window.__abCartBestSellers = true;
+  var onCart = function () { return location.pathname === '/cart'; };
+  var BOOKS = 120;
+
+  // Product ids in the cart: the guest cart in localStorage and, for a signed-in shopper, what the
+  // tracking script read from the cart API.
+  function cartIds() {
+    var ids = {};
+    ['Amolbooks_USER_CART_1', 'Amolbooks_LOCAL_USER_CART_1'].forEach(function (key) {
+      try {
+        (JSON.parse(localStorage.getItem(key) || '[]') || []).forEach(function (item) {
+          var id = item && (item.product && item.product._id || item.product);
+          if (id) ids[String(id)] = true;
+        });
+      } catch (_error) {}
+    });
+    try {
+      var tracked = window.__amolTracking && window.__amolTracking.cartItems();
+      (tracked || []).forEach(function (item) { if (item && item.item_id) ids[String(item.item_id)] = true; });
+    } catch (_error) {}
+    return ids;
+  }
+
+  // The section's own request: every product, newest first, no filter or pagination.
+  function isSectionQuery(query) {
+    return query && query.filter === null && query.pagination === null && query.sort && query.sort.createdAt === -1 &&
+      query.select && query.select.costPrice === 1 && query.select.slug === 1;
+  }
+
+  var open = XMLHttpRequest.prototype.open;
+  var send = XMLHttpRequest.prototype.send;
+  XMLHttpRequest.prototype.open = function (method, url) {
+    this.__abBestSellerUrl = String(url || '');
+    return open.apply(this, arguments);
+  };
+  XMLHttpRequest.prototype.send = function (body) {
+    var args = Array.prototype.slice.call(arguments);
+    if (typeof body === 'string' && onCart() && /\/product\/get-all(\?|$)/.test(this.__abBestSellerUrl || '')) {
+      try {
+        var query = JSON.parse(body);
+        if (isSectionQuery(query)) {
+          query.filter = { status: 'publish', quantity: { $gt: 0 } };
+          query.sort = { totalSold: -1, priority: -1 };
+          query.pagination = { pageSize: BOOKS, currentPage: 0 };
+          query.select.discountType = 1;
+          query.select.discountAmount = 1;
+          query.select.afterDiscountPrice = 1;
+          args[0] = JSON.stringify(query);
+          leaveOutCartBooks(this);
+        }
+      } catch (_error) {}
+    }
+    return send.apply(this, args);
+  };
+
+  // Drop the cart's books from the answer before the section reads it.
+  function leaveOutCartBooks(xhr) {
+    var proto = XMLHttpRequest.prototype;
+    var textGetter = Object.getOwnPropertyDescriptor(proto, 'responseText');
+    var responseGetter = Object.getOwnPropertyDescriptor(proto, 'response');
+    if (!textGetter || !textGetter.get) return;
+    var cache = null;
+    function filtered() {
+      var raw = textGetter.get.call(xhr);
+      if (xhr.readyState !== 4 || !raw) return raw;
+      if (cache && cache.raw === raw) return cache.text;
+      var text = raw;
+      try {
+        var body = JSON.parse(raw);
+        if (body && Array.isArray(body.data)) {
+          var inCart = cartIds();
+          body.data = body.data.filter(function (product) { return product && !inCart[String(product._id)]; });
+          text = JSON.stringify(body);
+        }
+      } catch (_error) {}
+      cache = { raw: raw, text: text };
+      return text;
+    }
+    try {
+      Object.defineProperty(xhr, 'responseText', { configurable: true, get: filtered });
+      Object.defineProperty(xhr, 'response', {
+        configurable: true,
+        get: function () {
+          var type = xhr.responseType;
+          if (type === '' || type === 'text') return filtered();
+          if (type === 'json') { try { return JSON.parse(filtered()); } catch (_error) { return null; } }
+          return responseGetter && responseGetter.get ? responseGetter.get.call(xhr) : undefined;
+        },
+      });
+    } catch (_error) {}
+  }
+
+  // A book added from the row (or elsewhere) while the cart page is open leaves the row.
+  function hideCartBooks() {
+    if (!onCart()) return;
+    var inCart = cartIds();
+    var changed = false;
+    var swiperEl = null;
+    Array.prototype.forEach.call(document.querySelectorAll('app-cart app-related-products .swiper-slide'), function (slide) {
+      var button = slide.querySelector('[data-product-id]');
+      var id = button && button.getAttribute('data-product-id');
+      var hide = Boolean(id && inCart[id]);
+      if (hide !== slide.hasAttribute('data-ab-in-cart')) {
+        // The tablet layout sets display:flex !important on slides, so hide with !important too.
+        if (hide) { slide.setAttribute('data-ab-in-cart', ''); slide.style.setProperty('display', 'none', 'important'); }
+        else { slide.removeAttribute('data-ab-in-cart'); slide.style.removeProperty('display'); }
+        changed = true;
+        swiperEl = slide.closest('.swiper');
+      }
+    });
+    if (changed && swiperEl && swiperEl.swiper) {
+      try { swiperEl.swiper.update(); } catch (_error) {}
+    }
+  }
+  window.addEventListener('ab-cart-updated', function () { window.setTimeout(hideCartBooks, 0); });
+  window.addEventListener('storage', function () { window.setTimeout(hideCartBooks, 0); });
+})();
+</script>

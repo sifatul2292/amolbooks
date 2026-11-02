@@ -21,7 +21,7 @@ import { STOREFRONT_SPECIAL_PACKAGE_SCRIPT } from './storefront-special-package-
 import { ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT } from './admin-incomplete-order-editor-script';
 import { STOREFRONT_ATTRIBUTION_SCRIPT } from './storefront-attribution-script';
 import { STOREFRONT_PRODUCT_SECTIONS_SCRIPT } from './storefront-product-sections-script';
-import { patchViewCartPrices } from './storefront-view-cart-tracking';
+import { patchTrackingListPrices, patchViewCartPrices } from './storefront-view-cart-tracking';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule, { cors: true });
@@ -586,6 +586,8 @@ ${storefrontPurchaseExternalIdHelper}
     'cart-page-navigation.html',
     'product-detail-polish.html',
     'author-books-grid.html',
+    'publisher-banner.html',
+    'cart-best-sellers.html',
     'product-review-video.html',
     'blog-reading.html',
     'book-gift-card.html',
@@ -733,6 +735,7 @@ ${storefrontPurchaseExternalIdHelper}
       );
     }
     patchedTrackingHtml = patchViewCartPrices(patchedTrackingHtml);
+    patchedTrackingHtml = patchTrackingListPrices(patchedTrackingHtml);
     patchedTrackingHtml = patchedTrackingHtml
       .replace(legacyStorefrontAddToCartPriceCode, storefrontAddToCartPriceCode)
       .replace(
@@ -1264,7 +1267,8 @@ ${storefrontPurchaseExternalIdHelper}
         (req.method === 'GET' && req.path === '/product/get-all-data') ||
         (req.method === 'GET' && req.path.startsWith('/product/get-by-slug/')) ||
         (req.method === 'GET' && /^\/author\/[^/]+$/.test(req.path)) ||
-        (req.method === 'POST' && req.path === '/category/get-all/');
+        (req.method === 'POST' && req.path === '/category/get-all/') ||
+        (req.method === 'POST' && req.path === '/publisher/get-all');
       if (!allowedCatalogueRequest) return res.sendStatus(404);
       const requestBody = isLibraryRequest
         ? JSON.stringify({

@@ -8,15 +8,18 @@ const { createRequire } = require('node:module');
 const req = createRequire(path.resolve(__dirname, '../api/package.json'));
 const { JSDOM } = req('jsdom');
 const root = path.resolve(__dirname, '..');
-const { patchViewCartPrices, VIEW_CART_FINAL_PRICE_MARKER } = require('../api/dist/storefront-view-cart-tracking');
+const { patchViewCartPrices, patchTrackingListPrices, VIEW_CART_FINAL_PRICE_MARKER, TRACKING_LIST_PRICE_MARKER } = require('../api/dist/storefront-view-cart-tracking');
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const main = fs.readFileSync(path.join(root, 'api/src/main.ts'), 'utf8');
 assert.match(main, /patchedTrackingHtml = patchViewCartPrices\(patchedTrackingHtml\);/, 'main.ts applies the view-cart patch');
-const html = patchViewCartPrices(fs.readFileSync(path.join(root, 'ui/dist/angular-ui/browser/index.html'), 'utf8'));
+const html = patchTrackingListPrices(patchViewCartPrices(fs.readFileSync(path.join(root, 'ui/dist/angular-ui/browser/index.html'), 'utf8')));
+assert.match(main, /patchedTrackingHtml = patchTrackingListPrices\(patchedTrackingHtml\);/, 'main.ts applies the list-price guard');
+assert.equal(patchTrackingListPrices(html), html, 'guard is applied once');
 assert.equal(patchViewCartPrices(html), html, 'patch is applied once');
 const tracking = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]).find((code) => code.includes('function pushViewCart'));
 assert.ok(tracking && tracking.includes(VIEW_CART_FINAL_PRICE_MARKER), 'tracking script carries the helper');
+assert.ok(tracking.includes(TRACKING_LIST_PRICE_MARKER), 'tracking script carries the list-price guard');
 assert.equal(tracking.split('try{fixViewCartPrices(obj);}catch(e){}').length - 1, 2, 'both dataLayer wrappers fix view_cart');
 
 // Discounted books: 500 → 315 (37%), 470 → 294 (Tk 176 off), 600 → 320 (Tk 280 off).
@@ -40,7 +43,7 @@ const FINAL = [315, 294, 320];
     send() {
       this.readyState = 4;
       this.status = 200;
-      this.responseText = JSON.stringify({ success: true, data: products });
+      this.responseText = JSON.stringify({ success: true, data: window.__nextData || products });
       (this.listeners.readystatechange || []).forEach((listener) => listener());
       (this.listeners.load || []).forEach((listener) => listener());
     }
@@ -69,6 +72,18 @@ const FINAL = [315, 294, 320];
   const checkout = dataLayer.filter((e) => e && e.event === 'begin_checkout_stape');
   assert.equal(checkout.length, 1);
   assert.equal(checkout[0].ecommerce.value, 929, 'begin_checkout unchanged and equal');
+
+  // The header search preloads every book with salePrice only (no discount fields); that must not
+  // replace the final prices already learnt before the next view_cart.
+  window.__nextData = products.map((p) => ({ _id: p._id, name: p.name, salePrice: p.salePrice }));
+  const preload = new window.XMLHttpRequest();
+  preload.open('POST', 'https://apisub.amolbooks.com/api/product/get-all');
+  preload.send('{}');
+  window.__nextData = null;
+  await wait(20);
+  const again = angularViewCart();
+  dataLayer.push(again);
+  assert.deepEqual(again.ecommerce.items.map((i) => i.price), FINAL, 'a list-price-only preload does not undo final prices');
 
   // GTM replaces push later; even a GTM that reads the event before passing it on sees final prices.
   const seenByGtm = [];

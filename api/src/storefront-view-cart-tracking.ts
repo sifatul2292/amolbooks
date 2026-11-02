@@ -29,3 +29,20 @@ export function patchViewCartPrices(html: string): string {
     .replace(EARLY_PUSH, EARLY_PUSH_FIXED)
     .replace(LATE_PUSH, LATE_PUSH_FIXED);
 }
+
+// The header search preloads every book with salePrice and no discount fields, and the tracking
+// script learnt prices from every product list it saw, so that preload could replace a book's final
+// price with its list price just before view_cart / add_to_cart / begin_checkout read it. A
+// list-price-only record may now set a price, but never replace one already learnt.
+export const TRACKING_LIST_PRICE_MARKER = '/* amol-list-price-guard */';
+const REMEMBER_PRICE = '    _trackingPriceById[String(p._id)]=finalTrackingPrice(p);\n  }';
+const REMEMBER_PRICE_GUARDED = `    ${TRACKING_LIST_PRICE_MARKER}
+    if(p.afterDiscountPrice==null&&!('discountType' in p)&&!('discountAmount' in p)&&Object.prototype.hasOwnProperty.call(_trackingPriceById,String(p._id)))return;
+${REMEMBER_PRICE}`;
+
+export function patchTrackingListPrices(html: string): string {
+  if (html.includes(TRACKING_LIST_PRICE_MARKER) || !html.includes('function rememberTrackingProduct(p){')) return html;
+  const at = html.indexOf(REMEMBER_PRICE, html.indexOf('function rememberTrackingProduct(p){'));
+  if (at === -1) return html;
+  return html.slice(0, at) + REMEMBER_PRICE_GUARDED + html.slice(at + REMEMBER_PRICE.length);
+}

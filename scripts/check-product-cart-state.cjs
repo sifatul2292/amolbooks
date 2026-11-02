@@ -257,8 +257,7 @@ function sourceFunction(name) {
   return source.slice(start, end);
 }
 assert.match(source, /if \(isLocalPreviewHost\(\)\) \{\s*document\.addEventListener\('click', function \(event\) \{[\s\S]*?'\.ab-corow, \.cart-slide-area, app-checkout \.cart-product-item'[\s\S]*?localCartControlTapAt = Date\.now\(\);/, 'Only local preview records taps on native cart controls');
-function localCartHarness() {
-  const store = {};
+function localCartHarness(store = {}) {
   const localStorage = {
     getItem: (key) => (Object.prototype.hasOwnProperty.call(store, key) ? store[key] : null),
     setItem: (key, value) => { store[key] = String(value); },
@@ -267,8 +266,8 @@ function localCartHarness() {
   const window = { name: '' };
   const api = new Function('localStorage', 'window', 'isLocalPreviewHost',
     'var localCartControlTapAt = 0; var LOCAL_CART_ADOPT_MS = 4000; var cartMigrationScheduled = false;' +
-    ['cartStorageKey', 'tabCartItems', 'setTabCartItems', 'cartItemsSignature', 'cartPageProductId'].map(sourceFunction).join('\n') +
-    '; return { cartStorageKey: cartStorageKey, tabCartItems: tabCartItems, tap: function (at) { localCartControlTapAt = at; } };'
+    ['cartStorageKey', 'tabCartItems', 'setTabCartItems', 'storedGuestCartItems', 'cartItemsSignature', 'cartPageProductId'].map(sourceFunction).join('\n') +
+    '; return { cartStorageKey: cartStorageKey, tabCartItems: tabCartItems, setTabCartItems: setTabCartItems, storedGuestCartItems: storedGuestCartItems, tap: function (at) { localCartControlTapAt = at; } };'
   )(localStorage, window, () => true);
   return { store, api };
 }
@@ -291,9 +290,44 @@ harness.api.tap(Date.now() - 5000);
 harness.api.cartStorageKey();
 assert.deepEqual(JSON.parse(harness.store.Amolbooks_USER_CART_1), [], 'Removing the last item leaves every copy empty');
 assert.deepEqual(harness.api.tabCartItems(), [], 'An emptied cart is not resurrected from the tab copy');
+// Two tabs share localStorage but each keeps its own window.name copy.
+const sharedStore = {};
+const tabA = localCartHarness(sharedStore);
+const tabB = localCartHarness(sharedStore);
+sharedStore.Amolbooks_LOCAL_USER_CART_1 = JSON.stringify([lineA]);
+sharedStore.Amolbooks_USER_CART_1 = JSON.stringify([lineA]);
+tabA.api.setTabCartItems([lineA]);
+tabB.api.setTabCartItems([lineA]);
+sharedStore.Amolbooks_LOCAL_USER_CART_1 = '[]';
+sharedStore.Amolbooks_USER_CART_1 = '[]';
+tabA.api.setTabCartItems([]);
+assert.deepEqual(tabB.api.storedGuestCartItems(), [], 'Another tab does not bring back the last removed book');
+assert.deepEqual(JSON.parse(sharedStore.Amolbooks_LOCAL_USER_CART_1), [], 'The removal stays in the shared cart');
+assert.deepEqual(tabB.api.tabCartItems(), [], 'The other tab drops its stale copy');
+const wiped = localCartHarness();
+wiped.api.setTabCartItems([lineA]);
+assert.deepEqual(wiped.api.storedGuestCartItems(), [lineA], 'Wiped storage is still restored from the tab copy');
 harness = localCartHarness();
 harness.store.Amolbooks_LOCAL_USER_CART_1 = JSON.stringify([lineA, lineB]);
 harness.store.Amolbooks_USER_CART_1 = JSON.stringify([lineA]);
 harness.api.tap(Date.now() - 5000);
 harness.api.cartStorageKey();
 assert.deepEqual(JSON.parse(harness.store.Amolbooks_USER_CART_1), [lineA, lineB], 'Stale taps do not adopt native resets');
+// Removing the last book clears the notebook offer box (a fresh load of an empty cart shows none).
+assert.match(source, /if \(!items\.length\) \{\s*syncNativeCartPage\(\[\], \[\]\);\s*clearCartOffer\(\);/, 'guest cart emptied: offer box cleared');
+assert.match(source, /if \(!ids\.length\) \{[\s\S]{0,160}?syncNativeCartPage\(\[\], \[\]\);\s*clearCartOffer\(\);/, 'cart page emptied: offer box cleared');
+// Blocked storage (private modes, some in-app browsers) throws on every access; the cart helpers must
+// return an empty cart instead of stopping the whole storefront script.
+{
+  const blocked = { getItem() { throw new Error('SecurityError'); }, setItem() { throw new Error('SecurityError'); }, removeItem() {} };
+  const api = new Function('localStorage', 'window', 'isLocalPreviewHost',
+    'var localCartControlTapAt = 0; var LOCAL_CART_ADOPT_MS = 4000; var cartMigrationScheduled = false;' +
+    ['cartStorageKey', 'tabCartItems', 'setTabCartItems', 'storedGuestCartItems', 'cartItemsSignature', 'cartPageProductId'].map(sourceFunction).join('\n') +
+    '; return { storedGuestCartItems: storedGuestCartItems };'
+  );
+  for (const local of [true, false]) {
+    assert.deepEqual(api(blocked, { name: '' }, () => local).storedGuestCartItems(), [], `blocked storage gives an empty cart (${local ? 'local preview' : 'live'})`);
+  }
+}
+// One tap on a cart row's button must not also fire the next row's button (the click that follows the tap).
+assert.match(sourceFunction('handleCartOperationTap'), /event\.type === 'click' && fastCartTapAt && Date\.now\(\) - fastCartTapAt < 700\) return true;/, 'the click after a handled tap is ignored');
