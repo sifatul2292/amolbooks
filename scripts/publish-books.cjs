@@ -2,12 +2,16 @@
 // once the owner has reviewed them. Only a draft whose name matches its book in books.json changes;
 // anything already published, hidden or not found is reported and left alone. A book without a
 // cover stays a draft unless --include-no-cover is given.
+// --facebook-catalog also switches on "Facebook Catalog" for the set's published books (including
+// the ones published in the same run), which puts them in the Meta feed (/api/fb-feed.xml). Books
+// without a cover never go to the catalogue.
 // Uses the API's own mongoose schema (api/dist, so run after `npm run build`).
 //
 // On the VPS, from /home/amolbooks:
 //   node scripts/publish-books.cjs sondipon            dry run, shows what would be published
 //   node scripts/publish-books.cjs sondipon --apply    writes to the database
-// Options: --env <file> (default api/.env), --include-no-cover
+//   node scripts/publish-books.cjs sondipon --facebook-catalog [--apply]
+// Options: --env <file> (default api/.env), --include-no-cover, --facebook-catalog
 // The shop caches its book lists for up to 5 minutes, so the books appear within that time.
 const fs = require('node:fs');
 const path = require('node:path');
@@ -25,9 +29,10 @@ const option = (name, fallback) => {
 const SET = args.find((arg, index) => !arg.startsWith('--') && !(index > 0 && args[index - 1] === '--env'));
 const APPLY = args.includes('--apply');
 const WITHOUT_COVER = args.includes('--include-no-cover');
+const FACEBOOK = args.includes('--facebook-catalog');
 const ENV_FILE = path.resolve(root, option('--env', 'api/.env'));
 if (!SET || !/^[a-z0-9-]+$/.test(SET)) {
-  console.error('usage: node scripts/publish-books.cjs <set> [--apply] [--include-no-cover]');
+  console.error('usage: node scripts/publish-books.cjs <set> [--apply] [--include-no-cover] [--facebook-catalog]');
   process.exit(1);
 }
 
@@ -66,18 +71,38 @@ const same = (value) => String(value || '').normalize('NFD').replace(/\s+/g, ' '
   const ready = [];
   const noCover = [];
   const skipped = [];
+  const catalogue = [];
+  let inCatalogue = 0;
   for (const book of books) {
     // The importer adds "-2", "-3" … to a slug that was already taken.
     const found = (await Product.find({ slug: new RegExp('^' + escapeRegex(book.slug) + '(-\\d+)?$') })
-      .select('name slug status images')
+      .select('name slug status images isFacebookCatalog')
       .lean()).find((product) => same(product.name) === same(book.name));
-    if (!found) skipped.push(`${book.name} (not in the shop: not imported yet, or renamed in admin)`);
-    else if (found.status !== 'draft') skipped.push(`${found.name} (${found.status === 'publish' ? 'already published' : found.status})`);
-    else if (!(found.images || []).length && !WITHOUT_COVER) noCover.push(found);
-    else ready.push(found);
+    if (!found) {
+      skipped.push(`${book.name} (not in the shop: not imported yet, or renamed in admin)`);
+      continue;
+    }
+    const hasCover = (found.images || []).length > 0;
+    if (found.status === 'draft') {
+      if (!hasCover && !WITHOUT_COVER) {
+        noCover.push(found);
+        continue;
+      }
+      ready.push(found);
+    } else if (found.status !== 'publish') {
+      skipped.push(`${found.name} (${found.status})`);
+      continue;
+    } else if (!FACEBOOK) {
+      skipped.push(`${found.name} (already published)`);
+    }
+    // Meta needs a real picture, so a book without a cover never goes to the catalogue.
+    if (FACEBOOK && !hasCover) skipped.push(`${found.name} (not added to the Facebook catalogue: no cover)`);
+    else if (FACEBOOK && found.isFacebookCatalog) inCatalogue++;
+    else if (FACEBOOK) catalogue.push(found);
   }
 
   for (const product of ready) console.log(`${APPLY ? 'publish' : 'would publish'}  ${product.name}${(product.images || []).length ? '' : ' (no cover)'}`);
+  for (const product of catalogue) console.log(`${APPLY ? 'add to Facebook catalogue' : 'would add to Facebook catalogue'}  ${product.name}`);
   for (const product of noCover) console.log(`keep draft     ${product.name} (no cover yet: add one in admin and publish it there, or re-run with --include-no-cover)`);
   for (const line of skipped) console.log(`skip           ${line}`);
 
@@ -87,7 +112,16 @@ const same = (value) => String(value || '').normalize('NFD').replace(/\s+/g, ' '
       { $set: { status: 'publish' } },
     );
   }
-  console.log(`\n${ready.length} book(s) ${APPLY ? 'published' : 'would be published (dry run; add --apply to write)'}; ${noCover.length} kept as draft for a missing cover; ${skipped.length} skipped`);
+  if (APPLY && catalogue.length) {
+    await Product.updateMany(
+      { _id: { $in: catalogue.map((product) => product._id) }, status: 'publish' },
+      { $set: { isFacebookCatalog: true } },
+    );
+  }
+  const facebook = FACEBOOK
+    ? `; ${catalogue.length} ${APPLY ? 'added to' : 'would be added to'} the Facebook catalogue (${inCatalogue} already there)`
+    : '';
+  console.log(`\n${ready.length} book(s) ${APPLY ? 'published' : 'would be published (dry run; add --apply to write)'}${facebook}; ${noCover.length} kept as draft for a missing cover; ${skipped.length} skipped`);
   await mongoose.disconnect();
 })().catch(async (error) => {
   console.error(error.message || error);
