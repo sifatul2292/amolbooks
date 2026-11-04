@@ -5,6 +5,8 @@ import { join } from 'path';
 import { STOREFRONT_PAGE_VIEW_TITLE_SYNC } from './storefront-page-view-title-sync';
 import { ProductService } from '../product/product.service';
 import { SpecialPackageService } from '../offers/special-package/special-package.service';
+import { CatalogueSeoService } from './catalogue-seo.service';
+import { CatalogueKind, renderCatalogueSeo } from './catalogue-seo.utils';
 
 // Hide only the server fallback; Angular removes this wrapper when it renders.
 export const STOREFRONT_SEO_FALLBACK_HEAD = `<script>document.documentElement.classList.add('ab-js-startup');</script>
@@ -28,13 +30,35 @@ const escapeHtml = (value: string) =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+const AUTHOR_PATH = /^author-list\/author-details\/(.+?)\/?$/;
+const AUTHOR_NOT_FOUND =
+  '<!doctype html><html lang="bn"><head><meta name="robots" content="noindex"><title>লেখক পাওয়া যায়নি | Amolbooks</title></head><body><h1>লেখক পাওয়া যায়নি</h1><a href="https://www.amolbooks.com/author-list">সব লেখক</a></body></html>';
+
+// /product-list?publisher=<slug> (with or without publisherId) and ?categories=<slug> are the
+// publisher and category pages; any other book list keeps the general page.
+function catalogueFilter(query: Record<string, any>): { kind: CatalogueKind; slug: string; id?: string } | null {
+  const value = (key: string) => {
+    const raw = Array.isArray(query[key]) ? query[key][0] : query[key];
+    return typeof raw === 'string' ? raw.trim() : '';
+  };
+  if (value('publisher') || value('publisherId')) return { kind: 'publisher', slug: value('publisher'), id: value('publisherId') };
+  if (value('categories')) return { kind: 'category', slug: value('categories') };
+  return null;
+}
 
 // Keep metadata in step with Angular navigation as well as full page loads.
 export const STOREFRONT_SEO_NAVIGATION = `<script>
 (function(){
   if(window.__amolSeoNavigation)return;
   window.__amolSeoNavigation=true;
-  var path=location.pathname, revision=0;
+  var path=location.pathname, key=pageKey(), revision=0;
+  // A book list for one publisher or category has metadata of its own.
+  function pageKey(){
+    if(location.pathname!=='/product-list')return location.pathname;
+    var query=new URLSearchParams(location.search),params=[];
+    ['publisher','publisherId','categories'].forEach(function(name){var value=query.get(name);if(value)params.push(name+'='+encodeURIComponent(value));});
+    return location.pathname+(params.length?'?'+params.join('&'):'');
+  }
   var titleDescriptor=Object.getOwnPropertyDescriptor(Document.prototype,'title');
   var titleState={path:path,title:document.title,ready:Promise.resolve()};
   window.__amolSeoTitleState=titleState;
@@ -59,16 +83,18 @@ export const STOREFRONT_SEO_NAVIGATION = `<script>
   ${STOREFRONT_PAGE_VIEW_TITLE_SYNC}
   var selector='title,link[rel="canonical"],meta[name="description"],meta[name="robots"],meta[property^="og:"],meta[property^="product:"],meta[name^="twitter:"],script[type="application/ld+json"]';
   function update(){
-    if(path===location.pathname)return;
+    var next=pageKey();
+    if(key===next)return;
+    key=next;
     path=location.pathname;
     var current=++revision;
     var state={path:path,title:null,ready:Promise.resolve()};
     titleState=state;window.__amolSeoTitleState=state;
     document.querySelectorAll('script[type="application/ld+json"]').forEach(function(node){node.remove();});
     var canonical=document.querySelector('link[rel="canonical"]');
-    if(canonical)canonical.href='https://www.amolbooks.com'+path;
-    if(!/^\\/(?:$|product-list$|category-list$|author-list$|publisher-list$|blogs$|offers$|contact-us$|product-details\\/|special-package-details\\/)/.test(path))return;
-    state.ready=fetch('/api/storefront-document'+path).then(function(response){
+    if(canonical)canonical.href='https://www.amolbooks.com'+key;
+    if(!/^\\/(?:$|product-list$|category-list$|author-list$|publisher-list$|blogs$|offers$|contact-us$|product-details\\/|special-package-details\\/|author-list\\/author-details\\/)/.test(path))return;
+    state.ready=fetch('/api/storefront-document'+key).then(function(response){
       if(!response.ok)throw new Error('SEO document unavailable');
       return response.text();
     }).then(function(html){
@@ -93,6 +119,7 @@ export class StorefrontDocumentService {
   constructor(
     private readonly products: ProductService,
     private readonly packages: SpecialPackageService,
+    private readonly catalogue: CatalogueSeoService,
   ) {}
 
   private async homepageImagePreloads(path: string): Promise<string> {
@@ -120,9 +147,20 @@ export class StorefrontDocumentService {
     }
   }
 
-  async send(path: string, res: Response): Promise<void> {
+  // notFound: called instead of answering 404 for an unknown author (the plain storefront then loads).
+  async send(
+    path: string,
+    res: Response,
+    query: Record<string, any> = {},
+    notFound?: () => void,
+  ): Promise<void> {
     let page = '';
     let status = 200;
+    const author = path.match(AUTHOR_PATH);
+    const filter = path === 'product-list' ? catalogueFilter(query) : null;
+    const listed = filter
+      ? await this.catalogue.page(filter.kind, filter.slug, filter.id)
+      : null;
     // Reuse the detail renderers so prices, canonicals and missing-page handling agree.
     const capture = {
       setHeader: () => capture,
@@ -151,6 +189,17 @@ export class StorefrontDocumentService {
         path.slice('special-package-details/'.length).replace(/\/$/, ''),
         capture as any,
       );
+    } else if (author) {
+      const found = await this.catalogue.page('author', author[1]);
+      if (!found && notFound) return notFound();
+      if (found) {
+        page = renderCatalogueSeo('author', found.entity, found.books, found.total);
+      } else {
+        status = 404;
+        page = AUTHOR_NOT_FOUND;
+      }
+    } else if (listed) {
+      page = renderCatalogueSeo(filter.kind, listed.entity, listed.books, listed.total);
     } else if (Object.prototype.hasOwnProperty.call(PAGE_TITLES, path)) {
       const title = escapeHtml(PAGE_TITLES[path]);
       const canonical = `${ORIGIN}/${path}`;

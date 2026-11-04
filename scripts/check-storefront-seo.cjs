@@ -12,8 +12,8 @@ function load(file) {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, experimentalDecorators: true },
   }).outputText;
   const context = { exports: {}, __dirname: path.dirname(filename), require: (name) => {
-    if (name === './storefront-page-view-title-sync') return load('api/src/pages/sitemap/storefront-page-view-title-sync.ts');
-    if (name.includes('product.service') || name.includes('special-package.service') || name.includes('blog.service')) return {};
+    if (name.includes('product.service') || name.includes('special-package.service') || name.includes('blog.service') || name.includes('catalogue-seo.service')) return {};
+    if (name.startsWith('.')) return load(path.relative(root, path.resolve(path.dirname(filename), name + '.ts')));
     return apiRequire(name);
   }};
   vm.runInNewContext(output, context, { filename });
@@ -37,7 +37,7 @@ const packages = {
   findAllForSitemap: async () => offers,
   getSpecialPackageOgHtml: async (id, res) => res.status(200).send(`<html><head><title>Package</title><link rel="canonical" href="https://www.amolbooks.com/special-package-details/${id}"></head><body><h1>Package</h1></body></html>`),
 };
-const service = new StorefrontDocumentService(products, packages);
+const service = new StorefrontDocumentService(products, packages, { page: async () => null });
 async function render(urlPath) {
   const res = { code: 200, headers: {}, setHeader(k,v) { this.headers[k] = v; return this; }, status(n) { this.code=n; return this; }, type() { return this; }, send(s) { this.body=s; return this; } };
   await service.send(urlPath, res);
@@ -74,7 +74,7 @@ async function main() {
   assert.match(pkg.body, /<app-root><div id="amol-seo-fallback"><h1>Package<\/h1>/);
   const pkgWithSlash = await render('special-package-details/' + offers[0]._id + '/');
   assert.ok(pkgWithSlash.body.includes('href="https://www.amolbooks.com/special-package-details/' + offers[0]._id + '"'));
-  const sitemap = await new SitemapService(products, {findAllPublished: async () => []}, packages).generateSitemapXml();
+  const sitemap = await new SitemapService(products, {findAllPublished: async () => []}, packages, { sitemapEntries: async () => [] }).generateSitemapXml();
   assert.ok(sitemap.includes('/500%20shobder%20kuraner%2075%25'));
   assert.ok(sitemap.includes('/quraner-shounorjo%2F'));
   const { JSDOM } = apiRequire('jsdom');

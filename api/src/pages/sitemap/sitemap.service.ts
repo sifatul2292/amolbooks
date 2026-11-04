@@ -4,6 +4,7 @@ import { SitemapStream, streamToPromise } from 'sitemap';
 import { ProductService } from '../product/product.service';
 import { BlogService } from '../blog/blog/blog.service';
 import { SpecialPackageService } from '../offers/special-package/special-package.service';
+import { CatalogueSeoService } from './catalogue-seo.service';
 
 const STOREFRONT_ORIGIN = 'https://www.amolbooks.com';
 
@@ -13,6 +14,7 @@ export class SitemapService {
     private readonly productService: ProductService,
     private readonly blogService: BlogService,
     private readonly specialPackageService: SpecialPackageService,
+    private readonly catalogueSeoService: CatalogueSeoService,
   ) {}
 
   async generateSitemapXml(): Promise<string> {
@@ -50,6 +52,18 @@ export class SitemapService {
         img: specialPackage.image
           ? [{ url: specialPackage.image, title: specialPackage.name }]
           : undefined,
+      }),
+    );
+
+    // Author pages and the book lists of publishers and categories that have published books.
+    const catalogue = await this.catalogueSeoService.sitemapEntries();
+    catalogue.forEach((entry) =>
+      smStream.write({
+        url: entry.url,
+        lastmod: entry.lastmod,
+        changefreq: 'weekly',
+        priority: 0.7,
+        img: entry.image ? [{ url: entry.image, title: entry.name }] : undefined,
       }),
     );
 

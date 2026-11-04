@@ -1,7 +1,7 @@
 const ORIGIN = 'https://www.amolbooks.com';
 const SHOP = 'Amolbooks';
 
-function text(value: any): string {
+export function text(value: any): string {
   return String(value || '').replace(/<[^>]*>/g, ' ').replace(/(\*\*|__)(.*?)\1/g, '$2')
     .replace(/&(nbsp|amp|quot|apos|lt|gt);/gi, (_, entity) =>
       ({ nbsp: ' ', amp: '&', quot: '"', apos: "'", lt: '<', gt: '>' })[entity.toLowerCase()])
@@ -10,11 +10,11 @@ function text(value: any): string {
       return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : '';
     }).replace(/\s+/g, ' ').trim();
 }
-function escape(value: any): string {
+export function escape(value: any): string {
   return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
-function summary(value: string): string {
+export function summary(value: string): string {
   if (value.length <= 180) return value;
   const prefix = value.slice(0, 180);
   const sentence = Math.max(prefix.lastIndexOf('।'), prefix.lastIndexOf('. '), prefix.lastIndexOf('! '), prefix.lastIndexOf('? '));

@@ -24,10 +24,18 @@ const products = {
     res.status(slug === '50% / book' ? 200 : 404).send('<html><head><title>Test</title><meta name="robots" content="noindex"></head><body><h1>Test</h1></body></html>');
   },
 };
+const lookups = [];
+const catalogue = {
+  page: async (kind, slug, id) => {
+    lookups.push([kind, slug, id]);
+    if (slug !== 'সন্দীপন প্রকাশন' && slug !== 'আরিফ-আজাদ') return null;
+    return { entity: { name: slug, slug }, books: [{ name: 'Test book', slug: '50% / book' }], total: 1 };
+  },
+};
 class TestModule {}
 NestModule({controllers:[SitemapController], providers:[
   {provide:SitemapService, useValue:{}},
-  {provide:StorefrontDocumentService, useValue:new StorefrontDocumentService(products,{})},
+  {provide:StorefrontDocumentService, useValue:new StorefrontDocumentService(products,{},catalogue)},
 ]})(TestModule);
 async function main() {
   const app = await NestFactory.create(TestModule, {logger:false});
@@ -50,7 +58,17 @@ async function main() {
     const missing = await fetch(base+'/api/storefront-document/product-details/missing');
     assert.equal(missing.status, 404);
     assert.equal(missing.headers.get('cache-control'), 'no-store');
-    console.log('PASS: real Nest prefix/versioning, root route, encoded percent/slash and missing-book HTTP status');
+    const publisher = await fetch(base+'/api/storefront-document/product-list?publisher='+encodeURIComponent('সন্দীপন প্রকাশন')+'&publisherId=abc');
+    assert.equal(publisher.status, 200);
+    assert.deepEqual(lookups.pop(), ['publisher', 'সন্দীপন প্রকাশন', 'abc'], 'The query string reaches the document service');
+    assert.ok((await publisher.text()).includes('rel="canonical" href="https://www.amolbooks.com/product-list?publisher='+encodeURIComponent('সন্দীপন প্রকাশন')+'"'));
+    const author = await fetch(base+'/api/storefront-document/author-list/author-details/'+encodeURIComponent('আরিফ-আজাদ'));
+    assert.equal(author.status, 200);
+    assert.deepEqual(lookups.pop(), ['author', 'আরিফ-আজাদ', undefined]);
+    const unknownAuthor = await fetch(base+'/api/storefront-document/author-list/author-details/nobody');
+    assert.equal(unknownAuthor.status, 404);
+    assert.match(await unknownAuthor.text(), /noindex/);
+    console.log('PASS: real Nest prefix/versioning, root route, encoded percent/slash, missing-book HTTP status, publisher query and author pages');
   } finally { await app.close(); }
 }
 main().catch((error)=>{console.error(error);process.exitCode=1;});

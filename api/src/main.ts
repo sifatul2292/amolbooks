@@ -16,6 +16,7 @@ import multer = require('multer');
 import * as sharp from 'sharp';
 import { RedirectUrlMiddleware } from './middleware/redirect-url.middleware';
 import { storefrontSeoHtml, storefrontSeoRouting } from './middleware/storefront-seo-routing';
+import { StorefrontDocumentService } from './pages/sitemap/storefront-document.service';
 import { STOREFRONT_PRICE_SCRIPT } from './storefront-price-script';
 import { STOREFRONT_SPECIAL_PACKAGE_SCRIPT } from './storefront-special-package-script';
 import { ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT } from './admin-incomplete-order-editor-script';
@@ -920,6 +921,29 @@ ${storefrontPurchaseExternalIdHelper}
     }
   }
 
+  // Author pages have no nginx route of their own: give them the same SEO document as
+  // /api/storefront-document, or the plain storefront when the author is unknown.
+  let storefrontDocuments: StorefrontDocumentService | null = null;
+  function sendAuthorDocument(
+    req: express.Request,
+    res: express.Response,
+    encodedSlug: string
+  ) {
+    const fallback = () => {
+      if (!res.headersSent) sendStorefrontIndex(req, res);
+    };
+    try {
+      const slug = decodeURIComponent(encodedSlug);
+      storefrontDocuments =
+        storefrontDocuments || app.get(StorefrontDocumentService);
+      storefrontDocuments
+        .send(`author-list/author-details/${slug}`, res, {}, fallback)
+        .catch(fallback);
+    } catch (_error) {
+      fallback();
+    }
+  }
+
   installStaticStorefrontPatch();
 
   const httpAdapter = app.getHttpAdapter().getInstance() as express.Express;
@@ -996,6 +1020,8 @@ ${storefrontPurchaseExternalIdHelper}
       ) {
         return next();
       }
+      const author = path.match(/^\/author-list\/author-details\/([^/]+)\/?$/);
+      if (author) return sendAuthorDocument(req, res, author[1]);
       return sendStorefrontIndex(req, res);
     }
   );

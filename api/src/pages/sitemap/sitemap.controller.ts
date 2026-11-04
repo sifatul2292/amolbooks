@@ -14,7 +14,11 @@ export class SitemapController {
   @Version(VERSION_NEUTRAL)
   @Get('storefront-document/*')
   async getStorefrontDocument(@Req() req: Request, @Res() res: Response) {
-    return this.storefrontDocumentService.send(req.params[0] || '', res);
+    return this.storefrontDocumentService.send(
+      req.params[0] || '',
+      res,
+      req.query as Record<string, any>,
+    );
   }
 
   @Version(VERSION_NEUTRAL)
