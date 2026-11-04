@@ -167,6 +167,7 @@ export class OrderService {
   async addOrderAdmin(
     admin,
     addOrderDto: AddOrderDto,
+    staffOrigin?: 'crm',
   ): Promise<ResponsePayload> {
     if (!admin || !admin._id) {
       this.logger.error('Admin data is missing in addOrderAdmin');
@@ -230,7 +231,7 @@ export class OrderService {
       ObjectId.isValid(addOrderDto.incompleteOrderId)
         ? await this.incompleteOrderModel
             .findById(addOrderDto.incompleteOrderId)
-            .select('attribution adminNote adminNoteBy')
+            .select('attribution adminNote adminNoteBy orderedItems')
             .lean()
         : null;
 
@@ -263,6 +264,19 @@ export class OrderService {
         : staffActor && { ...staffActor, at: new Date() };
       if (noteBy) mData.adminNoteBy = noteBy;
     }
+    // Conversion and books added by the call; they score when the parcel is sent.
+    await this.trackStaff(async (staff) => {
+      const credit = staff.newOrderCredit(
+        staffActor,
+        {
+          incompleteOrderId: convertedIncomplete && addOrderDto.incompleteOrderId,
+          incompleteItems: convertedIncomplete?.orderedItems,
+          crm: staffOrigin === 'crm',
+        },
+        mData.orderedItems,
+      );
+      if (credit) mData.staffCredit = credit;
+    });
 
     const newData = new this.orderModel(mData);
 
@@ -349,11 +363,7 @@ export class OrderService {
           saveData.orderId,
         );
         await this.trackStaff((staff) =>
-          staff.incompleteConverted(
-            addOrderDto.incompleteOrderId,
-            saveData,
-            staffActor,
-          ),
+          staff.incompleteConverted(addOrderDto.incompleteOrderId, staffActor),
         );
       } catch (error) {
         this.logger.warn(
@@ -456,6 +466,7 @@ export class OrderService {
     admin: Admin,
     addOrderDto: AddOrderDto,
     manualOrderSource: 'phone' | 'whatsapp' = 'whatsapp',
+    staffOrigin?: 'crm',
   ): Promise<ResponsePayload> {
     if (!admin || !admin._id) {
       throw new BadRequestException('Admin authentication failed');
@@ -539,7 +550,7 @@ export class OrderService {
       orderFrom: this.manualOrderLabel(manualOrderSource),
     } as AddOrderDto;
 
-    return this.addOrderAdmin(admin, manualOrderDto);
+    return this.addOrderAdmin(admin, manualOrderDto, staffOrigin);
   }
 
   async addOrder(
@@ -3061,7 +3072,7 @@ export class OrderService {
   /** Attribution fields are server-owned; never accept them from a request body. */
   private stripStaffStamps<T>(data: T): T {
     if (data && typeof data === 'object') {
-      for (const key of ['adminNoteBy', 'courierSentBy', 'convertedBy']) {
+      for (const key of ['adminNoteBy', 'courierSentBy', 'convertedBy', 'staffCredit']) {
         delete (data as any)[key];
       }
     }
@@ -4008,6 +4019,19 @@ export class OrderService {
     if (!data) {
       throw new NotFoundException('No Data found!');
     }
+    // This route has no admin guard: a note change needs a live admin login, so a
+    // note is never saved without its writer (an expired login would drop the name).
+    const staffActor = await this.staffActor(null, adminToken);
+    if (
+      this.staffActivityService &&
+      !staffActor &&
+      typeof updateOrderDto.adminNote === 'string' &&
+      updateOrderDto.adminNote.trim() !== String(data.adminNote || '').trim()
+    ) {
+      throw new UnauthorizedException(
+        'Login expired. Please log in again to save the note.',
+      );
+    }
     try {
       const updated = await this.orderModel.findOneAndUpdate(
         { _id: id, customerCancelledAt: { $exists: false } },
@@ -4017,7 +4041,6 @@ export class OrderService {
         { strict: false },
       );
       if (!updated) throw new ConflictException('Customer-cancelled orders cannot be reopened');
-      const staffActor = await this.staffActor(null, adminToken);
       await this.trackStaff(async (staff) => {
         if (orderStatus !== undefined) {
           await staff.statusChanged(data, orderStatus, staffActor);
@@ -4026,6 +4049,11 @@ export class OrderService {
           'order',
           data,
           updateOrderDto.adminNote,
+          staffActor,
+        );
+        await staff.itemsChanged(
+          data,
+          (updateOrderDto as any).orderedItems,
           staffActor,
         );
       });
@@ -4109,6 +4137,7 @@ export class OrderService {
         updateData.adminNote,
         staffActor,
       );
+      await staff.itemsChanged(order, updateData.orderedItems, staffActor);
     });
 
     if (

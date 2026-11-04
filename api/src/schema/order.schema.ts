@@ -386,6 +386,12 @@ export const OrderSchema = new mongoose.Schema(
       role: { type: String },
       at: { type: Date },
     },
+    // Staff credit scored when the parcel is sent (staff-activity): who converted the
+    // order (incomplete / crm) and the customer's own book count plus who added more.
+    staffCredit: {
+      type: Schema.Types.Mixed,
+      required: false,
+    },
     user: {
       type: Schema.Types.ObjectId,
       ref: 'User',

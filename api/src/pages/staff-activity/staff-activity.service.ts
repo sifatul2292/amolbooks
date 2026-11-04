@@ -9,25 +9,39 @@ import { Admin } from '../../interfaces/admin/admin.interface';
 // Pending, Processing, Shipping and Courier.
 export const PROCESSING_STATUSES = [0, 1, 3, 4, 8];
 
-// Proposed defaults until the owner saves their own values.
+// The owner's points (2026-11-02) until they save other values. Moves out of
+// Processing are still recorded but no longer score.
 export const DEFAULT_STAFF_POINTS = {
   courierSent: 1,
-  processingMoved: 2,
   incompleteConverted: 10,
+  crmConverted: 5,
+  extraItems: 3,
 };
 const POINT_LABELS = {
   courierSent: 'Parcel sent to courier',
-  processingMoved: 'Moved from Processing',
   incompleteConverted: 'Incomplete order converted',
+  crmConverted: 'Customer Manager order',
+  extraItems: 'Extra book added',
 };
 const ACTION_FIELDS = {
   courier_sent: 'courierSent',
   processing_moved: 'processingMoved',
   incomplete_converted: 'incompleteConverted',
+  crm_converted: 'crmConverted',
+  extra_items: 'extraItems',
 };
 const MANAGER_ROLES = ['super_admin', 'admin'];
 const ACTOR_CACHE_MS = 5 * 60 * 1000;
 const DHAKA_OFFSET_MS = 6 * 60 * 60 * 1000;
+
+/** Books in an order: each line's quantity except free gifts (a package counts once). */
+export function itemCount(items: any): number {
+  return (Array.isArray(items) ? items : []).reduce((sum: number, item: any) => {
+    if (!item || item.isGift === true || item.orderType === 'gift') return sum;
+    const quantity = Math.floor(Number(item.quantity));
+    return sum + (quantity > 0 ? quantity : 0);
+  }, 0);
+}
 
 export interface StaffActor {
   _id: Types.ObjectId;
@@ -88,14 +102,96 @@ export class StaffActivityService {
   }
 
   async courierSent(order: any, courierData: any, actor: StaffActor | null) {
-    if (!actor || !order?._id) return;
-    await this.orderModel.updateOne(
-      { _id: order._id },
-      { $set: { courierSentBy: this.stamp(actor) } },
-    );
-    await this.record('courier_sent', actor, order, {
-      provider: courierData?.providerName,
-    });
+    if (!order?._id) return;
+    if (actor) {
+      await this.orderModel.updateOne(
+        { _id: order._id },
+        { $set: { courierSentBy: this.stamp(actor) } },
+      );
+      await this.record('courier_sent', actor, order, {
+        provider: courierData?.providerName,
+      });
+    }
+    await this.creditOnSend(order._id);
+  }
+
+  /**
+   * Credit stored on a new staff order (Incomplete Orders Send/Add Order, or Customer
+   * Manager's Create order). Nothing scores until the parcel is sent to the courier.
+   */
+  newOrderCredit(
+    actor: StaffActor | null,
+    source: { incompleteOrderId?: any; incompleteItems?: any; crm?: boolean },
+    items: any,
+  ) {
+    if (!actor) return undefined;
+    const credit: any = {};
+    if (source.crm) credit.crm = this.stamp(actor);
+    if (Types.ObjectId.isValid(String(source.incompleteOrderId || ''))) {
+      credit.incomplete = {
+        ...this.stamp(actor),
+        incompleteOrderId: new Types.ObjectId(String(source.incompleteOrderId)),
+      };
+      // The abandoned cart is what the customer chose; more books were the call's doing.
+      const base = itemCount(source.incompleteItems);
+      if (base > 0) {
+        credit.items = { base };
+        if (itemCount(items) > base) credit.items.by = this.stamp(actor);
+      }
+    }
+    return Object.keys(credit).length ? credit : undefined;
+  }
+
+  /**
+   * Staff changed an order's books. The count before the first staff edit is what the
+   * customer chose; whoever raises the count above it gets the extra books.
+   */
+  async itemsChanged(order: any, items: any, actor: StaffActor | null) {
+    if (!order?._id || !Array.isArray(items)) return;
+    const before = itemCount(order.orderedItems);
+    const after = itemCount(items);
+    const known = order.staffCredit?.items?.base;
+    const base = Number.isInteger(known) ? known : before;
+    const set: any = {};
+    if (!Number.isInteger(known)) set['staffCredit.items.base'] = base;
+    if (actor && after > before && after > base) {
+      set['staffCredit.items.by'] = this.stamp(actor);
+    }
+    if (Object.keys(set).length) {
+      await this.orderModel.updateOne({ _id: order._id }, { $set: set });
+    }
+  }
+
+  /** The parcel went out: score the conversion and the books added that this order carries. */
+  private async creditOnSend(orderId: any) {
+    const order: any = await this.orderModel
+      .findById(orderId)
+      .select('orderId orderedItems staffCredit')
+      .lean();
+    const credit = order?.staffCredit;
+    if (!credit) return;
+    const incomplete = credit.incomplete;
+    if (incomplete?._id && incomplete.incompleteOrderId) {
+      // Keyed by the incomplete order: one conversion, however many orders it produced.
+      await this.record(
+        'incomplete_converted',
+        this.actorOf(incomplete),
+        { _id: incomplete.incompleteOrderId, orderId: order.orderId },
+        { creditedOrder: order._id },
+      );
+    }
+    if (credit.crm?._id) {
+      // A Customer Manager order scores as a whole, without extra books on top.
+      await this.record('crm_converted', this.actorOf(credit.crm), order);
+      return;
+    }
+    const base = credit.items?.base;
+    const extra = itemCount(order.orderedItems) - base;
+    if (credit.items?.by?._id && Number.isInteger(base) && extra > 0) {
+      await this.record('extra_items', this.actorOf(credit.items.by), order, {
+        quantity: extra,
+      });
+    }
   }
 
   /** Counts the first staff move of an order out of the Processing tab. */
@@ -136,23 +232,19 @@ export class StaffActivityService {
     );
   }
 
-  /** Incomplete Orders page Send/Add Order turned an abandoned checkout into an order. */
-  async incompleteConverted(
-    incompleteOrderId: any,
-    order: any,
-    actor: StaffActor | null,
-  ) {
+  /**
+   * Incomplete Orders page Send/Add Order turned an abandoned checkout into an order:
+   * the first converter is named on the row; points follow when the parcel is sent.
+   */
+  async incompleteConverted(incompleteOrderId: any, actor: StaffActor | null) {
     if (!actor || !Types.ObjectId.isValid(String(incompleteOrderId))) return;
-    const target = {
-      _id: new Types.ObjectId(String(incompleteOrderId)),
-      orderId: order?.orderId,
-    };
-    if (await this.record('incomplete_converted', actor, target)) {
-      await this.incompleteOrderModel.updateOne(
-        { _id: target._id },
-        { $set: { convertedBy: this.stamp(actor) } },
-      );
-    }
+    await this.incompleteOrderModel.updateOne(
+      {
+        _id: new Types.ObjectId(String(incompleteOrderId)),
+        convertedBy: { $exists: false },
+      },
+      { $set: { convertedBy: this.stamp(actor) } },
+    );
   }
 
   async attribution(ids: any, kind: any) {
@@ -203,7 +295,7 @@ export class StaffActivityService {
         {
           $group: {
             _id: { admin: '$admin', action: '$action' },
-            count: { $sum: 1 },
+            count: { $sum: { $ifNull: ['$quantity', 1] } },
             confirmed: { $sum: { $cond: [{ $eq: ['$toStatus', 2] }, 1, 0] } },
             name: { $last: '$adminName' },
             role: { $last: '$adminRole' },
@@ -227,6 +319,8 @@ export class StaffActivityService {
           processingMoved: 0,
           movedToConfirmed: 0,
           incompleteConverted: 0,
+          crmConverted: 0,
+          extraItems: 0,
           points: 0,
         });
       }
@@ -256,6 +350,8 @@ export class StaffActivityService {
       processingMoved: 0,
       movedToConfirmed: 0,
       incompleteConverted: 0,
+      crmConverted: 0,
+      extraItems: 0,
       points: 0,
     };
     for (const entry of list) {
@@ -351,6 +447,10 @@ export class StaffActivityService {
       if (Number(error?.code) === 11000) return false;
       throw error;
     }
+  }
+
+  private actorOf(stamp: any): StaffActor {
+    return { _id: stamp._id, name: stamp.name, role: stamp.role };
   }
 
   private stamp(actor: StaffActor) {

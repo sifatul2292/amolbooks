@@ -4,6 +4,8 @@ export const STAFF_ACTIONS = [
   'courier_sent',
   'processing_moved',
   'incomplete_converted',
+  'crm_converted',
+  'extra_items',
 ];
 
 // One scored action per order (or incomplete order). Retries, double clicks and
@@ -20,6 +22,10 @@ export const StaffActivitySchema = new Schema(
     fromStatus: { type: Number },
     toStatus: { type: Number },
     provider: { type: String },
+    // extra_items: books staff added beyond what the customer chose.
+    quantity: { type: Number },
+    // incomplete_converted: the order whose parcel scored the conversion.
+    creditedOrder: { type: Schema.Types.ObjectId },
   },
   { versionKey: false, timestamps: { createdAt: true, updatedAt: false } },
 );
@@ -32,6 +38,8 @@ export const StaffPointsSchema = new Schema(
     courierSent: { type: Number },
     processingMoved: { type: Number },
     incompleteConverted: { type: Number },
+    crmConverted: { type: Number },
+    extraItems: { type: Number },
     updatedBy: { type: Schema.Types.ObjectId, ref: 'Admin' },
     updatedByName: { type: String },
   },

@@ -223,20 +223,28 @@ const waitFor = async (check, label, ms = 3000) => {
   assert.equal(nameOf((await get(Order, E)).adminNoteBy), 'Karim Admin', 'Saving an unchanged note keeps its author');
   await note('Evening delivery, call first', token(sumi));
   assert.equal(nameOf((await get(Order, E)).adminNoteBy), 'Sumi Sales');
-  await note('Changed without a token');
+  // A note change without a live admin login is refused; the saved note and its writer stay.
+  const refused = async (text, who, why) => {
+    await assert.rejects(note(text, who), (error) => error?.getStatus?.() === 401, why);
+    order = await get(Order, E);
+    assert.equal(order.adminNote, 'Evening delivery, call first', why);
+    assert.equal(nameOf(order.adminNoteBy), 'Sumi Sales', why);
+  };
+  await refused('Changed without a token', undefined, 'No login');
+  await refused('Wrong secret', jwt.sign(karim, 'not-the-secret'), 'Wrong secret');
+  await refused('Expired', token({ ...karim, exp: Math.floor(Date.now() / 1000) - 60 }, {}), 'Expired login');
+  await refused('', undefined, 'Clearing a note also needs a login');
+  await note('Evening delivery, call first ');
+  await orderService.updateOrderById(String(E._id), { paymentStatus: 'unpaid', courierSentBy: { name: 'Forged' } });
   order = await get(Order, E);
-  assert.equal(order.adminNote, 'Changed without a token');
-  assert.equal(order.adminNoteBy, undefined, 'An unattributed change clears the old author');
-  await note('Wrong secret', jwt.sign(karim, 'not-the-secret'));
-  assert.equal((await get(Order, E)).adminNoteBy, undefined);
-  await note('Expired', token({ ...karim, exp: Math.floor(Date.now() / 1000) - 60 }, {}));
-  assert.equal((await get(Order, E)).adminNoteBy, undefined);
+  assert.equal(order.paymentStatus, 'unpaid', 'Updates that leave the note alone need no login');
+  assert.equal(nameOf(order.adminNoteBy), 'Sumi Sales');
   await note('Written by Karim', token(karim));
   await note('', token(karim));
   assert.equal((await get(Order, E)).adminNoteBy, undefined, 'A cleared note has no author');
-  await orderService.updateOrderById(String(E._id), { adminNote: 'Forged', adminNoteBy: { name: 'Forged' }, courierSentBy: { name: 'Forged' } });
+  await orderService.updateOrderById(String(E._id), { adminNote: 'Forged', adminNoteBy: { name: 'Forged' }, courierSentBy: { name: 'Forged' } }, token(rahim));
   order = await get(Order, E);
-  assert.equal(order.adminNoteBy, undefined);
+  assert.equal(nameOf(order.adminNoteBy), 'Rahim Sales');
   assert.equal(order.courierSentBy, undefined, 'Request bodies cannot set attribution');
   const F = await seed();
   await orderService.updateOrderById(String(F._id), { orderStatus: 2 }, token(rahim));
@@ -276,12 +284,12 @@ const waitFor = async (check, label, ms = 3000) => {
     });
     return id;
   };
-  const payload = (incompleteOrderId, adminNote) => ({
+  const payload = (incompleteOrderId, adminNote, quantity = 1) => ({
     ...(incompleteOrderId ? { incompleteOrderId: String(incompleteOrderId) } : {}),
     name: 'Test customer — not a real order', phoneNo: '01800000000', shippingAddress: 'Test address',
     paymentType: 'cash_on_delivery', paymentStatus: 'unpaid', orderStatus: 1, subTotal: 300, discount: 50,
     deliveryCharge: 60, grandTotal: 310, adminNote, manualOrderSource: 'phone', orderFrom: 'Phone',
-    orderedItems: [{ _id: String(productId), name: 'পরীক্ষার বই — প্রকৃত অর্ডার নয়', quantity: 1, regularPrice: 300, salePrice: 250, unitPrice: 250 }],
+    orderedItems: [{ _id: String(productId), name: 'পরীক্ষার বই — প্রকৃত অর্ডার নয়', quantity, regularPrice: 300, salePrice: 250, unitPrice: 250 }],
   });
   const J = await incomplete('Asked to call after 5pm');
   await orderService.updateIncompleteOrderByAdmin(String(J), { adminNote: 'Call after 6pm' }, rahim);
@@ -292,7 +300,15 @@ const waitFor = async (check, label, ms = 3000) => {
   assert.equal(nameOf(convertedJ.convertedBy), 'Sumi Sales');
   order = await get(Order, created._id);
   assert.equal(nameOf(order.adminNoteBy), 'Rahim Sales', 'A carried-over note keeps its author');
+  assert.equal(nameOf(order.staffCredit.incomplete), 'Sumi Sales');
+  assert.equal(String(order.staffCredit.incomplete.incompleteOrderId), String(J));
+  assert.deepEqual(order.staffCredit.items, { base: 1 }, 'Same books as the cart: nothing extra');
+  assert.equal((await activities({ action: 'incomplete_converted', target: J })).length, 0, 'A conversion scores only when its parcel is sent');
   await orderService.sendToCourier(String(created._id), sumi);
+  const conversion = (await activities({ action: 'incomplete_converted', target: J }))[0];
+  assert.equal(conversion.adminName, 'Sumi Sales');
+  assert.equal(String(conversion.creditedOrder), String(created._id));
+  assert.equal((await activities({ action: 'extra_items', target: created._id })).length, 0);
   const again = (await orderService.addOrderAdmin(karim, payload(J, 'Call after 6pm'))).data;
   await waitFor(async () => (await get(Incomplete, J)).orderId === again.orderId, 'second conversion bookkeeping');
   await new Promise((resolve) => setTimeout(resolve, 150));
@@ -308,6 +324,76 @@ const waitFor = async (check, label, ms = 3000) => {
   order = await get(Order, forged._id);
   assert.equal(order.courierSentBy, undefined);
   assert.equal(order.adminNoteBy, undefined);
+
+  // 7b. Extra books: counted against what the customer chose, for whoever added them, when sent.
+  const K = await incomplete('');
+  const fromK = (await orderService.addOrderAdmin(rahim, payload(K, '', 3))).data;
+  order = await get(Order, fromK._id);
+  assert.equal(order.staffCredit.items.base, 1);
+  assert.equal(nameOf(order.staffCredit.items.by), 'Rahim Sales', 'The converter added two books on the call');
+  assert.equal((await activities({ target: fromK._id })).length, 0, 'Nothing scores before the parcel is sent');
+  await orderService.sendToCourier(String(fromK._id), karim);
+  const extraK = (await activities({ action: 'extra_items', target: fromK._id }))[0];
+  assert.equal(extraK.adminName, 'Rahim Sales', 'Extra books go to the caller, not the sender');
+  assert.equal(extraK.quantity, 2);
+  assert.equal((await activities({ action: 'courier_sent', target: fromK._id }))[0].adminName, 'Karim Admin');
+  assert.equal((await activities({ action: 'incomplete_converted', target: K }))[0].adminName, 'Rahim Sales');
+  const items = (quantity, extra = []) => [{ _id: String(productId), name: 'পরীক্ষার বই — প্রকৃত অর্ডার নয়', quantity, regularPrice: 300, salePrice: 250, unitPrice: 250 }, ...extra];
+  const gift = { _id: String(new mongoose.Types.ObjectId()), name: 'উপহার নোটবুক', quantity: 1, regularPrice: 0, salePrice: 0, unitPrice: 0, orderType: 'gift', isGift: true };
+  const W = await seed();
+  await orderService.updateOrderByAdmin(String(W._id), { adminNote: 'Will call' }, karim);
+  await orderService.updateOrderByAdmin(String(W._id), { orderedItems: items(2, [gift]) }, sumi);
+  await orderService.updateOrderByAdmin(String(W._id), { adminNote: 'Called, added one' }, karim);
+  order = await get(Order, W);
+  assert.equal(order.staffCredit.items.base, 1, 'The website order as placed is the customer\'s choice');
+  assert.equal(nameOf(order.staffCredit.items.by), 'Sumi Sales');
+  await orderService.sendToCourier(String(W._id), karim);
+  assert.equal((await activities({ action: 'extra_items', target: W._id }))[0].quantity, 1, 'A free gift is not an extra book');
+  assert.equal((await activities({ action: 'extra_items', target: W._id }))[0].adminName, 'Sumi Sales');
+  const X = await seed();
+  await orderService.updateOrderByAdmin(String(X._id), { orderedItems: items(3) }, rahim);
+  await orderService.updateOrderByAdmin(String(X._id), { orderedItems: items(1) }, karim);
+  await orderService.sendToCourier(String(X._id), karim);
+  assert.equal((await activities({ action: 'extra_items', target: X._id })).length, 0, 'Books added and removed again do not count');
+  const X2 = await seed({ orderedItems: [{ _id: productId, name: 'পরীক্ষার বই — প্রকৃত অর্ডার নয়', quantity: 2, regularPrice: 300, salePrice: 250 }] });
+  await orderService.updateOrderByAdmin(String(X2._id), { orderedItems: items(1) }, karim);
+  await orderService.updateOrderByAdmin(String(X2._id), { orderedItems: items(2) }, rahim);
+  await orderService.sendToCourier(String(X2._id), karim);
+  assert.equal((await activities({ action: 'extra_items', target: X2._id })).length, 0, 'Putting back a book the customer chose is not extra');
+  const Y = await seed();
+  await orderService.updateOrderById(String(Y._id), { orderedItems: items(4) }, token(rahim));
+  await orderService.updateOrderById(String(Y._id), { staffCredit: { items: { base: 0, by: { _id: sumi._id, name: 'Forged' } } } });
+  order = await get(Order, Y);
+  assert.equal(nameOf(order.staffCredit.items.by), 'Rahim Sales', 'Request bodies cannot set the credit');
+  assert.equal(order.staffCredit.items.base, 1);
+  assert.equal((await activities({ target: Y._id })).length, 0, 'An order that is never sent (e.g. cancelled) never scores');
+  const Y2 = await seed();
+  await orderService.updateOrderById(String(Y2._id), { orderedItems: items(3) });
+  await orderService.sendToCourier(String(Y2._id), karim);
+  assert.equal((await activities({ action: 'extra_items', target: Y2._id })).length, 0, 'No staff identity, no extra-book credit');
+  await orderService.updateOrderById(String(Y._id), { orderedItems: items(5) }, token(sumi));
+  await orderService.sendToCourier(String(Y._id), karim);
+  const extraY = (await activities({ action: 'extra_items', target: Y._id }))[0];
+  assert.deepEqual([extraY.adminName, extraY.quantity], ['Sumi Sales', 4], 'The last staff member to add books gets them');
+
+  // 7c. Customer Manager "Create order": 5 points when the parcel is sent, no extra books on top.
+  const crmOrder = (await orderService.addAiAssistOrderAdmin(rahim, {
+    name: 'Test customer — not a real order', phoneNo: '01900000000', shippingAddress: 'Test address', paymentType: 'cash_on_delivery',
+    paymentStatus: 'unpaid', deliveryCharge: 60, manualOrderRequestId: 'crm-' + crypto.randomBytes(10).toString('hex'),
+    cartData: [{ product: String(productId), selectedQty: 2 }],
+  }, 'phone', 'crm')).data;
+  order = await get(Order, crmOrder._id);
+  assert.equal(nameOf(order.staffCredit.crm), 'Rahim Sales');
+  await orderService.updateOrderByAdmin(String(crmOrder._id), { orderedItems: items(4) }, sumi);
+  assert.equal((await activities({ target: crmOrder._id })).length, 0);
+  await orderService.sendToCourier(String(crmOrder._id), sumi);
+  assert.deepEqual((await activities({ target: crmOrder._id, action: { $ne: 'processing_moved' } })).map((a) => [a.action, a.adminName]).sort(), [['courier_sent', 'Sumi Sales'], ['crm_converted', 'Rahim Sales']]);
+  assert.equal((await activities({ action: 'extra_items', target: crmOrder._id })).length, 0, 'No extra books on top of a Customer Manager order');
+  const aiOrder = (await orderService.addAiAssistOrderAdmin(sumi, {
+    name: 'Test customer — not a real order', phoneNo: '01900000001', shippingAddress: 'Test address', paymentType: 'cash_on_delivery',
+    paymentStatus: 'unpaid', deliveryCharge: 60, cartData: [{ product: String(productId), selectedQty: 1 }],
+  })).data;
+  assert.equal((await get(Order, aiOrder._id)).staffCredit, undefined, 'Other staff-entered orders are not Customer Manager orders');
 
   // 8. Row labels for the order page.
   let attribution = (await staff.attribution([String(A._id), String(created._id), String(I._id), 'not-an-id'], 'order')).data;
@@ -331,16 +417,19 @@ const waitFor = async (check, label, ms = 3000) => {
   assert.equal(report.scope, 'all');
   assert.equal(report.canEditPoints, true);
   assert.equal(report.pointsAreDefault, true);
-  assert.deepEqual(report.points, { courierSent: 1, processingMoved: 2, incompleteConverted: 10 });
-  const pick = (r) => r.rows.map((x) => [x.name, x.courierSent, x.processingMoved, x.movedToConfirmed, x.incompleteConverted, x.points]);
+  assert.deepEqual(report.points, { courierSent: 1, incompleteConverted: 10, crmConverted: 5, extraItems: 3 });
+  const pick = (r) => r.rows.map((x) => [x.name, x.courierSent, x.incompleteConverted, x.crmConverted, x.extraItems, x.points]);
+  // Parcels, conversions (scored at send), Customer Manager orders, extra books; moves no longer score.
   assert.deepEqual(pick(report), [
-    ['Sumi Sales', 1, 3, 2, 1, 17],
-    ['Rahim Sales', 1, 2, 2, 1, 15],
-    ['Owner Hasan', 1, 2, 0, 0, 5],
-    ['Karim Admin', 0, 2, 1, 0, 4],
-    ['editor-only', 0, 1, 1, 0, 2],
+    ['Sumi Sales', 2, 1, 0, 5, 27],
+    ['Rahim Sales', 1, 1, 1, 2, 22],
+    ['Karim Admin', 6, 0, 0, 0, 6],
+    ['Owner Hasan', 1, 0, 0, 0, 1],
+    ['editor-only', 0, 0, 0, 0, 0],
   ]);
-  assert.deepEqual(report.totals, { courierSent: 3, processingMoved: 10, movedToConfirmed: 6, incompleteConverted: 2, points: 43 });
+  const { courierSent, incompleteConverted, crmConverted, extraItems, points } = report.totals;
+  assert.deepEqual({ courierSent, incompleteConverted, crmConverted, extraItems, points }, { courierSent: 10, incompleteConverted: 2, crmConverted: 1, extraItems: 7, points: 56 });
+  assert.ok(report.rows.find((r) => r.name === 'Karim Admin').processingMoved > 0, 'Moves are still recorded');
   assert.equal(report.rows.some((r) => r.name === 'Old Staff'), false, 'Disabled accounts without activity are hidden');
   const fortyDaysAgo = new Date(Date.now() + 6 * 3600000 - 45 * 86400000).toISOString().slice(0, 10);
   report = (await staff.performance({ from: fortyDaysAgo, to: today }, owner)).data;
@@ -348,18 +437,20 @@ const waitFor = async (check, label, ms = 3000) => {
   report = (await staff.performance({ from: today, to: today }, rahim)).data;
   assert.equal(report.scope, 'self');
   assert.equal(report.canEditPoints, false);
-  assert.deepEqual(pick(report), [['Rahim Sales', 1, 2, 2, 1, 15]], 'Sales staff see only their own score');
+  assert.deepEqual(pick(report), [['Rahim Sales', 1, 1, 1, 2, 22]], 'Sales staff see only their own score');
   for (const bad of [{ from: '2026-02-30' }, { from: '2026-13-01' }, { from: 'today' }, { from: today, to: '2020-01-01' }, { from: '2024-01-01', to: today }]) {
     await assert.rejects(staff.performance(bad, owner), (error) => error.status === 400, JSON.stringify(bad));
   }
-  for (const bad of [{ courierSent: -1, processingMoved: 1, incompleteConverted: 1 }, { courierSent: 1.5, processingMoved: 1, incompleteConverted: 1 }, { courierSent: '5', processingMoved: 1, incompleteConverted: 1 }, { courierSent: 1, processingMoved: 1 }, { courierSent: 1, processingMoved: 1, incompleteConverted: 1001 }]) {
+  const valid = { courierSent: 1, incompleteConverted: 1, crmConverted: 1, extraItems: 1 };
+  for (const bad of [{ ...valid, courierSent: -1 }, { ...valid, extraItems: 1.5 }, { ...valid, crmConverted: '5' }, { courierSent: 1, incompleteConverted: 1, crmConverted: 1 }, { ...valid, incompleteConverted: 1001 }]) {
     await assert.rejects(staff.savePoints(bad, owner), (error) => error.status === 400, JSON.stringify(bad));
   }
-  await staff.savePoints({ courierSent: 3, processingMoved: 1, incompleteConverted: 20 }, owner);
+  await staff.savePoints({ courierSent: 3, incompleteConverted: 20, crmConverted: 1, extraItems: 2, processingMoved: 50 }, owner);
   report = (await staff.performance({}, owner)).data;
   assert.equal(report.pointsAreDefault, false);
   assert.equal(report.pointsUpdatedBy, 'Owner Hasan');
-  assert.deepEqual(report.rows.slice(0, 2).map((r) => [r.name, r.points]), [['Sumi Sales', 26], ['Rahim Sales', 25]], 'New points recalculate the period');
+  assert.deepEqual(report.rows.slice(0, 2).map((r) => [r.name, r.points]), [['Sumi Sales', 36], ['Rahim Sales', 28]], 'New points recalculate the period');
+  assert.equal(report.points.processingMoved, undefined, 'Moves cannot be given points again');
 
   // 10. HTTP: guards, controller wiring and page injection.
   assert.equal((await call('POST', '/api/staff-activity/attribution', null, { ids: [] })).status, 401);
@@ -371,14 +462,18 @@ const waitFor = async (check, label, ms = 3000) => {
   response = await call('GET', '/api/staff-activity/performance?from=' + today + '&to=' + today, sumi);
   assert.equal(response.status, 200);
   assert.deepEqual(response.body.data.rows.map((r) => r.name), ['Sumi Sales']);
-  assert.equal((await call('PUT', '/api/staff-activity/points', sumi, { courierSent: 99, processingMoved: 99, incompleteConverted: 99 })).status, 401, 'Sales staff cannot change points');
-  assert.equal((await call('PUT', '/api/staff-activity/points', editor, { courierSent: 99, processingMoved: 99, incompleteConverted: 99 })).status, 401);
-  response = await call('PUT', '/api/staff-activity/points', karim, { courierSent: 1, processingMoved: 2, incompleteConverted: 10 });
+  assert.equal((await call('PUT', '/api/staff-activity/points', sumi, { courierSent: 99, incompleteConverted: 99, crmConverted: 99, extraItems: 99 })).status, 401, 'Sales staff cannot change points');
+  assert.equal((await call('PUT', '/api/staff-activity/points', editor, { courierSent: 99, incompleteConverted: 99, crmConverted: 99, extraItems: 99 })).status, 401);
+  response = await call('PUT', '/api/staff-activity/points', karim, { courierSent: 1, incompleteConverted: 10, crmConverted: 5, extraItems: 3 });
   assert.equal(response.status, 200);
   assert.equal(response.body.data.updatedByName, 'Karim Admin');
   const P = await seed();
   assert.equal((await call('PUT', '/api/order/update/' + P._id, karim, { adminNote: 'Through HTTP' })).status, 200);
   assert.equal(nameOf((await get(Order, P)).adminNoteBy), 'Karim Admin', 'The unguarded update route reads the administrator header');
+  response = await call('PUT', '/api/order/update/' + P._id, null, { adminNote: 'No login' });
+  assert.equal(response.status, 401, 'A note change without a login is refused over HTTP');
+  assert.match(response.body.message, /Login expired/);
+  assert.equal((await get(Order, P)).adminNote, 'Through HTTP');
   assert.equal((await call('POST', '/api/order/send-to-courier/' + P._id, sumi)).status, 201);
   assert.equal(nameOf((await get(Order, P)).courierSentBy), 'Sumi Sales');
   const Q = await seed();
@@ -389,6 +484,7 @@ const waitFor = async (check, label, ms = 3000) => {
   assert.equal(nameOf((await get(Incomplete, R)).adminNoteBy), 'Karim Admin');
   const ordersPage = (await call('GET', '/upload/static/custom-orders.html', null, null, true)).body;
   assert.equal(ordersPage.split('id="navStaffPerformance"').length, 2, 'One Staff Performance link');
+  assert.match(ordersPage, /window\.editAdminNote[^]*r\.status === 401[^]*Log in again, then press Save on the note[^]*!d\.ok/, 'A refused note save asks for a login, not "Note saved"');
   assert.match(ordersPage, /id="navCustomerManager"[^]*id="navStaffPerformance"/);
   assert.equal(ordersPage.split('id="ab-staff-attribution"').length, 2);
   assert.ok(ordersPage.indexOf('id="ab-staff-attribution"') > ordersPage.indexOf("var isIncompleteView"), 'Labels load after the page script');
@@ -424,7 +520,7 @@ const waitFor = async (check, label, ms = 3000) => {
   }
 
   await Points.deleteMany({});
-  console.log('Staff activity: Steadfast sender, status moves, note authors, incomplete conversions, once-only points, date ranges, role scopes, points settings, HTTP guards, order-page injection and one shared sidebar on every admin page pass');
+  console.log('Staff activity: Steadfast sender, status moves, note authors, incomplete conversions and Customer Manager orders scored at send, extra books, once-only points, date ranges, role scopes, points settings, HTTP guards, order-page injection and one shared sidebar on every admin page pass');
 
   if (serve) {
     console.log('\nSandbox (throwaway local DB) at http://localhost:3000/upload/static/custom-orders.html');

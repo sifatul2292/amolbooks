@@ -791,7 +791,12 @@ export class CustomerManagerService implements OnApplicationBootstrap {
       })),
     } as unknown as AddOrderDto;
     // Shared catalog pricing, order numbering, idempotency and bookkeeping.
-    return this.orderService.addAiAssistOrderAdmin(admin, payload, body.source);
+    return this.orderService.addAiAssistOrderAdmin(
+      admin,
+      payload,
+      body.source,
+      'crm',
+    );
   }
 
   async save(rawPhone: string, body: any, admin: any) {

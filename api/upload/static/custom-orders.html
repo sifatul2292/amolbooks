@@ -4101,16 +4101,23 @@
         method: 'PUT', headers: authHeaders(),
         body: JSON.stringify({ adminNote: val }),
       })
-      .then(function (r) { return r.json(); })
-      .then(function (resp) {
-        if (resp && resp.success === false) { showToast(resp.message || 'Failed to save note', 'error'); saveBtn.disabled = false; saveBtn.textContent = 'Save'; return; }
+      .then(function (r) {
+        // Expired login: the note box stays open, so Save works again after signing in.
+        if (r.status === 401 || r.status === 403) {
+          clearToken(); showLogin('Session expired. Log in again, then press Save on the note.'); throw new Error('auth');
+        }
+        return r.json().then(function (resp) { return { ok: r.ok, resp: resp }; });
+      })
+      .then(function (d) {
+        var resp = d.resp;
+        if (!d.ok || (resp && resp.success === false)) { showToast((resp && resp.message) || 'Failed to save note', 'error'); saveBtn.disabled = false; saveBtn.textContent = 'Save'; return; }
         if (order) order.adminNote = val;
         cell.innerHTML = val
           ? '<span class="admin-note-text" onclick="editAdminNote(\'' + mongoId + '\',this)">' + esc(val) + '</span>'
           : '<button class="btn-add-note" onclick="editAdminNote(\'' + mongoId + '\',this)">+ Add</button>';
         showToast('Note saved', 'success');
       })
-      .catch(function (err) { showToast('Error: ' + err.message, 'error'); saveBtn.disabled = false; saveBtn.textContent = 'Save'; });
+      .catch(function (err) { if (err.message !== 'auth') showToast('Error: ' + err.message, 'error'); saveBtn.disabled = false; saveBtn.textContent = 'Save'; });
     };
     cancelBtn.onclick = function () {
       var cur = (order && order.adminNote) || '';

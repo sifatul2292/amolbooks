@@ -126,7 +126,7 @@
       }
       .stats {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(5, minmax(0, 1fr));
         gap: 12px;
         margin-bottom: 18px;
       }
@@ -256,7 +256,7 @@
       }
       .points-form {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
         gap: 12px;
         align-items: end;
         margin-top: 16px;
@@ -314,11 +314,12 @@
         width: 100%;
       }
       @media (max-width: 1100px) {
-        .filters {
+        .filters,
+        .points-form {
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
         .stats {
-          grid-template-columns: repeat(2, 1fr);
+          grid-template-columns: repeat(3, minmax(0, 1fr));
         }
       }
       @media (max-width: 900px) {
@@ -344,6 +345,9 @@
           grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 10px;
         }
+        .stats .stat:last-child {
+          grid-column: 1 / -1;
+        }
         .stat {
           padding: 14px;
         }
@@ -361,8 +365,8 @@
           <div>
             <h1>Staff Performance</h1>
             <p class="muted" id="subtitle">
-              Points for parcels sent, Processing orders moved on and incomplete
-              orders recovered
+              Points for parcels sent, orders won by phone and extra books
+              added
             </p>
           </div>
           <div class="heading-actions">
@@ -404,12 +408,16 @@
             <div><small>Parcels sent to courier</small><strong id="total-courierSent">—</strong></div>
           </div>
           <div class="card stat">
-            <span class="stat-icon">➜</span>
-            <div><small>Moved from Processing</small><strong id="total-processingMoved">—</strong></div>
-          </div>
-          <div class="card stat">
             <span class="stat-icon">↺</span>
             <div><small>Incomplete orders converted</small><strong id="total-incompleteConverted">—</strong></div>
+          </div>
+          <div class="card stat">
+            <span class="stat-icon">☎</span>
+            <div><small>Customer Manager orders</small><strong id="total-crmConverted">—</strong></div>
+          </div>
+          <div class="card stat">
+            <span class="stat-icon">＋</span>
+            <div><small>Extra books added</small><strong id="total-extraItems">—</strong></div>
           </div>
           <div class="card stat">
             <span class="stat-icon">★</span>
@@ -432,13 +440,14 @@
                   <th>#</th>
                   <th>Staff</th>
                   <th class="num">Parcels sent</th>
-                  <th class="num">Moved from Processing</th>
                   <th class="num">Incomplete converted</th>
+                  <th class="num">Customer Manager orders</th>
+                  <th class="num">Extra books</th>
                   <th class="num">Points</th>
                 </tr>
               </thead>
               <tbody id="rows">
-                <tr><td colspan="6" class="empty">Loading…</td></tr>
+                <tr><td colspan="7" class="empty">Loading…</td></tr>
               </tbody>
               <tfoot id="foot"></tfoot>
             </table>
@@ -448,29 +457,30 @@
         <section class="card" id="points-card">
           <h2>Points per action</h2>
           <p class="muted" id="points-summary" style="margin-top: 6px">—</p>
-          <div class="notice" id="points-default" hidden>
-            These are proposed starting values and have not been confirmed yet.
-          </div>
           <form class="points-form" id="points-form" hidden>
             <div>
               <label for="p-courierSent">Parcel sent to courier</label
               ><input id="p-courierSent" type="number" min="0" max="1000" step="1" required />
             </div>
             <div>
-              <label for="p-processingMoved">Order moved from Processing</label
-              ><input id="p-processingMoved" type="number" min="0" max="1000" step="1" required />
-            </div>
-            <div>
               <label for="p-incompleteConverted">Incomplete order converted</label
               ><input id="p-incompleteConverted" type="number" min="0" max="1000" step="1" required />
+            </div>
+            <div>
+              <label for="p-crmConverted">Customer Manager order</label
+              ><input id="p-crmConverted" type="number" min="0" max="1000" step="1" required />
+            </div>
+            <div>
+              <label for="p-extraItems">Each extra book added</label
+              ><input id="p-extraItems" type="number" min="0" max="1000" step="1" required />
             </div>
             <button class="primary" id="save-points">Save points</button>
           </form>
           <p class="status" id="points-status" role="status"></p>
           <ul class="rules">
             <li>Each order counts once per action, for the staff member who did it first. Re-sending, double clicks or switching a status back and forth never add points.</li>
-            <li>“Moved from Processing” means an order left the Processing tab (Pending, Processing, Shipping, Courier) to Confirmed, Completed, Cancelled, Returned, Refunded or Trash. Sending a parcel from Processing also moves the order to Confirmed.</li>
-            <li>“Incomplete converted” is the Incomplete Orders page’s Send / Add Order action.</li>
+            <li>“Incomplete converted” is the Incomplete Orders page’s Send / Add Order; “Customer Manager order” is Create order in a customer’s popup. Both count when that order’s parcel is sent to the courier, so cancelled orders never score.</li>
+            <li>“Extra books” are the books in the parcel beyond what the customer chose: the abandoned cart for an incomplete order, or the order before the first staff edit for any other order. They go to the staff member who added them, when the parcel is sent. Free gifts do not count and a package counts as one; Customer Manager orders score as a whole, without extra books.</li>
             <li>Changing the points recalculates every period. Actions are recorded from the day this feature went live.</li>
           </ul>
         </section>
@@ -509,7 +519,7 @@
           accountant: 'Accountant',
           Collector: 'Collector',
         };
-        const POINT_KEYS = ['courierSent', 'processingMoved', 'incompleteConverted'];
+        const POINT_KEYS = ['courierSent', 'incompleteConverted', 'crmConverted', 'extraItems'];
         const roleLabel = (role) => ROLE_LABELS[role] || role || 'Staff';
         const num = (v) => Number(v || 0).toLocaleString('en-US');
         let data = null;
@@ -581,7 +591,7 @@
           const role = $('role').value;
           const me = String(tokenPayload()._id || '');
           const rows = data.rows.filter((r) => !role || r.role === role);
-          const totals = { courierSent: 0, processingMoved: 0, movedToConfirmed: 0, incompleteConverted: 0, points: 0 };
+          const totals = { courierSent: 0, incompleteConverted: 0, crmConverted: 0, extraItems: 0, points: 0 };
           rows.forEach((r) => Object.keys(totals).forEach((k) => (totals[k] += r[k])));
           Object.keys(totals).forEach((k) => {
             if ($('total-' + k)) $('total-' + k).textContent = num(totals[k]);
@@ -597,26 +607,26 @@
                     '<td><div class="staff-name">' + esc(r.name) + (r.adminId === me ? ' <small style="display:inline">(you)</small>' : '') +
                     '</div><span class="badge">' + esc(roleLabel(r.role)) + '</span></td>' +
                     '<td class="num">' + num(r.courierSent) + '</td>' +
-                    '<td class="num">' + num(r.processingMoved) +
-                    (r.processingMoved ? '<small>' + num(r.movedToConfirmed) + ' confirmed</small>' : '') + '</td>' +
                     '<td class="num">' + num(r.incompleteConverted) + '</td>' +
+                    '<td class="num">' + num(r.crmConverted) + '</td>' +
+                    '<td class="num">' + num(r.extraItems) + '</td>' +
                     '<td class="num"><span class="points">' + num(r.points) + '</span></td></tr>'
                 )
                 .join('')
-            : '<tr><td colspan="6" class="empty">No staff activity in this period.</td></tr>';
+            : '<tr><td colspan="7" class="empty">No staff activity in this period.</td></tr>';
           $('foot').innerHTML =
             rows.length > 1
               ? '<tr><td></td><td>Total</td><td class="num">' + num(totals.courierSent) +
-                '</td><td class="num">' + num(totals.processingMoved) +
                 '</td><td class="num">' + num(totals.incompleteConverted) +
+                '</td><td class="num">' + num(totals.crmConverted) +
+                '</td><td class="num">' + num(totals.extraItems) +
                 '</td><td class="num">' + num(totals.points) + '</td></tr>'
               : '';
           const p = data.points;
           $('points-summary').textContent =
-            p.courierSent + ' per parcel sent · ' + p.processingMoved + ' per order moved from Processing · ' +
-            p.incompleteConverted + ' per incomplete order converted' +
+            p.courierSent + ' per parcel sent · ' + p.incompleteConverted + ' per incomplete order converted · ' +
+            p.crmConverted + ' per Customer Manager order · ' + p.extraItems + ' per extra book added' +
             (data.pointsUpdatedBy ? ' (last changed by ' + data.pointsUpdatedBy + ')' : '');
-          $('points-default').hidden = !data.pointsAreDefault;
           $('points-form').hidden = !data.canEditPoints;
           if (data.canEditPoints && !$('points-form').contains(document.activeElement)) {
             POINT_KEYS.forEach((k) => ($('p-' + k).value = p[k]));
@@ -656,7 +666,7 @@
               $('login').hidden = false;
               $('login-status').textContent = 'Please sign in again.';
             }
-            $('rows').innerHTML = '<tr><td colspan="6" class="empty">' + esc(error.message) + '</td></tr>';
+            $('rows').innerHTML = '<tr><td colspan="7" class="empty">' + esc(error.message) + '</td></tr>';
             $('foot').innerHTML = '';
           } finally {
             if (loading === id) $('apply').disabled = false;
@@ -679,7 +689,7 @@
         $('filters').onsubmit = (event) => {
           event.preventDefault();
           if ($('from').value > $('to').value) {
-            $('rows').innerHTML = '<tr><td colspan="6" class="empty">“From” must be on or before “To”.</td></tr>';
+            $('rows').innerHTML = '<tr><td colspan="7" class="empty">“From” must be on or before “To”.</td></tr>';
             return;
           }
           load();
@@ -707,7 +717,7 @@
         $('logout').onclick = () => {
           localStorage.removeItem('co_admin_token');
           data = null;
-          $('rows').innerHTML = '<tr><td colspan="6" class="empty">Sign in to view staff performance.</td></tr>';
+          $('rows').innerHTML = '<tr><td colspan="7" class="empty">Sign in to view staff performance.</td></tr>';
           $('foot').innerHTML = '';
           $('login').hidden = false;
         };
