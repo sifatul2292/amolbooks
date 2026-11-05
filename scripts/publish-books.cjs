@@ -1,7 +1,8 @@
 // Publishes the books scripts/import-books.cjs added as drafts from data/new-books/<set>/books.json,
 // once the owner has reviewed them. Only a draft whose name matches its book in books.json changes;
 // anything already published, hidden or not found is reported and left alone. A book without a
-// cover stays a draft unless --include-no-cover is given.
+// cover stays a draft unless --include-no-cover is given. With --with-sample, only books that have
+// sample pages ("একটু পড়ে দেখুন" PDF) are published; the rest stay drafts.
 // --facebook-catalog also switches on "Facebook Catalog" for the set's published books (including
 // the ones published in the same run), which puts them in the Meta feed (/api/fb-feed.xml). Books
 // without a cover never go to the catalogue.
@@ -11,7 +12,8 @@
 //   node scripts/publish-books.cjs sondipon            dry run, shows what would be published
 //   node scripts/publish-books.cjs sondipon --apply    writes to the database
 //   node scripts/publish-books.cjs sondipon --facebook-catalog [--apply]
-// Options: --env <file> (default api/.env), --include-no-cover, --facebook-catalog
+//   node scripts/publish-books.cjs somokalin --with-sample --facebook-catalog [--apply]
+// Options: --env <file> (default api/.env), --include-no-cover, --with-sample, --facebook-catalog
 // The shop caches its book lists for up to 5 minutes, so the books appear within that time.
 const fs = require('node:fs');
 const path = require('node:path');
@@ -30,9 +32,10 @@ const SET = args.find((arg, index) => !arg.startsWith('--') && !(index > 0 && ar
 const APPLY = args.includes('--apply');
 const WITHOUT_COVER = args.includes('--include-no-cover');
 const FACEBOOK = args.includes('--facebook-catalog');
+const WITH_SAMPLE = args.includes('--with-sample');
 const ENV_FILE = path.resolve(root, option('--env', 'api/.env'));
 if (!SET || !/^[a-z0-9-]+$/.test(SET)) {
-  console.error('usage: node scripts/publish-books.cjs <set> [--apply] [--include-no-cover] [--facebook-catalog]');
+  console.error('usage: node scripts/publish-books.cjs <set> [--apply] [--include-no-cover] [--with-sample] [--facebook-catalog]');
   process.exit(1);
 }
 
@@ -70,13 +73,14 @@ const same = (value) => String(value || '').normalize('NFD').replace(/\s+/g, ' '
 
   const ready = [];
   const noCover = [];
+  const noSample = [];
   const skipped = [];
   const catalogue = [];
   let inCatalogue = 0;
   for (const book of books) {
     // The importer adds "-2", "-3" … to a slug that was already taken.
     const found = (await Product.find({ slug: new RegExp('^' + escapeRegex(book.slug) + '(-\\d+)?$') })
-      .select('name slug status images isFacebookCatalog')
+      .select('name slug status images isFacebookCatalog pdfFile')
       .lean()).find((product) => same(product.name) === same(book.name));
     if (!found) {
       skipped.push(`${book.name} (not in the shop: not imported yet, or renamed in admin)`);
@@ -84,6 +88,10 @@ const same = (value) => String(value || '').normalize('NFD').replace(/\s+/g, ' '
     }
     const hasCover = (found.images || []).length > 0;
     if (found.status === 'draft') {
+      if (WITH_SAMPLE && !found.pdfFile) {
+        noSample.push(found);
+        continue;
+      }
       if (!hasCover && !WITHOUT_COVER) {
         noCover.push(found);
         continue;
@@ -103,6 +111,7 @@ const same = (value) => String(value || '').normalize('NFD').replace(/\s+/g, ' '
 
   for (const product of ready) console.log(`${APPLY ? 'publish' : 'would publish'}  ${product.name}${(product.images || []).length ? '' : ' (no cover)'}`);
   for (const product of catalogue) console.log(`${APPLY ? 'add to Facebook catalogue' : 'would add to Facebook catalogue'}  ${product.name}`);
+  for (const product of noSample) console.log(`keep draft     ${product.name} (no sample pages)`);
   for (const product of noCover) console.log(`keep draft     ${product.name} (no cover yet: add one in admin and publish it there, or re-run with --include-no-cover)`);
   for (const line of skipped) console.log(`skip           ${line}`);
 
@@ -121,7 +130,8 @@ const same = (value) => String(value || '').normalize('NFD').replace(/\s+/g, ' '
   const facebook = FACEBOOK
     ? `; ${catalogue.length} ${APPLY ? 'added to' : 'would be added to'} the Facebook catalogue (${inCatalogue} already there)`
     : '';
-  console.log(`\n${ready.length} book(s) ${APPLY ? 'published' : 'would be published (dry run; add --apply to write)'}${facebook}; ${noCover.length} kept as draft for a missing cover; ${skipped.length} skipped`);
+  const sample = WITH_SAMPLE ? `; ${noSample.length} kept as draft without sample pages` : '';
+  console.log(`\n${ready.length} book(s) ${APPLY ? 'published' : 'would be published (dry run; add --apply to write)'}${facebook}${sample}; ${noCover.length} kept as draft for a missing cover; ${skipped.length} skipped`);
   await mongoose.disconnect();
 })().catch(async (error) => {
   console.error(error.message || error);
