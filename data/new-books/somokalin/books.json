@@ -1,0 +1,2855 @@
+{
+  "publisher": "সমকালীন",
+  "note": "Somokalin books not yet on Amol Books (2026-11-04). Imported as draft, 20 in stock, cover price minus 25% (flat Taka), like the Somokalin books already in the shop.",
+  "books": [
+    {
+      "name": "গল্পগুলো অন্যরকম",
+      "nameEn": "Golpo Gulo Onno Rokom",
+      "slug": "golpo-gulo-onno-rokom",
+      "mrp": 340,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 216,
+      "edition": "1st Published, 2019",
+      "binding": "পেপারব্যাক",
+      "weight": 250,
+      "translators": [
+        "মুরসালিন নিলয়",
+        "আফিফা আবেদীন সাওদা",
+        "আনিকা তুবা"
+      ],
+      "authors": [
+        {
+          "name": "সানজিদা সিদ্দীক কথা",
+          "nameEn": "Sanjida Siddique Kotha"
+        },
+        {
+          "name": "শারিন সফি",
+          "nameEn": "Sharin Shafi"
+        },
+        {
+          "name": "যাইনাব আল-গাযি",
+          "nameEn": "Zainab al-Ghazi"
+        }
+      ],
+      "categories": [
+        "ইসলামী সাহিত্য"
+      ],
+      "description": "<p>জীবনের কাছে মাঝে মাঝে গল্পও তুচ্ছ হয়ে যায়। মাঝে মাঝে জীবন রূপকথার চেয়েও বেশি অবিশ্বাস্য হয়ে ওঠে। জীবনের বাঁকে বাঁকে, মোড়ে মোড়ে, ঘটনা-প্রতি-ঘটনায় জন্ম নেয় হৃদয়ের আকুতি-মিনতি, প্রেম-ভালোবাসা, সুখ আর দুঃখ। এজন্যেই জীবন দুরন্ত, দুর্বিনীত ও চঞ্চল। এজন্যেই জীবন অন্যরকম। সেই অন্যরকম জীবনে জন্ম নেওয়া একগুচ্ছ গল্প দিয়েই সাজনো ‘গল্পগুলো অন্যরকম’ বইটি।</p>",
+      "image": "book-golpo-gulo-onno-rokom-fa4f.webp",
+      "pdf": "golpo-gulo-onno-rokom-fa4f.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/07/Golpogulo-Onnorokon-Front.jpg",
+      "sources": [
+        "https://www.wafilife.com/golpo-gulo-onno-rokom/pd/4177",
+        "https://www.rokomari.com/book/188368/গল্পগুলো-অন্যরকম"
+      ]
+    },
+    {
+      "name": "৩০ হাজার খ্রিষ্টানের গুরু যেভাবে দ্বীনের দাঈ",
+      "nameEn": "30 Hajar Khristan Guru Jevabe Diner Dayi",
+      "slug": "30-hajar-khristan-guru-jevabe-diner-dayi",
+      "mrp": 96,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 64,
+      "edition": "1st Published, 2025",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [],
+      "authors": [
+        {
+          "name": "মুফতি যুবায়ের আহমাদ",
+          "nameEn": "Mufti Zubair Ahmad"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>তার প্রকৃত নাম জাহাঙ্গীর খালেদ, যিনি লেবু ডাক্তার নামে প্রসিদ্ধ ছিলেন। খ্রিষ্টান মিশনারির মাধ্যমে ধর্মান্তরিত হন। তারপর বাংলাদেশের ছয়টি জেলায় ৩০ বছর ধরে খ্রিষ্টধর্ম প্রচারের কাজ করেন। ৩০ হাজার মানুষ তার মাধ্যমে খ্রিষ্টান হয়েছে। অবশেষে মাওলানা যুবাইর আহমাদ হাফিজাহুল্লাহর দাওয়াতের মাধ্যমে তিনি ইসলামের পথে ফিরে আসেন। দ্বীনের একজন দরদি দাঈ হয়ে ওঠেন। এর জন্য তাকে জেল-জুলুমেরও শিকার হতে হয়। এ বইয়ে দাওয়াতি সফরের মাধ্যমে তার মর্মস্পর্শী কাহিনি তুলে ধরা হয়েছে।</p>",
+      "image": "book-30-hajar-khristan-guru-jevabe-diner-dayi-0cf4.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2025/10/WhatsApp-Image-2025-10-26-at-11.15.12-AM.jpg",
+      "sources": [
+        "https://www.wafilife.com/30-hajar-khristan-guru-jevabe-diner-dayi/pd/70661",
+        "https://www.rokomari.com/book/513738/৩০-হাজার-খ্রিষ্টানের-গুরু-যেভাবে-দ্বীনের-দাঈ"
+      ]
+    },
+    {
+      "name": "Double Standard",
+      "nameEn": "Double Standard",
+      "slug": "double-standard",
+      "mrp": 268,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 176,
+      "edition": "1st Published, 2025",
+      "binding": "পেপারব্যাক",
+      "weight": 200,
+      "translators": [],
+      "authors": [
+        {
+          "name": "ডা. শামসুল আরেফীন",
+          "nameEn": "Dr. Shamsul Arefin"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>In this age of ignorance, confusion, and intellectual darkness, Islam—once the complete and divinely revealed code of life—has, for most born Muslims, been reduced to little more than a set of ritualistic customs, similar to other man-made or distorted religions. At such a critical juncture, it has become the foremost duty of every truth-conscious person to convey, in the right way, the genuine truth and comprehensive guidance of Islam—the sole system of life and the true solution to all human problems—to those lost in the labyrinth of darkness and delusion.</p><p>The author has presented, in story form, many issues about which most Muslims are poorly informed—topics that atheists and so-called “freethinkers” often exploit to mislead them. He handles these sensitive issues with impressive factual depth, logical reasoning, and analytical clarity. Furthermore, beginning with a reflection on the existence of the Creator and concluding with a piece of scientific fiction, he beautifully illustrates humanity’s timeless and universal yearning for the truth of divine oneness (Tawheed).</p>",
+      "image": "book-double-standard-b32d.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2025/10/WhatsApp-Image-2025-10-26-at-11.56.10-AM.jpg",
+      "sources": [
+        "https://www.wafilife.com/double-standard/pd/70660",
+        "https://www.rokomari.com/book/512497/double-standard"
+      ]
+    },
+    {
+      "name": "আপ কি আমানাত",
+      "nameEn": "Aap-Ki-Amanat",
+      "slug": "aap-ki-amanat",
+      "mrp": 68,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 40,
+      "edition": "1st Published 2025",
+      "binding": "হার্ডকভার",
+      "weight": 250,
+      "translators": [],
+      "authors": [
+        {
+          "name": "মাওলানা কালিম সিদ্দিকী",
+          "nameEn": "Maulana Kalim Siddiqui"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>সকল মানুষের মধ্যেই এক ধরনের শূন্যতা বিরাজ করে। সেই শূন্যতা কাটিয়ে পূর্ণতার দিকে সবাই যার যার মতো ধাবমান। সবাই শান্তি খোঁজে, খুঁজে ফিরে জীবনের পরমার্থ। মানুষকে সেই পরমের খোঁজে সহায়তা করার চেয়ে বড় কোনো পুণ্য নেই। স্রষ্টার সাথে সৃষ্টির মেলবন্ধনের সে সুমহান দায়িত্বটিই লেখক পালন করেছেন একান্ত হামদর্দির সাথে। হৃদয়ের আকুতি তুলে ধরেছেন মর্মভেদী বর্ণনায়।</p><p>ছোট্ট এই বইটি বদলে দিয়েছে লাখো মানুষের জীবন। কত দিশাহীন মানুষ যে বইটি পড়ে ফিরে পেয়েছেন জীবনের গতিপথ, তার হিসেব নেই। পথভোলা মানুষের কাছে এই যুগান্তকারী বইটি পৌঁছে দেওয়া আমাদের সকলের দায়িত্ব।</p>",
+      "image": "book-aap-ki-amanat-71d8.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2025/10/WhatsApp-Image-2025-10-05-at-1.35.23-PM.jpeg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%86%e0%a6%aa-%e0%a6%95%e0%a6%bf-%e0%a6%86%e0%a6%ae%e0%a6%be%e0%a6%a8%e0%a6%be%e0%a6%a4/pd/69991",
+        "https://www.rokomari.com/book/510488/আপ-কি-আমানাত"
+      ]
+    },
+    {
+      "name": "ইসলামের বিধান প্রণয়নে সুন্নাহর অবস্থান এবং প্রাচ্যবিদদের আপত্তির জবাব",
+      "nameEn": "Islamer-Bidhan-Pronoyoner-Sunnaher-Obosthan-Ebong-Prachobidder-Apottir-Jobab",
+      "slug": "islamer-bidhan-pronoyoner-sunnaher-obosthan-ebong-prachobidder-apottir-jobab",
+      "mrp": 1040,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 784,
+      "edition": "1st Published, September 2025",
+      "binding": "হার্ডকভার",
+      "weight": 900,
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. মুস্তফা আসসিবায়ি",
+          "nameEn": "Dr. Mustafa al-Siba'i"
+        }
+      ],
+      "categories": [
+        "আল হাদিস"
+      ],
+      "description": "<p>সুন্নাহ ইসলামের গুরুত্বপূর্ণ উৎস। সুন্নাহ ছাড়া ইসলাম বোঝা ও ধারণ করা সম্ভব নয়। এমনকি সুন্নাহর জ্ঞান ছাড়া কুরআনের কোন আয়াতে কোন বিধানের কথা বলা হয়েছে আর সে বিধানের স্বরূপই-বা কী, তাও বোঝার উপায় নেই।</p><p>সুন্নাহর এই গুরুত্ব ইসলামের শত্রু প্রাচ্যবিদরা ভালো করেই জানে। তাই তারা সবচেয়ে জঘন্যভাবে আক্রমণ করেছে নবিজির সুন্নাহর বিষয়ে। বানোয়াট আর অবান্তর প্রশ্ন করে মুসলিমদের করতে চেয়েছে বিভ্রান্ত। সুন্নাহ সম্পর্কে সন্দেহ তৈরি করা গেলে ইসলামের ব্যাপারেই সংশয়ে পতিত হবে।</p><p>সেসব ধোঁয়াশা শক্তহাতে অ্যাকাডেমিকভাবে খণ্ডন করেছেন শাইখ মুস্তফা আস-সিবায়ি রাহিমাহুল্লাহ। রচনা করেছেন বক্ষ্যমাণ এই কালজয়ী গ্রন্থ। এমন একটি গুরুত্বপূর্ণ রচনা পাঠকদের হাতে তুলে দিতে পেরে আমরা মহান রবের শুকরিয়া আদায় করছি।</p>",
+      "image": "book-islamer-bidhan-pronoyoner-sunnaher-obosthan-ebong--1f1b.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2025/10/WhatsApp-Image-2025-10-05-at-1.31.14-PM.jpeg",
+      "sources": [
+        "https://www.wafilife.com/islamer-bidhan-pronoyoner-sunnaher-obosthan-ebong-prachobidder-apottir-jobab/pd/69990",
+        "https://www.rokomari.com/book/510490/ইসলামের-বিধান-প্রণয়নের-সুন্নাহর-অবস্থান-এবং-প্রাচ্যবিদদের-আপত্তির-জবাব"
+      ]
+    },
+    {
+      "name": "জিনদের ক্ষতি থেকে বেঁচে থাকার আমল",
+      "nameEn": "Jinder-Khoti-Theke-Beche-Thakar-Amol",
+      "slug": "jinder-khoti-theke-beche-thakar-amol",
+      "mrp": 650,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 448,
+      "edition": "1st",
+      "binding": "হার্ডকভার",
+      "weight": 550,
+      "translators": [
+        "আল-আমিন ফেরদৌস"
+      ],
+      "authors": [
+        {
+          "name": "ওয়াহিদ আবদুস সালাম বালি",
+          "nameEn": "Wahid Abdus Salam Bali"
+        }
+      ],
+      "categories": [
+        "ইসলামি আমল ও আমলের সহায়িকা"
+      ],
+      "description": "<p>অন্য যেকোনো সময়ের তুলনায় মানুষ এখন জিন, জাদু ও বদনজরে বেশি আক্রান্ত। মানুষ অন্যের উন্নতি সহ্য করতে পারে না। তাই প্রথমে বদনজর এবং একটা সময় আশ্রয় নেয় জাদুটোনার। আর জীন সম্পর্কে জানাশোনা না থাকায় অনেকেই পড়ে দুষ্ট জিনের ফাঁদে। বাহুবল, জনবল ও অর্থবল দিয়ে জিন, জাদু ও বদনজরের মোকাবেলা করা সম্ভব নয়। এসব থেকে বাঁচতে জানতে হবে শরিয়ত সম্মত রুকইয়া ও আমল। সেগুলো পালন করতে হবে যথাযথ উপায়ে। এসব ক্ষতি থেকে কীভাবে নিজে বাঁচা যাবে এবং সুরক্ষিত রাখা যাবে নিজের পরিবার-পরিজনকে, সেসকল বিষয়েই বিস্তারিত আলোচনা করা হয়েছে এ বইয়ে।</p>",
+      "image": "book-jinder-khoti-theke-beche-thakar-amol-74e1.webp",
+      "pdf": "jinder-khoti-theke-beche-thakar-amol-74e1.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2025/08/WhatsApp-Image-2025-08-14-at-18.22.55_ba424ccc.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%9c%e0%a6%bf%e0%a6%a8%e0%a6%a6%e0%a7%87%e0%a6%b0-%e0%a6%95%e0%a7%8d%e0%a6%b7%e0%a6%a4%e0%a6%bf-%e0%a6%a5%e0%a7%87%e0%a6%95%e0%a7%87-%e0%a6%ac%e0%a7%87%e0%a6%81%e0%a6%9a%e0%a7%87-%e0%a6%a5/pd/68139",
+        "https://www.rokomari.com/book/492348/জিনদের-ক্ষতি-থেকে-বেঁচে-থাকার-আমল"
+      ]
+    },
+    {
+      "name": "আল-ফাওয়াইদ (মুখতাসার)",
+      "nameEn": "Al-Fawaid-Mukhtasar",
+      "slug": "al-fawaid-mukhtasar",
+      "mrp": 260,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 168,
+      "edition": "১ম প্রকাশ, ২০২৫",
+      "binding": "পেপারব্যাক",
+      "weight": 200,
+      "translators": [
+        "উস্তায আকরাম হোসাইন"
+      ],
+      "authors": [
+        {
+          "name": "আল্লামা ইবনুল কায়্যিম জাওযিয়্যাহ রহ",
+          "nameEn": "Allama Ibn al-Qayyim al-Jawziyya"
+        }
+      ],
+      "categories": [
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>মানুষের যাবতীয় কাজকর্মের মূল নিয়ন্ত্রক তার মন। মন পরিশুদ্ধ ও প্রফুল্ল থাকলে মানুষের মধ্যে ভালোকাজের অনুপ্রেরণা জাগে। আর মন কলুষিত থাকলে হয় এর উলটোটা। নবিজি সাল্লাল্লাহু আলাইহি ওয়া সাল্লামের ভাষ্যমতে—‘যদি মন সুস্থ থাকে, তাহলে সুস্থ থাকে গোটা দেহ। আর মন অসুস্থ হয়ে পড়লে গোটা দেহই হয়ে পড়ে অসুস্থ।’ তাই দুনিয়া-আখিরাতসহ জীবনের প্রতিটি ক্ষেত্রে সফল হতে হলে মনের সুস্থতার কোনো বিকল্প নেই। এজন্য নিয়মিত মনের পরিচর্যা করতে হয়। অসুস্থ হয়ে পড়লে সেবা-শুশ্রূষা করতে হয় তার। মন যেন সবসময় সঠিক পথে পরিচালিত হয়, বাঁকা পথে চলে না যায়, খেয়াল রাখতে হয় সেদিকে। ইমাম ইবনুল কাইয়িম রাহিমাহুল্লাহ মানুষের মনের চিকিৎসক। অভিজ্ঞতার আলোকে তিনি বুঝতে পারেন মানবমনের গতি-প্রকৃতি, তার চিকিৎসার পথ-পদ্ধতি। ‘আল-ফাওয়াইদ’ গ্রন্থটি তার সে অভিজ্ঞতারই সার-নির্যাস।</p>",
+      "image": "book-al-fawaid-mukhtasar-4680.webp",
+      "pdf": "al-fawaid-mukhtasar-4680.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2025/08/WhatsApp-Image-2025-08-13-at-3.46.43.jpg",
+      "sources": [
+        "https://www.wafilife.com/al-fawaid-mukhtasar/pd/68127",
+        "https://www.rokomari.com/book/492144/আল-ফাওয়াইদ-মুখতাসার"
+      ]
+    },
+    {
+      "name": "ইমাম নববির ৪০ হাদিস ও তার ব্যাখ্যা",
+      "nameEn": "Imam Nobobir 40 Hadis O Tar Bekkha",
+      "slug": "imam-nobobir-40-hadis-o-tar-bekkha",
+      "mrp": 415,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 288,
+      "edition": "1st Published, 2025",
+      "binding": "হার্ডকভার",
+      "weight": 400,
+      "translators": [
+        "উস্তায আবুল হাসানাত কাসিম",
+        "উস্তায আকরাম হোসাইন"
+      ],
+      "authors": [
+        {
+          "name": "শায়খ মুহাম্মাদ বিন সালিহ আল উসাইমিন",
+          "nameEn": "Shaykh Muhammad ibn Salih al-Uthaymin"
+        }
+      ],
+      "categories": [
+        "আল হাদিস"
+      ],
+      "description": "<p>এটি এমন একটি গ্রন্থ, যাতে সংকলিত হাদিসগুলো দ্বীনের মৌলিক শিক্ষা, নৈতিকতা, আত্মশুদ্ধি এবং সমাজজীবনের রূপরেখা ও দিকনির্দেশনা তুলে ধরে। প্রতিটি হাদিস একেকটি মূল স্তম্ভের মতো—যার ওপর দাঁড়িয়ে আছে পুরো ইসলামি জীবনদর্শন।</p><p>বিষয়ের দিক থেকে সেসব হাদিস নির্বাচন করা হয়েছে, যেগুলো মুসলিমদের চিন্তা-বিশ্বাস ও কর্মধারাকে সঠিক পথে পরিচালিত করে। হাদিসগুলোর উপস্থাপনা অত্যন্ত হৃদয়গ্রাহী, বক্তব্য সহজবোধ্য। গ্রন্থটি কেবল জ্ঞানের উৎস নয়; আত্মার জাগরণ, চরিত্র গঠন ও হিদায়াতের পথে চলার আলোকবর্তিকাস্বরূপ।</p>",
+      "image": "book-imam-nobobir-40-hadis-o-tar-bekkha-b8b2.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2025/08/imam_nobobir_40_hadis.jpg",
+      "sources": [
+        "https://www.wafilife.com/imam-nobobir-40-hadis-o-tar-bekkha/pd/68047",
+        "https://www.rokomari.com/book/489832/ইমাম-নববির-৪০-হাদিস-ও-তার-ব্যাখ্যা"
+      ]
+    },
+    {
+      "name": "হিন্দু থেকে মুসলিম হওয়ার ঈমান-জাগানিয়া সাক্ষাৎকার",
+      "nameEn": "Iman Jagania Sakkhatkar",
+      "slug": "iman-jagania-sakkhatkar",
+      "mrp": 890,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 752,
+      "edition": "1st editon, 2025",
+      "binding": "হার্ডকভার",
+      "weight": 850,
+      "translators": [
+        "মুফতি যুবায়ের আহমাদ",
+        "মুফতী যুবায়ের আহমদ"
+      ],
+      "authors": [
+        {
+          "name": "মাওলানা কালিম সিদ্দিকী",
+          "nameEn": "Maulana Kalim Siddiqui"
+        }
+      ],
+      "categories": [
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>ভারতের মতো দেশে হিন্দু থেকে মুসলিম হওয়া যে কতটা বিপজ্জনক, এই বইয়ের প্রতিটি পৃষ্ঠা এর জ্বলন্ত সাক্ষী। শুধু সত্যগ্রহণের অপরাধে আমাদের ভাইবোনেরা যে ভয়াবহ নিপীড়নের মুখোমুখি হয়েছেন, এই বই না পড়লে আমরা তা কল্পনাও করতে পারব না। এই অবর্ণনীয় জুলুম-নির্যাতনও থামাতে পারেনি তাদের ঈমানি কাফেলা। নিম্নবর্ণ থেকে নিয়ে উচ্চবর্ণ, কামার-কুমার থেকে নিয়ে নোবেলের জন্য মনোনীত কবিসাহিত্যিক-সহ সকল শ্রেণি ও পেশার মানুষ আলোকিত হচ্ছেন ঈমানের নুরে। ঈমানের জন্য তাদের আত্মত্যাগ মনে করিয়ে দেয় সাহাবিযুগের কথা। প্রতিটি ঘটনাই গল্পউপন্যাসের চরিত্রকেও হার মানায়।</p><p>ঈমান তাজা করার জন্য কেউ যদি একটি মাত্র বই পড়তে চান, তিনি যেন এই বই পড়েন। যদি দুটি বই পড়তে চান, তবে এই বইটিই যেন দ্বিতীয়বার পড়েন।</p>",
+      "image": "book-iman-jagania-sakkhatkar-9bbd.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2025/03/iman-jagania-sakkhatkar.jpeg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%b9%e0%a6%bf%e0%a6%a8%e0%a7%8d%e0%a6%a6%e0%a7%81-%e0%a6%a5%e0%a7%87%e0%a6%95%e0%a7%87-%e0%a6%ae%e0%a7%81%e0%a6%b8%e0%a6%b2%e0%a6%bf%e0%a6%ae-%e0%a6%b9%e0%a6%93%e0%a6%af%e0%a6%bc%e0%a6%be/pd/63306",
+        "https://www.rokomari.com/book/464725/হিন্দু-থেকে-মুসলিম-হওয়ার-ঈমান-জাগানিয়া-সাক্ষাৎকার"
+      ]
+    },
+    {
+      "name": "বাক্সের বাইরে",
+      "nameEn": "Baksher Baire",
+      "slug": "baksher-baire",
+      "mrp": 272,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 176,
+      "edition": "New Editon, 2025",
+      "binding": "পেপারব্যাক",
+      "weight": 200,
+      "translators": [],
+      "authors": [
+        {
+          "name": "শরীফ আবু হায়াত অপু",
+          "nameEn": "Sharif Abu Hayat Opu"
+        }
+      ],
+      "categories": [
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>বাক্সগুলো সাধারণত আমরা জন্মসূত্রে পেয়ে থাকি। পরিবার থেকে, সমাজ থেকে। বাক্সগুলো আরামদায়ক—তাতে যে আমরা বন্দি আছি, সে বোধটা আসে না মোটেই। বাক্সের ভেতরে আবর্তিত হয় নাওয়া-খাওয়া-ঘুম-বংশবৃদ্ধির চক্র। নিতান্তই গৃহপালিত পাশবিক জীবনযাপন!</p><p>বাক্সের বাইরেটা আলোকিত, তাতে অনেক কিছুর আসল রংটা বোঝা যায়। সেখানে বাঁচাটা কঠিন হলেও আনন্দের। বাক্সের বাইরের পথটা আপাত দুর্গম হলেও তার শেষে অকল্পনীয় প্রাপ্তি আছে।</p><p>এ বইটার লেখাগুলো না গল্প, না প্রবন্ধ—দেশ, সমাজ, ধর্ম, জীবন, সম্পর্ক সবকিছুকে অন্য আঙ্গিকে দেখার প্রয়াস থেকে লেখা। বাক্সের বাইরে বাঁচার চেষ্টা করছে এমন একজন মানুষের লেখা। বাক্সের বাইরে ভাবতে চায় এমন মানুষদের জন্য লেখা।</p>",
+      "image": "book-baksher-baire-1cfd.webp",
+      "pdf": "baksher-baire-1cfd.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2025/02/Image-2025-6.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%ac%e0%a6%be%e0%a6%95%e0%a7%8d%e0%a6%b8%e0%a7%87%e0%a6%b0-%e0%a6%ac%e0%a6%be%e0%a6%87%e0%a6%b0%e0%a7%87-2/pd/62498",
+        "https://www.rokomari.com/book/456511/বাক্সের-বাইরে"
+      ]
+    },
+    {
+      "name": "জান্নাতের সুসংবাদপ্রাপ্ত নারী সাহাবিদের জীবনকথা",
+      "nameEn": "Jannater Susongbad Prapto Sahabider Jibon Kotha",
+      "slug": "jannater-susongbad-prapto-sahabider-jibon-kotha",
+      "mrp": 350,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 232,
+      "edition": "1st Published, 2025",
+      "binding": "পেপারব্যাক",
+      "weight": 250,
+      "translators": [
+        "ওমর ইবনে আব্দুর রউফ"
+      ],
+      "authors": [
+        {
+          "name": "মাহমুদ আহমদ গজনফর",
+          "nameEn": "Mahmud Ahmad Ghadanfar"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>এ বইয়ে জান্নাতের সুসংবাদপ্রাপ্ত নারী সাহাবিদের জীবনের গল্পগুলো তুলে ধরা হয়েছে সহজ-সরল তবে হৃদয়ছোঁয়া বর্ণনায়। এখান থেকে নারীরা যেমন জানতে পারবেন, তাদের জীবন কেমন হওয়া উচিত। তেমনই পুরুষরা জানতে পারবেন, কেমন হওয়া উচিত নারীদের প্রতি তাদের আচরণ। বইটি আমাদের সবার জন্য উপকারী হয়ে উঠুক। আমিন।</p>",
+      "image": "book-jannater-susongbad-prapto-sahabider-jibon-kotha-99f5.webp",
+      "pdf": "jannater-susongbad-prapto-sahabider-jibon-kotha-99f5.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2024/12/NARI-SAHABIDER-JIBONI.png",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%9c%e0%a6%be%e0%a6%a8%e0%a7%8d%e0%a6%a8%e0%a6%be%e0%a6%a4%e0%a7%87%e0%a6%b0-%e0%a6%b8%e0%a7%81%e0%a6%b8%e0%a6%82%e0%a6%ac%e0%a6%be%e0%a6%a6%e0%a6%aa%e0%a7%8d%e0%a6%b0%e0%a6%be%e0%a6%aa%e0%a7%8d/pd/60716",
+        "https://www.rokomari.com/book/445710/জান্নাতের-সুসংবাদপ্রাপ্ত-নারী-সাহাবিদের-জীবনকথা"
+      ]
+    },
+    {
+      "name": "কারবালার প্রকৃত ইতিহাস",
+      "nameEn": "Karbalar Prokrito Itihas",
+      "slug": "karbalar-prokrito-itihas",
+      "mrp": 180,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 112,
+      "edition": "1st Published, 2025",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [
+        "মুজিব হাসান"
+      ],
+      "authors": [
+        {
+          "name": "হযরত মাওলানা মুফতী মুহাম্মদ শফী (রহ.)",
+          "nameEn": "Mufti Muhammad Shafi"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>কারবালার ঘটনা মুসলিম জাতির ইতিহাসে এক বেদনাদায়ক অধ্যায়। এটা কোনো সাধারণ হত্যাকাণ্ড বা আত্মত্যাগের আখ্যান নয়—এর বাস্তবতা এত মর্মান্তিক ও হৃদয়বিদারক, যা পৃথিবীর সমস্ত নৃসংশতা ও পাশবিকতাকে হার মানিয়ে দেয়। ফলে হাজার বছর পেরিয়ে গেলেও এই ঘটনা মুসলিমদের হৃদয়ে বেদনার রক্তক্ষরণ ঘটায়। হয়ে ওঠে জীবন-দর্শন ও সাহিত্যের অনুষঙ্গ।</p><p>এ বইটি গুণীমহল ও পাঠকসমাজে দারুণ সমাদর পেয়েছে। এতে তুলে ধরা হয়েছে কারবালার প্রকৃত ইতিহাস ও নির্ভরযোগ্য ঘটনাবলি। সচেতনভাবে এড়িয়ে যাওয়া হয়েছে বানোয়াট গল্পকাহিনি ও দুর্বল-অসমর্থিত বর্ণনা। সংক্ষিপ্ত পরিসরে গল্পের আবহে উঠে এসেছে কারবালা কাহিনির আগাগোড়া বিবরণ।</p>",
+      "image": "book-karbalar-prokrito-itihas-2156.webp",
+      "pdf": "karbalar-prokrito-itihas-2156.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2024/12/KARBALAR-PROKRITO-ITIHAS.png",
+      "sources": [
+        "https://www.wafilife.com/karbalar-prokrito-itihas/pd/60717",
+        "https://www.rokomari.com/book/445711/কারবালার-প্রকৃত-ইতিহাস"
+      ]
+    },
+    {
+      "name": "ইসলামে উত্তরাধিকার আইন ও সমাজের অসংগতি",
+      "nameEn": "Islame Uttoradhikar Ain O Somajer Osongoti",
+      "slug": "islame-uttoradhikar-ain-o-somajer-osongoti",
+      "mrp": 220,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 144,
+      "edition": "1st Published, 2025",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [],
+      "authors": [
+        {
+          "name": "মুফতি মাহবুবুর রহমান",
+          "nameEn": "Mufti Mahbubur Rahman"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>উত্তরাধিকার সংক্রান্ত দরকারি জ্ঞানটুকু আমাদের অনেকেরই নেই। উত্তরাধিকার বিষয়ে আমাদের অঞ্চলে অনেক অজ্ঞতা এবং কুসংস্কার প্রচলিত রয়েছে। ফলে মৃতের সম্পদ বণ্টনের সময় কাউকে অধিকার থেকে বঞ্চিত করি, অনেককে তো আমরা সম্পদের হকদারই মনে করি না। এতে করে আল্লাহর অকাট্য বিধান লঙ্ঘনের পাশাপাশি আমাদের পারিবারিক জীবনেও নেমে আসে চরম অশান্তি।</p><p>মিরাস সংক্রান্ত প্রচলিত অজ্ঞতা এবং কুসংস্কার নিয়ে আলোচনা করা হয়েছে এ বইয়ে। সেই সাথে বাতলে দেওয়া হয়েছে উত্তরণের পন্থাও। মিরাস বিষয়ে জানতে আগ্রহী সকল পাঠকের জন্য বইটি অবশ্য পাঠ্য।</p>",
+      "image": "book-islame-uttoradhikar-ain-o-somajer-osongoti-3e11.webp",
+      "pdf": "islame-uttoradhikar-ain-o-somajer-osongoti-3e11.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2024/12/ISLAME-UTTORADHIKAR-AIN.jpg",
+      "sources": [
+        "https://www.wafilife.com/islame-uttoradhikar-ain-o-somajer-osongoti/pd/60718",
+        "https://www.rokomari.com/book/445712/ইসলামে-উত্তরাধিকার-আইন-ও-সমাজের-অসংগতি"
+      ]
+    },
+    {
+      "name": "সুফিয়ান আস-সাওরি রাহিমাহুল্লাহর জীবন ও কর্ম",
+      "nameEn": "Sufiyan As Sawri Rahimahullar Jibon O Kormo",
+      "slug": "sufiyan-as-sawri-rahimahullar-jibon-o-kormo",
+      "mrp": 230,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 152,
+      "edition": "1st Published, 2025",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [],
+      "authors": [
+        {
+          "name": "আব্দুল্লাহিল মামুন",
+          "nameEn": "Abdullahil Mamun"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>সুফিয়ান আস-সাওরি রাহিমাহুল্লাহ। হিজরি প্রথম শতকের শেষভাগে জন্ম নেওয়া এ মহামনীষী ছিলেন এক প্রদীপ্ত সূর্য, যার আলোতে উদ্ভাসিত হয়েছে ইসলামি জ্ঞানের দুনিয়া। তিনি ছিলেন আকাশছোঁয়া সত্যের মিনার। মিথ্যার শত ঝড়ঝাপটা তাকে টলাতে পারেনি। তার জীবনযাপন ছিল খুব সাদামাটা। দুনিয়ার জৌলুস থেকে সবসময় দূরে থেকেছেন। এ বইয়ে তার জীবনপাঠ পাঠককে দারুণ আলোড়িত করবে, ইনশাআল্লাহ।</p>",
+      "image": "book-sufiyan-as-sawri-rahimahullar-jibon-o-kormo-b6a8.webp",
+      "pdf": "sufiyan-as-sawri-rahimahullar-jibon-o-kormo-b6a8.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2024/12/SUFIAN-AS-SAWRI.png",
+      "sources": [
+        "https://www.wafilife.com/sufiyan-as-sawri-rahimahullar-jibon-o-kormo/pd/60719",
+        "https://www.rokomari.com/book/445716/সুফিয়ান-আস-সাওরি-রাহিমাহুল্লাহর-জীবন-ও-কর্ম"
+      ]
+    },
+    {
+      "name": "মায়েদের প্যারেন্টিং",
+      "nameEn": "Mayeder Parenting",
+      "slug": "mayeder-parenting",
+      "mrp": 280,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 176,
+      "edition": "1st Published, 2024",
+      "binding": "পেপারব্যাক",
+      "weight": 200,
+      "translators": [],
+      "authors": [
+        {
+          "name": "আফরোজা হাসান",
+          "nameEn": "Afroza Hasan"
+        }
+      ],
+      "categories": [
+        "বিয়ে ও সংসার"
+      ],
+      "description": "<p>মা মানে মমতার আধার। সন্তানের প্রতি মায়ের মমতা অসীম ও অতুলনীয়। সন্তান যে তার কলিজার টুকরো, বুকের মানিক, নাড়িছেঁড়া ধন। শৈশবে মায়ের স্নেহ-মমতা সন্তানের বেঁচে থাকা নিশ্চিত করে। এজন্য সন্তানের প্রতি মায়ের ভালোবাসার সাথে সাথে অনেক দায়িত্ব থাকে। সন্তান যখন একটু একটু করে বড় হতে থাকে, বাড়তে থাকে মায়ের এসব দায়িত্ব ও কর্তব্য।</p><p>জীবনসংসার সামলে সন্তান প্রতিপালন করতে গিয়ে মায়েদের অনেক কঠিন অভিজ্ঞতার মুখোমুখি হতে হয়। সন্তানের শরীরের যত্ন নেওয়া, মনের পরিচর্যা করা, তার ভেতরে ভালো কাজের বোধ তৈরি করা, মন্দ কাজের ব্যাপারে সতর্ক করা, তাকে ন্যায় ও অন্যায়ের পার্থক্য শিখিয়ে নেওয়া—সর্বোপরি সন্তানকে দ্বীন ও নৈতিকতার শিক্ষা দেওয়া প্রত্যেক বাবা-মায়ের অবশ্য কর্তব্য। এ বিষয়ে বাস্তব অভিজ্ঞতা ও উদাহরণের আলোকে বিস্তারিত আলোচনা ও নির্দেশনা রয়েছে এ বইয়ে।</p>",
+      "image": "book-mayeder-parenting-a927.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2024/07/MAYEDER-PARENTING.jpg",
+      "sources": [
+        "https://www.wafilife.com/mayeder-parenting/pd/56385",
+        "https://www.rokomari.com/book/423518/মায়েদের-প্যারেন্টিং"
+      ]
+    },
+    {
+      "name": "নবিজির শেষ দিনগুলো ﷺ",
+      "nameEn": "Nobijir Shesh Dingulo",
+      "slug": "nobijir-shesh-dingulo",
+      "mrp": 150,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 80,
+      "edition": "1st Published, 2024",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [],
+      "authors": [
+        {
+          "name": "শাইখ নিযার রাইয়ান",
+          "nameEn": "Shaykh Nizar Rayyan"
+        }
+      ],
+      "categories": [
+        "সীরাতে রাসূল (সা.)"
+      ],
+      "description": "<p>জীবনের শেষ দিনগুলোতে কেমন ছিল নবিজির রুটিন? অসুস্থতার সময়টা তিনি কীভাবে কাটাতেন? নবিজি যখন ভীষণ অসুস্থ, তখন পরিবার ও সাহাবিদের সাথে কীরকম ছিল তার আচরণ? কী ছিল তার অন্তিম উপদেশ? কেমন ছিল নবিজির শেষ নিঃশ্বাস ত্যাগ, সাহাবিদের শোক ও জানাযা আদায়ের দৃশ্যগুলো? এমনসব গুরুত্বপূর্ণ প্রশ্নের বিস্তারিত উত্তর উঠে এসেছে এ বইয়ে।</p><p>রাসুলের ভালোবাসায় সিক্ত যে হৃদয়, এ বই সে হৃদয়ে জাগাবে নবিপ্রেমের আলোড়ন, উথলে দেবে ভালোবাসার জোয়ার। আমরা যারা নবিজিকে ভালোবাসি, সাহাবিদের ভালোবাসি আর চাই নিজেদের শেষ দিনগুলোকে সুন্দর ও আলোকিত করে তুলতে, তাদের জন্য অবশ্যপাঠ্য এ বই।</p>",
+      "image": "book-nobijir-shesh-dingulo-8107.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2024/07/NOBIJIR-SHESH-DINGULO.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%a8%e0%a6%ac%e0%a6%bf%e0%a6%9c%e0%a6%bf%e0%a6%b0-%ef%b7%ba-%e0%a6%b6%e0%a7%87%e0%a6%b7-%e0%a6%a6%e0%a6%bf%e0%a6%a8%e0%a6%97%e0%a7%81%e0%a6%b2%e0%a7%8b/pd/56386",
+        "https://www.rokomari.com/book/423509/নবিজির-শেষ-দিনগুলো"
+      ]
+    },
+    {
+      "name": "সাহাবিদের অনন্য জীবন",
+      "nameEn": "Sahabider Ononno Jibon",
+      "slug": "sahabider-ononno-jibon",
+      "mrp": 665,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 456,
+      "edition": "1st Published, 2024",
+      "binding": "হার্ডকভার",
+      "weight": 550,
+      "translators": [],
+      "authors": [
+        {
+          "name": "আব্দুল ওয়াহিদ হামিদ",
+          "nameEn": "Abdul Wahid Hamid"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>নবিজি সাল্লাল্লাহু আলাইহি ওয়া সাল্লামের সাহাবিগণ সোনালি যুগের সোনার মানুষ। তাদের জীবন গড়ে উঠেছে স্বয়ং নবিজিকে দেখে, তার কথা ও কাজের প্রত্যক্ষ অনুকরণে। নবিজির জীবনকে তাদের মতো করে আর কেউ দেখেনি। তাদের মতো করে আর কেউ ভালোবাসেনি আল্লাহর রাসুলকে। ইসলামের জন্য তারা যেসব কষ্ট সহ্য করেছেন এবং যেভাবে নবিজিকে সঙ্গ দিয়েছেন, এর কোনো তুলনা হয় না। তাই তারা মানুষ হিসেবে শ্রেষ্ঠ ও অনন্য।</p><p>এ বইয়ে অর্ধশতাধিক সাহাবির জীবনকথা অন্তর্ভুক্ত হয়েছে। দ্বীনের জন্য তাদের অসীম আত্মত্যাগ, অবিচল মনোবল, ন্যায় ও সত্য প্রতিষ্ঠার জন্য লড়াই এবং জীবনদানের ঘটনাগুলো পড়তে পড়তে পাঠকমন আপ্লুত হয়ে উঠবে। অজান্তে ভিজে উঠবে চোখের কোণ। সেইসাথে হৃদয়ে জাগবে সাহাবিদের মতো অনন্য জীবন গড়ার প্রত্যয় ও উদ্দীপনা।</p>",
+      "image": "book-sahabider-ononno-jibon-911f.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2024/07/SAHABIDER-ONONNO-JIBON.png",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%b8%e0%a6%be%e0%a6%b9%e0%a6%be%e0%a6%ac%e0%a6%bf%e0%a6%a6%e0%a7%87%e0%a6%b0-%e0%a6%85%e0%a6%a8%e0%a6%a8%e0%a7%8d%e0%a6%af-%e0%a6%9c%e0%a7%80%e0%a6%ac%e0%a6%a8/pd/56387",
+        "https://www.rokomari.com/book/423519/সাহাবিদের-অনন্য-জীবন"
+      ]
+    },
+    {
+      "name": "শাইখুল ইসলাম ইবনু তাইমিয়া রাহিমাহুল্লাহ: জীবন ও কর্ম",
+      "nameEn": "Shaikhul Islam Ibnu Taimiya Rh: Jibon O Kormo",
+      "slug": "shaikhul-islam-ibnu-taimiya-rh-jibon-o-kormo",
+      "mrp": 245,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 152,
+      "edition": "1st Published, 2024",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [],
+      "authors": [
+        {
+          "name": "আবুল হাসানাত কাসিম",
+          "nameEn": "Abul Hasanat Qasim"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>ইসলামের ইতিহাসে যে সকল মনীষী ইলমের জন্য নিজেদের সর্বস্ব উজাড় করে দিয়েছেন, ইমাম ইবনু তাইমিয়া তাদের অন্যতম। তার পুরোটা জীবন ছিল ইলমের জন্য নিবেদিত। সত্যের প্রশ্নে তিনি ছিলেন আপসহীন। মানুষের কাছে দ্বীনের সঠিক জ্ঞান পৌঁছানোর জন্য তিনি আমরণ সংগ্রাম করে গিয়েছেন।</p><p>জগতের আর কোনো বিষয়ে তার আগ্রহ ছিল না, ইলমই ছিল তার জীবনের একমাত্র ধ্যানজ্ঞান। সত্য সন্ধানীদের জন্য ইমাম ইবনু তাইমিয়ার অনুপম জীবনে রয়েছে শিক্ষার অজস্র উপকরণ। ইসলাম সম্পর্কে যারা আগ্রহী, ইমামদের জীবনী থেকে যারা অনুপ্রাণিত হতে চায়—এই মহান সংস্কারকের জীবন তাদের আলোড়িত এবং আলোকিত করবে।</p>",
+      "image": "book-shaikhul-islam-ibnu-taimiya-rh-jibon-o-kormo-00cc.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2024/07/LIFE-OF-IBNU-TAIMIYAH.jpg",
+      "sources": [
+        "https://www.wafilife.com/shaikhul-islam-ibnu-taimiya-rh:-jibon-o-kormo/pd/56384",
+        "https://www.rokomari.com/book/423517/শাইখুল-ইসলাম-ইবনু-তাইমিয়া-রাহিমাহুল্লাহর-জীবন-ও-কর্ম"
+      ]
+    },
+    {
+      "name": "ফতোয়া লেখার কলাকৌশল",
+      "nameEn": "Fotoyar Lekhar Kowshol",
+      "slug": "fotoyar-lekhar-kowshol",
+      "mrp": 60,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 40,
+      "edition": "1st Published, December 2023",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [],
+      "authors": [
+        {
+          "name": "মুফতি আব্দুল্লাহ মাসুম (সিএসএএ)",
+          "nameEn": "Mufti Abdullah Masum"
+        }
+      ],
+      "categories": [
+        "ইসলামি আমল ও আমলের সহায়িকা"
+      ],
+      "description": "<p>ইসলামি শরিয়তে ফতোয়ার গুরুত্ব অপরিসীম। ফতোয়া কেবল একটি বিধান বা সমাধানই নয়, বরং এর মাধ্যমে নির্ণীত হয় ইসলামি জীবনব্যবস্থার সামগ্রিক রূপরেখা। প্রত্যেক মুসলিমের ব্যক্তিগত, সামাজিক, রাষ্ট্রীয় ও আন্তর্জাতিক জীবনের প্রতিটি ক্ষেত্রে ফতোয়ার প্রয়োজনীয়তা অনস্বীকার্য। এজন্য ফতোয়া প্রদানের বিষয়টি যেমন গুরুত্বপূর্ণ, তেমনই স্পর্শকাতরও বটে।</p><p>ফতোয়ার চর্চা ও প্রয়োগের বিষয়ে বিভিন্ন কলাকৌশলের লিখিত প্রয়াস এ বই। ফতোয়া লিখতে কী কী জিনিসের দরকার, ফতোয়া লেখার মৌলিক নীতিমালাগুলো কী, কীভাবে ফতোয়া উপস্থাপন করতে হয়, সুন্দর ফতোয়ার ১০টি ধাপ, উদাহরণের মাধ্যমে ফতোয়ার চর্চা ও প্রয়োগ, ফতোয়া লেখার সময় অতি দরকারি বিষয়াবলি এবং ফতোয়া লেখকের মধ্যে যেসব গুণ থাকা জরুরি, এক কথায় ফতোয়া লেখার শুরু থেকে শেষ পর্যন্ত যা যা দরকার, সে সবকিছু নিয়েই এ বই। ইফতায় অধ্যয়ন রত তালিবুল ইলম ভাইয়েরা বইটি থেকে বিশেষভাবে উপকৃত হবেন, ইনশাআল্লাহ।</p>",
+      "image": "book-fotoyar-lekhar-kowshol-2284.webp",
+      "pdf": "fotoyar-lekhar-kowshol-2284.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/12/FATWA-LEKHAR-KOLAKOUSHOL.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%ab%e0%a6%a4%e0%a7%8b%e0%a6%af%e0%a6%bc%e0%a6%be-%e0%a6%b2%e0%a7%87%e0%a6%96%e0%a6%be%e0%a6%b0-%e0%a6%95%e0%a6%b2%e0%a6%be%e0%a6%95%e0%a7%8c%e0%a6%b6%e0%a6%b2/pd/29386",
+        "https://www.rokomari.com/book/363174/ফতোয়া-লেখার-কলাকৌশল"
+      ]
+    },
+    {
+      "name": "এনজয় ইয়োর লাইফ",
+      "nameEn": "Enjoy Your Life",
+      "slug": "enjoy-your-life",
+      "mrp": 700,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 560,
+      "edition": "1st Published, December 2023",
+      "binding": "হার্ডকভার",
+      "weight": 650,
+      "translators": [
+        "আকরাম হোসাইন"
+      ],
+      "authors": [
+        {
+          "name": "ড. মুহাম্মদ ইবনে আবদুর রহমান আরিফী",
+          "nameEn": "Dr. Muhammad ibn Abdur Rahman al-Arifi"
+        }
+      ],
+      "categories": [
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>জীবন কারও কাছে রঙিন, কারও কাছে সাদাকালো। কারও জন্য সুখের নীড়, কারও জন্য তাসের ঘর। জীবনকে দেখে কেউ মেকি হাসে, কেউ করে মায়াকান্না। কেউ বিমল আনন্দ উদযাপন করে আর কেউ পুড়ে মরে অব্যক্ত বেদনায়। এতসব রূপ-রং-বৈচিত্র্য বিপরীতে বেশিরভাগ মানুষই কেবল কোনোরকমে জীবনটাকে পার করে যায়; জীবনকে উপভোগ করা আর হয়ে ওঠে না। অথচ ভোগ নয়, উপভোগ; যাপন নয়, উদযাপনই কাম্য।</p><p>জীবনকে উপভোগ করতে হলে দরকার একটি প্রশান্ত হৃদয়। যে হৃদয়ে ভরপুর থাকবে দয়ামায়া, ভালোবাসা, সহানুভূতি ও সদাচরণের মতো মহৎ গুণাবলি। হিংসাবিদ্বেষ, অহংকার, নির্মমতা ও জিঘাংসার কোনো বালাই থাকবে না সেখানে। এমন হৃদয়ের অধিকারীগণ জীবনকে যথাযথভাবে উপভোগ করতে পারেন। দুনিয়া ও আখিরাতে তারাই লাভ করেন মহিমান্বিত জীবন। জীবন উপভোগের অজস্র পন্থা পাঠকের সামনে উন্মোচিত করবে এ বই।</p>",
+      "image": "book-enjoy-your-life-0209.webp",
+      "pdf": "enjoy-your-life-0209.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/12/Enjoy-Your-Life.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%8f%e0%a6%a8%e0%a6%9c%e0%a6%af%e0%a6%bc-%e0%a6%87%e0%a6%af%e0%a6%bc%e0%a7%8b%e0%a6%b0-%e0%a6%b2%e0%a6%be%e0%a6%87%e0%a6%ab/pd/29390",
+        "https://www.rokomari.com/book/363169/এনজয়-ইয়োর-লাইফ"
+      ]
+    },
+    {
+      "name": "কিতাবুল বুয়ু",
+      "nameEn": "Kitabul Bayu",
+      "slug": "kitabul-bayu",
+      "mrp": 586,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 480,
+      "edition": "1st Published, December 2023",
+      "binding": "হার্ডকভার",
+      "weight": 600,
+      "translators": [],
+      "authors": [
+        {
+          "name": "মুফতি আব্দুল্লাহ মাসুম (সিএসএএ)",
+          "nameEn": "Mufti Abdullah Masum"
+        }
+      ],
+      "categories": [
+        "বিনিয়োগ ও অর্থনীতি"
+      ],
+      "description": "<p>মানুষ প্রয়োজনে একে অন্যের দ্বারস্থ হয়। একজনের থেকে দরকারি জিনিসটি নিতে গেলে তাকেও উপকৃত করতে হয় কোনো না-কোনোভাবে। এরকম লেনদেন চলে আসছে আবহমানকাল থেকেই। প্রাত্যহিক প্রয়োজনীয় আদান-প্রদানই মূলত ব্যবসা। কালের আবর্তনে তাতে মানুষ যুক্ত করে কৌশল ও নিয়মকানুন। ফলে ব্যবসায় সংমিশ্রণ ঘটে ভালো ও মন্দের।</p><p>মানুষের অর্থনৈতিক দিকটি যেন স্বচ্ছ ও নির্ভেজাল থাকে, এজন্য ইসলাম উপকারী কেনাবেচাকে হালাল আর ক্ষতিকর ক্রয়বিক্রয়কে হারাম ঘোষণা করেছে। তাই প্রত্যেক মুসলিমের কর্তব্য হলো, ব্যবসার ক্ষেত্রে হালাল-হারামের বিধান জানা। বৈধ উপায়ে সম্পদ উপার্জন করা। বেচাকেনায় কাউকে না ঠকানো। অসৎ লোকদের প্রতারণা থেকে সাবধান থাকা।</p><p>এ গ্রন্থে ইসলামি অর্থনীতির আলোকে আধুনিক বিজনেস, ব্যাংকিং, মার্কেটিং পলিসি প্রভৃতি নিয়ে আলোচনা করা হয়েছে। প্রতিটি বিষয়ের প্রয়োগক্ষেত্র উল্লেখ করে বর্তমান সময়ের উদাহরণ টেনে একে আরও স্পষ্ট করা হয়েছে। সর্বোপরি ইসলামি বিধানের আলোকে আধুনিক অর্থনীতি জানতে শিক্ষিত ও সাধারণ সকলের জন্যই গ্রন্থটি উপকারী হবে, ইনশাআল্লাহ।</p>",
+      "image": "book-kitabul-bayu-0aee.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/12/KITABUL-BUYU.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%95%e0%a6%bf%e0%a6%a4%e0%a6%be%e0%a6%ac%e0%a7%81%e0%a6%b2-%e0%a6%ac%e0%a7%81%e0%a6%af%e0%a6%bc%e0%a7%81/pd/29452",
+        "https://www.rokomari.com/book/363421/কিতাবুল-বুয়ু"
+      ]
+    },
+    {
+      "name": "জিনজাতির বিস্ময়কর জগৎ",
+      "nameEn": "Jinjatir Bismoykor Jogod",
+      "slug": "jinjatir-bismoykor-jogod",
+      "mrp": 300,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 200,
+      "edition": "1st Published, December 2023",
+      "binding": "পেপারব্যাক",
+      "weight": 200,
+      "translators": [],
+      "authors": [
+        {
+          "name": "আবু আহমাদ সারোয়ার",
+          "nameEn": "Abu Ahmad Sarwar"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>জিনজাতি আল্লাহর এক বিস্ময়কর সৃষ্টি। এই পৃথিবীতে মানুষ সৃষ্টির আগে জিনদের বসবাস ছিল। আল্লাহ তাআলা তাদের ধোঁয়াবিহীন আগুন থেকে সৃষ্টি করেছেন এবং দিয়েছেন আশ্চর্য সব ক্ষমতা। মানবসমাজের অসম্ভব অনেক কিছুই জিনদের জগতে নিতান্ত স্বাভাবিক ঘটনা। তারা আমাদের দেখতে পায়, আমরা তাদের দেখতে পারি না। তারা আমাদের ব্যাপারে প্রায় সবকিছুই জানে, সেই তুলনায় আমরা তাদের ব্যাপারে খুব কমই জানি।</p><p>জিনদের জীবন, জগৎ, ইতিহাস, কার্যকলাপ সবই মানুষের অগোচরে ও জ্ঞানের বাইরে। এ সম্পর্কে যতটুকু জানা যায়, তা কুরআন-হাদিসের বিশুদ্ধ বর্ণনার মাধ্যমে। জিনদের রয়েছে সমাজজীবন, ধর্ম-সংস্কৃতি ও শ্রেণিবিভেদ। পাপ-পুণ্যের হিসাব-নিকাশ তাদেরও হবে। কুরআন-হাদিসের আলোকে জিনজাতির ব্যাপারে বিস্তারিত আলোচনা করা হয়েছে এ বইয়ে।</p>",
+      "image": "book-jinjatir-bismoykor-jogod-c9bc.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/12/Jinnjatir-Bissoykor-Jogot.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%9c%e0%a6%bf%e0%a6%a8%e0%a6%9c%e0%a6%be%e0%a6%a4%e0%a6%bf%e0%a6%b0-%e0%a6%ac%e0%a6%bf%e0%a6%b8%e0%a7%8d%e0%a6%ae%e0%a6%af%e0%a6%bc%e0%a6%95%e0%a6%b0-%e0%a6%9c%e0%a6%97%e0%a7%8e/pd/29449",
+        "https://www.rokomari.com/book/363426/জিনজাতির-বিস্ময়কর-জগৎ"
+      ]
+    },
+    {
+      "name": "গল্প নয়, একমুঠো আলো",
+      "nameEn": "Golpo Noi Akmotho Alo",
+      "slug": "golpo-noi-akmotho-alo",
+      "mrp": 285,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 200,
+      "edition": "1st Published, December 2023",
+      "binding": "পেপারব্যাক",
+      "weight": 200,
+      "translators": [
+        "রিফাত মাহমুদ"
+      ],
+      "authors": [
+        {
+          "name": "ড. আদহাম আশ শারকাবি",
+          "nameEn": "Dr. Adham al-Sharqawi"
+        }
+      ],
+      "categories": [
+        "ইসলামী সাহিত্য"
+      ],
+      "description": "<p>বহতা নদীর স্রোতের মতো বয়ে যায় সময়। ঢেউয়ের তোড় ঠেলে, জলকল্লোলে দুলে দুলে ছুটে চলে জীবনতরী। ঘাটে ঘাটে নোঙর করে সওদা নেয়; হাটে হাটে ফেরি করে পুঁজি জমায়। এভাবে এগিয়ে যায় অন্তিম মোহনায়। যখন সন্ধ্যা নেমে আসে, থেমে যায় ইহজীবনের বাইচ; শুরু হয় পরপারের যাত্রা। সেই যাত্রার পাথেয় এখান থেকেই সঞ্চয় করে নিতে হয়।</p><p>পার্থিব জীবনের সর্বোত্তম পাথেয় তাকওয়া তথা আল্লাহর ভয়। মুমিন বান্দার মনে সবসময় আল্লাহর ভয় থাকে। তার কথায় ও কাজে এটা ফুটে ওঠে। তাই সে জীবনযাপনের প্রতিটি ক্ষেত্রে এ পাথেয় সামনে রাখে, এর আলোকে পথ চলে। এটাই ইসলামের মহান শিক্ষা, জীবন গড়ার দীক্ষা। এই বইয়ে গল্পের আবহের ভেতর দিয়ে ইসলামের এ শিক্ষাকে তুলে ধরা হয়েছে।</p>",
+      "image": "book-golpo-noi-akmotho-alo-f3f1.webp",
+      "pdf": "golpo-noi-akmotho-alo-f3f1.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/12/GOLPO-NOY-EKMUTHO-ALO.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%97%e0%a6%b2%e0%a7%8d%e0%a6%aa-%e0%a6%a8%e0%a6%af%e0%a6%bc-%e0%a6%8f%e0%a6%95%e0%a6%ae%e0%a7%81%e0%a6%a0%e0%a7%8b-%e0%a6%86%e0%a6%b2%e0%a7%8b/pd/29451",
+        "https://www.rokomari.com/book/363422/গল্প-নয়-একমুঠো-আলো"
+      ]
+    },
+    {
+      "name": "জিন, জাদু ও বদনজরের চিকিৎসা (রুকইয়াহ)",
+      "nameEn": "Jin Jadu O Bodnojor Cikitsa Rokaiya",
+      "slug": "jin-jadu-o-bodnojor-cikitsa-rokaiya",
+      "mrp": 430,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 296,
+      "edition": "1st Published, December 2023",
+      "binding": "হার্ডকভার",
+      "weight": 400,
+      "translators": [
+        "মুফতি তারেকুজ্জামান"
+      ],
+      "authors": [
+        {
+          "name": "ওয়াহিদ আবদুস সালাম বালি",
+          "nameEn": "Wahid Abdus Salam Bali"
+        }
+      ],
+      "categories": [
+        "ইসলামি আমল ও আমলের সহায়িকা"
+      ],
+      "description": "<p>আমরা যা দেখি, এটা পৃথিবীর দৃশ্যমান জগৎ। এর কেন্দ্রবিন্দুতে রয়েছে মানুষ, প্রাণিকুল ও উদ্ভিদরাজি। আরেকটা জগৎ রয়েছে, যা আমাদের চোখে পড়ে না। সেই অদৃশ্য জগৎটাই জিনদের জগৎ। জিনদেরও রয়েছে সমাজজীবন, ধর্ম ও শ্রেণিবিভেদ। কিছু জিন আছে শান্তশিষ্ট, কিছু আবার মারাত্মক দুষ্ট। জাদুকরেরা এই দুষ্ট জিনদের নিয়ন্ত্রণ করে এদের শক্তি কাজে লাগিয়ে জাদুটোনা করে। জাদু যে কুফরি, এতে কোনো সন্দেহ নেই।</p><p>দুষ্ট জিনের কুপ্রভাব, জাদুটোনা ও বদনজরের বিষক্রিয়া মানুষের স্বাভাবিক জীবনযাপনকে বিপর্যস্ত করে তোলে। অনেক সময় এগুলো ভয়ানক সমস্যা হয়ে দেখা দেয়। তবে সমস্যা যত ভয়ানক হোক না কেন, কুরআনুল কারিমে এর রয়েছে সমাধান ও সুচিকিৎসা। এ বইয়ে জিন, জাদুটোনা, বদনজর ইত্যকার সমস্যাবলি নিয়ে আলোচনা করা হয়েছে। বাতলে দেওয়া হয়েছে কুরআনি চিকিৎসা ও সমাধান। যাদের জীবন এসব সমস্যায় জর্জরিত, এ বইটির মাধ্যমে তারা উপকৃত হবেন, ইনশাআল্লাহ!</p>",
+      "image": "book-jin-jadu-o-bodnojor-cikitsa-rokaiya-d81a.webp",
+      "pdf": "jin-jadu-o-bodnojor-cikitsa-rokaiya-d81a.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/12/JINN-JADU-O-BODNOJOR.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%9c%e0%a6%bf%e0%a6%a8-%e0%a6%9c%e0%a6%be%e0%a6%a6%e0%a7%81-%e0%a6%93-%e0%a6%ac%e0%a6%a6%e0%a6%a8%e0%a6%9c%e0%a6%b0%e0%a7%87%e0%a6%b0-%e0%a6%9a%e0%a6%bf%e0%a6%95%e0%a6%bf%e0%a7%8e%e0%a6%b8/pd/29454",
+        "https://www.rokomari.com/book/363419/জিন-জাদু-ও-বদনজরের-চিকিৎসা-রুকইয়াহ"
+      ]
+    },
+    {
+      "name": "মা, মা, মা এবং বাবা - [দ্বিতীয় খণ্ড]",
+      "nameEn": "Ma Ma Ma And Baba",
+      "slug": "ma-ma-ma-and-baba",
+      "mrp": 258,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 168,
+      "edition": "1st Published, December 2023",
+      "binding": "পেপারব্যাক",
+      "weight": 200,
+      "translators": [],
+      "authors": [
+        {
+          "name": "আরিফ আজাদ",
+          "nameEn": "Arif Azad"
+        }
+      ],
+      "categories": [
+        "আদব, আখলাক"
+      ],
+      "description": "<p>বাবা-মা ও সন্তানের মধ্যকার সম্পর্কটাই পৃথিবীর সবচেয়ে মধুর সম্পর্ক। এই সম্পর্কের কোথাও কোনো খাঁদ নেই। নেই লৌকিকতা কিংবা স্বার্থপরতার ছোঁয়া। স্নেহ-মমতা, আদর-যত্ন ও নিখাঁদ ভালোবাসার এক অদ্ভুত মায়াবী চক্রে আবর্তিত এই সম্পর্কের প্রতিটি মুহূর্ত। আমাদের জন্ম ও বেড়ে ওঠায়, শৈশব-কৈশোরের গল্পে, আমাদের যুবক হয়ে ওঠার চিত্রপটে তারাই থাকেন মূল ভূমিকায়।</p><p>যারা নিজেদের সবটুকু দিয়ে সন্তানদের মানুষ করেন, সন্তানের সুন্দর ভবিষ্যতের জন্য উৎসর্গ করেন নিজেদের বর্তমান। অথচ এই সন্তানদের কাছেই একটা সময়ে বাবা-মা’রা হয়ে যান অতিরিক্ত বোঝা ও অযাচিত জঞ্জাল। দুনিয়ার লোভ আর রূপের মোহে পড়ে যারা ভুলে যায় বাবা-মা’দের, ভুলে যায় তাদের অবদান ও ত্যাগ-তিতিক্ষার কথা, কেমন হয় তাদের শেষ পরিণতি?</p><p>আর যেসব সন্তান জীবনভর বাবা-মা’কে আগলে রাখেন, ভালোবাসেন। সন্তান হিসেবে তাদের হক আদায়ের প্রতি থাকেন যত্নশীল। সেসব সৌভাগ্যবান সন্তানের শুভ পরিণতির গল্পগুলোই বা কেমন? এমন আনন্দ-বেদনার গল্পের সমাহার নিয়ে রচিত ‘মা, মা, মা এবং বাবা’ সিরিজ।</p>",
+      "image": "book-ma-ma-ma-and-baba-3140.webp",
+      "pdf": "ma-ma-ma-and-baba-3140.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/12/MA-MA-MA-EBONG-BABASECOND-PART.png",
+      "sources": [
+        "https://www.wafilife.com/ma-ma-ma-and-baba/pd/29383",
+        "https://www.rokomari.com/book/170978/মা-মা-মা-এবং-বাবা"
+      ]
+    },
+    {
+      "name": "ফেরেশতাদের জগৎ",
+      "nameEn": "Fereshtader Jogot",
+      "slug": "fereshtader-jogot",
+      "mrp": 220,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 144,
+      "edition": "1st Published, December 2023",
+      "binding": "হার্ডকভার",
+      "weight": 250,
+      "translators": [
+        "আশিক আরমান নিলয়"
+      ],
+      "authors": [
+        {
+          "name": "আশিক আরমান নিলয়",
+          "nameEn": "Ashik Arman Niloy"
+        },
+        {
+          "name": "ড. উমার সুলায়মান আল আশকার",
+          "nameEn": "Dr. Umar Sulaiman al-Ashqar"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>ফেরেশতা এক বিস্ময়কর সৃষ্টি। তারা আল্লাহর বাহিনী, নুরের তৈরি। বিশ্বব্রহ্মাণ্ডের সুষ্ঠু পরিচালনা তাদের হাতে ন্যস্ত। মর্যাদা ও মর্তবা অনুসারে তাদের রয়েছে নানা শ্রেণিবিন্যাস। রিজিকবণ্টন, মেঘমালা পরিচালনা, আমলনামা-লিপিবদ্ধকরণ, জানকবজ, জান্নাত-জাহান্নামের দেখভাল-সহ দুনিয়া আখিরাতের যাবতীয় দায়িত্ব তাদের কাঁধে।</p><p>সৃষ্টি থেকে শুরু করে কিয়ামত পর্যন্ত ফেরেশতাদের ইতিহাস ও কর্মবিধির বিস্তারিত বিবরণ তুলে ধরা হয়েছে এই বইয়ে। ফেরেশতাদের প্রতি বিশ্বাস স্থাপন ঈমানের মৌলিক অংশ। তাদের সম্পর্কে একজন মুমিনের যা যা জানা দরকার, তার সবই উঠে এসেছে এই দুই মলাটের ভেতরে।</p>",
+      "image": "book-fereshtader-jogot-6aaa.webp",
+      "pdf": "fereshtader-jogot-6aaa.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/12/FERESHTADER-JOGOT.png",
+      "sources": [
+        "https://www.wafilife.com/fereshtader-jogot/pd/29389",
+        "https://www.rokomari.com/book/363163/ফেরেশতাদের-জগৎ"
+      ]
+    },
+    {
+      "name": "গুনাহ মাফের উপায়",
+      "nameEn": "Gunah Maper Upaiy",
+      "slug": "gunah-maper-upaiy",
+      "mrp": 335,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 224,
+      "edition": "1st Published, December 2023",
+      "binding": "পেপারব্যাক",
+      "weight": 250,
+      "translators": [],
+      "authors": [
+        {
+          "name": "শাহাদাৎ হুসাইন খান ফয়সাল",
+          "nameEn": "Shahadat Hossain Khan Faysal"
+        }
+      ],
+      "categories": [
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>পানির স্পর্শে লোহায় যেমন জং ধরে, মরিচা পড়ে, গুনাহের ফলেও আমাদের অন্তরে ময়লা জমে, আত্মায় বিরাজ করে পঙ্কিলতা। লোহার মরিচা লোহাকে যেভাবে ভঙ্গুর বানিয়ে দেয়, পাপের আস্তরণ ঠিক একইভাবে আমাদের অন্তরকে করে ফেলে শুষ্ক, শক্ত ও অনুভূতি-শূন্য। কাপড়ে ময়লা জমলে আমরা তা ধুয়ে পরিষ্কার করি। ফেলে দিই না। ক্ষুধা পেলেও আমরা খাবার গ্রহণ করি। ক্ষুধার্ত থাকি না। অথচ গুনাহের বেলায় এর ঠিক বিপরীতটাই আমরা করে থাকি।</p><p>আমরা মনে করি, গুনাহ করে ফেললে বুঝি আমাদের আর পরিত্রাণ নেই। অথচ আসমানে যিনি আছেন, তিনি রাহমানুর রাহিম। অপার দয়ার ভান্ডার সমেত তিনি তাকিয়ে আছেন তাঁর কোন বান্দা তাঁর কাছে ক্ষমা ভিক্ষা করছে, তাঁর কাছে আশ্রয় চাইছে, তাঁর কাছে করজোড়ে প্রার্থনা করছে। তিনি অপেক্ষা করেন অনুতপ্ত হৃদয়ের জন্য, অশ্রুসিক্ত দুটো চোখের জন্য, কাঁপা কাঁপা দুটো হাত আর একটি নত মস্তকের জন্য । অতঃপর তিনি তাদের ক্ষমা করেন।</p><p>যেসব উপায় অবলম্বন করলে আমাদের অন্তর পরিশুদ্ধ হবে, যে আমলগুলো করলে আমাদের আত্মা কলুষমুক্ত হবে—সেসব নিয়েই রচিত হয়েছে ‘গুনাহ মাফের উপায়’।</p>",
+      "image": "book-gunah-maper-upaiy-1e42.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/12/GUNAH-MAFER-UPAY.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%97%e0%a7%81%e0%a6%a8%e0%a6%be%e0%a6%b9-%e0%a6%ae%e0%a6%be%e0%a6%ab%e0%a7%87%e0%a6%b0-%e0%a6%89%e0%a6%aa%e0%a6%be%e0%a6%af%e0%a6%bc/pd/29450",
+        "https://www.rokomari.com/book/363423/গুনাহ-মাফের-উপায়"
+      ]
+    },
+    {
+      "name": "সিরাতে ইবনে হিশাম",
+      "nameEn": "Sirate Ibne Hisham",
+      "slug": "sirate-ibne-hisham",
+      "mrp": 436,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 304,
+      "edition": "1st Published, December 2023",
+      "binding": "হার্ডকভার",
+      "weight": 400,
+      "translators": [
+        "তাহমিদ বিন একরাম"
+      ],
+      "authors": [
+        {
+          "name": "ইবনে হিশাম",
+          "nameEn": "Ibn Hisham"
+        }
+      ],
+      "categories": [
+        "সীরাতে রাসূল (সা.)"
+      ],
+      "description": "<p>নবিজি সাল্লাল্লাহু আলাইহি ওয়া সাল্লামের সিরাত এক প্রোজ্জ্বল প্রদীপ—যার সামনে আমাদের জীবন এক চিলতে সলতের মতো। এর আলোয় প্রজ্জ্বলিত হয়ে ওঠে আমাদের জীবনবাতি। আলোকিত হয়ে ওঠে হৃদয়জগৎ। জীবনের কানাগলি ছেড়ে আমরা তখন উঠে যাই আলোর রাজপথে। ছুটে যাই ভালোর দিকে। এজন্য সিরাতের মোহন এত দারুণ। জানা ঘটনা, জানা ইতিহাস বারবার পড়ার পরেও মনের তৃপ্তি মেটে না। এ যেন সঞ্জীবনী সুধা—যত পান করি, তত উজ্জীবিত হই।</p><p>‘সিরাতু ইবনি হিশাম’ বহুলপঠিত ও সমাদৃত একটি গ্রন্থ। এটি সিরাতশাস্ত্রের প্রামাণ্যগ্রন্থ হিসেবে বরিত। সিরাতের পাঠক, লেখক, গবেষক সকলের কাছে গ্রন্থটির যথেষ্ট কদর ও ব্যাপক গ্রহণযোগ্যতা রয়েছে। তাই সহস্র শতাব্দীর বেশি সময় ধরে আজও এর উপকারিতা ও জনপ্রিয়তা সমান। এই গ্রন্থে নবিজি সাল্লাল্লাহু আলাইহি ওয়া সাল্লামের গোটা জীবনকে আলোকবর্তিকা হিসেবে তুলে ধরা হয়েছে। যার উজ্জ্বল পাঠগ্রহণের দ্বারা সমগ্র মুসলিম উম্মাহ পাবে সঠিক পথের দিশা।</p>",
+      "image": "book-sirate-ibne-hisham-c8a4.webp",
+      "pdf": "sirate-ibne-hisham-c8a4.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/12/SIRAT-IBN-HISAM.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%b8%e0%a6%bf%e0%a6%b0%e0%a6%be%e0%a6%a4%e0%a7%87-%e0%a6%87%e0%a6%ac%e0%a6%a8%e0%a7%87-%e0%a6%b9%e0%a6%bf%e0%a6%b6%e0%a6%be%e0%a6%ae/pd/29453",
+        "https://www.rokomari.com/book/363420/সিরাতে-ইবনে-হিশাম"
+      ]
+    },
+    {
+      "name": "মুসা আলাইহিস সালামের ঘটনাবহুল জীবন এবং আমাদের জন্য রেখে যাওয়া শিক্ষা",
+      "nameEn": "Musa Alaihis Salamer Gotonabhul Jibon And Amader Jonno Rekhe Jaoya Shikkha",
+      "slug": "musa-alaihis-salamer-gotonabhul-jibon-and-amader-jonno-rekhe-jaoya-shikkha",
+      "mrp": 210,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 136,
+      "edition": "1st Published, December 2023",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [
+        "উস্তায আসাদুল্লাহ ফুয়াদ",
+        "আসাদুল্লাহ ফুয়াদ"
+      ],
+      "authors": [
+        {
+          "name": "শাইখ আলী জাবির আল ফাইফী",
+          "nameEn": "Shaykh Ali Jaber al-Faifi"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>মুসা আলাইহিস সালামের জীবন যেমন ঘটনাবহুল, তেমনই শিক্ষণীয় উপাদানে ভরপুর। তার নবি হওয়ার পূর্বাপরের ঘটনাবলি কুরআনে বিশদভাবে বর্ণিত হয়েছে। তার সমাজে যেসব অন্যায়, পাপাচার, অরাজকতা ও শ্রেণিবৈষম্য ছিল, তিনি সেসবের বিরুদ্ধে রুখে দাঁড়িয়েছেন। আল্লাহদ্রোহী ফিরাউনকে ভোগ করিয়েছেন চূড়ান্ত পরিণতি। তার সম্প্রদায় লাভ করেছে আল্লাহর অগণিত নিয়ামত। কিন্তু তারা ছিল চরম অকৃতজ্ঞ ও অবাধ্য জাতি। আল্লাহ তাআলা তাই তাদেরকেও দিয়েছেন উচিত শিক্ষা।</p><p>কুরআনুল কারিমের বর্ণনা ও প্রসঙ্গ ধরে এসব বিষয় নিয়ে আলোচনা করা হয়েছে এ বইয়ে। পাশাপাশি আলোকপাত করা হয়েছে আমাদের সমাজের বাস্তবতা এবং রূপরেখার ওপরও। সর্বোপরি মুসা আলাইহিস সালামের জীবনে যেসব শিক্ষণীয় বিষয় রয়েছে, কীভাবে সেগুলো আমরা হৃদয়ে ধারণ করব—এরও দিকনির্দেশনা রয়েছে এ বইয়ে।</p>",
+      "image": "book-musa-alaihis-salamer-gotonabhul-jibon-and-amader-j-47e1.webp",
+      "pdf": "musa-alaihis-salamer-gotonabhul-jibon-and-amader-j-47e1.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/12/MUSA-AS-ER-GHOTONABOHUL-JIBON.png",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%ae%e0%a7%81%e0%a6%b8%e0%a6%be-%e0%a6%86%e0%a6%b2%e0%a6%be%e0%a6%87%e0%a6%b9%e0%a6%bf%e0%a6%b8-%e0%a6%b8%e0%a6%be%e0%a6%b2%e0%a6%be%e0%a6%ae%e0%a7%87%e0%a6%b0-%e0%a6%98%e0%a6%9f%e0%a6%a8/pd/29387",
+        "https://www.rokomari.com/book/363167/মুসা-আলাইহিস-সালামের-ঘটনাবহুল-জীবন-এবং-আমাদের-জন্য-রেখে-যাওয়া-শিক্ষা"
+      ]
+    },
+    {
+      "name": "কিয়ামতের আলামত ও শেষ যুগের ভয়াবহ ফিতনা",
+      "nameEn": "Kiyamoter Alamot O Shesh Zuger Voyaboho Fitna",
+      "slug": "kiyamoter-alamot-o-shesh-zuger-voyaboho-fitna",
+      "mrp": 960,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 696,
+      "edition": "1st Published, 2023",
+      "binding": "হার্ডকভার",
+      "weight": 800,
+      "translators": [],
+      "authors": [
+        {
+          "name": "মীযান হারুন",
+          "nameEn": "Mizan Harun"
+        }
+      ],
+      "categories": [
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>নিশ্চয়ই কিয়ামত অতি নিকটে । অথচ আমরা কত উদাসীন ! আল্লাহকে ভুলে গিয়ে আকণ্ঠ ডুবে আছি পাপের সাগরে। ভ্রান্ত বিশ্বাস, ভুল ধারণা, মনগড়া প্রথা ও প্রচলিত অপব্যাখ্যায় আক্রান্ত আমাদের অনেকেই। কিয়ামত সম্পর্কে বিশুদ্ধ ও পরিপূর্ণ জ্ঞান না থাকার কারণে বহু মুসলিম আজ পথভ্রষ্টতায় নিমজ্জিত। ঈমান-আমল ও আকিদা সব যেন হারাতে বসেছে আমাদের এই প্রজন্ম ।</p><p>মুসলিম-জীবনের এ সকল গুরুতর সমস্যা নিরসনে সম্পূর্ণ কুরআন ও হাদিসের আলোকে লেখা হয়েছে ‘কিয়ামতের আলামত ও শেষ যুগের ভয়াবহ ফিতনা’ বইটি । এখানে মাহদি ও ঈসা আলাইহিমাস সালামের আগমন, দাজ্জালের ভয়াবহ ফিতনা, ইয়াজুজ-মাজুজের বিপর্যয়-সহ প্রতিটি বিষয় সবিস্তারে আলোচনা করা হয়েছে । পাশাপাশি এ বইটি থেকে আরও জানা যাবে, অতি নিকটবর্তী সেই কঠিনতম সময়ে ঈমান-আমল ঠিক রেখে কীভাবে আমরা ফিতনা থেকে বেঁচে থাকব এবং আল্লাহ তাআলার প্রিয় বান্দায় পরিণত হতে পারব ।</p>",
+      "image": "book-kiyamoter-alamot-o-shesh-zuger-voyaboho-fitna-a142.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/03/কিয়ামতের-আলামত.jpg",
+      "sources": [
+        "https://www.wafilife.com/kiyamoter-alamot-o-shesh-zuger-voyaboho-fitna/pd/27186",
+        "https://www.rokomari.com/book/346475/কিয়ামতের-আলামত-ও-শেষ-যুগের-ভয়াবহ-ফিতনা"
+      ]
+    },
+    {
+      "name": "ভ্রান্তির সমাধি",
+      "nameEn": "Vrantir Somadhi",
+      "slug": "vrantir-somadhi",
+      "mrp": 268,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 168,
+      "edition": "1st Published, 2023",
+      "binding": "পেপারব্যাক",
+      "weight": 200,
+      "translators": [],
+      "authors": [
+        {
+          "name": "মুহাম্মাদ মুশফিকুর রহমান মিনার",
+          "nameEn": "Muhammad Mushfiqur Rahman Minar"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>কিছু প্রশ্নের মূলে থাকে জানার আগ্রহ । অজানাকে জানার এ বাসনা নন্দিত । আর কিছু প্রশ্নের সাথে ছুটে আসে বিদ্বেষ ও কটাক্ষের তির । এটা সবখানে সবসময় নিন্দিত । মুশকিল হচ্ছে, এখন নেতিবাচকতা ছড়ানো হচ্ছে ইতিবাচক শিরোনামে। এই যেমন ইসলামবিদ্বেষের নাম দেওয়া হয়েছে মুক্তচিন্তা । এর দোহাই দিয়ে যেসব প্রশ্ন করা হয়, তার অন্যতম উদ্দেশ্য মানুষের মধ্যে বিভ্রান্তি তৈরি করা ।</p><p>ইসলাম যেখানে এক পরিপূর্ণ জীবনব্যবস্থা দিয়েছে, মৌলিক-অমৌলিক প্রতিটি বিষয়ে প্রদান করেছে সুন্দর ও সঠিক সমাধান; সেসব বিষয়ের ওপর প্রশ্ন বা আপত্তি তোলা কিংবা সন্দেহ-সংশয় প্রকাশ করা নির্জলা মিথ্যাচার এবং বাতুলতা ছাড়া আর কিছুই নয় । ইসলাম সম্পর্কে মুক্তমনাদের তেমনই কিছু প্রশ্নের বাস্তবসম্মত ও প্রমাণসিদ্ধ জবাব দিয়ে সাজানো হয়েছে এই বই—ভ্রান্তির সমাধি ।</p>",
+      "image": "book-vrantir-somadhi-cd7f.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/03/ভ্রান্তির-সমাধি.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%ad%e0%a7%8d%e0%a6%b0%e0%a6%be%e0%a6%a8%e0%a7%8d%e0%a6%a4%e0%a6%bf%e0%a6%b0-%e0%a6%b8%e0%a6%ae%e0%a6%be%e0%a6%a7%e0%a6%bf/pd/27187",
+        "https://www.rokomari.com/book/346706/ভ্রান্তির-সমাধি"
+      ]
+    },
+    {
+      "name": "আত্মশুদ্ধির ব্যাবহারিক পাঠ",
+      "nameEn": "Attoshuddhir Beboharik Path",
+      "slug": "attoshuddhir-beboharik-path",
+      "mrp": 190,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 120,
+      "edition": "1st Published, 2023",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [
+        "আব্দুল্লাহ মজুমদার"
+      ],
+      "authors": [
+        {
+          "name": "উস্তায মাহমুদ তাওফিক",
+          "nameEn": "Ustadh Mahmud Tawfiq"
+        }
+      ],
+      "categories": [
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>প্রতিদিন আমাদের জীবনে কত বিচিত্র ঘটনা ঘটে । কোনোটা সুখের, কোনোটা দুঃখের । সুখের ঘটনাগুলো জীবনে আনন্দের সাময়িক পরশ বুলালেও দুঃখের ঘটনাবলি যাপনকে ব্যাকুল করে রাখে বেদনায় । লেখক এই বইয়ে দেখিয়েছেন, কীভাবে আমরা চাইলেই আমাদের জীবনের দুঃখের গল্পগুলোকে সুখের গল্পে রূপান্তর করতে পারি । দৈনন্দিন জীবনের প্রতিটি ঘটনায় ইতিবাচক দৃষ্টিভঙ্গি লালনের নানা কলাকৌশল তিনি তুলে ধরেছেন দারুণ মুনশিয়ানায় । তিনি দেখিয়েছেন, কীভাবে প্রাত্যহিক জীবনে শুদ্ধাচারের মধ্য দিয়ে সমাজের সকলের কাছে প্রিয়ভাজন হওয়ার পাশাপাশি আল্লাহর নৈকট্যপ্রাপ্ত বান্দাদেরও একজন হয়ে উঠব, ইনশাআল্লাহ । নিজেকে পরিশুদ্ধ করার মহান এই যাত্রায় আপনাকেও স্বাগতম।</p>",
+      "image": "book-attoshuddhir-beboharik-path-d870.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/03/আত্মশুদ্ধির-ব্যাবহারিক-পাঠ.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%86%e0%a6%a4%e0%a7%8d%e0%a6%ae%e0%a6%b6%e0%a7%81%e0%a6%a6%e0%a7%8d%e0%a6%a7%e0%a6%bf%e0%a6%b0-%e0%a6%ac%e0%a7%8d%e0%a6%af%e0%a6%be%e0%a6%ac%e0%a6%b9%e0%a6%be%e0%a6%b0%e0%a6%bf%e0%a6%95-%e0%a6%aa/pd/27188",
+        "https://www.rokomari.com/book/346472/আত্মশুদ্ধির-ব্যাবহারিক-পাঠ"
+      ]
+    },
+    {
+      "name": "জীবনের সেরা রামাদান",
+      "nameEn": "Jiboner Sera Ramadan",
+      "slug": "jiboner-sera-ramadan",
+      "mrp": 286,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": null,
+      "edition": "1st Edition, 2023",
+      "binding": "পেপারব্যাক",
+      "weight": 250,
+      "translators": [
+        "আল-আমিন ফেরদৌস"
+      ],
+      "authors": [
+        {
+          "name": "ড. সালমান আল আওদাহ",
+          "nameEn": "Dr. Salman al-Ouda"
+        }
+      ],
+      "categories": [
+        "ইসলামি আমল ও আমলের সহায়িকা"
+      ],
+      "description": "<p>রামাদানকে আমরা কীভাবে কাজে লাগাব—এর বিস্তারিত বিবরণ উঠে এসেছে এ বইয়ে। সিয়াম, সালাত, তারাবি, তিলাওয়াত, ইতিকাফ-সহ রামাদান-সংশ্লিষ্ট প্রতিটি বিষয়ের বিস্তারিত বিবরণ তুলে ধরা হয়েছে এতে। নিজেকে পাপমুক্ত ও শুদ্ধ করে তোলার এই মাসটিকে যারা যথাযথভাবে কাজে লাগাতে চায়, এ বইটি তাদের জন্য আদর্শ একটি গাইড-বুকের কাজ করবে, ইনশাআল্লাহ।</p><p>এ বইয়ে কঠিন ও জটিল বিষয়গুলোও তুলে ধরা হয়েছে সহজ ও সরলভাবে। উপরন্তু কলমের কালির সঙ্গে হৃদয়ের সবটুকু দরদ যেন ঢেলে দেওয়া হয়েছে বইটির পাতায়-পাতায়। অসামান্য মায়া নিয়ে উম্মাহকে বলা হয়েছে এমন কিছু কথা, যা সচরাচর খুব একটা শোনা যায় না।</p>",
+      "image": "book-jiboner-sera-ramadan-393b.webp",
+      "pdf": "jiboner-sera-ramadan-393b.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/02/Jiboner-Sera-Ramadan-1.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%9c%e0%a7%80%e0%a6%ac%e0%a6%a8%e0%a7%87%e0%a6%b0-%e0%a6%b8%e0%a7%87%e0%a6%b0%e0%a6%be-%e0%a6%b0%e0%a6%be%e0%a6%ae%e0%a6%be%e0%a6%a6%e0%a6%be%e0%a6%a8/pd/24000",
+        "https://www.rokomari.com/book/286599/জীবনের-সেরা-রামাদান"
+      ]
+    },
+    {
+      "name": "জান্নাতিদের আমল",
+      "nameEn": "Jannatider Amol",
+      "slug": "jannatider-amol",
+      "mrp": 470,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 328,
+      "edition": "1st Edition, 2023",
+      "binding": "পেপারব্যাক",
+      "weight": 350,
+      "translators": [
+        "উস্তায রিফাত মাহমুদ"
+      ],
+      "authors": [
+        {
+          "name": "শাইখ আলা নুমান",
+          "nameEn": "Shaykh Ala Nu'man"
+        }
+      ],
+      "categories": [
+        "ইসলামি আমল ও আমলের সহায়িকা"
+      ],
+      "description": "<p>আমাদের জীবন খুবই সংক্ষিপ্ত। ছোট্ট এই জীবনে চাইলেও আমরা খুব বেশি আমল করতে পারি না। আর তাই আল্লাহ তাআলা আপন অনুগ্রহে আমাদের জন্য বিপুল সাওয়াব অর্জনের সুযোগ করে দিয়েছেন। আমরা যদি একটু বুদ্ধি খাটিয়ে, একটু ভেবেচিন্তে, বিশেষ কিছু আমল নিয়মিত করতে পারি, তাহলে অল্প সময়ের ব্যবধানে আমাদের নেকির পাল্লা অনেক বেশি ভারী হয়ে উঠবে। হাশরের ময়দানে যখন কেউ কাউকে চিনবে না, তখন এই আমলগুলোই হবে আমাদের একমাত্র সম্বল,জাহান্নাম থেকে মুক্তি পাওয়ার অন্যতম অসিলা।</p><p>‘জান্নাতিদের আমল’ বইটির পাতায় পাতায় বর্ণিত হয়েছে হাজারো আমলের কথা।যেসব আমলের মাধ্যমে মিলবে আল্লাহর সন্তুষ্টি ও নৈকট্য, রাতে ঘুমিয়ে থেকেও অর্জন করা যাবে তাহাজ্জুদের সাওয়াব, শহিদ না হয়েওলাভ করা যাবেশহিদি মর্যাদা, কবরের আজাব থেকে মিলবে চিরমুক্তি, হাশরের ময়দানে আরশের ছায়া, প্রিয় নবিজির সুপারিশ এবং আরও কত কি!</p>",
+      "image": "book-jannatider-amol-f9b1.webp",
+      "pdf": "jannatider-amol-f9b1.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/02/Jannatider-Amol-1.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%9c%e0%a6%be%e0%a6%a8%e0%a7%8d%e0%a6%a8%e0%a6%be%e0%a6%a4%e0%a6%bf%e0%a6%a6%e0%a7%87%e0%a6%b0-%e0%a6%86%e0%a6%ae%e0%a6%b2/pd/23999",
+        "https://www.rokomari.com/book/286598/জান্নাতিদের-আমল"
+      ]
+    },
+    {
+      "name": "আল্লাহর প্রিয় বান্দাদের আমল",
+      "nameEn": "Allahor Prio Bandader Amol",
+      "slug": "allahor-prio-bandader-amol",
+      "mrp": 640,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 448,
+      "edition": "1st Edition, 2023",
+      "binding": "হার্ডকভার",
+      "weight": 550,
+      "translators": [
+        "উস্তায রিফাত মাহমুদ"
+      ],
+      "authors": [
+        {
+          "name": "শাইখ আলা নুমান",
+          "nameEn": "Shaykh Ala Nu'man"
+        }
+      ],
+      "categories": [
+        "ইসলামি আমল ও আমলের সহায়িকা"
+      ],
+      "description": "<p>অল্প আমলে অধিক সাওয়াব পেতে কে না চায়! আল্লাহর প্রিয় বান্দা হতে কার না ইচ্ছে করে! অথচ অধিকাংশ মুসলিমই জানে না, কীভাবে বুদ্ধি খাটিয়ে আমল করতে হয়; কোন সময় কোন আমলগুলো করলে সারারাত ঘুমিয়েও পাওয়া যায় তাহাজ্জুদের সাওয়াব, হজে না গিয়েও মিলে পূর্ণ হজের নেকি, শহিদ না হয়েও লাভ করা যায়শাহাদাতের মর্যাদা।</p><p>আল্লাহ তাআলা ইবাদতের ক্ষেত্রে এমনসব সুযোগের ব্যবস্থা করে রেখেছেন, যাতে আমরাসীমিত সময়ে এবং কম পরিশ্রমে নিজেদের আমলনামায় যুক্ত করতে পারি পাহাড়সমান সাওয়াব; পাপের সাগরে যা হবে আমাদের নাজাতের তরি। হাশরের ময়দানে সাওয়াবে ভরপুর আমলনামা দেখে নিজেরাই হয়ে যাববিস্মিত।</p><p>এজন্য জীবনকে আমলেরমাধ্যমে পরিপূর্ণ করে তুলতে এবং আল্লাহর আরও বেশি নৈকট্যপ্রাপ্ত বান্দা হতে আমাদের এবারের আয়োজন—‘আল্লাহর প্রিয় বান্দাদের আমল’।</p>",
+      "image": "book-allahor-prio-bandader-amol-1c8a.webp",
+      "pdf": "allahor-prio-bandader-amol-1c8a.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/02/Allahor-Priyo-Bandader-Amol-1.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%86%e0%a6%b2%e0%a7%8d%e0%a6%b2%e0%a6%be%e0%a6%b9%e0%a6%b0-%e0%a6%aa%e0%a7%8d%e0%a6%b0%e0%a6%bf%e0%a6%af%e0%a6%bc-%e0%a6%ac%e0%a6%be%e0%a6%a8%e0%a7%8d%e0%a6%a6%e0%a6%be%e0%a6%a6%e0%a7%87%e0%a6%b0/pd/23998",
+        "https://www.rokomari.com/book/286597/আল্লাহর-প্রিয়-বান্দাদের-আমল"
+      ]
+    },
+    {
+      "name": "হালাল হারামের বিধান",
+      "nameEn": "Halal Haramer Bidhan",
+      "slug": "halal-haramer-bidhan",
+      "mrp": 890,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 632,
+      "edition": "1st Published, 2022",
+      "binding": "হার্ডকভার",
+      "weight": 750,
+      "translators": [
+        "আসাদুল্লাহ ফুয়াদ"
+      ],
+      "authors": [
+        {
+          "name": "ড. ইউসুফ আল কারযাভী",
+          "nameEn": "Dr. Yusuf al-Qaradawi"
+        }
+      ],
+      "categories": [
+        "ইসলামি আমল ও আমলের সহায়িকা"
+      ],
+      "description": "<p>মুসলিম হিসেবে হালাল-হারামের ব্যাপারে আমাদের সর্বোচ্চ সতর্কতা আবশ্যক । অবশ্য কিছু বিষয়ের হালাল-হারাম হওয়া নিয়ে কখনো কখনো বেশ দ্বন্দ্বে পড়ে যাই আমরা । এটা হালাল হলে ওটা হারাম কেন, এভাবে হারাম হলে ওভাবে হালাল কেন—এ জাতীয় নানা প্রশ্ন আমাদের মাথায় ঘুরতে থাকে । দিশেহারা হয়ে পড়ি আমরা । অথচ কোনো কিছুর হালাল কিংবা হারাম সাব্যস্ত হওয়ার যে সামান্য কিছু মূলনীতি রয়েছে, সেগুলো জানা থাকলে এ অবস্থা থেকে অনেকাংশেই বেঁচে থাকা সম্ভব ।</p><p>একজন মুসলিমের জন্য কোন কাজটি হালাল আর কোনটি হারাম, কোন কাজ এক জায়গায় জায়িয হলেও অন্য জায়গায় বা অন্য সময়ে নাজায়িয, কোনো কাজ জায়িয এবং নাজায়িয হওয়ার কারণগুলোই বা কী ? ব্যক্তিগত, পারিবারিক, সামাজিক-জীবনঘনিষ্ঠ এমন অসংখ্য বিষয়ের বাস্তবধর্মী আলোচনা নিয়ে ড. ইউসুফ আল-কারযাবি রাহিমাহুল্লাহর বিশ্বজুড়ে সাড়াজাগানো গ্রন্থটি প্রকাশিত হলো ‘হালাল-হারামের বিধান’ নামে ।</p>",
+      "image": "book-halal-haramer-bidhan-0478.webp",
+      "pdf": "halal-haramer-bidhan-0478.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2022/11/Halal-Haramer-Bidhan.png",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%b9%e0%a6%be%e0%a6%b2%e0%a6%be%e0%a6%b2-%e0%a6%b9%e0%a6%be%e0%a6%b0%e0%a6%be%e0%a6%ae%e0%a7%87%e0%a6%b0-%e0%a6%ac%e0%a6%bf%e0%a6%a7%e0%a6%be%e0%a6%a8/pd/23046",
+        "https://www.rokomari.com/book/274274/হালাল-হারামের-বিধান"
+      ]
+    },
+    {
+      "name": "জান্নাতের সৌন্দর্য ও জাহান্নামের ভয়াবহতা",
+      "nameEn": "Jannater Shoundorjo O Jahannamer Bhoyabohota",
+      "slug": "jannater-shoundorjo-o-jahannamer-bhoyabohota",
+      "mrp": 515,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 331,
+      "edition": "New Edition, 2024",
+      "binding": "হার্ডকভার",
+      "weight": 450,
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. উমার সুলায়মান আল আশকার",
+          "nameEn": "Dr. Umar Sulaiman al-Ashqar"
+        }
+      ],
+      "categories": [
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>জান্নাত এমন এক শান্তিসুখের চিরস্থায়ী নিবাস, যা আমরা কখনো কল্পনাও করতে পারি না। জান্নাতের শুরু আছে, শেষ নেই। সেখানে জীবন আছে, মৃত্যু নেই। যৌবন আছে, বার্ধক্য নেই। এমন সব নিয়ামত রয়েছে সেখানে, যা কোনো চোখ দেখেনি, কোনো কান শোনেনি এবং কোনো হৃদয়ও কখনো কল্পনা করেনি। আর জাহান্নাম হচ্ছে চিরস্থায়ী শাস্তিভোগের এমন এক আবাস, যার কল্পনা করাও আমাদের সাধ্যের বাইরে। শাস্তির ভয়াবহতায় মানুষ সেখানে মরে যেতে চাইবে। মৃত্যুকে সেখানে সবার সামনে জবাই করা হবে। তাই চাইলেও কেউ আর মরে যেতে পারবে না। জাহান্নামের শাস্তি এতটাই প্রলয়ংকরী যে, এর বর্ণনা শুনলেও অন্তরাত্মা কেঁপে ওঠে।</p><p>জান্নাত-জাহান্নামের স্বরূপ না জানলে আমরা আমাদের করণীয় নির্ধারণ করতে পারব না। তাই জান্নাতের অফুরন্ত নিয়ামত আর জাহান্নামের প্রচণ্ড ভয়াবহতার বিস্তারিত বিবরণ নিয়ে আমাদের এবারের আয়োজন—‘জান্নাত-জাহান্নাম ’।</p>",
+      "image": "book-jannater-shoundorjo-o-jahannamer-bhoyabohota-0730.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2022/09/234728-IMG.jpeg",
+      "sources": [
+        "https://www.wafilife.com/jannater-shoundorjo-o-jahannamer-bhoyabohota/pd/20301",
+        "https://www.rokomari.com/book/429416/জান্নাতের-সৌন্দর্য-ও-জাহান্নামের-ভয়াবহতা"
+      ]
+    },
+    {
+      "name": "উমার রাযিয়াল্লাহু আনহুর সমর্থনে অবতীর্ণ আয়াতসমূহের প্রেক্ষাপট",
+      "nameEn": "Umar Ra Er Somorthone Obotinro Ayatsomuher Prekkhapot",
+      "slug": "umar-ra-er-somorthone-obotinro-ayatsomuher-prekkhapot",
+      "mrp": 225,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 144,
+      "edition": "1st Published, 2022",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [],
+      "authors": [
+        {
+          "name": "মুফতি মুহাম্মদ সাইফুল্লাহ মুরতযা",
+          "nameEn": "Mufti Muhammad Saifullah Murtaza"
+        }
+      ],
+      "categories": [
+        "কুরআন বিষয়ক আলোচনা",
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>জ্ঞান, প্রজ্ঞা ও বিচক্ষণতায় উমার রাযিয়াল্লাহ আনহু থাকতেন সবার থেকে এগিয়ে। বহু ক্ষেত্রে তার চিন্তা ও কথা আল্লাহ তাআলার অবর্তীণ করা ওহির সাথে পুরোপুরি মিলে গিয়েছে। এমনকি উমারের কিছু কিছু বক্তব্য আল্লাহ তাআলা হুবহু কুরআনের আয়াত হিসেবে নাযিল করেছেন। এসকল কারণেই নবিজি সাল্লাল্লাহু আলাইহি ওয়া সাল্লাম বলেছেন, ‘আমার পরে কেউ নবি হলে, সে হতো উমার।’</p><p>আমাদের ঈমানি শক্তিকে আরো মজবুত করতে, মেধা ও জ্ঞানের পরিধিকে আরো বিকশিত করতে সমকালীন প্রকাশন এবার হাজির হয়েছে ‘উমারের সমর্থনে অবতীর্ণ আয়াতসমূহের প্রেক্ষাপট’ বইটি নিয়ে।</p>",
+      "image": "book-umar-ra-er-somorthone-obotinro-ayatsomuher-prekkha-8bb6.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2022/09/Umar-RA-Front-Cover.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%89%e0%a6%ae%e0%a6%be%e0%a6%b0-%e0%a6%b0%e0%a6%be%e0%a6%af%e0%a6%bf%e0%a7%9f%e0%a6%be%e0%a6%b2%e0%a7%8d%e0%a6%b2%e0%a6%be%e0%a6%b9%e0%a7%81-%e0%a6%86%e0%a6%b9%e0%a6%a8%e0%a7%81%e0%a6%b0/pd/20302",
+        "https://www.rokomari.com/book/262196/উমারের-সমর্থনে-অবতীর্ণ-আয়াতসমূহের-প্রেক্ষাপট"
+      ]
+    },
+    {
+      "name": "বাইতুল্লাহ : প্রস্তুতি, বিধান ও সফরনামা",
+      "nameEn": "Baitullah Prostuti Bidhan Sofornama",
+      "slug": "baitullah-prostuti-bidhan-sofornama",
+      "mrp": 400,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 264,
+      "edition": "1st Published, 2022",
+      "binding": "পেপারব্যাক",
+      "weight": 300,
+      "translators": [],
+      "authors": [
+        {
+          "name": "উস্তাযা উম্মে সায়েমা তাযকিয়া",
+          "nameEn": "Ustadha Umme Sayema Tazkia"
+        }
+      ],
+      "categories": [
+        "ইসলামি আমল ও আমলের সহায়িকা"
+      ],
+      "description": "<p>মক্কা-মদিনার সেই ঐতিহাসিক সফরে যে আসমানি স্বাদ লেখিকা পেয়েছেন, তার সুন্দর ও সুখময় অনুভূতিগুলো ভাগাভাগি করার জন্যই লেখিকা এই সফরটিকে উপস্থাপন করার ক্ষুদ্র প্রচেষ্টা চালিয়েছেন তিনি। বাইতুল্লাহ, মসজিদে নববি, উহুদ, বদরসহ হিজায-ভূমিতে অবস্থিত ইসলামের সব ঐতিহাসিক ও বরকতপূর্ণ স্থানসমূহে যাওয়া, সেখানে ইবাদত করে আল্লাহ আর তাঁর রাসুলের প্রেমে ডুব দেওয়ার যে তীব্র বাসনা এবং দীর্ঘ অপেক্ষার পর প্রাপ্তিতে যে ভাবাবেগ, তার পূর্ণ চিত্রায়ন ফুটিয়ে তোলা হয়েছে বইটিতে। প্রতিটি বাক্যে প্রকাশিত ভাব ও অনুভূতি যেন লেখক তার হৃদয়কে শত টুকরা করে বইয়ের পাতায় পাতায় ছড়িয়ে দিয়েছেন। কলম ও কলবের মিশেলে মনের সুপ্ত সব ভাবাবেগ নিরাকার থেকে যেন মূর্তিমান হয়ে উঠেছে।</p><p>পাশাপাশি সহিহ-শুদ্ধভাবে হজ ও উমরা করার নিয়ম-কানুনও তুলে ধরার চেষ্টা করা হয়েছে। সেইসাথে মা-বোনদের জন্য হজের মহিলা-সংক্রান্ত হুকুম-আহকাম ও উল্লেখ করেছি। মা-বোনেরা এই বইটিকে হজের সফর গাইড হিসেবেও সাথে নিতে পারবেন। এতে আরো রয়েছে কুরআন-হাদিসের আলোকে গুরুত্বপূর্ণ সুন্দর কিছু দুআ, যা হিজাজের ভূমিতে সফরকালীন আপনাদের কাজে লাগতে পারে।</p>",
+      "image": "book-baitullah-prostuti-bidhan-sofornama-dfe7.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/03/Baitullah.png",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%ac%e0%a6%be%e0%a6%87%e0%a6%a4%e0%a7%81%e0%a6%b2%e0%a7%8d%e0%a6%b2%e0%a6%be%e0%a6%b9-%e0%a6%aa%e0%a7%8d%e0%a6%b0%e0%a6%b8%e0%a7%8d%e0%a6%a4%e0%a7%81%e0%a6%a4%e0%a6%bf-%e0%a6%ac%e0%a6%bf/pd/16960",
+        "https://www.rokomari.com/book/249767/বাইতুল্লাহ-প্রস্তুতি-বিধান-ও-সফরনামা"
+      ]
+    },
+    {
+      "name": "হাদিস সংকলনের ইতিহাস",
+      "nameEn": "Hadis Songkoloner Itihas",
+      "slug": "hadis-songkoloner-itihas",
+      "mrp": 360,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 216,
+      "edition": "1st Published, 2022",
+      "binding": "হার্ডকভার",
+      "weight": 300,
+      "translators": [
+        "আশিক আরমান নিলয়"
+      ],
+      "authors": [
+        {
+          "name": "ডঃ মুহাম্মাদ মুস্তাফা আল আযামী",
+          "nameEn": "Dr. Muhammad Mustafa al-Azami"
+        }
+      ],
+      "categories": [
+        "আল হাদিস"
+      ],
+      "description": "<p>হাদিস-সংকলনের ইতিহাস ইসলামের একক বৈশিষ্ট্য। পৃথিবীর আর কোনো জাতির গৌরব করার মতো এমন কিছু নেই। দুঃখের কথা হলো—গর্ব করা দূর কি বাত; আমরা সেই সোনালি ইতিহাস সম্পর্কে জানিই না খুব একটা। সেই অজ্ঞতাকে কাজে লাগিয়ে প্রাচ্যবিদরা আমাদের মনে হাদিস-সংক্রান্ত সংশয় উসকে দিতে তৎপর। তাদের এসব দুরভিসন্ধির মোকাবেলায় হাদিস-সংকলনের ইতিহাস সম্পর্কে আমাদের সম্যক অবগতি থাকা উচিত। ঠিক এই জায়গায় পাঠককে সহায়তা করবে এই বই।</p><p>হাদিসের সংজ্ঞা, প্রকারভেদ, প্রাথমিক মূলনীতি-সহ রাবি তথা বর্ণনাকারীদের সবিস্তার আলোচনা অত্যন্ত সরল ভাষায় তুলে ধরা হয়েছে এখানে। হাদিসের প্রসিদ্ধ গ্রন্থগুলো নিয়ে সংক্ষিপ্ত অথচ সারগর্ভ আলোচনা সন্নিবেশিত হয়েছে এই বইয়ে। বইটি রচিত হয়েছে সকল শ্রেণির পাঠকের জন্য, তাই শাস্ত্রীয় পরিভাষাগুলো সবচে সহজ ও বোধগম্য ভাষায় পেশ করা হয়েছে। এই বই বাংলাভাষী হাদিস-পাঠকদের জ্ঞানপিপাসা মেটাতে সহায়তা করবে, ইনশাআল্লাহ।</p>",
+      "image": "book-hadis-songkoloner-itihas-ee1b.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/03/Hadis-Sonkolon.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%b9%e0%a6%be%e0%a6%a6%e0%a6%bf%e0%a6%b8-%e0%a6%b8%e0%a6%82%e0%a6%95%e0%a6%b2%e0%a6%a8%e0%a7%87%e0%a6%b0-%e0%a6%87%e0%a6%a4%e0%a6%bf%e0%a6%b9%e0%a6%be%e0%a6%b8-2/pd/16958",
+        "https://www.rokomari.com/book/249764/হাদিস-সংকলনের-ইতিহাস"
+      ]
+    },
+    {
+      "name": "শেষরাত্রির গল্পগুলো",
+      "nameEn": "Seshratir Golpogulo",
+      "slug": "seshratir-golpogulo",
+      "mrp": 245,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 152,
+      "edition": "1st Published, 2022",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [],
+      "authors": [
+        {
+          "name": "আব্দুল্লাহ মাহমুদ নজীব",
+          "nameEn": "Abdullah Mahmud Najib"
+        }
+      ],
+      "categories": [
+        "ইসলামী সাহিত্য"
+      ],
+      "description": "<p>শেষরাত্রির গল্পগুলো প্রচলিত অর্থে কোনো গল্পগ্রন্থ নয়। বলা যেতে পারে একটি গল্পের আসর। এই আসরে লেখক ও পাঠক পরস্পর গল্প করবেন। গল্প করতে করতে আনমনা হবেন। গল্প করতে করতেই চিন্তা-প্রতিচিন্তায় ঋদ্ধ হবেন এই বইয়ের উল্লেখযোগ্য-সংখ্যক প্রবন্ধগল্প লেখকের ব্যক্তিজীবন-ঘনিষ্ঠ। জীবন থেকে নেওয়া ছোট-বড় অভিজ্ঞতা, ভাবনা ও অনুভূতি এখানে মূর্ত হয়েছে একটু ভিন্ন আঙ্গিকে। সময়, বিষয়বস্তু, পূর্বাপর প্রেক্ষাপট ও উদ্দীষ্ট পাঠকের মনস্তত্ত্ব—এসবকিছু বিবেচনায় রাখলে প্রতিটি লেখা তার নিজস্ব ধাঁচেই বিশিষ্ট, নিজস্ব ছকেই স্বতন্ত্র। তাই বৈচিত্র্য লোপ না করে লেখাগুলোর চেহারা ও মেজাজ অক্ষুণ্ন রাখা হয়েছে এই বইয়ে। লেখাগুলোর ধরন ও প্রকৃতিতে বৈচিত্র্য আছে। কখনো হালকা চালে গল্পনির্ভর লেখা, কখনো তথ্যসূত্র ও টীকা-টিপ্পনীতে ভরপুর পুরোদস্তুর অ্যাকাডেমিক লেখার মতোই। কখনো চোখে পড়বে প্রবন্ধের মোড়কে গল্প বলার কোশেশ। অথবা গল্পের আবহে প্রবন্ধের অবতারণা।</p><p>শেষরাত্রির গল্পগুলো বইটির নতুন সংস্করণ।</p>",
+      "image": "book-seshratir-golpogulo-0f4d.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/03/SHESH-RATRIR-GOLPOGULO.jpg",
+      "sources": [
+        "https://www.wafilife.com/seshratir-golpogulo/pd/16963",
+        "https://www.rokomari.com/book/249769/শেষরাত্রির-গল্পগুলো"
+      ]
+    },
+    {
+      "name": "হৃদয় জুড়ানো সালাত",
+      "nameEn": "Hridoy Jurano Salat",
+      "slug": "hridoy-jurano-salat",
+      "mrp": 110,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 64,
+      "edition": "1st Published, 2022",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [
+        "আশিক আরমান নিলয়"
+      ],
+      "authors": [
+        {
+          "name": "শাইখ মিশারি আল-খাররাজ",
+          "nameEn": "Shaykh Mishari al-Kharraz"
+        }
+      ],
+      "categories": [
+        "ইসলামি আমল ও আমলের সহায়িকা"
+      ],
+      "description": "<p>খুশুখুযু হলো সালাতের প্রাণ। খুশুখুযুহীন সালাত যেন যান্ত্রিক ওঠাবসা ছাড়া কিছু নয়। দুঃখজনক হলেও সত্য, আমাদের সালাত থেকে খুশুখুযু হারিয়ে গেছে। ফলে আমাদের জীবন থেকে হারিয়ে গেছে সালাতের সেই প্রভাবও। উদাসীনতার তলদেশে হারিয়ে যাওয়া সেই খুশুখুযু ফিরিয়ে আনতেই আমাদের এবারের পরিবেশনা। সালাতের প্রতিটি পর্বে খুশুখুযু ধরে রাখার অব্যর্থ সব কলাকৌশলে সমৃদ্ধ ‘হৃদয়জুড়ানো সালাত’ বইটি। এ বই পাঠের পর আমাদের সালাতে আসবে কাঙ্ক্ষিত পরিবর্তন, ইনশাআল্লাহ।</p>",
+      "image": "book-hridoy-jurano-salat-474b.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/03/Hridoy-Jurano-Salat.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%b9%e0%a7%83%e0%a6%a6%e0%a7%9f%e0%a6%9c%e0%a7%81%e0%a7%9c%e0%a6%be%e0%a6%a8%e0%a7%8b-%e0%a6%b8%e0%a6%be%e0%a6%b2%e0%a6%be%e0%a6%a4/pd/16961",
+        "https://www.rokomari.com/book/249768/হৃদয়-জুড়ানো-সালাত"
+      ]
+    },
+    {
+      "name": "আরবি রস (দ্বিতীয় খণ্ড)",
+      "nameEn": "Arbi Ros",
+      "slug": "arbi-ros",
+      "mrp": 255,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 160,
+      "edition": "1st Published, 2022",
+      "binding": null,
+      "weight": 200,
+      "translators": [],
+      "authors": [
+        {
+          "name": "আব্দুল্লাহ মাহমুদ নজীব",
+          "nameEn": "Abdullah Mahmud Najib"
+        }
+      ],
+      "categories": [
+        "ইসলামী সাহিত্য"
+      ],
+      "description": "<p>আরবি ভাষায় যারা পারদর্শী কিংবা যারা এক-আধটু জানেন অথবা শিখছেন, তাদের জীবনে আরবি রস সিরিজটি নতুন এক মাত্রা সংযোজন করবে। জ্ঞানচর্চা ও জ্ঞানস্পৃহা বাড়িয়ে দিতে এমন বইয়ের জুড়ি মেলা ভার। লেখক যেভাবে আলাপী ঢঙে আরবি ভাষার সৌকর্য ও সৌন্দর্যের বিবরণ দিয়েছেন তা সত্যিই প্রশংসার দাবি রাখে। কখনো শব্দের খেলা, কখনো বাক্যের মেলা, কখনো বা কাব্যানুবাদের পরশ নিয়েই আরবি রস।</p><p>পাঠকগণ এ সিরিজের প্রথম খণ্ডের মতো দ্বিতীয় খণ্ড পড়েও উপকৃত হবেন এবং আনন্দের সাথে, গল্পের ছলে তারা আরবি ভাষার রূপ, রস ও বৈচিত্র্য উপভোগ করতে পারবেন, ইনশা আল্লাহ।</p>",
+      "image": "book-arbi-ros-ab2e.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/03/AROBI-ROSH-02.png",
+      "sources": [
+        "https://www.wafilife.com/arbi-ros/pd/16957",
+        "https://www.rokomari.com/book/210914/আরবি-রস"
+      ]
+    },
+    {
+      "name": "জবাব ২",
+      "nameEn": "Jobab 2",
+      "slug": "jobab-2",
+      "mrp": 295,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 176,
+      "edition": "1st Published, 2022",
+      "binding": "পেপারব্যাক",
+      "weight": 200,
+      "translators": [],
+      "authors": [
+        {
+          "name": "মুরসালিন নিলয়",
+          "nameEn": "Murshalin Niloy"
+        },
+        {
+          "name": "আসিফ মাহমুদ",
+          "nameEn": "Asif Mahmud"
+        },
+        {
+          "name": "ডা. আব্দুল্লাহ সাঈদ খান",
+          "nameEn": "Dr. Abdullah Saeed Khan"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>নাস্তিকদের উত্থাপিত প্রশ্ন, অভিযোগ আর আপত্তির প্রতিউত্তর নিয়েই রচিত হলো ‘জবাব। চিন্তাশীল, ভাবনা-জাগানিয়া, গবেষণাধর্মী লেখার সমৃদ্ধ একটি সংকলন এটা। প্রাণোচ্ছলে ভরপুর একঝাঁক তরুণ লেখকের সম্মিলিত প্রচেষ্টার ফসল এই গ্রন্থ। ২০১৩ সালের শেষ দিকে হঠাৎ করে কমিউনিটি ব্লগগুলো এদেশে বেশ পরিচিতি পেতে শুরু করে। অসংখ্য মানুষ শখের বশে লেখালেখি আর সময় কাটানোর মাধ্যম হিসেবে যুক্ত হতে থাকে সেসব ব্লগে। বলা বাহুল্য—এ সুযোগটিকে চমৎকারভাবে লুফে নেয় বাংলার তথাকথিত নাস্তিক-মহল। সে সময়ে নাস্তিকরা যতটা সাড়ম্বরে ব্লগের জগতে আসে, চিন্তাশীল মুসলিমদের পদচারণা ছিল ততটাই নির্জীব। অবশেষে ২০১৮ সালের পর থেকে কিছু তরুণ মুসলিম ভাইদের দৃঢ় প্রচেষ্টা এবং তাদের বিশ্বাসের কথাগুলো ছড়িয়ে দেয়ার লক্ষ্যে আমাদের এবারের প্রয়াস—‘জবাব ২.০।</p>",
+      "image": "book-jobab-2-8b15.webp",
+      "pdf": "jobab-2-8b15.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2022/02/274067717_4447188208719774_5400686953509902425_n-e1644910120266.png",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%9c%e0%a6%ac%e0%a6%be%e0%a6%ac-%e0%a7%a8/pd/14108",
+        "https://www.rokomari.com/book/226872/জবাব-২"
+      ]
+    },
+    {
+      "name": "প্রত্যাবর্তন ২",
+      "nameEn": "Prottaborton 2",
+      "slug": "prottaborton-2",
+      "mrp": 250,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 152,
+      "edition": "1st Published, 2022",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [
+        "উস্তায আবুল হাসানাত কাসিম",
+        "মুরসালিন নিলয়",
+        "আল-আমিন ফেরদৌস"
+      ],
+      "authors": [
+        {
+          "name": "সমকালীন সংকলন টিম",
+          "nameEn": "Somokalin Compilation Team"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>তারা ডুবে ছিলেন ভোগবিলাসিতায়, প্রাচুর্য আর লোভ-লালসায়। গাড়ি, বাড়ি, অর্থকড়ি, সম্মান ও যশখ্যাতি—সবই ছিল তাদের জীবনে। ছিল না কেবল মানসিক প্রশান্তি। তাদের অন্তরে ছিল অন্তহীন এক অতৃপ্তি। কীসের যেন এক শূন্যতা। হৃদয়জুড়ে এক নীরব আর্তনাদ। দিনের পর দিন প্রার্থনায় লীন হয়েছেন তারা। সত্যকে খুঁজে পেতে কখনো দিনরাত গবেষণা, কখনো-বা করেছেন জ্ঞানীদের সাথে বৈঠক-আলোচনা।</p><p>অবশেষে মহান আল্লাহর অশেষ করুণায় তাদের সামনে উন্মোচিত হয় এক আলোকিত পথ। সেই সাথে নেমে আসে কালবোশেখী ঝড়। লন্ডভন্ড হয়ে যায় তাদের এতদিনের সাজানো পৃথিবী। পাহাড়সম বাধা, কল্পনাতীত পরীক্ষা আর সীমাহীন যন্ত্রণা তাদের পথ আগলে দাঁড়ায়। তবু তারা সত্যের পথে অবিচল থাকে। আল্লাহকে ভালোবাসে তারা আঁকড়ে ধরে ইসলাম। খ্রিষ্টবাদ ছেড়ে ইসলামে আসা পাদরিদের এমনই অশ্রুভেজা, ঈমানদীপ্ত, বাস্তব সব ঘটনায় গড়ে উঠেছে আমাদের এবারের আয়োজন—‘প্রত্যাবর্তন ২.০’।</p>",
+      "image": "book-prottaborton-2-c8b2.webp",
+      "pdf": "prottaborton-2-c8b2.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2022/02/Prottaborton-2.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%aa%e0%a7%8d%e0%a6%b0%e0%a6%a4%e0%a7%8d%e0%a6%af%e0%a6%be%e0%a6%ac%e0%a6%b0%e0%a7%8d%e0%a6%a4%e0%a6%a8-%e0%a7%a8/pd/14109",
+        "https://www.rokomari.com/book/226871/প্রত্যাবর্তন-২"
+      ]
+    },
+    {
+      "name": "ইজ মিউজিক হালাল?",
+      "nameEn": "Is Music Halal?",
+      "slug": "is-music-halal",
+      "mrp": 350,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 232,
+      "edition": "1st Published, 2022",
+      "binding": "পেপারব্যাক",
+      "weight": 250,
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. গওহর মুশতাক",
+          "nameEn": "Dr. Gohar Mushtaq"
+        }
+      ],
+      "categories": [
+        "ইসলামি আমল ও আমলের সহায়িকা"
+      ],
+      "description": "<p>এ বইটি মুসলিম-অমুসলিম, যুবক-বৃদ্ধ, ছাত্র-শিক্ষক নির্বিশেষে প্রতিটি মানুষের জন্য চমৎকার একটি রচনা। মিউজিক কেউ ভালোবাসুক বা না বাসুক—গ্রন্থটির পরিসর সবাইকে ঘিরেই। ইসলামে মিউজিকের প্রকৃত অবস্থান জানানো এবং অন্বেষণকারীদের জন্য তিয়াস নিবারণ গ্রন্থটির প্রধান উদ্দেশ্য। তবে ধর্মীয় সূত্র ছাড়াও এখানে স্থান পেয়েছে সামাজিক, ঐতিহাসিক এবং চিকিৎসাবিজ্ঞান থেকে সংগৃহীত অসংখ্য দলিল-প্রমাণ। ফলে বইটির গ্রহণযোগ্যতা বেড়ে গেছে বহুগুণে। মিউজিক ও ইসলাম সম্পর্কে আমাদের না জানা, না বোঝা কিংবা ভুল বোঝার অবসান আবদ্ধ রয়েছে এই দুই মলাটের মধ্যে।</p>",
+      "image": "book-is-music-halal-ad27.webp",
+      "pdf": "is-music-halal-ad27.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2022/02/IS-MUSIC-HALAL.png",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%87%e0%a6%9c-%e0%a6%ae%e0%a6%bf%e0%a6%89%e0%a6%9c%e0%a6%bf%e0%a6%95-%e0%a6%b9%e0%a6%be%e0%a6%b2%e0%a6%be%e0%a6%b2/pd/13997",
+        "https://www.rokomari.com/book/225608/ইজ-মিউজিক-হালাল"
+      ]
+    },
+    {
+      "name": "সিরাজাম মুনির",
+      "nameEn": "Sirajam Munira",
+      "slug": "sirajam-munira",
+      "mrp": 280,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 168,
+      "edition": "1st Published, 2022",
+      "binding": "পেপারব্যাক",
+      "weight": 200,
+      "translators": [],
+      "authors": [
+        {
+          "name": "আরিফুল ইসলাম",
+          "nameEn": "Ariful Islam"
+        }
+      ],
+      "categories": [
+        "সীরাতে রাসূল (সা.)"
+      ],
+      "description": "<p>সিরাত পড়তে গিয়ে কিছু কিছু ঘটনা আমরা খুব একটা মনোযোগের সাথে পড়ি না। শুধু চোখ বুলিয়েই চলে যাই। আবার কিছু ঘটনা আছে, যেগুলো খুব একটা জনপ্রিয় না; ধারাবাহিক সিরাতের গ্রন্থগুলোতেও পাওয়া যায় না। এমন ঘটনাগুলোকে ‘সিরাজাম মুনির’ বইয়ে উল্লেখ করা হয়েছে।</p><p>সাধারণত দেখা যায়, কেউ একটি সিরাতগ্রন্থ পড়েই হাত গুটিয়ে বসে পড়েন। আমাদের বিশ্বাস, ‘সিরাজাম মুনির’ বইটি পাঠকের এই ধারণা ভেঙে দিতে সক্ষম হবে ইনশা আল্লাহ। বইটি পড়ে সিরাত অধ্যয়নের তৃষ্ণা নিবারণ তো হবেই না, উল্টো আরো বেড়ে যাবে এই আমাদের প্রত্যাশা।</p>",
+      "image": "book-sirajam-munira-cf01.webp",
+      "pdf": "sirajam-munira-cf01.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2022/02/SIRAJUM-MUNIR-1.png",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%b8%e0%a6%bf%e0%a6%b0%e0%a6%be%e0%a6%9c%e0%a7%81%e0%a6%ae-%e0%a6%ae%e0%a7%81%e0%a6%a8%e0%a6%bf%e0%a6%b0/pd/13996",
+        "https://www.rokomari.com/book/225606/সিরাজাম-মুনিরা"
+      ]
+    },
+    {
+      "name": "বিষয়ভিত্তিক বিশুদ্ধ হাদিস সংকলন",
+      "nameEn": "Bishoyvittik Bishuddha Hadis Songkolon",
+      "slug": "bishoyvittik-bishuddha-hadis-songkolon",
+      "mrp": 515,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 360,
+      "edition": "1st Published, 2022",
+      "binding": "হার্ডকভার",
+      "weight": 450,
+      "translators": [
+        "উস্তায আবুল হাসানাত কাসিম"
+      ],
+      "authors": [
+        {
+          "name": "শাইখ ড. আওয়াদ আল-খালফ",
+          "nameEn": "Shaykh Dr. Awad al-Khalaf"
+        }
+      ],
+      "categories": [
+        "আল হাদিস"
+      ],
+      "description": "<p>আমাদের যাপিত জীবনের যাবতীয় সমস্যার সুন্দর সমাধান মেলে নবিজি সাল্লাল্লাহু আলাইহি ওয়া সাল্লামের হাদিসে। কিন্তু এত এত হাদিসের ভিড়ে আমরা বুঝব কী করে, কোনটা বিশুদ্ধ আর কোনটা দুর্বল ও জাল হাদিস?</p><p>বিশুদ্ধতার বিচারে কুতুবুস সিত্তাহ তথা সহিহুল বুখারি, সহিহ মুসলিম, জামি তিরমিযি, সুনানুন নাসায়ি, সুনানু আবি দাউদ, সুনানু ইবনি মাজাহ—এই ছয়টি প্রসিদ্ধ হাদিসগ্রন্থের অবস্থান সবার ওপরে। আর যেসব হাদিস রয়েছে এই ছয়টি গ্রন্থের প্রত্যেকটিতেই, সেগুলো যে বিশুদ্ধতম হাদিস তা আর বলার অপেক্ষা রাখে না।</p><p>কুতুবুস সিত্তাহর কমন হাদিসগুলো নিয়ে গড়ে উঠেছে আমাদের এবারের আয়োজন ‘বিষয়ভিত্তিক বিশুদ্ধ হাদিস সংকলন’। জ্ঞানপিপাসুদের জন্য এমন গ্রন্থের জুড়ি মেলার ভার। জীবনঘনিষ্ঠ এসব হাদিস থেকে সমাজের প্রতিটি মানুষ উপকৃত হবে, ইনশা আল্লাহ।</p>",
+      "image": "book-bishoyvittik-bishuddha-hadis-songkolon-5384.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2022/01/Bishoybhittik-Hadis-Songkolon.png",
+      "sources": [
+        "https://www.wafilife.com/bishoyvittik-bishuddha-hadis-songkolon/pd/13659",
+        "https://www.rokomari.com/book/223902/বিষয়ভিত্তিক-বিশুদ্ধ-হাদিস-সংকলন"
+      ]
+    },
+    {
+      "name": "সুখী পরিবার নির্মাণের রূপরেখা",
+      "nameEn": "Sukhi Poribar Nirmaner Ruprekha",
+      "slug": "sukhi-poribar-nirmaner-ruprekha",
+      "mrp": 175,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 112,
+      "edition": "1st Published, 2021",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [
+        "মেহজাবীন ইসলাম মীম"
+      ],
+      "authors": [
+        {
+          "name": "শাইখ আব্দুল করীম বাক্কার",
+          "nameEn": "Shaykh Abdul Karim Bakkar"
+        }
+      ],
+      "categories": [
+        "বিয়ে ও সংসার"
+      ],
+      "description": "<p>পরিবার আমাদের প্রথম পাঠশালা। আমাদের নৈতিক শিক্ষা ও মূল্যবোধ অর্জনের সবুজ কানন। মা-বাবা এবং পরিবারের বড় সদস্যরা হলেন আমাদের প্রথম শিক্ষক। যে শিক্ষা আমরা পরিবার থেকে পাই, জীবনভর তা-ই লালন করি এবং জীবনপাথেয় হিসেবে তা-ই ধারণ করি। কীভাবে একটি পরিবারকে আদর্শ পাঠশালা হিসেবে গড়ে তোলা যায়, তা-ই নিয়ে আমাদের ‘আদর্শ পরিবার সিরিজ’।</p><p>এই সিরিজে সন্তান গড়ার কৌশল, শিশুদের সমস্যা ও তার প্রতিকার, সন্তানের বয়ঃসন্ধিকালের মনস্তত্ব ইত্যাদি বিষয়ে গুরুত্বপূর্ণ আলাপ উঠে এসেছে। বাদ পড়েনি সন্তানকে বইমুখী করার কৌশলও। শিশুদের কচিমনে জ্ঞান ও উৎকর্ষের সুপ্ত বীজ প্রোথিত করতে প্রতিটি মা-বাবার উচিৎ ‘আদর্শ পরিবার সিরিজ’-এর পাঠগুলো রপ্ত করে নেওয়া এবং বাস্তব জীবনে এসব অভিজ্ঞতার যথাযথ প্রয়োগ করা।</p><p>সিরিজটি রচনা করেছেন আরবের প্রখ্যাত চিন্তাবিদ ও শিক্ষাবিদ প্রফেসর ড. আব্দুল কারিম বাক্কার হাফিযাহুল্লাহ। বইগুলোর বিষয়বস্তু ও বর্ণনাশৈলী এতটাই চমকপ্রদ যে পাঠকমাত্রই মুগ্ধ হবেন। এই সিরিজের বাকি বইগুলো যথাক্রমে- সন্তানকে বইমুখী করার কৌশল পারিবারিক সম্পর্কের বুনন সন্তান গড়ার কার্যকরী কৌশল শিশুদের সমস্যা আমাদের করণীয় সন্তানের বয়ঃসন্ধিকালের মনস্তত্ত্ব</p>",
+      "image": "book-sukhi-poribar-nirmaner-ruprekha-04ff.webp",
+      "pdf": "sukhi-poribar-nirmaner-ruprekha-04ff.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/11/01.-SUKHI-PORIBAR-NIRMANER-RUPOREKHA-e1636001825954.png",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%b8%e0%a7%81%e0%a6%96%e0%a7%80-%e0%a6%aa%e0%a6%b0%e0%a6%bf%e0%a6%ac%e0%a6%be%e0%a6%b0-%e0%a6%a8%e0%a6%bf%e0%a6%b0%e0%a7%8d%e0%a6%ae%e0%a6%be%e0%a6%a3%e0%a7%87%e0%a6%b0-%e0%a6%b0%e0%a7%82/pd/12564",
+        "https://www.rokomari.com/book/221054/সুখী-পরিবার-নির্মাণের-রূপরেখা"
+      ]
+    },
+    {
+      "name": "পারিবারিক সম্পর্কের বুনন",
+      "nameEn": "Paribarik Somporker Bunon",
+      "slug": "paribarik-somporker-bunon",
+      "mrp": 130,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 80,
+      "edition": "1st Published, 2021",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [
+        "শারিকা হাসান"
+      ],
+      "authors": [
+        {
+          "name": "শাইখ আব্দুল করীম বাক্কার",
+          "nameEn": "Shaykh Abdul Karim Bakkar"
+        }
+      ],
+      "categories": [
+        "বিয়ে ও সংসার"
+      ],
+      "description": "<p>পরিবার আমাদের প্রথম পাঠশালা। আমাদের নৈতিক শিক্ষা ও মূল্যবোধ অর্জনের সবুজ কানন। মা-বাবা এবং পরিবারের বড় সদস্যরা হলেন আমাদের প্রথম শিক্ষক। যে শিক্ষা আমরা পরিবার থেকে পাই, জীবনভর তা-ই লালন করি এবং জীবনপাথেয় হিসেবে তা-ই ধারণ করি। কীভাবে একটি পরিবারকে আদর্শ পাঠশালা হিসেবে গড়ে তোলা যায়, তা-ই নিয়ে আমাদের ‘আদর্শ পরিবার সিরিজ’।</p><p>এই সিরিজে সন্তান গড়ার কৌশল, শিশুদের সমস্যা ও তার প্রতিকার, সন্তানের বয়ঃসন্ধিকালের মনস্তত্ব ইত্যাদি বিষয়ে গুরুত্বপূর্ণ আলাপ উঠে এসেছে। বাদ পড়েনি সন্তানকে বইমুখী করার কৌশলও। শিশুদের কচিমনে জ্ঞান ও উৎকর্ষের সুপ্ত বীজ প্রোথিত করতে প্রতিটি মা-বাবার উচিৎ ‘আদর্শ পরিবার সিরিজ’-এর পাঠগুলো রপ্ত করে নেওয়া এবং বাস্তব জীবনে এসব অভিজ্ঞতার যথাযথ প্রয়োগ করা।</p><p>সিরিজটি রচনা করেছেন আরবের প্রখ্যাত চিন্তাবিদ ও শিক্ষাবিদ প্রফেসর ড. আব্দুল কারিম বাক্কার হাফিযাহুল্লাহ। বইগুলোর বিষয়বস্তু ও বর্ণনাশৈলী এতটাই চমকপ্রদ যে পাঠকমাত্রই মুগ্ধ হবেন। এই সিরিজের বাকি বইগুলো যথাক্রমে- সন্তানকে বইমুখী করার কৌশল সন্তান গড়ার কার্যকরী কৌশল শিশুদের সমস্যা আমাদের করণীয় সন্তানের বয়ঃসন্ধিকালের মনস্তত্ত্ব সুখী পরিবার নির্মাণের রূপরেখা</p>",
+      "image": "book-paribarik-somporker-bunon-d21e.webp",
+      "pdf": "paribarik-somporker-bunon-d21e.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/11/03.-PARIBARIK-SOMPORKER-BUNON-e1636001862610.png",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%aa%e0%a6%be%e0%a6%b0%e0%a6%bf%e0%a6%ac%e0%a6%be%e0%a6%b0%e0%a6%bf%e0%a6%95-%e0%a6%b8%e0%a6%ae%e0%a7%8d%e0%a6%aa%e0%a6%b0%e0%a7%8d%e0%a6%95%e0%a7%87%e0%a6%b0-%e0%a6%ac%e0%a7%81%e0%a6%a8%e0%a6%a8/pd/12571",
+        "https://www.rokomari.com/book/221056/পারিবারিক-সম্পর্কের-বুনন"
+      ]
+    },
+    {
+      "name": "সন্তানের বয়ঃসন্ধিকালের মনস্তত্ত্ব",
+      "nameEn": "Sontaner Boyosondikaler Monostotto",
+      "slug": "sontaner-boyosondikaler-monostotto",
+      "mrp": 165,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 104,
+      "edition": "1st Published, 2021",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [],
+      "authors": [
+        {
+          "name": "শাইখ আব্দুল করীম বাক্কার",
+          "nameEn": "Shaykh Abdul Karim Bakkar"
+        }
+      ],
+      "categories": [
+        "বিয়ে ও সংসার"
+      ],
+      "description": "<p>পরিবার আমাদের প্রথম পাঠশালা। আমাদের নৈতিক শিক্ষা ও মূল্যবোধ অর্জনের সবুজ কানন। মা-বাবা এবং পরিবারের বড় সদস্যরা হলেন আমাদের প্রথম শিক্ষক। যে শিক্ষা আমরা পরিবার থেকে পাই, জীবনভর তা-ই লালন করি এবং জীবনপাথেয় হিসেবে তা-ই ধারণ করি। কীভাবে একটি পরিবারকে আদর্শ পাঠশালা হিসেবে গড়ে তোলা যায়, তা-ই নিয়ে আমাদের ‘আদর্শ পরিবার সিরিজ’।</p><p>এই সিরিজে সন্তান গড়ার কৌশল, শিশুদের সমস্যা ও তার প্রতিকার, সন্তানের বয়ঃসন্ধিকালের মনস্তত্ব ইত্যাদি বিষয়ে গুরুত্বপূর্ণ আলাপ উঠে এসেছে। বাদ পড়েনি সন্তানকে বইমুখী করার কৌশলও। শিশুদের কচিমনে জ্ঞান ও উৎকর্ষের সুপ্ত বীজ প্রোথিত করতে প্রতিটি মা-বাবার উচিৎ ‘আদর্শ পরিবার সিরিজ’-এর পাঠগুলো রপ্ত করে নেওয়া এবং বাস্তব জীবনে এসব অভিজ্ঞতার যথাযথ প্রয়োগ করা।</p><p>সিরিজটি রচনা করেছেন আরবের প্রখ্যাত চিন্তাবিদ ও শিক্ষাবিদ প্রফেসর ড. আব্দুল কারিম বাক্কার হাফিযাহুল্লাহ। বইগুলোর বিষয়বস্তু ও বর্ণনাশৈলী এতটাই চমকপ্রদ যে পাঠকমাত্রই মুগ্ধ হবেন। এই সিরিজের বাকি বইগুলো যথাক্রমে- সন্তানকে বইমুখী করার কৌশল পারিবারিক সম্পর্কের বুনন সন্তান গড়ার কার্যকরী কৌশল শিশুদের সমস্যা আমাদের করণীয় সুখী পরিবার নির্মাণের রূপরেখা</p>",
+      "image": "book-sontaner-boyosondikaler-monostotto-0b14.webp",
+      "pdf": "sontaner-boyosondikaler-monostotto-0b14.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/11/04.-SONTANER-BOYOSONDHI-KALER-MONOSTOTTO-e1636001840532.png",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%b8%e0%a6%a8%e0%a7%8d%e0%a6%a4%e0%a6%be%e0%a6%a8%e0%a7%87%e0%a6%b0-%e0%a6%ac%e0%a7%9f%e0%a6%83%e0%a6%b8%e0%a6%a8%e0%a7%8d%e0%a6%a7%e0%a6%bf%e0%a6%95%e0%a6%be%e0%a6%b2%e0%a7%87%e0%a6%b0-%e0%a6%ae/pd/12565",
+        "https://www.rokomari.com/book/221057/সন্তানের-বয়ঃসন্ধিকালের-মনস্তত্ত্ব"
+      ]
+    },
+    {
+      "name": "সন্তান গড়ার কার্যকরী কৌশল",
+      "nameEn": "Sontan Gorar Karzokori Koushol",
+      "slug": "sontan-gorar-karzokori-koushol",
+      "mrp": 145,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 88,
+      "edition": "Published, 2021",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [],
+      "authors": [
+        {
+          "name": "শাইখ আব্দুল করীম বাক্কার",
+          "nameEn": "Shaykh Abdul Karim Bakkar"
+        }
+      ],
+      "categories": [
+        "বিয়ে ও সংসার"
+      ],
+      "description": "<p>পরিবার আমাদের প্রথম পাঠশালা। আমাদের নৈতিক শিক্ষা ও মূল্যবোধ অর্জনের সবুজ কানন। মা-বাবা এবং পরিবারের বড় সদস্যরা হলেন আমাদের প্রথম শিক্ষক। যে শিক্ষা আমরা পরিবার থেকে পাই, জীবনভর তা-ই লালন করি এবং জীবনপাথেয় হিসেবে তা-ই ধারণ করি। কীভাবে একটি পরিবারকে আদর্শ পাঠশালা হিসেবে গড়ে তোলা যায়, তা-ই নিয়ে আমাদের ‘আদর্শ পরিবার সিরিজ’।</p><p>এই সিরিজে সন্তান গড়ার কৌশল, শিশুদের সমস্যা ও তার প্রতিকার, সন্তানের বয়ঃসন্ধিকালের মনস্তত্ব ইত্যাদি বিষয়ে গুরুত্বপূর্ণ আলাপ উঠে এসেছে। বাদ পড়েনি সন্তানকে বইমুখী করার কৌশলও। শিশুদের কচিমনে জ্ঞান ও উৎকর্ষের সুপ্ত বীজ প্রোথিত করতে প্রতিটি মা-বাবার উচিৎ ‘আদর্শ পরিবার সিরিজ’-এর পাঠগুলো রপ্ত করে নেওয়া এবং বাস্তব জীবনে এসব অভিজ্ঞতার যথাযথ প্রয়োগ করা।</p><p>সিরিজটি রচনা করেছেন আরবের প্রখ্যাত চিন্তাবিদ ও শিক্ষাবিদ প্রফেসর ড. আব্দুল কারিম বাক্কার হাফিযাহুল্লাহ। বইগুলোর বিষয়বস্তু ও বর্ণনাশৈলী এতটাই চমকপ্রদ যে পাঠকমাত্রই মুগ্ধ হবেন। এই সিরিজের বাকি বইগুলো যথাক্রমে- সন্তানকে বইমুখী করার কৌশল পারিবারিক সম্পর্কের বুনন শিশুদের সমস্যা আমাদের করণীয় সন্তানের বয়ঃসন্ধিকালের মনস্তত্ত্ব সুখী পরিবার নির্মাণের রূপরেখা</p>",
+      "image": "book-sontan-gorar-karzokori-koushol-4d85.webp",
+      "pdf": "sontan-gorar-karzokori-koushol-4d85.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/11/02.-SONTAN-GORAR-KARJOKORI-KOUSHOL-e1636001882128.png",
+      "sources": [
+        "https://www.wafilife.com/sontan-gorar-karzokori-koushol/pd/12568",
+        "https://www.rokomari.com/book/221055/সন্তান-গড়ার-কার্যকরী-কৌশল"
+      ]
+    },
+    {
+      "name": "শিশুদের সমস্যা আমাদের করণীয়",
+      "nameEn": "Shishuder Somossa Amader Koroniyo",
+      "slug": "shishuder-somossa-amader-koroniyo",
+      "mrp": 175,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 104,
+      "edition": "1st Published, 2021",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [
+        "শারিকা হাসান"
+      ],
+      "authors": [
+        {
+          "name": "শাইখ আব্দুল করীম বাক্কার",
+          "nameEn": "Shaykh Abdul Karim Bakkar"
+        }
+      ],
+      "categories": [
+        "বিয়ে ও সংসার"
+      ],
+      "description": "<p>পরিবার আমাদের প্রথম পাঠশালা। আমাদের নৈতিক শিক্ষা ও মূল্যবোধ অর্জনের সবুজ কানন। মা-বাবা এবং পরিবারের বড় সদস্যরা হলেন আমাদের প্রথম শিক্ষক। যে শিক্ষা আমরা পরিবার থেকে পাই, জীবনভর তা-ই লালন করি এবং জীবনপাথেয় হিসেবে তা-ই ধারণ করি। কীভাবে একটি পরিবারকে আদর্শ পাঠশালা হিসেবে গড়ে তোলা যায়, তা-ই নিয়ে আমাদের ‘আদর্শ পরিবার সিরিজ’।</p><p>এই সিরিজে সন্তান গড়ার কৌশল, শিশুদের সমস্যা ও তার প্রতিকার, সন্তানের বয়ঃসন্ধিকালের মনস্তত্ব ইত্যাদি বিষয়ে গুরুত্বপূর্ণ আলাপ উঠে এসেছে। বাদ পড়েনি সন্তানকে বইমুখী করার কৌশলও। শিশুদের কচিমনে জ্ঞান ও উৎকর্ষের সুপ্ত বীজ প্রোথিত করতে প্রতিটি মা-বাবার উচিৎ ‘আদর্শ পরিবার সিরিজ’-এর পাঠগুলো রপ্ত করে নেওয়া এবং বাস্তব জীবনে এসব অভিজ্ঞতার যথাযথ প্রয়োগ করা।</p><p>সিরিজটি রচনা করেছেন আরবের প্রখ্যাত চিন্তাবিদ ও শিক্ষাবিদ প্রফেসর ড. আব্দুল কারিম বাক্কার হাফিযাহুল্লাহ। বইগুলোর বিষয়বস্তু ও বর্ণনাশৈলী এতটাই চমকপ্রদ যে পাঠকমাত্রই মুগ্ধ হবেন। এই সিরিজের বাকি বইগুলো যথাক্রমে- সন্তানকে বইমুখী করার কৌশল পারিবারিক সম্পর্কের বুনন সন্তান গড়ার কার্যকরী কৌশল সন্তানের বয়ঃসন্ধিকালের মনস্তত্ত্ব সুখী পরিবার নির্মাণের রূপরেখা</p>",
+      "image": "book-shishuder-somossa-amader-koroniyo-884b.webp",
+      "pdf": "shishuder-somossa-amader-koroniyo-884b.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/11/05.-SHISHUDER-SOMOSSA-AMADER-KORONIO-e1636001872930.png",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%b6%e0%a6%bf%e0%a6%b6%e0%a7%81%e0%a6%a6%e0%a7%87%e0%a6%b0-%e0%a6%b8%e0%a6%ae%e0%a6%b8%e0%a7%8d%e0%a6%af%e0%a6%be-%e0%a6%86%e0%a6%ae%e0%a6%be%e0%a6%a6%e0%a7%87%e0%a6%b0-%e0%a6%95%e0%a6%b0/pd/12567",
+        "https://www.rokomari.com/book/221058/শিশুদের-সমস্যা-আমাদের-করণীয়"
+      ]
+    },
+    {
+      "name": "সন্তানকে বইমুখী করার কৌশল",
+      "nameEn": "Sontanke Boimukhi Korar Koushol",
+      "slug": "sontanke-boimukhi-korar-koushol",
+      "mrp": 145,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 88,
+      "edition": "1st Published, 2021",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [
+        "মুরসালিন নিলয়"
+      ],
+      "authors": [
+        {
+          "name": "শাইখ আব্দুল করীম বাক্কার",
+          "nameEn": "Shaykh Abdul Karim Bakkar"
+        }
+      ],
+      "categories": [
+        "বিয়ে ও সংসার"
+      ],
+      "description": "<p>পরিবার আমাদের প্রথম পাঠশালা। আমাদের নৈতিক শিক্ষা ও মূল্যবোধ অর্জনের সবুজ কানন। মা-বাবা এবং পরিবারের বড় সদস্যরা হলেন আমাদের প্রথম শিক্ষক। যে শিক্ষা আমরা পরিবার থেকে পাই, জীবনভর তা-ই লালন করি এবং জীবনপাথেয় হিসেবে তা-ই ধারণ করি। কীভাবে একটি পরিবারকে আদর্শ পাঠশালা হিসেবে গড়ে তোলা যায়, তা-ই নিয়ে আমাদের ‘আদর্শ পরিবার সিরিজ’।</p><p>এই সিরিজে সন্তান গড়ার কৌশল, শিশুদের সমস্যা ও তার প্রতিকার, সন্তানের বয়ঃসন্ধিকালের মনস্তত্ব ইত্যাদি বিষয়ে গুরুত্বপূর্ণ আলাপ উঠে এসেছে। বাদ পড়েনি সন্তানকে বইমুখী করার কৌশলও। শিশুদের কচিমনে জ্ঞান ও উৎকর্ষের সুপ্ত বীজ প্রোথিত করতে প্রতিটি মা-বাবার উচিৎ ‘আদর্শ পরিবার সিরিজ’-এর পাঠগুলো রপ্ত করে নেওয়া এবং বাস্তব জীবনে এসব অভিজ্ঞতার যথাযথ প্রয়োগ করা।</p><p>সিরিজটি রচনা করেছেন আরবের প্রখ্যাত চিন্তাবিদ ও শিক্ষাবিদ প্রফেসর ড. আব্দুল কারিম বাক্কার হাফিযাহুল্লাহ। বইগুলোর বিষয়বস্তু ও বর্ণনাশৈলী এতটাই চমকপ্রদ যে পাঠকমাত্রই মুগ্ধ হবেন। এই সিরিজের বাকি বইগুলো যথাক্রমে- পারিবারিক সম্পর্কের বুনন সন্তান গড়ার কার্যকরী কৌশল শিশুদের সমস্যা আমাদের করণীয় সন্তানের বয়ঃসন্ধিকালের মনস্তত্ত্ব সুখী পরিবার নির্মাণের রূপরেখা</p>",
+      "image": "book-sontanke-boimukhi-korar-koushol-f73e.webp",
+      "pdf": "sontanke-boimukhi-korar-koushol-f73e.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/11/06.-SONTANKE-BOIMUKHI-KORAR-KOUSHOL-e1636001851117.png",
+      "sources": [
+        "https://www.wafilife.com/sontanke-boimukhi-korar-koushol/pd/12576",
+        "https://www.rokomari.com/book/221059/সন্তানকে-বইমুখী-করার-কৌশল"
+      ]
+    },
+    {
+      "name": "আকিদাতুত ত্বাহাবি (সহজ ও সংক্ষিপ্ত ব্যাখ্যাগ্রন্থ)",
+      "nameEn": "Aqidatut Tahabi Sohoj O Shongkhipto Bekkha-Grontho",
+      "slug": "aqidatut-tahabi-sohoj-o-shongkhipto-bekkha-grontho",
+      "mrp": 245,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 160,
+      "edition": "1st Published, 2021",
+      "binding": "পেপারব্যাক",
+      "weight": 200,
+      "translators": [
+        "উস্তায রিফাত মাহমুদ"
+      ],
+      "authors": [
+        {
+          "name": "ড. মুহাম্মাদ ইবনু আব্দির রহমান আল-খুমাইস",
+          "nameEn": "Dr. Muhammad ibn Abdur Rahman al-Khumayyis"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>১. আকিদা হলো এক বৃক্ষের মতো, আর আমলগুলো তার ডালপালা। বৃক্ষ ছাড়া যেমন ডালের অস্তিত্ব কল্পনাতীত, ঠিক তেমনি আকিদাবিহীন আমলও পুরোপুরি মূল্যহীন।</p><p>২. যদি দেখেন মৃত্যুর পর আপনার কোনো আমলই আর কাজে আসছে না, তখন কেমন লাগবে আপনার? হ্যাঁ, ভ্রান্ত আকিদা আমাদের সব আমল নিঃশেষ করে দেয়।</p><p>৩. আমল তখনই কবুল হবে, যখন আকিদা হবে বিশুদ্ধ। আর বিশুদ্ধ আকিদা গড়ে তুলতে এবং সে অনুযায়ী আমল করতে আজই পড়ে ফেলুন চমৎকার এ বইটি।</p><p>৪. আকিদার দুটি অংশ—মৌলিক ও শাখা-প্রশাখা। শাখাগত অংশে মতপার্থক্য থাকলেও মৌলিক অংশে কারো কোনো দ্বিমত নেই। এ বইটি আকিদার সেই মৌলিক অংশ নিয়েই রচিত।</p>",
+      "image": "book-aqidatut-tahabi-sohoj-o-shongkhipto-bekkha-grontho-183f.webp",
+      "pdf": "aqidatut-tahabi-sohoj-o-shongkhipto-bekkha-grontho-183f.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/09/241896370_3939679639470636_4453878724524764970_n.png",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%86%e0%a6%95%e0%a6%bf%e0%a6%a6%e0%a6%be%e0%a6%a4%e0%a7%81%e0%a6%a4-%e0%a6%a4%e0%a6%be%e0%a6%b9%e0%a6%be%e0%a6%ac%e0%a6%bf-%e0%a6%b8%e0%a6%b9%e0%a6%9c-%e0%a6%93-%e0%a6%b8%e0%a6%82%e0%a6%95/pd/11352",
+        "https://www.rokomari.com/book/219202/আকিদাতুত-তাহাবি"
+      ]
+    },
+    {
+      "name": "প্রোডাক্টিভিটি লেসনস",
+      "nameEn": "Productive Lessons",
+      "slug": "productive-lessons",
+      "mrp": 152,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 96,
+      "edition": "1st Published, 2021",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [],
+      "authors": [
+        {
+          "name": "শাইখ ড. মাশআল আব্দুল আযিয আল-ফাল্লাহি",
+          "nameEn": "Shaykh Dr. Mash'al Abdul Aziz al-Fallahi"
+        }
+      ],
+      "categories": [
+        "প্রোডাক্টিভিটি"
+      ],
+      "description": "<p>যদি মহান আল্লাহর ওপর ভরসা করে আত্মশক্তিতে বলীয়ান হয়ে জীবনপথে অগ্রসর হতে চান, যদি মনপ্রাণ ঢেলে দিয়ে প্রতিটি কাজ সুষ্ঠুভাবে সম্পন্ন করতে চান, যদি মেধাকে আরো বেশি বিকশিত করতে চান, তবে এ বইটির চেয়ে ভালো বন্ধু আর একটিও খুঁজে পাবেন না আপনি। এ বইয়ের চমৎকার টিপস এন্ড ট্রিকস আপনার জীবনে ভিন্ন মাত্রা এনে দেবে।</p>",
+      "image": "book-productive-lessons-bccc.webp",
+      "pdf": "productive-lessons-bccc.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/09/241867208_3939165589522041_3976430884454648216_n.png",
+      "sources": [
+        "https://www.wafilife.com/productive-lessons/pd/11349",
+        "https://www.rokomari.com/book/219204/প্রোডাক্টিভিটি-লেসনস"
+      ]
+    },
+    {
+      "name": "ভ্রূণের আর্তনাদ",
+      "nameEn": "Vruner Artonad",
+      "slug": "vruner-artonad",
+      "mrp": 152,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 96,
+      "edition": "1st Published, 2021",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [],
+      "authors": [
+        {
+          "name": "শাহিনা বেগম",
+          "nameEn": "Shahina Begum"
+        }
+      ],
+      "categories": [
+        "ইসলামী সাহিত্য"
+      ],
+      "description": "<p>একটি ভ্রূণের হৃদয়-বিদারক অনুভূতি এবং বেঁচে থাকার তীব্র আকুলতা ফুটিয়ে তোলা হয়েছে এ বইটির পাতায় পাতায়। ভ্রূণহত্যার মতো গর্হিত কাজ থেকে নিজেকে বিরত রাখতে এবং সুন্দর একটি সমাজ গড়ে তুলতে এমন বইয়ের জুড়ি মেলা ভার।</p>",
+      "image": "book-vruner-artonad-80da.webp",
+      "pdf": "vruner-artonad-80da.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/09/242021244_3940096302762303_3745942669228717899_n.png",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%ad%e0%a7%8d%e0%a6%b0%e0%a7%82%e0%a6%a3%e0%a7%87%e0%a6%b0-%e0%a6%86%e0%a6%b0%e0%a7%8d%e0%a6%a4%e0%a6%a8%e0%a6%be%e0%a6%a6/pd/11351",
+        "https://www.rokomari.com/book/219203/ভ্রূণের-আর্তনাদ"
+      ]
+    },
+    {
+      "name": "সেরা হোক এবারের রামাদান",
+      "nameEn": "Sera Hok Ebarer Romadan",
+      "slug": "sera-hok-ebarer-romadan",
+      "mrp": 260,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 184,
+      "edition": "1st Published, 2021",
+      "binding": "পেপারব্যাক",
+      "weight": 200,
+      "translators": [],
+      "authors": [
+        {
+          "name": "রৌদ্রময়ী টিম",
+          "nameEn": "Roudromoyee Team"
+        }
+      ],
+      "categories": [
+        "ইসলামি আমল ও আমলের সহায়িকা"
+      ],
+      "description": "<p>রৌদ্রময়ী একটি প্লাটফর্মের নাম। এখানে আমাদের বোনেরা তাদের মনের কথাগুলো লিখে যান। ইসলামে নারীর অধিকার, নারীদের দ্বীন শিক্ষা, দ্বীন চর্চা, পারিবারিক ব্যবস্থা, সামাজিক বিভিন্ন কুপ্রথা-কুসংস্কার, ইত্যাদি বিষয়ে প্রতিনিয়ত লিখে চলেছেন। ‘সেরা হোক এবারের রামাদান’ বইটি তাদের রামাদান বিষয়ক লেখাগুলোর সংকলন।</p>",
+      "image": "book-sera-hok-ebarer-romadan-8868.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/03/SERA-HOK-EBARER-RAMADAN.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%b8%e0%a7%87%e0%a6%b0%e0%a6%be-%e0%a6%b9%e0%a7%8b%e0%a6%95-%e0%a6%8f%e0%a6%ac%e0%a6%be%e0%a6%b0%e0%a7%87%e0%a6%b0-%e0%a6%b0%e0%a6%be%e0%a6%ae%e0%a6%be%e0%a6%a6%e0%a6%be%e0%a6%a8/pd/8571",
+        "https://www.rokomari.com/book/212667/সেরা-হোক-এবারের-রামাদান"
+      ]
+    },
+    {
+      "name": "আরবি রস",
+      "nameEn": "Arbi Rosh",
+      "slug": "arbi-rosh",
+      "mrp": 186,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 136,
+      "edition": "1st Edition",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [],
+      "authors": [
+        {
+          "name": "আব্দুল্লাহ মাহমুদ নজীব",
+          "nameEn": "Abdullah Mahmud Najib"
+        }
+      ],
+      "categories": [
+        "ইসলামী সাহিত্য"
+      ],
+      "description": "<p>আরবি রস একটি মজার বই। আরবি সাহিত্যে কত অসাধারণ রস লুকিয়ে আছে—তার সাথে বাঙলাভাষী পাঠককে পরিচিত করার প্রয়াস। আরবি সাহিত্য শুধু নয়, আরবি ভাষাটাও খুবই মজার। এই মজাটা আয়ত্তে আনার কিছু কলকব্জা এই বইয়ের গল্প থেকে পাওয়া যাবে।</p><p>‘আরবি রস’ সবার জন্যে। এই রস আস্বাদনের জন্যে আরবি ভাষা জানা কিংবা আরবি ভাষার শিক্ষার্থী হওয়া আবশ্যক নয়। আরবি রস-এর হাঁড়ি সবার জন্যে উন্মুক্ত। এ কথাও স্মর্তব্য, সবার উপযোগী করে রচিত হলেও এটি কোনো চটুল কৌতুকগ্রন্থ নয়। ভাষা-সাহিত্যের বিচিত্র-বর্ণাঢ্য স্বাদ উপভোগে অভ্যস্ত বা আগ্রহী পাঠকবৃন্দ ‘আরবি রস’-এর সাথে বেশ সুন্দর সময় কাটাতে সক্ষম হবেন।</p>",
+      "image": "book-arbi-rosh-0f9b.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/03/AROBI-ROSH.jpg",
+      "sources": [
+        "https://www.wafilife.com/arbi-rosh/pd/8314",
+        "https://www.rokomari.com/book/210914/আরবি-রস"
+      ]
+    },
+    {
+      "name": "সুরা ইউসুফ: পবিত্র এক মানবের গল্প",
+      "nameEn": "Sura Yusuf Pobitro Ek Manober Golpo",
+      "slug": "sura-yusuf-pobitro-ek-manober-golpo",
+      "mrp": 186,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 128,
+      "edition": "1st Edition",
+      "binding": null,
+      "weight": 150,
+      "translators": [],
+      "authors": [
+        {
+          "name": "শাইখ আলী জাবির আল ফাইফী",
+          "nameEn": "Shaykh Ali Jaber al-Faifi"
+        }
+      ],
+      "categories": [
+        "কুরআন বিষয়ক আলোচনা",
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>সুরা ইউসুফ। আল-কুরআনের মনোমুগ্ধকর, শিক্ষণীয় এবং চমকপ্রদ একটি সুরা। এ সুরা থেকে জানা যায়, নবি ইউসুফ আলাইহিস সালাম ছিলেন পবিত্র এক মানব। বক্ষ্যমাণ গ্রন্থে আমরা সেই নিষ্পাপ যুবকের আলোকময় জীবনচরিত ধাপে ধাপে বর্ণনা করা হয়েছে। শত শত বছর ধরে সারা পৃথিবী জুড়ে তাকে নিয়ে রচিত হয়েছে অসংখ্য অগণিত গ্রন্থ। তবে এ বইটি নিঃসন্দেহে অনুপম আর অতুলনীয়। অল্প কথায় প্রাঞ্জল ভাষায় এত বেশি সমৃদ্ধ একটি বই সচরাচর দেখা যায় না সাহিত্যজগতে। লেখক যেভাবে দু-মলাটের মাঝে তার চিন্তা, কথা, জ্ঞান ও মেধাকে সমন্বিত করেছেন এবং পাঠকদের সামনে চমৎকারভাবে তুলে ধরেছেন তা সত্যিই প্রশংসার দাবি রাখে।</p><p>বইটি কলেবরে ছোট হলেও সুরা ইউসুফের মর্মার্থ অনুধাবন এবং এ থেকে অফুরান শিক্ষা গ্রহণে কারো বিন্দুমাত্র অসুবিধা হবে না। এখানে পাতায় পাতায় দেখা মিলবে জ্ঞানমূলক কথামালার সুবিন্যস্ত আয়োজন। প্রতিটি বাক্যে, প্রতিটি অংশে পরিলক্ষিত হবে নিঁখুত শব্দের মজবুত গাঁথুনি। পাঠক যত বেশি এ গ্রন্থ পাঠ করবে, ততই যেন তার জ্ঞানতৃষ্ণা বেড়ে যাবে।</p>",
+      "image": "book-sura-yusuf-pobitro-ek-manober-golpo-9cf3.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/03/SURAH-YUSUF.jpg",
+      "sources": [
+        "https://www.wafilife.com/sura-yusuf-pobitro-ek-manober-golpo/pd/8313"
+      ]
+    },
+    {
+      "name": "কে উনি??",
+      "nameEn": "Ke Uni",
+      "slug": "ke-uni",
+      "mrp": 172,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 128,
+      "edition": "1st Edition",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [],
+      "authors": [
+        {
+          "name": "মোহাম্মদ তোয়াহা আকবর",
+          "nameEn": "Mohammad Toaha Akbar"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ",
+        "সীরাতে রাসূল (সা.)"
+      ],
+      "description": "<p>এই বইতে সুদৃঢ়, সুপ্রতিষ্ঠিত ইতিহাস থেকেই একের পর এক প্রমাণ করা হবে মুহাম্মাদ সাল্লাল্লাহু আলাইহি ওয়া সাল্লাম একজন নবি ছিলেন। সত্য নবি। সত্যের দিকে আহ্বানকারী আল্লাহর সত্যিকারের একজন বার্তাবাহক, মেসেঞ্জার। একজন ট্রু প্রফেট।</p><p>এই বইটি পড়ে পাঠক-পাঠিকা গালে হাত দিয়ে ভাবনার অতলে তলিয়ে যাবে, ঘুমাতে পারবে না আর চিন্তায় চিন্তায়। নবিজি সাল্লাল্লাহু আলাইহি ওয়া সাল্লামের জীবনীর পাতায় পাতায়, কুরআনের পরতে পরতে তার নবুওয়াতের সত্যতা দেখে নিতে, ভেবে বের করে শেখার চেষ্টা করবে নিজে নিজে। উনাকে অস্বীকার করার আর কোনো ভিত্তিই খুঁজে পাবে না নিজের ভেতরে। মুখে অস্বীকার করলেও, ভেতর থেকে ঠিকই জেনে যাবে, উনি নবি, সত্য নবি। আর উনাকে নবি হিসেবে সত্য জানলেই ইসলামের সত্যতা প্রতিষ্ঠিত হয়ে যায় অন্তরের ভেতর।</p>",
+      "image": "book-ke-uni-b6be.webp",
+      "pdf": "ke-uni-b6be.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/03/KE-UNI.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%95%e0%a7%87-%e0%a6%89%e0%a6%a8%e0%a6%bf-2/pd/8311",
+        "https://www.rokomari.com/book/210916/কে-উনি"
+      ]
+    },
+    {
+      "name": "ওপারেতে সর্বসুখ: জান্নাতের মনোমুগ্ধকর বর্ণনা",
+      "nameEn": "Oparete Sorbosukh",
+      "slug": "oparete-sorbosukh",
+      "mrp": 172,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 120,
+      "edition": "1st Edition",
+      "binding": null,
+      "weight": 150,
+      "translators": [],
+      "authors": [
+        {
+          "name": "আরিফুল ইসলাম",
+          "nameEn": "Ariful Islam"
+        }
+      ],
+      "categories": [
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>ক্ষণিকের এ দুনিয়ায় সুখী হবার জন্য কতই না তোড়জোড় আমাদের! সুখের খোঁজে আমরা ঠিক যেন যন্ত্রের মতো ছুটে চলি সারাদিন সারাবেলা। বিলাসবহুল বাড়ি, দৃষ্টিনন্দন গাড়ি আর অফুরান অর্থকড়ি—সত্যিই কি আমাদের জীবনে সুখ এনে দিতে পারে? না, কখনোই নয়। দুনিয়া কখনো পরম সুখপ্রাপ্তির স্থান নয়। আসল সুখের ঠিকানা একমাত্র জান্নাত। কেবল সেখানে গেলেই ঘুচে যাবে সব অভাব-অনটন, দূর হবে সকল দুঃখ-কষ্ট আর না-পাওয়ার বেদনা।</p><p>কী আছে সেই জান্নাতে? কেন জান্নাত এত বেশি আকাঙ্ক্ষিত? কীভাবে যাওয়া যাবে সেখানে? কারা যেতে পারবে? কারা পারবে না?—এসব নিয়েই আমাদের এবারের আয়োজন ‘ওপারেতে সর্বসুখ’ বইটি।</p>",
+      "image": "book-oparete-sorbosukh-7064.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/03/OPARATE-SORBOSUKH.jpg",
+      "sources": [
+        "https://www.wafilife.com/ওপারেতে-সর্বসুখ:-জান্নাতের-মনোমুগ্ধকর-বর্ণনা/pd/8312"
+      ]
+    },
+    {
+      "name": "ইমাম আবু হানিফা (রা.) জীবন ও কর্ম",
+      "nameEn": "Imam Abu Hanifa Roh",
+      "slug": "imam-abu-hanifa-roh",
+      "mrp": 255,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 168,
+      "edition": "1st Published, 2020",
+      "binding": "পেপারব্যাক",
+      "weight": 200,
+      "translators": [],
+      "authors": [
+        {
+          "name": "আবুল হাসানাত কাসিম",
+          "nameEn": "Abul Hasanat Qasim"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>উম্মাহর এই মহান ইমাম, ফকিহ এবং হাদিস বিশারদের জীবনবৃত্তান্ত আমরা গতানুগতিকতার বাইরে গিয়ে, একটু ভিন্নভাবে সাজানাের চেষ্টা করেছি। ঘটনাবহুল এই মহীয়ান ইমামের জীবন থেকে আমরা পাঠকদের জন্য এমন কিছু সার কথা তুলে এনেছি যা ইমাম আবু হানিফা রাহিমাহুল্লাহকে এক ভিন্ন দৃষ্টিকোণ ও ভিন্ন আয়নায় দেখাবে বলে আমরা বিশ্বাস করি, ইনশা আল্লাহ।</p>",
+      "image": "book-imam-abu-hanifa-roh-869f.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/02/Imam-Abu-Hanifa.png",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%87%e0%a6%ae%e0%a6%be%e0%a6%ae-%e0%a6%86%e0%a6%ac%e0%a7%81-%e0%a6%b9%e0%a6%be%e0%a6%a8%e0%a6%bf%e0%a6%ab%e0%a6%be-%e0%a6%b0%e0%a6%be%e0%a6%b9%e0%a6%bf%e0%a6%ae%e0%a6%be%e0%a6%b9%e0%a7%81/pd/7815",
+        "https://www.rokomari.com/book/202028/ইমাম-আবু-হানিফা-রা-জীবন-ও-কর্ম"
+      ]
+    },
+    {
+      "name": "ইমাম মালিক (রা.) জীবন ও কর্ম",
+      "nameEn": "Imam Malik Roh",
+      "slug": "imam-malik-roh",
+      "mrp": 243,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 160,
+      "edition": "1st Published, 2020",
+      "binding": "পেপারব্যাক",
+      "weight": 200,
+      "translators": [],
+      "authors": [
+        {
+          "name": "আব্দুল্লাহ মাহমুদ",
+          "nameEn": "Abdullah Mahmud"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>সাহাবি যুগের পর যাকে বলা হতাে ‘ ইমামু দারিল হিজরাহ ’ তথা মদিনার ইমাম। অসংখ্য অগণিত মুহাদ্দিসের উস্তায এই ইমামের বাল্যকাল, ইলম অর্জন, আখলাক-শিষ্টাচার ও দ্বীনের খিদমত-সহ জীবনের প্রতিটি দিক দলিল সহকারে অত্যন্ত প্রাঞ্জল ভাষায় আলােচনার প্রয়াস চালিয়েছি। আমরা। কীভাবে তিনি নিজেকে গড়ে তুলেছেন, কীভাবে মদিনার হাদিসের মসনদ অলংকৃত করতে সক্ষম হয়েছেন এসব জানতেই আমাদের এই বই। আশা করি, বইটি আগ্রহী পাঠকদের চাহিদা পূরণ করতে সক্ষম হবে, ইন শা আল্লাহ ।</p>",
+      "image": "book-imam-malik-roh-0bf2.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/02/Imam-Malik.png",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%87%e0%a6%ae%e0%a6%be%e0%a6%ae-%e0%a6%ae%e0%a6%be%e0%a6%b2%e0%a6%bf%e0%a6%95-%e0%a6%b0%e0%a6%be%e0%a6%b9%e0%a6%bf%e0%a6%ae%e0%a6%be%e0%a6%b9%e0%a7%81%e0%a6%b2%e0%a7%8d%e0%a6%b2%e0%a6%be%e0%a6%b9/pd/7818",
+        "https://www.rokomari.com/book/202029/ইমাম-মালিক-রা-জীবন-ও-কর্ম"
+      ]
+    },
+    {
+      "name": "ইমাম আহমাদ ইবনু হাম্বল (রা.) জীবন ও কর্ম",
+      "nameEn": "Imam Ahmad Ibnu Hambol Roh",
+      "slug": "imam-ahmad-ibnu-hambol-roh",
+      "mrp": 255,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 168,
+      "edition": "1st Published, 2020",
+      "binding": "পেপারব্যাক",
+      "weight": 200,
+      "translators": [],
+      "authors": [
+        {
+          "name": "যোবায়ের নাজাত",
+          "nameEn": "Zobayer Najat"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>হাদিস ও ফিকহশাস্ত্রের সর্বজনস্বীকৃত এই ইমামকে সম্পূর্ণ নিরপেক্ষ ও মার্জিত দৃষ্টিতে পরিচয় করিয়েছি আমরা। তার জীবনের প্রতিটি বাঁক অত্যন্ত নিখুঁত ও সুচারুরূপে তুলে ধরার প্রয়াস চালানাে হয়েছে। ইমামু আহলিস সুন্নাহ ’ খ্যাত এই মনীষীর জীবনের অবিস্মরণীয় ত্যাগ ও কুরবানিগুলাে পাঠকদের আলােড়িত করবে বলে আমরা বিশ্বাস করি , ইন শা আল্লাহ ৷</p>",
+      "image": "book-imam-ahmad-ibnu-hambol-roh-bea0.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/02/Ahmad-Ibnu-Hanbal.png",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%87%e0%a6%ae%e0%a6%be%e0%a6%ae-%e0%a6%86%e0%a6%b9%e0%a6%ae%e0%a6%be%e0%a6%a6-%e0%a6%87%e0%a6%ac%e0%a6%a8%e0%a7%81-%e0%a6%b9%e0%a6%be%e0%a6%ae%e0%a7%8d%e0%a6%ac%e0%a6%b2-%e0%a6%b0%e0%a6%be/pd/7820",
+        "https://www.rokomari.com/book/202031/ইমাম-আহমাদ-ইবনু-হাম্বল-রা-জীবন-ও-কর্ম"
+      ]
+    },
+    {
+      "name": "ইমাম শাফিয়ি (রা.) জীবন ও কর্ম",
+      "nameEn": "Imam Shafiyi Roh",
+      "slug": "imam-shafiyi-roh",
+      "mrp": 243,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 159,
+      "edition": "1st Published, 2020",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [],
+      "authors": [
+        {
+          "name": "আব্দুল্লাহিল মামুন",
+          "nameEn": "Abdullahil Mamun"
+        },
+        {
+          "name": "আব্দুল্লাহ মাহমুদ",
+          "nameEn": "Abdullah Mahmud"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>একজন সুপ্রসিদ্ধ ফকিহ , গবেষক ও বিশিষ্ট চিন্তাবিদ আলিম হিসেবে বিশ্বজোড়া খ্যাতি লাভকারী এই ইমামকে গতানুগতিকতার বাইরে গিয়ে পরিচয় করানাের প্রয়াস চালিয়েছি আমরা। ইসলামের বিধি-বিধান সম্পর্কে ব্যাপক গবেষণা করে জনসাধারণের নিকট ইসলামকে সহজভাবে উপস্থাপনকারী এই মনীষীর জীবনের প্রতিটি ধাপ সুবিন্যস্তরূপে তুলে ধরেছি৷ বিজ্ঞ পাঠক তা পড়ে পরিতৃপ্ত হবেন বলে আমাদের দৃঢ় বিশ্বাস।</p>",
+      "image": "book-imam-shafiyi-roh-0e2a.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/02/Imam-Shafii.png",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%87%e0%a6%ae%e0%a6%be%e0%a6%ae-%e0%a6%b6%e0%a6%be%e0%a6%ab%e0%a6%bf%e0%a7%9f%e0%a6%bf-%e0%a6%b0%e0%a6%be%e0%a6%b9%e0%a6%bf%e0%a6%ae%e0%a6%be%e0%a6%b9%e0%a7%81%e0%a6%b2%e0%a7%8d%e0%a6%b2%e0%a6%be/pd/7819",
+        "https://www.rokomari.com/book/202030/ইমাম-শাফিয়ি-রা-জীবন-ও-কর্ম"
+      ]
+    },
+    {
+      "name": "ইমাম হাসান আল-বাসরি (রা.) জীবন ও কর্ম",
+      "nameEn": "Imam Hasan Al Basri Roh",
+      "slug": "imam-hasan-al-basri-roh",
+      "mrp": 175,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 112,
+      "edition": "1st Published, 2020",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [],
+      "authors": [
+        {
+          "name": "আব্দুল বারি",
+          "nameEn": "Abdul Bari"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>যুগশ্রেষ্ঠ এই তাবিয়িকে আমরা সম্পূর্ণ ভিন্ন আঙ্গিকে তুলে ধরার চেষ্টা করেছি। তার অনুপম আখলাক , চরিত্র , আত্মশুদ্ধি ও কর্মময় জীবন যুগ যুগ ধরে মুসলিম জাতির জন্য অনুসরণীয় হয়ে আছে ৷ সেই অনুসৃত জীবনের সামান্য ঝলক স্থান পেয়েছে এই বইটিতে। তবে তার নামে রটানাে সবরকম কল্পকাহিনী থেকে মুক্ত হয়ে সম্পূর্ণ নিরপেক্ষ দৃষ্টিতে আলােচনা করা হয়েছে এখানে। অসম্ভব বিনয়ী ও আল্লাহভীরু এই মহৎ ব্যক্তিত্বকে পাঠকগণ এক ভিন্ন চেহারায় , বিশুদ্ধ আয়নায় দেখতে পাবেন বলে আমাদের বিশ্বাস , ইনশা আল্লাহ।</p>",
+      "image": "book-imam-hasan-al-basri-roh-86c0.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/02/Hasan-Al-Basri.png",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%87%e0%a6%ae%e0%a6%be%e0%a6%ae-%e0%a6%b9%e0%a6%be%e0%a6%b8%e0%a6%be%e0%a6%a8-%e0%a6%86%e0%a6%b2-%e0%a6%ac%e0%a6%be%e0%a6%b8%e0%a6%b0%e0%a6%bf-%e0%a6%b0%e0%a6%be%e0%a6%b9%e0%a6%bf%e0%a6%ae/pd/7823",
+        "https://www.rokomari.com/book/202032/ইমাম-হাসান-আল-বাসরি-রা-জীবন-ও-কর্ম"
+      ]
+    },
+    {
+      "name": "ইমাম আব্দুল্লাহ ইবনু মুবারক (রা.) জীবন ও কর্ম",
+      "nameEn": "Imam Abullah Ibnu Mubarok Roh",
+      "slug": "imam-abullah-ibnu-mubarok-roh",
+      "mrp": 265,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 176,
+      "edition": "1st Published, 2020",
+      "binding": "পেপারব্যাক",
+      "weight": 200,
+      "translators": [],
+      "authors": [
+        {
+          "name": "আবুল হাসানাত কাসিম",
+          "nameEn": "Abul Hasanat Qasim"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>ইসলামি ইতিহাসের অন্যতম প্রতিভাধর এই মনীষীর আলােকিত জীবনকে এক অভিনব ভঙ্গিতে মেলে ধরার চেষ্টা করেছি আমরা ৷ ফিকহশাস্ত্রে দক্ষতা, তাফসির ও আরবি সাহিত্যে পারঙ্গমতা, যুহদ ও ত্যাগ – তপস্যায় একনিষ্ঠতা, জিহাদের ময়দানে পাহাড়সম দৃঢ়তা – সহ তার বৈচিত্র্যময় জীবনের প্রায় সবদিক নিয়েই হৃদয়গ্রাহী ভাষায় আলােচনা করা হয়েছে এই বইয়ে। আশা করি , আর্থসামাজিক পদস্খলনের এই যুগে পাঠকগণ এতে চিন্তার যথেষ্ট খােরাক পাবেন , ইন শা আল্লাহ ।</p>",
+      "image": "book-imam-abullah-ibnu-mubarok-roh-f3bd.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/02/Abdullah-Ibnul-Mubarak.png",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%87%e0%a6%ae%e0%a6%be%e0%a6%ae-%e0%a6%86%e0%a6%ac%e0%a7%8d%e0%a6%a6%e0%a7%81%e0%a6%b2%e0%a7%8d%e0%a6%b2%e0%a6%be%e0%a6%b9-%e0%a6%87%e0%a6%ac%e0%a6%a8%e0%a7%81-%e0%a6%ae%e0%a7%81%e0%a6%ac/pd/7824",
+        "https://www.rokomari.com/book/202033/ইমাম-আব্দুল্লাহ-ইবনু-মুবারক-রা-জীবন-ও-কর্ম"
+      ]
+    },
+    {
+      "name": "তিনিই আমার প্রাণের নবি (সা.)",
+      "nameEn": "Tinii Amar Praner Nobi",
+      "slug": "tinii-amar-praner-nobi",
+      "mrp": 186,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 120,
+      "edition": "1st published 2020",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [
+        "শাইখ আব্দুল্লাহিল মা'মুন"
+      ],
+      "authors": [
+        {
+          "name": "শাইখ আলী জাবির আল ফাইফী",
+          "nameEn": "Shaykh Ali Jaber al-Faifi"
+        }
+      ],
+      "categories": [
+        "সীরাতে রাসূল (সা.)"
+      ],
+      "description": "<p>‘তিনিই আমার প্রাণের নবি (সা.)’</p><p>শাইখ আলী জাবির আল ফাইফী রচিত এই বইয়ের পরতে পরতে পাঠক নবীজিকে নতুন ভাবে চিনবেন। দেখবেন, তিনি এসেছেন মহানুভুবতা, ভালোবাসা আর বিশ্বস্ততার প্রতীক হয়ে। জানবেন, তার শুভামন ঘটেছে মহান রবের পক্ষ থেকে এক আলো-ঝলমলে বার্তা নিয়ে, যে আলোয় ভেসে যায় সমস্ত অনাচার, মুছে যায় সব মিথ্যে উপাস্যের ঠুনকো অস্তিত্ব। তিনি জানেন ভালোবাসা ছড়িয়ে দিতে। তিনি জানেন সকলের মাঝে ভালোবাসার বীজ বুনে দিতে।</p><p>বইয়ের প্রতিটি পরিচ্ছেদ পড়ার সময় পাঠকমনে একটি কথাই বার বার প্রতিধ্বনিত হবে: তিনিই আমার নবী, তিনিই আমার প্রাণের নবী, সাল্লাল্লাহু আলাইহি ওয়া সাল্লাম।</p>",
+      "image": "book-tinii-amar-praner-nobi-3c9d.webp",
+      "pdf": "tinii-amar-praner-nobi-3c9d.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2020/10/Tinie-Amar-Praner-Nabi-Dark.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%a4%e0%a6%bf%e0%a6%a8%e0%a6%bf%e0%a6%87-%e0%a6%86%e0%a6%ae%e0%a6%be%e0%a6%b0-%e0%a6%aa%e0%a7%8d%e0%a6%b0%e0%a6%be%e0%a6%a3%e0%a7%87%e0%a6%b0-%e0%a6%a8%e0%a6%ac%e0%a6%bf-%e0%a6%b8%e0%a6%be/pd/5590",
+        "https://www.rokomari.com/book/204761/তিনিই-আমার-প্রাণের-নবি-সা"
+      ]
+    },
+    {
+      "name": "হাইয়া আলাস সালাহ",
+      "nameEn": "Haia Alas Salah",
+      "slug": "haia-alas-salah",
+      "mrp": 175,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 112,
+      "edition": "1st published 2020",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [],
+      "authors": [
+        {
+          "name": "শাইখ আবু আব্দিল আজিজ মুনির আল-জাযাইরি",
+          "nameEn": "Shaykh Abu Abdil Aziz Munir al-Jazairi"
+        }
+      ],
+      "categories": [
+        "ইসলামি আমল ও আমলের সহায়িকা"
+      ],
+      "description": "<p>ব্যক্তিগতভাবে সালাত নিয়ে দীর্ঘদিন যাবত একটি বই খুঁজছিলাম, যার উপস্থাপনা হবে অত্যন্ত হৃদয়গ্রাহী ভাষায়। এমন একটি বই, যা পড়ে মুসলিম উম্মাহর প্রতিটি সদস্য মসজিদমুখী হবে, সালাতের ব্যাপারে যত্নশীল হবে। হাইয়া আলাস সালাহ হাতে পাওয়ার পর মনে হলো, আমার ইচ্ছা পূরণ হয়েছে আলহামদুলিল্লাহ।</p><p>হাইয়া আলাস সালাহ; হৃদয় যখন পাপসাগরে নিমজ্জিত, জীবন যখন থমকে দাঁড়ায় হতাশার বালুচরে কিংবা ক্লান্তি এসে ভিড় জমায় মনের আঙিনায়, তখন মুনাজ্জিনের এক চিলতে বিনীত আহ্বান—হাইয়া আলাস সালাহ—আমাদের অন্তরাত্মা কাঁপিয়ে দেয়, ভেতর থেকে যেন বলতে চায়, এসো কল্যানের পথে, এসো এক সুন্দর আগামীর পথে এগিয়ে যাই। পাঠক, আমাদের বিশ্বাস, এই বইটি ইন শা আল্লাহ্‌ আপনাকে ঠিক এভাবেই এগিয়ে দেবে পরকালের পথে। নিয়ে যাবে আল্লাহর ঘরে, যেখানে ফেরেশতাদের আবাস।</p>",
+      "image": "book-haia-alas-salah-b75b.webp",
+      "pdf": "haia-alas-salah-b75b.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2020/10/Haiya-Alas-Salah-Front.png",
+      "sources": [
+        "https://www.wafilife.com/haia-alas-salah/pd/5593",
+        "https://www.rokomari.com/book/204763/হাইয়া-আলাস-সালাহ"
+      ]
+    },
+    {
+      "name": "সন্তান স্বপ্ন দিয়ে বোনা",
+      "nameEn": "Shontan Shopno Diye Bona",
+      "slug": "shontan-shopno-diye-bona",
+      "mrp": 185,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 128,
+      "edition": "1st Published, 2019",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [],
+      "authors": [
+        {
+          "name": "আকরাম হোসাইন",
+          "nameEn": "Akram Hossain"
+        }
+      ],
+      "categories": [
+        "বিয়ে ও সংসার"
+      ],
+      "description": "<p>সন্তান, নিছক কোনো জৈবিক ক্রিয়ার ফল নয়; বরং তারা আমাদের স্বপ্ন, আমাদের পৃথিবী এবং আখিরাতের পাথেয়। সন্তানকে যদি শৈশব থেকে সদাচরণ, সত্য কথা বলা আর পাপ-পুণ্যের পাঠ না দেওয়া হয়, তাহলে বড় হওয়ার সাথে সাথে সেই সন্তান মা-বাবার নিয়ন্ত্রণের বাইরে চলে যায়। তাকে আর কোনোভাবেই মূল্যবোধের পাঠ শেখানো যায় না।</p><p>একজন মুসলিমের কাছে সন্তান প্রতিপালনের দায়িত্বটা আরও বিশাল। মুসলিম মা-বাবার অবশ্য কর্তব্য হলো—তাদের সন্তানদের প্রকৃত মুসলিম হিসেবে গড়ে তোলা। সন্তানকে প্রকৃত মুসলিম হবার এই পাঠ খুব শৈশবেই দিতে হয়। সন্তান যেদিন জন্মলাভ করে, সেদিন থেকেই মা-বাবার ওপর এই দায়িত্ব এসে পড়ে।</p><p>সন্তানের নাম রাখা থেকে শুরু করে তার আকীকা, তার শিক্ষাদীক্ষাসহ বিস্তৃত দিকনির্দেশনামূলক বইয়ের প্রয়োজনীয়তা অনুভব করেই কলম হাতে তুলে নিয়েছেন উস্তায আকরাম হোসাইন হাফিজাহুল্লাহ। সন্তান গ্রহণের উপযুক্ত সময়-নির্ধারণ থেকে শুরু করে একেবারে সন্তানের লালন-পালনের খুঁটিনাটি বিষয়সমূহও লেখক নজরে এনেছেন। এমনকি, নিঃসন্তান দম্পতি, তাদের প্রতি অন্যদের আচার-আচরণ ও সমাজের অবস্থানের বিষয়াদিও স্থান পেয়েছে লেখকের কলমে।</p><p>‘প্যারেন্টিং’ বিষয়ে উস্তায আকরাম হোসাইন হাফিযাহুল্লাহর ‘সন্তান : স্বপ্ন দিয়ে বোনা’ বইটি সন্তানদের ভালো মানুষ, ভালো সন্তান এবং সর্বোপরি প্রকৃত মুসলিম হিসেবে গড়ে তুলতে মা-বাবাদের কিছুটা হলেও উপকারে আসবে বলে আমাদের বিশ্বাস।</p>",
+      "image": "book-shontan-shopno-diye-bona-642f.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/04/Sontan.jpg",
+      "sources": [
+        "https://www.wafilife.com/shontan-shopno-diye-bona/pd/4012",
+        "https://www.rokomari.com/book/181192/সন্তানঃ-স্বপ্ন-দিয়ে-বোনা"
+      ]
+    },
+    {
+      "name": "সালাফদের জীবনকথা",
+      "nameEn": "Salafder Jibon Kotha",
+      "slug": "salafder-jibon-kotha",
+      "mrp": 320,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 240,
+      "edition": "1st Published, 2019",
+      "binding": "পেপারব্যাক",
+      "weight": 250,
+      "translators": [
+        "মাসউদ আলিমী"
+      ],
+      "authors": [
+        {
+          "name": "শাইখ আব্দুল আযীয ইবনু নাসির",
+          "nameEn": "Shaykh Abdul Aziz ibn Nasir"
+        },
+        {
+          "name": "শাইখ বাহাউদ্দীন উকাইল",
+          "nameEn": "Shaykh Bahauddin Uqail"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>ঐশী আলোয় উদ্ভাসিত যে-জীবন, কতই না উত্তম সেই জীবনের গল্প। নববী আদর্শে উজ্জ্বল যাদের পদরেখা, কতই না মহিমান্বিত সেই জীবনধারা। সেই জীবন এমন এক অঙ্কিত ছবির মতো, যেখানে রঙতুলিতে আঁকা হয় মহান রবের সান্নিধ্য লাভের পথ। সেই পথ মুখরিত হয়ে আছে কুরআনের সুর-তাল-লহরিতে। আলোকিত হয়ে আছে এমন এক অপার্থিব আলোয়, যে-আলো প্রথম ঝলমল করে উঠেছিল নির্জন, নিস্তব্ধ হেরার অন্ধকারে। এরপর, সেই আলোর বিচ্ছুরণে যাদের জীবন রাঙিয়ে উঠেছিল, তারাই আমাদের মহান পূর্বসূরি। আমাদের উত্তম পূর্বপুরুষ। আমাদের সালাফ। তাদের যাপিত জীবনের প্রতিচ্ছবির নাম ‘সালাফদের জীবনকথা’।</p>",
+      "image": "book-salafder-jibon-kotha-8e6a.webp",
+      "pdf": "salafder-jibon-kotha-8e6a.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/10/Salafder-Jibon-Kotha.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%b8%e0%a6%be%e0%a6%b2%e0%a6%be%e0%a6%ab%e0%a6%a6%e0%a7%87%e0%a6%b0-%e0%a6%9c%e0%a7%80%e0%a6%ac%e0%a6%a8%e0%a6%95%e0%a6%a5%e0%a6%be/pd/4360",
+        "https://www.rokomari.com/book/191076/সালাফদের-জীবনকথা"
+      ]
+    },
+    {
+      "name": "ভালোবাসার রামাদান",
+      "nameEn": "Valobashar Romadan",
+      "slug": "valobashar-romadan",
+      "mrp": 250,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 184,
+      "edition": "1st Published, 2019",
+      "binding": "পেপারব্যাক",
+      "weight": 200,
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. আইদ আল কারণী",
+          "nameEn": "Dr. Aidh al-Qarni"
+        }
+      ],
+      "categories": [
+        "ইসলামি আমল ও আমলের সহায়িকা"
+      ],
+      "description": "<p>রামাদান এতই মাহাত্ম্যপূর্ণ একটি মাস যে, এই মাসে জান্নাতের সবগুলো দরজা উন্মুক্ত রাখা হয় এবং জাহান্নামের সবগুলো দরজা বন্ধ করে দেওয়া হয়। আর এই মাসেই রয়েছে লাইলাতুল ক্বদেরর ন্যায় বরকতময় রজনী যা হাজার মাসের চেয়েও উত্তম। নবী সাল্লাল্লাহু আলাইহি ওয়া সাল্লাম বলেন, রামাদানের প্রতিটি দিন ও রাতে আল্লাহর কাছে বান্দার দুআ কবুল হয় এবং অগণিত বান্দা জাহান্নাম থেকে মুক্তি লাভ করে। অথচ কত-ই না দুর্ভাগা আমরা যে, উপযুক্ত দিক-নির্দেশনার অভাবে আমাদের অনেকেই মূল্যবান এই মাসটিকে যথাযথভাবে কাজে লাগাতে পারি না। ফলে আমরা ব্যর্থ হই রামাদানের অমূল্য-সব নিয়ামতপ্রাপ্তি থেকে।</p><p>মূল্যবান এই গ্রন্থখানি রামাদানে সিয়াম পালনের বিভিন্ন গুরুত্বপূর্ণ দিক-নির্দেশনা সমৃদ্ধ। এই গ্রন্থে অপেক্ষাকৃত কার্যকরী বহু আয়াত ও বিশুদ্ধ হাদীসের মাধ্যমে রামাদানের বিভিন্ন আমলের ব্যাপারে নির্ভুল দিক-নির্দেশনা প্রদানের চেষ্টা করা হয়েছে। পাঠকগণ যেন তাদের রামাদানকে উত্তমরূপে কাজে লাগাতে পারেন সে-উদ্দেশ্যেই সমকালীন প্রকাশনের এই ক্ষুদ্র প্রয়াস।</p>",
+      "image": "book-valobashar-romadan-1e25.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/05/Bhalobasar-Ramadan.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%ad%e0%a6%be%e0%a6%b2%e0%a7%8b%e0%a6%ac%e0%a6%be%e0%a6%b8%e0%a6%be%e0%a6%b0-%e0%a6%b0%e0%a6%be%e0%a6%ae%e0%a6%be%e0%a6%a6%e0%a6%be%e0%a6%a8/pd/4082",
+        "https://www.rokomari.com/book/185811/ভালোবাসার-রামাদান"
+      ]
+    },
+    {
+      "name": "সবুজ রাতের কোলাজ",
+      "nameEn": "Shobuj Rater Kolaj",
+      "slug": "shobuj-rater-kolaj",
+      "mrp": 170,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 93,
+      "edition": "দ্বিতীয় সংস্করণ, ডিসেম্বর ২০১৮",
+      "binding": "হার্ডকভার",
+      "weight": 250,
+      "translators": [],
+      "authors": [
+        {
+          "name": "আব্দুল্লাহ মাহমুদ নজীব",
+          "nameEn": "Abdullah Mahmud Najib"
+        }
+      ],
+      "categories": [
+        "ইসলামী সাহিত্য"
+      ],
+      "description": "<p>প্যারাডক্সিক্যাল সাজিদ বইয়ের লেখক আরিফ আজাদ বলেন, নজীবের সাথেপরিচয় তাঁর কবিতার মাধ্যমেই। যেদিন তাঁর কবিতা পড়ি, সেদিন অস্ফুটে বলে উঠেছিলাম—আমরা পেয়ে গেছি আমাদের নতুন আল মাহমুদ। আমাদের নতুন ফররুখ আহমদ। আমি নজীবের কবিতার একজন একনিষ্ঠ ভক্ত। আমি এবং আমরা যে রেঁনেসার স্বপ্ন দেখি, সেই রেঁনেসায় নজীবের ভূমিকা হবে বিশাল কিছু। আমি দেখতে পাই—একটি সবুজ দেশ। একদল তরুণ আলোর মশাল হাতে এগিয়ে যাচ্ছে। নজীব তাদের নেতৃত্বে।</p><p>নজীদের তৃতীয় কাব্যগ্রন্থ সবুজরাতের কোলাজ। যখন শুনলাম আমাকেই বইটার ভূমিকা লিখতে হবে, চিন্তায় পড়ে গেলাম। আমরা কী সাধ্য আছে তাঁর প্রতিভার, তাঁর কাজের কয়েকটি শব্দে মূল্যায়ন করার? নজীবের অন্যান্য কবিতার বইয়ের মতো এ বইয়েও স্থান পেয়েছে তাঁর বেশকিছু অনন্য অসাধারণ কবিতা। এতে আল আকসা নিয়ে কবিতা আছে, নাইয়র কাব্য, আমি কেন কবি, আমি যেদিন বাবা হবো নামে আছে দুর্দান্ত সব কবিতা। আমি আশাবাদী, কবিতাগুলো পাঠকদের হৃদয় ছুঁয়ে যাবে, ইনশাআল্লাহ্‌।</p>",
+      "image": "book-shobuj-rater-kolaj-fac5.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2018/02/Sobuj-Rater-Collage.jpg",
+      "sources": [
+        "https://www.wafilife.com/shobuj-rater-kolaj/pd/3275",
+        "https://www.rokomari.com/book/160940/সবুজ-রাতের-কোলাজ"
+      ]
+    },
+    {
+      "name": "জীবন পথে সফল হতে",
+      "nameEn": "Jibon Pothe Shofol Hote",
+      "slug": "jibon-pothe-shofol-hote",
+      "mrp": 232,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 158,
+      "edition": "1st published, 2019",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [
+        "আব্দুল্লাহ মজুমদার"
+      ],
+      "authors": [
+        {
+          "name": "শাইখ আব্দুল করীম বাক্কার",
+          "nameEn": "Shaykh Abdul Karim Bakkar"
+        }
+      ],
+      "categories": [
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>বইয়ের কিছু অংশ:</p><p>এমন ঘটনা প্রায়ই শুনে থাকবেন—কোনো ছেলে বাইরে কোথাও এক মেয়ের সাথে দেখা করতে গিয়েছে। এরপর সে গোপনে মেয়েটির অস্বাভাবিক একটা ছবি তুলে রেখেছে অথবা তাদের বিশেষ কোনো আলাপ, কথা-বার্তা রেকর্ড করে রেখেছে। কয়েকদিন পর এই ছবি অথবা রেকর্ড দিয়েই ছেলেটা মেয়েটিকে বার বার হুমকি দিতে থাকে। মেয়েটির মনে হয়, সে যেন মাইন পুঁতে রাখা ভূমির ওপর দিয়ে হাঁটছে। কারণ, সে যেদিকেই যাবে সেদিকেই তার জন্য বিপদ অপেক্ষা করছে। আবার এমনও শোনা যায়, মেয়েদের অসাবধানতার সুযোগ নিয়ে কোনো ছেলে তার ক্ষতি করে বসেছে। এরপর ঠিকই তাকে বিয়ের ওয়াদা দেয়, কিন্তু শেষমেষ রণে ভঙ্গ দিয়ে পালিয়ে যায়। তার আর কোনো খোঁজখবর পাওয়া যায় না। মেয়েটার জীবনে তখন ভয়াবহ দু‍র্যোগ নেমে আসে। কখনোও কখনোও মেয়েটা গর্ভবতী হয়ে পড়ে।</p><p>তাই মেয়েদেরকে বলি, আল্লাহ যা নির্ধারণ করেছেন তার বাইরে কিছুই হবে না। একজন মেয়ে যতই দুর্বল বা একাকী হোক না কেন, আল্লাহ তার সাথেই আছেন। আল্লাহ তাআলা-ই জীবনসঙ্গী নির্ধারণ করে দেন। তাই তাঁর কাছেই চাইতে হবে। মনে রাখতে হবে, আল্লাহর অবাধ্যতায় এ চাওয়া পূরণ হবে না। তাঁর কাছ থেকে কিছু পেতে হলে অবশ্যই তাঁর আনুগত্য করতে হবে, তাঁর বিধি-নিষেধ মেনে চলতে হবে।</p><p>মেয়েরা বোঝে না, যে মেয়েকে চাইলেই পাওয়া যায়, তাকে কখনোও ছেলেরা নিজের স্ত্রী হবার উপযুক্ত মনে করে না। সেখানে তার সন্তান-সন্ততির মা হিসেবে মেনে নেওয়া তো দূরের ব্যাপার! তাই নিজেকে এমন কোথাও সঁপে দেওয়া ঠিক হবে না, যেখানে কোনো সম্মান নেই। আল্লাহর স্মরণে, তাঁর ভালোবাসায়, তাঁর সাথে সম্পর্ক দৃঢ় করার মাধ্যমেই অন্তরে প্রশান্তি আসে। এজন্য কোথায় জীবনের স্বাদ সবচেয়ে বেশি সেটি না খুঁজে বরং সবচেয়ে সম্মানজনক স্বাদটা কোথায় সেটিই খুঁজে নিতে হবে।</p>",
+      "image": "book-jibon-pothe-shofol-hote-1090.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/02/0.png",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%9c%e0%a7%80%e0%a6%ac%e0%a6%a8-%e0%a6%aa%e0%a6%a5%e0%a7%87-%e0%a6%b8%e0%a6%ab%e0%a6%b2-%e0%a6%b9%e0%a6%a4%e0%a7%87/pd/3872",
+        "https://www.rokomari.com/book/178212/জীবন-পথে-সফল-হতে"
+      ]
+    },
+    {
+      "name": "নবীজি ﷺ—যেমন ছিলেন তিনি",
+      "nameEn": "Nobiji Sallallahu Alaihi Wa Sallam Jemon Chilen Tini",
+      "slug": "nobiji-sallallahu-alaihi-wa-sallam-jemon-chilen-tini",
+      "mrp": 278,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": null,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "weight": 250,
+      "translators": [
+        "মুরসালিন নিলয়"
+      ],
+      "authors": [
+        {
+          "name": "ড. আইদ আল কারণী",
+          "nameEn": "Dr. Aidh al-Qarni"
+        }
+      ],
+      "categories": [
+        "আল হাদিস",
+        "সীরাতে রাসূল (সা.)"
+      ],
+      "description": "<p>বাইন্ডিং: পেপার ব্যাক</p><p>সর্বশেষ ছাপা: সেপ্টেম্বর, ২০২০</p><p>নিজের জামা থেকে শুরু করে জুতা পর্যন্ত নিজেই সেলাই করতেন। নিজেই ঘর মুছতেন, বকরির দুধ দোহাতেন, পরিবারকে মাংস কাটায় সহায়তা করতেন। কেউ এলে নিজেই আতিথেয়তা করতেন, কথা বলতেন এবং তাদের প্রতি অত্যন্ত উদার ব্যবহার করতেন। যখন সফরে বের হতেন তখন পালাক্রমে একবার নিজে সাওয়ার হতেন, আরেকবার তার সাথীকে সাওয়ার হতে দিতেন। তার খাবার ছিল যবের রুটি। তিনি ঘুমাতেন মসজিদে। কখনো কখনো খালি পায়েও হাঁটতেন। দুজন সাওয়ার হলে তিনি পেছনে বসতেন, যাতে আরেকজনের ভ্রমণে কষ্ট না হয়। একদল মুসাফিরদের ভেতর থাকলে তিনি পেছনের দিকে থাকতেন, যাতে দুর্বল মুসাফিরদেরকে তিনি সাহায্য করতে পারেন, আর অন্যদের সাথে মিলেমিশে চলতে পারেন।</p>",
+      "image": "book-nobiji-sallallahu-alaihi-wa-sallam-jemon-chilen-ti-8500.webp",
+      "pdf": "nobiji-sallallahu-alaihi-wa-sallam-jemon-chilen-ti-8500.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/06/Nabiji-1.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%a8%e0%a6%ac%e0%a7%80%e0%a6%9c%e0%a6%bf-%ef%b7%ba-%e0%a6%af%e0%a7%87%e0%a6%ae%e0%a6%a8-%e0%a6%9b%e0%a6%bf%e0%a6%b2%e0%a7%87%e0%a6%a8-%e0%a6%a4%e0%a6%bf%e0%a6%a8%e0%a6%bf/pd/4114",
+        "https://www.rokomari.com/book/185918/নবীজি-যেমন-ছিলেন-তিনি"
+      ]
+    },
+    {
+      "name": "আর্গুমেন্টস অব আরজু",
+      "nameEn": "Arguments Of Arju",
+      "slug": "arguments-of-arju",
+      "mrp": 250,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 152,
+      "edition": "1st Published, 2019",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [],
+      "authors": [
+        {
+          "name": "আরিফুল ইসলাম",
+          "nameEn": "Ariful Islam"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>‘আর্গুমেন্টস অব আরজু’। নাস্তিকতা বিরোধি খুবই পাঠকপ্রিয় একটা বই। বইটির কেন্দ্রীয় চরিত্র আরজু নামের একজন যুবক যে তার শাণিত যুক্তি, তথ্যনির্ভর আলোচনা এবং অসাধারণ উপস্থাপনশৈলীর মাধ্যমে ভেঙে দেয় নাস্তিকদের গড়ে তোলা দূর্গ। নির্মাণ করে বিশ্বাসের সুদৃঢ় দেয়াল। আরজুকে কেবল একটা চরিত্র হিসেবে দেখার আর সুযোগ নেই; আরজু যেন সমকালীন নাস্তিকতা বিরোধি বুদ্ধিবৃত্তিক আন্দোলনের একটি জ্বলন্ত শিখা, যে শিখা একদিকে জ্বেলে যায় সত্যের আলো, পথ দেখায় পথভোলা পথিকদের। অন্যদিকে এই শিখা জ্বালিয়ে দেয় মিথ্যার আস্তরণ। ভষ্ম করে দেয় যতো অসত্য আর অসুন্দরকে। আরজু আমাদের মধ্য থেকে উঠে আসা একটি নাম। আরজু আমাদেরই একজন। আমরাই আরজু।</p>",
+      "image": "book-arguments-of-arju-c7a6.webp",
+      "pdf": "arguments-of-arju-c7a6.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/12/78114982_2263431423762141_7574688684973228032_o.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%86%e0%a6%b0%e0%a7%8d%e0%a6%97%e0%a7%81%e0%a6%ae%e0%a7%87%e0%a6%a8%e0%a7%8d%e0%a6%9f%e0%a6%b8-%e0%a6%85%e0%a6%ac-%e0%a6%86%e0%a6%b0%e0%a6%9c%e0%a7%81/pd/4507",
+        "https://www.rokomari.com/book/192456/আর্গুমেন্টস-অব-আরজু"
+      ]
+    },
+    {
+      "name": "তারাফুল",
+      "nameEn": "Taraful",
+      "slug": "taraful",
+      "mrp": 232,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 160,
+      "edition": "1st Published, 2019",
+      "binding": "পেপারব্যাক",
+      "weight": 200,
+      "translators": [],
+      "authors": [
+        {
+          "name": "আব্দুল্লাহ মাহমুদ নজীব",
+          "nameEn": "Abdullah Mahmud Najib"
+        }
+      ],
+      "categories": [
+        "ইসলামী সাহিত্য"
+      ],
+      "description": "<p>আবদুল্লাহ মাহমুদ নজীব একজন স্বাপ্নিক সবুজ তরুণ। নিজের জীবনবোধ এবং জীবনদর্শন থেকে তিনি আমাদের জন্য কিছু পাঠ তুলে এনেছেন। জীবনের নিত্য পরিসরে, স্রষ্টার সান্নিধ্যে আসতে তিনি যে-উপায়, যে-দর্শন লালন করেন, সেই দর্শন পড়ে আগ্রহী পাঠকমাত্রই ভাববে, চিন্তা করবে―এমনটাই তিনি আশা করেন। তার সেই জীবনদর্শনের সমন্বিত রূপের নাম― ‘তারাফুল’। তারাফুলের মতো করে প্রস্ফুটিত হবে বিশ্বাসী হৃদয়গুলো―এমন প্রত্যাশা আমাদেরও।</p>",
+      "image": "book-taraful-3722.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/02/taraful.png",
+      "sources": [
+        "https://www.wafilife.com/taraful/pd/3873",
+        "https://www.rokomari.com/book/181281/তারাফুল"
+      ]
+    },
+    {
+      "name": "বিশ্বাসের জয়",
+      "nameEn": "Bisshaser Joy",
+      "slug": "bisshaser-joy",
+      "mrp": 245,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 160,
+      "edition": "New Edition 2022",
+      "binding": "হার্ডকভার",
+      "weight": 250,
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. হুসামুদ্দীন হামিদ",
+          "nameEn": "Dr. Husamuddin Hamid"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>কোনো বই পড়ে ঈমান বেড়েছে, এমনটা আমার খুব কম হয়েছে। আব্দুল্লাহ মজুমদার ভাইয়ের অনূদিত এ বইটি আমার পড়া সেই হাতে গোনা কয়েকটির মধ্যে একটি, যা পড়ে আমি অন্তরের ঈমানের স্বাদ পেয়েছি, মিন্ট ফ্লেভারের। মনে হয়েছে, হৃৎপিণ্ড কেউ মেনথল দিয়ে ধুয়ে দিয়েছে। যদিও মূল বিষয়বস্তু একজন মুমিন ও একজন সংশয়ীর কথোপকথন, কিন্তু সংশয়ীর খোরাকের চেয়ে ঈমানওয়ালাদের খোরাক এই বইয়ে বেশি। অবশ্য সংশয়ী যদি তার্কিক না হয়ে ভাবুক হন, তবে এ বই তাকে হয়তো শুরু থেকে আরেকবার ভাবাবে। কিছু বই একবার পড়ে ফেলে রাখতে নেই, বার বার পড়তে হয়।</p><p>এই বইটি আমাদের সপ্তাহে একবার করে পড়া উচিত বলে মনে হয়েছে। সেই সাথে প্রতিদিন কিছু সময় বইয়ের কথাগুলো আরেকজনের কাছে আওড়ানো দরকার, যাতে কথাগুলো একেবারে ভেতরে বসে যায়, সত্তার সাথে মিশে যায় (assimilation)।</p><p>তাওহীদ আর রিসালাতের সত্যায়ন এবং আমার সত্তা যেন একাকার হয়ে যায়, আমার প্রতিটা নিঃশ্বাস যেন বলে তাওহীদ ও রিসালাত সত্য। তাহলে বের হবার কালেও নিঃশ্বাস কালিমার সত্যায়ন ছাড়া ভিন্ন কিছু বলার সুযোগই পাবে না। এজন্য এই বইটি নিয়মিত পড়া এবং এখানে আল্লাহর সিফাত ও রিসালাতের সত্যতা যেভাবে খুলে খুলে বিস্তারিত উঠে এসেছে, সেভাবে আরেক মুসলিম ভাইয়ের সাথে জবান নাড়িয়ে আলোচনা আমি নিজেও করব, ইন শা আল্লাহ, আপনাদেরও করার আহবান।</p><p>ড. হুসামউদ্দীন হামিদ রচিত ‘বিশ্বাসের জয়’ বইটি নিয়ে ডা. শামসুল আরেফীনের অভিমত। ইতোপূর্বে বইটি ‘মেঘ কেটে যায়’ নামে সমকালীন প্রকাশন থেকে প্রকাশিত হয়েছিল। বিশেষ কারণে বইটির প্রচ্ছদ ও নাম পরিবর্তন করা হয়েছে।</p>",
+      "image": "book-bisshaser-joy-e20d.webp",
+      "pdf": "bisshaser-joy-e20d.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/04/273943039_4445057212266207_6745112441170770292_n.png",
+      "sources": [
+        "https://www.wafilife.com/bisshaser-joy/pd/4013",
+        "https://www.rokomari.com/book/226952/বিশ্বাসের-জয়"
+      ]
+    },
+    {
+      "name": "শিশুর মননে ঈমান",
+      "nameEn": "Shishur Monone Iman",
+      "slug": "shishur-monone-iman",
+      "mrp": 176,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 120,
+      "edition": "1st Edition, 2019",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [
+        "মাসুদ শরীফ"
+      ],
+      "authors": [
+        {
+          "name": "ড. আইশা হামদান",
+          "nameEn": "Dr. Aisha Hamdan"
+        }
+      ],
+      "categories": [
+        "বিয়ে ও সংসার"
+      ],
+      "description": "<p>পৃষ্ঠা – ১২০ (পেপার ব্যাক কভার)</p><p>কোন দিকে অগ্রসর হবে আমাদের আগামী প্রজন্ম? কোন দিকে যাত্রা করবে নতুন দিনের অভিযাত্রীরা? তারা কি ডুবে যাবে কালের আঁধারে? বিলীন হবে অশুদ্ধতার অশুভ গহ্বরে? নাকি, তারা হৃদয়-মাঝারে বয়ে বেড়াবে আলোর ফুলকি? আলোকিত করে যাবে জনপদ থেকে জনপদ? তারা কি রাঙিয়ে তুলবে ভুবন? নতুন করে ছিনিয়ে আনবে হারিয়ে যাওয়া সোনালি প্রভাত? তারা কি বেড়ে উঠবে ফুলের কুঁড়ির মতো? প্রস্ফুটিত হবে দিগন্ত আলো করা শোভা নিয়ে? তারা কি আখিরাতেও আমাদের জন্য আলো হবে? প্রদীপের মতো হবে পথযাত্রী? আগামীর সেই অভিযাত্রীদের মনে দীপ্ত এই বিশ্বাস ছড়িয়ে দেওয়ার প্রয়াসেই রচিত হয়েছে ‘শিশুর মননে ঈমান’।</p>",
+      "image": "book-shishur-monone-iman-497f.webp",
+      "pdf": "shishur-monone-iman-497f.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/10/Shishur-Monone-Iman.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%b6%e0%a6%bf%e0%a6%b6%e0%a7%81%e0%a6%b0-%e0%a6%ae%e0%a6%a8%e0%a6%a8%e0%a7%87-%e0%a6%88%e0%a6%ae%e0%a6%be%e0%a6%a8/pd/4362",
+        "https://www.rokomari.com/book/191078/শিশুর-মননে-ঈমান"
+      ]
+    },
+    {
+      "name": "মেঘ রোদ্দুর বৃষ্টি",
+      "nameEn": "Megh Roddur Bristi",
+      "slug": "megh-roddur-bristi",
+      "mrp": 300,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 216,
+      "edition": "216",
+      "binding": "পেপারব্যাক",
+      "weight": 250,
+      "translators": [],
+      "authors": [
+        {
+          "name": "রৌদ্রময়ী টিম",
+          "nameEn": "Roudromoyee Team"
+        }
+      ],
+      "categories": [
+        "ইসলামী সাহিত্য"
+      ],
+      "description": "<p>মেঘ রোদ্দুর বৃষ্টি - বইটা ১৯/০২/২০১৯ তারিখে আউট অফ স্টক করা হয়েছে , পারচাস টিম জানিয়েছে ২৬.০২.২০১৯ তারিখের দিকে বইটা আসতে পারে।</p>",
+      "image": "book-megh-roddur-bristi-2393.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2018/02/Megh-Roddur-Brishti.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%ae%e0%a7%87%e0%a6%98-%e0%a6%b0%e0%a7%8b%e0%a6%a6%e0%a7%8d%e0%a6%a6%e0%a7%81%e0%a6%b0-%e0%a6%ac%e0%a7%83%e0%a6%b7%e0%a7%8d%e0%a6%9f%e0%a6%bf/pd/3871",
+        "https://www.rokomari.com/book/181195/মেঘ-রোদ্দুর-বৃষ্টি"
+      ]
+    },
+    {
+      "name": "হিফয করতে হলে",
+      "nameEn": "Hifz Korte Hole",
+      "slug": "hifz-korte-hole",
+      "mrp": 150,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 96,
+      "edition": "1st Published, 2019",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [],
+      "authors": [
+        {
+          "name": "শাইখ আব্দুল কাইয়্যূম আস-সুহাইবানী",
+          "nameEn": "Shaykh Abdul Qayyum al-Suhaibani"
+        }
+      ],
+      "categories": [
+        "কুরআন বিষয়ক আলোচনা"
+      ],
+      "description": "<p>কুরআনের পরশে প্রতিটি বস্তুই পরিণত হয় পরম সম্মান ও মর্যাদার পাত্রে। যে-মাসে এ কুরআন অবতীর্ণ হয়েছে, সে-মাস অন্য মাসের চেয়ে অধিক সম্মানের। যে-রাতে এ কুরআন অবতীর্ণ হয়েছে সে-রাত অন্য রাতের তুলনায় অধিক মর্যাদার। যে-নবীর ওপর এ কুরআন অবতীর্ণ হয়েছে, তিনিই সকল নবীর পথিকৃৎ। অতএব, কুরআনের সংস্পর্শে এসে কুরআন অধ্যয়ন ও মুখস্থ করে একজন সাধারণ মানুষও পরিণত হন মহান ব্যক্তিত্বে। আর এভাবেই রচিত হয়েছিল ইসলামের ইতিহাসে কুরআন মুখস্থকরণের সোনালি অধ্যায়।</p><p>কীভাবে পবিত্র কুরআন ও হাদীস সহজে মুখস্থ করে তা স্থায়ীভাবে ধারণ করা যায় এবং এর সহায়ক উপায়সমূহ কী—এসব নিয়ে চমৎকার আলোচনার সমাবেশ ঘটেছে এই গ্রন্থখানিতে।</p>",
+      "image": "book-hifz-korte-hole-ba06.webp",
+      "pdf": "hifz-korte-hole-ba06.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/07/Hifz-Korte-Holey.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%b9%e0%a6%bf%e0%a6%ab%e0%a6%af-%e0%a6%95%e0%a6%b0%e0%a6%a4%e0%a7%87-%e0%a6%b9%e0%a6%b2%e0%a7%87/pd/4178",
+        "https://www.rokomari.com/book/188369/হিফয-করতে-হলে"
+      ]
+    },
+    {
+      "name": "জিলহজ্জের উপহার",
+      "nameEn": "Jilhojjer Upohar",
+      "slug": "jilhojjer-upohar",
+      "mrp": 140,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": null,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "weight": 250,
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. খালিদ আবু শাদি",
+          "nameEn": "Dr. Khalid Abu Shadi"
+        }
+      ],
+      "categories": [
+        "ইসলামি আমল ও আমলের সহায়িকা"
+      ],
+      "description": "<p>জিলহজ মাস। বছরের এক পবিত্র ও মহিমান্বিত মাস। আল্লাহর নবি ইবরাহিম আলাইহিস সালাম তখন মরুভূমির দেশ মক্কায়। একদিন স্বপ্নে তিনি আদিষ্ট হলেন প্রিয়তম পুত্র ইসমাইলকে কুরবানি করতে হবে। স্বপ্নের কথা নিদ্বির্ধায় জানালেন আদরের সেই পুত্রকে। পুত্রের মুখে স্মিত হাসি। আনন্দিত কণ্ঠে বলে উঠল সে, ‘বাবা, আল্লাহ আপনাকে যে হুকুম দিয়েছেন তা যথাযথভাবে পালন করুন। এ কাজে আপনি আমায় ধৈর্যশীল পাবেন।’</p><p>আমরা ধৈর্যের এক পরাকাষ্ঠা দেখতে পাই পিতা ও পুত্রের সেই ঘটনায় যা ইসলামের ইতিহাসে সুবিদিত হয়ে থাকবে চিরকাল। যদিও সেদিন ইসমাইল আলাইহিস সালামকে কুরবানি করতে হয়নি, তবে আল্লাহর নামে কুরবানি তথা পশু উৎসর্গের রেওয়াজ আমাদের ধর্ম ও সংস্কৃতির অনুষঙ্গ হয়ে দাঁড়িয়েছে।</p><p>সেদিনের সেই পবিত্র ঘটনা ঘটেছিল বছরের পবিত্র মাস জিলহজে। তাই জিলহজের মাহাত্ম্য, গুরুত্ব আর ফজিলত মুসলিমদের কাছে অপরিসীম। আর এ মাসেই সারা পৃথিবীর মানুষ কাবা প্রাঙ্গণে জড়ো হয় হজ সম্পাদনে। লাখো লাখো মুসল্লি অবস্থান করে মিনায়, ছুটে বেড়ায় সাফা-মারওয়ায়, পাথর ছুঁড়ে মারে মুযদালিফায় এবং যিয়ারত করে পবিত্র মদিনা-মুনাওয়ারায়। আল্লাহর ঘর তাওয়াফের তৃষ্ণা যাদের অন্তরে জিইয়ে থাকে, যারা স্বপ্নের ডালা সাজিয়ে রাখে সারাটি বছর ধরে। কেবল একটি বার তারা কাবাঘরের কালো গিলাফটি ছুঁয়ে দেখতে চান। তাদের কাছে জিলহজ মাস এক স্বপ্নছোঁয়ার মাস।</p><p>এই পবিত্র জিলহজ মাসকে ঘিরে আছে কিছু নির্দিষ্ট আমল, নির্দিষ্ট কিছু রীতিনীতি। সেই আমল এবং রীতিগুলো পালনে আছে অপরিমেয় সাওয়াব। মানুষ যাতে করে আমলের মাধ্যমে সেই সাওয়াবগুলো অর্জন করতে পারে, সঠিকভাবে বুঝতে পারে জিলহজের মাহাত্ম্য, সেজন্যেই আমাদের এবারের আয়োজন জিলহজের উপহার।</p>",
+      "image": "book-jilhojjer-upohar-1df2.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/05/Jilhajjer-Upohar-Front.png",
+      "sources": [
+        "https://www.wafilife.com/jilhojjer-upohar/pd/5137",
+        "https://www.rokomari.com/book/202228/জিলহজের-উপহার"
+      ]
+    },
+    {
+      "name": "অশ্রুজলে লেখা",
+      "nameEn": "Oshru Jole Lekha",
+      "slug": "oshru-jole-lekha",
+      "mrp": 290,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 192,
+      "edition": "New Edition 2022",
+      "binding": "পেপারব্যাক",
+      "weight": 200,
+      "translators": [
+        "আব্দুল্লাহ মজুমদার"
+      ],
+      "authors": [
+        {
+          "name": "শাইখ আব্দুল মালিক আল কাসিম",
+          "nameEn": "Shaykh Abdul Malik al-Qasim"
+        }
+      ],
+      "categories": [
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>শাইখ আব্দুল মালিক আল-কাসিম হাফিজাহুল্লাহ কর্তৃক লিখিত আয-যামান আল -কাদ্বিম ঠিক এমন একটি বই। অন্ধকারে ডুবে থাকা একদল মানুষের আলোর জগতে ফিরে আসার কাহিনীগুলোকে তিনি গল্পে রূপ দান করেছেন। সেই অন্ধকার গহ্বরে কীভাবে পৌঁছালো আলোর রশ্মি, কীভাবে পাথরের মতো পাষাণ হৃদয়ে হিদায়াতের ফল্গুধারা নেমে এলো, কোন জিনিসটি আলো হয়ে এসে ভরে দিয়ে গেছে মনের উঠোন—পরিবর্তনের পেছনে এমনসব নিয়ামকগুলো নিয়ে তিনি গল্প সাজিয়েছেন। এই গল্পগুলোতে কখনো তিনি পাঠকদের কাঁদিয়েছেন, কখনো ভাবিয়েছেন। মনের সামনে ঝুলতে থাকা অন্ধকার পর্দা সরাতে তিনি আশ্রয় নিয়েছেন কিছু চরিত্রের। সেই চরিত্রগুলো প্রতিনিধিত্ব করেছে আমার, আপনার এবং আমাদের। আমাদের ভুলে থাকা মন, বিস্মৃত অন্তরকে জাগিয়ে তুলতে লেখক চেষ্টা করেছেন গল্পগুলোতে ভিন্ন ভিন্ন মাত্রা আর কাহিনীর সন্নিবেশ করতে এবং লেখক তার কাজে যথেষ্টই সফল হয়েছেন, আলহামদু লিল্লাহ। লেখকের এই বই আরব বিশ্বে খুবই জনপ্রিয় এবং বহুল পঠিত একটি গল্পগ্রন্থ।</p>",
+      "image": "book-oshru-jole-lekha-a95a.webp",
+      "pdf": "oshru-jole-lekha-a95a.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/04/273967513_4444800092291919_5253227554886544501_n.png",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%b8%e0%a7%87%e0%a6%87%e0%a6%b8%e0%a6%ac-%e0%a6%a6%e0%a6%bf%e0%a6%a8%e0%a6%b0%e0%a6%be%e0%a6%a4%e0%a7%8d%e0%a6%b0%e0%a6%bf/pd/4014",
+        "https://www.rokomari.com/book/226954/অশ্রুজলে-লেখা"
+      ]
+    },
+    {
+      "name": "সুখের নাটাই",
+      "nameEn": "Shukher Natai",
+      "slug": "shukher-natai",
+      "mrp": 160,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 104,
+      "edition": "1st Published, 2020",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [],
+      "authors": [
+        {
+          "name": "আফরোজা হাসান",
+          "nameEn": "Afroza Hasan"
+        }
+      ],
+      "categories": [
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>সেই প্রাগৈতিহাসিক যুগ থেকে মানুষ সুখের সন্ধান করে ফিরছে। নিজেদের জীবনকে সুখের আবরণে আচ্ছাদিত করতে মানুষের আজন্ম অভিপ্রায়। সভ্যতা এগোলো, মানুষ সংঘবদ্ধ হলো, গড়ে উঠলো সমাজ, রাষ্ট্র আর পরিবার। মানুষ থিঁতু হলো একটা জায়গায়। কিন্তু, সুখ সন্ধানে তার যে পৌরাণিক পৌনঃপুনিকতা, তা থেকে সে কি নিবৃত হতে পেরেছে কখনো?</p><p>আজ আমরা জানি, ব্যক্তিজীবন, সমাজজীবন কিংবা রাষ্ট্রজীবন, সবখানেই মুখ্য এবং গুরুত্বপূর্ণ ভূমিকা পালন করে পরিবার। একটা পরিবার কাঠামোর মধ্যেই নিহিত থাকে আমাদের সমাজজীবন, রাষ্ট্রজীবন আর ব্যক্তিজীবনের সুখের বীজ। আমাদের পরিবার যতোখানি গোছানো হবে, যতোখানি পরিপাটি হবে আমাদের সংসার, আমরা ততোখানিই সুখের কাছাকাছি যেতে পারবো। তবে, এসবকিছুকে ছাপিয়ে, সুখী জীবনের সবচেয়ে বড় এবং সারকথা নিহিত আছে যে বিষয়ে, তা হলো মহান রবের সন্তুষ্টি। আমরা একটা বৃত্তবন্দী জীবন পার করি। আমাদের কেন্দ্রে আল্লাহর সন্তুষ্টি বিধানই প্রধান এবং মুখ্য। ফলে, আমরা যতোখানি কেন্দ্রের কাছাকাছি থাকতে পারবো, কিংবা একীভূত হতে পারবো তার মাঝে, ততোই আমাদের জীবন সুখী হবে। সুখের সুন্দর সৌন্দর্য তখন আমাদের জীবনে প্রস্ফুটিত হবে। বৃত্তবন্দী সেই জীবনের পরত থেকে, সুখের অনুসন্ধানে লেখিকা আফরোজা হাসান রচনা করেছেন ‘সুখের নাটাই’ শিরোনামে একটি অনন্য শৈলীর উপাখ্যান।</p><p>আমাদের বৃত্তবন্দী জীবনের অলিগলি থেকে, জীবনের পরত থেকে তুলে আনা সুখ সন্ধানের গল্পগুলো লেখিকার কলমে দারুণ শৈল্পীকতার রূপ লাভ করেছে। ‘সুখের নাটাই’-এ ভর করে, আমরাও ডুব দেবো অনন্ত অসীম আকাশে, যেখানে দেখা মিলবে সত্যিকার সুখের ঘুড়ির</p>",
+      "image": "book-shukher-natai-f3cf.webp",
+      "pdf": "shukher-natai-f3cf.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2020/02/Sukher-Natai-1.png",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%b8%e0%a7%81%e0%a6%96%e0%a7%87%e0%a6%b0-%e0%a6%a8%e0%a6%be%e0%a6%9f%e0%a6%be%e0%a6%87/pd/4667",
+        "https://www.rokomari.com/book/198252/সুখের-নাটাই"
+      ]
+    },
+    {
+      "name": "যে জীবন মরীচিকা",
+      "nameEn": "Je Jibon Morichikar",
+      "slug": "je-jibon-morichikar",
+      "mrp": 190,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 128,
+      "edition": "1st published, 2019",
+      "binding": "পেপারব্যাক",
+      "weight": 150,
+      "translators": [
+        "আরিফ আবদাল চৌধুরি"
+      ],
+      "authors": [
+        {
+          "name": "শাইখ আব্দুল মালিক আল কাসিম",
+          "nameEn": "Shaykh Abdul Malik al-Qasim"
+        }
+      ],
+      "categories": [
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>একদল মানুষ আছে যারা এই দুনিয়াটাকে একটা বোঝা হিসেবে দেখে। আরেকদলের কাছে আখিরাতটাই গৌণ। এই দুই দলের মাঝেও একটি দল আছে যারা দুনিয়াকে ঠিক সেভাবে প্রাধান্য দেয় যেভাবে দুনিয়াকে প্রাধান্য দেওয়া উচিত। যতোটুকু প্রাধান্য দিয়েছিলেন রাসূল সাল্লাললাহু আলাইহি ওয়া সাল্লাম। যেভাবে প্রাধান্য দিয়েছিলেন আমাদের সালাফ-আস-সালেহীনগণ। প্রান্তিক দুই দলের বাইরে এসে এই দলটা দুনিয়া থেকে সংগ্রহ করে নেয় আখিরাতের রশদ। কুড়িয়ে নেয় পরকালের পাথেয়। সেই সৌভাগ্যবানদের জীবন থেকে টুকরো টুকরো ঘটনা, তাদের কথা, তাদের চলন, তাদের জীবন দিয়েই সাজানো ‘যে জীবন মরিচীকা’ বইটি।</p>",
+      "image": "book-je-jibon-morichikar-0619.webp",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/02/Je-Jibon-Morichika.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%af%e0%a7%87-%e0%a6%9c%e0%a7%80%e0%a6%ac%e0%a6%a8-%e0%a6%ae%e0%a6%b0%e0%a7%80%e0%a6%9a%e0%a6%bf%e0%a6%95%e0%a6%be/pd/3896",
+        "https://www.rokomari.com/book/178417/যে-জীবন-মরীচিকা"
+      ]
+    },
+    {
+      "name": "সবর",
+      "nameEn": "Sobor",
+      "slug": "sobor",
+      "mrp": 265,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": 172,
+      "edition": "1st Published, 2019",
+      "binding": "পেপারব্যাক",
+      "weight": 200,
+      "translators": [
+        "আব্দুল্লাহ মজুমদার"
+      ],
+      "authors": [
+        {
+          "name": "আল্লামা ইবনুল কায়্যিম জাওযিয়্যাহ রহ",
+          "nameEn": "Allama Ibn al-Qayyim al-Jawziyya"
+        }
+      ],
+      "categories": [
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>আমাদের জীবনটা বড্ড সমস্যা সংকুল। হঠাৎ করে যদি বাবা মারা যায় অথবা মা, অথবা যদি অনাকাঙ্খিতভাবে হারাতে হয় চাকরি, জীবন যদি বিপদের ঢালি নিয়ে হাজির হয় আমাদের সামনে, আমরা ভেঙে পড়ি। দূর্বল হয়ে পড়ি। ভিতরে ভিতরে গুড়িয়ে যাই।</p><p>জীবন এমনই। বহতা নদীর স্রোতের মতো জীবনের গতিপথ সরল এবং সোজা নয়। জীবনের পথ কখনো সমান্তরাল হয়না। অনিবার্য বাস্তবতা হলো এই, জীবনের গতিপথ সবসময় দূর্গম এবং বন্ধুর। পথে পথে কাঁটা বিছানো।</p><p>আমরা যদি নবী-রাসূলদের জীবনের দিকে তাকাই, তাহলে দেখবো যে তাদের জীবনের অধিকাংশ সময়ই অতিবাহিত হয়েছে এই দূর্গম এবং বন্ধুর পথ মাড়ি দেওয়ার মাধ্যমেই। তারা যে পরিবেশ, পরিস্থিতিতে তাওহীদের দাওয়াত নিয়ে ধরায় এসেছেন, সেই পরিবেশ-পরিস্থিতি কখনোই তাদের পক্ষে ছিলোনা। তাদেরকে জীবনের প্রতিটি রন্ধ্রে রন্ধ্রে পরীক্ষার মুখোমুখি হতে হয়েছে। অথচ, তাঁরা ছিলেন নিষ্পাপ। তাহলে কেনো তাদের মুখোমুখি হতে হয়েছে এই কঠিন বাস্তবতার? হ্যাঁ, পরীক্ষা সবসময় বান্দার পাপের ফল নয়। কখনো কখনো বান্দার পরীক্ষাগুলো তার জন্যে আল্লাহর বিশেষ রহমত। এই পরীক্ষার মাধ্যমেই আল্লাহ্‌ তাঁকে করে নেন আরো প্রিয়, আরো আপন, আরো উত্তম; কিন্তু, সব পরীক্ষাই যে আল্লাহর পক্ষ থেকে নিয়ামত, তাও নয়। এর কিছু আছে বান্দার পাপের ফল। বান্দার নিজ হাতে কামাই করা গুনাহর ফসল। বান্দা যখন পাপ করতে করতে নিজের আত্মাকে কলুষিত করে তোলে, তখন তার জন্যে নেমে আসে আযাব। সেই আযাবের নামই পরীক্ষা।</p><p>তবুও, এই পরীক্ষা নিয়ামত হোক বা পাপের ফসল- কোন অবস্থাতেই বান্দা ভেঙে পড়বেনা। সাহস হারাবে না। সে ধৈর্যধারণ করবে।</p><p>আল্লাহ্‌ বলছেন, ‘নিশ্চয়ই আমি তোমাদেরকে পরীক্ষা করবো ভয়, ক্ষুধা, জান-মাল এবং ফসলের ক্ষতির মাধ্যমে। অতএব, ( হে নবী ) আপনি ধৈর্যশীলদের সুসংবাদ প্রদান করুন’। [ বাকারা ১৫৫]</p><p>কুরআনের অনেক আয়াতে আল্লাহ্‌ সুবহানাহু ওয়া’তাআলা ধৈর্যশীলদের জন্য পুরস্কারের ঘোষণা দিয়েছেন।</p><p>একজন মুসলিম কখনোই ধৈর্য হারায় না। ভেঙে পড়েনা। মনোবল হারায় না। আল্লাহর উপর, আল্লাহর ফয়সালার উপর তার পরিপূর্ণ আস্থা এবং বিশ্বাস থাকে।</p><p>যখন বিপদ নেমে আসে আমাদের উপর, যখন জীবন হয়ে উঠে পরীক্ষাময়, চারদিক থেকে পৃথিবীটা যখন ক্রমশঃ সংকুচিত হয়ে আসে, তখন একজন মুমিন কিভাবে ধৈর্যধারণ করবে? কিভাবে সবর করবে? সে উপায়গুলোর উপর লিখেছেন যুগের ইমাম, ফকীহ, মুজাদ্দিদ ইমাম ইবনুল কাইয়্যিম রাহিমাহুল্লাহ। তাঁর রচিত বিখ্যাত বই ‘উদ্দাতুস সাবীরিন ওয়া যাখীরাতুশ শাকিরীন’ এর সংক্ষিপ্তসার।</p>",
+      "image": "book-sobor-03bd.webp",
+      "pdf": "sobor-03bd.pdf",
+      "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/06/Sabr.jpg",
+      "sources": [
+        "https://www.wafilife.com/%e0%a6%b8%e0%a6%ac%e0%a6%b0/pd/4113",
+        "https://www.rokomari.com/book/186174/সবর"
+      ]
+    },
+    {
+      "name": "কুরআনের সাথে হৃদয়ের কথা",
+      "nameEn": "Quraner Sathe Hridoyer Kotha",
+      "slug": "quraner-sathe-hridoyer-kotha",
+      "mrp": 260,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": null,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "weight": 250,
+      "translators": [
+        "আব্দুল্লাহ মজুমদার"
+      ],
+      "authors": [
+        {
+          "name": "শাইখ ইবরাহীম আস সাকরান",
+          "nameEn": "Shaykh Ibrahim al-Sakran"
+        }
+      ],
+      "categories": [
+        "কুরআন শেখা"
+      ],
+      "description": "<p>যখন হৃদয় হয় আর্ত, তৃষ্ণার্ত। যখন হৃদয় আকাশে নেমে আসে চৈত্রের দাবদাহ। যখন হৃদয়-জমিন মরুভূমির মতোন হাহাকার করে, তখন কুরআন যেন সেখানে এক পশলা বৃষ্টি হয়ে নামে। উত্তপ্ত আকাশে একখণ্ড মেঘের মতো। কুরআন যেন হৃদয়ের জন্যই রচিত, অথবা হৃদয়ের জন্যই কুরআনের</p>",
+      "image": null,
+      "pdf": "quraner-sathe-hridoyer-kotha-9477.pdf",
+      "sources": [
+        "https://www.rokomari.com/book/191077/কুরআনের-সাথে-হৃদয়ের-কথা"
+      ]
+    },
+    {
+      "name": "জীবনের বাঁকে বাঁকে কুরআনের পাঠ - দ্বিতীয় খণ্ড",
+      "nameEn": "Jiboner Banke Banke Quraner Path 2",
+      "slug": "jiboner-banke-banke-quraner-path-2",
+      "mrp": 230,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": null,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "weight": 250,
+      "translators": [
+        "আল-আমিন ফেরদৌস"
+      ],
+      "authors": [
+        {
+          "name": "শাইখ ইবরাহীম আস সাকরান",
+          "nameEn": "Shaykh Ibrahim al-Sakran"
+        }
+      ],
+      "categories": [
+        "কুরআন শেখা"
+      ],
+      "description": "<p>কুরআনুল কারিম মহান আল্লাহর পবিত্র কালাম। সমগ্র মানবজাতির জন্য হিদায়াত। মুমিনের জীবন ও ভাবনায় কুরআনের প্রোজ্জ্বল প্রভাব রয়েছে। আল্লাহর আদেশ-নিষেধ পালনের সাথে সাথে বান্দা তাঁর কথাগুলো নিয়ে চিন্তাভাবনা করবে। নিজেকে রবের খাঁটি বান্দায় পরিণত করবে। ফলে কুর</p>",
+      "image": null,
+      "sources": [
+        "https://www.rokomari.com/book/363173/জীবনের-বাঁকে-বাঁকে-কুরআনের-পাঠ-দ্বিতীয়-খণ্ড"
+      ]
+    },
+    {
+      "name": "হৃদয় জাগার জন্য",
+      "nameEn": "Hridoy Jagar Jonno",
+      "slug": "hridoy-jagar-jonno",
+      "mrp": 250,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": null,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "weight": 250,
+      "translators": [
+        "মাসুদ শরীফ"
+      ],
+      "authors": [
+        {
+          "name": "ইয়াসমিন মুজাহিদ",
+          "nameEn": "Yasmin Mogahed"
+        }
+      ],
+      "categories": [
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>কালবৈশাখীর কালো মেঘে যেভাবে ছেয়ে যায় নীলাভ আকাশ, আমাদের অন্তরও মাঝে মাঝে সেভাবে অন্ধকার হয়ে পড়ে। পাপের আস্তরণে আস্তে আস্তে মরিচা ধরে আমাদের ঈমান এবং আমলের স্তম্ভগুলোতে। কালবৈশাখীর ঝড়ের ঝাপটায় যেভাবে প্রকৃতি লণ্ডভণ্ড হয়ে যায়, পাপের আবরণ আর কলুষতার কাল</p>",
+      "image": null,
+      "sources": [
+        "https://www.rokomari.com/book/195355/হৃদয়-জাগার-জন্য"
+      ]
+    },
+    {
+      "name": "নানান রঙের মানুষ (১৮টি গল্প)",
+      "nameEn": "Nanan Ronger Manush",
+      "slug": "nanan-ronger-manush",
+      "mrp": 185,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": null,
+      "edition": null,
+      "binding": "হার্ডকভার",
+      "weight": 250,
+      "translators": [],
+      "authors": [
+        {
+          "name": "রেহনুমা বিনত আনিস",
+          "nameEn": "Rehnuma Bint Anis"
+        }
+      ],
+      "categories": [
+        "ইসলামে নারী",
+        "ইসলামী সাহিত্য"
+      ],
+      "description": "<p>\"নানান রঙের মানুষ\" বইয়ের পিছনের কভারের লেখা: বিচিত্র মানুষের বসবাস আমাদের চারপাশে। চলার পথে তারা গল্প করে, গল্প বানায়, গল্প গাঁথে। সেসব গল্পে উঠে আসে জনমানুষের কথা, জীবনের কথা। প্রাণ এবং প্রণােদনার কথা। উৎসাহ এবং উদ্দীপনার কথা। কিছু গল্প ভাবায়, অন</p>",
+      "image": null,
+      "sources": [
+        "https://www.rokomari.com/book/170984/নানান-রঙের-মানুষ-১৮টি-গল্প"
+      ]
+    },
+    {
+      "name": "মেঘ কেটে যায়",
+      "nameEn": "Megh Kete Jay",
+      "slug": "megh-kete-jay",
+      "mrp": 268,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": null,
+      "edition": null,
+      "binding": "হার্ডকভার",
+      "weight": 250,
+      "translators": [
+        "আব্দুল্লাহ মজুমদার"
+      ],
+      "authors": [
+        {
+          "name": "ড. হুসামুদ্দীন হামিদ",
+          "nameEn": "Dr. Husamuddin Hamid"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>‘মেঘ কেটে যায়’ বইয়ের কিছুকথাঃ মেঘগুলো কেমন যেন! দলবেঁধে এসে ছেঁয়ে ফেলে আকাশটাকে। মেঘের আড়ালে ফিকে হয়ে যায় আকশের নীল। মেঘেরা তৈরি করে এক বিদঘুটে পরিবেশ। নীল আকাশ ছেঁয়ে যায় এক গুমোট আবহাওয়ায়। থমথমে। নীরব। নিস্তব্ধ। হঠাৎ কোথা থেকে যেন এক টুকরো আলোক রশ্</p>",
+      "image": null,
+      "sources": [
+        "https://www.rokomari.com/book/184376/মেঘ-কেটে-যায়"
+      ]
+    },
+    {
+      "name": "সেইসব দিনরাত্রি",
+      "nameEn": "Seisob Dinratri",
+      "slug": "seisob-dinratri",
+      "mrp": 313,
+      "discountPercent": 25,
+      "quantity": 20,
+      "pages": null,
+      "edition": null,
+      "binding": "হার্ডকভার",
+      "weight": 250,
+      "translators": [
+        "আব্দুল্লাহ মজুমদার"
+      ],
+      "authors": [
+        {
+          "name": "শাইখ আব্দুল মালিক আল কাসিম",
+          "nameEn": "Shaykh Abdul Malik al-Qasim"
+        }
+      ],
+      "categories": [
+        "ইসলামী সাহিত্য"
+      ],
+      "description": "<p>শাইখ আব্দুল মালিক আল-কাসিম হাফিজাহুল্লাহ কর্তৃক লিখিত আয-যামান আল -কাদ্বিম ঠিক এমন একটি বই। অন্ধকারে ডুবে থাকা একদল মানুষের আলোর জগতে ফিরে আসার কাহিনীগুলোকে তিনি গল্পে রূপ দান করেছেন। সেই অন্ধকার গহ্বরে কীভাবে পৌঁছালো আলোর রশ্মি, কীভাবে পাথরের মতো পা</p>",
+      "image": null,
+      "sources": [
+        "https://www.rokomari.com/book/184379/সেইসব-দিনরাত্রি"
+      ]
+    }
+  ]
+}
