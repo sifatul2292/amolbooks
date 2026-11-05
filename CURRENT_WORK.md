@@ -8,6 +8,15 @@
 - Checks: new `scripts/check-search-insights.cjs` (throwaway DB on local mongod: merging, grouping, no IP stored, skips, periods, controller wiring with result counts, HTTP guard, page + menu); `check-staff-activity.cjs` menu section now includes the page; storefront SEO, catalogue SEO, book gifts and client-IP throttle checks pass. Local preview: searching "tafsir ibn kasir" (typed + Enter) recorded once with 0 books, "sobor" with 1; page shows both, phone width fine. The local kit's `/storefront-catalog` forwarder now passes the browser's User-Agent/IP locally (git-ignored `.claude/staff-dev/guard.cjs`); live calls the API directly.
 - Deploy: build + restart. Searches start counting from then (nothing before is recoverable).
 
+## Somokalin prices = Rokomari's (2026-11-05, same branch, not run on live)
+
+- Owner (after importing and publishing on live): the books were cheaper than Rokomari (25% vs Rokomari's mostly 20%); set the same price as Rokomari.
+- `books.json` now has an exact `discountAmount` per book = cover price minus Rokomari's selling price (Rokomari publisher 6854 list fetched 2026-11-05; matched by the saved Rokomari link, 4 by title: সূরা ইউসুফ, ওপারেতে সর্বসুখ, আরবি রস-দ্বিতীয় খণ্ড, মা মা মা এবং বাবা - দ্বিতীয় খণ্ড); `discountPercent` is its rounded percent. All 93 cover prices equal Rokomari's. 87 books get dearer (e.g. সবর ৳199 → ৳212), 4 cheaper (Rokomari 28–30% off), 1 unchanged.
+- `import-books.cjs` uses `discountAmount` when present; `check-new-books.cjs` validates it.
+- New `scripts/update-book-prices.cjs <set>` (dry run; `--apply`): sets discountType 2, discountAmount and afterDiscountPrice for the set's books in the shop; a book whose cover price was changed in admin is skipped. Tested on the local preview copy (92 changed, edited-cover book skipped, re-run changes nothing).
+- Sondipon checked too (Rokomari 11068): 44 same, 30 a few Taka cheaper, 5 dearer, 16 not comparable — left as is (23%).
+- VPS: safe pull, then `node scripts/update-book-prices.cjs somokalin` (dry run) and `--apply`. No build needed.
+
 ## Somokalin books not yet in the shop (2026-11-04, same branch, not imported)
 
 - Owner asked to add all সমকালীন প্রকাশন books. somokalin.com (the publisher's WooCommerce shop) disallows ClaudeBot/anthropic-ai/Claude-Web in robots.txt, so it was not used (one homepage + one product-list request were made before reading it; discarded). Sources: Rokomari publisher 6854 (156 items) and Wafilife `somokalin-prokashon` (147), checked against all 200 live products (public `POST /api/product/get-all`) and 136 live authors (`POST /api/author/get-all`).
