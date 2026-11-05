@@ -579,6 +579,8 @@ ${storefrontPurchaseExternalIdHelper}
   const storefrontSnippetFiles = [
     'meta-match-data.html',
     'header-stability.html',
+    // After header-stability.html: restyles the header that one keeps steady.
+    'header-redesign.html',
     'password-reset-security.html',
     'google-auth.html',
     'customer-account-mobile.html',
@@ -600,6 +602,8 @@ ${storefrontPurchaseExternalIdHelper}
     'guest-orders.html',
     'commerce-events.html',
     'mobile-browsing.html',
+    // Tidies autofilled +880 numbers in the checkout phone box (the box used to cut them).
+    'checkout-phone.html',
     'pagespeed-accessibility.html',
     'pagespeed-runtime.html',
   ];
@@ -1293,6 +1297,8 @@ ${storefrontPurchaseExternalIdHelper}
         (req.method === 'GET' && req.path === '/product/get-all-data') ||
         (req.method === 'GET' && req.path.startsWith('/product/get-by-slug/')) ||
         (req.method === 'GET' && /^\/author\/[^/]+$/.test(req.path)) ||
+        // Homepage "জনপ্রিয় লেখক" photos (read-only author list).
+        (req.method === 'POST' && req.path === '/author/get-all') ||
         (req.method === 'POST' && req.path === '/category/get-all/') ||
         (req.method === 'POST' && req.path === '/publisher/get-all');
       if (!allowedCatalogueRequest) return res.sendStatus(404);

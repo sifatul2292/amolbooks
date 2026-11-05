@@ -17,7 +17,11 @@ assert.doesNotMatch(source.slice(source.indexOf("window.addEventListener('ab-car
 assert.match(source, /function reconcileAuthenticatedCartFromLocal\([\s\S]*?\/cart\/delete\/[\s\S]*?\/cart\/update\//, 'Local authenticated cart is reconciled to the visible guest cart');
 assert.match(source, /searchParams\.set\('ab-auth-cart-ready', '1'\)/, 'Checkout reloads once after authenticated cart reconciliation');
 assert.match(source, /if \(isLocalPreviewHost\(\)\) updateNativeCartCount\(storedGuestCartItems\(\)\)/, 'Local account pages keep the native cart badge aligned');
-assert.match(source, /if \(!isProductPage\(\) && location\.pathname !== '\/'\) return;/, 'Homepage uses the shared added-to-cart modal');
+assert.match(source, /if \(desktop \? !desktopCartPopupRoute\(\) : !isProductPage\(\) && location\.pathname !== '\/'\) return;/, 'Phones show the added-to-cart modal on home/product pages; desktop on every page except cart/checkout');
+assert.match(source, /@media \(min-width: 768px\) \{\s*#amol-cart-toast \{ display: none !important; \}\s*#ab-added-cart-modal \{/, 'Desktop replaces the legacy green toast with the added-to-cart modal');
+assert.match(source, /if \(desktop && !desktopBuyNow\) afterDesktopCartLanding\(showPopup\);\s*else window\.setTimeout\(showPopup, 140\);/, 'Phones keep the 140ms added-to-cart modal timing');
+assert.match(source, /@media \(min-width: 768px\) and \(prefers-reduced-motion: reduce\)/, 'Desktop cart animation respects reduced motion');
+assert.match(source, /if \(desktopCartFlying\) desktopCartPendingCount = count;\s*else setDesktopHeaderCartCount\(count, false\);/, 'Desktop header cart count follows the cart');
 assert.match(source, /data-ab-popular-price[\s\S]*?productPriceHtml\(product\)/, 'Cart popular cards use the shared discounted-price renderer');
 assert.match(source, /repairCartPopularProducts\(\)[\s\S]*?addButton\.classList\.add\('ab-add-cart-button'\)[\s\S]*?addButton\.setAttribute\('data-product-id', String\(product\._id\)\)/, 'Cart popular buttons upgrade to the shared product-ID add handler');
 assert.match(source, /if \(!template\) \{\s*area\.insertAdjacentHTML\('beforeend', cartMirrorRowHtml\(item, product\)\);\s*return;/, 'A newly added cart product renders even when no native row exists to clone');
@@ -171,7 +175,7 @@ const context = {
   fetchJson: async path => ({ data: { _id: path.endsWith('one') ? '1' : '2' } }),
   rememberCartProducts() {}, addProductToCart: async id => { adds++; items.push({ product: id, selectedQty: 1 }); },
   showAddedCartModal() {}, pulseStickyCart() {}, updateStickyProductActions() {}, repairProductActionLabels() {},
-  cartPageItems: async () => items,
+  cartPageItems: async () => items, desktopCartFeedback: () => false,
 };
 vm.createContext(context);
 vm.runInContext(helpers, context);

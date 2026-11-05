@@ -113,7 +113,8 @@ assert.doesNotMatch(html, /আমল বুকসের নির্বাচি
   'কী বিষয়ে পড়তে চান?',
   'আপনি কেমন পাঠক?',
   'কী চান?',
-  'আপনার বই দেখুন',
+  'আমার জন্য বই খুঁজুন →',
+  'বুক ফাইন্ডার · ১ মিনিট',
   'হাদিস',
   'নামাজ ও দুআ',
   'ইতিহাস',
@@ -132,7 +133,11 @@ assert.match(html, /manualSlugs: \['Jibonpaltano4books', 'Jibon', 'Poro Collecti
 assert.match(html, /index === 4 \? goalsHtml/);
 assert.match(html, /index === 6 \? authorsHtml/);
 assert.match(html, /index === 8 \? publishersHtml/);
-assert.match(html, /class="ab-home-name-list"/);
+assert.match(html, /class="ab-home-name-list ab-home-name-list--media"/);
+assert.match(html, /showEntityImages\(root\)/, 'Author photos and publisher logos are filled in after render');
+assert.match(html, /filter: \{ slug: \{ \$in: slugs \} \}/, 'Pictures are fetched by slug (the list API does not cast _id)');
+assert.match(html, /ab_home_quiz_start/, 'Quiz starts are tracked next to completions');
+assert.match(html, /slug === OWN_PUBLISHER_SLUG \? ownLogo\(\)/, 'Our own publisher card shows the store logo');
 assert.match(html, /publisher: 1/);
 assert.match(html, /grid-auto-columns:\s*clamp\(8\.75rem, 38vw, 10rem\)/);
 assert.match(html, /app-header \.logo img/);

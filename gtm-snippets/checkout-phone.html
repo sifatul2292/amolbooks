@@ -1,0 +1,65 @@
+<!-- Checkout phone number. Browser autofill puts a saved number in as "+880 1750-250123", but the checkout box only took 11 characters, so it kept "+8801750250": the last digits were lost and incomplete orders/orders could not be called back (owner, 2026-11-05). The box now takes the whole number and turns it into the local 11-digit form (01750250123) before the checkout reads it; Bengali digits become English ones. Typing an ordinary 01... number works as before (still stops at 11 digits). No API calls. -->
+<script>
+(function () {
+  'use strict';
+  if (window.__abCheckoutPhone) return;
+  window.__abCheckoutPhone = true;
+
+  var FIELD = 'app-checkout input[formcontrolname="phoneNo"]';
+  var BENGALI = '০১২৩৪৫৬৭৮৯';
+
+  function localPhone(value) {
+    var digits = String(value || '')
+      .replace(/[০-৯]/g, function (digit) { return String(BENGALI.indexOf(digit)); })
+      .replace(/\D/g, '');
+    // Country code in front (0088 / 88 / +880): drop it as soon as the first digit after it
+    // is there, so typing "+880 1..." key by key works as well as autofill or paste.
+    // Local numbers always start with 01, so "8801..." can only be the country-code form.
+    if (/^0088\d/.test(digits)) digits = digits.slice(4);
+    if (/^880[01]/.test(digits)) digits = '0' + digits.slice(3).replace(/^0/, '');
+    // A number given without its leading 0 (1XXXXXXXXX).
+    if (/^1[3-9]\d{8}$/.test(digits)) digits = '0' + digits;
+    return digits.slice(0, 11);
+  }
+
+  function isField(element) {
+    return Boolean(element && element.matches && element.matches(FIELD));
+  }
+
+  // Room for the whole autofilled number; the value itself never ends up longer than 11 digits.
+  function widen() {
+    document.querySelectorAll(FIELD).forEach(function (input) {
+      if (input.getAttribute('maxlength') !== '20') input.setAttribute('maxlength', '20');
+    });
+  }
+
+  // Runs before the checkout's own listener on the box, so the checkout only ever sees the tidy number.
+  document.addEventListener('input', function (event) {
+    var input = event.target;
+    if (!isField(input)) return;
+    var tidy = localPhone(input.value);
+    if (tidy !== input.value) input.value = tidy;
+  }, true);
+
+  // Some browsers fill the box and only report "change"; tell the checkout about the tidy number.
+  ['change', 'focusout'].forEach(function (type) {
+    document.addEventListener(type, function (event) {
+      var input = event.target;
+      if (!isField(input)) return;
+      var tidy = localPhone(input.value);
+      if (tidy === input.value) return;
+      input.value = tidy;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }, true);
+  });
+
+  var scheduled = false;
+  function schedule() {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(function () { scheduled = false; widen(); });
+  }
+  new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true });
+  schedule();
+})();
+</script>

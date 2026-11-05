@@ -558,6 +558,10 @@ export class OrderService {
     req?: any,
   ): Promise<ResponsePayload> {
     try {
+      // Autofill can send +880/0088 forms: keep the local 01XXXXXXXXX number.
+      if (addOrderDto?.phoneNo) {
+        addOrderDto.phoneNo = this.checkoutLocalPhone(addOrderDto.phoneNo);
+      }
       let newOrderMake: any;
       const fraudCheckerData: any = null;
       const orderInput: any = { ...addOrderDto };
@@ -2314,6 +2318,22 @@ export class OrderService {
     if (digits.length === 10 && digits.startsWith('1')) return `880${digits}`;
     if (digits.length === 11 && digits.startsWith('0')) return `88${digits}`;
     return digits.startsWith('88') ? digits : `88${digits}`;
+  }
+
+  /**
+   * Browser autofill can put a saved number in as "+880 1750-250123" (also
+   * 0088..., Bengali digits). Keep the local 01XXXXXXXXX form when the number
+   * is recognisable; anything else is kept as it came.
+   */
+  private checkoutLocalPhone(phoneNo: any): any {
+    if (typeof phoneNo !== 'string') return phoneNo;
+    let local = phoneNo
+      .replace(/[০-৯]/g, (digit) => String('০১২৩৪৫৬৭৮৯'.indexOf(digit)))
+      .replace(/\D/g, '');
+    if (local.startsWith('0088')) local = local.slice(4);
+    else if (local.startsWith('88')) local = local.slice(2);
+    if (/^1[3-9]\d{8}$/.test(local)) local = `0${local}`;
+    return /^01[3-9]\d{8}$/.test(local) ? local : phoneNo.trim();
   }
 
   /**
@@ -5878,6 +5898,10 @@ export class OrderService {
   ): Promise<ResponsePayload> {
     try {
       const incompleteInput: any = { ...addIncompleteOrderDto };
+      // Autofill can send +880/0088 forms: keep the local 01XXXXXXXXX number.
+      if (incompleteInput.phoneNo) {
+        incompleteInput.phoneNo = this.checkoutLocalPhone(incompleteInput.phoneNo);
+      }
       incompleteInput.attribution = this.normalizeAttribution({
         ...(incompleteInput.attribution || {}),
         clientUserAgent:
@@ -5887,7 +5911,7 @@ export class OrderService {
           incompleteInput.attribution?.clientIpAddress ||
           (req ? this.utilsService.getClientIp(req) : undefined),
       });
-      const phoneNo = String(addIncompleteOrderDto?.phoneNo || '').trim();
+      const phoneNo = String(incompleteInput.phoneNo || '').trim();
       if (phoneNo) {
         const existing = await this.incompleteOrderModel
           .findOne({
@@ -6145,6 +6169,9 @@ export class OrderService {
     // changes. Keep this public for that storefront flow, but never accept
     // admin-only fields here.
     const incompleteInput: any = { ...updateIncompleteOrderDto };
+    if (incompleteInput.phoneNo) {
+      incompleteInput.phoneNo = this.checkoutLocalPhone(incompleteInput.phoneNo);
+    }
     if (incompleteInput.attribution || req) {
       incompleteInput.attribution = this.normalizeAttribution({
         ...(incompleteInput.attribution || {}),

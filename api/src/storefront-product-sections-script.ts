@@ -4942,6 +4942,268 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     @media (prefers-reduced-motion: reduce) {
       #\${ROOT_ID} .ab-product-card { transition-duration: 0ms; }
     }
+
+    /* Desktop add-to-cart feedback (768px and wider). The phone popup above is
+     * styled only for 767px and narrower; this gives desktop the same popup in
+     * place of the old green toast, plus a short bump on the header cart. */
+    @media (min-width: 768px) {
+      #amol-cart-toast { display: none !important; }
+
+      #ab-added-cart-modal {
+        position: fixed;
+        z-index: 10060;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 2rem;
+        background: rgb(0 0 0 / 0.48);
+        animation: ab-added-cart-backdrop-in 180ms ease-out both;
+      }
+
+      #ab-added-cart-modal .ab-added-cart-panel {
+        width: min(100%, 31rem);
+        max-height: min(86vh, 40rem);
+        overflow: auto;
+        border-radius: 0.6rem;
+        background: #fff;
+        color: #2f3438;
+        box-shadow: 0 1.5rem 4rem rgb(0 0 0 / 0.26);
+      }
+
+      #ab-added-cart-modal.ab-added-cart-enter .ab-added-cart-panel {
+        animation: ab-added-cart-panel-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+      }
+
+      #ab-added-cart-modal .ab-added-cart-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 2.5rem;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1.1rem 1.1rem 1rem 1.5rem;
+        border-bottom: 1px solid #eef0f2;
+      }
+
+      #ab-added-cart-modal .ab-added-cart-title {
+        margin: 0;
+        color: #26292c;
+        font: 800 1.2rem/1.4 var(--ab-product-heading-bold);
+      }
+
+      #ab-added-cart-modal .ab-added-cart-check {
+        display: inline-grid;
+        width: 1.35rem;
+        height: 1.35rem;
+        place-items: center;
+        margin-inline-start: 0.25rem;
+        border: 2px solid #31c45d;
+        border-radius: 999px;
+        color: #31c45d;
+        font: 900 0.9rem/1 var(--ab-product-number);
+        vertical-align: -0.1rem;
+      }
+
+      #ab-added-cart-modal .ab-added-cart-close {
+        display: grid;
+        width: 2.5rem;
+        height: 2.5rem;
+        place-items: center;
+        padding: 0;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: #72777d;
+        font-size: 1.8rem;
+        line-height: 1;
+        cursor: pointer;
+        transition: background-color 120ms ease, color 120ms ease;
+      }
+
+      #ab-added-cart-modal .ab-added-cart-close:hover {
+        background: #f1f3f4;
+        color: #2f3438;
+      }
+
+      #ab-added-cart-modal .ab-added-cart-body {
+        padding: 1.25rem 1.5rem 1.5rem;
+      }
+
+      #ab-added-cart-modal .ab-added-cart-summary {
+        padding: 1.1rem 1.25rem 1.25rem;
+        border-radius: 0.4rem;
+        background: #f7f7f7;
+        text-align: center;
+      }
+
+      #ab-added-cart-modal .ab-added-cart-summary p {
+        margin: 0 0 0.35rem;
+        color: #33383d;
+        font: 800 1.05rem/1.35 var(--ab-product-number);
+      }
+
+      #ab-added-cart-modal .ab-added-cart-actions {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.75rem;
+        margin-top: 1rem;
+      }
+
+      #ab-added-cart-modal .ab-added-cart-actions button {
+        min-height: 3rem;
+        border: 1px solid #08a5dd;
+        border-radius: 0.3rem;
+        background: #fff;
+        color: #099bd0;
+        font: 800 1rem/1.3 var(--ab-product-heading-bold);
+        cursor: pointer;
+        transition: background-color 120ms ease, border-color 120ms ease;
+      }
+
+      #ab-added-cart-modal .ab-added-cart-actions button:hover { background: #effaff; }
+
+      #ab-added-cart-modal .ab-added-cart-actions .ab-added-cart-go {
+        background: #0aa1d6;
+        color: #fff;
+      }
+
+      #ab-added-cart-modal .ab-added-cart-actions .ab-added-cart-go:hover {
+        border-color: #0890c0;
+        background: #0890c0;
+      }
+
+      #ab-added-cart-modal button:focus-visible {
+        outline: 3px solid rgb(10 161 214 / 0.45);
+        outline-offset: 2px;
+      }
+
+      app-header li.menu-cart.ab-cart-bump .header-action-icon img {
+        animation: ab-desktop-cart-bump 640ms cubic-bezier(0.3, 0.7, 0.4, 1) 1;
+        transform-origin: 50% 80%;
+      }
+
+      app-header li.menu-cart.ab-cart-bump .cart-quantity {
+        animation: ab-desktop-cart-count 560ms cubic-bezier(0.3, 0.7, 0.4, 1) 1;
+      }
+
+      /* Header scrolled away: a small cart chip drops in at the same corner. */
+      #ab-desktop-cart-chip {
+        position: fixed;
+        z-index: 10070;
+        top: 0.9rem;
+        right: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        padding: 0.4rem 0.95rem 0.4rem 0.6rem;
+        border: 1px solid #e3e7ea;
+        border-radius: 999px;
+        background: #fff;
+        color: #1f2a24;
+        font: 700 0.95rem/1.2 var(--ab-product-heading-bold);
+        text-decoration: none;
+        box-shadow: 0 0.6rem 1.6rem rgb(0 0 0 / 0.18);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(calc(-100% - 1.2rem));
+        transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 180ms ease, visibility 0s linear 220ms;
+      }
+
+      #ab-desktop-cart-chip.is-visible {
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 180ms ease, visibility 0s;
+      }
+
+      #ab-desktop-cart-chip:hover { border-color: #cfd6db; }
+
+      #ab-desktop-cart-chip:focus-visible {
+        outline: 3px solid rgb(18 146 69 / 0.4);
+        outline-offset: 2px;
+      }
+
+      #ab-desktop-cart-chip .ab-desktop-cart-chip-icon {
+        display: grid;
+        width: 1.9rem;
+        height: 1.9rem;
+        place-items: center;
+      }
+
+      #ab-desktop-cart-chip .ab-desktop-cart-chip-icon img {
+        display: block;
+        width: 1.55rem;
+        height: auto;
+      }
+
+      #ab-desktop-cart-chip .ab-desktop-cart-chip-count {
+        display: grid;
+        min-width: 1.4rem;
+        height: 1.4rem;
+        place-items: center;
+        padding: 0 0.3rem;
+        border-radius: 999px;
+        background: #c82027;
+        color: #fff;
+        font: 700 0.78rem/1 var(--ab-product-number);
+      }
+
+      #ab-desktop-cart-chip .ab-desktop-cart-chip-count:empty { display: none; }
+
+      #ab-desktop-cart-chip.ab-cart-bump .ab-desktop-cart-chip-icon img {
+        animation: ab-desktop-cart-bump 640ms cubic-bezier(0.3, 0.7, 0.4, 1) 1;
+        transform-origin: 50% 80%;
+      }
+
+      #ab-desktop-cart-chip.ab-cart-bump .ab-desktop-cart-chip-count {
+        animation: ab-desktop-cart-count 560ms cubic-bezier(0.3, 0.7, 0.4, 1) 1;
+      }
+
+      .ab-cart-fly {
+        position: fixed;
+        z-index: 10080;
+        margin: 0;
+        border-radius: 0.3rem;
+        object-fit: cover;
+        box-shadow: 0 0.6rem 1.4rem rgb(0 0 0 / 0.25);
+        pointer-events: none;
+        will-change: transform, opacity;
+      }
+    }
+
+    @keyframes ab-added-cart-backdrop-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes ab-added-cart-panel-in {
+      from { opacity: 0; transform: translateY(0.75rem) scale(0.97); }
+      to { opacity: 1; transform: none; }
+    }
+
+    @keyframes ab-desktop-cart-bump {
+      0% { transform: none; }
+      30% { transform: translateY(-0.3rem) scale(1.16) rotate(-7deg); }
+      55% { transform: translateY(0) scale(0.95) rotate(4deg); }
+      78% { transform: scale(1.04) rotate(-1deg); }
+      100% { transform: none; }
+    }
+
+    @keyframes ab-desktop-cart-count {
+      0% { transform: scale(1); }
+      35% { transform: scale(1.45); }
+      100% { transform: scale(1); }
+    }
+
+    @media (min-width: 768px) and (prefers-reduced-motion: reduce) {
+      #ab-added-cart-modal,
+      #ab-added-cart-modal .ab-added-cart-panel,
+      #ab-desktop-cart-chip,
+      #ab-desktop-cart-chip *,
+      app-header li.menu-cart.ab-cart-bump .header-action-icon img,
+      app-header li.menu-cart.ab-cart-bump .cart-quantity {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
   \`;
 
   function installStyle() {
@@ -5498,6 +5760,9 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
 
   function updateNativeCartCount(items) {
     var count = Array.isArray(items) ? items.length : 0;
+    // Desktop header badge; while a cover is flying in, it updates when it lands.
+    if (desktopCartFlying) desktopCartPendingCount = count;
+    else setDesktopHeaderCartCount(count, false);
     var navItem = document.querySelector('.bottom-nav .fa-shopping-bag');
     navItem = navItem && navItem.closest('li');
     if (!navItem) return;
@@ -6135,39 +6400,434 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       if (!itemCount && addedProduct && addedProduct._id) itemCount = 1;
       if (!subtotal && addedProduct && addedProduct._id) subtotal = finalPrice(addedProduct);
       var modal = document.getElementById('ab-added-cart-modal');
+      var created = !modal;
       if (!modal) {
         modal = document.createElement('div');
         modal.id = 'ab-added-cart-modal';
         modal.setAttribute('role', 'dialog');
         modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-labelledby', 'ab-added-cart-title');
         document.body.appendChild(modal);
       }
-      var title = (addedProduct && (addedProduct.name || addedProduct.nameEn)) || 'Product';
+      var title = (addedProduct && (addedProduct.name || addedProduct.nameEn)) || (desktopCartFeedback() ? DESKTOP_CART_FALLBACK_TITLE : 'Product');
       modal.innerHTML = '<div class="ab-added-cart-panel">' +
-        '<header class="ab-added-cart-head"><h2 class="ab-added-cart-title">' + escapeHtml(title) + ' কার্টে যুক্ত হয়েছে <span class="ab-added-cart-check">✓</span></h2><button class="ab-added-cart-close" type="button" data-ab-added-cart-close="true" aria-label="বন্ধ করুন">×</button></header>' +
+        '<header class="ab-added-cart-head"><h2 class="ab-added-cart-title" id="ab-added-cart-title">' + escapeHtml(title) + ' কার্টে যুক্ত হয়েছে <span class="ab-added-cart-check">✓</span></h2><button class="ab-added-cart-close" type="button" data-ab-added-cart-close="true" aria-label="বন্ধ করুন">×</button></header>' +
         '<div class="ab-added-cart-body">' +
           '<section class="ab-added-cart-summary"><p>' + escapeHtml(String(itemCount)) + ' Item(s)</p><p>Subtotal: ' + escapeHtml(money(subtotal)) + '</p><div class="ab-added-cart-actions"><button type="button" data-ab-added-cart-close="true">আরও বই কিনুন</button><button class="ab-added-cart-go" type="button" data-ab-added-cart-go="true">অর্ডার সম্পন্ন করতে কার্টে যান</button></div></section>' +
         '</div>' +
       '</div>';
+      focusDesktopAddedCartModal(modal, created);
       });
     });
   }
 
   function showAddedCartModal(productId) {
-    if (!isProductPage() && location.pathname !== '/') return;
+    /* Phones keep the popup to the home and product pages. Desktop shows it after
+       every add except on the cart and checkout pages themselves. */
+    var desktop = desktopCartFeedback();
+    if (desktop ? !desktopCartPopupRoute() : !isProductPage() && location.pathname !== '/') return;
+    // On desktop list pages a product left over from an earlier product page is not the added book.
+    var fallbackProduct = desktop && !isProductPage() ? null : currentProduct;
     var addedPromise = currentProduct && String(currentProduct._id || '') === String(productId)
       ? Promise.resolve(currentProduct)
-      : fetchProductsByIds([productId]).then(function (products) { return products[0] || currentProduct || null; });
+      : (desktop && !productId ? Promise.resolve([]) : fetchProductsByIds([productId])).then(function (products) { return products[0] || fallbackProduct || null; });
     addedPromise.then(function (product) {
+      if (desktop && !desktopCartPopupRoute()) return;
       renderAddedCartModal(product);
     });
   }
 
   function showAddedSpecialPackageModal(packageId) {
+    if (desktopCartFeedback()) {
+      // Package adds announce nothing else, so the cart animation starts here on desktop.
+      playDesktopCartAdded();
+      afterDesktopCartLanding(function () {
+        if (desktopCartPopupRoute()) renderAddedSpecialPackageModal(packageId);
+      });
+      return Promise.resolve();
+    }
+    return renderAddedSpecialPackageModal(packageId);
+  }
+
+  function renderAddedSpecialPackageModal(packageId) {
     return fetchCartProducts([{ specialPackage: packageId, selectedQty: 1, cartType: 1 }]).then(function (packages) {
       if (packages[0]) renderAddedCartModal(packages[0]);
     });
   }
+
+  /* ── Desktop add-to-cart feedback (768px and wider) ──
+     Replaces the old green toast with the phone popup, and shows where the book
+     went: its cover flies to the header cart, which bumps while its count ticks
+     up. When the header has scrolled away, a small cart chip drops in at the
+     same corner instead. Phones never reach this code. */
+  var DESKTOP_CART_QUERY = '(min-width: 768px)';
+  var DESKTOP_CART_FALLBACK_TITLE = 'আপনার বই';
+  var DESKTOP_CART_FLY_MS = 480;
+  var desktopCartSource = null;
+  var desktopCartBuyNowAt = 0;
+  var desktopCartReturnFocus = null;
+  var desktopCartChipTimer = null;
+  var desktopCartFlying = false;
+  var desktopCartPlayedAt = 0;
+  var desktopCartPendingCount = null;
+  var desktopCartLandingCallbacks = [];
+
+  function desktopCartFeedback() {
+    return Boolean(window.matchMedia && window.matchMedia(DESKTOP_CART_QUERY).matches);
+  }
+
+  function desktopCartReducedMotion() {
+    return Boolean(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  function desktopCartPopupRoute() {
+    return location.pathname !== '/cart' && location.pathname.indexOf('/checkout') !== 0;
+  }
+
+  // The popup opens once the cover has landed (straight away without the animation).
+  function afterDesktopCartLanding(callback) {
+    if (desktopCartFlying) desktopCartLandingCallbacks.push(callback);
+    else window.setTimeout(callback, 140);
+  }
+
+  // The add_to_cart entry the storefront just pushed, for adds that carry no product id.
+  function recentDataLayerCartProductId() {
+    var layer = Array.isArray(window.dataLayer) ? window.dataLayer : [];
+    for (var index = layer.length - 1; index >= 0 && index >= layer.length - 40; index -= 1) {
+      var entry = layer[index];
+      if (!entry || entry.event !== 'add_to_cart' || !entry.ecommerce) continue;
+      var items = entry.ecommerce.items || (entry.ecommerce.add && entry.ecommerce.add.products) || [];
+      var id = items[0] && (items[0].item_id || items[0].id);
+      if (id) return String(id);
+    }
+    return '';
+  }
+
+  function desktopHeaderCart() {
+    var items = document.querySelectorAll('app-header li.menu-cart');
+    for (var index = 0; index < items.length; index += 1) {
+      if (items[index].getBoundingClientRect().width > 0) return items[index];
+    }
+    return null;
+  }
+
+  function desktopHeaderCartInView(item) {
+    if (!item) return false;
+    var rect = item.getBoundingClientRect();
+    return rect.width > 0 && rect.bottom > 4 && rect.top < window.innerHeight;
+  }
+
+  function desktopHeaderCartCount() {
+    var badge = desktopHeaderCart();
+    badge = badge && badge.querySelector('.cart-quantity');
+    return badge ? Number(String(badge.textContent || '').replace(/\\D/g, '')) || 0 : 0;
+  }
+
+  /* Book adds made by these scripts write the cart directly, so Angular's header
+     badge can lag behind. Keep its text node (Angular's binding) and only add a
+     badge of our own while Angular has none. */
+  function setDesktopHeaderCartCount(count, onlyIncrease) {
+    if (!desktopCartFeedback()) return;
+    var item = desktopHeaderCart();
+    if (!item) return;
+    var badges = item.querySelectorAll('.cart-quantity');
+    var ownBadge = item.querySelector('.ab-cart-quantity-fallback');
+    if (ownBadge && (badges.length > 1 || !count)) {
+      ownBadge.remove();
+      badges = item.querySelectorAll('.cart-quantity');
+    }
+    var badge = badges[0] || null;
+    var current = badge ? Number(String(badge.textContent || '').replace(/\\D/g, '')) || 0 : 0;
+    if (onlyIncrease && count < current) count = current;
+    if (!count || count === current) return;
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'cart-quantity ab-cart-quantity-fallback';
+      Array.prototype.forEach.call(item.attributes, function (attribute) {
+        if (attribute.name.indexOf('_ngcontent') === 0) badge.setAttribute(attribute.name, '');
+      });
+      badge.style.backgroundColor = '#c82027';
+      item.appendChild(badge);
+    }
+    var text = badge.firstChild;
+    if (text && text.nodeType === 3 && badge.childNodes.length === 1) text.nodeValue = String(count);
+    else badge.textContent = String(count);
+  }
+
+  function desktopCartChip() {
+    var chip = document.getElementById('ab-desktop-cart-chip');
+    if (chip) return chip;
+    var bag = document.querySelector('app-header li.menu-cart .header-action-icon img');
+    var bagSource = bag && (bag.currentSrc || bag.src);
+    chip = document.createElement('a');
+    chip.id = 'ab-desktop-cart-chip';
+    chip.href = '/cart';
+    chip.setAttribute('data-ab-added-cart-go', 'true');
+    chip.innerHTML = '<span class="ab-desktop-cart-chip-icon" aria-hidden="true">' +
+      (bagSource ? '<img src="' + escapeHtml(bagSource) + '" alt="">' : '<i class="fa fa-shopping-bag"></i>') +
+      '</span><span class="ab-desktop-cart-chip-label">ক্রয় তালিকা</span><span class="ab-desktop-cart-chip-count"></span>';
+    chip.addEventListener('click', function () { hideDesktopCartChip(); });
+    document.body.appendChild(chip);
+    return chip;
+  }
+
+  function placeDesktopCartChip(chip) {
+    var item = desktopHeaderCart();
+    var rect = item && item.getBoundingClientRect();
+    // Line the chip up under the header cart's right edge.
+    var right = rect && rect.width ? Math.max(16, window.innerWidth - rect.right) : 24;
+    chip.style.right = right + 'px';
+  }
+
+  function updateDesktopCartChip(chip, count) {
+    var badge = chip.querySelector('.ab-desktop-cart-chip-count');
+    if (badge) badge.textContent = count ? String(count) : '';
+    chip.setAttribute('aria-label', count ? 'ক্রয় তালিকা, ' + count + 'টি বই' : 'ক্রয় তালিকা');
+  }
+
+  function hideDesktopCartChip() {
+    window.clearTimeout(desktopCartChipTimer);
+    var chip = document.getElementById('ab-desktop-cart-chip');
+    if (chip) chip.classList.remove('is-visible');
+  }
+
+  // Leave the chip up while the popup is open, then a few seconds more.
+  function scheduleDesktopCartChipHide(delay) {
+    window.clearTimeout(desktopCartChipTimer);
+    desktopCartChipTimer = window.setTimeout(function () {
+      if (document.getElementById('ab-added-cart-modal')) {
+        scheduleDesktopCartChipHide(2500);
+        return;
+      }
+      hideDesktopCartChip();
+    }, delay);
+  }
+
+  function bumpDesktopCartTarget(target) {
+    if (!target || desktopCartReducedMotion()) return;
+    target.classList.remove('ab-cart-bump');
+    void target.offsetWidth;
+    target.classList.add('ab-cart-bump');
+    window.setTimeout(function () { target.classList.remove('ab-cart-bump'); }, 700);
+  }
+
+  // The cover of the card (or product page) whose add button was just used.
+  function desktopCartSourceImage() {
+    var source = desktopCartSource;
+    if (!source || Date.now() - source.at > 6000 || !document.contains(source.element)) return null;
+    var node = source.element;
+    for (var depth = 0; node && node !== document.body && depth < 8; depth += 1) {
+      var best = null;
+      var bestArea = 0;
+      Array.prototype.forEach.call(node.querySelectorAll('img'), function (image) {
+        var rect = image.getBoundingClientRect();
+        var visible = rect.width >= 40 && rect.height >= 40 && rect.bottom > 0 && rect.top < window.innerHeight;
+        if (visible && rect.width * rect.height > bestArea && (image.currentSrc || image.src)) {
+          best = image;
+          bestArea = rect.width * rect.height;
+        }
+      });
+      if (best) return best;
+      node = node.parentElement;
+    }
+    return null;
+  }
+
+  function flyCoverToCart(image, to, done) {
+    var from = image && image.getBoundingClientRect();
+    if (!from || !from.width || !to || !to.width || desktopCartReducedMotion() || typeof document.body.animate !== 'function') {
+      done();
+      return;
+    }
+    var width = Math.min(from.width, 110);
+    var height = Math.min(from.height * (width / from.width), 160);
+    var left = from.left + (from.width - width) / 2;
+    var top = from.top + (from.height - height) / 2;
+    var fly = document.createElement('img');
+    fly.className = 'ab-cart-fly';
+    fly.alt = '';
+    fly.src = image.currentSrc || image.src;
+    fly.style.left = left + 'px';
+    fly.style.top = top + 'px';
+    fly.style.width = width + 'px';
+    fly.style.height = height + 'px';
+    document.body.appendChild(fly);
+    var dx = to.left + to.width / 2 - (left + width / 2);
+    var dy = to.top + to.height / 2 - (top + height / 2);
+    var finished = false;
+    function finish() {
+      if (finished) return;
+      finished = true;
+      fly.remove();
+      done();
+    }
+    window.setTimeout(finish, DESKTOP_CART_FLY_MS + 200);
+    var animation = fly.animate([
+      { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+      { transform: 'translate(' + dx * 0.45 + 'px, ' + (dy * 0.45 - 40) + 'px) scale(0.6)', opacity: 1, offset: 0.45 },
+      { transform: 'translate(' + dx + 'px, ' + dy + 'px) scale(0.16)', opacity: 0.35 },
+    ], { duration: DESKTOP_CART_FLY_MS, easing: 'cubic-bezier(0.45, 0, 0.25, 1)', fill: 'forwards' });
+    animation.onfinish = finish;
+  }
+
+  // Where the cover lands: the header bag, or the chip's bag where the chip comes to rest
+  // (offsets ignore the chip's slide-in transform).
+  function desktopCartTargetRect(header, chip) {
+    if (!chip) return (header.querySelector('.header-action-icon') || header).getBoundingClientRect();
+    var icon = chip.querySelector('.ab-desktop-cart-chip-icon');
+    return {
+      left: chip.offsetLeft + (icon ? icon.offsetLeft : 0),
+      top: chip.offsetTop + (icon ? icon.offsetTop : 0),
+      width: icon ? icon.offsetWidth : chip.offsetWidth,
+      height: icon ? icon.offsetHeight : chip.offsetHeight,
+    };
+  }
+
+  function landDesktopCart(header, chip) {
+    desktopCartFlying = false;
+    try {
+      if (desktopCartPendingCount !== null) setDesktopHeaderCartCount(desktopCartPendingCount, false);
+      // A signed-in cart is counted from the account cart once it reloads.
+      else if (!cartAuthorization()) setDesktopHeaderCartCount(storedGuestCartItems().length, true);
+      if (chip) updateDesktopCartChip(chip, desktopHeaderCartCount() || storedGuestCartItems().length);
+      bumpDesktopCartTarget(chip || header);
+    } catch (_) {}
+    desktopCartPendingCount = null;
+    var callbacks = desktopCartLandingCallbacks;
+    desktopCartLandingCallbacks = [];
+    window.setTimeout(function () {
+      callbacks.forEach(function (callback) { callback(); });
+    }, 60);
+  }
+
+  function playDesktopCartAdded() {
+    // One add can announce itself twice (this script, then the tracking mirror).
+    if (Date.now() - desktopCartPlayedAt < 1000) return;
+    desktopCartPlayedAt = Date.now();
+    var header = desktopHeaderCart();
+    var chip = null;
+    var landed = false;
+    function land() {
+      if (landed) return;
+      landed = true;
+      landDesktopCart(header, chip);
+    }
+    desktopCartFlying = true;
+    try {
+      // Tablet widths keep the phone's bottom bar; its bag already bounces on every add.
+      var bottomBag = document.querySelector('.bottom-nav .fa-shopping-bag');
+      if (!desktopHeaderCartInView(header) && desktopHeaderCartInView(bottomBag)) {
+        flyCoverToCart(desktopCartSourceImage(), bottomBag.getBoundingClientRect(), land);
+        return;
+      }
+      if (!desktopHeaderCartInView(header)) {
+        // On the cart and checkout pages the page itself shows the new book.
+        if (!desktopCartPopupRoute()) {
+          land();
+          return;
+        }
+        chip = desktopCartChip();
+        placeDesktopCartChip(chip);
+        updateDesktopCartChip(chip, desktopHeaderCartCount());
+        chip.classList.add('is-visible');
+        scheduleDesktopCartChipHide(4000);
+      }
+      flyCoverToCart(desktopCartSourceImage(), desktopCartTargetRect(header, chip), land);
+    } catch (_) {
+      land();
+    }
+  }
+
+  function focusDesktopAddedCartModal(modal, created) {
+    if (!modal || !desktopCartFeedback()) return;
+    if (created) {
+      var active = document.activeElement;
+      desktopCartReturnFocus = active && active !== document.body && !modal.contains(active)
+        ? active
+        : desktopCartSource && desktopCartSource.element || null;
+      modal.classList.add('ab-added-cart-enter');
+      window.setTimeout(function () { modal.classList.remove('ab-added-cart-enter'); }, 320);
+    } else if (modal.contains(document.activeElement)) {
+      return;
+    }
+    var primary = modal.querySelector('[data-ab-added-cart-go]');
+    if (!primary) return;
+    try { primary.focus({ preventScroll: true }); } catch (_) { primary.focus(); }
+  }
+
+  function restoreDesktopCartFocus() {
+    var target = desktopCartReturnFocus;
+    desktopCartReturnFocus = null;
+    if (!target || !document.contains(target) || typeof target.focus !== 'function') return;
+    try { target.focus({ preventScroll: true }); } catch (_) { target.focus(); }
+  }
+
+  function closeDesktopAddedCartModal() {
+    var modal = document.getElementById('ab-added-cart-modal');
+    if (modal) modal.remove();
+    restoreDesktopCartFocus();
+  }
+
+  /* Remember which add button was used (for the flying cover) and Buy Now presses
+     (no animation). Pointer and key presses come before any click handler, some
+     of which stop the click from reaching other listeners. */
+  function rememberDesktopCartSource(eventTarget) {
+    if (!desktopCartFeedback()) return;
+    var target = eventTarget && eventTarget.closest && eventTarget.closest('button, a, [role="button"], .add-to-cart-overlay');
+    if (!target) return;
+    var label = String(target.textContent || '').replace(/\\s+/g, ' ').trim();
+    // Bengali "য়" comes both precomposed and as য + nukta; NFC gives one form.
+    if (typeof label.normalize === 'function') label = label.normalize('NFC');
+    if (target.matches('[data-ab-action-label="buy-now"], .ab-sticky-product-buy') || /^(?:অর্ডার করুন|Buy Now)$/i.test(label)) {
+      desktopCartBuyNowAt = Date.now();
+      return;
+    }
+    if (target.closest('#ab-added-cart-modal, #ab-desktop-cart-chip')) return;
+    if (target.matches('.ab-add-cart-button, .add-to-cart-overlay, .add-all-btn, [data-ab-action-label="cart"], .ab-sticky-product-add') ||
+      /কার্টে যোগ|কার্টে যুক্ত|ক্রয় তালিকায় (?:যুক্ত|রাখুন)|add (?:all )?to cart/i.test(label)) {
+      desktopCartSource = { element: target, at: Date.now() };
+    }
+  }
+
+  window.addEventListener('pointerdown', function (event) {
+    rememberDesktopCartSource(event.target);
+  }, true);
+
+  window.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter' || event.key === ' ') rememberDesktopCartSource(event.target);
+  }, true);
+
+  document.addEventListener('keydown', function (event) {
+    var modal = document.getElementById('ab-added-cart-modal');
+    if (!modal || !desktopCartFeedback()) return;
+    if (event.key === 'Escape' || event.key === 'Esc') {
+      event.preventDefault();
+      closeDesktopAddedCartModal();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    var focusable = Array.prototype.filter.call(modal.querySelectorAll('button, a[href]'), function (element) {
+      return !element.disabled && element.getClientRects().length > 0;
+    });
+    if (!focusable.length) return;
+    var first = focusable[0];
+    var last = focusable[focusable.length - 1];
+    if (!modal.contains(document.activeElement)) {
+      event.preventDefault();
+      first.focus();
+    } else if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }, true);
+
+  window.addEventListener('scroll', function () {
+    var chip = document.getElementById('ab-desktop-cart-chip');
+    if (chip && chip.classList.contains('is-visible') && desktopHeaderCartInView(desktopHeaderCart())) hideDesktopCartChip();
+  }, { passive: true });
 
   function pushCartViewTracking(items, products) {
     if (!cartPageOpen() || cartViewTrackingSent || window.__amolCartViewTracked) return;
@@ -6769,7 +7429,15 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         return addProductToCart(product._id, null);
       })).then(function () {
         suppressAddedCartModalUntil = 0;
-        showAddedCartModal(products[products.length - 1]._id);
+        var lastProductId = products[products.length - 1]._id;
+        if (desktopCartFeedback()) {
+          // The individual adds above were kept quiet; show one cart animation for the set.
+          desktopCartPlayedAt = 0;
+          playDesktopCartAdded();
+          afterDesktopCartLanding(function () { showAddedCartModal(lastProductId); });
+        } else {
+          showAddedCartModal(lastProductId);
+        }
         pulseStickyCart();
         updateStickyProductActions();
       });
@@ -8830,6 +9498,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       event.preventDefault();
       var modal = document.getElementById('ab-added-cart-modal');
       if (modal) modal.remove();
+      restoreDesktopCartFocus();
       return;
     }
 
@@ -9030,14 +9699,23 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     pulseStickyCart();
     updateStickyProductActions();
     var productId = event && event.detail && event.detail.product;
-    if (!productId && currentProduct && currentProduct._id) productId = currentProduct._id;
-    window.setTimeout(function () {
+    var desktop = desktopCartFeedback();
+    // Desktop list pages may still hold a product from an earlier product page.
+    if (!productId && currentProduct && currentProduct._id && !(desktop && !isProductPage())) productId = currentProduct._id;
+    var desktopBuyNow = desktop && (Date.now() < suppressAddedCartModalUntil || Date.now() - desktopCartBuyNowAt < 2500);
+    if (desktop && !desktopBuyNow) playDesktopCartAdded();
+    var showPopup = function () {
       if (Date.now() < suppressAddedCartModalUntil) {
         clearCartAddedFeedback();
         return;
       }
+      // Buy Now and "Add All" kept this add quiet; they show their own result.
+      if (desktop && (desktopBuyNow || Date.now() - desktopCartBuyNowAt < 2500)) return;
+      if (desktop && !productId) productId = recentDataLayerCartProductId();
       showAddedCartModal(productId);
-    }, 140);
+    };
+    if (desktop && !desktopBuyNow) afterDesktopCartLanding(showPopup);
+    else window.setTimeout(showPopup, 140);
   });
   window.addEventListener('storage', function () {
     if (isProductPage()) refreshProductCartState();

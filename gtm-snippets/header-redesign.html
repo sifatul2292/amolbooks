@@ -1,0 +1,143 @@
+<!-- All Pages. Header redesign, "Option A" (owner chose it 2026-11-05): brand-green search box and icons in place of the red ones, the menu as plain tabs with a green line under the current page, "আমার অর্ডার দেখুন" as an outlined button, and a slimmer offer strip. On phones the menu is one slim row you swipe (a fade on the right shows there is more) and the header is about 40px shorter. Styling only, plus a small script that scrolls the current page's tab into view on narrow screens. No API calls. To go back, take this file out of the snippet list in api/src/main.ts. -->
+<script>document.documentElement.classList.add('ab-header-v2');</script>
+<style>
+/* Offer strip: slimmer, gold label instead of the red block. */
+html.ab-header-v2 #ab-header-ticker { height: 30px !important; min-height: 30px !important; background: #175c36 !important; align-items: center !important; }
+html.ab-header-v2 #ab-header-ticker .ab-header-ticker-label { height: 22px !important; line-height: 22px !important; align-self: center !important; margin: 0 12px 0 16px !important; padding: 0 12px !important; border-radius: 999px !important; background: #f3c34a !important; color: #3b2b00 !important; font-weight: 700 !important; }
+html.ab-header-v2 #ab-header-ticker .ab-header-ticker-label::before,
+html.ab-header-v2 #ab-header-ticker .ab-header-ticker-label::after { display: none !important; }
+
+/* Logo row. The logo gets a fixed box (final logo is 325x415) so nothing moves when it loads. */
+html.ab-header-v2 app-header .header-main { background: #fff !important; }
+html.ab-header-v2 app-header .header-main-content { align-items: center !important; }
+html.ab-header-v2 app-header .logo img { width: 49px !important; height: 62px !important; object-fit: contain; }
+
+/* Search: a rounded box with a green round button. */
+html.ab-header-v2 app-header .header-middle-top { position: relative; display: flex !important; align-items: center !important; border: 1.5px solid #d3dfd7 !important; border-radius: 999px !important; background: #f5f8f6 !important; overflow: hidden; transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease; }
+html.ab-header-v2 app-header .header-middle-top:focus-within { border-color: #129245 !important; background: #fff !important; box-shadow: 0 0 0 4px rgb(18 146 69 / .12); }
+html.ab-header-v2 app-header .header-middle-top .search-bar,
+html.ab-header-v2 app-header .header-middle-top .search-bar form { flex: 1 1 auto; height: 100%; border: 0 !important; background: transparent !important; }
+html.ab-header-v2 app-header #searchInput { height: 100% !important; border: 0 !important; outline: 0 !important; background: transparent !important; padding: 0 8px 0 22px !important; color: #1f2a24 !important; }
+/* Phones paint their own search label (.search-bar::before); line it up with the new padding. */
+html.ab-header-v2 app-header .search-bar::before { left: 22px !important; }
+html.ab-header-v2 app-header .header-middle-top .search-icon { flex: 0 0 auto; display: grid !important; place-items: center; border: 0 !important; border-radius: 999px !important; background: #175c36 !important; color: #fff !important; cursor: pointer; transition: background-color .15s ease; }
+html.ab-header-v2 app-header .header-middle-top .search-icon:hover { background: #129245 !important; }
+/* The magnifier is drawn from this built-in image, so it shows at once instead of
+   waiting for the icon font (the button stayed empty until that file arrived). */
+html.ab-header-v2 app-header .header-middle-top .search-icon i { display: none !important; }
+html.ab-header-v2 app-header .header-middle-top .search-icon::before { content: ""; display: block; width: 19px; height: 19px; background: #fff; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.8' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.6'/%3E%3Cpath d='m15.6 15.6 4.9 4.9'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.8' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.6'/%3E%3Cpath d='m15.6 15.6 4.9 4.9'/%3E%3C/svg%3E") center / contain no-repeat; }
+
+/* Icons: the same drawings in brand green instead of red (their white parts stay white).
+   Also the cart chip that drops in on desktop when the header has scrolled away. */
+html.ab-header-v2 app-header .services .service-icon img,
+html.ab-header-v2 app-header .header-action-icon img,
+html.ab-header-v2 #ab-desktop-cart-chip .ab-desktop-cart-chip-icon img { filter: hue-rotate(164deg) saturate(.7); }
+
+/* Menu: plain tabs, green line under the current page, outlined "আমার অর্ডার দেখুন". */
+html.ab-header-v2 app-header .header-middle-bottom { height: auto !important; background: #fff !important; border-top: 1px solid #edf2ee !important; border-bottom: 1px solid #e1e8e3 !important; box-shadow: none !important; }
+html.ab-header-v2 app-header .nav-list .nav-item { flex: 0 0 auto !important; width: auto !important; height: auto !important; margin: 0 !important; border: 0 !important; }
+html.ab-header-v2 app-header .nav-list .nav-link { position: relative; display: flex !important; align-items: center; width: auto !important; border: 0 !important; border-radius: 999px !important; background: transparent !important; color: #33413a !important; font-weight: 500 !important; white-space: nowrap; cursor: pointer; transition: background-color .15s ease, color .15s ease; }
+html.ab-header-v2 app-header .nav-list .nav-link.active { color: #175c36 !important; font-weight: 700 !important; background: transparent !important; }
+html.ab-header-v2 app-header .nav-list .nav-link.active::after { content: ""; position: absolute; bottom: -6px; height: 3px; border-radius: 3px 3px 0 0; background: #129245; }
+html.ab-header-v2 app-header .nav-list .nav-link[data-ab-guest-orders] { border: 1.5px solid #175c36 !important; color: #175c36 !important; font-weight: 600 !important; }
+
+/* Phones (767px and narrower): shorter header, one slim row of tabs you swipe. */
+@media (max-width: 767px) {
+  html.ab-header-v2 #ab-header-ticker { height: 28px !important; min-height: 28px !important; }
+  html.ab-header-v2 #ab-header-ticker .ab-header-ticker-label { height: 20px !important; line-height: 20px !important; margin: 0 10px 0 12px !important; padding: 0 10px !important; font-size: 11.5px !important; }
+  html.ab-header-v2 app-header .header-main { padding: 0 !important; }
+  html.ab-header-v2 app-header .header-main-content { height: 64px !important; min-height: 64px; gap: 12px !important; }
+  html.ab-header-v2 app-header .logo img { width: 35px !important; height: 44px !important; }
+  html.ab-header-v2 app-header .header-middle-top { height: 44px; padding-right: 3px; }
+  html.ab-header-v2 app-header .header-middle-top .search-icon { width: 38px !important; height: 38px !important; }
+  html.ab-header-v2 app-header .header-middle-bottom { position: relative; }
+  html.ab-header-v2 app-header .header-middle-bottom .container { padding: 0 !important; }
+  html.ab-header-v2 app-header .nav-list { gap: 2px !important; height: 46px !important; padding: 0 30px 0 10px !important; scroll-padding-inline: 10px; }
+  html.ab-header-v2 app-header .nav-list .nav-link { height: 34px !important; padding: 0 12px !important; font-size: 15px !important; }
+  html.ab-header-v2 app-header .nav-list .nav-link.active::after { left: 12px; right: 12px; }
+  html.ab-header-v2 app-header .nav-list .nav-item:has(> [data-ab-guest-orders]) { margin-left: 6px !important; }
+  html.ab-header-v2 app-header .nav-list .nav-link[data-ab-guest-orders] { height: 30px !important; font-size: 13.5px !important; }
+}
+
+/* Phones and tablets (up to 1070px, where the bottom bar is shown): the menu row scrolls sideways. */
+@media (max-width: 1070px) {
+  html.ab-header-v2 app-header .nav-list { display: flex !important; align-items: center !important; margin: 0 !important; overflow-x: auto !important; overflow-y: hidden !important; scrollbar-width: none; -webkit-overflow-scrolling: touch; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 30px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 30px), transparent); }
+  html.ab-header-v2 app-header .nav-list::-webkit-scrollbar { display: none; }
+}
+
+/* Tablet and desktop (768px and wider). */
+@media (min-width: 768px) {
+  html.ab-header-v2 app-header .header-main .container,
+  html.ab-header-v2 app-header .header-middle-bottom .container { max-width: 1280px !important; margin: 0 auto !important; padding: 0 32px !important; }
+  html.ab-header-v2 app-header .header-main-content { height: 84px; gap: 28px !important; padding: 0 !important; }
+  html.ab-header-v2 app-header .logo { display: flex !important; align-items: center; height: 100%; }
+  html.ab-header-v2 app-header .header-middle { flex: 1 1 auto !important; max-width: 640px; margin: 0 auto !important; }
+  html.ab-header-v2 app-header .header-middle-top { height: 48px; padding-right: 4px; }
+  html.ab-header-v2 app-header .header-middle-top .search-icon { width: 40px !important; height: 40px !important; }
+  html.ab-header-v2 app-header .services,
+  html.ab-header-v2 app-header .header-right { align-items: center; }
+  html.ab-header-v2 app-header .header-right-top ul { display: flex !important; gap: 4px !important; margin: 0 !important; }
+  html.ab-header-v2 app-header .services .service-content,
+  html.ab-header-v2 app-header .header-action-link { display: flex !important; flex-direction: column; align-items: center; gap: 4px; min-width: 72px; padding: 6px 10px !important; border-radius: 12px; color: #26322b !important; text-decoration: none !important; transition: background-color .15s ease; }
+  html.ab-header-v2 app-header .services .service-content:hover,
+  html.ab-header-v2 app-header .header-action-link:hover { background: #eef6f0; }
+  html.ab-header-v2 app-header .services .service-icon img,
+  html.ab-header-v2 app-header .header-action-icon img { width: 26px !important; height: 30px !important; }
+  html.ab-header-v2 app-header .service-label,
+  html.ab-header-v2 app-header .header-action-label { margin: 0 !important; color: #26322b !important; font-size: 13px !important; font-weight: 500 !important; line-height: 1.2 !important; white-space: nowrap; }
+  html.ab-header-v2 app-header li.menu-cart .cart-quantity { top: 0 !important; right: 10px !important; min-width: 20px; width: auto !important; height: 20px !important; padding: 0 5px; border: 2px solid #fff; border-radius: 999px !important; font-size: 11px !important; font-weight: 700; line-height: 1; box-sizing: border-box; }
+  html.ab-header-v2 app-header .nav-list { display: flex !important; justify-content: flex-start !important; align-items: center !important; gap: 4px !important; height: 50px !important; padding: 0 !important; margin: 0 !important; border: 0 !important; }
+  html.ab-header-v2 app-header .nav-list .nav-link { height: 38px !important; padding: 0 16px !important; font-size: 16px !important; }
+  html.ab-header-v2 app-header .nav-list .nav-link:hover { color: #175c36 !important; background: #eef6f0 !important; }
+  html.ab-header-v2 app-header .nav-list .nav-link.active::after { left: 16px; right: 16px; }
+  html.ab-header-v2 app-header .nav-list .nav-link[data-ab-guest-orders]:hover { background: #175c36 !important; color: #fff !important; }
+}
+
+/* Tablets (768-1070px): room for the fade at the end of the scrolling menu. */
+@media (min-width: 768px) and (max-width: 1070px) {
+  html.ab-header-v2 app-header .nav-list { padding-right: 30px !important; }
+  html.ab-header-v2 app-header .nav-list .nav-item:has(> [data-ab-guest-orders]) { margin-left: 8px !important; }
+}
+
+/* Wide desktop: "আমার অর্ডার দেখুন" sits at the right end of the menu. */
+@media (min-width: 1071px) {
+  html.ab-header-v2 app-header .nav-list .nav-item:has(> [data-ab-guest-orders]) { margin-left: auto !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.ab-header-v2 app-header .header-middle-top,
+  html.ab-header-v2 app-header .header-middle-top .search-icon,
+  html.ab-header-v2 app-header .nav-list .nav-link,
+  html.ab-header-v2 app-header .services .service-content,
+  html.ab-header-v2 app-header .header-action-link { transition: none !important; }
+}
+</style>
+<script>
+(function () {
+  'use strict';
+  if (window.__abHeaderV2) return;
+  window.__abHeaderV2 = true;
+
+  // Narrow screens: when the current page's tab is off to the right (e.g. ব্লগ), scroll the menu to it.
+  function revealActiveTab() {
+    var list = document.querySelector('app-header .nav-list');
+    var active = list && list.querySelector('.nav-link.active');
+    if (!active || list.scrollWidth <= list.clientWidth) return;
+    var item = active.closest('.nav-item') || active;
+    var start = list.scrollLeft;
+    if (item.offsetLeft < start || item.offsetLeft + item.offsetWidth > start + list.clientWidth - 30) {
+      list.scrollLeft = Math.max(0, item.offsetLeft - 10);
+    }
+  }
+
+  // The menu is drawn after this runs, and pages change without a reload.
+  var lastRoute = '';
+  window.setInterval(function () {
+    var route = location.pathname + location.search;
+    if (route === lastRoute) return;
+    lastRoute = route;
+    window.setTimeout(revealActiveTab, 400);
+    window.setTimeout(revealActiveTab, 1500);
+  }, 700);
+})();
+</script>
