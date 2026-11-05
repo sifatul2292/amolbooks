@@ -35,6 +35,7 @@ for (const set of fs.readdirSync(base)) {
     assert.match(String(b.nameEn), /^[\x20-\x7e]+$/, `${where}: English name`);
     assert.ok(Number.isInteger(b.mrp) && b.mrp > 0, `${where}: cover price`);
     assert.ok(b.discountPercent >= 0 && b.discountPercent < 50, `${where}: discount`);
+    if (b.discountAmount !== undefined) assert.ok(Number.isInteger(b.discountAmount) && b.discountAmount >= 0 && b.discountAmount < b.mrp / 2, `${where}: discount in Taka`);
     assert.ok(Number.isInteger(b.quantity) && b.quantity >= 0, `${where}: quantity`);
     assert.ok(b.categories.length >= 1 && b.categories.length <= 2, `${where}: one or two categories`);
     for (const c of b.categories) assert.ok(CATEGORIES.has(c.normalize('NFD')), `${where}: category "${c}" exists`);

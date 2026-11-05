@@ -169,7 +169,8 @@ const same = (value) => String(value || '').normalize('NFD').replace(/\s+/g, ' '
     // Sample pages ("একটু পড়ে দেখুন"), compressed; the product page shows them from pdfFile.
     const sample = book.pdf ? path.join(DATA_DIR, 'pdfs', book.pdf) : null;
     if (sample && !fs.existsSync(sample)) throw new Error(`${book.name}: sample PDF missing ${sample}`);
-    const discountAmount = Math.round(book.mrp * book.discountPercent / 100);
+    // An exact Taka discount (e.g. to match another shop's price) wins over the percentage.
+    const discountAmount = Number.isInteger(book.discountAmount) ? book.discountAmount : Math.round(book.mrp * book.discountPercent / 100);
     plan.products.push({
       image: source ? { source, target: path.join(UPLOAD_DIR, book.image) } : null,
       pdf: sample ? { source: sample, target: path.join(FILES_DIR, book.pdf) } : null,

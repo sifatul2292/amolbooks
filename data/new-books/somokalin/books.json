@@ -1,13 +1,14 @@
 {
   "publisher": "সমকালীন",
-  "note": "Somokalin books not yet on Amol Books (2026-11-04). Imported as draft, 20 in stock, cover price minus 25% (flat Taka), like the Somokalin books already in the shop.",
+  "note": "Somokalin books not yet on Amol Books (2026-11-04). Imported as draft, 20 in stock. Price = Rokomari selling price on 2026-11-05 (discountAmount = cover price minus Rokomari price).",
   "books": [
     {
       "name": "গল্পগুলো অন্যরকম",
       "nameEn": "Golpo Gulo Onno Rokom",
       "slug": "golpo-gulo-onno-rokom",
       "mrp": 340,
-      "discountPercent": 25,
+      "discountPercent": 30,
+      "discountAmount": 102,
       "quantity": 20,
       "pages": 216,
       "edition": "1st Published, 2019",
@@ -41,7 +42,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/07/Golpogulo-Onnorokon-Front.jpg",
       "sources": [
         "https://www.wafilife.com/golpo-gulo-onno-rokom/pd/4177",
-        "https://www.rokomari.com/book/188368/গল্পগুলো-অন্যরকম"
+        "https://www.rokomari.com/book/188368/গল্পগুলো-অন্যরকম",
+        "https://www.rokomari.com/book/188368"
       ]
     },
     {
@@ -49,7 +51,8 @@
       "nameEn": "30 Hajar Khristan Guru Jevabe Diner Dayi",
       "slug": "30-hajar-khristan-guru-jevabe-diner-dayi",
       "mrp": 96,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 19,
       "quantity": 20,
       "pages": 64,
       "edition": "1st Published, 2025",
@@ -70,7 +73,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2025/10/WhatsApp-Image-2025-10-26-at-11.15.12-AM.jpg",
       "sources": [
         "https://www.wafilife.com/30-hajar-khristan-guru-jevabe-diner-dayi/pd/70661",
-        "https://www.rokomari.com/book/513738/৩০-হাজার-খ্রিষ্টানের-গুরু-যেভাবে-দ্বীনের-দাঈ"
+        "https://www.rokomari.com/book/513738/৩০-হাজার-খ্রিষ্টানের-গুরু-যেভাবে-দ্বীনের-দাঈ",
+        "https://www.rokomari.com/book/513738"
       ]
     },
     {
@@ -78,7 +82,8 @@
       "nameEn": "Double Standard",
       "slug": "double-standard",
       "mrp": 268,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 54,
       "quantity": 20,
       "pages": 176,
       "edition": "1st Published, 2025",
@@ -99,7 +104,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2025/10/WhatsApp-Image-2025-10-26-at-11.56.10-AM.jpg",
       "sources": [
         "https://www.wafilife.com/double-standard/pd/70660",
-        "https://www.rokomari.com/book/512497/double-standard"
+        "https://www.rokomari.com/book/512497/double-standard",
+        "https://www.rokomari.com/book/512497"
       ]
     },
     {
@@ -107,7 +113,8 @@
       "nameEn": "Aap-Ki-Amanat",
       "slug": "aap-ki-amanat",
       "mrp": 68,
-      "discountPercent": 25,
+      "discountPercent": 21,
+      "discountAmount": 14,
       "quantity": 20,
       "pages": 40,
       "edition": "1st Published 2025",
@@ -128,7 +135,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2025/10/WhatsApp-Image-2025-10-05-at-1.35.23-PM.jpeg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%86%e0%a6%aa-%e0%a6%95%e0%a6%bf-%e0%a6%86%e0%a6%ae%e0%a6%be%e0%a6%a8%e0%a6%be%e0%a6%a4/pd/69991",
-        "https://www.rokomari.com/book/510488/আপ-কি-আমানাত"
+        "https://www.rokomari.com/book/510488/আপ-কি-আমানাত",
+        "https://www.rokomari.com/book/510488"
       ]
     },
     {
@@ -136,7 +144,8 @@
       "nameEn": "Islamer-Bidhan-Pronoyoner-Sunnaher-Obosthan-Ebong-Prachobidder-Apottir-Jobab",
       "slug": "islamer-bidhan-pronoyoner-sunnaher-obosthan-ebong-prachobidder-apottir-jobab",
       "mrp": 1040,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 208,
       "quantity": 20,
       "pages": 784,
       "edition": "1st Published, September 2025",
@@ -157,7 +166,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2025/10/WhatsApp-Image-2025-10-05-at-1.31.14-PM.jpeg",
       "sources": [
         "https://www.wafilife.com/islamer-bidhan-pronoyoner-sunnaher-obosthan-ebong-prachobidder-apottir-jobab/pd/69990",
-        "https://www.rokomari.com/book/510490/ইসলামের-বিধান-প্রণয়নের-সুন্নাহর-অবস্থান-এবং-প্রাচ্যবিদদের-আপত্তির-জবাব"
+        "https://www.rokomari.com/book/510490/ইসলামের-বিধান-প্রণয়নের-সুন্নাহর-অবস্থান-এবং-প্রাচ্যবিদদের-আপত্তির-জবাব",
+        "https://www.rokomari.com/book/510490"
       ]
     },
     {
@@ -165,7 +175,8 @@
       "nameEn": "Jinder-Khoti-Theke-Beche-Thakar-Amol",
       "slug": "jinder-khoti-theke-beche-thakar-amol",
       "mrp": 650,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 130,
       "quantity": 20,
       "pages": 448,
       "edition": "1st",
@@ -189,7 +200,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2025/08/WhatsApp-Image-2025-08-14-at-18.22.55_ba424ccc.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%9c%e0%a6%bf%e0%a6%a8%e0%a6%a6%e0%a7%87%e0%a6%b0-%e0%a6%95%e0%a7%8d%e0%a6%b7%e0%a6%a4%e0%a6%bf-%e0%a6%a5%e0%a7%87%e0%a6%95%e0%a7%87-%e0%a6%ac%e0%a7%87%e0%a6%81%e0%a6%9a%e0%a7%87-%e0%a6%a5/pd/68139",
-        "https://www.rokomari.com/book/492348/জিনদের-ক্ষতি-থেকে-বেঁচে-থাকার-আমল"
+        "https://www.rokomari.com/book/492348/জিনদের-ক্ষতি-থেকে-বেঁচে-থাকার-আমল",
+        "https://www.rokomari.com/book/492348"
       ]
     },
     {
@@ -197,7 +209,8 @@
       "nameEn": "Al-Fawaid-Mukhtasar",
       "slug": "al-fawaid-mukhtasar",
       "mrp": 260,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 52,
       "quantity": 20,
       "pages": 168,
       "edition": "১ম প্রকাশ, ২০২৫",
@@ -221,7 +234,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2025/08/WhatsApp-Image-2025-08-13-at-3.46.43.jpg",
       "sources": [
         "https://www.wafilife.com/al-fawaid-mukhtasar/pd/68127",
-        "https://www.rokomari.com/book/492144/আল-ফাওয়াইদ-মুখতাসার"
+        "https://www.rokomari.com/book/492144/আল-ফাওয়াইদ-মুখতাসার",
+        "https://www.rokomari.com/book/492144"
       ]
     },
     {
@@ -229,7 +243,8 @@
       "nameEn": "Imam Nobobir 40 Hadis O Tar Bekkha",
       "slug": "imam-nobobir-40-hadis-o-tar-bekkha",
       "mrp": 415,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 83,
       "quantity": 20,
       "pages": 288,
       "edition": "1st Published, 2025",
@@ -253,7 +268,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2025/08/imam_nobobir_40_hadis.jpg",
       "sources": [
         "https://www.wafilife.com/imam-nobobir-40-hadis-o-tar-bekkha/pd/68047",
-        "https://www.rokomari.com/book/489832/ইমাম-নববির-৪০-হাদিস-ও-তার-ব্যাখ্যা"
+        "https://www.rokomari.com/book/489832/ইমাম-নববির-৪০-হাদিস-ও-তার-ব্যাখ্যা",
+        "https://www.rokomari.com/book/489832"
       ]
     },
     {
@@ -261,7 +277,8 @@
       "nameEn": "Iman Jagania Sakkhatkar",
       "slug": "iman-jagania-sakkhatkar",
       "mrp": 890,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 178,
       "quantity": 20,
       "pages": 752,
       "edition": "1st editon, 2025",
@@ -285,7 +302,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2025/03/iman-jagania-sakkhatkar.jpeg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%b9%e0%a6%bf%e0%a6%a8%e0%a7%8d%e0%a6%a6%e0%a7%81-%e0%a6%a5%e0%a7%87%e0%a6%95%e0%a7%87-%e0%a6%ae%e0%a7%81%e0%a6%b8%e0%a6%b2%e0%a6%bf%e0%a6%ae-%e0%a6%b9%e0%a6%93%e0%a6%af%e0%a6%bc%e0%a6%be/pd/63306",
-        "https://www.rokomari.com/book/464725/হিন্দু-থেকে-মুসলিম-হওয়ার-ঈমান-জাগানিয়া-সাক্ষাৎকার"
+        "https://www.rokomari.com/book/464725/হিন্দু-থেকে-মুসলিম-হওয়ার-ঈমান-জাগানিয়া-সাক্ষাৎকার",
+        "https://www.rokomari.com/book/464725"
       ]
     },
     {
@@ -293,7 +311,8 @@
       "nameEn": "Baksher Baire",
       "slug": "baksher-baire",
       "mrp": 272,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 54,
       "quantity": 20,
       "pages": 176,
       "edition": "New Editon, 2025",
@@ -315,7 +334,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2025/02/Image-2025-6.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%ac%e0%a6%be%e0%a6%95%e0%a7%8d%e0%a6%b8%e0%a7%87%e0%a6%b0-%e0%a6%ac%e0%a6%be%e0%a6%87%e0%a6%b0%e0%a7%87-2/pd/62498",
-        "https://www.rokomari.com/book/456511/বাক্সের-বাইরে"
+        "https://www.rokomari.com/book/456511/বাক্সের-বাইরে",
+        "https://www.rokomari.com/book/456511"
       ]
     },
     {
@@ -323,7 +343,8 @@
       "nameEn": "Jannater Susongbad Prapto Sahabider Jibon Kotha",
       "slug": "jannater-susongbad-prapto-sahabider-jibon-kotha",
       "mrp": 350,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 70,
       "quantity": 20,
       "pages": 232,
       "edition": "1st Published, 2025",
@@ -347,7 +368,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2024/12/NARI-SAHABIDER-JIBONI.png",
       "sources": [
         "https://www.wafilife.com/%e0%a6%9c%e0%a6%be%e0%a6%a8%e0%a7%8d%e0%a6%a8%e0%a6%be%e0%a6%a4%e0%a7%87%e0%a6%b0-%e0%a6%b8%e0%a7%81%e0%a6%b8%e0%a6%82%e0%a6%ac%e0%a6%be%e0%a6%a6%e0%a6%aa%e0%a7%8d%e0%a6%b0%e0%a6%be%e0%a6%aa%e0%a7%8d/pd/60716",
-        "https://www.rokomari.com/book/445710/জান্নাতের-সুসংবাদপ্রাপ্ত-নারী-সাহাবিদের-জীবনকথা"
+        "https://www.rokomari.com/book/445710/জান্নাতের-সুসংবাদপ্রাপ্ত-নারী-সাহাবিদের-জীবনকথা",
+        "https://www.rokomari.com/book/445710"
       ]
     },
     {
@@ -355,7 +377,8 @@
       "nameEn": "Karbalar Prokrito Itihas",
       "slug": "karbalar-prokrito-itihas",
       "mrp": 180,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 36,
       "quantity": 20,
       "pages": 112,
       "edition": "1st Published, 2025",
@@ -379,7 +402,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2024/12/KARBALAR-PROKRITO-ITIHAS.png",
       "sources": [
         "https://www.wafilife.com/karbalar-prokrito-itihas/pd/60717",
-        "https://www.rokomari.com/book/445711/কারবালার-প্রকৃত-ইতিহাস"
+        "https://www.rokomari.com/book/445711/কারবালার-প্রকৃত-ইতিহাস",
+        "https://www.rokomari.com/book/445711"
       ]
     },
     {
@@ -387,7 +411,8 @@
       "nameEn": "Islame Uttoradhikar Ain O Somajer Osongoti",
       "slug": "islame-uttoradhikar-ain-o-somajer-osongoti",
       "mrp": 220,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 44,
       "quantity": 20,
       "pages": 144,
       "edition": "1st Published, 2025",
@@ -409,7 +434,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2024/12/ISLAME-UTTORADHIKAR-AIN.jpg",
       "sources": [
         "https://www.wafilife.com/islame-uttoradhikar-ain-o-somajer-osongoti/pd/60718",
-        "https://www.rokomari.com/book/445712/ইসলামে-উত্তরাধিকার-আইন-ও-সমাজের-অসংগতি"
+        "https://www.rokomari.com/book/445712/ইসলামে-উত্তরাধিকার-আইন-ও-সমাজের-অসংগতি",
+        "https://www.rokomari.com/book/445712"
       ]
     },
     {
@@ -417,7 +443,8 @@
       "nameEn": "Sufiyan As Sawri Rahimahullar Jibon O Kormo",
       "slug": "sufiyan-as-sawri-rahimahullar-jibon-o-kormo",
       "mrp": 230,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 46,
       "quantity": 20,
       "pages": 152,
       "edition": "1st Published, 2025",
@@ -439,7 +466,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2024/12/SUFIAN-AS-SAWRI.png",
       "sources": [
         "https://www.wafilife.com/sufiyan-as-sawri-rahimahullar-jibon-o-kormo/pd/60719",
-        "https://www.rokomari.com/book/445716/সুফিয়ান-আস-সাওরি-রাহিমাহুল্লাহর-জীবন-ও-কর্ম"
+        "https://www.rokomari.com/book/445716/সুফিয়ান-আস-সাওরি-রাহিমাহুল্লাহর-জীবন-ও-কর্ম",
+        "https://www.rokomari.com/book/445716"
       ]
     },
     {
@@ -447,7 +475,8 @@
       "nameEn": "Mayeder Parenting",
       "slug": "mayeder-parenting",
       "mrp": 280,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 56,
       "quantity": 20,
       "pages": 176,
       "edition": "1st Published, 2024",
@@ -468,7 +497,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2024/07/MAYEDER-PARENTING.jpg",
       "sources": [
         "https://www.wafilife.com/mayeder-parenting/pd/56385",
-        "https://www.rokomari.com/book/423518/মায়েদের-প্যারেন্টিং"
+        "https://www.rokomari.com/book/423518/মায়েদের-প্যারেন্টিং",
+        "https://www.rokomari.com/book/423518"
       ]
     },
     {
@@ -476,7 +506,8 @@
       "nameEn": "Nobijir Shesh Dingulo",
       "slug": "nobijir-shesh-dingulo",
       "mrp": 150,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 30,
       "quantity": 20,
       "pages": 80,
       "edition": "1st Published, 2024",
@@ -497,7 +528,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2024/07/NOBIJIR-SHESH-DINGULO.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%a8%e0%a6%ac%e0%a6%bf%e0%a6%9c%e0%a6%bf%e0%a6%b0-%ef%b7%ba-%e0%a6%b6%e0%a7%87%e0%a6%b7-%e0%a6%a6%e0%a6%bf%e0%a6%a8%e0%a6%97%e0%a7%81%e0%a6%b2%e0%a7%8b/pd/56386",
-        "https://www.rokomari.com/book/423509/নবিজির-শেষ-দিনগুলো"
+        "https://www.rokomari.com/book/423509/নবিজির-শেষ-দিনগুলো",
+        "https://www.rokomari.com/book/423509"
       ]
     },
     {
@@ -505,7 +537,8 @@
       "nameEn": "Sahabider Ononno Jibon",
       "slug": "sahabider-ononno-jibon",
       "mrp": 665,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 133,
       "quantity": 20,
       "pages": 456,
       "edition": "1st Published, 2024",
@@ -526,7 +559,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2024/07/SAHABIDER-ONONNO-JIBON.png",
       "sources": [
         "https://www.wafilife.com/%e0%a6%b8%e0%a6%be%e0%a6%b9%e0%a6%be%e0%a6%ac%e0%a6%bf%e0%a6%a6%e0%a7%87%e0%a6%b0-%e0%a6%85%e0%a6%a8%e0%a6%a8%e0%a7%8d%e0%a6%af-%e0%a6%9c%e0%a7%80%e0%a6%ac%e0%a6%a8/pd/56387",
-        "https://www.rokomari.com/book/423519/সাহাবিদের-অনন্য-জীবন"
+        "https://www.rokomari.com/book/423519/সাহাবিদের-অনন্য-জীবন",
+        "https://www.rokomari.com/book/423519"
       ]
     },
     {
@@ -534,7 +568,8 @@
       "nameEn": "Shaikhul Islam Ibnu Taimiya Rh: Jibon O Kormo",
       "slug": "shaikhul-islam-ibnu-taimiya-rh-jibon-o-kormo",
       "mrp": 245,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 49,
       "quantity": 20,
       "pages": 152,
       "edition": "1st Published, 2024",
@@ -555,7 +590,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2024/07/LIFE-OF-IBNU-TAIMIYAH.jpg",
       "sources": [
         "https://www.wafilife.com/shaikhul-islam-ibnu-taimiya-rh:-jibon-o-kormo/pd/56384",
-        "https://www.rokomari.com/book/423517/শাইখুল-ইসলাম-ইবনু-তাইমিয়া-রাহিমাহুল্লাহর-জীবন-ও-কর্ম"
+        "https://www.rokomari.com/book/423517/শাইখুল-ইসলাম-ইবনু-তাইমিয়া-রাহিমাহুল্লাহর-জীবন-ও-কর্ম",
+        "https://www.rokomari.com/book/423517"
       ]
     },
     {
@@ -563,7 +599,8 @@
       "nameEn": "Fotoyar Lekhar Kowshol",
       "slug": "fotoyar-lekhar-kowshol",
       "mrp": 60,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 12,
       "quantity": 20,
       "pages": 40,
       "edition": "1st Published, December 2023",
@@ -585,7 +622,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/12/FATWA-LEKHAR-KOLAKOUSHOL.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%ab%e0%a6%a4%e0%a7%8b%e0%a6%af%e0%a6%bc%e0%a6%be-%e0%a6%b2%e0%a7%87%e0%a6%96%e0%a6%be%e0%a6%b0-%e0%a6%95%e0%a6%b2%e0%a6%be%e0%a6%95%e0%a7%8c%e0%a6%b6%e0%a6%b2/pd/29386",
-        "https://www.rokomari.com/book/363174/ফতোয়া-লেখার-কলাকৌশল"
+        "https://www.rokomari.com/book/363174/ফতোয়া-লেখার-কলাকৌশল",
+        "https://www.rokomari.com/book/363174"
       ]
     },
     {
@@ -593,7 +631,8 @@
       "nameEn": "Enjoy Your Life",
       "slug": "enjoy-your-life",
       "mrp": 700,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 140,
       "quantity": 20,
       "pages": 560,
       "edition": "1st Published, December 2023",
@@ -617,7 +656,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/12/Enjoy-Your-Life.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%8f%e0%a6%a8%e0%a6%9c%e0%a6%af%e0%a6%bc-%e0%a6%87%e0%a6%af%e0%a6%bc%e0%a7%8b%e0%a6%b0-%e0%a6%b2%e0%a6%be%e0%a6%87%e0%a6%ab/pd/29390",
-        "https://www.rokomari.com/book/363169/এনজয়-ইয়োর-লাইফ"
+        "https://www.rokomari.com/book/363169/এনজয়-ইয়োর-লাইফ",
+        "https://www.rokomari.com/book/363169"
       ]
     },
     {
@@ -625,7 +665,8 @@
       "nameEn": "Kitabul Bayu",
       "slug": "kitabul-bayu",
       "mrp": 586,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 117,
       "quantity": 20,
       "pages": 480,
       "edition": "1st Published, December 2023",
@@ -646,7 +687,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/12/KITABUL-BUYU.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%95%e0%a6%bf%e0%a6%a4%e0%a6%be%e0%a6%ac%e0%a7%81%e0%a6%b2-%e0%a6%ac%e0%a7%81%e0%a6%af%e0%a6%bc%e0%a7%81/pd/29452",
-        "https://www.rokomari.com/book/363421/কিতাবুল-বুয়ু"
+        "https://www.rokomari.com/book/363421/কিতাবুল-বুয়ু",
+        "https://www.rokomari.com/book/363421"
       ]
     },
     {
@@ -654,7 +696,8 @@
       "nameEn": "Jinjatir Bismoykor Jogod",
       "slug": "jinjatir-bismoykor-jogod",
       "mrp": 300,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 60,
       "quantity": 20,
       "pages": 200,
       "edition": "1st Published, December 2023",
@@ -675,7 +718,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/12/Jinnjatir-Bissoykor-Jogot.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%9c%e0%a6%bf%e0%a6%a8%e0%a6%9c%e0%a6%be%e0%a6%a4%e0%a6%bf%e0%a6%b0-%e0%a6%ac%e0%a6%bf%e0%a6%b8%e0%a7%8d%e0%a6%ae%e0%a6%af%e0%a6%bc%e0%a6%95%e0%a6%b0-%e0%a6%9c%e0%a6%97%e0%a7%8e/pd/29449",
-        "https://www.rokomari.com/book/363426/জিনজাতির-বিস্ময়কর-জগৎ"
+        "https://www.rokomari.com/book/363426/জিনজাতির-বিস্ময়কর-জগৎ",
+        "https://www.rokomari.com/book/363426"
       ]
     },
     {
@@ -683,7 +727,8 @@
       "nameEn": "Golpo Noi Akmotho Alo",
       "slug": "golpo-noi-akmotho-alo",
       "mrp": 285,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 57,
       "quantity": 20,
       "pages": 200,
       "edition": "1st Published, December 2023",
@@ -707,7 +752,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/12/GOLPO-NOY-EKMUTHO-ALO.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%97%e0%a6%b2%e0%a7%8d%e0%a6%aa-%e0%a6%a8%e0%a6%af%e0%a6%bc-%e0%a6%8f%e0%a6%95%e0%a6%ae%e0%a7%81%e0%a6%a0%e0%a7%8b-%e0%a6%86%e0%a6%b2%e0%a7%8b/pd/29451",
-        "https://www.rokomari.com/book/363422/গল্প-নয়-একমুঠো-আলো"
+        "https://www.rokomari.com/book/363422/গল্প-নয়-একমুঠো-আলো",
+        "https://www.rokomari.com/book/363422"
       ]
     },
     {
@@ -715,7 +761,8 @@
       "nameEn": "Jin Jadu O Bodnojor Cikitsa Rokaiya",
       "slug": "jin-jadu-o-bodnojor-cikitsa-rokaiya",
       "mrp": 430,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 86,
       "quantity": 20,
       "pages": 296,
       "edition": "1st Published, December 2023",
@@ -739,7 +786,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/12/JINN-JADU-O-BODNOJOR.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%9c%e0%a6%bf%e0%a6%a8-%e0%a6%9c%e0%a6%be%e0%a6%a6%e0%a7%81-%e0%a6%93-%e0%a6%ac%e0%a6%a6%e0%a6%a8%e0%a6%9c%e0%a6%b0%e0%a7%87%e0%a6%b0-%e0%a6%9a%e0%a6%bf%e0%a6%95%e0%a6%bf%e0%a7%8e%e0%a6%b8/pd/29454",
-        "https://www.rokomari.com/book/363419/জিন-জাদু-ও-বদনজরের-চিকিৎসা-রুকইয়াহ"
+        "https://www.rokomari.com/book/363419/জিন-জাদু-ও-বদনজরের-চিকিৎসা-রুকইয়াহ",
+        "https://www.rokomari.com/book/363419"
       ]
     },
     {
@@ -747,7 +795,8 @@
       "nameEn": "Ma Ma Ma And Baba",
       "slug": "ma-ma-ma-and-baba",
       "mrp": 258,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 52,
       "quantity": 20,
       "pages": 168,
       "edition": "1st Published, December 2023",
@@ -769,7 +818,7 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/12/MA-MA-MA-EBONG-BABASECOND-PART.png",
       "sources": [
         "https://www.wafilife.com/ma-ma-ma-and-baba/pd/29383",
-        "https://www.rokomari.com/book/170978/মা-মা-মা-এবং-বাবা"
+        "https://www.rokomari.com/book/363165"
       ]
     },
     {
@@ -777,7 +826,8 @@
       "nameEn": "Fereshtader Jogot",
       "slug": "fereshtader-jogot",
       "mrp": 220,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 44,
       "quantity": 20,
       "pages": 144,
       "edition": "1st Published, December 2023",
@@ -805,7 +855,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/12/FERESHTADER-JOGOT.png",
       "sources": [
         "https://www.wafilife.com/fereshtader-jogot/pd/29389",
-        "https://www.rokomari.com/book/363163/ফেরেশতাদের-জগৎ"
+        "https://www.rokomari.com/book/363163/ফেরেশতাদের-জগৎ",
+        "https://www.rokomari.com/book/363163"
       ]
     },
     {
@@ -813,7 +864,8 @@
       "nameEn": "Gunah Maper Upaiy",
       "slug": "gunah-maper-upaiy",
       "mrp": 335,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 67,
       "quantity": 20,
       "pages": 224,
       "edition": "1st Published, December 2023",
@@ -834,7 +886,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/12/GUNAH-MAFER-UPAY.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%97%e0%a7%81%e0%a6%a8%e0%a6%be%e0%a6%b9-%e0%a6%ae%e0%a6%be%e0%a6%ab%e0%a7%87%e0%a6%b0-%e0%a6%89%e0%a6%aa%e0%a6%be%e0%a6%af%e0%a6%bc/pd/29450",
-        "https://www.rokomari.com/book/363423/গুনাহ-মাফের-উপায়"
+        "https://www.rokomari.com/book/363423/গুনাহ-মাফের-উপায়",
+        "https://www.rokomari.com/book/363423"
       ]
     },
     {
@@ -842,7 +895,8 @@
       "nameEn": "Sirate Ibne Hisham",
       "slug": "sirate-ibne-hisham",
       "mrp": 436,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 87,
       "quantity": 20,
       "pages": 304,
       "edition": "1st Published, December 2023",
@@ -866,7 +920,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/12/SIRAT-IBN-HISAM.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%b8%e0%a6%bf%e0%a6%b0%e0%a6%be%e0%a6%a4%e0%a7%87-%e0%a6%87%e0%a6%ac%e0%a6%a8%e0%a7%87-%e0%a6%b9%e0%a6%bf%e0%a6%b6%e0%a6%be%e0%a6%ae/pd/29453",
-        "https://www.rokomari.com/book/363420/সিরাতে-ইবনে-হিশাম"
+        "https://www.rokomari.com/book/363420/সিরাতে-ইবনে-হিশাম",
+        "https://www.rokomari.com/book/363420"
       ]
     },
     {
@@ -874,7 +929,8 @@
       "nameEn": "Musa Alaihis Salamer Gotonabhul Jibon And Amader Jonno Rekhe Jaoya Shikkha",
       "slug": "musa-alaihis-salamer-gotonabhul-jibon-and-amader-jonno-rekhe-jaoya-shikkha",
       "mrp": 210,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 42,
       "quantity": 20,
       "pages": 136,
       "edition": "1st Published, December 2023",
@@ -899,7 +955,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/12/MUSA-AS-ER-GHOTONABOHUL-JIBON.png",
       "sources": [
         "https://www.wafilife.com/%e0%a6%ae%e0%a7%81%e0%a6%b8%e0%a6%be-%e0%a6%86%e0%a6%b2%e0%a6%be%e0%a6%87%e0%a6%b9%e0%a6%bf%e0%a6%b8-%e0%a6%b8%e0%a6%be%e0%a6%b2%e0%a6%be%e0%a6%ae%e0%a7%87%e0%a6%b0-%e0%a6%98%e0%a6%9f%e0%a6%a8/pd/29387",
-        "https://www.rokomari.com/book/363167/মুসা-আলাইহিস-সালামের-ঘটনাবহুল-জীবন-এবং-আমাদের-জন্য-রেখে-যাওয়া-শিক্ষা"
+        "https://www.rokomari.com/book/363167/মুসা-আলাইহিস-সালামের-ঘটনাবহুল-জীবন-এবং-আমাদের-জন্য-রেখে-যাওয়া-শিক্ষা",
+        "https://www.rokomari.com/book/363167"
       ]
     },
     {
@@ -907,7 +964,8 @@
       "nameEn": "Kiyamoter Alamot O Shesh Zuger Voyaboho Fitna",
       "slug": "kiyamoter-alamot-o-shesh-zuger-voyaboho-fitna",
       "mrp": 960,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 192,
       "quantity": 20,
       "pages": 696,
       "edition": "1st Published, 2023",
@@ -928,7 +986,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/03/কিয়ামতের-আলামত.jpg",
       "sources": [
         "https://www.wafilife.com/kiyamoter-alamot-o-shesh-zuger-voyaboho-fitna/pd/27186",
-        "https://www.rokomari.com/book/346475/কিয়ামতের-আলামত-ও-শেষ-যুগের-ভয়াবহ-ফিতনা"
+        "https://www.rokomari.com/book/346475/কিয়ামতের-আলামত-ও-শেষ-যুগের-ভয়াবহ-ফিতনা",
+        "https://www.rokomari.com/book/346475"
       ]
     },
     {
@@ -936,7 +995,8 @@
       "nameEn": "Vrantir Somadhi",
       "slug": "vrantir-somadhi",
       "mrp": 268,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 54,
       "quantity": 20,
       "pages": 168,
       "edition": "1st Published, 2023",
@@ -957,7 +1017,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/03/ভ্রান্তির-সমাধি.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%ad%e0%a7%8d%e0%a6%b0%e0%a6%be%e0%a6%a8%e0%a7%8d%e0%a6%a4%e0%a6%bf%e0%a6%b0-%e0%a6%b8%e0%a6%ae%e0%a6%be%e0%a6%a7%e0%a6%bf/pd/27187",
-        "https://www.rokomari.com/book/346706/ভ্রান্তির-সমাধি"
+        "https://www.rokomari.com/book/346706/ভ্রান্তির-সমাধি",
+        "https://www.rokomari.com/book/346706"
       ]
     },
     {
@@ -965,7 +1026,8 @@
       "nameEn": "Attoshuddhir Beboharik Path",
       "slug": "attoshuddhir-beboharik-path",
       "mrp": 190,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 38,
       "quantity": 20,
       "pages": 120,
       "edition": "1st Published, 2023",
@@ -988,7 +1050,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/03/আত্মশুদ্ধির-ব্যাবহারিক-পাঠ.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%86%e0%a6%a4%e0%a7%8d%e0%a6%ae%e0%a6%b6%e0%a7%81%e0%a6%a6%e0%a7%8d%e0%a6%a7%e0%a6%bf%e0%a6%b0-%e0%a6%ac%e0%a7%8d%e0%a6%af%e0%a6%be%e0%a6%ac%e0%a6%b9%e0%a6%be%e0%a6%b0%e0%a6%bf%e0%a6%95-%e0%a6%aa/pd/27188",
-        "https://www.rokomari.com/book/346472/আত্মশুদ্ধির-ব্যাবহারিক-পাঠ"
+        "https://www.rokomari.com/book/346472/আত্মশুদ্ধির-ব্যাবহারিক-পাঠ",
+        "https://www.rokomari.com/book/346472"
       ]
     },
     {
@@ -996,7 +1059,8 @@
       "nameEn": "Jiboner Sera Ramadan",
       "slug": "jiboner-sera-ramadan",
       "mrp": 286,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 57,
       "quantity": 20,
       "pages": null,
       "edition": "1st Edition, 2023",
@@ -1020,7 +1084,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/02/Jiboner-Sera-Ramadan-1.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%9c%e0%a7%80%e0%a6%ac%e0%a6%a8%e0%a7%87%e0%a6%b0-%e0%a6%b8%e0%a7%87%e0%a6%b0%e0%a6%be-%e0%a6%b0%e0%a6%be%e0%a6%ae%e0%a6%be%e0%a6%a6%e0%a6%be%e0%a6%a8/pd/24000",
-        "https://www.rokomari.com/book/286599/জীবনের-সেরা-রামাদান"
+        "https://www.rokomari.com/book/286599/জীবনের-সেরা-রামাদান",
+        "https://www.rokomari.com/book/286599"
       ]
     },
     {
@@ -1028,7 +1093,8 @@
       "nameEn": "Jannatider Amol",
       "slug": "jannatider-amol",
       "mrp": 470,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 94,
       "quantity": 20,
       "pages": 328,
       "edition": "1st Edition, 2023",
@@ -1052,7 +1118,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/02/Jannatider-Amol-1.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%9c%e0%a6%be%e0%a6%a8%e0%a7%8d%e0%a6%a8%e0%a6%be%e0%a6%a4%e0%a6%bf%e0%a6%a6%e0%a7%87%e0%a6%b0-%e0%a6%86%e0%a6%ae%e0%a6%b2/pd/23999",
-        "https://www.rokomari.com/book/286598/জান্নাতিদের-আমল"
+        "https://www.rokomari.com/book/286598/জান্নাতিদের-আমল",
+        "https://www.rokomari.com/book/286598"
       ]
     },
     {
@@ -1060,7 +1127,8 @@
       "nameEn": "Allahor Prio Bandader Amol",
       "slug": "allahor-prio-bandader-amol",
       "mrp": 640,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 128,
       "quantity": 20,
       "pages": 448,
       "edition": "1st Edition, 2023",
@@ -1084,7 +1152,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/02/Allahor-Priyo-Bandader-Amol-1.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%86%e0%a6%b2%e0%a7%8d%e0%a6%b2%e0%a6%be%e0%a6%b9%e0%a6%b0-%e0%a6%aa%e0%a7%8d%e0%a6%b0%e0%a6%bf%e0%a6%af%e0%a6%bc-%e0%a6%ac%e0%a6%be%e0%a6%a8%e0%a7%8d%e0%a6%a6%e0%a6%be%e0%a6%a6%e0%a7%87%e0%a6%b0/pd/23998",
-        "https://www.rokomari.com/book/286597/আল্লাহর-প্রিয়-বান্দাদের-আমল"
+        "https://www.rokomari.com/book/286597/আল্লাহর-প্রিয়-বান্দাদের-আমল",
+        "https://www.rokomari.com/book/286597"
       ]
     },
     {
@@ -1092,7 +1161,8 @@
       "nameEn": "Halal Haramer Bidhan",
       "slug": "halal-haramer-bidhan",
       "mrp": 890,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 178,
       "quantity": 20,
       "pages": 632,
       "edition": "1st Published, 2022",
@@ -1116,7 +1186,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2022/11/Halal-Haramer-Bidhan.png",
       "sources": [
         "https://www.wafilife.com/%e0%a6%b9%e0%a6%be%e0%a6%b2%e0%a6%be%e0%a6%b2-%e0%a6%b9%e0%a6%be%e0%a6%b0%e0%a6%be%e0%a6%ae%e0%a7%87%e0%a6%b0-%e0%a6%ac%e0%a6%bf%e0%a6%a7%e0%a6%be%e0%a6%a8/pd/23046",
-        "https://www.rokomari.com/book/274274/হালাল-হারামের-বিধান"
+        "https://www.rokomari.com/book/274274/হালাল-হারামের-বিধান",
+        "https://www.rokomari.com/book/274274"
       ]
     },
     {
@@ -1124,7 +1195,8 @@
       "nameEn": "Jannater Shoundorjo O Jahannamer Bhoyabohota",
       "slug": "jannater-shoundorjo-o-jahannamer-bhoyabohota",
       "mrp": 515,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 103,
       "quantity": 20,
       "pages": 331,
       "edition": "New Edition, 2024",
@@ -1145,7 +1217,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2022/09/234728-IMG.jpeg",
       "sources": [
         "https://www.wafilife.com/jannater-shoundorjo-o-jahannamer-bhoyabohota/pd/20301",
-        "https://www.rokomari.com/book/429416/জান্নাতের-সৌন্দর্য-ও-জাহান্নামের-ভয়াবহতা"
+        "https://www.rokomari.com/book/429416/জান্নাতের-সৌন্দর্য-ও-জাহান্নামের-ভয়াবহতা",
+        "https://www.rokomari.com/book/429416"
       ]
     },
     {
@@ -1153,7 +1226,8 @@
       "nameEn": "Umar Ra Er Somorthone Obotinro Ayatsomuher Prekkhapot",
       "slug": "umar-ra-er-somorthone-obotinro-ayatsomuher-prekkhapot",
       "mrp": 225,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 45,
       "quantity": 20,
       "pages": 144,
       "edition": "1st Published, 2022",
@@ -1175,7 +1249,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2022/09/Umar-RA-Front-Cover.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%89%e0%a6%ae%e0%a6%be%e0%a6%b0-%e0%a6%b0%e0%a6%be%e0%a6%af%e0%a6%bf%e0%a7%9f%e0%a6%be%e0%a6%b2%e0%a7%8d%e0%a6%b2%e0%a6%be%e0%a6%b9%e0%a7%81-%e0%a6%86%e0%a6%b9%e0%a6%a8%e0%a7%81%e0%a6%b0/pd/20302",
-        "https://www.rokomari.com/book/262196/উমারের-সমর্থনে-অবতীর্ণ-আয়াতসমূহের-প্রেক্ষাপট"
+        "https://www.rokomari.com/book/262196/উমারের-সমর্থনে-অবতীর্ণ-আয়াতসমূহের-প্রেক্ষাপট",
+        "https://www.rokomari.com/book/262196"
       ]
     },
     {
@@ -1183,7 +1258,8 @@
       "nameEn": "Baitullah Prostuti Bidhan Sofornama",
       "slug": "baitullah-prostuti-bidhan-sofornama",
       "mrp": 400,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 80,
       "quantity": 20,
       "pages": 264,
       "edition": "1st Published, 2022",
@@ -1204,7 +1280,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/03/Baitullah.png",
       "sources": [
         "https://www.wafilife.com/%e0%a6%ac%e0%a6%be%e0%a6%87%e0%a6%a4%e0%a7%81%e0%a6%b2%e0%a7%8d%e0%a6%b2%e0%a6%be%e0%a6%b9-%e0%a6%aa%e0%a7%8d%e0%a6%b0%e0%a6%b8%e0%a7%8d%e0%a6%a4%e0%a7%81%e0%a6%a4%e0%a6%bf-%e0%a6%ac%e0%a6%bf/pd/16960",
-        "https://www.rokomari.com/book/249767/বাইতুল্লাহ-প্রস্তুতি-বিধান-ও-সফরনামা"
+        "https://www.rokomari.com/book/249767/বাইতুল্লাহ-প্রস্তুতি-বিধান-ও-সফরনামা",
+        "https://www.rokomari.com/book/249767"
       ]
     },
     {
@@ -1212,7 +1289,8 @@
       "nameEn": "Hadis Songkoloner Itihas",
       "slug": "hadis-songkoloner-itihas",
       "mrp": 360,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 72,
       "quantity": 20,
       "pages": 216,
       "edition": "1st Published, 2022",
@@ -1235,7 +1313,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/03/Hadis-Sonkolon.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%b9%e0%a6%be%e0%a6%a6%e0%a6%bf%e0%a6%b8-%e0%a6%b8%e0%a6%82%e0%a6%95%e0%a6%b2%e0%a6%a8%e0%a7%87%e0%a6%b0-%e0%a6%87%e0%a6%a4%e0%a6%bf%e0%a6%b9%e0%a6%be%e0%a6%b8-2/pd/16958",
-        "https://www.rokomari.com/book/249764/হাদিস-সংকলনের-ইতিহাস"
+        "https://www.rokomari.com/book/249764/হাদিস-সংকলনের-ইতিহাস",
+        "https://www.rokomari.com/book/249764"
       ]
     },
     {
@@ -1243,7 +1322,8 @@
       "nameEn": "Seshratir Golpogulo",
       "slug": "seshratir-golpogulo",
       "mrp": 245,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 49,
       "quantity": 20,
       "pages": 152,
       "edition": "1st Published, 2022",
@@ -1264,7 +1344,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/03/SHESH-RATRIR-GOLPOGULO.jpg",
       "sources": [
         "https://www.wafilife.com/seshratir-golpogulo/pd/16963",
-        "https://www.rokomari.com/book/249769/শেষরাত্রির-গল্পগুলো"
+        "https://www.rokomari.com/book/249769/শেষরাত্রির-গল্পগুলো",
+        "https://www.rokomari.com/book/249769"
       ]
     },
     {
@@ -1272,7 +1353,8 @@
       "nameEn": "Hridoy Jurano Salat",
       "slug": "hridoy-jurano-salat",
       "mrp": 110,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 22,
       "quantity": 20,
       "pages": 64,
       "edition": "1st Published, 2022",
@@ -1295,7 +1377,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/03/Hridoy-Jurano-Salat.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%b9%e0%a7%83%e0%a6%a6%e0%a7%9f%e0%a6%9c%e0%a7%81%e0%a7%9c%e0%a6%be%e0%a6%a8%e0%a7%8b-%e0%a6%b8%e0%a6%be%e0%a6%b2%e0%a6%be%e0%a6%a4/pd/16961",
-        "https://www.rokomari.com/book/249768/হৃদয়-জুড়ানো-সালাত"
+        "https://www.rokomari.com/book/249768/হৃদয়-জুড়ানো-সালাত",
+        "https://www.rokomari.com/book/249768"
       ]
     },
     {
@@ -1303,7 +1386,8 @@
       "nameEn": "Arbi Ros",
       "slug": "arbi-ros",
       "mrp": 255,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 51,
       "quantity": 20,
       "pages": 160,
       "edition": "1st Published, 2022",
@@ -1324,7 +1408,7 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/03/AROBI-ROSH-02.png",
       "sources": [
         "https://www.wafilife.com/arbi-ros/pd/16957",
-        "https://www.rokomari.com/book/210914/আরবি-রস"
+        "https://www.rokomari.com/book/249765"
       ]
     },
     {
@@ -1332,7 +1416,8 @@
       "nameEn": "Jobab 2",
       "slug": "jobab-2",
       "mrp": 295,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 59,
       "quantity": 20,
       "pages": 176,
       "edition": "1st Published, 2022",
@@ -1362,7 +1447,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2022/02/274067717_4447188208719774_5400686953509902425_n-e1644910120266.png",
       "sources": [
         "https://www.wafilife.com/%e0%a6%9c%e0%a6%ac%e0%a6%be%e0%a6%ac-%e0%a7%a8/pd/14108",
-        "https://www.rokomari.com/book/226872/জবাব-২"
+        "https://www.rokomari.com/book/226872/জবাব-২",
+        "https://www.rokomari.com/book/226872"
       ]
     },
     {
@@ -1370,7 +1456,8 @@
       "nameEn": "Prottaborton 2",
       "slug": "prottaborton-2",
       "mrp": 250,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 50,
       "quantity": 20,
       "pages": 152,
       "edition": "1st Published, 2022",
@@ -1396,7 +1483,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2022/02/Prottaborton-2.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%aa%e0%a7%8d%e0%a6%b0%e0%a6%a4%e0%a7%8d%e0%a6%af%e0%a6%be%e0%a6%ac%e0%a6%b0%e0%a7%8d%e0%a6%a4%e0%a6%a8-%e0%a7%a8/pd/14109",
-        "https://www.rokomari.com/book/226871/প্রত্যাবর্তন-২"
+        "https://www.rokomari.com/book/226871/প্রত্যাবর্তন-২",
+        "https://www.rokomari.com/book/226871"
       ]
     },
     {
@@ -1404,7 +1492,8 @@
       "nameEn": "Is Music Halal?",
       "slug": "is-music-halal",
       "mrp": 350,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 70,
       "quantity": 20,
       "pages": 232,
       "edition": "1st Published, 2022",
@@ -1426,7 +1515,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2022/02/IS-MUSIC-HALAL.png",
       "sources": [
         "https://www.wafilife.com/%e0%a6%87%e0%a6%9c-%e0%a6%ae%e0%a6%bf%e0%a6%89%e0%a6%9c%e0%a6%bf%e0%a6%95-%e0%a6%b9%e0%a6%be%e0%a6%b2%e0%a6%be%e0%a6%b2/pd/13997",
-        "https://www.rokomari.com/book/225608/ইজ-মিউজিক-হালাল"
+        "https://www.rokomari.com/book/225608/ইজ-মিউজিক-হালাল",
+        "https://www.rokomari.com/book/225608"
       ]
     },
     {
@@ -1434,7 +1524,8 @@
       "nameEn": "Sirajam Munira",
       "slug": "sirajam-munira",
       "mrp": 280,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 56,
       "quantity": 20,
       "pages": 168,
       "edition": "1st Published, 2022",
@@ -1456,7 +1547,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2022/02/SIRAJUM-MUNIR-1.png",
       "sources": [
         "https://www.wafilife.com/%e0%a6%b8%e0%a6%bf%e0%a6%b0%e0%a6%be%e0%a6%9c%e0%a7%81%e0%a6%ae-%e0%a6%ae%e0%a7%81%e0%a6%a8%e0%a6%bf%e0%a6%b0/pd/13996",
-        "https://www.rokomari.com/book/225606/সিরাজাম-মুনিরা"
+        "https://www.rokomari.com/book/225606/সিরাজাম-মুনিরা",
+        "https://www.rokomari.com/book/225606"
       ]
     },
     {
@@ -1464,7 +1556,8 @@
       "nameEn": "Bishoyvittik Bishuddha Hadis Songkolon",
       "slug": "bishoyvittik-bishuddha-hadis-songkolon",
       "mrp": 515,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 103,
       "quantity": 20,
       "pages": 360,
       "edition": "1st Published, 2022",
@@ -1487,7 +1580,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2022/01/Bishoybhittik-Hadis-Songkolon.png",
       "sources": [
         "https://www.wafilife.com/bishoyvittik-bishuddha-hadis-songkolon/pd/13659",
-        "https://www.rokomari.com/book/223902/বিষয়ভিত্তিক-বিশুদ্ধ-হাদিস-সংকলন"
+        "https://www.rokomari.com/book/223902/বিষয়ভিত্তিক-বিশুদ্ধ-হাদিস-সংকলন",
+        "https://www.rokomari.com/book/223902"
       ]
     },
     {
@@ -1495,7 +1589,8 @@
       "nameEn": "Sukhi Poribar Nirmaner Ruprekha",
       "slug": "sukhi-poribar-nirmaner-ruprekha",
       "mrp": 175,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 35,
       "quantity": 20,
       "pages": 112,
       "edition": "1st Published, 2021",
@@ -1519,7 +1614,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/11/01.-SUKHI-PORIBAR-NIRMANER-RUPOREKHA-e1636001825954.png",
       "sources": [
         "https://www.wafilife.com/%e0%a6%b8%e0%a7%81%e0%a6%96%e0%a7%80-%e0%a6%aa%e0%a6%b0%e0%a6%bf%e0%a6%ac%e0%a6%be%e0%a6%b0-%e0%a6%a8%e0%a6%bf%e0%a6%b0%e0%a7%8d%e0%a6%ae%e0%a6%be%e0%a6%a3%e0%a7%87%e0%a6%b0-%e0%a6%b0%e0%a7%82/pd/12564",
-        "https://www.rokomari.com/book/221054/সুখী-পরিবার-নির্মাণের-রূপরেখা"
+        "https://www.rokomari.com/book/221054/সুখী-পরিবার-নির্মাণের-রূপরেখা",
+        "https://www.rokomari.com/book/221054"
       ]
     },
     {
@@ -1527,7 +1623,8 @@
       "nameEn": "Paribarik Somporker Bunon",
       "slug": "paribarik-somporker-bunon",
       "mrp": 130,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 26,
       "quantity": 20,
       "pages": 80,
       "edition": "1st Published, 2021",
@@ -1551,7 +1648,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/11/03.-PARIBARIK-SOMPORKER-BUNON-e1636001862610.png",
       "sources": [
         "https://www.wafilife.com/%e0%a6%aa%e0%a6%be%e0%a6%b0%e0%a6%bf%e0%a6%ac%e0%a6%be%e0%a6%b0%e0%a6%bf%e0%a6%95-%e0%a6%b8%e0%a6%ae%e0%a7%8d%e0%a6%aa%e0%a6%b0%e0%a7%8d%e0%a6%95%e0%a7%87%e0%a6%b0-%e0%a6%ac%e0%a7%81%e0%a6%a8%e0%a6%a8/pd/12571",
-        "https://www.rokomari.com/book/221056/পারিবারিক-সম্পর্কের-বুনন"
+        "https://www.rokomari.com/book/221056/পারিবারিক-সম্পর্কের-বুনন",
+        "https://www.rokomari.com/book/221056"
       ]
     },
     {
@@ -1559,7 +1657,8 @@
       "nameEn": "Sontaner Boyosondikaler Monostotto",
       "slug": "sontaner-boyosondikaler-monostotto",
       "mrp": 165,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 33,
       "quantity": 20,
       "pages": 104,
       "edition": "1st Published, 2021",
@@ -1581,7 +1680,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/11/04.-SONTANER-BOYOSONDHI-KALER-MONOSTOTTO-e1636001840532.png",
       "sources": [
         "https://www.wafilife.com/%e0%a6%b8%e0%a6%a8%e0%a7%8d%e0%a6%a4%e0%a6%be%e0%a6%a8%e0%a7%87%e0%a6%b0-%e0%a6%ac%e0%a7%9f%e0%a6%83%e0%a6%b8%e0%a6%a8%e0%a7%8d%e0%a6%a7%e0%a6%bf%e0%a6%95%e0%a6%be%e0%a6%b2%e0%a7%87%e0%a6%b0-%e0%a6%ae/pd/12565",
-        "https://www.rokomari.com/book/221057/সন্তানের-বয়ঃসন্ধিকালের-মনস্তত্ত্ব"
+        "https://www.rokomari.com/book/221057/সন্তানের-বয়ঃসন্ধিকালের-মনস্তত্ত্ব",
+        "https://www.rokomari.com/book/221057"
       ]
     },
     {
@@ -1589,7 +1689,8 @@
       "nameEn": "Sontan Gorar Karzokori Koushol",
       "slug": "sontan-gorar-karzokori-koushol",
       "mrp": 145,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 29,
       "quantity": 20,
       "pages": 88,
       "edition": "Published, 2021",
@@ -1611,7 +1712,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/11/02.-SONTAN-GORAR-KARJOKORI-KOUSHOL-e1636001882128.png",
       "sources": [
         "https://www.wafilife.com/sontan-gorar-karzokori-koushol/pd/12568",
-        "https://www.rokomari.com/book/221055/সন্তান-গড়ার-কার্যকরী-কৌশল"
+        "https://www.rokomari.com/book/221055/সন্তান-গড়ার-কার্যকরী-কৌশল",
+        "https://www.rokomari.com/book/221055"
       ]
     },
     {
@@ -1619,7 +1721,8 @@
       "nameEn": "Shishuder Somossa Amader Koroniyo",
       "slug": "shishuder-somossa-amader-koroniyo",
       "mrp": 175,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 35,
       "quantity": 20,
       "pages": 104,
       "edition": "1st Published, 2021",
@@ -1643,7 +1746,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/11/05.-SHISHUDER-SOMOSSA-AMADER-KORONIO-e1636001872930.png",
       "sources": [
         "https://www.wafilife.com/%e0%a6%b6%e0%a6%bf%e0%a6%b6%e0%a7%81%e0%a6%a6%e0%a7%87%e0%a6%b0-%e0%a6%b8%e0%a6%ae%e0%a6%b8%e0%a7%8d%e0%a6%af%e0%a6%be-%e0%a6%86%e0%a6%ae%e0%a6%be%e0%a6%a6%e0%a7%87%e0%a6%b0-%e0%a6%95%e0%a6%b0/pd/12567",
-        "https://www.rokomari.com/book/221058/শিশুদের-সমস্যা-আমাদের-করণীয়"
+        "https://www.rokomari.com/book/221058/শিশুদের-সমস্যা-আমাদের-করণীয়",
+        "https://www.rokomari.com/book/221058"
       ]
     },
     {
@@ -1651,7 +1755,8 @@
       "nameEn": "Sontanke Boimukhi Korar Koushol",
       "slug": "sontanke-boimukhi-korar-koushol",
       "mrp": 145,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 29,
       "quantity": 20,
       "pages": 88,
       "edition": "1st Published, 2021",
@@ -1675,7 +1780,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/11/06.-SONTANKE-BOIMUKHI-KORAR-KOUSHOL-e1636001851117.png",
       "sources": [
         "https://www.wafilife.com/sontanke-boimukhi-korar-koushol/pd/12576",
-        "https://www.rokomari.com/book/221059/সন্তানকে-বইমুখী-করার-কৌশল"
+        "https://www.rokomari.com/book/221059/সন্তানকে-বইমুখী-করার-কৌশল",
+        "https://www.rokomari.com/book/221059"
       ]
     },
     {
@@ -1683,7 +1789,8 @@
       "nameEn": "Aqidatut Tahabi Sohoj O Shongkhipto Bekkha-Grontho",
       "slug": "aqidatut-tahabi-sohoj-o-shongkhipto-bekkha-grontho",
       "mrp": 245,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 49,
       "quantity": 20,
       "pages": 160,
       "edition": "1st Published, 2021",
@@ -1707,7 +1814,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/09/241896370_3939679639470636_4453878724524764970_n.png",
       "sources": [
         "https://www.wafilife.com/%e0%a6%86%e0%a6%95%e0%a6%bf%e0%a6%a6%e0%a6%be%e0%a6%a4%e0%a7%81%e0%a6%a4-%e0%a6%a4%e0%a6%be%e0%a6%b9%e0%a6%be%e0%a6%ac%e0%a6%bf-%e0%a6%b8%e0%a6%b9%e0%a6%9c-%e0%a6%93-%e0%a6%b8%e0%a6%82%e0%a6%95/pd/11352",
-        "https://www.rokomari.com/book/219202/আকিদাতুত-তাহাবি"
+        "https://www.rokomari.com/book/219202/আকিদাতুত-তাহাবি",
+        "https://www.rokomari.com/book/219202"
       ]
     },
     {
@@ -1715,7 +1823,8 @@
       "nameEn": "Productive Lessons",
       "slug": "productive-lessons",
       "mrp": 152,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 30,
       "quantity": 20,
       "pages": 96,
       "edition": "1st Published, 2021",
@@ -1737,7 +1846,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/09/241867208_3939165589522041_3976430884454648216_n.png",
       "sources": [
         "https://www.wafilife.com/productive-lessons/pd/11349",
-        "https://www.rokomari.com/book/219204/প্রোডাক্টিভিটি-লেসনস"
+        "https://www.rokomari.com/book/219204/প্রোডাক্টিভিটি-লেসনস",
+        "https://www.rokomari.com/book/219204"
       ]
     },
     {
@@ -1745,7 +1855,8 @@
       "nameEn": "Vruner Artonad",
       "slug": "vruner-artonad",
       "mrp": 152,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 30,
       "quantity": 20,
       "pages": 96,
       "edition": "1st Published, 2021",
@@ -1767,7 +1878,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/09/242021244_3940096302762303_3745942669228717899_n.png",
       "sources": [
         "https://www.wafilife.com/%e0%a6%ad%e0%a7%8d%e0%a6%b0%e0%a7%82%e0%a6%a3%e0%a7%87%e0%a6%b0-%e0%a6%86%e0%a6%b0%e0%a7%8d%e0%a6%a4%e0%a6%a8%e0%a6%be%e0%a6%a6/pd/11351",
-        "https://www.rokomari.com/book/219203/ভ্রূণের-আর্তনাদ"
+        "https://www.rokomari.com/book/219203/ভ্রূণের-আর্তনাদ",
+        "https://www.rokomari.com/book/219203"
       ]
     },
     {
@@ -1775,7 +1887,8 @@
       "nameEn": "Sera Hok Ebarer Romadan",
       "slug": "sera-hok-ebarer-romadan",
       "mrp": 260,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 52,
       "quantity": 20,
       "pages": 184,
       "edition": "1st Published, 2021",
@@ -1796,7 +1909,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/03/SERA-HOK-EBARER-RAMADAN.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%b8%e0%a7%87%e0%a6%b0%e0%a6%be-%e0%a6%b9%e0%a7%8b%e0%a6%95-%e0%a6%8f%e0%a6%ac%e0%a6%be%e0%a6%b0%e0%a7%87%e0%a6%b0-%e0%a6%b0%e0%a6%be%e0%a6%ae%e0%a6%be%e0%a6%a6%e0%a6%be%e0%a6%a8/pd/8571",
-        "https://www.rokomari.com/book/212667/সেরা-হোক-এবারের-রামাদান"
+        "https://www.rokomari.com/book/212667/সেরা-হোক-এবারের-রামাদান",
+        "https://www.rokomari.com/book/212667"
       ]
     },
     {
@@ -1804,7 +1918,8 @@
       "nameEn": "Arbi Rosh",
       "slug": "arbi-rosh",
       "mrp": 186,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 37,
       "quantity": 20,
       "pages": 136,
       "edition": "1st Edition",
@@ -1825,7 +1940,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/03/AROBI-ROSH.jpg",
       "sources": [
         "https://www.wafilife.com/arbi-rosh/pd/8314",
-        "https://www.rokomari.com/book/210914/আরবি-রস"
+        "https://www.rokomari.com/book/210914/আরবি-রস",
+        "https://www.rokomari.com/book/210914"
       ]
     },
     {
@@ -1833,7 +1949,8 @@
       "nameEn": "Sura Yusuf Pobitro Ek Manober Golpo",
       "slug": "sura-yusuf-pobitro-ek-manober-golpo",
       "mrp": 186,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 37,
       "quantity": 20,
       "pages": 128,
       "edition": "1st Edition",
@@ -1854,7 +1971,8 @@
       "image": "book-sura-yusuf-pobitro-ek-manober-golpo-9cf3.webp",
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/03/SURAH-YUSUF.jpg",
       "sources": [
-        "https://www.wafilife.com/sura-yusuf-pobitro-ek-manober-golpo/pd/8313"
+        "https://www.wafilife.com/sura-yusuf-pobitro-ek-manober-golpo/pd/8313",
+        "https://www.rokomari.com/book/210917"
       ]
     },
     {
@@ -1862,7 +1980,8 @@
       "nameEn": "Ke Uni",
       "slug": "ke-uni",
       "mrp": 172,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 34,
       "quantity": 20,
       "pages": 128,
       "edition": "1st Edition",
@@ -1885,7 +2004,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/03/KE-UNI.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%95%e0%a7%87-%e0%a6%89%e0%a6%a8%e0%a6%bf-2/pd/8311",
-        "https://www.rokomari.com/book/210916/কে-উনি"
+        "https://www.rokomari.com/book/210916/কে-উনি",
+        "https://www.rokomari.com/book/210916"
       ]
     },
     {
@@ -1893,7 +2013,8 @@
       "nameEn": "Oparete Sorbosukh",
       "slug": "oparete-sorbosukh",
       "mrp": 172,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 34,
       "quantity": 20,
       "pages": 120,
       "edition": "1st Edition",
@@ -1913,7 +2034,8 @@
       "image": "book-oparete-sorbosukh-7064.webp",
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/03/OPARATE-SORBOSUKH.jpg",
       "sources": [
-        "https://www.wafilife.com/ওপারেতে-সর্বসুখ:-জান্নাতের-মনোমুগ্ধকর-বর্ণনা/pd/8312"
+        "https://www.wafilife.com/ওপারেতে-সর্বসুখ:-জান্নাতের-মনোমুগ্ধকর-বর্ণনা/pd/8312",
+        "https://www.rokomari.com/book/210913"
       ]
     },
     {
@@ -1921,7 +2043,8 @@
       "nameEn": "Imam Abu Hanifa Roh",
       "slug": "imam-abu-hanifa-roh",
       "mrp": 255,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 51,
       "quantity": 20,
       "pages": 168,
       "edition": "1st Published, 2020",
@@ -1942,7 +2065,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/02/Imam-Abu-Hanifa.png",
       "sources": [
         "https://www.wafilife.com/%e0%a6%87%e0%a6%ae%e0%a6%be%e0%a6%ae-%e0%a6%86%e0%a6%ac%e0%a7%81-%e0%a6%b9%e0%a6%be%e0%a6%a8%e0%a6%bf%e0%a6%ab%e0%a6%be-%e0%a6%b0%e0%a6%be%e0%a6%b9%e0%a6%bf%e0%a6%ae%e0%a6%be%e0%a6%b9%e0%a7%81/pd/7815",
-        "https://www.rokomari.com/book/202028/ইমাম-আবু-হানিফা-রা-জীবন-ও-কর্ম"
+        "https://www.rokomari.com/book/202028/ইমাম-আবু-হানিফা-রা-জীবন-ও-কর্ম",
+        "https://www.rokomari.com/book/202028"
       ]
     },
     {
@@ -1950,7 +2074,8 @@
       "nameEn": "Imam Malik Roh",
       "slug": "imam-malik-roh",
       "mrp": 243,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 49,
       "quantity": 20,
       "pages": 160,
       "edition": "1st Published, 2020",
@@ -1971,7 +2096,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/02/Imam-Malik.png",
       "sources": [
         "https://www.wafilife.com/%e0%a6%87%e0%a6%ae%e0%a6%be%e0%a6%ae-%e0%a6%ae%e0%a6%be%e0%a6%b2%e0%a6%bf%e0%a6%95-%e0%a6%b0%e0%a6%be%e0%a6%b9%e0%a6%bf%e0%a6%ae%e0%a6%be%e0%a6%b9%e0%a7%81%e0%a6%b2%e0%a7%8d%e0%a6%b2%e0%a6%be%e0%a6%b9/pd/7818",
-        "https://www.rokomari.com/book/202029/ইমাম-মালিক-রা-জীবন-ও-কর্ম"
+        "https://www.rokomari.com/book/202029/ইমাম-মালিক-রা-জীবন-ও-কর্ম",
+        "https://www.rokomari.com/book/202029"
       ]
     },
     {
@@ -1979,7 +2105,8 @@
       "nameEn": "Imam Ahmad Ibnu Hambol Roh",
       "slug": "imam-ahmad-ibnu-hambol-roh",
       "mrp": 255,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 51,
       "quantity": 20,
       "pages": 168,
       "edition": "1st Published, 2020",
@@ -2000,7 +2127,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/02/Ahmad-Ibnu-Hanbal.png",
       "sources": [
         "https://www.wafilife.com/%e0%a6%87%e0%a6%ae%e0%a6%be%e0%a6%ae-%e0%a6%86%e0%a6%b9%e0%a6%ae%e0%a6%be%e0%a6%a6-%e0%a6%87%e0%a6%ac%e0%a6%a8%e0%a7%81-%e0%a6%b9%e0%a6%be%e0%a6%ae%e0%a7%8d%e0%a6%ac%e0%a6%b2-%e0%a6%b0%e0%a6%be/pd/7820",
-        "https://www.rokomari.com/book/202031/ইমাম-আহমাদ-ইবনু-হাম্বল-রা-জীবন-ও-কর্ম"
+        "https://www.rokomari.com/book/202031/ইমাম-আহমাদ-ইবনু-হাম্বল-রা-জীবন-ও-কর্ম",
+        "https://www.rokomari.com/book/202031"
       ]
     },
     {
@@ -2008,7 +2136,8 @@
       "nameEn": "Imam Shafiyi Roh",
       "slug": "imam-shafiyi-roh",
       "mrp": 243,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 49,
       "quantity": 20,
       "pages": 159,
       "edition": "1st Published, 2020",
@@ -2033,7 +2162,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/02/Imam-Shafii.png",
       "sources": [
         "https://www.wafilife.com/%e0%a6%87%e0%a6%ae%e0%a6%be%e0%a6%ae-%e0%a6%b6%e0%a6%be%e0%a6%ab%e0%a6%bf%e0%a7%9f%e0%a6%bf-%e0%a6%b0%e0%a6%be%e0%a6%b9%e0%a6%bf%e0%a6%ae%e0%a6%be%e0%a6%b9%e0%a7%81%e0%a6%b2%e0%a7%8d%e0%a6%b2%e0%a6%be/pd/7819",
-        "https://www.rokomari.com/book/202030/ইমাম-শাফিয়ি-রা-জীবন-ও-কর্ম"
+        "https://www.rokomari.com/book/202030/ইমাম-শাফিয়ি-রা-জীবন-ও-কর্ম",
+        "https://www.rokomari.com/book/202030"
       ]
     },
     {
@@ -2041,7 +2171,8 @@
       "nameEn": "Imam Hasan Al Basri Roh",
       "slug": "imam-hasan-al-basri-roh",
       "mrp": 175,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 35,
       "quantity": 20,
       "pages": 112,
       "edition": "1st Published, 2020",
@@ -2062,7 +2193,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/02/Hasan-Al-Basri.png",
       "sources": [
         "https://www.wafilife.com/%e0%a6%87%e0%a6%ae%e0%a6%be%e0%a6%ae-%e0%a6%b9%e0%a6%be%e0%a6%b8%e0%a6%be%e0%a6%a8-%e0%a6%86%e0%a6%b2-%e0%a6%ac%e0%a6%be%e0%a6%b8%e0%a6%b0%e0%a6%bf-%e0%a6%b0%e0%a6%be%e0%a6%b9%e0%a6%bf%e0%a6%ae/pd/7823",
-        "https://www.rokomari.com/book/202032/ইমাম-হাসান-আল-বাসরি-রা-জীবন-ও-কর্ম"
+        "https://www.rokomari.com/book/202032/ইমাম-হাসান-আল-বাসরি-রা-জীবন-ও-কর্ম",
+        "https://www.rokomari.com/book/202032"
       ]
     },
     {
@@ -2070,7 +2202,8 @@
       "nameEn": "Imam Abullah Ibnu Mubarok Roh",
       "slug": "imam-abullah-ibnu-mubarok-roh",
       "mrp": 265,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 53,
       "quantity": 20,
       "pages": 176,
       "edition": "1st Published, 2020",
@@ -2091,7 +2224,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2021/02/Abdullah-Ibnul-Mubarak.png",
       "sources": [
         "https://www.wafilife.com/%e0%a6%87%e0%a6%ae%e0%a6%be%e0%a6%ae-%e0%a6%86%e0%a6%ac%e0%a7%8d%e0%a6%a6%e0%a7%81%e0%a6%b2%e0%a7%8d%e0%a6%b2%e0%a6%be%e0%a6%b9-%e0%a6%87%e0%a6%ac%e0%a6%a8%e0%a7%81-%e0%a6%ae%e0%a7%81%e0%a6%ac/pd/7824",
-        "https://www.rokomari.com/book/202033/ইমাম-আব্দুল্লাহ-ইবনু-মুবারক-রা-জীবন-ও-কর্ম"
+        "https://www.rokomari.com/book/202033/ইমাম-আব্দুল্লাহ-ইবনু-মুবারক-রা-জীবন-ও-কর্ম",
+        "https://www.rokomari.com/book/202033"
       ]
     },
     {
@@ -2099,7 +2233,8 @@
       "nameEn": "Tinii Amar Praner Nobi",
       "slug": "tinii-amar-praner-nobi",
       "mrp": 186,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 37,
       "quantity": 20,
       "pages": 120,
       "edition": "1st published 2020",
@@ -2123,7 +2258,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2020/10/Tinie-Amar-Praner-Nabi-Dark.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%a4%e0%a6%bf%e0%a6%a8%e0%a6%bf%e0%a6%87-%e0%a6%86%e0%a6%ae%e0%a6%be%e0%a6%b0-%e0%a6%aa%e0%a7%8d%e0%a6%b0%e0%a6%be%e0%a6%a3%e0%a7%87%e0%a6%b0-%e0%a6%a8%e0%a6%ac%e0%a6%bf-%e0%a6%b8%e0%a6%be/pd/5590",
-        "https://www.rokomari.com/book/204761/তিনিই-আমার-প্রাণের-নবি-সা"
+        "https://www.rokomari.com/book/204761/তিনিই-আমার-প্রাণের-নবি-সা",
+        "https://www.rokomari.com/book/204761"
       ]
     },
     {
@@ -2131,7 +2267,8 @@
       "nameEn": "Haia Alas Salah",
       "slug": "haia-alas-salah",
       "mrp": 175,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 35,
       "quantity": 20,
       "pages": 112,
       "edition": "1st published 2020",
@@ -2153,7 +2290,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2020/10/Haiya-Alas-Salah-Front.png",
       "sources": [
         "https://www.wafilife.com/haia-alas-salah/pd/5593",
-        "https://www.rokomari.com/book/204763/হাইয়া-আলাস-সালাহ"
+        "https://www.rokomari.com/book/204763/হাইয়া-আলাস-সালাহ",
+        "https://www.rokomari.com/book/204763"
       ]
     },
     {
@@ -2161,7 +2299,8 @@
       "nameEn": "Shontan Shopno Diye Bona",
       "slug": "shontan-shopno-diye-bona",
       "mrp": 185,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 37,
       "quantity": 20,
       "pages": 128,
       "edition": "1st Published, 2019",
@@ -2182,7 +2321,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/04/Sontan.jpg",
       "sources": [
         "https://www.wafilife.com/shontan-shopno-diye-bona/pd/4012",
-        "https://www.rokomari.com/book/181192/সন্তানঃ-স্বপ্ন-দিয়ে-বোনা"
+        "https://www.rokomari.com/book/181192/সন্তানঃ-স্বপ্ন-দিয়ে-বোনা",
+        "https://www.rokomari.com/book/181192"
       ]
     },
     {
@@ -2190,7 +2330,8 @@
       "nameEn": "Salafder Jibon Kotha",
       "slug": "salafder-jibon-kotha",
       "mrp": 320,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 64,
       "quantity": 20,
       "pages": 240,
       "edition": "1st Published, 2019",
@@ -2218,7 +2359,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/10/Salafder-Jibon-Kotha.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%b8%e0%a6%be%e0%a6%b2%e0%a6%be%e0%a6%ab%e0%a6%a6%e0%a7%87%e0%a6%b0-%e0%a6%9c%e0%a7%80%e0%a6%ac%e0%a6%a8%e0%a6%95%e0%a6%a5%e0%a6%be/pd/4360",
-        "https://www.rokomari.com/book/191076/সালাফদের-জীবনকথা"
+        "https://www.rokomari.com/book/191076/সালাফদের-জীবনকথা",
+        "https://www.rokomari.com/book/191076"
       ]
     },
     {
@@ -2226,7 +2368,8 @@
       "nameEn": "Valobashar Romadan",
       "slug": "valobashar-romadan",
       "mrp": 250,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 50,
       "quantity": 20,
       "pages": 184,
       "edition": "1st Published, 2019",
@@ -2247,7 +2390,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/05/Bhalobasar-Ramadan.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%ad%e0%a6%be%e0%a6%b2%e0%a7%8b%e0%a6%ac%e0%a6%be%e0%a6%b8%e0%a6%be%e0%a6%b0-%e0%a6%b0%e0%a6%be%e0%a6%ae%e0%a6%be%e0%a6%a6%e0%a6%be%e0%a6%a8/pd/4082",
-        "https://www.rokomari.com/book/185811/ভালোবাসার-রামাদান"
+        "https://www.rokomari.com/book/185811/ভালোবাসার-রামাদান",
+        "https://www.rokomari.com/book/185811"
       ]
     },
     {
@@ -2255,7 +2399,8 @@
       "nameEn": "Shobuj Rater Kolaj",
       "slug": "shobuj-rater-kolaj",
       "mrp": 170,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 34,
       "quantity": 20,
       "pages": 93,
       "edition": "দ্বিতীয় সংস্করণ, ডিসেম্বর ২০১৮",
@@ -2276,7 +2421,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2018/02/Sobuj-Rater-Collage.jpg",
       "sources": [
         "https://www.wafilife.com/shobuj-rater-kolaj/pd/3275",
-        "https://www.rokomari.com/book/160940/সবুজ-রাতের-কোলাজ"
+        "https://www.rokomari.com/book/160940/সবুজ-রাতের-কোলাজ",
+        "https://www.rokomari.com/book/160940"
       ]
     },
     {
@@ -2284,7 +2430,8 @@
       "nameEn": "Jibon Pothe Shofol Hote",
       "slug": "jibon-pothe-shofol-hote",
       "mrp": 232,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 46,
       "quantity": 20,
       "pages": 158,
       "edition": "1st published, 2019",
@@ -2307,7 +2454,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/02/0.png",
       "sources": [
         "https://www.wafilife.com/%e0%a6%9c%e0%a7%80%e0%a6%ac%e0%a6%a8-%e0%a6%aa%e0%a6%a5%e0%a7%87-%e0%a6%b8%e0%a6%ab%e0%a6%b2-%e0%a6%b9%e0%a6%a4%e0%a7%87/pd/3872",
-        "https://www.rokomari.com/book/178212/জীবন-পথে-সফল-হতে"
+        "https://www.rokomari.com/book/178212/জীবন-পথে-সফল-হতে",
+        "https://www.rokomari.com/book/178212"
       ]
     },
     {
@@ -2315,7 +2463,8 @@
       "nameEn": "Nobiji Sallallahu Alaihi Wa Sallam Jemon Chilen Tini",
       "slug": "nobiji-sallallahu-alaihi-wa-sallam-jemon-chilen-tini",
       "mrp": 278,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 56,
       "quantity": 20,
       "pages": null,
       "edition": null,
@@ -2340,7 +2489,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/06/Nabiji-1.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%a8%e0%a6%ac%e0%a7%80%e0%a6%9c%e0%a6%bf-%ef%b7%ba-%e0%a6%af%e0%a7%87%e0%a6%ae%e0%a6%a8-%e0%a6%9b%e0%a6%bf%e0%a6%b2%e0%a7%87%e0%a6%a8-%e0%a6%a4%e0%a6%bf%e0%a6%a8%e0%a6%bf/pd/4114",
-        "https://www.rokomari.com/book/185918/নবীজি-যেমন-ছিলেন-তিনি"
+        "https://www.rokomari.com/book/185918/নবীজি-যেমন-ছিলেন-তিনি",
+        "https://www.rokomari.com/book/185918"
       ]
     },
     {
@@ -2348,7 +2498,8 @@
       "nameEn": "Arguments Of Arju",
       "slug": "arguments-of-arju",
       "mrp": 250,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 50,
       "quantity": 20,
       "pages": 152,
       "edition": "1st Published, 2019",
@@ -2370,7 +2521,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/12/78114982_2263431423762141_7574688684973228032_o.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%86%e0%a6%b0%e0%a7%8d%e0%a6%97%e0%a7%81%e0%a6%ae%e0%a7%87%e0%a6%a8%e0%a7%8d%e0%a6%9f%e0%a6%b8-%e0%a6%85%e0%a6%ac-%e0%a6%86%e0%a6%b0%e0%a6%9c%e0%a7%81/pd/4507",
-        "https://www.rokomari.com/book/192456/আর্গুমেন্টস-অব-আরজু"
+        "https://www.rokomari.com/book/192456/আর্গুমেন্টস-অব-আরজু",
+        "https://www.rokomari.com/book/192456"
       ]
     },
     {
@@ -2378,7 +2530,8 @@
       "nameEn": "Taraful",
       "slug": "taraful",
       "mrp": 232,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 46,
       "quantity": 20,
       "pages": 160,
       "edition": "1st Published, 2019",
@@ -2399,7 +2552,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/02/taraful.png",
       "sources": [
         "https://www.wafilife.com/taraful/pd/3873",
-        "https://www.rokomari.com/book/181281/তারাফুল"
+        "https://www.rokomari.com/book/181281/তারাফুল",
+        "https://www.rokomari.com/book/181281"
       ]
     },
     {
@@ -2407,7 +2561,8 @@
       "nameEn": "Bisshaser Joy",
       "slug": "bisshaser-joy",
       "mrp": 245,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 49,
       "quantity": 20,
       "pages": 160,
       "edition": "New Edition 2022",
@@ -2429,7 +2584,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/04/273943039_4445057212266207_6745112441170770292_n.png",
       "sources": [
         "https://www.wafilife.com/bisshaser-joy/pd/4013",
-        "https://www.rokomari.com/book/226952/বিশ্বাসের-জয়"
+        "https://www.rokomari.com/book/226952/বিশ্বাসের-জয়",
+        "https://www.rokomari.com/book/226952"
       ]
     },
     {
@@ -2437,7 +2593,8 @@
       "nameEn": "Shishur Monone Iman",
       "slug": "shishur-monone-iman",
       "mrp": 176,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 35,
       "quantity": 20,
       "pages": 120,
       "edition": "1st Edition, 2019",
@@ -2461,7 +2618,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/10/Shishur-Monone-Iman.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%b6%e0%a6%bf%e0%a6%b6%e0%a7%81%e0%a6%b0-%e0%a6%ae%e0%a6%a8%e0%a6%a8%e0%a7%87-%e0%a6%88%e0%a6%ae%e0%a6%be%e0%a6%a8/pd/4362",
-        "https://www.rokomari.com/book/191078/শিশুর-মননে-ঈমান"
+        "https://www.rokomari.com/book/191078/শিশুর-মননে-ঈমান",
+        "https://www.rokomari.com/book/191078"
       ]
     },
     {
@@ -2469,7 +2627,8 @@
       "nameEn": "Megh Roddur Bristi",
       "slug": "megh-roddur-bristi",
       "mrp": 300,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 60,
       "quantity": 20,
       "pages": 216,
       "edition": "216",
@@ -2490,7 +2649,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2018/02/Megh-Roddur-Brishti.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%ae%e0%a7%87%e0%a6%98-%e0%a6%b0%e0%a7%8b%e0%a6%a6%e0%a7%8d%e0%a6%a6%e0%a7%81%e0%a6%b0-%e0%a6%ac%e0%a7%83%e0%a6%b7%e0%a7%8d%e0%a6%9f%e0%a6%bf/pd/3871",
-        "https://www.rokomari.com/book/181195/মেঘ-রোদ্দুর-বৃষ্টি"
+        "https://www.rokomari.com/book/181195/মেঘ-রোদ্দুর-বৃষ্টি",
+        "https://www.rokomari.com/book/181195"
       ]
     },
     {
@@ -2498,7 +2658,8 @@
       "nameEn": "Hifz Korte Hole",
       "slug": "hifz-korte-hole",
       "mrp": 150,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 30,
       "quantity": 20,
       "pages": 96,
       "edition": "1st Published, 2019",
@@ -2520,7 +2681,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/07/Hifz-Korte-Holey.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%b9%e0%a6%bf%e0%a6%ab%e0%a6%af-%e0%a6%95%e0%a6%b0%e0%a6%a4%e0%a7%87-%e0%a6%b9%e0%a6%b2%e0%a7%87/pd/4178",
-        "https://www.rokomari.com/book/188369/হিফয-করতে-হলে"
+        "https://www.rokomari.com/book/188369/হিফয-করতে-হলে",
+        "https://www.rokomari.com/book/188369"
       ]
     },
     {
@@ -2528,7 +2690,8 @@
       "nameEn": "Jilhojjer Upohar",
       "slug": "jilhojjer-upohar",
       "mrp": 140,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 28,
       "quantity": 20,
       "pages": null,
       "edition": null,
@@ -2549,7 +2712,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2023/05/Jilhajjer-Upohar-Front.png",
       "sources": [
         "https://www.wafilife.com/jilhojjer-upohar/pd/5137",
-        "https://www.rokomari.com/book/202228/জিলহজের-উপহার"
+        "https://www.rokomari.com/book/202228/জিলহজের-উপহার",
+        "https://www.rokomari.com/book/202228"
       ]
     },
     {
@@ -2557,7 +2721,8 @@
       "nameEn": "Oshru Jole Lekha",
       "slug": "oshru-jole-lekha",
       "mrp": 290,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 58,
       "quantity": 20,
       "pages": 192,
       "edition": "New Edition 2022",
@@ -2581,7 +2746,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/04/273967513_4444800092291919_5253227554886544501_n.png",
       "sources": [
         "https://www.wafilife.com/%e0%a6%b8%e0%a7%87%e0%a6%87%e0%a6%b8%e0%a6%ac-%e0%a6%a6%e0%a6%bf%e0%a6%a8%e0%a6%b0%e0%a6%be%e0%a6%a4%e0%a7%8d%e0%a6%b0%e0%a6%bf/pd/4014",
-        "https://www.rokomari.com/book/226954/অশ্রুজলে-লেখা"
+        "https://www.rokomari.com/book/226954/অশ্রুজলে-লেখা",
+        "https://www.rokomari.com/book/226954"
       ]
     },
     {
@@ -2589,7 +2755,8 @@
       "nameEn": "Shukher Natai",
       "slug": "shukher-natai",
       "mrp": 160,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 32,
       "quantity": 20,
       "pages": 104,
       "edition": "1st Published, 2020",
@@ -2611,7 +2778,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2020/02/Sukher-Natai-1.png",
       "sources": [
         "https://www.wafilife.com/%e0%a6%b8%e0%a7%81%e0%a6%96%e0%a7%87%e0%a6%b0-%e0%a6%a8%e0%a6%be%e0%a6%9f%e0%a6%be%e0%a6%87/pd/4667",
-        "https://www.rokomari.com/book/198252/সুখের-নাটাই"
+        "https://www.rokomari.com/book/198252/সুখের-নাটাই",
+        "https://www.rokomari.com/book/198252"
       ]
     },
     {
@@ -2619,7 +2787,8 @@
       "nameEn": "Je Jibon Morichikar",
       "slug": "je-jibon-morichikar",
       "mrp": 190,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 38,
       "quantity": 20,
       "pages": 128,
       "edition": "1st published, 2019",
@@ -2642,7 +2811,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/02/Je-Jibon-Morichika.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%af%e0%a7%87-%e0%a6%9c%e0%a7%80%e0%a6%ac%e0%a6%a8-%e0%a6%ae%e0%a6%b0%e0%a7%80%e0%a6%9a%e0%a6%bf%e0%a6%95%e0%a6%be/pd/3896",
-        "https://www.rokomari.com/book/178417/যে-জীবন-মরীচিকা"
+        "https://www.rokomari.com/book/178417/যে-জীবন-মরীচিকা",
+        "https://www.rokomari.com/book/178417"
       ]
     },
     {
@@ -2650,7 +2820,8 @@
       "nameEn": "Sobor",
       "slug": "sobor",
       "mrp": 265,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 53,
       "quantity": 20,
       "pages": 172,
       "edition": "1st Published, 2019",
@@ -2674,7 +2845,8 @@
       "coverSource": "https://wafilife-media-v2.wafilife.com/uploads/2019/06/Sabr.jpg",
       "sources": [
         "https://www.wafilife.com/%e0%a6%b8%e0%a6%ac%e0%a6%b0/pd/4113",
-        "https://www.rokomari.com/book/186174/সবর"
+        "https://www.rokomari.com/book/186174/সবর",
+        "https://www.rokomari.com/book/186174"
       ]
     },
     {
@@ -2682,7 +2854,8 @@
       "nameEn": "Quraner Sathe Hridoyer Kotha",
       "slug": "quraner-sathe-hridoyer-kotha",
       "mrp": 260,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 52,
       "quantity": 20,
       "pages": null,
       "edition": null,
@@ -2704,7 +2877,8 @@
       "image": null,
       "pdf": "quraner-sathe-hridoyer-kotha-9477.pdf",
       "sources": [
-        "https://www.rokomari.com/book/191077/কুরআনের-সাথে-হৃদয়ের-কথা"
+        "https://www.rokomari.com/book/191077/কুরআনের-সাথে-হৃদয়ের-কথা",
+        "https://www.rokomari.com/book/191077"
       ]
     },
     {
@@ -2712,7 +2886,8 @@
       "nameEn": "Jiboner Banke Banke Quraner Path 2",
       "slug": "jiboner-banke-banke-quraner-path-2",
       "mrp": 230,
-      "discountPercent": 25,
+      "discountPercent": 20,
+      "discountAmount": 46,
       "quantity": 20,
       "pages": null,
       "edition": null,
@@ -2733,7 +2908,8 @@
       "description": "<p>কুরআনুল কারিম মহান আল্লাহর পবিত্র কালাম। সমগ্র মানবজাতির জন্য হিদায়াত। মুমিনের জীবন ও ভাবনায় কুরআনের প্রোজ্জ্বল প্রভাব রয়েছে। আল্লাহর আদেশ-নিষেধ পালনের সাথে সাথে বান্দা তাঁর কথাগুলো নিয়ে চিন্তাভাবনা করবে। নিজেকে রবের খাঁটি বান্দায় পরিণত করবে। ফলে কুর</p>",
       "image": null,
       "sources": [
-        "https://www.rokomari.com/book/363173/জীবনের-বাঁকে-বাঁকে-কুরআনের-পাঠ-দ্বিতীয়-খণ্ড"
+        "https://www.rokomari.com/book/363173/জীবনের-বাঁকে-বাঁকে-কুরআনের-পাঠ-দ্বিতীয়-খণ্ড",
+        "https://www.rokomari.com/book/363173"
       ]
     },
     {
@@ -2741,7 +2917,8 @@
       "nameEn": "Hridoy Jagar Jonno",
       "slug": "hridoy-jagar-jonno",
       "mrp": 250,
-      "discountPercent": 25,
+      "discountPercent": 28,
+      "discountAmount": 71,
       "quantity": 20,
       "pages": null,
       "edition": null,
@@ -2762,7 +2939,8 @@
       "description": "<p>কালবৈশাখীর কালো মেঘে যেভাবে ছেয়ে যায় নীলাভ আকাশ, আমাদের অন্তরও মাঝে মাঝে সেভাবে অন্ধকার হয়ে পড়ে। পাপের আস্তরণে আস্তে আস্তে মরিচা ধরে আমাদের ঈমান এবং আমলের স্তম্ভগুলোতে। কালবৈশাখীর ঝড়ের ঝাপটায় যেভাবে প্রকৃতি লণ্ডভণ্ড হয়ে যায়, পাপের আবরণ আর কলুষতার কাল</p>",
       "image": null,
       "sources": [
-        "https://www.rokomari.com/book/195355/হৃদয়-জাগার-জন্য"
+        "https://www.rokomari.com/book/195355/হৃদয়-জাগার-জন্য",
+        "https://www.rokomari.com/book/195355"
       ]
     },
     {
@@ -2771,6 +2949,7 @@
       "slug": "nanan-ronger-manush",
       "mrp": 185,
       "discountPercent": 25,
+      "discountAmount": 46,
       "quantity": 20,
       "pages": null,
       "edition": null,
@@ -2790,7 +2969,8 @@
       "description": "<p>\"নানান রঙের মানুষ\" বইয়ের পিছনের কভারের লেখা: বিচিত্র মানুষের বসবাস আমাদের চারপাশে। চলার পথে তারা গল্প করে, গল্প বানায়, গল্প গাঁথে। সেসব গল্পে উঠে আসে জনমানুষের কথা, জীবনের কথা। প্রাণ এবং প্রণােদনার কথা। উৎসাহ এবং উদ্দীপনার কথা। কিছু গল্প ভাবায়, অন</p>",
       "image": null,
       "sources": [
-        "https://www.rokomari.com/book/170984/নানান-রঙের-মানুষ-১৮টি-গল্প"
+        "https://www.rokomari.com/book/170984/নানান-রঙের-মানুষ-১৮টি-গল্প",
+        "https://www.rokomari.com/book/170984"
       ]
     },
     {
@@ -2798,7 +2978,8 @@
       "nameEn": "Megh Kete Jay",
       "slug": "megh-kete-jay",
       "mrp": 268,
-      "discountPercent": 25,
+      "discountPercent": 29,
+      "discountAmount": 79,
       "quantity": 20,
       "pages": null,
       "edition": null,
@@ -2819,7 +3000,8 @@
       "description": "<p>‘মেঘ কেটে যায়’ বইয়ের কিছুকথাঃ মেঘগুলো কেমন যেন! দলবেঁধে এসে ছেঁয়ে ফেলে আকাশটাকে। মেঘের আড়ালে ফিকে হয়ে যায় আকশের নীল। মেঘেরা তৈরি করে এক বিদঘুটে পরিবেশ। নীল আকাশ ছেঁয়ে যায় এক গুমোট আবহাওয়ায়। থমথমে। নীরব। নিস্তব্ধ। হঠাৎ কোথা থেকে যেন এক টুকরো আলোক রশ্</p>",
       "image": null,
       "sources": [
-        "https://www.rokomari.com/book/184376/মেঘ-কেটে-যায়"
+        "https://www.rokomari.com/book/184376/মেঘ-কেটে-যায়",
+        "https://www.rokomari.com/book/184376"
       ]
     },
     {
@@ -2827,7 +3009,8 @@
       "nameEn": "Seisob Dinratri",
       "slug": "seisob-dinratri",
       "mrp": 313,
-      "discountPercent": 25,
+      "discountPercent": 30,
+      "discountAmount": 94,
       "quantity": 20,
       "pages": null,
       "edition": null,
@@ -2848,7 +3031,8 @@
       "description": "<p>শাইখ আব্দুল মালিক আল-কাসিম হাফিজাহুল্লাহ কর্তৃক লিখিত আয-যামান আল -কাদ্বিম ঠিক এমন একটি বই। অন্ধকারে ডুবে থাকা একদল মানুষের আলোর জগতে ফিরে আসার কাহিনীগুলোকে তিনি গল্পে রূপ দান করেছেন। সেই অন্ধকার গহ্বরে কীভাবে পৌঁছালো আলোর রশ্মি, কীভাবে পাথরের মতো পা</p>",
       "image": null,
       "sources": [
-        "https://www.rokomari.com/book/184379/সেইসব-দিনরাত্রি"
+        "https://www.rokomari.com/book/184379/সেইসব-দিনরাত্রি",
+        "https://www.rokomari.com/book/184379"
       ]
     }
   ]
