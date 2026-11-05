@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Customer Searches · Amolbooks</title>
+    <style>
+      :root {
+        font-family: Inter, system-ui, -apple-system, sans-serif;
+        color: #182039;
+        background: #f3f1fc;
+        font-size: 14px;
+        --purple: #7135e8;
+        --muted: #667697;
+        --border: #e3e6f1;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 10px 12px;
+        background: #fff;
+        color: inherit;
+        touch-action: manipulation;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:hover {
+        border-color: var(--purple);
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      :focus-visible {
+        outline: 3px solid #bba0fa;
+        outline-offset: 2px;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      h1,
+      h2,
+      p {
+        margin: 0;
+      }
+      h1 {
+        font-size: 28px;
+        letter-spacing: -0.8px;
+      }
+      h2 {
+        font-size: 17px;
+      }
+      .muted,
+      small {
+        color: var(--muted);
+      }
+      small {
+        font-size: 12px;
+      }
+      label {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+      .workspace {
+        min-height: 100vh;
+      }
+      main {
+        min-width: 0;
+        padding: 28px 24px;
+        max-width: 1280px;
+      }
+      .heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      .heading p {
+        margin-top: 7px;
+      }
+      .heading-actions {
+        display: flex;
+        gap: 8px;
+        white-space: nowrap;
+      }
+      .menu {
+        display: none;
+      }
+      .primary {
+        background: var(--purple);
+        border-color: var(--purple);
+        color: #fff;
+        font-weight: 650;
+      }
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: #fff;
+        padding: 19px;
+      }
+      .filters {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+        gap: 12px;
+        align-items: end;
+        margin-bottom: 18px;
+      }
+      .filters input,
+      .filters select {
+        width: 100%;
+        min-width: 0;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+      .stat {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .stat-icon {
+        background: #efe9ff;
+        color: #7135e8;
+        border-radius: 12px;
+        width: 46px;
+        height: 46px;
+        flex: none;
+        display: grid;
+        place-items: center;
+        font-size: 21px;
+      }
+      .stat:nth-child(2) .stat-icon {
+        background: #fff2df;
+        color: #ae6500;
+      }
+      .stat:nth-child(3) .stat-icon {
+        background: #e9fbef;
+        color: #138638;
+      }
+      .stat:nth-child(4) .stat-icon {
+        background: #fde8f3;
+        color: #b4236b;
+      }
+      .stat strong {
+        display: block;
+        font-size: 24px;
+        margin-top: 4px;
+      }
+      .table-card {
+        padding: 18px 10px 0;
+        margin-bottom: 18px;
+      }
+      .table-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 12px;
+        flex-wrap: wrap;
+        padding: 0 8px 16px;
+      }
+      .table-title p {
+        margin-top: 5px;
+      }
+      .table-scroll {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+      th {
+        background: #f5f4fc;
+        color: var(--muted);
+        font-size: 10px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        text-align: left;
+        padding: 14px 10px;
+      }
+      th.num,
+      td.num {
+        text-align: right;
+      }
+      td {
+        padding: 15px 10px;
+        border-bottom: 1px solid #edf0f6;
+      }
+      td small {
+        display: block;
+        margin-top: 4px;
+      }
+      tbody tr.me {
+        background: #f7f2ff;
+      }
+      .rank {
+        display: inline-grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #f0f3f8;
+        color: #52627e;
+        font-weight: 700;
+        font-size: 12px;
+      }
+      .rank.top {
+        background: #7135e8;
+        color: #fff;
+      }
+      .staff-name {
+        font-weight: 650;
+      }
+      .badge {
+        display: inline-block;
+        margin-top: 4px;
+        padding: 3px 8px;
+        border-radius: 20px;
+        background: #f0f3f8;
+        color: #52627e;
+        font-size: 11px;
+      }
+      .points {
+        font-size: 16px;
+        font-weight: 750;
+        color: #5b21b6;
+      }
+      tfoot td {
+        font-weight: 700;
+        border-bottom: 0;
+        background: #fbfaff;
+      }
+      .empty {
+        text-align: center;
+        color: var(--muted);
+        padding: 36px 10px;
+        white-space: normal;
+      }
+      .points-form {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+        gap: 12px;
+        align-items: end;
+        margin-top: 16px;
+      }
+      .points-form input {
+        width: 100%;
+      }
+      .notice {
+        margin-top: 12px;
+        padding: 10px 12px;
+        border-radius: 9px;
+        background: #fff7e6;
+        color: #8a5300;
+        font-size: 13px;
+      }
+      .status {
+        min-height: 18px;
+        margin-top: 10px;
+        font-size: 13px;
+      }
+      .status.error {
+        color: #b42318;
+      }
+      .status.ok {
+        color: #16763b;
+      }
+      .rules {
+        margin: 14px 0 0;
+        padding-left: 18px;
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 13px;
+      }
+      .login {
+        position: fixed;
+        inset: 0;
+        background: #141426cc;
+        display: grid;
+        place-items: center;
+        z-index: 50;
+        padding: 16px;
+      }
+      .login[hidden] {
+        display: none;
+      }
+      .login form {
+        background: #fff;
+        border-radius: 16px;
+        padding: 26px;
+        width: min(360px, 100%);
+        display: grid;
+        gap: 12px;
+      }
+      .login input {
+        width: 100%;
+      }
+      @media (max-width: 1100px) {
+        .filters,
+        .points-form {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .stats {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 900px) {
+        .menu {
+          display: inline-block;
+        }
+        .heading h1 {
+          font-size: 24px;
+        }
+        main {
+          padding: 20px 16px;
+        }
+      }
+      @media (max-width: 600px) {
+        .heading {
+          align-items: flex-start;
+        }
+        .filters,
+        .points-form {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .stats {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
+        .stats .stat:last-child {
+          grid-column: 1 / -1;
+        }
+        .stat {
+          padding: 14px;
+        }
+        .stat-icon {
+          display: none;
+        }
+      }
+      /* Customer Searches: three summary cards, view tabs, one table. */
+      .filters {
+        grid-template-columns: minmax(0, 160px) minmax(0, 1fr) auto auto;
+      }
+      .stats {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .tabs button[aria-pressed='true'] {
+        background: var(--purple);
+        border-color: var(--purple);
+        color: #fff;
+      }
+      .missing {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 2px 9px;
+        font-size: 12px;
+        font-weight: 600;
+        background: #fdecec;
+        color: #b42318;
+      }
+      .term {
+        font-weight: 600;
+        overflow-wrap: anywhere;
+      }
+      @media (max-width: 1100px) {
+        .filters {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .stats {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 600px) {
+        .filters {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .stats {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- AB_ADMIN_SIDEBAR -->
+    <div class="workspace">
+      <main>
+        <header class="heading">
+          <div>
+            <h1>Customer Searches</h1>
+            <p class="muted" id="subtitle">What customers type in the shop's search box</p>
+          </div>
+          <div class="heading-actions">
+            <button class="menu" id="menu" aria-label="Toggle navigation">☰</button
+            ><button id="logout">Sign out</button>
+          </div>
+        </header>
+
+        <form class="card filters" id="filters">
+          <div>
+            <label for="days">Period</label>
+            <select id="days">
+              <option value="7">Last 7 days</option>
+              <option value="30" selected>Last 30 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="365">Last 12 months</option>
+            </select>
+          </div>
+          <div>
+            <label for="filter">Find a search</label>
+            <input id="filter" type="search" placeholder="Type a word" autocomplete="off" />
+          </div>
+          <button class="primary" id="apply">Show</button>
+          <button type="button" id="copy">Copy list</button>
+        </form>
+
+        <div class="stats">
+          <div class="card stat">
+            <span class="stat-icon">⌕</span>
+            <div><small>Searches</small><strong id="total-searches">—</strong></div>
+          </div>
+          <div class="card stat">
+            <span class="stat-icon">≡</span>
+            <div><small>Different searches</small><strong id="total-terms">—</strong></div>
+          </div>
+          <div class="card stat">
+            <span class="stat-icon">!</span>
+            <div><small>Found no books</small><strong id="total-notFound">—</strong></div>
+          </div>
+        </div>
+
+        <section class="card table-card">
+          <div class="table-title">
+            <div>
+              <h2 id="table-heading">Searches that found no books</h2>
+              <p class="muted" id="table-note">Books customers looked for that the shop doesn't have yet</p>
+            </div>
+            <div class="tabs" role="group" aria-label="Which searches">
+              <button type="button" id="view-missing" aria-pressed="true">Found no books</button
+              ><button type="button" id="view-all" aria-pressed="false">All searches</button>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th class="num">#</th>
+                  <th>Search</th>
+                  <th class="num">Searches</th>
+                  <th class="num">People</th>
+                  <th class="num">Books found</th>
+                  <th>Last searched</th>
+                </tr>
+              </thead>
+              <tbody id="rows">
+                <tr><td colspan="6" class="empty">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="status" id="status" role="status"></p>
+          <ul class="rules">
+            <li>Every search in the shop's search box or on the search results page counts once. Typing a word step by step (“পড়”, “পড়ো”) counts as one search.</li>
+            <li>“People” counts different visitors per day; no names, phone numbers or IP addresses are kept. Staff searching in the admin panel are not counted.</li>
+            <li>“Found no books” means the shop's search showed nothing for those words. Spelling mistakes show up here too, so check before ordering a book.</li>
+            <li>Searches are kept for 12 months.</li>
+          </ul>
+        </section>
+      </main>
+    </div>
+
+    <div class="login" id="login" hidden>
+      <form id="login-form">
+        <h2>Sign in</h2>
+        <p class="muted">Use your admin username and password.</p>
+        <input id="username" autocomplete="username" placeholder="Username" required />
+        <input id="password" type="password" autocomplete="current-password" placeholder="Password" required />
+        <button id="login-button" class="primary">Sign in</button>
+        <p id="login-status" class="status error" role="status"></p>
+      </form>
+    </div>
+
+    <script>
+      (function () {
+        'use strict';
+        // Same-origin on local previews; production uses the current API environment.
+        const API_BASE = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)
+          ? location.origin
+          : 'https://apisub.amolbooks.com';
+        const $ = (id) => document.getElementById(id);
+        const esc = (v) =>
+          String(v == null ? '' : v).replace(
+            /[&<>"']/g,
+            (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
+          );
+        const num = (v) => Number(v || 0).toLocaleString('en-US');
+        let data = null;
+        let view = 'missing';
+
+        function token() {
+          return localStorage.getItem('co_admin_token') || '';
+        }
+        function when(value) {
+          return new Date(value).toLocaleString('en-GB', {
+            timeZone: 'Asia/Dhaka',
+            day: 'numeric',
+            month: 'short',
+            hour: 'numeric',
+            minute: '2-digit',
+          });
+        }
+        async function request(path) {
+          const response = await fetch(API_BASE + path, { headers: { administrator: token() } });
+          let payload = {};
+          try {
+            payload = await response.json();
+          } catch (_) {}
+          if (!response.ok || payload.success === false) {
+            if (response.status === 401) $('login').hidden = false;
+            const error = new Error(
+              response.status === 401
+                ? 'Sign in to see customer searches.'
+                : (Array.isArray(payload.message) ? payload.message.join(' ') : payload.message) ||
+                  'Could not load searches. Please try again.'
+            );
+            error.status = response.status;
+            throw error;
+          }
+          return payload.data;
+        }
+        function visibleRows() {
+          const words = $('filter').value.trim().toLowerCase();
+          return (data ? data.rows : []).filter(
+            (row) => (view === 'all' || !row.results) && (!words || row.term.toLowerCase().includes(words))
+          );
+        }
+        function render() {
+          const rows = visibleRows();
+          $('view-missing').setAttribute('aria-pressed', String(view === 'missing'));
+          $('view-all').setAttribute('aria-pressed', String(view === 'all'));
+          $('table-heading').textContent = view === 'all' ? 'All searches' : 'Searches that found no books';
+          $('table-note').textContent =
+            view === 'all'
+              ? 'Most searched first'
+              : "Books customers looked for that the shop doesn't have yet";
+          if (!data) return;
+          $('total-searches').textContent = num(data.searches);
+          $('total-terms').textContent = num(data.terms);
+          $('total-notFound').textContent = num(data.notFound);
+          $('rows').innerHTML = rows.length
+            ? rows
+                .map(
+                  (row, i) =>
+                    '<tr><td class="num">' + (i + 1) + '</td><td class="term">' + esc(row.term) + '</td><td class="num">' +
+                    num(row.searches) + '</td><td class="num">' + num(row.visitors) + '</td><td class="num">' +
+                    (row.results ? num(row.results) : '<span class="missing">None</span>') + '</td><td>' +
+                    esc(when(row.lastAt)) + '</td></tr>'
+                )
+                .join('')
+            : '<tr><td colspan="6" class="empty">' +
+              (data.rows.length ? 'No search matches these words.' : 'No searches in this period yet.') +
+              '</td></tr>';
+        }
+        async function load() {
+          if (!token()) {
+            $('login').hidden = false;
+            $('rows').innerHTML = '<tr><td colspan="6" class="empty">Sign in to see customer searches.</td></tr>';
+            return;
+          }
+          $('status').className = 'status';
+          $('status').textContent = '';
+          $('apply').disabled = true;
+          try {
+            data = await request('/api/search-insights/report?days=' + encodeURIComponent($('days').value));
+            render();
+          } catch (error) {
+            data = null;
+            $('rows').innerHTML = '<tr><td colspan="6" class="empty">' + esc(error.message) + '</td></tr>';
+          } finally {
+            $('apply').disabled = false;
+          }
+        }
+
+        $('filters').onsubmit = (event) => {
+          event.preventDefault();
+          load();
+        };
+        $('days').onchange = load;
+        $('filter').oninput = render;
+        $('view-missing').onclick = () => {
+          view = 'missing';
+          render();
+        };
+        $('view-all').onclick = () => {
+          view = 'all';
+          render();
+        };
+        $('copy').onclick = async () => {
+          const text = visibleRows()
+            .map((row) => row.term + '\t' + row.searches)
+            .join('\n');
+          $('status').className = 'status';
+          if (!text) {
+            $('status').textContent = 'Nothing to copy.';
+            return;
+          }
+          try {
+            await navigator.clipboard.writeText(text);
+            $('status').className = 'status ok';
+            $('status').textContent = 'Copied ' + visibleRows().length + ' searches (word and count per line).';
+          } catch (_) {
+            $('status').className = 'status error';
+            $('status').textContent = 'Copy is blocked in this browser. Select the table and copy it instead.';
+          }
+        };
+        $('menu').onclick = () => $('navigation').classList.toggle('open');
+        $('logout').onclick = () => {
+          localStorage.removeItem('co_admin_token');
+          data = null;
+          $('rows').innerHTML = '<tr><td colspan="6" class="empty">Sign in to see customer searches.</td></tr>';
+          $('login').hidden = false;
+        };
+        $('login-form').onsubmit = async (event) => {
+          event.preventDefault();
+          $('login-button').disabled = true;
+          $('login-status').textContent = 'Signing in…';
+          try {
+            const response = await fetch(API_BASE + '/api/admin/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username: $('username').value, password: $('password').value }),
+            });
+            const payload = await response.json();
+            if (!response.ok || !payload.token) throw new Error(payload.message || 'Sign in failed');
+            localStorage.setItem('co_admin_token', payload.token);
+            $('password').value = '';
+            $('login-status').textContent = '';
+            $('login').hidden = true;
+            await load();
+          } catch (error) {
+            $('login-status').textContent = error.message;
+          } finally {
+            $('login-button').disabled = false;
+          }
+        };
+
+        render();
+        load();
+      })();
+    </script>
+  </body>
+</html>

@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Logger,
+  Optional,
   Param,
   Post,
   Put,
@@ -26,6 +27,7 @@ import { AdminPermissionGuard } from '../../guards/admin-permission.guard';
 import { AdminJwtAuthGuard } from '../../guards/admin-jwt-auth.guard';
 import { ResponsePayload } from '../../interfaces/core/response-payload.interface';
 import { ProductService } from './product.service';
+import { SearchInsightsService } from '../search-insights/search-insights.service';
 import {
   AddProductDto,
   FilterAndPaginationProductDto,
@@ -46,7 +48,10 @@ import {
 export class ProductController {
   private logger = new Logger(ProductController.name);
 
-  constructor(private productService: ProductService) {}
+  constructor(
+    private productService: ProductService,
+    @Optional() private readonly searchInsights?: SearchInsightsService,
+  ) {}
 
 
   @Get('/get-all-data')
@@ -119,8 +124,14 @@ export class ProductController {
   async getAllProducts(
     @Body() filterProductDto: FilterAndPaginationProductDto,
     @Query('q') searchString: string,
+    @Req() req: Request,
   ): Promise<ResponsePayload> {
-    return this.productService.getAllProducts(filterProductDto, searchString);
+    const result: any = await this.productService.getAllProducts(filterProductDto, searchString);
+    // Shop searches feed the admin "Customer Searches" page; the response never waits for it.
+    if (searchString) {
+      void this.searchInsights?.record(searchString, Number(result?.count ?? result?.data?.length ?? 0), req);
+    }
+    return result;
   }
 
   /**

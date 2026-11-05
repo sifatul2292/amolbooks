@@ -502,11 +502,11 @@ const waitFor = async (check, label, ms = 3000) => {
   };
   const expected = menu(ordersPage, 'sidebar-nav');
   assert.ok(expected.length >= 15, 'Orders page menu comes from the shared list');
-  for (const label of ['Customer Manager', 'Staff Performance', 'Book Gift Offers', 'Profit Dashboard', 'Import WooCommerce', 'Stock Management']) {
+  for (const label of ['Customer Manager', 'Staff Performance', 'Customer Searches', 'Book Gift Offers', 'Profit Dashboard', 'Import WooCommerce', 'Stock Management']) {
     assert.ok(expected.some((entry) => entry.split('|')[3] === label), label + ' is in the menu');
   }
   assert.equal(ordersPage.split('class="nav-item').length - 1, expected.filter((entry) => entry.startsWith('a|')).length, 'No leftover hand-made links');
-  for (const [file, active] of [['customer-manager.html', 'Customer Manager'], ['staff-performance.html', 'Staff Performance'], ['book-gift-offers.html', 'Book Gift Offers'], ['profit-dashboard.html', 'Profit Dashboard'], ['import-woo-orders.html', 'Import WooCommerce']]) {
+  for (const [file, active] of [['customer-manager.html', 'Customer Manager'], ['staff-performance.html', 'Staff Performance'], ['search-insights.html', 'Customer Searches'], ['book-gift-offers.html', 'Book Gift Offers'], ['profit-dashboard.html', 'Profit Dashboard'], ['import-woo-orders.html', 'Import WooCommerce']]) {
     const { status, body } = await call('GET', '/upload/static/' + file, null, null, true);
     assert.equal(status, 200, file);
     assert.deepEqual(menu(body, 'ab-sb-nav'), expected, file + ' shows the same menu as the orders page');

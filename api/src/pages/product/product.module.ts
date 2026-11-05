@@ -14,6 +14,7 @@ import { BoughtTogetherConfigSchema } from '../../schema/bought-together-config.
 import { StockMovementSchema } from '../../schema/stock-movement.schema';
 import { StockPurchaseSchema } from '../../schema/stock-purchase.schema';
 import { OrderSchema } from '../../schema/order.schema';
+import { SearchInsightsModule } from '../search-insights/search-insights.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { OrderSchema } from '../../schema/order.schema';
       { name: 'StockPurchase', schema: StockPurchaseSchema },
       { name: 'Order', schema: OrderSchema },
     ]),
+    SearchInsightsModule,
   ],
   providers: [ProductService],
   controllers: [ProductController],
