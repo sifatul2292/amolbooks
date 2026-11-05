@@ -1,4 +1,4 @@
-## Checkout phone: autofilled +880 numbers were cut (2026-11-05, same branch, uncommitted, not deployed)
+## Checkout phone: autofilled +880 numbers were cut (2026-11-05, same branch, committed b46d4d62 and pushed 2026-11-06, not deployed)
 
 - Owner saw incomplete orders with uncallable numbers like "8801750250". Cause: the compiled checkout phone box (`app-checkout input[formcontrolname="phoneNo"]`) has `maxlength="11"` and the checkout only requires 11+ characters; `mobile-browsing.html` sets `autocomplete="tel"`, so autofill inserts the saved number as "+8801750250123", the box keeps "+8801750250", and the checkout's own input handler strips the "+". The checkout then POSTs `add-incomplete-order-by-anonymous` with "8801750250" (orders could get it too: 11 characters passes minLength).
 - New `gtm-snippets/checkout-phone.html` (registered in `api/src/main.ts` after `mobile-browsing.html`): raises the box's maxlength to 20 and, in a capture-phase `input` listener that runs before the checkout's own handler, turns the value into the local form: Bengali digits to ASCII, non-digits dropped, `0088`/`880` prefix removed as soon as the next digit is there ("8801..." can only be the country-code form), 10-digit `1XXXXXXXXX` gets its 0, capped at 11. `change`/`focusout` re-tidy and re-dispatch `input` for browsers that only report change. Typing an ordinary 01 number is unchanged (still stops at 11).
@@ -7,7 +7,7 @@
 - Numbers already saved cut-off (e.g. 8801750250) cannot be repaired: the last digits never reached the server.
 - Deploy: API build + restart (snippet + server). Commit `gtm-snippets/checkout-phone.html`, `scripts/check-checkout-phone.cjs`, `api/src/pages/sales/order/order.service.ts`, the `checkout-phone.html` line in `api/src/main.ts`.
 
-## Homepage: author photos, publisher logos, standout book finder (2026-11-05, same branch, uncommitted, not deployed)
+## Homepage: author photos, publisher logos, standout book finder (2026-11-05, same branch, committed b46d4d62 and pushed 2026-11-06, not deployed)
 
 - Owner asked for author images in "জনপ্রিয় লেখক", publisher logos in "জনপ্রিয় প্রকাশনী", and a more distinct book-finder quiz ("people aren't using it").
 - `gtm-snippets/homepage-redesign.html`: name strips render cards with a picture slot (author = round photo, publisher = logo box) showing the name's first letter (titles like ড./শাইখ skipped) until the picture loads; `showEntityImages()` fetches `{slug, image}` for just the shown slugs via `POST <catalogue base>/author/get-all` and `/publisher/get-all` (filter `slug $in`; the list API's aggregate doesn't cast `_id`), caches per visit in sessionStorage `ab-home-entity-images-v1`, falls back to the letter on error. Live data: all 9 shown publishers have logos, 10 of the 18 top authors have photos. The own publisher card (slug `আমল-বুকস`) always shows the store logo (read from the header logo, fallback the uploaded logo PNG), because its saved publisher picture is a book cover (owner's choice). Duplicate author records with the same name (two "ড. খালিদ আবু শাদি") show once.
@@ -15,7 +15,7 @@
 - Book finder: now a deep-green rounded card with a gold "বুক ফাইন্ডার · ১ মিনিট" badge, numbered questions, white/gold answer chips and a gold "আমার জন্য বই খুঁজুন →" button; same questions and recommendation logic. New `ab_home_quiz_start` event (first answer change) next to the existing `ab_home_quiz_complete`, so starts vs finishes can be compared in GA4.
 - Deploy: API build + restart.
 
-## Header redesign, Option A (2026-11-05, same branch, uncommitted, not deployed)
+## Header redesign, Option A (2026-11-05, same branch, committed b46d4d62 and pushed 2026-11-06, not deployed)
 
 - Owner disliked the header; two designs were previewed on the local site (nothing applied), owner picked "Option A" after asking for a better phone version.
 - New `gtm-snippets/header-redesign.html`, registered in `api/src/main.ts` right after `header-stability.html`. An inline script adds `html.ab-header-v2` before first paint; all rules are scoped to it. To go back: remove the file from the snippet list (API build + restart).
@@ -26,7 +26,7 @@
 - Local dev kit (git-ignored `.claude/staff-dev/guard.cjs`): new opt-in `HEADER_PREVIEW_URL` env var that injects a preview script into every page (off unless set; used for the design preview).
 - Deploy: API build + restart. Commit `gtm-snippets/header-redesign.html`, `api/src/main.ts` (plus the cart-popup files below if releasing together).
 
-## Desktop add-to-cart popup + cart icon animation (2026-11-05, same branch, uncommitted, not deployed)
+## Desktop add-to-cart popup + cart icon animation (2026-11-05, same branch, committed b46d4d62 and pushed 2026-11-06, not deployed)
 
 - Owner asked: on desktop, "কার্টে যোগ করুন" should show the same popup as the phone site instead of the green toast ("আপনার বই কার্টে যোগ হয়েছে… চেকআউট করুন →"), and the header cart icon should animate so people notice it.
 - Root cause of the toast: the phone popup `#ab-added-cart-modal` (in `api/src/storefront-product-sections-script.ts`) is styled only inside `@media (max-width: 767px)`, and `showAddedCartModal` only ran on `/` and product pages. On desktop the modal was appended unstyled at the bottom of the page and the legacy toast (inline in `ui/dist/.../index.html`, not edited) showed instead. Also found: the desktop header badge (`app-header li.menu-cart .cart-quantity`) stayed stale after adds made by the injected scripts (only the phone bottom-bar count was updated).
