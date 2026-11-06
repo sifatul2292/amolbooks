@@ -22,9 +22,9 @@ const { PassportModule } = lib('@nestjs/passport');
 const { JwtAdminStrategy } = require('../api/dist/pages/admin/jwt-admin.strategy');
 const { OrderService } = require('../api/dist/pages/sales/order/order.service');
 const { OrderController } = require('../api/dist/pages/sales/order/order.controller');
-const { StaffActivityService } = require('../api/dist/pages/staff-activity/staff-activity.service');
+const { StaffActivityService, callPhoneKey } = require('../api/dist/pages/staff-activity/staff-activity.service');
 const { StaffActivityController } = require('../api/dist/pages/staff-activity/staff-activity.controller');
-const { StaffActivitySchema, StaffPointsSchema } = require('../api/dist/pages/staff-activity/staff-activity.schema');
+const { StaffActivitySchema, StaffPointsSchema, StaffCallSchema } = require('../api/dist/pages/staff-activity/staff-activity.schema');
 const { customerManagerPages } = require('../api/dist/pages/customer-manager/customer-manager-pages');
 const { UtilsService } = require('../api/dist/shared/utils/utils.service');
 const { OrderSchema } = require('../api/dist/schema/order.schema');
@@ -49,7 +49,7 @@ const waitFor = async (check, label, ms = 3000) => {
 };
 
 (async () => {
-  for (const file of ['staff-attribution.html', 'staff-performance.html']) {
+  for (const file of ['staff-attribution.html', 'staff-performance.html', 'staff-live.html']) {
     const html = fs.readFileSync(path.join(root, 'gtm-snippets', file), 'utf8');
     new vm.Script(html.match(/<script>([\s\S]*?)<\/script>/)[1], { filename: file });
   }
@@ -59,13 +59,14 @@ const waitFor = async (check, label, ms = 3000) => {
   const Incomplete = connection.model('IncompleteOrder', IncompleteOrderSchema);
   const Activity = connection.model('StaffActivity', StaffActivitySchema);
   const Points = connection.model('StaffPoints', StaffPointsSchema);
+  const Call = connection.model('StaffCall', StaffCallSchema);
   const Admin = connection.model('Admin', loose());
   const Product = connection.model('Product', loose());
   const User = connection.model('User', loose());
   const Setting = connection.model('Setting', loose());
   const StockMovement = connection.model('StockMovement', loose());
   const UniqueId = connection.model('UniqueId', new mongoose.Schema({ orderId: Number }));
-  await Promise.all([Order.init(), Incomplete.init(), Activity.init(), Points.init()]);
+  await Promise.all([Order.init(), Incomplete.init(), Activity.init(), Points.init(), Call.init()]);
 
   const admin = async (name, username, role, extra = {}) => {
     const doc = { _id: new mongoose.Types.ObjectId(), username, role, hasAccess: true, ...(name ? { name } : {}), ...extra };
@@ -98,7 +99,7 @@ const waitFor = async (check, label, ms = 3000) => {
     { get: (target, key) => target[key] || (async () => ({ status: 404 })) }
   );
   const config = { get: (key) => (key === 'adminJwtSecret' ? secret : undefined) };
-  const staff = new StaffActivityService(Activity, Points, Admin, Order, Incomplete, config);
+  const staff = new StaffActivityService(Activity, Points, Call, Admin, Order, Incomplete, config);
   const orderService = Object.create(OrderService.prototype);
   Object.assign(orderService, {
     orderModel: Order,
@@ -431,6 +432,94 @@ const waitFor = async (check, label, ms = 3000) => {
   assert.deepEqual({ courierSent, incompleteConverted, crmConverted, extraItems, points }, { courierSent: 10, incompleteConverted: 2, crmConverted: 1, extraItems: 7, points: 56 });
   assert.ok(report.rows.find((r) => r.name === 'Karim Admin').processingMoved > 0, 'Moves are still recorded');
   assert.equal(report.rows.some((r) => r.name === 'Old Staff'), false, 'Disabled accounts without activity are hidden');
+
+  // 9b. Ranking: the owner's account is never ranked; top / poor / unranked; ties share a rank.
+  const standing = (r) => r.rows.map((x) => [x.name, x.ranked, x.rank, x.status]);
+  assert.deepEqual(standing(report), [
+    ['Sumi Sales', true, 1, 'top'],
+    ['Rahim Sales', true, 2, 'behind'],
+    ['Karim Admin', true, 3, 'poor'],
+    ['Owner Hasan', false, null, 'owner'],
+    ['editor-only', false, null, 'unranked'],
+  ], 'Owner not ranked; under 40% of a 10+ leader is poor; a non-calling role with no points is not ranked');
+  assert.equal(report.leaderPoints, 27);
+  assert.deepEqual(report.rules, { poorShare: 0.4, poorMinLeader: 10 });
+  for (const row of report.rows) {
+    const daily = report.daily.filter((d) => d.adminId === row.adminId).reduce((sum, d) => sum + d.points, 0);
+    assert.equal(daily, row.points, row.name + ': daily points add up to the period total');
+  }
+  assert.ok(report.daily.every((d) => d.day === today), 'Daily rows use Dhaka days');
+  // The team board (order pages) shows everyone to sales staff too, but only for today.
+  let team = (await staff.teamToday(rahim)).data;
+  assert.equal(team.scope, 'team');
+  assert.equal(team.canEditPoints, false);
+  assert.equal(team.viewerId, rahim._id);
+  assert.deepEqual(standing(team), standing(report), 'Sales staff see the whole team today');
+  assert.deepEqual([team.from, team.to], [today, today]);
+  team = (await staff.teamToday({ ...rahim, role: 'salesman' })).data;
+  assert.equal(team.rows.length, 5);
+  assert.deepEqual(
+    (await staff.performance({ from: today, to: today }, rahim)).data.rows.map((r) => r.name),
+    ['Rahim Sales'],
+    'The performance page still shows sales staff only their own score'
+  );
+
+  // 9c. Who is calling whom.
+  assert.equal(callPhoneKey('+৮৮০ ১৭১১-০০০৭৭৭'), '01711000777');
+  assert.equal(callPhoneKey('0088 01711 000777'), '01711000777');
+  assert.equal(callPhoneKey('1711000777'), '01711000777');
+  assert.equal(callPhoneKey('abc'), null);
+  let callResult = (await staff.startCall({ phone: '+880 1711-000777', kind: 'incomplete', target: 'inc-1', label: 'INC1' }, rahim)).data;
+  assert.equal(callResult.started, true);
+  assert.equal(callResult.call.phoneKey, '01711000777');
+  assert.equal(callResult.call.adminName, 'Rahim Sales');
+  const rahimCall = callResult.call.id;
+  callResult = (await staff.startCall({ phone: '01711000777', kind: 'order', target: 'ord-1' }, sumi)).data;
+  assert.equal(callResult.started, false, 'Someone else on the call: nothing starts without force');
+  assert.equal(callResult.busy.adminName, 'Rahim Sales');
+  assert.equal(callResult.busy.mine, false);
+  assert.equal((await staff.startCall({ phone: '01711000777' }, rahim)).data.call.id, rahimCall, 'Same person, same customer keeps one call');
+  callResult = (await staff.startCall({ phone: '01711000777', kind: 'order', target: 'ord-1', force: true }, sumi)).data;
+  assert.equal(callResult.started, true);
+  const sumiCall = callResult.call.id;
+  let rahimDoc = await Call.findById(rahimCall).lean();
+  assert.ok(rahimDoc.endedAt, 'A forced call ends the other one');
+  assert.equal(rahimDoc.endedBy, 'Taken over by Sumi Sales');
+  const second = (await staff.startCall({ phone: '01811000888', kind: 'order' }, rahim)).data.call.id;
+  const third = (await staff.startCall({ phone: '01911000999', kind: 'order' }, rahim)).data.call.id;
+  assert.ok((await Call.findById(second).lean()).endedAt, 'Starting a call ends your previous one');
+  assert.equal((await Call.findById(third).lean()).endedAt, null);
+  assert.equal((await staff.endCall({ id: sumiCall }, rahim)).data.ended, false, "Sales staff cannot end someone else's call");
+  assert.equal((await staff.endCall({ id: third }, rahim)).data.ended, true);
+  assert.equal((await staff.endCall({ id: sumiCall }, karim)).data.ended, true, 'Managers can end any call');
+  await assert.rejects(staff.startCall({ phone: 'n/a' }, rahim), (error) => error.status === 400);
+  await assert.rejects(staff.endCall({ id: 'nope' }, rahim), (error) => error.status === 400);
+  const stale = (await staff.startCall({ phone: '01611000111', kind: 'order', target: 'x'.repeat(90) }, karim)).data.call.id;
+  await Call.updateOne({ _id: stale }, { $set: { expiresAt: new Date(Date.now() - 1000) } });
+  let listed = (await staff.listCalls(sumi)).data;
+  assert.ok(listed.now);
+  assert.deepEqual(
+    listed.calls.map((c) => [c.adminName, c.phoneKey, c.active, c.mine]),
+    [
+      ['Karim Admin', '01611000111', false, false],
+      ['Rahim Sales', '01911000999', false, false],
+      ['Rahim Sales', '01811000888', false, false],
+      ['Sumi Sales', '01711000777', false, true],
+      ['Rahim Sales', '01711000777', false, false],
+    ],
+    'Newest first; expired calls are no longer active'
+  );
+  assert.ok(listed.calls[0].endedAt, 'An expired call shows when it stopped');
+  assert.equal(listed.calls[0].target.length, 40, 'Stored text is trimmed');
+  team = (await staff.teamToday(owner)).data;
+  assert.deepEqual(
+    team.rows.map((r) => [r.name, r.callsLogged]),
+    [['Sumi Sales', 1], ['Rahim Sales', 3], ['Karim Admin', 1], ['Owner Hasan', 0], ['editor-only', 0]],
+    'Calls logged today per person'
+  );
+  const purge = (await Call.findById(stale).lean()).purgeAt.getTime() - Date.now();
+  assert.ok(purge > 119 * 86400000 && purge < 121 * 86400000, 'Call rows are kept 120 days');
+  assert.ok((await Call.collection.indexes()).some((i) => i.key.purgeAt === 1 && i.expireAfterSeconds === 0), 'TTL index removes old call rows');
   const fortyDaysAgo = new Date(Date.now() + 6 * 3600000 - 45 * 86400000).toISOString().slice(0, 10);
   report = (await staff.performance({ from: fortyDaysAgo, to: today }, owner)).data;
   assert.equal(report.rows.find((r) => r.name === 'Rahim Sales').processingMoved, 3, 'Older activity appears in a wider range');
@@ -482,6 +571,25 @@ const waitFor = async (check, label, ms = 3000) => {
   const R = await incomplete('');
   assert.equal((await call('PUT', '/api/order/update-incomplete-order-admin/' + R, karim, { adminNote: 'Busy, retry' })).status, 200);
   assert.equal(nameOf((await get(Incomplete, R)).adminNoteBy), 'Karim Admin');
+  for (const route of ['teamToday', 'calls', 'startCall', 'endCall']) {
+    assert.equal(Reflect.getMetadata('THROTTLER:SKIP', StaffActivityController.prototype[route]), true, route + ' is polled by the order pages: no per-address limit');
+  }
+  assert.equal(Reflect.getMetadata('THROTTLER:SKIP', StaffActivityController.prototype.performance), undefined);
+  assert.equal((await call('GET', '/api/staff-activity/team-today', null)).status, 401);
+  assert.equal((await call('GET', '/api/staff-activity/calls', null)).status, 401);
+  assert.equal((await call('POST', '/api/staff-activity/calls/start', null, { phone: '01711000777' })).status, 401);
+  response = await call('GET', '/api/staff-activity/team-today', sumi);
+  assert.equal(response.status, 200);
+  assert.ok(response.body.data.rows.length > 1, 'Every staff role gets the team board');
+  response = await call('POST', '/api/staff-activity/calls/start', editor, { phone: '01511000222', kind: 'customer' });
+  assert.equal(response.status, 200);
+  assert.equal(response.body.data.started, true);
+  response = await call('POST', '/api/staff-activity/calls/end', editor, { id: response.body.data.call.id });
+  assert.equal(response.status, 200);
+  assert.equal(response.body.data.ended, true);
+  response = await call('GET', '/api/staff-activity/calls', rahim);
+  assert.equal(response.status, 200);
+  assert.equal(response.body.data.calls[0].phoneKey, '01511000222');
   const ordersPage = (await call('GET', '/upload/static/custom-orders.html', null, null, true)).body;
   assert.equal(ordersPage.split('id="navStaffPerformance"').length, 2, 'One Staff Performance link');
   assert.match(ordersPage, /window\.editAdminNote[^]*r\.status === 401[^]*Log in again, then press Save on the note[^]*!d\.ok/, 'A refused note save asks for a login, not "Note saved"');
@@ -489,6 +597,9 @@ const waitFor = async (check, label, ms = 3000) => {
   assert.equal(ordersPage.split('id="ab-staff-attribution"').length, 2);
   assert.ok(ordersPage.indexOf('id="ab-staff-attribution"') > ordersPage.indexOf("var isIncompleteView"), 'Labels load after the page script');
   assert.ok(ordersPage.lastIndexOf('</body>') > ordersPage.indexOf('id="ab-staff-attribution"'));
+  assert.equal(ordersPage.split('id="ab-staff-live"').length, 2, 'Staff board injected once');
+  assert.ok(ordersPage.indexOf('id="ab-staff-live"') > ordersPage.indexOf('id="ab-staff-attribution"'), 'Board loads after the labels');
+  assert.ok(ordersPage.lastIndexOf('</body>') > ordersPage.indexOf('id="ab-staff-live"'));
   const performancePage = await call('GET', '/upload/static/staff-performance.html', null, null, true);
   assert.equal(performancePage.status, 200);
   assert.match(performancePage.body, /<title>Staff Performance · Amolbooks<\/title>/);
@@ -520,7 +631,7 @@ const waitFor = async (check, label, ms = 3000) => {
   }
 
   await Points.deleteMany({});
-  console.log('Staff activity: Steadfast sender, status moves, note authors, incomplete conversions and Customer Manager orders scored at send, extra books, once-only points, date ranges, role scopes, points settings, HTTP guards, order-page injection and one shared sidebar on every admin page pass');
+  console.log('Staff activity: Steadfast sender, status moves, note authors, incomplete conversions and Customer Manager orders scored at send, extra books, once-only points, date ranges, role scopes, ranking (owner never ranked, top/poor), the team board for today, daily points, who-is-calling (busy, take-over, one call each, expiry, 120-day rows), points settings, HTTP guards, order-page injection and one shared sidebar on every admin page pass');
 
   if (serve) {
     console.log('\nSandbox (throwaway local DB) at http://localhost:3000/upload/static/custom-orders.html');

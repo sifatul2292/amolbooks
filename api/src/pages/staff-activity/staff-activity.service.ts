@@ -31,8 +31,40 @@ const ACTION_FIELDS = {
   extra_items: 'extraItems',
 };
 const MANAGER_ROLES = ['super_admin', 'admin'];
+// The owner's account is not an employee: it appears in the tables but is never
+// ranked, called top performer or flagged as behind (owner, 2026-11-06).
+const OWNER_ROLES = ['super_admin'];
+// Roles that call customers are ranked even before their first point; other
+// roles (editor, accountant...) only once they score.
+const CALLING_ROLES = ['salesman', 'admin'];
+// "Quite poor": under 40% of the leader's points, once the leader has 10+.
+const POOR_SHARE = 0.4;
+const POOR_MIN_LEADER = 10;
+// A call shows as "calling now" for 15 minutes unless ended sooner; the list on
+// the order pages covers the last 24 hours; rows are kept 120 days for counts.
+const CALL_ACTIVE_MS = 15 * 60 * 1000;
+const CALL_RECENT_MS = 24 * 60 * 60 * 1000;
+const CALL_KEEP_MS = 120 * 24 * 60 * 60 * 1000;
+const CALL_KINDS = ['order', 'incomplete', 'customer'];
 const ACTOR_CACHE_MS = 5 * 60 * 1000;
 const DHAKA_OFFSET_MS = 6 * 60 * 60 * 1000;
+
+/**
+ * A customer's phone as the local 01XXXXXXXXX form (also from +880/0088 and
+ * Bengali digits), so every row with that customer shares one "calling" state.
+ * Other numbers keep their digits; nothing usable gives null.
+ */
+export function callPhoneKey(value: any): string | null {
+  const digits = String(value == null ? '' : value)
+    .replace(/[০-৯]/g, (digit) => String('০১২৩৪৫৬৭৮৯'.indexOf(digit)))
+    .replace(/\D/g, '');
+  let local = digits;
+  if (local.startsWith('0088')) local = local.slice(4);
+  else if (local.startsWith('88')) local = local.slice(2);
+  if (/^1[3-9]\d{8}$/.test(local)) local = `0${local}`;
+  if (/^01[3-9]\d{8}$/.test(local)) return local;
+  return digits.length >= 6 && digits.length <= 15 ? digits : null;
+}
 
 /** Books in an order: each line's quantity except free gifts (a package counts once). */
 export function itemCount(items: any): number {
@@ -57,6 +89,7 @@ export class StaffActivityService {
   constructor(
     @InjectModel('StaffActivity') private readonly activityModel: Model<any>,
     @InjectModel('StaffPoints') private readonly pointsModel: Model<any>,
+    @InjectModel('StaffCall') private readonly callModel: Model<any>,
     @InjectModel('Admin') private readonly adminModel: Model<Admin>,
     @InjectModel('Order') private readonly orderModel: Model<any>,
     @InjectModel('IncompleteOrder')
@@ -278,16 +311,23 @@ export class StaffActivityService {
   }
 
   /** Per-staff counts and points; only Super Admin/Admin see other staff. */
-  async performance(query: any, viewer: any) {
-    const { from, to, start, end } = this.range(query);
+  /**
+   * Scores for a date range. Managers see everyone; other roles only themselves,
+   * except `team` (today's board on the order pages), which every staff member sees.
+   */
+  async performance(query: any, viewer: any, team = false) {
+    const { from, to, start, end } = this.range(team ? {} : query);
     const manager = MANAGER_ROLES.includes(viewer?.role);
+    const everyone = manager || team;
     const viewerId = String(viewer?._id || '');
-    if (!manager && !Types.ObjectId.isValid(viewerId)) {
+    if (!everyone && !Types.ObjectId.isValid(viewerId)) {
       throw new BadRequestException('Unknown staff account.');
     }
     const match: any = { createdAt: { $gte: start, $lte: end } };
-    if (!manager) match.admin = new Types.ObjectId(viewerId);
-    const [settings, grouped, admins] = await Promise.all([
+    if (!everyone) match.admin = new Types.ObjectId(viewerId);
+    const callMatch: any = { startedAt: { $gte: start, $lte: end } };
+    if (match.admin) callMatch.admin = match.admin;
+    const [settings, grouped, admins, perDay, calls] = await Promise.all([
       this.getPoints(),
       this.activityModel.aggregate([
         { $match: match },
@@ -303,9 +343,32 @@ export class StaffActivityService {
         },
       ]),
       this.adminModel
-        .find(manager ? {} : { _id: viewerId })
+        .find(everyone ? {} : { _id: viewerId })
         .select('name username role hasAccess')
         .lean(),
+      this.activityModel.aggregate([
+        { $match: match },
+        {
+          $group: {
+            _id: {
+              day: {
+                $dateToString: {
+                  format: '%Y-%m-%d',
+                  date: '$createdAt',
+                  timezone: '+06:00',
+                },
+              },
+              admin: '$admin',
+              action: '$action',
+            },
+            count: { $sum: { $ifNull: ['$quantity', 1] } },
+          },
+        },
+      ]),
+      this.callModel.aggregate([
+        { $match: callMatch },
+        { $group: { _id: '$admin', count: { $sum: 1 } } },
+      ]),
     ]);
     const points = settings.points;
     const rows = new Map<string, any>();
@@ -321,6 +384,7 @@ export class StaffActivityService {
           incompleteConverted: 0,
           crmConverted: 0,
           extraItems: 0,
+          callsLogged: 0,
           points: 0,
         });
       }
@@ -337,6 +401,10 @@ export class StaffActivityService {
       entry[field] += group.count;
       if (field === 'processingMoved') entry.movedToConfirmed += group.confirmed;
     }
+    for (const group of calls) {
+      const entry = rows.get(String(group._id));
+      if (entry) entry.callsLogged = group.count;
+    }
     // Current admin records win over the names saved with older activity.
     for (const admin of admins as any[]) {
       const entry = rows.get(String(admin._id));
@@ -352,6 +420,7 @@ export class StaffActivityService {
       incompleteConverted: 0,
       crmConverted: 0,
       extraItems: 0,
+      callsLogged: 0,
       points: 0,
     };
     for (const entry of list) {
@@ -362,12 +431,37 @@ export class StaffActivityService {
       for (const key of Object.keys(totals)) totals[key] += entry[key];
     }
     list.sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
+    const standing = this.standings(list);
+    // Points per Dhaka day and staff member, for the page's daily chart.
+    const days = new Map<string, any>();
+    for (const group of perDay) {
+      const field = ACTION_FIELDS[group._id.action];
+      if (!(field in points)) continue;
+      const key = group._id.day + '|' + String(group._id.admin);
+      if (!days.has(key)) {
+        days.set(key, {
+          day: group._id.day,
+          adminId: String(group._id.admin),
+          courierSent: 0,
+          incompleteConverted: 0,
+          crmConverted: 0,
+          extraItems: 0,
+          points: 0,
+        });
+      }
+      const day = days.get(key);
+      day[field] += group.count;
+      day.points += group.count * points[field];
+    }
     return {
       success: true,
       data: {
         from,
         to,
-        scope: manager ? 'all' : 'self',
+        scope: manager ? 'all' : team ? 'team' : 'self',
+        viewerId,
+        leaderPoints: standing.leaderPoints,
+        rules: { poorShare: POOR_SHARE, poorMinLeader: POOR_MIN_LEADER },
         canEditPoints: manager,
         points,
         pointsUpdatedAt: settings.updatedAt,
@@ -375,7 +469,176 @@ export class StaffActivityService {
         pointsAreDefault: settings.isDefault,
         rows: list,
         totals,
+        daily: [...days.values()].sort(
+          (a, b) => a.day.localeCompare(b.day) || a.adminId.localeCompare(b.adminId),
+        ),
       },
+    };
+  }
+
+  /** Today's board for every staff member (order pages). */
+  teamToday(viewer: any) {
+    return this.performance({}, viewer, true);
+  }
+
+  /**
+   * Rank employees only (the owner never). Ties share a rank. status:
+   * top (most points, above 0), poor (under 40% of a leader with 10+),
+   * idle (no points yet), behind (the rest), owner (not ranked).
+   */
+  private standings(list: any[]) {
+    for (const entry of list) {
+      entry.ranked =
+        !OWNER_ROLES.includes(entry.role) &&
+        (CALLING_ROLES.includes(entry.role) || entry.points > 0);
+    }
+    const ranked = list.filter((entry) => entry.ranked);
+    const leaderPoints = ranked.reduce((max, entry) => Math.max(max, entry.points), 0);
+    let previous: number = null;
+    ranked.forEach((entry, index) => {
+      if (entry.points !== previous) {
+        entry.rank = index + 1;
+        previous = entry.points;
+      } else {
+        entry.rank = ranked[index - 1].rank;
+      }
+      if (leaderPoints > 0 && entry.points === leaderPoints) entry.status = 'top';
+      else if (leaderPoints >= POOR_MIN_LEADER && entry.points < leaderPoints * POOR_SHARE)
+        entry.status = 'poor';
+      else if (entry.points === 0) entry.status = 'idle';
+      else entry.status = 'behind';
+    });
+    for (const entry of list) {
+      if (entry.ranked) continue;
+      entry.rank = null;
+      entry.status = OWNER_ROLES.includes(entry.role) ? 'owner' : 'unranked';
+    }
+    return { leaderPoints };
+  }
+
+  /**
+   * Mark that the signed-in staff member is calling a customer. If someone else
+   * is already on a call with that number, nothing starts unless `force`.
+   * Starting a call ends the caller's previous one.
+   */
+  async startCall(body: any, admin: any) {
+    const actor = await this.resolveActor(admin);
+    if (!actor) throw new BadRequestException('Unknown staff account.');
+    const phoneKey = callPhoneKey(body?.phone);
+    if (!phoneKey) throw new BadRequestException('This phone number cannot be used.');
+    const now = new Date();
+    const live = { endedAt: null, expiresAt: { $gt: now } };
+    const busy: any = await this.callModel
+      .findOne({ ...live, phoneKey, admin: { $ne: actor._id } })
+      .sort({ startedAt: -1 })
+      .lean();
+    if (busy && body?.force !== true) {
+      return {
+        success: true,
+        data: { started: false, busy: this.publicCall(busy, actor._id, now) },
+      };
+    }
+    const mine: any = await this.callModel
+      .findOne({ ...live, phoneKey, admin: actor._id })
+      .sort({ startedAt: -1 })
+      .lean();
+    if (busy) {
+      await this.callModel.updateMany(
+        { ...live, phoneKey, admin: { $ne: actor._id } },
+        { $set: { endedAt: now, endedBy: 'Taken over by ' + actor.name } },
+      );
+    }
+    await this.callModel.updateMany(
+      { ...live, admin: actor._id, phoneKey: { $ne: phoneKey } },
+      { $set: { endedAt: now, endedBy: actor.name } },
+    );
+    if (mine) {
+      // Same person, same customer: keep the call going.
+      const call = await this.callModel
+        .findByIdAndUpdate(
+          mine._id,
+          { $set: { expiresAt: new Date(now.getTime() + CALL_ACTIVE_MS) } },
+          { new: true },
+        )
+        .lean();
+      return { success: true, data: { started: true, call: this.publicCall(call, actor._id, now) } };
+    }
+    const text = (value: any, max: number) =>
+      String(value == null ? '' : value).trim().slice(0, max);
+    const call: any = await this.callModel.create({
+      phoneKey,
+      phone: text(body?.phone, 24),
+      kind: CALL_KINDS.includes(body?.kind) ? body.kind : 'order',
+      target: text(body?.target, 40),
+      label: text(body?.label, 40),
+      admin: actor._id,
+      adminName: actor.name,
+      adminRole: actor.role,
+      startedAt: now,
+      expiresAt: new Date(now.getTime() + CALL_ACTIVE_MS),
+      endedAt: null,
+      purgeAt: new Date(now.getTime() + CALL_KEEP_MS),
+    });
+    return {
+      success: true,
+      data: { started: true, call: this.publicCall(call.toObject(), actor._id, now) },
+    };
+  }
+
+  /** "Done": end one's own call (managers may end anyone's). */
+  async endCall(body: any, admin: any) {
+    const actor = await this.resolveActor(admin);
+    if (!actor) throw new BadRequestException('Unknown staff account.');
+    const id = String(body?.id || '');
+    if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Unknown call.');
+    const filter: any = { _id: new Types.ObjectId(id), endedAt: null };
+    if (!MANAGER_ROLES.includes(actor.role)) filter.admin = actor._id;
+    const now = new Date();
+    const call = await this.callModel
+      .findOneAndUpdate(filter, { $set: { endedAt: now, endedBy: actor.name } }, { new: true })
+      .lean();
+    return {
+      success: true,
+      data: { ended: Boolean(call), call: call ? this.publicCall(call, actor._id, now) : null },
+    };
+  }
+
+  /** Calls of the last 24 hours, newest first (order pages poll this). */
+  async listCalls(admin: any) {
+    const actor = await this.resolveActor(admin);
+    if (!actor) throw new BadRequestException('Unknown staff account.');
+    const now = new Date();
+    const calls = await this.callModel
+      .find({ startedAt: { $gte: new Date(now.getTime() - CALL_RECENT_MS) } })
+      .sort({ startedAt: -1 })
+      .limit(400)
+      .lean();
+    return {
+      success: true,
+      data: {
+        now: now.toISOString(),
+        calls: calls.map((call) => this.publicCall(call, actor._id, now)),
+      },
+    };
+  }
+
+  private publicCall(call: any, viewerId: any, now: Date) {
+    const expiresAt = new Date(call.expiresAt);
+    const active = !call.endedAt && expiresAt > now;
+    return {
+      id: String(call._id),
+      phoneKey: call.phoneKey,
+      phone: call.phone || call.phoneKey,
+      kind: call.kind || 'order',
+      target: call.target || '',
+      label: call.label || '',
+      adminId: String(call.admin),
+      adminName: call.adminName || 'Staff',
+      startedAt: call.startedAt,
+      endedAt: active ? null : call.endedAt || expiresAt,
+      endedBy: call.endedBy || '',
+      active,
+      mine: String(call.admin) === String(viewerId),
     };
   }
 

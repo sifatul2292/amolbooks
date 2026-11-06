@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { renderProductSeo } from './product-seo.utils';
+import { prepareCandidates, rankSearch } from './product-search.util';
 import { Model, Types } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { UtilsService } from '../../shared/utils/utils.service';
@@ -39,8 +40,21 @@ import { OrderStatus } from '../../enum/order.enum';
 import * as moment from 'moment-timezone';
 const ObjectId = Types.ObjectId;
 
+// Spelling-tolerant search (product-search.util.ts): the searchable fields of
+// every product a filter allows, in the requested order, kept two minutes.
+const SEARCH_FIELDS =
+  'name nameEn seoKeywords translatorName category.name publisher.name author.name';
+const SEARCH_CANDIDATE_LIMIT = 6000;
+const SEARCH_CANDIDATE_TTL_MS = 2 * 60 * 1000;
+const SEARCH_RESULT_LIMIT = 500;
+
 @Injectable()
 export class ProductService {
+  private searchCandidateCache = new Map<
+    string,
+    { at: number; list: ReturnType<typeof prepareCandidates> }
+  >();
+
   private logger = new Logger(ProductService.name);
   private readonly cacheProductPage = 'getAllProducts?page=1';
   private readonly cacheProductCount = 'getAllProducts?count';
@@ -452,6 +466,34 @@ export class ProductService {
     }
   }
 
+  /** Search result ids in order, or null to use the old exact search. */
+  private async rankedSearchIds(
+    baseFilter: any,
+    sort: any,
+    searchQuery: string,
+  ): Promise<any[] | null> {
+    try {
+      const key = JSON.stringify(baseFilter || {}) + '|' + JSON.stringify(sort || {});
+      let entry = this.searchCandidateCache.get(key);
+      if (!entry || Date.now() - entry.at > SEARCH_CANDIDATE_TTL_MS) {
+        const docs = await this.productModel
+          .find(baseFilter || {})
+          .sort(sort)
+          .select(SEARCH_FIELDS)
+          .limit(SEARCH_CANDIDATE_LIMIT + 1)
+          .lean();
+        if (docs.length > SEARCH_CANDIDATE_LIMIT) return null;
+        entry = { at: Date.now(), list: prepareCandidates(docs as any[]) };
+        if (this.searchCandidateCache.size >= 50) this.searchCandidateCache.clear();
+        this.searchCandidateCache.set(key, entry);
+      }
+      return rankSearch(entry.list, searchQuery).slice(0, SEARCH_RESULT_LIMIT);
+    } catch (error) {
+      this.logger.warn(`Spelling-tolerant search failed, using exact search: ${error?.message}`);
+      return null;
+    }
+  }
+
   /**
    * getAllProducts
    * getProductById
@@ -571,7 +613,16 @@ export class ProductService {
     //   };
     //   // mFilter = { ...mFilter, ...{ name: new RegExp(searchQuery, 'i') } };
     // }
+    // Spelling-tolerant search: ids in result order (strong matches keep the
+    // requested sort; close spellings only when nothing matches). Falls back to
+    // the old exact search if the catalogue is too large or the lookup fails.
+    let searchOrder: any[] | null = null;
     if (searchQuery) {
+      searchOrder = await this.rankedSearchIds(mFilter, sort || { createdAt: -1 }, searchQuery);
+    }
+    if (searchOrder) {
+      mFilter = { $and: [mFilter, { _id: { $in: searchOrder } }] };
+    } else if (searchQuery) {
       mFilter = {
         $and: [
           mFilter,
@@ -606,7 +657,9 @@ export class ProductService {
       // mFilter = { ...mFilter, ...{ name: new RegExp(searchQuery, 'i') } };
     }
     // Sort
-    if (sort) {
+    if (searchOrder) {
+      mSort = { __searchRank: 1 };
+    } else if (sort) {
       mSort = sort;
     } else {
       mSort = { createdAt: -1 };
@@ -717,6 +770,12 @@ export class ProductService {
       if (groupPublisher) {
         aggregatePublisherGroupStages.push(groupPublisher);
       }
+    }
+
+    if (searchOrder) {
+      aggregateStages.push({
+        $addFields: { __searchRank: { $indexOfArray: [searchOrder, '$_id'] } },
+      });
     }
 
     if (Object.keys(mSort).length) {

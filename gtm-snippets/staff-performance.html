@@ -313,6 +313,275 @@
       .login input {
         width: 100%;
       }
+      /* Top performer / needs a push, and the charts (2026-11-06). */
+      .spotlight {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+      .spotlight[hidden],
+      .charts[hidden] {
+        display: none;
+      }
+      .spot {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        border-left: 5px solid var(--spot, #7135e8);
+      }
+      .spot.top {
+        --spot: #d97706;
+        background: linear-gradient(100deg, #fffbeb, #fff 70%);
+      }
+      .spot.push {
+        --spot: #dc2626;
+        background: linear-gradient(100deg, #fef2f2, #fff 70%);
+      }
+      .spot.ok {
+        --spot: #16a34a;
+        background: #fff;
+      }
+      .spot-icon {
+        flex: none;
+        width: 50px;
+        height: 50px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        font-size: 22px;
+        color: #fff;
+        background: var(--spot);
+      }
+      .spot .kicker {
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .spot strong {
+        display: block;
+        font-size: 19px;
+        margin-top: 3px;
+      }
+      .spot p {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+      .charts {
+        --c-courierSent: #2a78d6;
+        --c-incompleteConverted: #eb6834;
+        --c-crmConverted: #1baf7a;
+        --c-extraItems: #eda100;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+        align-items: start;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+      .chart-card {
+        min-width: 0;
+      }
+      .chart-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+      .chart-head h2 {
+        font-size: 15px;
+      }
+      .chart-head p {
+        margin-top: 4px;
+        font-size: 12px;
+      }
+      .chart-head select {
+        padding: 7px 10px;
+        max-width: 220px;
+      }
+      .legend {
+        list-style: none;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+        margin: 0 0 14px;
+        padding: 0;
+        font-size: 12px;
+        color: #3d4763;
+      }
+      .legend li {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .legend i {
+        width: 10px;
+        height: 10px;
+        border-radius: 3px;
+        background: var(--c);
+      }
+      .hbars {
+        display: grid;
+        gap: 12px;
+      }
+      .hbar {
+        display: grid;
+        grid-template-columns: 136px minmax(0, 1fr) 52px;
+        gap: 10px;
+        align-items: center;
+        font-size: 12.5px;
+      }
+      .hbar-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 650;
+      }
+      .hbar-name small {
+        display: inline;
+        color: #b45309;
+        font-weight: 700;
+      }
+      .hbar-track {
+        display: flex;
+        gap: 2px;
+        height: 18px;
+        min-width: 0;
+      }
+      .hbar-seg {
+        height: 100%;
+        min-width: 3px;
+        background: var(--c);
+      }
+      .hbar-seg:last-child {
+        border-radius: 0 4px 4px 0;
+      }
+      .hbar-total {
+        text-align: right;
+        font-weight: 750;
+        font-variant-numeric: tabular-nums;
+      }
+      .chart-empty {
+        padding: 30px 6px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .daily svg {
+        display: block;
+        width: 100%;
+        overflow: visible;
+      }
+      .daily text {
+        font-size: 11px;
+        fill: #7b859c;
+        font-variant-numeric: tabular-nums;
+      }
+      .daily-table summary {
+        margin-top: 10px;
+        cursor: pointer;
+        font-size: 12px;
+        color: var(--purple);
+        font-weight: 600;
+      }
+      .daily-table table {
+        margin-top: 8px;
+      }
+      .daily-table td,
+      .daily-table th {
+        padding: 8px 10px;
+      }
+      .tip {
+        position: fixed;
+        z-index: 60;
+        pointer-events: none;
+        min-width: 160px;
+        padding: 9px 11px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+        box-shadow: 0 10px 28px rgba(24, 32, 57, 0.16);
+        font-size: 12px;
+        color: #182039;
+      }
+      .tip[hidden] {
+        display: none;
+      }
+      .tip > strong {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 12.5px;
+      }
+      .tip-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        line-height: 1.7;
+      }
+      .tip-row b {
+        font-variant-numeric: tabular-nums;
+      }
+      .tip-key {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: #3d4763;
+      }
+      .tip-key i {
+        width: 12px;
+        height: 3px;
+        border-radius: 2px;
+        background: var(--c);
+      }
+      .tip-total {
+        margin-top: 4px;
+        padding-top: 4px;
+        border-top: 1px solid #edf0f6;
+      }
+      .status-pill {
+        display: inline-block;
+        margin: 4px 0 0 6px;
+        padding: 3px 8px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .status-pill.top {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      .status-pill.poor {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      tbody tr.owner td {
+        background: #fafafc;
+      }
+      @media (max-width: 1100px) {
+        .charts {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      @media (max-width: 600px) {
+        .spotlight {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .spot-icon {
+          width: 42px;
+          height: 42px;
+          font-size: 18px;
+        }
+        .hbar {
+          grid-template-columns: 92px minmax(0, 1fr) 42px;
+          gap: 8px;
+        }
+      }
       @media (max-width: 1100px) {
         .filters,
         .points-form {
@@ -425,6 +694,54 @@
           </div>
         </div>
 
+        <div class="spotlight" id="spotlight" hidden>
+          <div class="card spot top" id="spot-top">
+            <span class="spot-icon" aria-hidden="true">🏆</span>
+            <div>
+              <small class="kicker">Top performer</small>
+              <strong id="spot-top-name">—</strong>
+              <p id="spot-top-detail"></p>
+            </div>
+          </div>
+          <div class="card spot push" id="spot-push">
+            <span class="spot-icon" aria-hidden="true" id="spot-push-icon">⚑</span>
+            <div>
+              <small class="kicker">Needs a push</small>
+              <strong id="spot-push-name">—</strong>
+              <p id="spot-push-detail"></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="charts" id="charts" hidden>
+          <section class="card chart-card" aria-labelledby="bars-title">
+            <div class="chart-head">
+              <div>
+                <h2 id="bars-title">Points by staff</h2>
+                <p class="muted" id="bars-note">Employees only. The owner’s account is not ranked.</p>
+              </div>
+            </div>
+            <ul class="legend" id="legend-bars"></ul>
+            <div class="hbars" id="hbars"></div>
+          </section>
+          <section class="card chart-card" aria-labelledby="daily-title">
+            <div class="chart-head">
+              <div>
+                <h2 id="daily-title">Points per day</h2>
+                <p class="muted" id="daily-note">—</p>
+              </div>
+              <select id="daily-who" aria-label="Whose points to show"></select>
+            </div>
+            <ul class="legend" id="legend-daily"></ul>
+            <div class="daily" id="daily"></div>
+            <details class="daily-table">
+              <summary>Show the numbers</summary>
+              <div class="table-scroll" id="daily-table"></div>
+            </details>
+          </section>
+        </div>
+        <div class="tip" id="tip" role="tooltip" hidden></div>
+
         <section class="card table-card">
           <div class="table-title">
             <div>
@@ -443,11 +760,12 @@
                   <th class="num">Incomplete converted</th>
                   <th class="num">Customer Manager orders</th>
                   <th class="num">Extra books</th>
+                  <th class="num" title="Calls marked with “I’m calling” on the order pages (no points)">Calls logged</th>
                   <th class="num">Points</th>
                 </tr>
               </thead>
               <tbody id="rows">
-                <tr><td colspan="7" class="empty">Loading…</td></tr>
+                <tr><td colspan="8" class="empty">Loading…</td></tr>
               </tbody>
               <tfoot id="foot"></tfoot>
             </table>
@@ -587,12 +905,271 @@
           return payload.data;
         }
 
+        const TYPES = [
+          { key: 'courierSent', label: 'Parcels sent', one: 'parcel' },
+          { key: 'incompleteConverted', label: 'Incomplete converted', one: 'conversion' },
+          { key: 'crmConverted', label: 'Customer Manager orders', one: 'order' },
+          { key: 'extraItems', label: 'Extra books', one: 'book' },
+        ];
+        const plural = (n, word) => num(n) + ' ' + word + (Number(n) === 1 ? '' : 's');
+        // People are called by the last part of their name ("Golam Masum Munna" → "Munna").
+        const shortName = (name) => {
+          const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+          return parts.length ? parts[parts.length - 1] : 'Staff';
+        };
+        const typePoints = (row, key) => (row[key] || 0) * ((data && data.points[key]) || 0);
+        function breakdown(row) {
+          return TYPES.filter((t) => row[t.key])
+            .map((t) => (t.key === 'incompleteConverted' ? num(row[t.key]) + ' converted' : plural(row[t.key], t.key === 'courierSent' ? 'parcel' : t.key === 'crmConverted' ? 'Customer Manager order' : 'extra book')))
+            .join(' · ');
+        }
+        function legend(id) {
+          $(id).innerHTML = TYPES.map(
+            (t) => '<li><i style="--c:var(--c-' + t.key + ')"></i>' + esc(t.label) + ' (' + data.points[t.key] + ' pt each)</li>'
+          ).join('');
+        }
+
+        // Tooltip shared by both charts (values are also in the tables).
+        function tipShow(event, html) {
+          const tip = $('tip');
+          tip.innerHTML = html;
+          tip.hidden = false;
+          const pad = 14;
+          const w = tip.offsetWidth;
+          const h = tip.offsetHeight;
+          let x = event.clientX + pad;
+          let y = event.clientY + pad;
+          if (x + w > window.innerWidth - 8) x = event.clientX - w - pad;
+          if (y + h > window.innerHeight - 8) y = event.clientY - h - pad;
+          tip.style.left = Math.max(8, x) + 'px';
+          tip.style.top = Math.max(8, y) + 'px';
+        }
+        function tipHide() {
+          $('tip').hidden = true;
+        }
+        function tipRows(row) {
+          let total = 0;
+          const lines = TYPES.map((t) => {
+            const pts = typePoints(row, t.key);
+            total += pts;
+            return (
+              '<div class="tip-row"><span class="tip-key"><i style="--c:var(--c-' + t.key + ')"></i>' + esc(t.label) +
+              (row[t.key] ? ' · ' + num(row[t.key]) : '') + '</span><b>' + num(pts) + ' pts</b></div>'
+            );
+          }).join('');
+          return lines + '<div class="tip-row tip-total"><span>Total</span><b>' + num(total) + ' pts</b></div>';
+        }
+
+        function renderSpotlight(rows) {
+          const ranked = rows.filter((r) => r.ranked);
+          const show = data.scope !== 'self' && ranked.length > 0;
+          $('spotlight').hidden = !show;
+          if (!show) return;
+          const leaders = ranked.filter((r) => r.status === 'top');
+          const teamPoints = ranked.reduce((sum, r) => sum + r.points, 0);
+          if (leaders.length) {
+            const lead = leaders[0];
+            $('spot-top-name').textContent = leaders.map((r) => r.name).join(' & ') + ' · ' + plural(lead.points, 'point');
+            $('spot-top-detail').textContent =
+              (leaders.length > 1 ? 'Sharing first place. ' : '') +
+              (teamPoints ? Math.round((lead.points / teamPoints) * 100) + '% of the team’s points' : '') +
+              (breakdown(lead) ? ' — ' + breakdown(lead) : '') + '.';
+          } else {
+            $('spot-top-name').textContent = 'No points yet';
+            $('spot-top-detail').textContent = 'Nobody has scored in this period.';
+          }
+          const poor = ranked.filter((r) => r.status === 'poor');
+          $('spot-push').className = 'card spot ' + (poor.length ? 'push' : 'ok');
+          $('spot-push-icon').textContent = poor.length ? '⚑' : '✓';
+          if (poor.length) {
+            $('spot-push-name').textContent = poor.map((r) => shortName(r.name)).join(', ');
+            $('spot-push-detail').textContent =
+              poor.map((r) => r.name + ': ' + plural(r.points, 'point')).join(' · ') +
+              ' — under ' + Math.round(data.rules.poorShare * 100) + '% of the top score (' + num(data.leaderPoints) + ').';
+          } else {
+            $('spot-push-name').textContent = 'Everyone is on track';
+            $('spot-push-detail').textContent =
+              'Nobody is under ' + Math.round(data.rules.poorShare * 100) + '% of the top score' +
+              (data.leaderPoints < data.rules.poorMinLeader ? ' (checked once the leader has ' + data.rules.poorMinLeader + ' points).' : '.');
+          }
+        }
+
+        function renderBars(rows) {
+          const list = data.scope === 'self' ? rows : rows.filter((r) => r.ranked);
+          $('bars-title').textContent = data.scope === 'self' ? 'Your points' : 'Points by staff';
+          $('bars-note').textContent =
+            data.scope === 'self' ? 'By type of work.' : 'Employees only. The owner’s account is not ranked.';
+          legend('legend-bars');
+          const max = list.reduce((m, r) => Math.max(m, r.points), 0);
+          if (!list.length || !max) {
+            $('hbars').innerHTML = '<div class="chart-empty">No points in this period.</div>';
+            return;
+          }
+          $('hbars').innerHTML = list
+            .map((r, i) => {
+              const segs = TYPES.map((t) => {
+                const pts = typePoints(r, t.key);
+                if (!pts) return '';
+                return (
+                  '<span class="hbar-seg" data-row="' + i + '" style="--c:var(--c-' + t.key + ');flex:0 0 calc(' +
+                  ((pts / max) * 100).toFixed(3) + '% - 2px)"></span>'
+                );
+              }).join('');
+              return (
+                '<div class="hbar" data-row="' + i + '">' +
+                '<span class="hbar-name" title="' + esc(r.name) + '">' + esc(r.name) +
+                (r.status === 'top' ? ' <small>★</small>' : '') + '</span>' +
+                '<span class="hbar-track">' + segs + '</span>' +
+                '<span class="hbar-total">' + num(r.points) + '</span></div>'
+              );
+            })
+            .join('');
+          $('hbars').onpointermove = (event) => {
+            const bar = event.target.closest('.hbar');
+            if (!bar) return tipHide();
+            const r = list[Number(bar.getAttribute('data-row'))];
+            tipShow(event, '<strong>' + esc(r.name) + (r.rank ? ' · #' + r.rank : '') + '</strong>' + tipRows(r));
+          };
+          $('hbars').onpointerleave = tipHide;
+        }
+
+        function dayList(from, to) {
+          const out = [];
+          for (let d = from; d <= to && out.length < 400; d = shift(d, 1)) out.push(d);
+          return out;
+        }
+        function buckets(days) {
+          const label = (d) => new Date(d + 'T12:00:00+06:00').toLocaleDateString('en-GB', { timeZone: 'Asia/Dhaka', day: 'numeric', month: 'short' });
+          if (days.length <= 62) return days.map((d) => ({ key: d, label: label(d), title: fmtDay(d), days: [d] }));
+          const map = new Map();
+          for (const d of days) {
+            const k = d.slice(0, 7);
+            if (!map.has(k)) {
+              const name = new Date(k + '-15T12:00:00+06:00').toLocaleDateString('en-GB', { timeZone: 'Asia/Dhaka', month: 'short', year: 'numeric' });
+              map.set(k, { key: k, label: name, title: name, days: [] });
+            }
+            map.get(k).days.push(d);
+          }
+          return [...map.values()];
+        }
+        function fillWho(rows) {
+          const current = $('daily-who').value;
+          const ranked = rows.filter((r) => r.ranked);
+          const options =
+            (data.scope === 'self' ? [] : [['team', 'All employees']])
+              .concat(ranked.map((r) => [r.adminId, r.name]))
+              .concat(rows.filter((r) => !r.ranked).map((r) => [r.adminId, r.name + (r.status === 'owner' ? ' (owner)' : '')]));
+          $('daily-who').innerHTML = options
+            .map(([v, l]) => '<option value="' + esc(v) + '">' + esc(l) + '</option>')
+            .join('');
+          $('daily-who').value = options.some(([v]) => v === current) ? current : options.length ? options[0][0] : '';
+          $('daily-who').hidden = options.length < 2;
+        }
+        function niceMax(value) {
+          if (value <= 4) return 4;
+          const step = Math.pow(10, Math.floor(Math.log10(value / 4)));
+          const unit = [1, 2, 2.5, 5, 10].map((m) => m * step).find((u) => u * 4 >= value);
+          return unit * 4;
+        }
+        function renderDaily(rows) {
+          legend('legend-daily');
+          const who = $('daily-who').value;
+          const ids = new Set(who === 'team' ? rows.filter((r) => r.ranked).map((r) => r.adminId) : [who]);
+          const series = buckets(dayList(data.from, data.to)).map((b) => {
+            const sum = { courierSent: 0, incompleteConverted: 0, crmConverted: 0, extraItems: 0 };
+            for (const d of data.daily || []) {
+              if (!ids.has(d.adminId) || !b.days.includes(d.day)) continue;
+              for (const t of TYPES) sum[t.key] += d[t.key] || 0;
+            }
+            const total = TYPES.reduce((acc, t) => acc + typePoints(sum, t.key), 0);
+            return { ...b, sum, total };
+          });
+          const selected = $('daily-who').selectedOptions[0];
+          const whoLabel = selected ? selected.textContent : '';
+          const grand = series.reduce((a, b) => a + b.total, 0);
+          $('daily-note').textContent =
+            whoLabel + ' · ' + plural(grand, 'point') + (series.length > 1 ? ' over ' + plural(series.length, series[0].days.length > 1 ? 'month' : 'day') : '');
+          // Table view (same numbers as the chart).
+          $('daily-table').innerHTML =
+            '<table><thead><tr><th>' + (series[0] && series[0].days.length > 1 ? 'Month' : 'Day') + '</th>' +
+            TYPES.map((t) => '<th class="num">' + esc(t.label) + '</th>').join('') + '<th class="num">Points</th></tr></thead><tbody>' +
+            series.map((b) => '<tr><td>' + esc(b.title) + '</td>' + TYPES.map((t) => '<td class="num">' + num(b.sum[t.key]) + '</td>').join('') + '<td class="num">' + num(b.total) + '</td></tr>').join('') +
+            '</tbody></table>';
+          const box = $('daily');
+          if (!grand) {
+            box.innerHTML = '<div class="chart-empty">No points in this period.</div>';
+            box.onpointermove = box.onpointerleave = null;
+            return;
+          }
+          const W = Math.max(280, box.clientWidth || 600);
+          const H = 230;
+          const m = { l: 36, r: 6, t: 10, b: 26 };
+          const pw = W - m.l - m.r;
+          const ph = H - m.t - m.b;
+          const top = niceMax(Math.max(...series.map((b) => b.total)));
+          const y = (v) => m.t + ph - (v / top) * ph;
+          const band = pw / series.length;
+          const bw = Math.max(3, Math.min(28, band * 0.62));
+          let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" height="' + H + '" role="img" aria-label="Points per day, stacked by type of work">';
+          for (let i = 0; i <= 4; i++) {
+            const v = (top / 4) * i;
+            svg += '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="' + (i ? '#edf0f6' : '#d7dbe6') + '" />';
+            svg += '<text x="' + (m.l - 6) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + num(v) + '</text>';
+          }
+          svg += '<rect class="hover-band" x="0" y="' + m.t + '" width="' + band + '" height="' + ph + '" fill="#f3efff" visibility="hidden" />';
+          const every = Math.max(1, Math.ceil(series.length / Math.max(1, Math.floor(pw / 46))));
+          series.forEach((b, i) => {
+            const cx = m.l + band * i + band / 2;
+            const x = cx - bw / 2;
+            let cursor = y(0);
+            const drawn = TYPES.filter((t) => typePoints(b.sum, t.key) > 0);
+            drawn.forEach((t, j) => {
+              const h = (typePoints(b.sum, t.key) / top) * ph;
+              if (j > 0) cursor -= 2;
+              const y0 = cursor - h;
+              cursor = y0;
+              const fill = 'var(--c-' + t.key + ')';
+              if (j === drawn.length - 1) {
+                const r = Math.min(4, h, bw / 2);
+                svg +=
+                  '<path fill="' + fill + '" d="M' + x + ',' + (y0 + h) + 'V' + (y0 + r) + 'Q' + x + ',' + y0 + ' ' + (x + r) + ',' + y0 +
+                  'H' + (x + bw - r) + 'Q' + (x + bw) + ',' + y0 + ' ' + (x + bw) + ',' + (y0 + r) + 'V' + (y0 + h) + 'Z" />';
+              } else {
+                svg += '<rect fill="' + fill + '" x="' + x + '" y="' + y0 + '" width="' + bw + '" height="' + Math.max(0, h) + '" />';
+              }
+            });
+            if (i % every === 0) svg += '<text x="' + cx + '" y="' + (H - 8) + '" text-anchor="middle">' + esc(b.label) + '</text>';
+          });
+          svg += '</svg>';
+          box.innerHTML = svg;
+          const hover = box.querySelector('.hover-band');
+          box.onpointermove = (event) => {
+            const rect = box.querySelector('svg').getBoundingClientRect();
+            const px = ((event.clientX - rect.left) / rect.width) * W - m.l;
+            const i = Math.floor(px / band);
+            if (i < 0 || i >= series.length) {
+              hover.setAttribute('visibility', 'hidden');
+              return tipHide();
+            }
+            hover.setAttribute('x', m.l + band * i);
+            hover.setAttribute('visibility', 'visible');
+            const b = series[i];
+            tipShow(event, '<strong>' + esc(b.title) + '</strong>' + tipRows(b.sum));
+          };
+          box.onpointerleave = () => {
+            hover.setAttribute('visibility', 'hidden');
+            tipHide();
+          };
+        }
+
         function render() {
           const role = $('role').value;
           const me = String(tokenPayload()._id || '');
-          const rows = data.rows.filter((r) => !role || r.role === role);
-          const totals = { courierSent: 0, incompleteConverted: 0, crmConverted: 0, extraItems: 0, points: 0 };
-          rows.forEach((r) => Object.keys(totals).forEach((k) => (totals[k] += r[k])));
+          const filtered = data.rows.filter((r) => !role || r.role === role);
+          // Employees by rank first; the owner's account (not ranked) after them.
+          const rows = filtered.filter((r) => r.ranked).concat(filtered.filter((r) => !r.ranked));
+          const totals = { courierSent: 0, incompleteConverted: 0, crmConverted: 0, extraItems: 0, callsLogged: 0, points: 0 };
+          rows.forEach((r) => Object.keys(totals).forEach((k) => (totals[k] += r[k] || 0)));
           Object.keys(totals).forEach((k) => {
             if ($('total-' + k)) $('total-' + k).textContent = num(totals[k]);
           });
@@ -600,28 +1177,45 @@
           $('scope-note').textContent = data.scope === 'self' ? 'You can see your own score only.' : '';
           $('rows').innerHTML = rows.length
             ? rows
-                .map(
-                  (r, i) =>
-                    '<tr' + (r.adminId === me ? ' class="me"' : '') + '>' +
-                    '<td><span class="rank' + (i < 3 && r.points > 0 ? ' top' : '') + '">' + (i + 1) + '</span></td>' +
+                .map((r) => {
+                  const pill =
+                    r.status === 'top'
+                      ? '<span class="status-pill top">Top performer</span>'
+                      : r.status === 'poor'
+                      ? '<span class="status-pill poor">Needs a push</span>'
+                      : '';
+                  const badge = r.status === 'owner' ? 'Owner · not ranked' : roleLabel(r.role);
+                  return (
+                    '<tr class="' + [r.adminId === me ? 'me' : '', r.ranked ? '' : 'owner'].join(' ').trim() + '">' +
+                    '<td>' + (r.ranked ? '<span class="rank' + (r.status === 'top' ? ' top' : '') + '">' + r.rank + '</span>' : '<span class="rank">—</span>') + '</td>' +
                     '<td><div class="staff-name">' + esc(r.name) + (r.adminId === me ? ' <small style="display:inline">(you)</small>' : '') +
-                    '</div><span class="badge">' + esc(roleLabel(r.role)) + '</span></td>' +
+                    '</div><span class="badge">' + esc(badge) + '</span>' + pill + '</td>' +
                     '<td class="num">' + num(r.courierSent) + '</td>' +
                     '<td class="num">' + num(r.incompleteConverted) + '</td>' +
                     '<td class="num">' + num(r.crmConverted) + '</td>' +
                     '<td class="num">' + num(r.extraItems) + '</td>' +
+                    '<td class="num">' + num(r.callsLogged) + '</td>' +
                     '<td class="num"><span class="points">' + num(r.points) + '</span></td></tr>'
-                )
+                  );
+                })
                 .join('')
-            : '<tr><td colspan="7" class="empty">No staff activity in this period.</td></tr>';
+            : '<tr><td colspan="8" class="empty">No staff activity in this period.</td></tr>';
           $('foot').innerHTML =
             rows.length > 1
               ? '<tr><td></td><td>Total</td><td class="num">' + num(totals.courierSent) +
                 '</td><td class="num">' + num(totals.incompleteConverted) +
                 '</td><td class="num">' + num(totals.crmConverted) +
                 '</td><td class="num">' + num(totals.extraItems) +
+                '</td><td class="num">' + num(totals.callsLogged) +
                 '</td><td class="num">' + num(totals.points) + '</td></tr>'
               : '';
+          renderSpotlight(rows);
+          $('charts').hidden = !rows.length;
+          if (rows.length) {
+            renderBars(rows);
+            fillWho(rows);
+            renderDaily(rows);
+          }
           const p = data.points;
           $('points-summary').textContent =
             p.courierSent + ' per parcel sent · ' + p.incompleteConverted + ' per incomplete order converted · ' +
@@ -666,7 +1260,7 @@
               $('login').hidden = false;
               $('login-status').textContent = 'Please sign in again.';
             }
-            $('rows').innerHTML = '<tr><td colspan="7" class="empty">' + esc(error.message) + '</td></tr>';
+            $('rows').innerHTML = '<tr><td colspan="8" class="empty">' + esc(error.message) + '</td></tr>';
             $('foot').innerHTML = '';
           } finally {
             if (loading === id) $('apply').disabled = false;
@@ -686,10 +1280,21 @@
         };
         ['from', 'to'].forEach((id) => ($(id).oninput = () => ($('preset').value = 'custom')));
         $('role').onchange = () => data && render();
+        $('daily-who').onchange = () => {
+          if (!data) return;
+          const role = $('role').value;
+          const filtered = data.rows.filter((r) => !role || r.role === role);
+          renderDaily(filtered.filter((r) => r.ranked).concat(filtered.filter((r) => !r.ranked)));
+        };
+        let resizeTimer = null;
+        window.addEventListener('resize', () => {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(() => data && !$('charts').hidden && $('daily-who').onchange(), 150);
+        });
         $('filters').onsubmit = (event) => {
           event.preventDefault();
           if ($('from').value > $('to').value) {
-            $('rows').innerHTML = '<tr><td colspan="7" class="empty">“From” must be on or before “To”.</td></tr>';
+            $('rows').innerHTML = '<tr><td colspan="8" class="empty">“From” must be on or before “To”.</td></tr>';
             return;
           }
           load();
@@ -717,7 +1322,7 @@
         $('logout').onclick = () => {
           localStorage.removeItem('co_admin_token');
           data = null;
-          $('rows').innerHTML = '<tr><td colspan="7" class="empty">Sign in to view staff performance.</td></tr>';
+          $('rows').innerHTML = '<tr><td colspan="8" class="empty">Sign in to view staff performance.</td></tr>';
           $('foot').innerHTML = '';
           $('login').hidden = false;
         };

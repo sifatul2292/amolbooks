@@ -5864,11 +5864,60 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   /* Search suggestions, like Rokomari's: matching authors (photo, name, "লেখক") and
      publishers (logo, name, "প্রকাশনী") first, then books with the old and new price and an
      add button. */
+  // Same folding as the API search (product-search.util.ts): letters people mix up
+  // (ঔ/ও, ী/ি, ূ/ু, শ/ষ/স, ণ/ন, য/জ, ড়/র, ক্ষ/খ, hasanta, য় written two ways) count as one.
   function searchKey(value) {
-    return String(value || '').normalize('NFC').toLowerCase()
-      .replace(/[()\\[\\]{}.,:;'"‘’“”!?।\\/_\\-–—]+/g, ' ')
+    var text = String(value || '').normalize('NFC').toLowerCase()
+      .replace(/\\u09DC/g, 'ড\\u09BC').replace(/\\u09DD/g, 'ঢ\\u09BC').replace(/\\u09DF/g, 'য\\u09BC')
+      .replace(/ড\\u09BC|ঢ\\u09BC/g, 'র')
+      .replace(/ক\\u09CDষ/g, 'খ')
+      .replace(/জ\\u09CDঞ/g, 'গ')
+      .replace(/[\\u09BC\\u09CD\\u0981\\u0983\\u200C\\u200D]/g, '')
+      .replace(/ঈ/g, 'ই').replace(/ী/g, 'ি').replace(/ঊ/g, 'উ').replace(/ূ/g, 'ু')
+      .replace(/ঔ/g, 'ও').replace(/ৌ/g, 'ো').replace(/ঐ/g, 'ই').replace(/ৈ/g, 'ি')
+      .replace(/ঋ/g, 'রি').replace(/ৃ/g, 'রি')
+      .replace(/[শষ]/g, 'স').replace(/ণ/g, 'ন').replace(/য/g, 'জ').replace(/ঙ/g, 'ং').replace(/ৎ/g, 'ত')
+      .replace(/[০-৯]/g, function (digit) { return String('০১২৩৪৫৬৭৮৯'.indexOf(digit)); })
+      .replace(/([\\u0980-\\u09FFa-z])\\1+/g, '$1')
+      .replace(/[^\\u0980-\\u09FFa-z0-9]+/g, ' ')
       .replace(/\\s+/g, ' ')
       .trim();
+    return text.replace(/কোরআন|কোরান|কুরান/g, 'কুরআন').replace(/দোজা|দুজা|দোআ/g, 'দুআ')
+      .replace(/\\b(koran|kuran|quraan)/g, 'quran');
+  }
+
+  // Edit distance (with swaps) between two words, up to max + 1.
+  function searchTypos(a, b, max) {
+    a = Array.from(a);
+    b = Array.from(b);
+    if (Math.abs(a.length - b.length) > max) return max + 1;
+    var before = [];
+    var row = [];
+    for (var j = 0; j <= b.length; j++) row[j] = j;
+    for (var i = 1; i <= a.length; i++) {
+      var next = [i];
+      var best = i;
+      for (j = 1; j <= b.length; j++) {
+        var value = Math.min(row[j] + 1, next[j - 1] + 1, row[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+        if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) value = Math.min(value, before[j - 2] + 1);
+        next[j] = value;
+        if (value < best) best = value;
+      }
+      if (best > max) return max + 1;
+      before = row;
+      row = next;
+    }
+    return row[b.length];
+  }
+
+  // A typed word close to a name word: one wrong letter in 4-7 letters, two in longer words
+  // (also against the start of a longer word, for names still being typed).
+  function searchWordClose(word, token) {
+    var length = Array.from(word).length;
+    if (length < 4) return false;
+    var max = length <= 7 ? 1 : 2;
+    return searchTypos(word, token, max) <= max ||
+      searchTypos(word, Array.from(token).slice(0, length).join(''), max) <= max;
   }
 
   function searchAuthorList() {
@@ -5910,13 +5959,13 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   }
 
   // Bengali name, English name (nameEn) or an English slug ("sottayon-prokashon"); every typed
-  // word must start a word of one of them.
+  // word must start a word of one of them, or be a close spelling of one.
   function matchSearchNames(items, query, limit) {
     var words = searchKey(query).split(' ').filter(Boolean);
     if (!words.length) return [];
     var phrase = words.join(' ');
     var seen = {};
-    return (items || []).map(function (author) {
+    var matches = (items || []).map(function (author) {
       var score = 0;
       var latinSlug = /^[a-z0-9-]+$/.test(String(author && author.slug || '')) ? String(author.slug).replace(/-/g, ' ') : '';
       [author && author.name, author && author.nameEn, latinSlug].forEach(function (value) {
@@ -5926,12 +5975,24 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         var atWordStart = words.every(function (word) {
           return tokens.some(function (token) { return token.indexOf(word) === 0; });
         });
-        if (!atWordStart) return;
-        score = Math.max(score, name.indexOf(phrase) === 0 ? 3 : 2);
+        if (atWordStart) {
+          score = Math.max(score, name.indexOf(phrase) === 0 ? 3 : 2);
+          return;
+        }
+        // Close spelling ("ইবনুল কাইয়্যিম" typed "ইবনুল কায়িম"): ranked after exact matches.
+        var close = words.every(function (word) {
+          return tokens.some(function (token) { return token.indexOf(word) === 0 || searchWordClose(word, token); });
+        });
+        if (close) score = Math.max(score, 1);
       });
       return { author: author, score: score };
     }).filter(function (entry) {
       return entry.score > 0 && entry.author && entry.author.slug && entry.author.name;
+    });
+    // Close spellings only when no name matches as typed (like the book search).
+    var exact = matches.some(function (entry) { return entry.score >= 2; });
+    return matches.filter(function (entry) {
+      return !exact || entry.score >= 2;
     }).sort(function (a, b) {
       return b.score - a.score ||
         (b.author.image ? 1 : 0) - (a.author.image ? 1 : 0) ||

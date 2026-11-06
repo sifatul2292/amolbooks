@@ -5,6 +5,7 @@ import { OrderSchema } from '../../schema/order.schema';
 import { IncompleteOrderSchema } from '../../schema/incomplete-order.schema';
 import {
   StaffActivitySchema,
+  StaffCallSchema,
   StaffPointsSchema,
 } from './staff-activity.schema';
 import { StaffActivityService } from './staff-activity.service';
@@ -15,6 +16,7 @@ import { StaffActivityController } from './staff-activity.controller';
     MongooseModule.forFeature([
       { name: 'StaffActivity', schema: StaffActivitySchema },
       { name: 'StaffPoints', schema: StaffPointsSchema },
+      { name: 'StaffCall', schema: StaffCallSchema },
       { name: 'Admin', schema: AdminSchema },
       { name: 'Order', schema: OrderSchema },
       { name: 'IncompleteOrder', schema: IncompleteOrderSchema },

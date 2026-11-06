@@ -77,6 +77,19 @@ export function customerManagerPages(root: string) {
         } catch (_error) {
           // The order page still works without the labels.
         }
+        // Today's staff board and "who is calling" (after the labels script).
+        try {
+          const live = readFileSync(
+            join(root, 'gtm-snippets', 'staff-live.html'),
+            'utf8',
+          );
+          const end = page.lastIndexOf('</body>');
+          if (end !== -1 && !page.includes('id="ab-staff-live"')) {
+            page = page.slice(0, end) + live + page.slice(end);
+          }
+        } catch (_error) {
+          // The order page still works without the board.
+        }
         res.setHeader('Cache-Control', 'no-store');
         return res.type('html').send(page);
       } catch (_error) {

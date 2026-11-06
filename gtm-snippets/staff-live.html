@@ -1,0 +1,854 @@
+<!-- Live staff board and "who is calling" for custom-orders.html (Orders and Incomplete Order views).
+     Injected by customer-manager-pages.ts after staff-attribution.html (owner, 2026-11-06).
+     Panel above the cards:
+       - the signed-in staff member's standing today ("Ismam, you are today's top performer!");
+       - today's team board (the owner's account is shown nowhere on it and never ranked);
+       - who is on a call right now.
+     Order rows:
+       - "I'm calling" (or a click on the phone number) tells the team you are calling that customer;
+       - everyone else sees "<name> is calling" on every row with that number, then "Called by <name> · 20m ago".
+     Data: GET /api/staff-activity/team-today (every 60 s), GET /api/staff-activity/calls (every 10 s),
+     POST /api/staff-activity/calls/start | end. -->
+<style id="ab-staff-live">
+  .ab-tl {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: 14px;
+    margin: 0 0 18px;
+  }
+  .ab-tl[hidden] {
+    display: none;
+  }
+  .ab-tl-card {
+    background: #fff;
+    border: 1px solid #e7e3f6;
+    border-radius: 16px;
+    box-shadow: 0 6px 22px rgba(76, 29, 149, 0.07);
+    padding: 16px 18px;
+    min-width: 0;
+  }
+  .ab-tl-hero {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    border-left: 5px solid var(--ab-tl-accent, #7c3aed);
+  }
+  .ab-tl-icon {
+    flex: 0 0 auto;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    font-size: 22px;
+    color: #fff;
+    background: var(--ab-tl-accent, #7c3aed);
+  }
+  .ab-tl-hero[data-state='top'] { --ab-tl-accent: #d97706; background: linear-gradient(100deg, #fffbeb, #fff 70%); }
+  .ab-tl-hero[data-state='behind'] { --ab-tl-accent: #2563eb; }
+  .ab-tl-hero[data-state='poor'] { --ab-tl-accent: #dc2626; background: linear-gradient(100deg, #fef2f2, #fff 70%); }
+  .ab-tl-hero[data-state='idle'] { --ab-tl-accent: #64748b; }
+  .ab-tl-hero[data-state='owner'] { --ab-tl-accent: #7c3aed; }
+  .ab-tl-kicker {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #7c6f9b;
+    margin-bottom: 3px;
+  }
+  .ab-tl-title {
+    display: block;
+    font-size: 18px;
+    line-height: 1.3;
+    font-weight: 800;
+    color: #1e1b3a;
+  }
+  .ab-tl-sub {
+    display: block;
+    margin-top: 4px;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: #55607a;
+  }
+  .ab-tl-board-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .ab-tl-board-head strong {
+    font-size: 13px;
+    font-weight: 800;
+    color: #1e1b3a;
+  }
+  .ab-tl-board-head small {
+    font-size: 11px;
+    color: #7c879f;
+    white-space: nowrap;
+  }
+  .ab-tl-live-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 5px;
+    border-radius: 50%;
+    background: #16a34a;
+    vertical-align: 1px;
+  }
+  .ab-tl-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+  }
+  .ab-tl-list li {
+    display: grid;
+    grid-template-columns: 24px minmax(80px, 190px) minmax(40px, 1fr) 46px;
+    align-items: center;
+    gap: 10px;
+    font-size: 12.5px;
+    color: #27304a;
+  }
+  .ab-tl-rank {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 11px;
+    font-weight: 800;
+    background: #eef0f6;
+    color: #4b5675;
+  }
+  .ab-tl-list li.is-top .ab-tl-rank {
+    background: #f59e0b;
+    color: #fff;
+  }
+  .ab-tl-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+  .ab-tl-name small {
+    font-weight: 600;
+    color: #7c3aed;
+  }
+  .ab-tl-list li.is-me .ab-tl-name {
+    font-weight: 800;
+  }
+  .ab-tl-bar {
+    height: 10px;
+    border-radius: 5px;
+    background: #f1f2f8;
+    overflow: hidden;
+  }
+  .ab-tl-bar i {
+    display: block;
+    height: 100%;
+    min-width: 3px;
+    border-radius: 5px;
+    background: #8b5cf6;
+  }
+  .ab-tl-list li.is-me .ab-tl-bar i {
+    background: #6d28d9;
+  }
+  .ab-tl-list li.is-poor .ab-tl-bar i {
+    background: #f87171;
+  }
+  .ab-tl-pts {
+    text-align: right;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+  .ab-tl-pts small {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    color: #8a93a8;
+  }
+  .ab-tl-oncall {
+    margin-left: 4px;
+    color: #ea580c;
+    font-size: 11px;
+  }
+  .ab-tl-calls {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    font-size: 12.5px;
+    color: #55607a;
+  }
+  .ab-tl-calls > strong {
+    color: #1e1b3a;
+    font-weight: 800;
+    margin-right: 2px;
+  }
+  .ab-tl-call-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    color: #9a3412;
+    font-weight: 600;
+  }
+  .ab-tl-call-chip.is-mine {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #166534;
+  }
+  .ab-tl-pulse {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: ab-tl-pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes ab-tl-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.25; }
+  }
+
+  /* Order rows */
+  .ab-call {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    margin-top: 5px;
+    white-space: normal;
+  }
+  .ab-call-btn,
+  .ab-call-done {
+    font: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 5px 9px;
+    border-radius: 999px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #64748b;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .ab-call-btn:hover {
+    border-color: #a5b4fc;
+    background: #eef2ff;
+    color: #3730a3;
+  }
+  .ab-call-done {
+    border-color: #86efac;
+    background: #fff;
+    color: #166534;
+  }
+  .ab-call-btn:focus-visible,
+  .ab-call-done:focus-visible {
+    outline: 3px solid #a5b4fc;
+    outline-offset: 1px;
+  }
+  .ab-call-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.25;
+    padding: 4px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .ab-call-pill.is-busy {
+    background: #ffedd5;
+    color: #9a3412;
+    border: 1px solid #fdba74;
+  }
+  .ab-call-pill.is-mine {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+  }
+  .ab-call-pill.is-recent {
+    padding: 0;
+    font-weight: 600;
+    color: #64748b;
+  }
+  .ab-call-pill b {
+    font-weight: 800;
+  }
+  tr.ab-call-busy > td {
+    background: #fff7ed !important;
+  }
+  tr.ab-call-busy > td:first-child {
+    box-shadow: inset 4px 0 0 #f97316;
+  }
+  tr.ab-call-mine > td {
+    background: #f0fdf4 !important;
+  }
+  tr.ab-call-mine > td:first-child {
+    box-shadow: inset 4px 0 0 #16a34a;
+  }
+  .ab-call-toast {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 3000;
+    max-width: 340px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: #1e1b3a;
+    color: #fff;
+    font-size: 13px;
+    line-height: 1.4;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.3);
+  }
+  @media (max-width: 1100px) {
+    .ab-tl {
+      grid-template-columns: 1fr;
+    }
+  }
+  /* Narrow tables squeeze the phone column: let the row tag wrap there. */
+  @media (max-width: 900px) {
+    .ab-call-pill {
+      white-space: normal;
+    }
+  }
+  @media (max-width: 600px) {
+    .ab-tl-card {
+      padding: 13px 14px;
+    }
+    .ab-tl-icon {
+      width: 42px;
+      height: 42px;
+      font-size: 18px;
+    }
+    .ab-tl-title {
+      font-size: 15.5px;
+    }
+    .ab-tl-list li {
+      grid-template-columns: 22px minmax(70px, 1fr) minmax(40px, 1fr) 42px;
+      gap: 8px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ab-tl-pulse {
+      animation: none;
+    }
+  }
+</style>
+<script>
+  (function () {
+    'use strict';
+    if (window.__abStaffLive) return;
+    window.__abStaffLive = true;
+    var view = new URLSearchParams(window.location.search).get('view') || '';
+    if (view && view !== 'incomplete') return;
+    // Same API host as the order page (same-origin on local previews).
+    var API = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname)
+      ? window.location.origin
+      : 'https://apisub.amolbooks.com';
+    var KIND = view === 'incomplete' ? 'incomplete' : 'order';
+    var TEAM_MS = 60000;
+    var CALLS_MS = 10000;
+    var body = document.getElementById('ordersBody');
+    var cards = document.getElementById('totalOrders');
+    var statsRow = cards && cards.closest ? cards.closest('.stats-row') : null;
+    if (!body || !statsRow || !window.fetch || !window.MutationObserver) return;
+
+    var team = null;
+    var calls = [];
+    var byKey = {};
+    var skew = 0;
+    var teamAt = 0;
+    var teamBusy = false;
+    var callsBusy = false;
+
+    function token() {
+      try {
+        return localStorage.getItem('co_admin_token') || '';
+      } catch (_) {
+        return '';
+      }
+    }
+    function esc(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    // People are called by the last part of their name here ("Golam Masum Munna" → "Munna").
+    function shortName(name) {
+      var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+      return parts.length ? parts[parts.length - 1] : 'Staff';
+    }
+    function plural(n, word) {
+      return n + ' ' + word + (n === 1 ? '' : 's');
+    }
+    // Same rule as the API (callPhoneKey): the local 01XXXXXXXXX form.
+    function phoneKey(value) {
+      var digits = String(value || '')
+        .replace(/[০-৯]/g, function (d) {
+          return String('০১২৩৪৫৬৭৮৯'.indexOf(d));
+        })
+        .replace(/\D/g, '');
+      var local = digits;
+      if (local.indexOf('0088') === 0) local = local.slice(4);
+      else if (local.indexOf('88') === 0) local = local.slice(2);
+      if (/^1[3-9]\d{8}$/.test(local)) local = '0' + local;
+      if (/^01[3-9]\d{8}$/.test(local)) return local;
+      return digits.length >= 6 && digits.length <= 15 ? digits : '';
+    }
+    function minutesSince(at) {
+      var t = new Date(at).getTime();
+      if (!t) return 0;
+      return Math.max(0, Math.floor((Date.now() + skew - t) / 60000));
+    }
+    function ago(at) {
+      var m = minutesSince(at);
+      if (m < 1) return 'just now';
+      if (m < 60) return m + 'm ago';
+      var h = Math.floor(m / 60);
+      return h + 'h ago';
+    }
+    function lasting(at) {
+      var m = minutesSince(at);
+      return m < 1 ? 'just started' : m + ' min';
+    }
+    // Row pills sit in the narrow phone column: "Ismam calling · 2m".
+    function lastingShort(at) {
+      var m = minutesSince(at);
+      return m < 1 ? 'now' : m + 'm';
+    }
+    function request(method, path, payload) {
+      return fetch(API + path, {
+        method: method,
+        headers: { 'Content-Type': 'application/json', administrator: token() },
+        body: payload ? JSON.stringify(payload) : undefined,
+      }).then(function (response) {
+        return response
+          .json()
+          .catch(function () {
+            return {};
+          })
+          .then(function (json) {
+            if (!response.ok || json.success === false) {
+              var error = new Error(
+                (Array.isArray(json.message) ? json.message.join(' ') : json.message) || 'Request failed'
+              );
+              error.status = response.status;
+              throw error;
+            }
+            return json.data;
+          });
+      });
+    }
+    function toast(text) {
+      var el = document.createElement('div');
+      el.className = 'ab-call-toast';
+      el.setAttribute('role', 'status');
+      el.textContent = text;
+      document.body.appendChild(el);
+      setTimeout(function () {
+        if (el.parentNode) el.parentNode.removeChild(el);
+      }, 4500);
+    }
+
+    /* ── Panel ── */
+    var panel = document.createElement('section');
+    panel.className = 'ab-tl';
+    panel.id = 'ab-team-live';
+    panel.hidden = true;
+    panel.setAttribute('aria-label', "Today's staff performance");
+    panel.innerHTML =
+      '<div class="ab-tl-card ab-tl-hero" data-state="idle" aria-live="polite">' +
+      '<span class="ab-tl-icon" aria-hidden="true"><i class="fas fa-trophy"></i></span>' +
+      '<div><span class="ab-tl-kicker">Your day so far</span><strong class="ab-tl-title"></strong><span class="ab-tl-sub"></span></div>' +
+      '</div>' +
+      '<div class="ab-tl-card ab-tl-board">' +
+      '<div class="ab-tl-board-head"><strong>Today’s team</strong><small><span class="ab-tl-live-dot" aria-hidden="true"></span><span class="ab-tl-updated">Live</span></small></div>' +
+      '<ol class="ab-tl-list"></ol>' +
+      '</div>' +
+      '<div class="ab-tl-card ab-tl-calls"></div>';
+    statsRow.parentNode.insertBefore(panel, statsRow);
+    var hero = panel.querySelector('.ab-tl-hero');
+
+    function breakdown(row) {
+      var parts = [];
+      if (row.courierSent) parts.push(plural(row.courierSent, 'parcel'));
+      if (row.incompleteConverted) parts.push(row.incompleteConverted + ' converted');
+      if (row.crmConverted) parts.push(plural(row.crmConverted, 'Customer Manager order'));
+      if (row.extraItems) parts.push(plural(row.extraItems, 'extra book'));
+      return parts.join(' · ');
+    }
+    function names(rows, full) {
+      var list = rows.map(function (r) {
+        return full ? r.name : shortName(r.name);
+      });
+      return list.length > 1 ? list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1] : list[0] || '';
+    }
+
+    function renderHero() {
+      var rows = team.rows || [];
+      var ranked = rows.filter(function (r) {
+        return r.ranked;
+      });
+      var leaders = ranked.filter(function (r) {
+        return r.status === 'top';
+      });
+      var leader = leaders[0];
+      var me = rows.filter(function (r) {
+        return r.adminId === team.viewerId;
+      })[0];
+      var worth = team.points && team.points.incompleteConverted;
+      var tip = worth ? ' One converted incomplete order = ' + plural(worth, 'point') + '.' : '';
+      var state;
+      var icon;
+      var kicker = 'Your day so far';
+      var title;
+      var sub;
+      if (me && me.ranked) {
+        var you = shortName(me.name);
+        state = me.status;
+        if (me.status === 'top') {
+          icon = 'fa-trophy';
+          var others = leaders.filter(function (r) {
+            return r !== me;
+          });
+          if (others.length) {
+            title = you + ', you share the top spot today!';
+            sub = plural(me.points, 'point') + ', level with ' + names(others) + '. One more sale takes it.';
+          } else {
+            title = you + ', you are today’s top performer!';
+            sub = plural(me.points, 'point') + ' so far' + (breakdown(me) ? ' — ' + breakdown(me) : '') + '. Keep it up!';
+          }
+        } else if (me.status === 'poor') {
+          icon = 'fa-arrow-trend-down';
+          title = you + ', your performance is quite poor today.';
+          sub =
+            plural(me.points, 'point') + ' so far; ' + shortName(leader.name) + ' has ' + leader.points + '.' + tip;
+        } else if (me.status === 'behind') {
+          icon = 'fa-arrow-trend-up';
+          var gap = leader.points - me.points;
+          title = you + ', you are #' + me.rank + ' today — ' + plural(gap, 'point') + ' behind ' + shortName(leader.name) + '.';
+          sub = plural(me.points, 'point') + ' so far' + (breakdown(me) ? ' — ' + breakdown(me) : '') + '.' + tip;
+        } else {
+          icon = 'fa-mug-hot';
+          title = you + ', no points yet today.';
+          sub = 'Send a parcel or convert an incomplete order to get on the board.' + tip;
+        }
+      } else {
+        state = 'owner';
+        icon = 'fa-chart-simple';
+        kicker = 'Team today';
+        var poor = ranked.filter(function (r) {
+          return r.status === 'poor';
+        });
+        title = leader
+          ? 'Top performer today: ' + names(leaders, true) + ' · ' + plural(leader.points, 'point')
+          : 'No points on the team board yet today.';
+        sub = poor.length
+          ? 'Needs a push: ' +
+            poor
+              .map(function (r) {
+                return r.name + ' (' + r.points + ')';
+              })
+              .join(', ') +
+            '.'
+          : ranked.length
+          ? 'Everyone is on track.'
+          : '';
+      }
+      // Only touch the text when it changes (the hero is a polite live region).
+      var signature = [state, icon, kicker, title, sub].join('|');
+      if (hero.getAttribute('data-signature') === signature) return;
+      hero.setAttribute('data-signature', signature);
+      hero.setAttribute('data-state', state);
+      hero.querySelector('.ab-tl-icon').innerHTML = '<i class="fas ' + icon + '"></i>';
+      hero.querySelector('.ab-tl-kicker').textContent = kicker;
+      hero.querySelector('.ab-tl-title').textContent = title;
+      hero.querySelector('.ab-tl-sub').textContent = sub;
+    }
+
+    function renderBoard() {
+      var ranked = (team.rows || []).filter(function (r) {
+        return r.ranked;
+      });
+      var top = ranked.reduce(function (max, r) {
+        return Math.max(max, r.points);
+      }, 0);
+      var onCall = {};
+      calls.forEach(function (c) {
+        if (c.active) onCall[c.adminId] = c;
+      });
+      panel.querySelector('.ab-tl-list').innerHTML = ranked.length
+        ? ranked
+            .map(function (r) {
+              var mine = r.adminId === team.viewerId;
+              var cls = [r.status === 'top' ? 'is-top' : '', r.status === 'poor' ? 'is-poor' : '', mine ? 'is-me' : '']
+                .filter(Boolean)
+                .join(' ');
+              var width = top > 0 ? Math.max(2, Math.round((r.points / top) * 100)) : 0;
+              var detail = breakdown(r) || 'No points yet';
+              if (r.callsLogged) detail += ' · ' + plural(r.callsLogged, 'call') + ' logged';
+              return (
+                '<li class="' + cls + '" title="' + esc(r.name + ': ' + detail) + '">' +
+                '<span class="ab-tl-rank">' + r.rank + '</span>' +
+                '<span class="ab-tl-name">' + esc(r.name) + (mine ? ' <small>(you)</small>' : '') +
+                (onCall[r.adminId] ? '<span class="ab-tl-oncall" title="On a call now"><i class="fas fa-phone-volume"></i></span>' : '') +
+                '</span>' +
+                '<span class="ab-tl-bar" aria-hidden="true">' + (width ? '<i style="width:' + width + '%"></i>' : '') + '</span>' +
+                '<span class="ab-tl-pts">' + r.points + '<small>' + plural(r.callsLogged || 0, 'call') + '</small></span>' +
+                '</li>'
+              );
+            })
+            .join('')
+        : '<li><span></span><span class="ab-tl-name">No staff yet</span></li>';
+      var time = new Date(teamAt).toLocaleTimeString('en-GB', {
+        timeZone: 'Asia/Dhaka',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      panel.querySelector('.ab-tl-updated').textContent = 'Live · updated ' + time;
+    }
+
+    function renderCallsLine() {
+      var active = calls.filter(function (c) {
+        return c.active;
+      });
+      var box = panel.querySelector('.ab-tl-calls');
+      var html = active.length
+        ? '<strong><i class="fas fa-phone-volume"></i> Calling now</strong>' +
+          active
+            .map(function (c) {
+              return (
+                '<span class="ab-tl-call-chip' + (c.mine ? ' is-mine' : '') + '">' +
+                '<span class="ab-tl-pulse" aria-hidden="true"></span>' +
+                esc(c.mine ? 'You' : c.adminName) + ' → ' + esc(c.phone) + (c.label ? ' (' + esc(c.label) + ')' : '') +
+                ' · ' + esc(lasting(c.startedAt)) +
+                '</span>'
+              );
+            })
+            .join('')
+        : '<strong><i class="fas fa-phone"></i> Calling now</strong> Nobody is on a call. Press “I’m calling” on a row so others don’t call the same customer.';
+      if (box.getAttribute('data-html') !== html) {
+        box.innerHTML = html;
+        box.setAttribute('data-html', html);
+      }
+    }
+
+    /* ── Rows ── */
+    function rowKey(row) {
+      var link = row.querySelector('a.phone-link');
+      return link ? phoneKey(link.textContent || link.getAttribute('href')) : '';
+    }
+    function rowId(row) {
+      var box = row.querySelector('input.row-check');
+      return box ? String(box.value || '') : '';
+    }
+    function rowLabel(row) {
+      var no = row.querySelector('.order-no');
+      return no ? no.textContent.trim().slice(0, 40) : '';
+    }
+    function indexCalls() {
+      byKey = {};
+      calls.forEach(function (c) {
+        var seen = byKey[c.phoneKey];
+        // Calls come newest first: keep an active call over an older ended one.
+        if (!seen || (c.active && !seen.active)) byKey[c.phoneKey] = c;
+      });
+    }
+    function rowHtml(call) {
+      var button =
+        '<button type="button" class="ab-call-btn" title="Tell the team you are calling this customer"><i class="fas fa-phone"></i> I’m calling</button>';
+      if (!call) return button;
+      if (call.active && call.mine) {
+        return (
+          '<span class="ab-call-pill is-mine"><span class="ab-tl-pulse" aria-hidden="true"></span>You’re calling · ' +
+          esc(lastingShort(call.startedAt)) +
+          '</span><button type="button" class="ab-call-done" data-call-id="' + esc(call.id) + '">Done</button>'
+        );
+      }
+      if (call.active) {
+        return (
+          '<span class="ab-call-pill is-busy" title="Started ' + esc(new Date(call.startedAt).toLocaleTimeString('en-GB', { timeZone: 'Asia/Dhaka', hour: '2-digit', minute: '2-digit' })) +
+          ' · ' + esc(call.adminName) + '"><i class="fas fa-phone-volume"></i><span><b>' + esc(shortName(call.adminName)) + '</b> calling · ' + esc(lastingShort(call.startedAt)) + '</span></span>'
+        );
+      }
+      return (
+        '<span class="ab-call-pill is-recent" title="' + esc(call.adminName) + '">' +
+        (call.mine ? 'You called' : 'Called by <b>' + esc(shortName(call.adminName)) + '</b>') +
+        ' · ' + esc(ago(call.startedAt)) + '</span>' + button
+      );
+    }
+    function decorate() {
+      if (!token()) return;
+      Array.prototype.forEach.call(body.rows, function (row) {
+        var cell = row.querySelector('.phone-cell');
+        if (!cell) return;
+        var key = rowKey(row);
+        if (!key) return;
+        var call = byKey[key] || null;
+        row.classList.toggle('ab-call-busy', Boolean(call && call.active && !call.mine));
+        row.classList.toggle('ab-call-mine', Boolean(call && call.active && call.mine));
+        var html = rowHtml(call);
+        var box = cell.querySelector('.ab-call');
+        if (!box) {
+          box = document.createElement('div');
+          box.className = 'ab-call';
+          cell.appendChild(box);
+        }
+        if (box.getAttribute('data-html') !== html) {
+          box.innerHTML = html;
+          box.setAttribute('data-html', html);
+        }
+      });
+    }
+
+    function startCall(row, force) {
+      var link = row.querySelector('a.phone-link');
+      if (!link) return Promise.resolve();
+      return request('POST', '/api/staff-activity/calls/start', {
+        phone: link.textContent.trim(),
+        kind: KIND,
+        target: rowId(row),
+        label: rowLabel(row),
+        force: Boolean(force),
+      })
+        .then(function (data) {
+          if (data && data.started === false && data.busy) {
+            toast(data.busy.adminName + ' started calling this customer just before you.');
+          }
+          return loadCalls();
+        })
+        .catch(function (error) {
+          toast('Could not mark the call: ' + error.message);
+        });
+    }
+    // Returns false when the click should not go ahead (someone else is on the call).
+    function claim(row) {
+      var call = byKey[rowKey(row)];
+      if (call && call.active && call.mine) return true;
+      var force = false;
+      if (call && call.active) {
+        var question =
+          call.adminName + ' is already calling this customer (' + lasting(call.startedAt) + '). Call anyway?';
+        if (!window.confirm(question)) return false;
+        force = true;
+      }
+      startCall(row, force);
+      return true;
+    }
+
+    body.addEventListener(
+      'click',
+      function (event) {
+        if (!token()) return;
+        var target = event.target;
+        var row = target.closest ? target.closest('tr') : null;
+        if (!row) return;
+        var done = target.closest('.ab-call-done');
+        if (done) {
+          event.preventDefault();
+          event.stopPropagation();
+          done.disabled = true;
+          request('POST', '/api/staff-activity/calls/end', { id: done.getAttribute('data-call-id') })
+            .then(loadCalls)
+            .catch(function (error) {
+              done.disabled = false;
+              toast('Could not end the call: ' + error.message);
+            });
+          return;
+        }
+        if (target.closest('.ab-call-btn')) {
+          event.preventDefault();
+          event.stopPropagation();
+          claim(row);
+          return;
+        }
+        // The phone number itself still dials; it also marks the call.
+        if (target.closest('a.phone-link') && !claim(row)) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      },
+      true
+    );
+
+    /* ── Loading ── */
+    function loadTeam() {
+      if (teamBusy || !token()) return Promise.resolve();
+      teamBusy = true;
+      return request('GET', '/api/staff-activity/team-today')
+        .then(function (data) {
+          team = data;
+          teamAt = Date.now();
+          panel.hidden = false;
+          renderHero();
+          renderBoard();
+        })
+        .catch(function (error) {
+          if (error.status === 401) panel.hidden = true;
+        })
+        .then(function () {
+          teamBusy = false;
+        });
+    }
+    function loadCalls() {
+      if (callsBusy || !token()) return Promise.resolve();
+      callsBusy = true;
+      return request('GET', '/api/staff-activity/calls')
+        .then(function (data) {
+          var serverNow = new Date(data.now).getTime();
+          if (serverNow) skew = serverNow - Date.now();
+          calls = data.calls || [];
+          indexCalls();
+          decorate();
+          renderCallsLine();
+          if (team) renderBoard();
+        })
+        .catch(function () {})
+        .then(function () {
+          callsBusy = false;
+        });
+    }
+
+    // The table is redrawn on every filter, page and refresh: put the call state back,
+    // and pick up new points soon after (a parcel sent from this page scores at once).
+    var refreshSoon = null;
+    new MutationObserver(function () {
+      decorate();
+      if (refreshSoon) return;
+      refreshSoon = setTimeout(function () {
+        refreshSoon = null;
+        if (Date.now() - teamAt > 15000) loadTeam();
+      }, 3000);
+    }).observe(body, { childList: true });
+
+    setInterval(function () {
+      if (document.hidden || !token()) return;
+      loadCalls();
+    }, CALLS_MS);
+    setInterval(function () {
+      if (document.hidden || !token()) return;
+      if (!team || Date.now() - teamAt >= TEAM_MS) loadTeam();
+      // Elapsed times ("3 min") move on even without new calls.
+      if (team) renderCallsLine();
+    }, 5000);
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden || !token()) return;
+      loadCalls();
+      if (Date.now() - teamAt > 15000) loadTeam();
+    });
+    loadTeam();
+    loadCalls();
+  })();
+</script>

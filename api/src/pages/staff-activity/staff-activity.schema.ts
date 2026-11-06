@@ -45,3 +45,30 @@ export const StaffPointsSchema = new Schema(
   },
   { versionKey: false, timestamps: true },
 );
+
+// "Who is calling whom" on the order pages. One row per call a staff member
+// starts (phone link or "I'm calling"); `phoneKey` is the local 01XXXXXXXXX
+// form, so every row with that customer shows the same call. A call stays
+// active until "Done", a new call by the same person, or `expiresAt`; the row
+// itself is removed by Mongo three days later.
+export const StaffCallSchema = new Schema(
+  {
+    phoneKey: { type: String, required: true },
+    phone: { type: String },
+    kind: { type: String, enum: ['order', 'incomplete', 'customer'] },
+    target: { type: String },
+    label: { type: String },
+    admin: { type: Schema.Types.ObjectId, ref: 'Admin', required: true },
+    adminName: { type: String },
+    adminRole: { type: String },
+    startedAt: { type: Date, required: true },
+    expiresAt: { type: Date, required: true },
+    endedAt: { type: Date, default: null },
+    endedBy: { type: String },
+    purgeAt: { type: Date, required: true },
+  },
+  { versionKey: false },
+);
+StaffCallSchema.index({ purgeAt: 1 }, { expireAfterSeconds: 0 });
+StaffCallSchema.index({ startedAt: -1 });
+StaffCallSchema.index({ phoneKey: 1, startedAt: -1 });
