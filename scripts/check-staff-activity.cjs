@@ -254,6 +254,38 @@ const waitFor = async (check, label, ms = 3000) => {
   await orderService.updateOrderById(String(F2._id), { orderStatus: 2 });
   assert.equal((await activities({ target: F2._id })).length, 0);
 
+  // 4b. Note list (owner, 2026-11-08): every note stays with its writer and time.
+  const L = await seed();
+  await Order.collection.updateOne({ _id: L._id }, { $set: { adminNote: 'Old note', adminNoteBy: { name: 'Karim Admin', role: 'admin', at: new Date('2026-11-01T05:00:00Z') } } });
+  const addNote = (who, text, kind = 'order', id = L._id) => staff.addNote({ id: String(id), kind, text }, who);
+  const noteRows = (notes) => notes.map((n) => [n.text, n.by ? n.by.name : null]);
+  let savedNotes = (await addNote(rahim, 'Call dhore na')).data.notes;
+  assert.deepEqual(noteRows(savedNotes), [['Old note', 'Karim Admin'], ['Call dhore na', 'Rahim Sales']], 'A note written before the list stays, with its writer');
+  savedNotes = (await addNote(sumi, 'Call dhore na ')).data.notes;
+  assert.equal(savedNotes.length, 3, 'The same words on another call are a new note');
+  assert.equal(savedNotes[2].by.name, 'Sumi Sales');
+  assert.ok(savedNotes.every((n) => n.at), 'Every note has its time');
+  order = await get(Order, L);
+  assert.equal(order.adminNote, 'Call dhore na', 'adminNote keeps the latest text for the other screens');
+  assert.equal(nameOf(order.adminNoteBy), 'Sumi Sales');
+  await orderService.updateOrderById(String(L._id), { adminNote: 'From order details' }, token(karim));
+  assert.deepEqual(noteRows(staff.notesOf(await get(Order, L))).map((r) => r[0]), ['Old note', 'Call dhore na', 'Call dhore na', 'From order details'], 'Notes saved on other screens join the list');
+  await orderService.updateOrderById(String(L._id), { adminNotes: [{ text: 'Forged', by: { name: 'Boss' } }] }, token(karim));
+  assert.equal((await get(Order, L)).adminNotes.length, 4, 'Request bodies cannot rewrite the list');
+  await Promise.all(['a', 'b', 'c', 'd'].map((t, i) => addNote(i % 2 ? sumi : rahim, 'Same moment ' + t)));
+  assert.equal((await get(Order, L)).adminNotes.length, 8, 'Notes saved at the same moment are all kept');
+  await assert.rejects(addNote(rahim, '   '), (e) => e?.getStatus?.() === 400, 'Empty note');
+  await assert.rejects(addNote(rahim, 'x'.repeat(1001)), (e) => e?.getStatus?.() === 400, 'Note too long');
+  await assert.rejects(addNote(null, 'No login'), (e) => e?.getStatus?.() === 401, 'No staff identity');
+  await assert.rejects(addNote(rahim, 'Missing', 'order', new mongoose.Types.ObjectId()), (e) => e?.getStatus?.() === 404, 'Unknown order');
+  // Text the system adds to adminNote (customer cancellation) shows as its own note and is kept.
+  const L2 = await seed();
+  await addNote(rahim, 'Asked for Friday', 'order', L2._id);
+  await Order.collection.updateOne({ _id: L2._id }, { $set: { adminNote: 'Asked for Friday\nCustomer cancelled after phone verification' } });
+  assert.deepEqual(noteRows(staff.notesOf(await get(Order, L2))), [['Asked for Friday', 'Rahim Sales'], ['Asked for Friday\nCustomer cancelled after phone verification', null]]);
+  savedNotes = (await addNote(sumi, 'Refund done', 'order', L2._id)).data.notes;
+  assert.deepEqual(noteRows(savedNotes).map((r) => r[0]), ['Asked for Friday', 'Asked for Friday\nCustomer cancelled after phone verification', 'Refund done']);
+
   // 5. Bulk status change and bulk courier booking.
   const [G1, G2, G3] = [await seed(), await seed(), await seed({ orderStatus: 2 })];
   const gIds = [G1, G2, G3].map((g) => String(g._id));
@@ -301,6 +333,9 @@ const waitFor = async (check, label, ms = 3000) => {
   assert.equal(nameOf(convertedJ.convertedBy), 'Sumi Sales');
   order = await get(Order, created._id);
   assert.equal(nameOf(order.adminNoteBy), 'Rahim Sales', 'A carried-over note keeps its author');
+  assert.deepEqual(noteRows(staff.notesOf(order)), [['Asked to call after 5pm', null], ['Call after 6pm', 'Rahim Sales']], 'The note list moves with the converted order');
+  const noteInc = await incomplete('');
+  assert.equal((await addNote(sumi, 'Number busy', 'incomplete', noteInc)).data.notes[0].by.name, 'Sumi Sales', 'Incomplete Orders notes');
   assert.equal(nameOf(order.staffCredit.incomplete), 'Sumi Sales');
   assert.equal(String(order.staffCredit.incomplete.incompleteOrderId), String(J));
   assert.deepEqual(order.staffCredit.items, { base: 1 }, 'Same books as the cart: nothing extra');
@@ -631,7 +666,7 @@ const waitFor = async (check, label, ms = 3000) => {
   }
 
   await Points.deleteMany({});
-  console.log('Staff activity: Steadfast sender, status moves, note authors, incomplete conversions and Customer Manager orders scored at send, extra books, once-only points, date ranges, role scopes, ranking (owner never ranked, top/poor), the team board for today, daily points, who-is-calling (busy, take-over, one call each, expiry, 120-day rows), points settings, HTTP guards, order-page injection and one shared sidebar on every admin page pass');
+  console.log('Staff activity: Steadfast sender, status moves, note authors, note lists (every note kept with writer and time), incomplete conversions and Customer Manager orders scored at send, extra books, once-only points, date ranges, role scopes, ranking (owner never ranked, top/poor), the team board for today, daily points, who-is-calling (busy, take-over, one call each, expiry, 120-day rows), points settings, HTTP guards, order-page injection and one shared sidebar on every admin page pass');
 
   if (serve) {
     console.log('\nSandbox (throwaway local DB) at http://localhost:3000/upload/static/custom-orders.html');

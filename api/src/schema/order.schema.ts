@@ -379,6 +379,23 @@ export const OrderSchema = new mongoose.Schema(
       role: { type: String },
       at: { type: Date },
     },
+    // Every staff note, oldest first, with its writer and time (owner,
+    // 2026-11-08); adminNote keeps the latest text. Unset on older records.
+    adminNotes: {
+      type: [
+        {
+          _id: false,
+          text: { type: String },
+          at: { type: Date },
+          by: {
+            _id: { type: Schema.Types.ObjectId, ref: 'Admin' },
+            name: { type: String },
+            role: { type: String },
+          },
+        },
+      ],
+      default: undefined,
+    },
     // Staff whose action booked the courier parcel.
     courierSentBy: {
       _id: { type: Schema.Types.ObjectId, ref: 'Admin' },

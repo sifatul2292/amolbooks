@@ -1,6 +1,6 @@
 <!-- Live staff board and "who is calling" for custom-orders.html (Orders and Incomplete Order views).
      Injected by customer-manager-pages.ts after staff-attribution.html (owner, 2026-11-06).
-     Panel above the cards:
+     One compact card under the number strip (made minimal for desktop, 2026-11-06):
        - the signed-in staff member's standing today ("Ismam, you are today's top performer!");
        - today's team board (the owner's account is shown nowhere on it and never ranked);
        - who is on a call right now.
@@ -10,119 +10,97 @@
      Data: GET /api/staff-activity/team-today (every 60 s), GET /api/staff-activity/calls (every 10 s),
      POST /api/staff-activity/calls/start | end. -->
 <style id="ab-staff-live">
+  /* One compact card under the number strip: message + team on one line, calls below. */
   .ab-tl {
-    display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-    gap: 14px;
-    margin: 0 0 18px;
+    margin: 0 0 12px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    overflow: hidden;
   }
   .ab-tl[hidden] {
     display: none;
   }
-  .ab-tl-card {
-    background: #fff;
-    border: 1px solid #e7e3f6;
-    border-radius: 16px;
-    box-shadow: 0 6px 22px rgba(76, 29, 149, 0.07);
-    padding: 16px 18px;
-    min-width: 0;
+  .ab-tl-main {
+    display: grid;
+    grid-template-columns: minmax(250px, 340px) minmax(0, 1fr);
+    align-items: center;
+    gap: 20px;
+    padding: 12px 16px;
   }
   .ab-tl-hero {
     display: flex;
-    gap: 14px;
     align-items: center;
-    border-left: 5px solid var(--ab-tl-accent, #7c3aed);
+    gap: 12px;
+    min-width: 0;
+    padding-right: 20px;
+    border-right: 1px solid #eef0f5;
   }
   .ab-tl-icon {
     flex: 0 0 auto;
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
     display: grid;
     place-items: center;
-    font-size: 22px;
-    color: #fff;
-    background: var(--ab-tl-accent, #7c3aed);
+    font-size: 14px;
+    color: var(--ab-tl-accent, #6d28d9);
+    background: var(--ab-tl-tint, #f5f3ff);
   }
-  .ab-tl-hero[data-state='top'] { --ab-tl-accent: #d97706; background: linear-gradient(100deg, #fffbeb, #fff 70%); }
-  .ab-tl-hero[data-state='behind'] { --ab-tl-accent: #2563eb; }
-  .ab-tl-hero[data-state='poor'] { --ab-tl-accent: #dc2626; background: linear-gradient(100deg, #fef2f2, #fff 70%); }
-  .ab-tl-hero[data-state='idle'] { --ab-tl-accent: #64748b; }
-  .ab-tl-hero[data-state='owner'] { --ab-tl-accent: #7c3aed; }
-  .ab-tl-kicker {
-    display: block;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: #7c6f9b;
-    margin-bottom: 3px;
+  .ab-tl-hero[data-state='top'] { --ab-tl-accent: #b45309; --ab-tl-tint: #fef3c7; }
+  .ab-tl-hero[data-state='behind'] { --ab-tl-accent: #1d4ed8; --ab-tl-tint: #eff6ff; }
+  .ab-tl-hero[data-state='poor'] { --ab-tl-accent: #b91c1c; --ab-tl-tint: #fef2f2; }
+  .ab-tl-hero[data-state='idle'] { --ab-tl-accent: #475569; --ab-tl-tint: #f1f5f9; }
+  .ab-tl-hero[data-state='owner'] { --ab-tl-accent: #6d28d9; --ab-tl-tint: #f5f3ff; }
+  .ab-tl-text {
+    min-width: 0;
   }
   .ab-tl-title {
     display: block;
-    font-size: 18px;
-    line-height: 1.3;
-    font-weight: 800;
-    color: #1e1b3a;
+    font-size: 14px;
+    line-height: 1.35;
+    font-weight: 700;
+    color: #0f172a;
   }
   .ab-tl-sub {
-    display: block;
-    margin-top: 4px;
-    font-size: 12.5px;
-    line-height: 1.45;
-    color: #55607a;
-  }
-  .ab-tl-board-head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 8px;
-  }
-  .ab-tl-board-head strong {
-    font-size: 13px;
-    font-weight: 800;
-    color: #1e1b3a;
-  }
-  .ab-tl-board-head small {
-    font-size: 11px;
-    color: #7c879f;
-    white-space: nowrap;
-  }
-  .ab-tl-live-dot {
-    display: inline-block;
-    width: 7px;
-    height: 7px;
-    margin-right: 5px;
-    border-radius: 50%;
-    background: #16a34a;
-    vertical-align: 1px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    margin-top: 2px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #64748b;
   }
   .ab-tl-list {
     list-style: none;
     margin: 0;
     padding: 0;
+    min-width: 0;
     display: grid;
-    gap: 6px;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px 24px;
   }
   .ab-tl-list li {
     display: grid;
-    grid-template-columns: 24px minmax(80px, 190px) minmax(40px, 1fr) 46px;
+    grid-template-columns: 18px minmax(0, 1fr) auto;
     align-items: center;
-    gap: 10px;
+    column-gap: 8px;
+    row-gap: 5px;
     font-size: 12.5px;
-    color: #27304a;
+    color: #334155;
   }
   .ab-tl-rank {
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     display: grid;
     place-items: center;
-    font-size: 11px;
-    font-weight: 800;
-    background: #eef0f6;
-    color: #4b5675;
+    font-size: 10px;
+    font-weight: 700;
+    background: #f1f5f9;
+    color: #64748b;
   }
   .ab-tl-list li.is-top .ab-tl-rank {
     background: #f59e0b;
@@ -140,18 +118,31 @@
   }
   .ab-tl-list li.is-me .ab-tl-name {
     font-weight: 800;
+    color: #0f172a;
+  }
+  .ab-tl-pts {
+    font-weight: 800;
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .ab-tl-pts small {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #94a3b8;
   }
   .ab-tl-bar {
-    height: 10px;
-    border-radius: 5px;
-    background: #f1f2f8;
+    grid-column: 2 / -1;
+    height: 4px;
+    border-radius: 2px;
+    background: #eef0f5;
     overflow: hidden;
   }
   .ab-tl-bar i {
     display: block;
     height: 100%;
     min-width: 3px;
-    border-radius: 5px;
+    border-radius: 2px;
     background: #8b5cf6;
   }
   .ab-tl-list li.is-me .ab-tl-bar i {
@@ -160,42 +151,61 @@
   .ab-tl-list li.is-poor .ab-tl-bar i {
     background: #f87171;
   }
-  .ab-tl-pts {
-    text-align: right;
-    font-weight: 800;
-    font-variant-numeric: tabular-nums;
-  }
-  .ab-tl-pts small {
-    display: block;
-    font-size: 10px;
-    font-weight: 600;
-    color: #8a93a8;
-  }
   .ab-tl-oncall {
-    margin-left: 4px;
+    margin-left: 5px;
     color: #ea580c;
-    font-size: 11px;
+    font-size: 10.5px;
+  }
+  .ab-tl-foot {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 7px 16px;
+    border-top: 1px solid #eef0f5;
+    background: #fafbfc;
   }
   .ab-tl-calls {
-    grid-column: 1 / -1;
+    flex: 1;
+    min-width: 0;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    font-size: 12.5px;
-    color: #55607a;
+    gap: 6px 8px;
+    font-size: 12px;
+    color: #64748b;
   }
   .ab-tl-calls > strong {
-    color: #1e1b3a;
-    font-weight: 800;
+    color: #334155;
+    font-weight: 700;
     margin-right: 2px;
+  }
+  .ab-tl-calls > strong i {
+    margin-right: 5px;
+    color: #94a3b8;
+  }
+  .ab-tl-calls.is-active > strong i {
+    color: #ea580c;
+  }
+  .ab-tl-stamp {
+    flex: 0 0 auto;
+    font-size: 11px;
+    color: #94a3b8;
+    white-space: nowrap;
+  }
+  .ab-tl-live-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 5px;
+    border-radius: 50%;
+    background: #16a34a;
+    vertical-align: 1px;
   }
   .ab-tl-call-chip {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 10px;
+    padding: 2px 9px;
     border-radius: 999px;
     background: #fff7ed;
     border: 1px solid #fed7aa;
@@ -208,8 +218,8 @@
     color: #166534;
   }
   .ab-tl-pulse {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
     background: currentColor;
     animation: ab-tl-pulse 1.6s ease-in-out infinite;
@@ -313,8 +323,13 @@
     box-shadow: 0 12px 30px rgba(15, 23, 42, 0.3);
   }
   @media (max-width: 1100px) {
-    .ab-tl {
+    .ab-tl-main {
       grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .ab-tl-hero {
+      padding-right: 0;
+      border-right: 0;
     }
   }
   /* Narrow tables squeeze the phone column: let the row tag wrap there. */
@@ -324,20 +339,16 @@
     }
   }
   @media (max-width: 600px) {
-    .ab-tl-card {
-      padding: 13px 14px;
+    .ab-tl-main {
+      padding: 12px;
     }
-    .ab-tl-icon {
-      width: 42px;
-      height: 42px;
-      font-size: 18px;
+    .ab-tl-list {
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px 16px;
     }
-    .ab-tl-title {
-      font-size: 15.5px;
-    }
-    .ab-tl-list li {
-      grid-template-columns: 22px minmax(70px, 1fr) minmax(40px, 1fr) 42px;
-      gap: 8px;
+    .ab-tl-foot {
+      padding: 7px 12px;
+      align-items: flex-start;
     }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -469,16 +480,18 @@
     panel.hidden = true;
     panel.setAttribute('aria-label', "Today's staff performance");
     panel.innerHTML =
-      '<div class="ab-tl-card ab-tl-hero" data-state="idle" aria-live="polite">' +
+      '<div class="ab-tl-main">' +
+      '<div class="ab-tl-hero" data-state="idle" aria-live="polite">' +
       '<span class="ab-tl-icon" aria-hidden="true"><i class="fas fa-trophy"></i></span>' +
-      '<div><span class="ab-tl-kicker">Your day so far</span><strong class="ab-tl-title"></strong><span class="ab-tl-sub"></span></div>' +
+      '<div class="ab-tl-text"><strong class="ab-tl-title"></strong><span class="ab-tl-sub"></span></div>' +
       '</div>' +
-      '<div class="ab-tl-card ab-tl-board">' +
-      '<div class="ab-tl-board-head"><strong>Today’s team</strong><small><span class="ab-tl-live-dot" aria-hidden="true"></span><span class="ab-tl-updated">Live</span></small></div>' +
-      '<ol class="ab-tl-list"></ol>' +
+      '<ol class="ab-tl-list" aria-label="Today’s team"></ol>' +
       '</div>' +
-      '<div class="ab-tl-card ab-tl-calls"></div>';
-    statsRow.parentNode.insertBefore(panel, statsRow);
+      '<div class="ab-tl-foot"><div class="ab-tl-calls"></div>' +
+      '<small class="ab-tl-stamp" title="Updates every minute"><span class="ab-tl-live-dot" aria-hidden="true"></span><span class="ab-tl-updated">Live</span></small>' +
+      '</div>';
+    // Under the number strip, just above the status tabs and the table it talks about.
+    statsRow.parentNode.insertBefore(panel, statsRow.nextSibling);
     var hero = panel.querySelector('.ab-tl-hero');
 
     function breakdown(row) {
@@ -489,9 +502,9 @@
       if (row.extraItems) parts.push(plural(row.extraItems, 'extra book'));
       return parts.join(' · ');
     }
-    function names(rows, full) {
+    function names(rows) {
       var list = rows.map(function (r) {
-        return full ? r.name : shortName(r.name);
+        return shortName(r.name);
       });
       return list.length > 1 ? list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1] : list[0] || '';
     }
@@ -512,7 +525,6 @@
       var tip = worth ? ' One converted incomplete order = ' + plural(worth, 'point') + '.' : '';
       var state;
       var icon;
-      var kicker = 'Your day so far';
       var title;
       var sub;
       if (me && me.ranked) {
@@ -548,18 +560,17 @@
       } else {
         state = 'owner';
         icon = 'fa-chart-simple';
-        kicker = 'Team today';
         var poor = ranked.filter(function (r) {
           return r.status === 'poor';
         });
         title = leader
-          ? 'Top performer today: ' + names(leaders, true) + ' · ' + plural(leader.points, 'point')
+          ? 'Top performer today: ' + names(leaders) + ' · ' + plural(leader.points, 'point')
           : 'No points on the team board yet today.';
         sub = poor.length
           ? 'Needs a push: ' +
             poor
               .map(function (r) {
-                return r.name + ' (' + r.points + ')';
+                return shortName(r.name) + ' (' + r.points + ')';
               })
               .join(', ') +
             '.'
@@ -568,12 +579,11 @@
           : '';
       }
       // Only touch the text when it changes (the hero is a polite live region).
-      var signature = [state, icon, kicker, title, sub].join('|');
+      var signature = [state, icon, title, sub].join('|');
       if (hero.getAttribute('data-signature') === signature) return;
       hero.setAttribute('data-signature', signature);
       hero.setAttribute('data-state', state);
       hero.querySelector('.ab-tl-icon').innerHTML = '<i class="fas ' + icon + '"></i>';
-      hero.querySelector('.ab-tl-kicker').textContent = kicker;
       hero.querySelector('.ab-tl-title').textContent = title;
       hero.querySelector('.ab-tl-sub').textContent = sub;
     }
@@ -600,13 +610,15 @@
               var detail = breakdown(r) || 'No points yet';
               if (r.callsLogged) detail += ' · ' + plural(r.callsLogged, 'call') + ' logged';
               return (
-                '<li class="' + cls + '" title="' + esc(r.name + ': ' + detail) + '">' +
+                '<li class="' + cls + '" title="' + esc(r.name + ': ' + plural(r.points, 'point') + ' · ' + detail) + '">' +
                 '<span class="ab-tl-rank">' + r.rank + '</span>' +
-                '<span class="ab-tl-name">' + esc(r.name) + (mine ? ' <small>(you)</small>' : '') +
+                '<span class="ab-tl-name">' + esc(shortName(r.name)) + (mine ? ' <small>(you)</small>' : '') +
                 (onCall[r.adminId] ? '<span class="ab-tl-oncall" title="On a call now"><i class="fas fa-phone-volume"></i></span>' : '') +
                 '</span>' +
+                '<span class="ab-tl-pts">' + r.points +
+                (r.callsLogged ? '<small> · ' + plural(r.callsLogged, 'call') + '</small>' : '') +
+                '</span>' +
                 '<span class="ab-tl-bar" aria-hidden="true">' + (width ? '<i style="width:' + width + '%"></i>' : '') + '</span>' +
-                '<span class="ab-tl-pts">' + r.points + '<small>' + plural(r.callsLogged || 0, 'call') + '</small></span>' +
                 '</li>'
               );
             })
@@ -617,7 +629,7 @@
         hour: '2-digit',
         minute: '2-digit',
       });
-      panel.querySelector('.ab-tl-updated').textContent = 'Live · updated ' + time;
+      panel.querySelector('.ab-tl-updated').textContent = 'Live · ' + time;
     }
 
     function renderCallsLine() {
@@ -626,19 +638,20 @@
       });
       var box = panel.querySelector('.ab-tl-calls');
       var html = active.length
-        ? '<strong><i class="fas fa-phone-volume"></i> Calling now</strong>' +
+        ? '<strong><i class="fas fa-phone-volume"></i>Calling now</strong>' +
           active
             .map(function (c) {
               return (
                 '<span class="ab-tl-call-chip' + (c.mine ? ' is-mine' : '') + '">' +
                 '<span class="ab-tl-pulse" aria-hidden="true"></span>' +
-                esc(c.mine ? 'You' : c.adminName) + ' → ' + esc(c.phone) + (c.label ? ' (' + esc(c.label) + ')' : '') +
+                esc(c.mine ? 'You' : shortName(c.adminName)) + ' → ' + esc(c.phone) + (c.label ? ' (' + esc(c.label) + ')' : '') +
                 ' · ' + esc(lasting(c.startedAt)) +
                 '</span>'
               );
             })
             .join('')
-        : '<strong><i class="fas fa-phone"></i> Calling now</strong> Nobody is on a call. Press “I’m calling” on a row so others don’t call the same customer.';
+        : '<strong><i class="fas fa-phone"></i>Calling now</strong> Nobody. Press “I’m calling” on a row before you call, so no one else calls the same customer.';
+      box.classList.toggle('is-active', active.length > 0);
       if (box.getAttribute('data-html') !== html) {
         box.innerHTML = html;
         box.setAttribute('data-html', html);

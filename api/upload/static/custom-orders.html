@@ -469,9 +469,15 @@
     .fraud-cell { display: flex; flex-direction: column; gap: 5px; min-width: 72px; align-items: flex-start; }
     .note-cell { max-width: 160px; font-size: 12px; color: #334155; line-height: 1.5; word-break: break-word; }
     .customer-note-text { display: block; }
-    .admin-note-cell { min-width: 140px; max-width: 180px; }
-    .admin-note-text { display: block; font-size: 12px; color: #1e40af; cursor: pointer; line-height: 1.5; word-break: break-word; padding: 3px 6px; border-radius: 5px; background: #eff6ff; }
-    .admin-note-text:hover { background: #dbeafe; }
+    /* Admin notes: newest first, each with its writer and time (owner, 2026-11-08) */
+    .admin-note-cell { min-width: 200px; max-width: 240px; }
+    .an-list { list-style: none; margin: 0 0 6px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+    .an-text { font-size: 12px; color: #1e3a8a; line-height: 1.45; word-break: break-word; white-space: pre-wrap; padding: 4px 8px; border-radius: 6px; background: #eff6ff; }
+    .an-item + .an-item .an-text { color: #334155; background: #f8fafc; }
+    .an-meta { margin-top: 2px; padding: 0 2px; font-size: 10.5px; line-height: 1.35; color: #64748b; }
+    .an-meta strong { color: #5b21b6; font-weight: 700; }
+    .an-more { display: block; margin: -2px 0 6px; padding: 0 2px; border: none; background: none; font-size: 11px; font-weight: 600; color: #6366f1; cursor: pointer; }
+    .an-more:hover { text-decoration: underline; }
     .btn-add-note { font-size: 11px; color: #6366f1; background: none; border: 1px dashed #a5b4fc; border-radius: 5px; padding: 3px 8px; cursor: pointer; }
     .btn-add-note:hover { background: #eef2ff; }
     .admin-note-input { width: 100%; font-size: 12px; border: 1px solid #a5b4fc; border-radius: 5px; padding: 5px 7px; resize: vertical; font-family: inherit; outline: none; box-sizing: border-box; }
@@ -1279,6 +1285,49 @@
       .stock-demand-value { white-space: normal; }
       .stock-demand-unit { display: block; margin-top: 2px; }
     }
+
+    /* ── Compact header for the Orders / Incomplete views (owner, 2026-11-06) ──
+       One-line date bar, the four cards as one white strip. Same elements and ids. */
+    .stats-row.kpi-strip {
+      gap: 1px; background: var(--g200); border: 1px solid var(--g200);
+      border-radius: 12px; overflow: hidden; margin-bottom: 12px;
+      box-shadow: 0 1px 2px rgba(15,23,42,.04);
+    }
+    .kpi-strip .stat-card {
+      background: #fff !important; color: var(--g900);
+      border-radius: 0; box-shadow: none; padding: 12px 16px; gap: 12px;
+    }
+    .kpi-strip .stat-card:hover { transform: none; box-shadow: none; }
+    .kpi-strip .stat-card::before, .kpi-strip .stat-card::after { display: none; }
+    .kpi-strip .stat-icon { width: 34px; height: 34px; border-radius: 9px; font-size: 14px; background: var(--g100); color: var(--g500); }
+    .kpi-strip .c1 .stat-icon { background: #eff6ff; color: #2563eb; }
+    .kpi-strip .c2 .stat-icon { background: #fff7ed; color: #c2410c; }
+    .kpi-strip .c3 .stat-icon { background: #ecfdf5; color: #047857; }
+    .kpi-strip .c4 .stat-icon { background: #f5f3ff; color: #6d28d9; }
+    .kpi-strip #convertedOrdersCard .stat-icon { background: #ecfeff; color: #0e7490; }
+    .kpi-strip #convertedAmountCard .stat-icon { background: #f0fdfa; color: #0f766e; }
+    .kpi-strip #allConvertedOrdersCard .stat-icon { background: #eef2ff; color: #4338ca; }
+    .kpi-strip #allConvertedAmountCard .stat-icon { background: #fdf2f8; color: #be185d; }
+    .kpi-strip .stat-info label { font-size: 11.5px; font-weight: 600; text-transform: none; letter-spacing: 0; opacity: 1; color: var(--g500); }
+    .kpi-strip .stat-info .val { font-size: 21px; font-weight: 800; margin-top: 1px; letter-spacing: -.01em; color: var(--g900); font-variant-numeric: tabular-nums; }
+    @media(min-width:769px) {
+      .date-row { gap: 8px; margin-bottom: 12px; align-items: center; }
+      .date-box {
+        flex: 0 1 auto; min-width: 0; height: 40px; padding: 0 4px 0 12px; gap: 8px;
+        border: 1px solid var(--g200); border-radius: 10px; box-shadow: none;
+      }
+      .date-box > div { display: flex; align-items: center; gap: 10px; }
+      .date-box-icon { width: auto; height: auto; background: none !important; color: var(--g400) !important; font-size: 13px; }
+      .date-box label { margin: 0; font-size: 12px; font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--g500); white-space: nowrap; }
+      .date-inputs { gap: 4px; }
+      .date-inputs input { flex: none; width: 122px; font-size: 13px; color: var(--g900); }
+      .date-clear { padding: 6px 8px; }
+      .btn-today {
+        min-height: 40px; height: 40px; padding: 0 16px; border-radius: 10px;
+        background: var(--p); box-shadow: none; font-weight: 600;
+      }
+      .btn-today:hover { opacity: 1; background: var(--p-dark); }
+    }
   </style>
 </head>
 <body>
@@ -1598,7 +1647,7 @@
         <div class="date-box">
           <div class="date-box-icon v"><i class="fas fa-calendar-alt"></i></div>
           <div style="flex:1">
-            <label>Order Date Range</label>
+            <label>Order date</label>
             <div class="date-inputs">
               <input type="date" id="createdFrom" onchange="onDateChange()">
               <span>—</span>
@@ -1610,7 +1659,7 @@
         <div class="date-box">
           <div class="date-box-icon o"><i class="fas fa-truck"></i></div>
           <div style="flex:1">
-            <label>Delivery Date Range</label>
+            <label>Delivery date</label>
             <div class="date-inputs">
               <input type="date" id="deliveryFrom" onchange="onDateChange()">
               <span>—</span>
@@ -1625,7 +1674,7 @@
       </div>
 
       <!-- Stats -->
-      <div class="stats-row">
+      <div class="stats-row kpi-strip">
         <div class="stat-card c1">
           <div class="stat-icon"><i class="fas fa-shopping-bag"></i></div>
           <div class="stat-info"><label id="totalOrdersLabel">Processing Orders</label><div class="val" id="totalOrders">—</div></div>
@@ -2746,7 +2795,7 @@
         createdAt:1, checkoutDate:1, shippingAddress:1, courierData:1, courierStatus:1,
         courierLink:1, fraudChecker:1, admin:1, user:1, deliveryDate:1, orderedItems:1,
         division:1, area:1, zone:1,
-        note:1, adminNote:1, city:1, status:1, email:1,
+        note:1, adminNote:1, adminNoteBy:1, adminNotes:1, city:1, status:1, email:1,
         orderOrigin:1, orderFrom:1, manualOrderSource:1, attribution:1,
       },
     };
@@ -3603,7 +3652,7 @@
           '<td><small style="color:#64748b">'+(o.user?'User':'Guest')+'</small></td>',
           '<td><span style="color:#94a3b8;font-size:11px">—</span></td>',
           '<td><div class="note-cell">'+(o.note?'<span class="customer-note-text">'+esc(o.note)+'</span>':'<span style="color:#94a3b8;font-size:11px">—</span>')+'</div></td>',
-          '<td><div class="admin-note-cell" data-id="'+o._id+'">'+(o.adminNote?'<span class="admin-note-text" onclick="editAdminNote(\''+o._id+'\',this)">'+esc(o.adminNote)+'</span>':'<button class="btn-add-note" onclick="editAdminNote(\''+o._id+'\',this)">+ Add</button>')+'</div></td>',
+          '<td><div class="admin-note-cell" data-id="'+o._id+'">'+adminNoteCellHtml(o)+'</div></td>',
           '</tr>',
         ].join('');
       }
@@ -3628,7 +3677,7 @@
         '<td><small style="color:#64748b">'+orderBy+'</small></td>',
         '<td><a href="'+API+'/invoice/'+o._id+'.pdf" target="_blank" class="btn-action btn-invoice" title="Invoice"><i class="fas fa-file-invoice"></i></a></td>',
         '<td><div class="note-cell">'+(o.note?'<span class="customer-note-text">'+esc(o.note)+'</span>':'<span style="color:#94a3b8;font-size:11px">—</span>')+'</div></td>',
-        '<td><div class="admin-note-cell" data-id="'+o._id+'">'+(o.adminNote?'<span class="admin-note-text" onclick="editAdminNote(\''+o._id+'\',this)">'+esc(o.adminNote)+'</span>':'<button class="btn-add-note" onclick="editAdminNote(\''+o._id+'\',this)">+ Add</button>')+'</div></td>',
+        '<td><div class="admin-note-cell" data-id="'+o._id+'">'+adminNoteCellHtml(o)+'</div></td>',
         '</tr>',
       ].join('');
     }).join('');
@@ -4072,34 +4121,128 @@
     showToast('Exported '+allOrders.length+' orders.','success');
   };
 
-  /* ── Admin Note ── */
-  window.editAdminNote = function (mongoId, triggerEl) {
+  /* ── Admin notes (owner, 2026-11-08) ──
+     Every note stays, newest first, with who wrote it and when. "+ Add note"
+     adds a new one; nothing is overwritten. The latest 3 show; older ones open
+     with "Show N older". */
+  var NOTES_SHOWN = 3;
+  var notesExpanded = {};
+
+  // Same rule as the API (StaffActivityService.notesOf): the saved list, plus the
+  // order's current note when the list does not end with it (notes written before
+  // 2026-11-08, or text the system added).
+  function adminNoteEntries(o) {
+    var list = (o && Array.isArray(o.adminNotes) ? o.adminNotes : []).filter(function (n) {
+      return n && String(n.text || '').trim();
+    });
+    var text = String((o && o.adminNote) || '').trim();
+    var last = list[list.length - 1];
+    if (text && !(last && String(last.text || '').trim() === text)) {
+      var by = !list.length && o.adminNoteBy && o.adminNoteBy.name ? o.adminNoteBy : null;
+      list = list.concat([{ text: text, at: by ? by.at : null, by: by }]);
+    }
+    return list;
+  }
+  function noteDay(d) {
+    return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' });
+  }
+  // "Today, 3:42 pm" · "Yesterday, 11:05 am" · "6 Nov, 3:42 pm" (Bangladesh time).
+  function noteWhen(at) {
+    var d = at ? new Date(at) : null;
+    if (!d || isNaN(d.getTime())) return '';
+    var time = d.toLocaleTimeString('en-US', { timeZone: 'Asia/Dhaka', hour: 'numeric', minute: '2-digit' }).toLowerCase();
+    var day = noteDay(d);
+    var now = new Date();
+    if (day === noteDay(now)) return 'Today, ' + time;
+    if (day === noteDay(new Date(now.getTime() - 864e5))) return 'Yesterday, ' + time;
+    var opts = { timeZone: 'Asia/Dhaka', day: 'numeric', month: 'short' };
+    if (day.slice(0, 4) !== noteDay(now).slice(0, 4)) opts.year = 'numeric';
+    return d.toLocaleDateString('en-GB', opts) + ', ' + time;
+  }
+  function noteFullWhen(at) {
+    var d = at ? new Date(at) : null;
+    if (!d || isNaN(d.getTime())) return '';
+    return d.toLocaleString('en-GB', {
+      timeZone: 'Asia/Dhaka', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+      hour: 'numeric', minute: '2-digit',
+    });
+  }
+  // Short names stay whole ("Ismam", "Super admin"); long ones show the last
+  // word, as on the team board ("Md Maruf Billah Naeem" → "Naeem").
+  function noteShortName(name) {
+    var full = String(name || '').trim().replace(/\s+/g, ' ');
+    if (full.length <= 14) return full;
+    return full.split(' ').pop();
+  }
+  function adminNoteListHtml(o) {
+    var id = String(o._id);
+    var notes = adminNoteEntries(o).reverse();
+    if (!notes.length) return '';
+    var shown = notesExpanded[id] ? notes : notes.slice(0, NOTES_SHOWN);
+    var html = '<ol class="an-list">' + shown.map(function (n) {
+      var name = n.by && n.by.name ? String(n.by.name) : '';
+      var when = noteWhen(n.at);
+      var tip = [name, n.by && n.by.role ? String(n.by.role).replace(/_/g, ' ') : '', noteFullWhen(n.at)]
+        .filter(Boolean).join(' · ');
+      var meta = (name ? '<strong>' + esc(noteShortName(name)) + '</strong>' : '') +
+        (name && when ? ' · ' : '') + esc(when);
+      return '<li class="an-item"><div class="an-text">' + esc(n.text) + '</div>' +
+        (meta ? '<div class="an-meta"' + (tip ? ' title="' + esc(tip) + '"' : '') + '>' + meta + '</div>' : '') +
+        '</li>';
+    }).join('') + '</ol>';
+    if (notes.length > NOTES_SHOWN) {
+      html += '<button type="button" class="an-more" onclick="toggleAdminNotes(\'' + id + '\')">' +
+        (notesExpanded[id] ? 'Show less' : 'Show ' + (notes.length - NOTES_SHOWN) + ' older') + '</button>';
+    }
+    return html;
+  }
+  function adminNoteCellHtml(o) {
+    return '<div class="an-notes">' + adminNoteListHtml(o) + '</div>' +
+      '<button type="button" class="btn-add-note" onclick="editAdminNote(\'' + String(o._id) + '\',this)">+ Add note</button>';
+  }
+  window.toggleAdminNotes = function (mongoId) {
+    notesExpanded[mongoId] = !notesExpanded[mongoId];
+    var cell = document.querySelector('.admin-note-cell[data-id="' + mongoId + '"]');
+    var list = cell && cell.querySelector('.an-notes');
+    if (list) list.innerHTML = adminNoteListHtml(allOrdersById[String(mongoId)] || { _id: mongoId });
+  };
+
+  window.editAdminNote = function (mongoId) {
     var cell = document.querySelector('.admin-note-cell[data-id="' + mongoId + '"]');
     if (!cell) return;
-    var order = allOrdersById[String(mongoId)];
-    var current = (order && order.adminNote) || '';
+    var open = cell.querySelector('.admin-note-input');
+    if (open) { open.focus(); return; }
+    var order = allOrdersById[String(mongoId)] || { _id: mongoId };
+    var box = document.createElement('div');
     var textarea = document.createElement('textarea');
     textarea.className = 'admin-note-input';
-    textarea.value = current;
-    textarea.placeholder = 'Add admin note…';
+    textarea.placeholder = 'Write a note…';
     textarea.rows = 3;
+    textarea.maxLength = 1000;
     var saveBtn = document.createElement('button');
+    saveBtn.type = 'button';
     saveBtn.className = 'btn-note-save';
     saveBtn.textContent = 'Save';
     var cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
     cancelBtn.className = 'btn-note-cancel';
     cancelBtn.textContent = 'Cancel';
-    cell.innerHTML = '';
-    cell.appendChild(textarea);
-    cell.appendChild(saveBtn);
-    cell.appendChild(cancelBtn);
+    box.appendChild(textarea);
+    box.appendChild(saveBtn);
+    box.appendChild(cancelBtn);
+    var addBtn = cell.querySelector('.btn-add-note');
+    if (addBtn) addBtn.parentNode.replaceChild(box, addBtn); else cell.appendChild(box);
     textarea.focus();
-    saveBtn.onclick = function () {
+
+    function close() { cell.innerHTML = adminNoteCellHtml(order); }
+    function save() {
       var val = textarea.value.trim();
-      saveBtn.disabled = true; saveBtn.textContent = '…';
-      fetch(API + (isIncompleteView ? '/api/order/update-incomplete-order-admin/' : '/api/order/update/') + mongoId, {
-        method: 'PUT', headers: authHeaders(),
-        body: JSON.stringify({ adminNote: val }),
+      if (!val) { textarea.focus(); return; }
+      if (saveBtn.disabled) return;
+      saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+      fetch(API + '/api/staff-activity/notes', {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ id: mongoId, kind: isIncompleteView ? 'incomplete' : 'order', text: val }),
       })
       .then(function (r) {
         // Expired login: the note box stays open, so Save works again after signing in.
@@ -4110,20 +4253,26 @@
       })
       .then(function (d) {
         var resp = d.resp;
-        if (!d.ok || (resp && resp.success === false)) { showToast((resp && resp.message) || 'Failed to save note', 'error'); saveBtn.disabled = false; saveBtn.textContent = 'Save'; return; }
-        if (order) order.adminNote = val;
-        cell.innerHTML = val
-          ? '<span class="admin-note-text" onclick="editAdminNote(\'' + mongoId + '\',this)">' + esc(val) + '</span>'
-          : '<button class="btn-add-note" onclick="editAdminNote(\'' + mongoId + '\',this)">+ Add</button>';
-        showToast('Note saved', 'success');
+        if (!d.ok || !resp || resp.success === false || !resp.data) {
+          showToast((resp && resp.message) || 'Failed to save note', 'error');
+          saveBtn.disabled = false; saveBtn.textContent = 'Save';
+          return;
+        }
+        order.adminNotes = resp.data.notes || [];
+        order.adminNote = val;
+        close();
+        showToast('Note added', 'success');
       })
-      .catch(function (err) { if (err.message !== 'auth') showToast('Error: ' + err.message, 'error'); saveBtn.disabled = false; saveBtn.textContent = 'Save'; });
-    };
-    cancelBtn.onclick = function () {
-      var cur = (order && order.adminNote) || '';
-      cell.innerHTML = cur
-        ? '<span class="admin-note-text" onclick="editAdminNote(\'' + mongoId + '\',this)">' + esc(cur) + '</span>'
-        : '<button class="btn-add-note" onclick="editAdminNote(\'' + mongoId + '\',this)">+ Add</button>';
+      .catch(function (err) {
+        if (err.message !== 'auth') showToast('Error: ' + err.message, 'error');
+        saveBtn.disabled = false; saveBtn.textContent = 'Save';
+      });
+    }
+    saveBtn.onclick = save;
+    cancelBtn.onclick = close;
+    textarea.onkeydown = function (e) {
+      if (e.key === 'Escape') close();
+      else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); save(); }
     };
   };
 

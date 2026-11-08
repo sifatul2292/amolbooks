@@ -35,6 +35,15 @@ export class StaffActivityController {
     return this.service.attribution(body?.ids, body?.kind);
   }
 
+  /** "+ Add note" on the order pages: adds a note; earlier notes stay. */
+  @Version(VERSION_NEUTRAL)
+  @Post('notes')
+  @HttpCode(200)
+  @AdminMetaRoles(...ALL_STAFF)
+  addNote(@Body() body: any, @GetAdmin() admin: Admin) {
+    return this.service.addNote(body, admin);
+  }
+
   @Version(VERSION_NEUTRAL)
   @Get('performance')
   @AdminMetaRoles(...ALL_STAFF)

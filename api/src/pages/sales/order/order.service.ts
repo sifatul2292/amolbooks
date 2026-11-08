@@ -231,7 +231,7 @@ export class OrderService {
       ObjectId.isValid(addOrderDto.incompleteOrderId)
         ? await this.incompleteOrderModel
             .findById(addOrderDto.incompleteOrderId)
-            .select('attribution adminNote adminNoteBy orderedItems')
+            .select('attribution adminNote adminNoteBy adminNotes orderedItems')
             .lean()
         : null;
 
@@ -263,6 +263,10 @@ export class OrderService {
         ? convertedIncomplete.adminNoteBy
         : staffActor && { ...staffActor, at: new Date() };
       if (noteBy) mData.adminNoteBy = noteBy;
+    }
+    // A converted Incomplete Orders record brings its note list along.
+    if (Array.isArray(convertedIncomplete?.adminNotes) && convertedIncomplete.adminNotes.length) {
+      mData.adminNotes = convertedIncomplete.adminNotes;
     }
     // Conversion and books added by the call; they score when the parcel is sent.
     await this.trackStaff(async (staff) => {
@@ -3092,7 +3096,7 @@ export class OrderService {
   /** Attribution fields are server-owned; never accept them from a request body. */
   private stripStaffStamps<T>(data: T): T {
     if (data && typeof data === 'object') {
-      for (const key of ['adminNoteBy', 'courierSentBy', 'convertedBy', 'staffCredit']) {
+      for (const key of ['adminNoteBy', 'adminNotes', 'courierSentBy', 'convertedBy', 'staffCredit']) {
         delete (data as any)[key];
       }
     }

@@ -1,6 +1,7 @@
 <!-- Staff attribution labels for custom-orders.html (injected by customer-manager-pages.ts).
-     Orders: "Sent by <name>" under the courier cell and "Note by <name>" under the admin note.
-     Incomplete Orders: "by <name>" under the Converted badge, and the note author. -->
+     Orders: "Sent by <name>" under the courier cell.
+     Incomplete Orders: "by <name>" under the Converted badge.
+     Admin notes show their own writer and time (custom-orders.html, 2026-11-08). -->
 <style id="ab-staff-attribution">
   .ab-staff-by {
     display: block;
@@ -83,10 +84,6 @@
       if (entry.courierSentBy && courier) {
         courier.appendChild(label('Sent by', entry.courierSentBy));
       }
-      var note = row.querySelector('.admin-note-cell');
-      if (entry.adminNoteBy && note && note.querySelector('.admin-note-text')) {
-        note.appendChild(label('Note by', entry.adminNoteBy));
-      }
       if (entry.convertedBy) {
         var badge = Array.prototype.filter.call(row.querySelectorAll('.badge'), function (b) {
           return b.textContent.trim() === 'Converted';
@@ -153,7 +150,7 @@
           });
           return;
         }
-        var cell = record.target.closest && record.target.closest('.admin-note-cell, .courier-cell');
+        var cell = record.target.closest && record.target.closest('.courier-cell');
         if (cell) stale[rowId(cell.closest('tr'))] = true;
       });
       if (relevant) schedule();

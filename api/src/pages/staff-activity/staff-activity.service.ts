@@ -1,4 +1,10 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -47,6 +53,10 @@ const CALL_RECENT_MS = 24 * 60 * 60 * 1000;
 const CALL_KEEP_MS = 120 * 24 * 60 * 60 * 1000;
 const CALL_KINDS = ['order', 'incomplete', 'customer'];
 const ACTOR_CACHE_MS = 5 * 60 * 1000;
+// Staff notes on an order: up to 1000 characters each; the oldest drop off
+// after 200.
+const NOTE_MAX_CHARS = 1000;
+const NOTE_MAX_ENTRIES = 200;
 const DHAKA_OFFSET_MS = 6 * 60 * 60 * 1000;
 
 /**
@@ -246,7 +256,11 @@ export class StaffActivityService {
     });
   }
 
-  /** A note changed without a verified staff identity loses its author. */
+  /**
+   * adminNote saved from another admin screen: the new text joins the note list
+   * too. A note changed without a verified staff identity loses its author; a
+   * cleared note keeps the earlier entries.
+   */
   async adminNoteChanged(
     kind: 'order' | 'incomplete',
     record: any,
@@ -257,12 +271,126 @@ export class StaffActivityService {
     const after = note.trim();
     if (String(record.adminNote || '').trim() === after) return;
     const model = kind === 'order' ? this.orderModel : this.incompleteOrderModel;
+    if (!after) {
+      await model.updateOne({ _id: record._id }, { $unset: { adminNoteBy: 1 } });
+      return;
+    }
+    const current: any = await model
+      .findById(record._id)
+      .select('adminNoteBy adminNotes')
+      .lean();
+    const loose = this.looseNote(
+      { adminNote: record.adminNote, adminNoteBy: current?.adminNoteBy },
+      this.noteEntries(current),
+    );
+    const stamp = actor ? this.stamp(actor) : null;
+    const entry = { text: after, at: stamp ? stamp.at : new Date(), by: actor ? this.noteAuthor(actor) : null };
     await model.updateOne(
       { _id: record._id },
-      after && actor
-        ? { $set: { adminNoteBy: this.stamp(actor) } }
-        : { $unset: { adminNoteBy: 1 } },
+      {
+        $push: { adminNotes: { $each: loose ? [loose, entry] : [entry], $slice: -NOTE_MAX_ENTRIES } },
+        ...(stamp ? { $set: { adminNoteBy: stamp } } : { $unset: { adminNoteBy: 1 } }),
+      },
     );
+  }
+
+  /**
+   * "+ Add note" on the order pages (owner, 2026-11-08): the note joins the
+   * order's list with its writer and time; earlier notes stay. adminNote keeps
+   * the latest text for the other admin screens.
+   */
+  async addNote(body: any, admin: any) {
+    const kind = body?.kind === 'incomplete' ? 'incomplete' : 'order';
+    const id = String(body?.id || '');
+    const text = String(body?.text == null ? '' : body.text).trim();
+    if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Unknown order.');
+    if (!text) throw new BadRequestException('Write a note first.');
+    if (text.length > NOTE_MAX_CHARS) {
+      throw new BadRequestException(`Keep the note under ${NOTE_MAX_CHARS} characters.`);
+    }
+    const actor = await this.resolveActor(admin);
+    if (!actor) {
+      throw new UnauthorizedException('Login expired. Please log in again to save the note.');
+    }
+    const model = kind === 'order' ? this.orderModel : this.incompleteOrderModel;
+    // A note written before the list existed (or text the system added) joins the
+    // list first, exactly once: updatedAt lets only one of two saves at the same
+    // moment do it; the other reads again.
+    for (let attempt = 0; ; attempt++) {
+      const doc: any = await model
+        .findById(id)
+        .select('adminNote adminNoteBy adminNotes updatedAt')
+        .lean();
+      if (!doc) throw new NotFoundException('Order not found.');
+      const loose = this.looseNote(doc, this.noteEntries(doc));
+      if (!loose) break;
+      const seeded = await model.updateOne(
+        { _id: doc._id, updatedAt: doc.updatedAt ?? null },
+        { $push: { adminNotes: { $each: [loose], $slice: -NOTE_MAX_ENTRIES } } },
+      );
+      if (seeded.matchedCount) break;
+      if (attempt >= 4) {
+        throw new ConflictException('The order changed while saving. Please try again.');
+      }
+    }
+    // The new note itself is one atomic push: notes saved at the same moment all stay.
+    const stamp = this.stamp(actor);
+    const saved: any = await model
+      .findOneAndUpdate(
+        { _id: new Types.ObjectId(id) },
+        {
+          $push: {
+            adminNotes: {
+              $each: [{ text, at: stamp.at, by: this.noteAuthor(actor) }],
+              $slice: -NOTE_MAX_ENTRIES,
+            },
+          },
+          $set: { adminNote: text, adminNoteBy: stamp },
+        },
+        { new: true },
+      )
+      .select('adminNote adminNoteBy adminNotes')
+      .lean();
+    if (!saved) throw new NotFoundException('Order not found.');
+    return { success: true, data: { notes: this.notesOf(saved) } };
+  }
+
+  /** Notes for the order pages, oldest first; the current adminNote is always among them. */
+  notesOf(doc: any) {
+    const entries = this.noteEntries(doc);
+    const loose = this.looseNote(doc, entries);
+    return (loose ? entries.concat(loose) : entries).map((n) => this.publicNote(n));
+  }
+
+  private noteEntries(doc: any): any[] {
+    return (Array.isArray(doc?.adminNotes) ? doc.adminNotes : []).filter(
+      (n: any) => n && String(n.text || '').trim(),
+    );
+  }
+
+  /**
+   * The current adminNote when the list does not end with it: a note saved
+   * before the list existed (2026-11-08), or text added by the system (customer
+   * cancellation). adminNoteBy names its writer only when the list is empty.
+   */
+  private looseNote(doc: any, entries: any[]) {
+    const text = String(doc?.adminNote || '').trim();
+    const last = entries[entries.length - 1];
+    if (!text || (last && String(last.text || '').trim() === text)) return null;
+    const by = !entries.length && doc?.adminNoteBy?.name ? doc.adminNoteBy : null;
+    return { text, at: by?.at || null, by: by ? this.noteAuthor(by) : null };
+  }
+
+  private noteAuthor(actor: any) {
+    return { _id: actor._id, name: actor.name, role: actor.role || '' };
+  }
+
+  private publicNote(note: any) {
+    return {
+      text: String(note.text || ''),
+      at: note.at || null,
+      by: note.by?.name ? { name: note.by.name, role: note.by.role || '' } : null,
+    };
   }
 
   /**
