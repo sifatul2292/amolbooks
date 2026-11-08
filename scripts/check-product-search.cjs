@@ -81,6 +81,29 @@ let connection;
   assert.deepEqual(ids('কলম'), [], 'Short words must match exactly');
   assert.deepEqual(ids(''), []);
 
+  // 2b. Banglish (owner, 2026-11-08): Latin spellings of Bengali titles and names.
+  assert.equal(search.romanizeBengali('সম্পদ ও রিজিকের গোপন রহস্য'), 'sompod o rijiker gopon rohos');
+  assert.equal(search.romanizeBengali('আধুনিক ফিতনা'), 'adhunik fitna');
+  assert.equal(search.romanizeBengali('বিশ্ব নামাজ ২০২৫'), 'bish namaj 2025');
+  for (const [a, b] of [['rohossho', 'rohosso'], ['shompod', 'sampad'], ['rizik', 'rijik'], ['ow', 'o'], ['valo', 'bhalo'], ['quran', 'kuran']]) {
+    assert.equal(fold(a), fold(b), a + ' = ' + b);
+  }
+  const banglish = prepareCandidates(books.concat([
+    { _id: 'g', name: 'সম্পদ ও রিজিকের গোপন রহস্য', nameEn: 'Secrets of Wealth and Provision (Rizq)', author: { name: 'শাইখ ড. রাতিব আন-নাবুলুসি' } },
+  ]));
+  const bids = (query) => rankSearch(banglish, query);
+  assert.deepEqual(bids('sompod ow rijiker rohosso'), ['g'], 'Owner example 3: Banglish title');
+  assert.deepEqual(bids('shompod o rizik er gopon rohossho'), ['g'], 'Other Banglish spellings');
+  assert.deepEqual(bids('sampad rizik'), ['g']);
+  assert.deepEqual(bids('rijiker'), ['g']);
+  assert.deepEqual(bids('secrets of wealth'), ['g'], 'English name still works');
+  assert.deepEqual(bids('nabulsi'), ['g'], 'Banglish author, close spelling');
+  assert.deepEqual(bids('atmar oshudh'), ['a']);
+  assert.deepEqual(bids('adhunik fitna'), ['b']);
+  assert.deepEqual(bids('barakah effect'), ['d']);
+  assert.deepEqual(bids('masud sorif'), ['f'], 'Banglish translator');
+  assert.deepEqual(bids('আধুনিক ফিতনা'), ['b'], 'Bengali unchanged');
+
   // 3. The dropdown folds letters exactly like the API, and suggests authors with close spellings.
   new vm.Script(STOREFRONT_PRODUCT_SECTIONS_SCRIPT, { filename: 'storefront-product-sections.js' });
   const grab = (name) => {
@@ -95,8 +118,15 @@ let connection;
     throw new Error('Unbalanced ' + name);
   };
   const client = vm.createContext({});
-  vm.runInContext(['searchKey', 'searchTypos', 'searchWordClose', 'matchSearchNames'].map(grab).join('\n'), client);
-  for (const text of same.flat().concat(['আধুনিক — ফিতনা!!', 'প্রোডাক্টিভ মুসলিম', 'আল্লাহ', 'Productive Muslim 2'])) {
+  const romanTables = STOREFRONT_PRODUCT_SECTIONS_SCRIPT.slice(
+    STOREFRONT_PRODUCT_SECTIONS_SCRIPT.indexOf('var SEARCH_ROMAN_CONSONANTS'),
+    STOREFRONT_PRODUCT_SECTIONS_SCRIPT.indexOf('function searchRoman('),
+  );
+  vm.runInContext(romanTables + ['searchKey', 'searchLatin', 'searchRoman', 'searchTypos', 'searchWordClose', 'matchSearchNames'].map(grab).join('\n'), client);
+  for (const text of ['সম্পদ ও রিজিকের গোপন রহস্য', 'শাইখ ড. রাতিব আন-নাবুলুসি', 'আত্মার ওষুধ', 'বিশ্ব নামাজ ২০২৫', 'বড় দুঃখ চাঁদ', 'ব্যবসা স্বাধীন', 'মুসলমান সরকার']) {
+    assert.equal(client.searchRoman(text), search.romanizeBengali(text), 'Dropdown and API romanize "' + text + '" alike');
+  }
+  for (const text of same.flat().concat(['আধুনিক — ফিতনা!!', 'প্রোডাক্টিভ মুসলিম', 'আল্লাহ', 'Productive Muslim 2', 'sompod ow rijiker rohossho', 'Shaykh Dr. Ratib an-Nabulsi', 'phul vai zakat'])) {
     assert.equal(client.searchKey(text), fold(text), 'Dropdown and API fold "' + text + '" alike');
   }
   const authors = [
@@ -108,6 +138,7 @@ let connection;
   const names = (query) => client.matchSearchNames(authors, query, 3).map((author) => author.slug);
   assert.deepEqual(names('ইবনুল কায়িম'), ['ibnul']);
   assert.deepEqual(names('হুজায়ফা'), ['huzaifa']);
+  assert.deepEqual(names('arif azad'), ['arif'], 'Banglish author name');
   assert.deepEqual(names('আরিফ আযাদ'), ['arif']);
   assert.deepEqual(names('আরিফ'), ['arif', 'ariful'], 'Exact prefix matches first');
   assert.deepEqual(names('আরিফ আজাদ'), ['arif']);
@@ -181,7 +212,8 @@ let connection;
     await Product.deleteMany({});
     await Product.collection.insertMany(catalogue.map((p) => ({ ...p, _id: new mongoose.Types.ObjectId(p._id), status: 'publish' })));
     service.searchCandidateCache = new Map();
-    for (const [q, expected] of [['আত্মার ঔষুধ', 'আত্মার ওষুধ'], ['আধুনিল ফিতনা', 'আধুনিক ফিতনা'], ['প্রডাক্টিভ মুসলিম', 'প্রোডাক্টিভ মুসলিম']]) {
+    for (const [q, expected] of [['আত্মার ঔষুধ', 'আত্মার ওষুধ'], ['আধুনিল ফিতনা', 'আধুনিক ফিতনা'], ['প্রডাক্টিভ মুসলিম', 'প্রোডাক্টিভ মুসলিম'],
+      ['sompod ow rijiker rohosso', 'সম্পদ ও রিজিকের গোপন রহস্য'], ['atmar oshudh', 'আত্মার ওষুধ'], ['adhunik fitna', 'আধুনিক ফিতনা']]) {
       result = await run(q, { priority: -1, totalSold: -1 }, 8);
       assert.equal(result.data[0] && result.data[0].name, expected, q + ' (live catalogue)');
       console.log('live catalogue:', q, '→', result.data.map((p) => p.name).join(' | '));
@@ -190,7 +222,7 @@ let connection;
 
   await connection.dropDatabase();
   await connection.close();
-  console.log('Product search: letter folding, Quran/dua spellings, close spellings, word order, missing spaces, every searchable field, requested sort kept, drafts hidden, counts, exact-search fallback and the dropdown author/publisher matching pass' + (live ? ' (and the live catalogue examples)' : ''));
+  console.log('Product search: letter folding, Quran/dua spellings, close spellings, word order, missing spaces, every searchable field, Banglish titles/authors, requested sort kept, drafts hidden, counts, exact-search fallback and the dropdown author/publisher matching pass' + (live ? ' (and the live catalogue examples)' : ''));
 })().catch(async (error) => {
   console.error(error);
   if (connection && connection.readyState === 1) {

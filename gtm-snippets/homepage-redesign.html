@@ -304,7 +304,13 @@ app-home .super-deal-section { margin-top: 0 !important; }
     { label: 'ফিতনা থেকে বাঁচতে', match: 'আধুনিক ফিতনা', fallback: '/product-list?categories=' + encodeURIComponent('আধুনিক ফিতনা') }
   ];
   var shelves = [
-    { id: 'popular', title: 'জনপ্রিয়তার শীর্ষে' },
+    {
+      id: 'popular',
+      title: 'জনপ্রিয়তার শীর্ষে',
+      // Owner's picks (2026-11-08): a pinned book sits two places after its anchor, which on
+      // phones (two rows filled column by column) is right beside it.
+      pins: [{ slug: 'secrets-of-wealth-and-provision', after: 'the-barakah-effect' }]
+    },
     {
       id: 'combo',
       title: 'বেস্টসেলার বুক কম্বো',
@@ -445,7 +451,20 @@ app-home .super-deal-section { margin-top: 0 !important; }
     return (Array.isArray(product && product.category) ? product.category : []).map(function (category) { return category && category.name || ''; });
   }
   function productsForShelf(products, shelf) {
-    if (shelf.id === 'popular') return products.slice().sort(function (a, b) { return number(b.totalSold) - number(a.totalSold); }).slice(0, 10);
+    if (shelf.id === 'popular') {
+      var pinned = (shelf.pins || []).map(function (pin) {
+        return { pin: pin, product: products.find(function (product) { return product.slug === pin.slug; }) };
+      }).filter(function (entry) { return entry.product; });
+      var pinnedSlugs = pinned.map(function (entry) { return entry.product.slug; });
+      var top = products.filter(function (product) { return pinnedSlugs.indexOf(product.slug) === -1; })
+        .sort(function (a, b) { return number(b.totalSold) - number(a.totalSold); })
+        .slice(0, 10 - pinned.length);
+      pinned.forEach(function (entry) {
+        var anchor = top.findIndex(function (product) { return product.slug === entry.pin.after; });
+        top.splice(anchor === -1 ? Math.min(5, top.length) : Math.min(anchor + 2, top.length), 0, entry.product);
+      });
+      return top;
+    }
     var matches = products.filter(function (product) {
       if (shelf.words) return shelf.words.some(function (word) { return String(product.name || '').indexOf(word) !== -1; });
       var names = categoryNames(product);

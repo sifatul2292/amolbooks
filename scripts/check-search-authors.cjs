@@ -15,7 +15,9 @@ const fn = (name) => {
   return script.slice(start, end + 4);
 };
 const context = vm.createContext({});
-vm.runInContext(fn('searchKey') + fn('searchTypos') + fn('searchWordClose') + fn('matchSearchNames') + fn('matchSearchAuthors') + fn('matchSearchPublishers'), context);
+// The Banglish tables (SEARCH_ROMAN_*) sit just before searchRoman.
+const romanTables = script.slice(script.indexOf('  var SEARCH_ROMAN_CONSONANTS'), script.indexOf('  function searchRoman('));
+vm.runInContext(romanTables + fn('searchKey') + fn('searchLatin') + fn('searchRoman') + fn('searchTypos') + fn('searchWordClose') + fn('matchSearchNames') + fn('matchSearchAuthors') + fn('matchSearchPublishers'), context);
 const match = (authors, query) => Array.from(context.matchSearchAuthors(authors, query), (a) => a.slug);
 
 const profiles = JSON.parse(fs.readFileSync(path.join(root, 'data/author-profiles/authors.json'), 'utf8'));

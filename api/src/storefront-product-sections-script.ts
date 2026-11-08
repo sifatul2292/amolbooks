@@ -5883,7 +5883,80 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       .replace(/\\s+/g, ' ')
       .trim();
     return text.replace(/কোরআন|কোরান|কুরান/g, 'কুরআন').replace(/দোজা|দুজা|দোআ/g, 'দুআ')
-      .replace(/\\b(koran|kuran|quraan)/g, 'quran');
+      .replace(/\\b(koran|kuran|quraan)/g, 'quran')
+      .split(' ').map(function (word) { return /^[a-z]+$/.test(word) ? searchLatin(word) : word; }).join(' ');
+  }
+
+  // Banglish, same as the API (product-search.util.ts foldLatinWord / romanizeBengali), so
+  // "nabulsi" or "arif ajad" also suggest the Bengali-named author.
+  function searchLatin(word) {
+    var text = word.replace(/ph/g, 'f').replace(/q/g, 'k').replace(/x/g, 'ks').replace(/z/g, 'j')
+      .replace(/v/g, 'b').replace(/w/g, 'o').replace(/y/g, 'i').replace(/ee/g, 'i')
+      .replace(/([bcdfgjklmnprst])h/g, '$1').replace(/a/g, 'o').replace(/(.)\\1+/g, '$1');
+    if (text.length > 3 && text.charAt(text.length - 1) === 'o') text = text.slice(0, -1);
+    return text;
+  }
+
+  var SEARCH_ROMAN_CONSONANTS = {
+    'ক': 'k', 'খ': 'kh', 'গ': 'g', 'ঘ': 'gh', 'ঙ': 'ng', 'চ': 'c', 'ছ': 'ch', 'জ': 'j', 'ঝ': 'jh', 'ঞ': 'n',
+    'ট': 't', 'ঠ': 'th', 'ড': 'd', 'ঢ': 'dh', 'ণ': 'n', 'ত': 't', 'থ': 'th', 'দ': 'd', 'ধ': 'dh', 'ন': 'n',
+    'প': 'p', 'ফ': 'f', 'ব': 'b', 'ভ': 'bh', 'ম': 'm', 'য': 'j', 'র': 'r', 'ল': 'l', 'শ': 'sh', 'ষ': 'sh',
+    'স': 's', 'হ': 'h', 'ৎ': 't'
+  };
+  var SEARCH_ROMAN_VOWEL_SIGNS = { 'া': 'a', 'ি': 'i', 'ী': 'i', 'ু': 'u', 'ূ': 'u', 'ৃ': 'ri', 'ে': 'e', 'ৈ': 'oi', 'ো': 'o', 'ৌ': 'ou' };
+  var SEARCH_ROMAN_VOWELS = { 'অ': 'o', 'আ': 'a', 'ই': 'i', 'ঈ': 'i', 'উ': 'u', 'ঊ': 'u', 'ঋ': 'ri', 'এ': 'e', 'ঐ': 'oi', 'ও': 'o', 'ঔ': 'ou' };
+  var SEARCH_ROMAN_SIGNS = { 'ং': 'ng', 'ঃ': 'h', 'ঁ': '' };
+
+  function searchRoman(value) {
+    var words = String(value == null ? '' : value).normalize('NFC').match(/[\\u0980-\\u09FF]+/g) || [];
+    return words.map(function (word) {
+      var chars = Array.from(word);
+      var out = '';
+      var voweled = false;
+      for (var i = 0; i < chars.length; i++) {
+        var c = chars[i];
+        if (c in SEARCH_ROMAN_CONSONANTS) {
+          var base = SEARCH_ROMAN_CONSONANTS[c];
+          var j = i + 1;
+          if (chars[j] === '\\u09BC') {
+            base = c === 'য' ? 'y' : 'r';
+            j++;
+          }
+          if ((c === 'য' || c === 'ব') && chars[i - 1] === '\\u09CD' && j === i + 1) base = '';
+          out += base;
+          var next = chars[j];
+          if (next in SEARCH_ROMAN_VOWEL_SIGNS) {
+            out += SEARCH_ROMAN_VOWEL_SIGNS[next];
+            voweled = true;
+            i = j;
+          } else if (next === '\\u09CD') {
+            i = j;
+          } else if (next && next in SEARCH_ROMAN_CONSONANTS) {
+            var k = j + 1;
+            if (chars[k] === '\\u09BC') k++;
+            if (!(voweled && chars[k] in SEARCH_ROMAN_VOWEL_SIGNS)) {
+              out += 'o';
+              voweled = true;
+            }
+            i = j - 1;
+          } else if (next in SEARCH_ROMAN_SIGNS) {
+            out += 'o';
+            voweled = true;
+            i = j - 1;
+          } else {
+            i = j - 1;
+          }
+        } else if (c in SEARCH_ROMAN_VOWELS) {
+          out += SEARCH_ROMAN_VOWELS[c];
+          voweled = true;
+        } else if (c in SEARCH_ROMAN_SIGNS) {
+          out += SEARCH_ROMAN_SIGNS[c];
+        } else if (c >= '০' && c <= '৯') {
+          out += String('০১২৩৪৫৬৭৮৯'.indexOf(c));
+        }
+      }
+      return out;
+    }).filter(Boolean).join(' ');
   }
 
   // Edit distance (with swaps) between two words, up to max + 1.
@@ -5968,7 +6041,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     var matches = (items || []).map(function (author) {
       var score = 0;
       var latinSlug = /^[a-z0-9-]+$/.test(String(author && author.slug || '')) ? String(author.slug).replace(/-/g, ' ') : '';
-      [author && author.name, author && author.nameEn, latinSlug].forEach(function (value) {
+      [author && author.name, author && author.nameEn, latinSlug, searchRoman(author && author.name)].forEach(function (value) {
         var name = searchKey(value);
         if (!name) return;
         var tokens = name.split(' ');
