@@ -13,6 +13,8 @@ export const ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT = String.raw`
   var lastFocus = null;
   var searchTimer = null;
   var searchController = null;
+  // A coupon used at checkout stays as it is; the Discount box is anything on top.
+  var couponDiscount = 0;
 
   var CSS = [
     '.ie-overlay{position:fixed;inset:0;z-index:12500;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.72);backdrop-filter:blur(5px)}',
@@ -25,7 +27,9 @@ export const ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT = String.raw`
     '.ie-items{border:1px solid #e2e8f0;border-radius:12px;overflow:hidden}.ie-empty{padding:22px;color:#94a3b8;text-align:center}.ie-item{display:grid;grid-template-columns:minmax(0,1fr) 100px 76px 44px;align-items:end;gap:9px;padding:11px;border-bottom:1px solid #eef2f7}.ie-item:last-child{border-bottom:0}.ie-item-name{align-self:center;min-width:0;color:#172033;font-size:13px;font-weight:750;overflow-wrap:anywhere}.ie-small-label{display:block;margin-bottom:4px;color:#64748b;font-size:10px;font-weight:700}.ie-item input{width:100%;min-height:44px;border:1px solid #dbe3ed;border-radius:8px;padding:7px;text-align:center}.ie-remove{width:44px;height:44px;border:0;border-radius:8px;background:#fee2e2;color:#b91c1c;font-size:18px;cursor:pointer}',
     '.ie-totals{display:flex;justify-content:flex-end;gap:18px;margin-top:12px;color:#64748b;font-size:12px}.ie-totals strong{display:block;margin-top:2px;color:#172033;font-size:16px}.ie-status{min-height:18px;margin:10px 0 0;color:#64748b;font-size:12px}.ie-status.error{color:#b91c1c}.ie-status.success{color:#047857}',
     '.ie-footer{display:flex;justify-content:flex-end;gap:9px;padding:15px 22px;border-top:1px solid #eef2f7}',
-    '@media(max-width:620px){.ie-overlay{align-items:flex-end;padding:0}.ie-dialog{max-height:97vh;border-radius:18px 18px 0 0}.ie-body{padding:16px}.ie-grid{grid-template-columns:1fr}.ie-item{grid-template-columns:minmax(0,1fr) 82px 64px 44px}.ie-header,.ie-footer{padding:14px 16px}.ie-footer{display:grid;grid-template-columns:1fr 1fr}.ie-button{padding:9px 12px}}'
+    '.ie-grid.three{grid-template-columns:1.3fr 1fr 1fr}.ie-tag{display:inline-block;margin-right:6px;padding:1px 7px;border-radius:999px;background:#ede9fe;color:#6d28d9;font-size:10px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;vertical-align:1px}.ie-tag.off{background:#f1f5f9;color:#64748b}',
+    '.ie-result-group{padding:7px 11px;background:#f8fafc;border-bottom:1px solid #eef2f7;color:#64748b;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}.ie-totals .ie-minus strong{color:#047857}.ie-totals [hidden]{display:none}',
+    '@media(max-width:620px){.ie-overlay{align-items:flex-end;padding:0}.ie-dialog{max-height:97vh;border-radius:18px 18px 0 0}.ie-body{padding:16px}.ie-grid,.ie-grid.three{grid-template-columns:1fr}.ie-totals{flex-wrap:wrap;gap:10px 16px}.ie-item{grid-template-columns:minmax(0,1fr) 82px 64px 44px}.ie-header,.ie-footer{padding:14px 16px}.ie-footer{display:grid;grid-template-columns:1fr 1fr}.ie-button{padding:9px 12px}}'
   ].join('\n');
 
   var HTML = [
@@ -36,9 +40,9 @@ export const ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT = String.raw`
     '<div class="ie-grid"><div><label class="ie-label" for="ie-name">Customer name</label><input class="ie-control" id="ie-name" autocomplete="name"></div><div><label class="ie-label" for="ie-phone">Phone</label><input class="ie-control" id="ie-phone" inputmode="tel" autocomplete="tel"></div></div>',
     '<div class="ie-grid full"><div><label class="ie-label" for="ie-address">Shipping address</label><input class="ie-control" id="ie-address" autocomplete="street-address"></div></div>',
     '<div class="ie-grid"><div><label class="ie-label" for="ie-city">City / area</label><input class="ie-control" id="ie-city" autocomplete="address-level2"></div><div><label class="ie-label" for="ie-email">Email (optional)</label><input class="ie-control" id="ie-email" type="email" autocomplete="email"></div></div>',
-    '<div class="ie-grid"><div><label class="ie-label" for="ie-payment">Payment type</label><select class="ie-control" id="ie-payment"><option value="cash_on_delivery">Cash on Delivery</option><option value="bkash">bKash</option><option value="nagad">Nagad</option><option value="card">Card</option><option value="online_payment">Online payment</option></select></div><div><label class="ie-label" for="ie-delivery">Delivery charge (৳)</label><input class="ie-control" id="ie-delivery" type="number" min="0" step="1" inputmode="decimal"></div></div>',
-    '<div class="ie-grid full"><div><label class="ie-label" for="ie-search">Add or replace products</label><div class="ie-search-row"><input class="ie-control" id="ie-search" autocomplete="off" placeholder="Search product name…"><button class="ie-button" id="ie-search-button" type="button"><i class="fas fa-search"></i> Search</button></div><div class="ie-results" id="ie-results"></div></div></div>',
-    '<span class="ie-label">Products, unit prices and quantities</span><div class="ie-items" id="ie-items"></div><div class="ie-totals"><span>Products<strong id="ie-subtotal">৳0</strong></span><span>Delivery<strong id="ie-delivery-total">৳0</strong></span><span>Total<strong id="ie-grand-total">৳0</strong></span></div>',
+    '<div class="ie-grid three"><div><label class="ie-label" for="ie-payment">Payment type</label><select class="ie-control" id="ie-payment"><option value="cash_on_delivery">Cash on Delivery</option><option value="bkash">bKash</option><option value="nagad">Nagad</option><option value="card">Card</option><option value="online_payment">Online payment</option></select></div><div><label class="ie-label" for="ie-delivery">Delivery charge (৳)</label><input class="ie-control" id="ie-delivery" type="number" min="0" step="1" inputmode="decimal"></div><div><label class="ie-label" for="ie-discount">Discount (৳)</label><input class="ie-control" id="ie-discount" type="number" min="0" step="1" inputmode="decimal" placeholder="0"></div></div>',
+    '<div class="ie-grid full"><div><label class="ie-label" for="ie-search">Add books or packages</label><div class="ie-search-row"><input class="ie-control" id="ie-search" autocomplete="off" placeholder="Search book or package name…"><button class="ie-button" id="ie-search-button" type="button"><i class="fas fa-search"></i> Search</button></div><div class="ie-results" id="ie-results"></div></div></div>',
+    '<span class="ie-label">Books, packages, unit prices and quantities</span><div class="ie-items" id="ie-items"></div><div class="ie-totals"><span>Products<strong id="ie-subtotal">৳0</strong></span><span>Delivery<strong id="ie-delivery-total">৳0</strong></span><span class="ie-minus" id="ie-coupon-box" hidden>Coupon<strong id="ie-coupon-total">−৳0</strong></span><span class="ie-minus" id="ie-discount-box">Discount<strong id="ie-discount-total">−৳0</strong></span><span>Total<strong id="ie-grand-total">৳0</strong></span></div>',
     '<div class="ie-grid full" style="margin-top:15px"><div><label class="ie-label" for="ie-note">Customer note</label><textarea class="ie-control" id="ie-note" rows="2"></textarea></div></div>',
     '<p class="ie-status" id="ie-status" role="status" aria-live="polite"></p></div>',
     '<footer class="ie-footer"><button class="ie-button secondary" id="ie-cancel" type="button">Cancel</button><button class="ie-button" id="ie-save" type="button"><i class="fas fa-save"></i> Save changes</button></footer>',
@@ -74,10 +78,15 @@ export const ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT = String.raw`
   function totals() {
     var subtotal = items.reduce(function (sum, item) { return sum + number(item.editPrice) * quantity(item); }, 0);
     var delivery = number(byId('ie-delivery').value);
+    var discount = number(byId('ie-discount').value);
+    var grand = subtotal + delivery - couponDiscount - discount;
     byId('ie-subtotal').textContent = '৳' + subtotal.toLocaleString();
     byId('ie-delivery-total').textContent = '৳' + delivery.toLocaleString();
-    byId('ie-grand-total').textContent = '৳' + (subtotal + delivery).toLocaleString();
-    return { subTotal: subtotal, deliveryCharge: delivery, grandTotal: subtotal + delivery };
+    byId('ie-coupon-box').hidden = !couponDiscount;
+    byId('ie-coupon-total').textContent = '−৳' + couponDiscount.toLocaleString();
+    byId('ie-discount-total').textContent = '−৳' + discount.toLocaleString();
+    byId('ie-grand-total').textContent = (grand < 0 ? '−৳' : '৳') + Math.abs(grand).toLocaleString();
+    return { subTotal: subtotal, deliveryCharge: delivery, discount: discount, grandTotal: grand };
   }
   function renderItems() {
     var box = byId('ie-items');
@@ -86,6 +95,7 @@ export const ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT = String.raw`
     items.forEach(function (item, index) {
       var row = document.createElement('div'); row.className = 'ie-item';
       var name = document.createElement('div'); name.className = 'ie-item-name'; name.textContent = item.name || item.nameEn || 'Unnamed product';
+      if (item.isPackage) name.insertAdjacentHTML('afterbegin', '<span class="ie-tag">Package</span>');
       var priceWrap = document.createElement('label'); priceWrap.innerHTML = '<span class="ie-small-label">Unit price (৳)</span>';
       var price = document.createElement('input'); price.type = 'number'; price.min = '0'; price.step = '1'; price.value = item.editPrice; price.setAttribute('aria-label', 'Unit price for ' + name.textContent);
       price.addEventListener('input', function () { item.editPrice = number(price.value); totals(); }); priceWrap.appendChild(price);
@@ -98,28 +108,70 @@ export const ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT = String.raw`
     });
     totals();
   }
-  function renderResults(products) {
+  function addItem(line) {
+    var id = String(line._id || '');
+    var existing = items.find(function (item) { return String(item._id) === id; });
+    if (existing) existing.editQty = quantity(existing) + 1;
+    else items.push(Object.assign({}, line, { editPrice: itemPrice(line), editQty: 1 }));
+    byId('ie-search').value = ''; byId('ie-results').classList.remove('open'); renderItems();
+  }
+  // A package line is saved like a checkout order saves it: the package ID and
+  // name, priced from its books (server-calculated) less the package discount.
+  function packageLine(pkg) {
+    var total = number(pkg.salePrice);
+    return {
+      _id: pkg._id, name: pkg.name, nameEn: pkg.nameEn, slug: pkg.slug, image: pkg.image || null,
+      discountType: pkg.discountType, discountAmount: pkg.discountAmount,
+      regularPrice: total, salePrice: total, orderType: 'regular', isPackage: true
+    };
+  }
+  function resultButton(name, tagHtml, priceValue, onPick) {
+    var button = document.createElement('button'); button.type = 'button'; button.className = 'ie-result';
+    var label = document.createElement('span'); label.textContent = name;
+    if (tagHtml) label.insertAdjacentHTML('afterbegin', tagHtml);
+    var price = document.createElement('strong'); price.textContent = '৳' + priceValue.toLocaleString();
+    button.append(label, price); button.addEventListener('click', onPick);
+    return button;
+  }
+  function renderResults(packages, products) {
     var box = byId('ie-results'); box.innerHTML = ''; box.classList.add('open');
-    if (!products.length) { box.innerHTML = '<div class="ie-empty">No products found.</div>'; return; }
-    products.forEach(function (product) {
-      var button = document.createElement('button'); button.type = 'button'; button.className = 'ie-result';
-      var label = document.createElement('span'); label.textContent = product.name || product.nameEn || 'Unnamed product';
-      var price = document.createElement('strong'); price.textContent = '৳' + itemPrice(product).toLocaleString();
-      button.append(label, price); button.addEventListener('click', function () {
-        var id = String(product._id || '');
-        var existing = items.find(function (item) { return String(item._id) === id; });
-        if (existing) existing.editQty = quantity(existing) + 1;
-        else items.push(Object.assign({}, product, { editPrice: itemPrice(product), editQty: 1 }));
-        byId('ie-search').value = ''; box.classList.remove('open'); renderItems();
+    if (!packages.length && !products.length) { box.innerHTML = '<div class="ie-empty">No books or packages found.</div>'; return; }
+    if (packages.length) {
+      box.insertAdjacentHTML('beforeend', '<div class="ie-result-group">Packages</div>');
+      packages.forEach(function (pkg) {
+        var line = packageLine(pkg);
+        var tag = '<span class="ie-tag">Package</span>' + (pkg.active === false ? '<span class="ie-tag off">Not on site</span>' : '');
+        box.appendChild(resultButton(pkg.name || 'Unnamed package', tag, itemPrice(line), function () { addItem(line); }));
       });
-      box.appendChild(button);
+      if (products.length) box.insertAdjacentHTML('beforeend', '<div class="ie-result-group">Books</div>');
+    }
+    products.forEach(function (product) {
+      box.appendChild(resultButton(product.name || product.nameEn || 'Unnamed product', '', itemPrice(product), function () { addItem(product); }));
     });
+  }
+  function escapeRegex(text) { return text.replace(/[.*+?^$(){}|[\]\\]/g, '\\$&'); }
+  // Packages whose name matches (up to 6), with their current price from the server.
+  function searchPackages(query, signal) {
+    return fetch(API + '/api/special-package/get-all?q=' + encodeURIComponent(escapeRegex(query)) + '&_=' + Date.now(), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: signal,
+      body: JSON.stringify({ sort: { createdAt: -1 }, select: { name: 1 } })
+    }).then(parseResponse).then(function (payload) {
+      var ids = (Array.isArray(payload.data) ? payload.data : []).slice(0, 6).map(function (pkg) { return String(pkg._id); });
+      if (!ids.length) return [];
+      return fetch(API + '/api/special-package/get-products-by-ids', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: signal, body: JSON.stringify({ ids: ids })
+      }).then(parseResponse).then(function (result) {
+        var list = Array.isArray(result.data) ? result.data : [];
+        return ids.map(function (id) { return list.find(function (pkg) { return String(pkg._id) === id; }); }).filter(Boolean);
+      });
+    }).catch(function (error) { if (error.name === 'AbortError') throw error; return []; });
   }
   function search() {
     var query = byId('ie-search').value.trim(); var box = byId('ie-results');
     if (query.length < 2) { box.classList.remove('open'); box.innerHTML = ''; return; }
     if (searchController) searchController.abort(); searchController = new AbortController();
     box.classList.add('open'); box.innerHTML = '<div class="ie-empty">Searching…</div>';
+    var packagesRequest = searchPackages(query, searchController.signal);
     fetch(API + '/api/product/get-all?q=' + encodeURIComponent(query) + '&_=' + Date.now(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -135,7 +187,9 @@ export const ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT = String.raw`
         }
       })
     }).then(parseResponse).then(function (payload) {
-      renderResults(Array.isArray(payload.data) ? payload.data : []);
+      return packagesRequest.then(function (packages) {
+        renderResults(packages, Array.isArray(payload.data) ? payload.data : []);
+      });
     }).catch(function (error) {
       if (error.name !== 'AbortError') box.innerHTML = '<div class="ie-empty">' + String(error.message || 'Search failed') + '</div>';
     });
@@ -145,7 +199,7 @@ export const ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT = String.raw`
     if (lastFocus && lastFocus.focus) lastFocus.focus();
   }
   function open(id, mode) {
-    if (!id) return; currentId = id; currentMode = mode === 'order' ? 'order' : 'incomplete'; currentOrder = null; lastFocus = document.activeElement; items = []; renderItems(); setStatus('Loading order…');
+    if (!id) return; currentId = id; currentMode = mode === 'order' ? 'order' : 'incomplete'; currentOrder = null; lastFocus = document.activeElement; items = []; couponDiscount = 0; byId('ie-discount').value = ''; renderItems(); setStatus('Loading order…');
     byId('ie-title').textContent = currentMode === 'order' ? 'Edit order' : 'Edit incomplete order';
     byId('ie-subtitle').textContent = currentMode === 'order' ? 'Changes apply immediately to this order.' : 'Changes will be used when this order is added or sent to courier.';
     byId('ie-overlay').classList.add('open'); byId('ie-overlay').setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
@@ -160,6 +214,13 @@ export const ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT = String.raw`
       if (!byId('ie-payment').value) byId('ie-payment').value = 'cash_on_delivery';
       byId('ie-delivery').value = number(order.deliveryCharge); byId('ie-note').value = order.note || '';
       items = (Array.isArray(order.orderedItems) ? order.orderedItems : []).map(function (item) { return Object.assign({}, item, { editPrice: itemPrice(item), editQty: quantity(item) }); });
+      // The Discount box starts with whatever the saved total already takes off
+      // the books and delivery (apart from a coupon, shown on its own line).
+      couponDiscount = number(order.couponDiscount);
+      var before = totals();
+      var saved = order.grandTotal == null || order.grandTotal === '' ? NaN : Number(order.grandTotal);
+      var extra = Number.isFinite(saved) ? Math.round(before.subTotal + before.deliveryCharge - couponDiscount - saved) : 0;
+      byId('ie-discount').value = extra > 0 ? extra : '';
       renderItems(); setStatus(''); byId('ie-name').focus();
     }).catch(function (error) { setStatus(error.message || 'Could not load order.', 'error'); });
   }
@@ -168,7 +229,9 @@ export const ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT = String.raw`
     fields.forEach(function (entry) { byId(entry[0]).setAttribute('aria-invalid', byId(entry[0]).value.trim() ? 'false' : 'true'); });
     var missing = fields.find(function (entry) { return !byId(entry[0]).value.trim(); });
     if (missing) { setStatus(missing[1], 'error'); byId(missing[0]).focus(); return false; }
-    if (!items.length) { setStatus('Select at least one product.', 'error'); byId('ie-search').focus(); return false; }
+    if (!items.length) { setStatus('Select at least one book or package.', 'error'); byId('ie-search').focus(); return false; }
+    if (totals().grandTotal < 0) { setStatus('Discount is more than the order total.', 'error'); byId('ie-discount').setAttribute('aria-invalid', 'true'); byId('ie-discount').focus(); return false; }
+    byId('ie-discount').setAttribute('aria-invalid', 'false');
     return true;
   }
   function save() {
@@ -184,7 +247,7 @@ export const ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT = String.raw`
     var payload = {
       name: byId('ie-name').value.trim(), phoneNo: byId('ie-phone').value.trim(), shippingAddress: byId('ie-address').value.trim(),
       city: byId('ie-city').value.trim(), email: byId('ie-email').value.trim(), paymentType: byId('ie-payment').value,
-      paymentStatus: currentMode === 'order' ? (currentOrder && currentOrder.paymentStatus || 'unpaid') : 'unpaid', deliveryCharge: computed.deliveryCharge, subTotal: computed.subTotal, discount: 0,
+      paymentStatus: currentMode === 'order' ? (currentOrder && currentOrder.paymentStatus || 'unpaid') : 'unpaid', deliveryCharge: computed.deliveryCharge, subTotal: computed.subTotal, discount: computed.discount,
       grandTotal: computed.grandTotal, orderedItems: orderedItems, note: byId('ie-note').value.trim()
     };
     var button = byId('ie-save'); button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…'; setStatus('');
@@ -199,7 +262,7 @@ export const ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT = String.raw`
   byId('ie-close').addEventListener('click', close); byId('ie-cancel').addEventListener('click', close); byId('ie-save').addEventListener('click', save);
   byId('ie-search-button').addEventListener('click', search); byId('ie-search').addEventListener('input', function () { clearTimeout(searchTimer); searchTimer = setTimeout(search, 320); });
   byId('ie-search').addEventListener('keydown', function (event) { if (event.key === 'Enter') { event.preventDefault(); search(); } });
-  byId('ie-delivery').addEventListener('input', totals); byId('ie-overlay').addEventListener('click', function (event) { if (event.target === this) close(); });
+  byId('ie-delivery').addEventListener('input', totals); byId('ie-discount').addEventListener('input', totals); byId('ie-overlay').addEventListener('click', function (event) { if (event.target === this) close(); });
   document.addEventListener('keydown', function (event) { if (event.key === 'Escape' && byId('ie-overlay').classList.contains('open')) close(); });
   root.AmolbooksIncompleteEditor = { open: open, openOrder: function (id) { open(id, 'order'); }, close: close };
 })(window);

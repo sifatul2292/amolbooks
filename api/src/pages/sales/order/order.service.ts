@@ -4950,6 +4950,35 @@ export class OrderService {
     }
   }
 
+  /**
+   * Trash button on the Amolbooks Orders page (owner, 2026-11-08). Deletes the
+   * order for good. Its books go back to stock when stock was taken and the
+   * parcel has not left for the courier (same restock as a cancel, at most once).
+   */
+  async deleteOrderByAdmin(id: string, admin: Admin): Promise<ResponsePayload> {
+    const order: any = await this.orderModel.findById(id).lean();
+    if (!order) throw new NotFoundException('Order not found.');
+    const courier = order.courierData || {};
+    const leftForCourier =
+      [OrderStatus.SHIPPING, OrderStatus.DELIVERED, OrderStatus.Courier].includes(order.orderStatus) ||
+      Boolean(courier.consignmentId || courier.trackingCode || courier.trackingId);
+    let restocked = false;
+    if (order.stockDecremented === true && !order.stockRestocked && !leftForCourier) {
+      restocked = await this.restockProducts(String(order._id), order.orderedItems, 'cancel_restock');
+    }
+    const deleted = await this.orderModel.deleteOne({ _id: order._id });
+    if (!deleted.deletedCount) throw new NotFoundException('Order not found.');
+    this.logger.log(
+      `Order ${order.orderId || order._id} deleted from the Orders page by ` +
+        `${admin?.username || admin?._id || 'staff'}${restocked ? '; books back in stock' : ''}`,
+    );
+    return {
+      success: true,
+      message: 'Order deleted',
+      data: { orderId: order.orderId, restocked },
+    } as ResponsePayload;
+  }
+
   async deleteMultipleOrderById(
     ids: string[],
     checkUsage: boolean,

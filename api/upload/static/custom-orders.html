@@ -516,7 +516,26 @@
     .btn-edit:hover { background: #ddd6fe; }
     .btn-whatsapp { background: #dcfce7; color: #15803d; }
     .btn-whatsapp:hover { background: #bbf7d0; }
+    .btn-delete { background: #fee2e2; color: #b91c1c; padding: 5px 9px; }
+    .btn-delete:hover { background: #fecaca; }
     .order-row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* Delete order popup (owner, 2026-11-08) */
+    .del-overlay { position: fixed; inset: 0; z-index: 12600; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(15,23,42,.6); backdrop-filter: blur(3px); }
+    .del-overlay[hidden] { display: none; }
+    .del-dialog { width: min(400px, 100%); padding: 24px 22px 20px; border-radius: 16px; background: #fff; box-shadow: 0 24px 64px rgba(15,23,42,.3); text-align: center; }
+    .del-icon { display: flex; width: 48px; height: 48px; margin: 0 auto 12px; align-items: center; justify-content: center; border-radius: 50%; background: #fee2e2; color: #dc2626; font-size: 19px; }
+    .del-dialog h3 { margin: 0 0 6px; color: var(--g900); font-size: 17px; }
+    .del-order { margin: 0 0 12px; color: var(--g700); font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+    .del-warn { margin: 0; color: var(--g500); font-size: 12.5px; line-height: 1.5; }
+    .del-warn.strong { color: #b45309; }
+    .del-actions { display: flex; gap: 10px; margin-top: 18px; }
+    .del-actions button { flex: 1; min-height: 42px; border: 1px solid var(--g200); border-radius: 10px; font: 700 13.5px/1 inherit; cursor: pointer; }
+    .del-cancel { background: #fff; color: var(--g700); }
+    .del-cancel:hover { background: var(--g50); }
+    .del-yes { border-color: #dc2626 !important; background: #dc2626; color: #fff; }
+    .del-yes:hover { background: #b91c1c; }
+    .del-yes:disabled { cursor: wait; opacity: .6; }
 
     /* Pagination */
     .pagination-bar {
@@ -887,7 +906,8 @@
       tbody td:nth-child(12) .btn-view { width: 38px; height: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0; border-radius: 9px; }
       tbody td:nth-child(12) .btn-edit { width: 38px; height: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0; border-radius: 9px; }
       tbody td:nth-child(12) .btn-whatsapp { width: 38px; height: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0; border-radius: 9px; }
-      tbody td:nth-child(12) .btn-view i, tbody td:nth-child(12) .btn-edit i, tbody td:nth-child(12) .btn-whatsapp i { font-size: 15px; }
+      tbody td:nth-child(12) .btn-delete { width: 38px; height: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0; border-radius: 9px; }
+      tbody td:nth-child(12) .btn-view i, tbody td:nth-child(12) .btn-edit i, tbody td:nth-child(12) .btn-whatsapp i, tbody td:nth-child(12) .btn-delete i { font-size: 15px; }
       thead th { padding: 10px 5px; }
       tbody td { padding: 9px 5px; }
       thead th:first-child, tbody td:first-child { padding-left: 10px; width: 26px; }
@@ -3470,6 +3490,93 @@
     return '<button class="btn-action btn-whatsapp" data-phone="'+esc(o.phoneNo||'')+'" data-kind="'+kind+'" data-order-id="'+esc(o.orderId||'')+'" data-book-summary="'+esc(whatsappBookSummary(o.orderedItems))+'" onclick="openOrderWhatsApp(this.dataset.phone,this.dataset.kind,this.dataset.orderId,this.dataset.bookSummary)" title="Open WhatsApp with '+(kind === 'incomplete' ? 'abandoned-order' : 'order-confirmation')+' message" aria-label="Message customer on WhatsApp"><i class="fab fa-whatsapp"></i> WhatsApp</button>';
   }
 
+  /* ── Delete order (owner, 2026-11-08): trash button for Super Admin and Admin ── */
+  function deleteAction(o) {
+    if (!canRunCourierBackfill()) return '';
+    return '<button class="btn-action btn-delete" onclick="confirmDeleteOrder(\''+o._id+'\')" title="Delete order" aria-label="Delete order #'+esc(o.orderId||'')+'"><i class="fas fa-trash"></i></button>';
+  }
+  var deleteBox = null;
+  function closeDeleteDialog() {
+    if (deleteBox && !deleteBox.busy) deleteBox.hidden = true;
+  }
+  function deleteDialog() {
+    if (deleteBox) return deleteBox;
+    deleteBox = document.createElement('div');
+    deleteBox.className = 'del-overlay';
+    deleteBox.hidden = true;
+    deleteBox.innerHTML =
+      '<div class="del-dialog" role="alertdialog" aria-modal="true" aria-labelledby="delTitle" aria-describedby="delWarn">' +
+      '<div class="del-icon" aria-hidden="true"><i class="fas fa-trash"></i></div>' +
+      '<h3 id="delTitle"></h3><p class="del-order" id="delOrder"></p><p class="del-warn" id="delWarn"></p>' +
+      '<div class="del-actions"><button type="button" class="del-cancel">Cancel</button><button type="button" class="del-yes">Yes, delete</button></div>' +
+      '</div>';
+    document.body.appendChild(deleteBox);
+    deleteBox.addEventListener('click', function (e) { if (e.target === deleteBox) closeDeleteDialog(); });
+    deleteBox.querySelector('.del-cancel').addEventListener('click', closeDeleteDialog);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !deleteBox.hidden) closeDeleteDialog(); });
+    return deleteBox;
+  }
+  window.confirmDeleteOrder = function (id) {
+    var o = allOrdersById[String(id)];
+    if (!o) return;
+    var box = deleteDialog();
+    var no = o.orderId ? '#' + o.orderId : 'this order';
+    var courier = o.courierData || {};
+    // Same rule as the server (deleteOrderByAdmin): stock comes back only while
+    // the parcel has not left for the courier.
+    var sent = [4, 5, 8].indexOf(Number(o.orderStatus)) !== -1 ||
+      !!(courier.consignmentId || courier.trackingCode || courier.trackingId);
+    var restocked = [6, 7, 9].indexOf(Number(o.orderStatus)) !== -1;
+    box.querySelector('#delTitle').textContent = 'Delete order ' + no + '?';
+    box.querySelector('#delOrder').textContent = [o.name, o.phoneNo, '৳' + Number(o.grandTotal || 0).toLocaleString()].filter(Boolean).join(' · ');
+    var warn = box.querySelector('#delWarn');
+    warn.className = 'del-warn' + (sent ? ' strong' : '');
+    warn.textContent = sent
+      ? 'This order has already gone to the courier. Deleting it here does not cancel the parcel or change stock. This can\'t be undone.'
+      : restocked
+        ? 'This can\'t be undone.'
+        : 'This can\'t be undone. Books taken from stock for this order go back to stock.';
+    var yes = box.querySelector('.del-yes');
+    yes.disabled = false;
+    yes.textContent = 'Yes, delete';
+    yes.onclick = function () {
+      yes.disabled = true;
+      yes.textContent = 'Deleting…';
+      box.busy = true;
+      fetch(API + '/api/order/admin-delete/' + encodeURIComponent(id), { method: 'DELETE', headers: authHeaders() })
+      .then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (resp) { return { ok: r.ok, status: r.status, resp: resp }; });
+      })
+      .then(function (d) {
+        box.busy = false;
+        // The role guard answers 401 "…permission…"; any other 401 is an expired login.
+        var noRole = d.status === 403 || /permission/i.test(String(d.resp && d.resp.message || ''));
+        if (d.status === 401 && !noRole) {
+          box.hidden = true;
+          clearToken(); showLogin('Session expired. Log in again, then delete the order.');
+          return;
+        }
+        if (!d.ok || !d.resp || d.resp.success === false) {
+          yes.disabled = false;
+          yes.textContent = 'Yes, delete';
+          showToast(noRole ? 'Only the owner or an admin can delete orders.' : ((d.resp && d.resp.message) || 'Could not delete the order.'), 'error');
+          return;
+        }
+        box.hidden = true;
+        showToast('Order ' + no + ' deleted' + (d.resp.data && d.resp.data.restocked ? '. Books are back in stock.' : '.'), 'success');
+        loadOrders(); loadTodayStats();
+      })
+      .catch(function (err) {
+        box.busy = false;
+        yes.disabled = false;
+        yes.textContent = 'Yes, delete';
+        if (err.message !== 'auth') showToast('Error: ' + err.message, 'error');
+      });
+    };
+    box.hidden = false;
+    box.querySelector('.del-cancel').focus();
+  };
+
   function courierStatusCell(o) {
     if (isIncompleteView || !o.courierData || !o.courierData.providerName) {
       return '<span style="color:#94a3b8;font-size:11px">—</span>';
@@ -3669,7 +3776,7 @@
         '<td>'+courierStatusCell(o)+'</td>',
         '<td>'+courierChargeCell(o)+'</td>',
         '<td>'+fraudCell(o.fraudChecker,o._id,o.phoneNo||'')+'</td>',
-        '<td><div class="order-row-actions"><button class="btn-action btn-view" onclick="openProducts(\''+o._id+'\')" title="'+itemCount+' item(s)" aria-label="View order"><i class="fas fa-eye"></i> View'+(itemCount?' ('+itemCount+')':'')+'</button><button class="btn-action btn-edit" onclick="AmolbooksIncompleteEditor.openOrder(\''+o._id+'\')" title="Edit customer, products and price" aria-label="Edit order"><i class="fas fa-pen"></i> Edit</button>'+whatsappAction(o, 'order')+'</div></td>',
+        '<td><div class="order-row-actions"><button class="btn-action btn-view" onclick="openProducts(\''+o._id+'\')" title="'+itemCount+' item(s)" aria-label="View order"><i class="fas fa-eye"></i> View'+(itemCount?' ('+itemCount+')':'')+'</button><button class="btn-action btn-edit" onclick="AmolbooksIncompleteEditor.openOrder(\''+o._id+'\')" title="Edit customer, products and price" aria-label="Edit order"><i class="fas fa-pen"></i> Edit</button>'+whatsappAction(o, 'order')+deleteAction(o)+'</div></td>',
         '<td>'+payTypeBadge(o.paymentType)+'</td>',
         '<td>'+payStatusBadge(o.paymentStatus)+'</td>',
         '<td>'+statusSelect(o.orderId,o._id,o.orderStatus)+'</td>',

@@ -438,6 +438,19 @@ export class OrderController {
     return await this.orderService.deleteOrderById(id, Boolean(checkUsage));
   }
 
+  /** Trash button on the Amolbooks Orders page: Super Admin and Admin only. */
+  @Version(VERSION_NEUTRAL)
+  @Delete('/admin-delete/:id')
+  @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @UseGuards(AdminRolesGuard)
+  @UseGuards(AdminJwtAuthGuard)
+  async deleteOrderByAdmin(
+    @Param('id', MongoIdValidationPipe) id: string,
+    @GetAdmin() admin: Admin,
+  ): Promise<ResponsePayload> {
+    return await this.orderService.deleteOrderByAdmin(id, admin);
+  }
+
   @Version(VERSION_NEUTRAL)
   @Post('/delete-multiple')
   @UsePipes(ValidationPipe)
