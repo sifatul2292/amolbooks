@@ -357,6 +357,45 @@
     tr.row-completed:hover { background: #bbf7d0 !important; }
     tr.row-cancelled:hover { background: #fee2e2 !important; }
 
+    /* Table layout for desktop (owner, 2026-11-08): no word-by-word wrapping, one-line
+       actions, Order No stays in view while scrolling sideways. Phones keep their own rules. */
+    @media (min-width: 769px) {
+      tbody tr { background-color: #fff; }
+      tbody td { padding: 9px 10px; }
+      /* Long headers ("Courier charge") wrap instead of widening short columns. */
+      thead th { white-space: normal; line-height: 1.25; vertical-align: middle; }
+      thead th:nth-child(2), thead th:nth-child(7) { white-space: nowrap; }
+      thead th.col-sticky, td.col-check, td.col-no { position: sticky; z-index: 1; }
+      td.col-check, td.col-no { background: inherit; }
+      /* Covers the row's coloured left edge, so text scrolling under the pinned columns never peeks out. */
+      td.col-check::before { content: ''; position: absolute; top: 0; bottom: 0; left: -8px; width: 8px; background: inherit; }
+      /* The row's status stripe, drawn on the pinned cell so it stays visible. */
+      tr.row-processing td.col-check { box-shadow: inset 3px 0 0 #7c3aed; }
+      tr.row-confirmed td.col-check { box-shadow: inset 3px 0 0 #16a34a; }
+      tr.row-completed td.col-check { box-shadow: inset 3px 0 0 #059669; }
+      tr.row-cancelled td.col-check { box-shadow: inset 3px 0 0 #dc2626; }
+      tr.row-trash td.col-check { box-shadow: inset 3px 0 0 #94a3b8; }
+      thead th.col-sticky { z-index: 2; background: #6d28d9; }
+      thead th.col-sticky:first-child, td.col-check { left: 0; }
+      thead th.col-sticky + th.col-sticky, td.col-no { left: 46px; box-shadow: inset -1px 0 0 var(--g100); }
+      thead th:first-child, td.col-check { width: 46px; min-width: 46px; max-width: 46px; box-sizing: border-box; }
+      td.col-no { white-space: nowrap; }
+      .cell-clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+      td.col-name .cell-clamp { min-width: 110px; max-width: 170px; font-weight: 600; line-height: 1.35; }
+      td.col-address .cell-clamp { min-width: 170px; max-width: 230px; font-size: 12px; line-height: 1.45; }
+      .customer-note-text { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .courier-cell.is-booked { min-width: 140px; }
+      .courier-line { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+      .courier-chip { padding: 2px 8px; border-radius: 999px; background: #ecfeff; color: #0e7490; font-size: 10.5px; font-weight: 700; }
+      .courier-id { color: var(--g700); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+      .courier-cell .ab-staff-by { white-space: nowrap; }
+      td.col-actions .order-row-actions { flex-wrap: nowrap; gap: 4px; }
+      td.col-actions .btn-action { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 30px; height: 30px; padding: 0 8px; border-radius: 8px; font-size: 12px; }
+      td.col-actions .act-label { display: none; }
+      td.col-actions .act-count { min-width: 16px; padding: 0 4px; border-radius: 999px; background: #1d4ed8; color: #fff; font-size: 10px; line-height: 16px; text-align: center; }
+      .pay-badge, .status-badge, .badge, .source-badge { white-space: nowrap; }
+    }
+
     .order-no {
       font-weight: 800; color: var(--blue); text-decoration: none;
       font-size: 13px; letter-spacing: -.01em;
@@ -465,19 +504,62 @@
     }
     .btn-courier:hover { background: #0e7490; }
 
+    /* Future delivery (owner, 2026-11-08): send to the courier on a chosen date and time */
+    .courier-actions { display: inline-flex; gap: 5px; align-items: center; }
+    .btn-schedule { background: #ecfeff; color: #0e7490; border: 1px solid #a5f3fc; border-radius: 7px; padding: 4px 8px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; }
+    .btn-schedule:hover { background: #cffafe; }
+    .sched-cell { display: flex; flex-direction: column; gap: 3px; min-width: 150px; font-size: 11.5px; line-height: 1.4; }
+    .sched-when { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: #0e7490; white-space: nowrap; }
+    .sched-cell.is-failed .sched-when { color: #b91c1c; }
+    .sched-meta { color: var(--g500); font-size: 10.5px; }
+    .sched-error { color: #b91c1c; font-size: 11px; overflow-wrap: anywhere; }
+    .sched-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+    .sched-actions button { border: 1px solid var(--g200); background: #fff; color: var(--g700); border-radius: 6px; padding: 3px 7px; font-size: 10.5px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .sched-actions button:hover { background: var(--g50); }
+    .sched-actions .sched-now { border-color: #0891b2; background: #0891b2; color: #fff; }
+    .sched-actions .sched-now:hover { background: #0e7490; }
+    .sched-badge { display: inline-block; margin-top: 4px; padding: 2px 7px; border-radius: 999px; background: #ecfeff; color: #0e7490; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .btn-bulk-schedule { background: #0891b2; color: #fff; border: none; border-radius: 8px; padding: 7px 14px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .sch-overlay { position: fixed; inset: 0; z-index: 12600; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(15,23,42,.6); backdrop-filter: blur(3px); }
+    .sch-overlay[hidden] { display: none; }
+    .sch-dialog { width: min(420px, 100%); padding: 22px; border-radius: 16px; background: #fff; box-shadow: 0 24px 64px rgba(15,23,42,.3); }
+    .sch-dialog h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 4px; color: var(--g900); font-size: 17px; }
+    .sch-dialog h3 i { color: #0891b2; }
+    .sch-sub { margin: 0 0 16px; color: var(--g500); font-size: 12.5px; overflow-wrap: anywhere; }
+    .sch-quick { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+    .sch-quick button { border: 1px solid var(--g200); background: #fff; color: var(--g700); border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .sch-quick button:hover, .sch-quick button.is-on { border-color: #0891b2; background: #ecfeff; color: #0e7490; }
+    .sch-fields { display: grid; grid-template-columns: 1fr 120px; gap: 10px; }
+    .sch-fields label { display: block; margin-bottom: 5px; color: var(--g500); font-size: 11px; font-weight: 700; }
+    .sch-fields input { width: 100%; height: 40px; border: 1px solid var(--g200); border-radius: 10px; padding: 0 10px; font: 600 13.5px inherit; color: var(--g900); box-sizing: border-box; }
+    .sch-fields input:focus { outline: none; border-color: #0891b2; box-shadow: 0 0 0 3px rgba(8,145,178,.15); }
+    .sch-preview { margin: 14px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--g50); color: var(--g700); font-size: 12.5px; line-height: 1.5; }
+    .sch-preview strong { color: var(--g900); }
+    .sch-preview.is-bad { background: #fef2f2; color: #b91c1c; }
+    .sch-actions { display: flex; gap: 10px; margin-top: 18px; }
+    .sch-actions button { flex: 1; min-height: 42px; border: 1px solid var(--g200); border-radius: 10px; font: 700 13.5px/1 inherit; cursor: pointer; }
+    .sch-cancel { background: #fff; color: var(--g700); }
+    .sch-save { border-color: #0891b2 !important; background: #0891b2; color: #fff; }
+    .sch-save:hover { background: #0e7490; }
+    .sch-save:disabled { cursor: not-allowed; opacity: .55; }
+
     /* Fraud */
     .fraud-cell { display: flex; flex-direction: column; gap: 5px; min-width: 72px; align-items: flex-start; }
     .note-cell { max-width: 160px; font-size: 12px; color: #334155; line-height: 1.5; word-break: break-word; }
     .customer-note-text { display: block; }
     /* Admin notes: newest first, each with its writer and time (owner, 2026-11-08) */
-    .admin-note-cell { min-width: 200px; max-width: 240px; }
-    .an-list { list-style: none; margin: 0 0 6px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-    .an-text { font-size: 12px; color: #1e3a8a; line-height: 1.45; word-break: break-word; white-space: pre-wrap; padding: 4px 8px; border-radius: 6px; background: #eff6ff; }
+    /* Compact (owner, same day): only the latest note, two lines; "+N older" and "+ Add" share one line */
+    .admin-note-cell { min-width: 190px; max-width: 230px; display: flex; flex-wrap: wrap; align-items: center; column-gap: 10px; row-gap: 2px; }
+    .an-notes { display: contents; }
+    .admin-note-cell > div:not(.an-notes) { flex: 1 0 100%; }
+    .an-list { flex: 1 0 100%; list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+    .an-text { font-size: 12px; color: #1e3a8a; line-height: 1.4; word-break: break-word; white-space: pre-wrap; padding: 3px 7px; border-radius: 6px; background: #eff6ff; }
+    .an-list.is-collapsed .an-text { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; cursor: pointer; }
     .an-item + .an-item .an-text { color: #334155; background: #f8fafc; }
-    .an-meta { margin-top: 2px; padding: 0 2px; font-size: 10.5px; line-height: 1.35; color: #64748b; }
+    .an-meta { margin-top: 1px; padding: 0 2px; font-size: 10.5px; line-height: 1.3; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .an-meta strong { color: #5b21b6; font-weight: 700; }
-    .an-more { display: block; margin: -2px 0 6px; padding: 0 2px; border: none; background: none; font-size: 11px; font-weight: 600; color: #6366f1; cursor: pointer; }
-    .an-more:hover { text-decoration: underline; }
+    .an-more, .admin-note-cell .btn-add-note.is-inline { padding: 0 2px; border: none; border-radius: 0; background: none; font-size: 11px; font-weight: 600; line-height: 1.6; color: #6366f1; cursor: pointer; }
+    .an-more:hover, .admin-note-cell .btn-add-note.is-inline:hover { background: none; text-decoration: underline; }
     .btn-add-note { font-size: 11px; color: #6366f1; background: none; border: 1px dashed #a5b4fc; border-radius: 5px; padding: 3px 8px; cursor: pointer; }
     .btn-add-note:hover { background: #eef2ff; }
     .admin-note-input { width: 100%; font-size: 12px; border: 1px solid #a5b4fc; border-radius: 5px; padding: 5px 7px; resize: vertical; font-family: inherit; outline: none; box-sizing: border-box; }
@@ -644,6 +726,21 @@
     .ai-textarea:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,.1); }
     .ai-textarea::placeholder { color: #94a3b8; }
     .ai-hint { font-size: 11.5px; color: #64748b; margin-top: 8px; display: flex; align-items: center; gap: 6px; }
+    /* AI Assist review (owner, 2026-11-08): what the reader was unsure about, and book lines to pick by hand */
+    .ai-warnings { margin: 0 0 14px; padding: 10px 12px; border: 1px solid #fde68a; border-radius: 10px; background: #fffbeb; color: #92400e; font-size: 12.5px; line-height: 1.5; }
+    .ai-warnings[hidden] { display: none; }
+    .ai-warnings ul { margin: 4px 0 0; padding-left: 18px; }
+    .ai-warnings strong { color: #78350f; }
+    .ai-found { margin: 0 0 14px; padding: 8px 12px; border-radius: 10px; background: #ecfdf5; color: #065f46; font-size: 12.5px; }
+    .ai-found[hidden] { display: none; }
+    .ai-unmatched { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .ai-unmatched[hidden] { display: none; }
+    .ai-unmatched button { border: 1px dashed #f59e0b; background: #fffbeb; color: #92400e; border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .ai-unmatched button:hover { background: #fef3c7; }
+    /* Product search + delivery row: 2:1 and nothing spills past the popup. */
+    .ai-field { min-width: 0; }
+    .ai-field input, .ai-field select { min-width: 0; max-width: 100%; box-sizing: border-box; }
+    #aiStep2 .ai-field-row:has(#aiProductSearch) { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
     .ai-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
     .ai-field-row.full { grid-template-columns: 1fr; }
     .ai-field { display: flex; flex-direction: column; gap: 5px; }
@@ -902,7 +999,8 @@
       tbody td:nth-child(4) { max-width: 76px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       tbody td:nth-child(7) { white-space: nowrap; }
       tbody td:nth-child(12), thead th:nth-child(12) { text-align: center; }
-      tbody td:nth-child(12) .order-row-actions { justify-content: center; }
+      tbody td:nth-child(12) .order-row-actions { justify-content: center; display: grid; grid-template-columns: repeat(2, 32px); gap: 4px; }
+      tbody td:nth-child(12) .order-row-actions .btn-action { width: 32px; height: 32px; }
       tbody td:nth-child(12) .btn-view { width: 38px; height: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0; border-radius: 9px; }
       tbody td:nth-child(12) .btn-edit { width: 38px; height: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0; border-radius: 9px; }
       tbody td:nth-child(12) .btn-whatsapp { width: 38px; height: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0; border-radius: 9px; }
@@ -1734,6 +1832,7 @@
         <div class="status-tab active" id="tab-all" onclick="setStatusTab('all')">All <span class="tab-count" id="tabCount-all">—</span></div>
         <div class="status-tab" id="tab-in_review" onclick="setStatusTab('in_review')">In Review <span class="tab-count" id="tabCount-in_review">—</span></div>
         <div class="status-tab" id="tab-processing" onclick="setStatusTab('processing')">Processing <span class="tab-count" id="tabCount-processing">—</span></div>
+        <div class="status-tab" id="tab-future" onclick="setStatusTab('future')"><i class="far fa-calendar-alt"></i> Future delivery <span class="tab-count" id="tabCount-future">—</span></div>
         <div class="status-tab" id="tab-2" onclick="setStatusTab(2)">Confirmed <span class="tab-count" id="tabCount-2">—</span></div>
         <div class="status-tab" id="tab-6" onclick="setStatusTab(6)">Cancelled <span class="tab-count" id="tabCount-6">—</span></div>
         <div class="status-tab" id="tab-10" onclick="setStatusTab(10)">Trash <span class="tab-count" id="tabCount-10">—</span></div>
@@ -1811,6 +1910,7 @@
           <option value="10">🗑️ Trash</option>
         </select>
         <button class="btn-bulk-apply" onclick="applyBulkStatus()">Apply</button>
+        <button class="btn-bulk-schedule" id="bulkSchedule" onclick="openCourierSchedule(getSelectedIdsForSchedule())"><i class="far fa-calendar-plus"></i> Schedule courier</button>
         <button class="btn-bulk-clear" onclick="clearSelection()">Clear</button>
       </div>
 
@@ -1820,8 +1920,8 @@
           <table id="ordersTable">
             <thead>
               <tr>
-                <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th>
-                <th>Order No</th>
+                <th class="col-sticky"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th>
+                <th class="col-sticky">Order No</th>
                 <th>Phone</th>
                 <th>Name</th>
                 <th>Address</th>
@@ -1831,7 +1931,7 @@
                 <th>Courier Status</th>
                 <th>Courier Charge</th>
                 <th>Fraud</th>
-                <th>View</th>
+                <th>Actions</th>
                 <th>Pay Type</th>
                 <th>Pay Status</th>
                 <th>Status</th>
@@ -1888,6 +1988,8 @@
       </div>
       <!-- Step 2: Review & Confirm -->
       <div class="ai-step" id="aiStep2">
+        <div class="ai-warnings" id="aiWarnings" role="status" hidden></div>
+        <div class="ai-found" id="aiFound" hidden></div>
         <div class="ai-field-row">
           <div class="ai-field">
             <label>Phone</label>
@@ -1926,6 +2028,7 @@
               <input type="text" id="aiProductSearch" placeholder="Type book name..." onkeydown="if(event.key==='Enter'){event.preventDefault();aiSearchProducts();}" style="flex:1">
               <button type="button" class="btn-ai-extract" style="white-space:nowrap" onclick="aiSearchProducts()"><i class="fas fa-search"></i> Search</button>
             </div>
+            <div class="ai-unmatched" id="aiUnmatched" hidden></div>
             <div id="aiProductResults" style="display:none;max-height:190px;overflow:auto;border:1px solid #e2e8f0;border-radius:10px;margin-top:8px"></div>
           </div>
           <div class="ai-field" style="flex:1">
@@ -2724,6 +2827,8 @@
   window.updateBulkBar = function () {
     var ids = getSelectedIds();
     var bar = document.getElementById('bulkBar');
+    var scheduleButton = document.getElementById('bulkSchedule');
+    if (scheduleButton) scheduleButton.style.display = isIncompleteView ? 'none' : '';
     if (ids.length > 0) {
       bar.classList.add('show');
       document.getElementById('bulkCount').textContent = ids.length + ' ' + (isIncompleteView ? 'incomplete order' : 'order') + (ids.length > 1 ? 's' : '') + ' selected';
@@ -2789,10 +2894,15 @@
       filter['courierStatus.status'] = 'in_review';
     } else if (state.activeTab === 'processing') {
       filter.orderStatus = { $in: PROCESSING_STATUSES };
+      filter['courierSchedule.status'] = { $nin: SCHEDULE_ACTIVE };
+    } else if (state.activeTab === 'future') {
+      filter['courierSchedule.status'] = { $in: SCHEDULE_ACTIVE };
     } else if (state.activeTab === '6') {
       filter.orderStatus = { $in: [6, 7, 9] };
     } else if (state.activeTab !== 'all' && state.activeTab !== '') {
       filter.orderStatus = Number(state.activeTab);
+      // Scheduled orders wait in Future delivery, not in Confirmed.
+      if (Number(state.activeTab) === 2) filter['courierSchedule.status'] = { $nin: SCHEDULE_ACTIVE };
     } else if (state.orderStatus !== '') {
       filter.orderStatus = Number(state.orderStatus);
     }
@@ -2808,7 +2918,8 @@
     }
     var body = {
       pagination: { pageSize: state.pageSize, currentPage: isIncompleteView ? state.page + 1 : state.page },
-      sort: { createdAt: -1 },
+      // Future delivery: soonest first.
+      sort: state.activeTab === 'future' && !isIncompleteView ? { 'courierSchedule.at': 1 } : { createdAt: -1 },
       select: {
         orderId:1, name:1, phoneNo:1, grandTotal:1, subTotal:1, deliveryCharge:1,
         discount:1, orderStatus:1, paymentStatus:1, paymentType:1,
@@ -2816,7 +2927,7 @@
         courierLink:1, fraudChecker:1, admin:1, user:1, deliveryDate:1, orderedItems:1,
         division:1, area:1, zone:1,
         note:1, adminNote:1, adminNoteBy:1, adminNotes:1, city:1, status:1, email:1,
-        orderOrigin:1, orderFrom:1, manualOrderSource:1, attribution:1,
+        orderOrigin:1, orderFrom:1, manualOrderSource:1, attribution:1, courierSchedule:1,
       },
     };
     if (isIncompleteView) {
@@ -3021,6 +3132,8 @@
 
   /* ── Status tab counts ── */
   var PROCESSING_STATUSES = [0, 1, 3, 4, 8];
+  // Future delivery (pages/sales/courier-schedule on the API): waiting, sending or not sent.
+  var SCHEDULE_ACTIVE = ['scheduled', 'sending', 'failed'];
   function fetchCount(filter, onCount) {
     var body = { pagination: { pageSize: 1, currentPage: 0 }, sort: { createdAt: -1 }, select: { orderId: 1 } };
     if (filter) body.filter = filter;
@@ -3037,7 +3150,7 @@
       if (el) el.textContent = n.toLocaleString();
     });
     // processing
-    fetchCount({ orderStatus: { $in: PROCESSING_STATUSES } }, function(n){
+    fetchCount({ orderStatus: { $in: PROCESSING_STATUSES }, 'courierSchedule.status': { $nin: SCHEDULE_ACTIVE } }, function(n){
       var el = document.getElementById('tabCount-processing');
       if (el) el.textContent = n.toLocaleString();
       document.getElementById('totalOrders').textContent = n.toLocaleString();
@@ -3048,7 +3161,11 @@
       if (el) el.textContent = n.toLocaleString();
     });
     // confirmed
-    fetchCount({ orderStatus: 2 }, function(n){
+    fetchCount({ 'courierSchedule.status': { $in: SCHEDULE_ACTIVE } }, function(n){
+      var el = document.getElementById('tabCount-future');
+      if (el) el.textContent = n.toLocaleString();
+    });
+    fetchCount({ orderStatus: 2, 'courierSchedule.status': { $nin: SCHEDULE_ACTIVE } }, function(n){
       var el = document.getElementById('tabCount-2');
       if (el) el.textContent = n.toLocaleString();
     });
@@ -3487,7 +3604,7 @@
   };
 
   function whatsappAction(o, kind) {
-    return '<button class="btn-action btn-whatsapp" data-phone="'+esc(o.phoneNo||'')+'" data-kind="'+kind+'" data-order-id="'+esc(o.orderId||'')+'" data-book-summary="'+esc(whatsappBookSummary(o.orderedItems))+'" onclick="openOrderWhatsApp(this.dataset.phone,this.dataset.kind,this.dataset.orderId,this.dataset.bookSummary)" title="Open WhatsApp with '+(kind === 'incomplete' ? 'abandoned-order' : 'order-confirmation')+' message" aria-label="Message customer on WhatsApp"><i class="fab fa-whatsapp"></i> WhatsApp</button>';
+    return '<button class="btn-action btn-whatsapp" data-phone="'+esc(o.phoneNo||'')+'" data-kind="'+kind+'" data-order-id="'+esc(o.orderId||'')+'" data-book-summary="'+esc(whatsappBookSummary(o.orderedItems))+'" onclick="openOrderWhatsApp(this.dataset.phone,this.dataset.kind,this.dataset.orderId,this.dataset.bookSummary)" title="Open WhatsApp with '+(kind === 'incomplete' ? 'abandoned-order' : 'order-confirmation')+' message" aria-label="Message customer on WhatsApp"><i class="fab fa-whatsapp"></i><span class="act-label"> WhatsApp</span></button>';
   }
 
   /* ── Delete order (owner, 2026-11-08): trash button for Super Admin and Admin ── */
@@ -3623,7 +3740,7 @@
 
   /* ── Render Table ── */
   function incompleteActions(o) {
-    var view = '<button class="btn-action btn-view" onclick="openProducts(\''+o._id+'\')" title="View abandoned order"><i class="fas fa-eye"></i> View</button>';
+    var view = '<button class="btn-action btn-view" onclick="openProducts(\''+o._id+'\')" title="View abandoned order" aria-label="View"><i class="fas fa-eye"></i><span class="act-label"> View</span></button>';
     var whatsapp = whatsappAction(o, 'incomplete');
     // Converted rows already produced a real order; no re-convert (would duplicate).
     if (o.status === 'converted') {
@@ -3632,7 +3749,7 @@
         '</div>';
     }
     return '<div class="order-row-actions">' + view +
-      '<button class="btn-action" onclick="AmolbooksIncompleteEditor.open(\''+o._id+'\')" title="Edit customer, products and price" style="background:#ede9fe;color:#6d28d9;border-color:#c4b5fd"><i class="fas fa-pen"></i> Edit</button>' +
+      '<button class="btn-action" onclick="AmolbooksIncompleteEditor.open(\''+o._id+'\')" title="Edit customer, products and price" aria-label="Edit" style="background:#ede9fe;color:#6d28d9;border-color:#c4b5fd"><i class="fas fa-pen"></i><span class="act-label"> Edit</span></button>' +
       whatsapp +
       '<button class="btn-action" onclick="convertIncompleteOrder(\''+o._id+'\')" title="Create order from this abandoned checkout" style="background:#dcfce7;color:#166534;border-color:#bbf7d0"><i class="fas fa-plus"></i> Add Order</button>' +
       '<button class="btn-action" onclick="deleteIncompleteOrder(\''+o._id+'\')" title="Delete abandoned order" style="background:#fee2e2;color:#991b1b;border-color:#fecaca"><i class="fas fa-trash"></i></button>' +
@@ -3718,12 +3835,17 @@
     tbody.innerHTML = orders.map(function(o,i){
       var courierCell='';
       if (o.courierData&&o.courierData.providerName) {
-        courierCell='<div class="courier-cell"><span class="courier-name">'+esc(o.courierData.providerName)+'</span>';
-        if(o.courierData.consignmentId) courierCell+='<br><small>'+esc(o.courierData.consignmentId)+'</small>';
-        if(o.courierLink) courierCell+='<br><a href="'+esc(o.courierLink)+'" target="_blank" class="tracking-link">Track</a>';
-        courierCell+='</div>';
+        // One line: provider chip + consignment ID (+ Track); staff-attribution adds "Sent by" below.
+        var provider=String(o.courierData.providerName).replace(/\s*courier\s*$/i,'')||o.courierData.providerName;
+        courierCell='<div class="courier-cell is-booked"><div class="courier-line"><span class="courier-chip" title="'+esc(o.courierData.providerName)+'">'+esc(provider)+'</span>';
+        if(o.courierData.consignmentId) courierCell+='<span class="courier-id" title="Consignment ID">'+esc(o.courierData.consignmentId)+'</span>';
+        if(o.courierLink) courierCell+='<a href="'+esc(o.courierLink)+'" target="_blank" class="tracking-link">Track</a>';
+        courierCell+='</div></div>';
+      } else if (o.courierSchedule && SCHEDULE_ACTIVE.indexOf(o.courierSchedule.status) !== -1) {
+        courierCell=scheduleCell(o);
       } else if (o.orderStatus!==8) {
-        courierCell='<button class="btn-courier" onclick="sendToCourier(\''+o._id+'\')"><i class="fas fa-truck"></i> Send</button>';
+        courierCell='<div class="courier-actions"><button class="btn-courier" onclick="sendToCourier(\''+o._id+'\')"><i class="fas fa-truck"></i> Send</button>'+
+          ([1,2,3].indexOf(Number(o.orderStatus)) !== -1 ? '<button class="btn-schedule" onclick="openCourierSchedule([\''+o._id+'\'])" title="Send to courier later, on a date you choose" aria-label="Schedule courier"><i class="far fa-calendar-plus"></i></button>' : '')+'</div>';
       } else {
         courierCell='<span style="color:#94a3b8;font-size:11px">—</span>';
       }
@@ -3738,18 +3860,18 @@
         var incompleteStatus = o.status === 'converted' ? 'Converted' : 'Incomplete';
         return [
           '<tr class="row-processing">',
-          '<td><input type="checkbox" class="row-check" value="'+o._id+'" onchange="updateBulkBar()"></td>',
-          '<td><span class="order-no">'+esc(o.orderId||o._id.slice(-6))+'</span></td>',
+          '<td class="col-check"><input type="checkbox" class="row-check" value="'+o._id+'" onchange="updateBulkBar()"></td>',
+          '<td class="col-no"><span class="order-no">'+esc(o.orderId||o._id.slice(-6))+'</span></td>',
           '<td>'+phoneCell(o.phoneNo)+'</td>',
-          '<td style="font-weight:600">'+esc(o.name||'—')+'</td>',
-          '<td style="max-width:220px;word-break:break-word;line-height:1.5;font-size:12px">'+esc(rowAddress(o))+'</td>',
+          '<td class="col-name"><div class="cell-clamp" title="'+esc(o.name||'')+'">'+esc(o.name||'—')+'</div></td>',
+          '<td class="col-address"><div class="cell-clamp" title="'+esc(rowAddress(o))+'">'+esc(rowAddress(o))+'</div></td>',
           '<td>'+fmtDate(o.createdAt||o.checkoutDate)+'</td>',
           '<td><strong style="color:var(--p);font-size:13.5px">৳'+Number(o.grandTotal||0).toLocaleString()+'</strong></td>',
           '<td>'+incompleteCourierCell(o)+'</td>',
           '<td>'+courierStatusCell(o)+'</td>',
           '<td>'+courierChargeCell(o)+'</td>',
           '<td>'+fraudCell(o.fraudChecker,o._id,o.phoneNo||'')+'</td>',
-          '<td>'+incompleteActions(o)+'</td>',
+          '<td class="col-actions">'+incompleteActions(o)+'</td>',
           '<td>'+payTypeBadge(o.paymentType)+'</td>',
           '<td>'+payStatusBadge(o.paymentStatus||'unpaid')+'</td>',
           '<td>'+(o.status === 'converted'
@@ -3765,25 +3887,25 @@
       }
       return [
         '<tr class="'+rowCls+'">',
-        '<td><input type="checkbox" class="row-check" value="'+o._id+'" onchange="updateBulkBar()"></td>',
-        '<td><a href="'+ADMIN_URL+'/sales/order-details/'+o._id+'" target="_blank" class="order-no">#'+esc(o.orderId||o._id.slice(-6))+'</a></td>',
+        '<td class="col-check"><input type="checkbox" class="row-check" value="'+o._id+'" onchange="updateBulkBar()"></td>',
+        '<td class="col-no"><a href="'+ADMIN_URL+'/sales/order-details/'+o._id+'" target="_blank" class="order-no">#'+esc(o.orderId||o._id.slice(-6))+'</a></td>',
         '<td>'+phoneCell(o.phoneNo)+'</td>',
-        '<td style="font-weight:600">'+esc(o.name||'—')+'</td>',
-        '<td><div style="max-width:200px;word-break:break-word;line-height:1.5;font-size:12px">'+esc(rowAddress(o))+'</div></td>',
+        '<td class="col-name"><div class="cell-clamp" title="'+esc(o.name||'')+'">'+esc(o.name||'—')+'</div></td>',
+        '<td class="col-address"><div class="cell-clamp" title="'+esc(rowAddress(o))+'">'+esc(rowAddress(o))+'</div></td>',
         '<td>'+fmtDate(o.createdAt||o.checkoutDate)+'</td>',
         '<td><strong style="color:var(--p);font-size:13.5px">৳'+Number(o.grandTotal||0).toLocaleString()+'</strong></td>',
         '<td>'+courierCell+'</td>',
         '<td>'+courierStatusCell(o)+'</td>',
         '<td>'+courierChargeCell(o)+'</td>',
         '<td>'+fraudCell(o.fraudChecker,o._id,o.phoneNo||'')+'</td>',
-        '<td><div class="order-row-actions"><button class="btn-action btn-view" onclick="openProducts(\''+o._id+'\')" title="'+itemCount+' item(s)" aria-label="View order"><i class="fas fa-eye"></i> View'+(itemCount?' ('+itemCount+')':'')+'</button><button class="btn-action btn-edit" onclick="AmolbooksIncompleteEditor.openOrder(\''+o._id+'\')" title="Edit customer, products and price" aria-label="Edit order"><i class="fas fa-pen"></i> Edit</button>'+whatsappAction(o, 'order')+deleteAction(o)+'</div></td>',
+        '<td class="col-actions"><div class="order-row-actions"><button class="btn-action btn-view" onclick="openProducts(\''+o._id+'\')" title="View '+itemCount+' item(s)" aria-label="View order"><i class="fas fa-eye"></i><span class="act-label"> View</span>'+(itemCount?'<span class="act-count">'+itemCount+'</span>':'')+'</button><button class="btn-action btn-edit" onclick="AmolbooksIncompleteEditor.openOrder(\''+o._id+'\')" title="Edit customer, products and price" aria-label="Edit order"><i class="fas fa-pen"></i><span class="act-label"> Edit</span></button>'+whatsappAction(o, 'order')+deleteAction(o)+'</div></td>',
         '<td>'+payTypeBadge(o.paymentType)+'</td>',
         '<td>'+payStatusBadge(o.paymentStatus)+'</td>',
         '<td>'+statusSelect(o.orderId,o._id,o.orderStatus)+'</td>',
         '<td>'+sourceCell(o)+'</td>',
         '<td><small style="color:#64748b">'+orderBy+'</small></td>',
         '<td><a href="'+API+'/invoice/'+o._id+'.pdf" target="_blank" class="btn-action btn-invoice" title="Invoice"><i class="fas fa-file-invoice"></i></a></td>',
-        '<td><div class="note-cell">'+(o.note?'<span class="customer-note-text">'+esc(o.note)+'</span>':'<span style="color:#94a3b8;font-size:11px">—</span>')+'</div></td>',
+        '<td><div class="note-cell">'+(o.note?'<span class="customer-note-text" title="'+esc(o.note)+'">'+esc(o.note)+'</span>':'<span style="color:#94a3b8;font-size:11px">—</span>')+'</div></td>',
         '<td><div class="admin-note-cell" data-id="'+o._id+'">'+adminNoteCellHtml(o)+'</div></td>',
         '</tr>',
       ].join('');
@@ -4062,6 +4184,181 @@
     .catch(function(err){ showToast('Failed: '+err.message,'error'); loadOrders(); });
   };
 
+  /* ── Future delivery (owner, 2026-11-08) ──
+     Park an order with a date and time; the API sends it to the courier then, exactly
+     like the Send button (pages/sales/courier-schedule). Times are Bangladesh time. */
+  function dhakaDay(date) { return date.toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' }); }
+  function dhakaAt(day, time) { return new Date(day + 'T' + (time || '10:00') + ':00+06:00'); }
+  function addDays(day, n) {
+    var d = new Date(day + 'T12:00:00+06:00');
+    d.setUTCDate(d.getUTCDate() + n);
+    return dhakaDay(d);
+  }
+  function scheduleWhen(at, long) {
+    var d = at ? new Date(at) : null;
+    if (!d || isNaN(d.getTime())) return '';
+    var time = d.toLocaleTimeString('en-US', { timeZone: 'Asia/Dhaka', hour: 'numeric', minute: '2-digit' }).toLowerCase();
+    var day = dhakaDay(d);
+    var today = dhakaDay(new Date());
+    var label = day === today ? 'Today' : day === addDays(today, 1) ? 'Tomorrow'
+      : d.toLocaleDateString('en-GB', { timeZone: 'Asia/Dhaka', weekday: 'short', day: 'numeric', month: 'short', year: long || day.slice(0, 4) !== today.slice(0, 4) ? 'numeric' : undefined });
+    return label + ', ' + time;
+  }
+  function scheduleCell(o) {
+    var sc = o.courierSchedule || {};
+    var id = String(o._id);
+    var by = sc.by && sc.by.name ? noteShortName(sc.by.name) : '';
+    if (sc.status === 'sending') {
+      return '<div class="sched-cell"><span class="sched-when"><i class="fas fa-spinner fa-spin"></i> Sending to courier…</span></div>';
+    }
+    if (sc.status === 'failed') {
+      return '<div class="sched-cell is-failed"><span class="sched-when"><i class="fas fa-exclamation-circle"></i> Not sent</span>' +
+        '<span class="sched-error">' + esc(sc.error || 'The courier did not accept this order.') + '</span>' +
+        '<span class="sched-meta">Was due ' + esc(scheduleWhen(sc.at)) + '</span>' +
+        '<div class="sched-actions"><button type="button" class="sched-now" onclick="sendScheduledNow(\'' + id + '\')">Try again</button><button type="button" onclick="removeCourierSchedule(\'' + id + '\')">Remove</button></div></div>';
+    }
+    return '<div class="sched-cell"><span class="sched-when" title="Goes to the courier automatically at this time (Bangladesh time)"><i class="far fa-calendar-check"></i> ' + esc(scheduleWhen(sc.at)) + '</span>' +
+      (by ? '<span class="sched-meta">Scheduled by ' + esc(by) + '</span>' : '') +
+      '<div class="sched-actions"><button type="button" class="sched-now" onclick="sendScheduledNow(\'' + id + '\')">Send now</button><button type="button" onclick="openCourierSchedule([\'' + id + '\'])">Change</button><button type="button" onclick="removeCourierSchedule(\'' + id + '\')">Remove</button></div></div>';
+  }
+  window.getSelectedIdsForSchedule = function () { return getSelectedIds(); };
+
+  var scheduleBox = null;
+  function scheduleDialog() {
+    if (scheduleBox) return scheduleBox;
+    scheduleBox = document.createElement('div');
+    scheduleBox.className = 'sch-overlay';
+    scheduleBox.hidden = true;
+    scheduleBox.innerHTML =
+      '<div class="sch-dialog" role="dialog" aria-modal="true" aria-labelledby="schTitle">' +
+      '<h3 id="schTitle"><i class="far fa-calendar-plus"></i><span></span></h3><p class="sch-sub" id="schSub"></p>' +
+      '<div class="sch-quick" role="group" aria-label="Quick dates"><button type="button" data-days="1">Tomorrow</button><button type="button" data-days="3">In 3 days</button><button type="button" data-days="7">In 1 week</button><button type="button" data-days="14">In 2 weeks</button></div>' +
+      '<div class="sch-fields"><div><label for="schDate">Date</label><input type="date" id="schDate"></div><div><label for="schTime">Time</label><input type="time" id="schTime" step="300"></div></div>' +
+      '<p class="sch-preview" id="schPreview" aria-live="polite"></p>' +
+      '<div class="sch-actions"><button type="button" class="sch-cancel">Cancel</button><button type="button" class="sch-save">Schedule</button></div>' +
+      '</div>';
+    document.body.appendChild(scheduleBox);
+    scheduleBox.addEventListener('click', function (e) { if (e.target === scheduleBox && !scheduleBox.busy) scheduleBox.hidden = true; });
+    scheduleBox.querySelector('.sch-cancel').addEventListener('click', function () { if (!scheduleBox.busy) scheduleBox.hidden = true; });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !scheduleBox.hidden && !scheduleBox.busy) scheduleBox.hidden = true; });
+    Array.prototype.forEach.call(scheduleBox.querySelectorAll('.sch-quick button'), function (b) {
+      b.addEventListener('click', function () {
+        scheduleBox.querySelector('#schDate').value = addDays(dhakaDay(new Date()), Number(b.getAttribute('data-days')));
+        updateSchedulePreview();
+      });
+    });
+    scheduleBox.querySelector('#schDate').addEventListener('input', updateSchedulePreview);
+    scheduleBox.querySelector('#schTime').addEventListener('input', updateSchedulePreview);
+    return scheduleBox;
+  }
+  function chosenScheduleTime() {
+    var day = scheduleBox.querySelector('#schDate').value;
+    var time = scheduleBox.querySelector('#schTime').value;
+    if (!day || !time) return null;
+    var at = dhakaAt(day, time);
+    return isNaN(at.getTime()) ? null : at;
+  }
+  function updateSchedulePreview() {
+    var at = chosenScheduleTime();
+    var preview = scheduleBox.querySelector('#schPreview');
+    var save = scheduleBox.querySelector('.sch-save');
+    var today = dhakaDay(new Date());
+    Array.prototype.forEach.call(scheduleBox.querySelectorAll('.sch-quick button'), function (b) {
+      b.classList.toggle('is-on', scheduleBox.querySelector('#schDate').value === addDays(today, Number(b.getAttribute('data-days'))));
+    });
+    var ok = at && at.getTime() > Date.now() + 60000 && at.getTime() < Date.now() + 90 * 864e5;
+    preview.classList.toggle('is-bad', !ok);
+    preview.innerHTML = !at ? 'Choose a date and a time.'
+      : !ok ? (at.getTime() <= Date.now() + 60000 ? 'That time has already passed. Choose a later time.' : 'Choose a date within the next 90 days.')
+      : 'Goes to the courier automatically on <strong>' + esc(scheduleWhen(at, true)) + '</strong> (Bangladesh time). Until then it waits in <strong>Future delivery</strong>.';
+    save.disabled = !ok;
+  }
+  window.openCourierSchedule = function (ids) {
+    ids = (ids || []).filter(Boolean);
+    if (!ids.length) { showToast('Select an order first.', 'error'); return; }
+    if (!getToken()) { showLogin('Please log in to schedule orders.'); return; }
+    var box = scheduleDialog();
+    var first = allOrdersById[String(ids[0])];
+    var current = ids.length === 1 && first && first.courierSchedule && first.courierSchedule.status === 'scheduled' ? new Date(first.courierSchedule.at) : null;
+    box.querySelector('#schTitle span').textContent = current ? 'Change courier date' : ids.length > 1 ? 'Send ' + ids.length + ' orders to courier later' : 'Send to courier later';
+    box.querySelector('#schSub').textContent = ids.length === 1 && first
+      ? '#' + (first.orderId || '') + ' · ' + [first.name, first.phoneNo].filter(Boolean).join(' · ')
+      : ids.length + ' selected orders';
+    var start = current && !isNaN(current.getTime()) ? current : dhakaAt(addDays(dhakaDay(new Date()), 7), '10:00');
+    box.querySelector('#schDate').value = dhakaDay(start);
+    box.querySelector('#schDate').min = dhakaDay(new Date());
+    box.querySelector('#schDate').max = addDays(dhakaDay(new Date()), 89);
+    box.querySelector('#schTime').value = start.toLocaleTimeString('en-GB', { timeZone: 'Asia/Dhaka', hour: '2-digit', minute: '2-digit', hour12: false });
+    var save = box.querySelector('.sch-save');
+    save.textContent = current ? 'Save new date' : 'Schedule';
+    save.onclick = function () {
+      var at = chosenScheduleTime();
+      if (!at || save.disabled) return;
+      save.disabled = true;
+      save.textContent = 'Saving…';
+      box.busy = true;
+      fetch(API + '/api/courier-schedule/set', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ ids: ids, at: at.toISOString() }) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (resp) { return { ok: r.ok, status: r.status, resp: resp }; }); })
+      .then(function (d) {
+        box.busy = false;
+        save.textContent = current ? 'Save new date' : 'Schedule';
+        if (d.status === 401 && !/permission/i.test(String(d.resp && d.resp.message || ''))) {
+          box.hidden = true; clearToken(); showLogin('Session expired. Log in again, then schedule the order.'); return;
+        }
+        if (!d.ok || !d.resp || d.resp.success === false || !d.resp.data) {
+          save.disabled = false;
+          showToast((d.resp && d.resp.message) || 'Could not schedule.', 'error');
+          return;
+        }
+        var results = d.resp.data.results || [];
+        var done = results.filter(function (x) { return x.ok; }).length;
+        var skipped = results.filter(function (x) { return !x.ok; });
+        box.hidden = true;
+        if (done) showToast((done === 1 ? 'Order' : done + ' orders') + ' scheduled for ' + scheduleWhen(at), 'success');
+        if (skipped.length) {
+          var names = skipped.slice(0, 3).map(function (x) { var o = allOrdersById[x.id]; return '#' + (o && o.orderId || x.id.slice(-6)) + ': ' + x.reason; }).join(' ');
+          showToast((skipped.length === 1 ? '1 order' : skipped.length + ' orders') + ' not scheduled. ' + names, 'error');
+        }
+        clearSelection(); loadOrders(); loadStatusCounts();
+      })
+      .catch(function (err) { box.busy = false; save.disabled = false; save.textContent = current ? 'Save new date' : 'Schedule'; showToast('Error: ' + err.message, 'error'); });
+    };
+    box.hidden = false;
+    updateSchedulePreview();
+    box.querySelector('#schDate').focus();
+  };
+  function scheduleRequest(path, body) {
+    return fetch(API + '/api/courier-schedule/' + path, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) })
+      .then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (resp) {
+          if (r.status === 401 && !/permission/i.test(String(resp && resp.message || ''))) {
+            clearToken(); showLogin('Session expired. Please log in again.'); throw new Error('auth');
+          }
+          return { ok: r.ok, resp: resp };
+        });
+      });
+  }
+  window.removeCourierSchedule = function (id) {
+    var o = allOrdersById[String(id)];
+    if (!confirm('Remove #' + (o && o.orderId || '') + ' from Future delivery? It goes back to its normal tab and will not be sent automatically.')) return;
+    scheduleRequest('cancel', { ids: [id] }).then(function (d) {
+      if (!d.ok || !d.resp || d.resp.success === false) { showToast((d.resp && d.resp.message) || 'Could not remove.', 'error'); return; }
+      showToast('Removed from Future delivery', 'success');
+      loadOrders(); loadStatusCounts();
+    }).catch(function (err) { if (err.message !== 'auth') showToast('Error: ' + err.message, 'error'); });
+  };
+  window.sendScheduledNow = function (id) {
+    var o = allOrdersById[String(id)];
+    if (!confirm('Send #' + (o && o.orderId || '') + ' to the courier now?')) return;
+    showToast('Sending to courier…', 'success');
+    scheduleRequest('send-now', { id: id }).then(function (d) {
+      var resp = d.resp || {};
+      if (d.ok && resp.success) showToast('Sent to courier!', 'success');
+      else showToast('Not sent: ' + (resp.message || 'the courier did not accept this order.'), 'error');
+      loadOrders(); loadStatusCounts();
+    }).catch(function (err) { if (err.message !== 'auth') showToast('Error: ' + err.message, 'error'); });
+  };
+
   /* ── Send to Courier ── */
   window.sendToCourier = function (id) {
     if (!confirm('Send this order to courier?')) return;
@@ -4230,9 +4527,9 @@
 
   /* ── Admin notes (owner, 2026-11-08) ──
      Every note stays, newest first, with who wrote it and when. "+ Add note"
-     adds a new one; nothing is overwritten. The latest 3 show; older ones open
-     with "Show N older". */
-  var NOTES_SHOWN = 3;
+     adds a new one; nothing is overwritten. Only the latest note shows (two
+     lines); "+N older" or a click on it opens the rest. */
+  var NOTES_SHOWN = 1;
   var notesExpanded = {};
 
   // Same rule as the API (StaffActivityService.notesOf): the saved list, plus the
@@ -4285,27 +4582,30 @@
     var id = String(o._id);
     var notes = adminNoteEntries(o).reverse();
     if (!notes.length) return '';
-    var shown = notesExpanded[id] ? notes : notes.slice(0, NOTES_SHOWN);
-    var html = '<ol class="an-list">' + shown.map(function (n) {
+    var open = !!notesExpanded[id];
+    var shown = open ? notes : notes.slice(0, NOTES_SHOWN);
+    var html = '<ol class="an-list' + (open ? '' : ' is-collapsed') + '">' + shown.map(function (n) {
       var name = n.by && n.by.name ? String(n.by.name) : '';
       var when = noteWhen(n.at);
       var tip = [name, n.by && n.by.role ? String(n.by.role).replace(/_/g, ' ') : '', noteFullWhen(n.at)]
         .filter(Boolean).join(' · ');
       var meta = (name ? '<strong>' + esc(noteShortName(name)) + '</strong>' : '') +
         (name && when ? ' · ' : '') + esc(when);
-      return '<li class="an-item"><div class="an-text">' + esc(n.text) + '</div>' +
+      return '<li class="an-item"><div class="an-text"' + (open ? '' : ' title="' + esc(n.text) + '" onclick="toggleAdminNotes(\'' + id + '\')"') + '>' + esc(n.text) + '</div>' +
         (meta ? '<div class="an-meta"' + (tip ? ' title="' + esc(tip) + '"' : '') + '>' + meta + '</div>' : '') +
         '</li>';
     }).join('') + '</ol>';
     if (notes.length > NOTES_SHOWN) {
       html += '<button type="button" class="an-more" onclick="toggleAdminNotes(\'' + id + '\')">' +
-        (notesExpanded[id] ? 'Show less' : 'Show ' + (notes.length - NOTES_SHOWN) + ' older') + '</button>';
+        (open ? 'Show less' : '+' + (notes.length - NOTES_SHOWN) + ' older') + '</button>';
     }
     return html;
   }
   function adminNoteCellHtml(o) {
+    var has = adminNoteEntries(o).length > 0;
     return '<div class="an-notes">' + adminNoteListHtml(o) + '</div>' +
-      '<button type="button" class="btn-add-note" onclick="editAdminNote(\'' + String(o._id) + '\',this)">+ Add note</button>';
+      '<button type="button" class="btn-add-note' + (has ? ' is-inline' : '') + '" onclick="editAdminNote(\'' + String(o._id) + '\',this)">' +
+      (has ? '+ Add' : '+ Add note') + '</button>';
   }
   window.toggleAdminNotes = function (mongoId) {
     notesExpanded[mongoId] = !notesExpanded[mongoId];
@@ -4905,6 +5205,8 @@
 
   window.openAiAssist = function() {
     document.getElementById('aiOrderText').value = '';
+    document.getElementById('aiDelivery').value = 60;
+    aiRenderReview([], '', []);
     document.getElementById('aiStep1').classList.add('active');
     document.getElementById('aiStep2').classList.remove('active');
     document.getElementById('aiFooterStep1').style.display = 'flex';
@@ -4924,9 +5226,86 @@
     document.getElementById('aiFooterStep1').style.display = 'flex';
   };
 
+  /* The server reads the message (api/src/pages/sales/order-assist): phones anywhere,
+     labels, name/address in any order, books matched against the catalogue (spelling
+     and Banglish tolerant), delivery from the quoted total, and warnings. If it cannot
+     be reached, the old in-page rules below are used. */
+  function aiShowStep2() {
+    document.getElementById('aiStep1').classList.remove('active');
+    document.getElementById('aiStep2').classList.add('active');
+    document.getElementById('aiFooterStep1').style.display = 'none';
+    document.getElementById('aiFooterStep2').style.display = 'flex';
+  }
+  function aiSetPayment(value) {
+    var sel = document.getElementById('aiPaymentType');
+    for (var j = 0; j < sel.options.length; j++) {
+      if (sel.options[j].value === value) { sel.selectedIndex = j; break; }
+    }
+  }
+  function aiRenderReview(warnings, found, unmatched) {
+    var box = document.getElementById('aiWarnings');
+    box.hidden = !warnings.length;
+    box.innerHTML = warnings.length ? '<strong><i class="fas fa-exclamation-triangle"></i> Please check</strong><ul>' +
+      warnings.map(function (w) { return '<li>' + aiEsc(w) + '</li>'; }).join('') + '</ul>' : '';
+    var ok = document.getElementById('aiFound');
+    ok.hidden = !found;
+    ok.innerHTML = found ? '<i class="fas fa-check-circle"></i> ' + aiEsc(found) : '';
+    var chips = document.getElementById('aiUnmatched');
+    chips.hidden = !unmatched.length;
+    chips.innerHTML = unmatched.map(function (line) {
+      return '<button type="button" title="Search the shop for this" data-q="' + aiEsc(line) + '"><i class="fas fa-search"></i> ' + aiEsc(line) + '</button>';
+    }).join('');
+    Array.prototype.forEach.call(chips.querySelectorAll('button'), function (b) {
+      b.addEventListener('click', function () {
+        document.getElementById('aiProductSearch').value = b.getAttribute('data-q');
+        aiSearchProducts();
+      });
+    });
+  }
+  function aiFillFromServer(d) {
+    document.getElementById('aiPhone').value = d.phone || '';
+    document.getElementById('aiName').value = d.name || '';
+    document.getElementById('aiAddress').value = d.address || '';
+    document.getElementById('aiCity').value = d.city || '';
+    aiSetPayment(d.paymentType || 'COD');
+    if (d.deliveryCharge != null) document.getElementById('aiDelivery').value = d.deliveryCharge;
+    var note = [];
+    if (d.quotedTotal != null) note.push('Customer quoted: ৳' + d.quotedTotal);
+    if (d.altPhones && d.altPhones.length) note.push('Other number: ' + d.altPhones.join(', '));
+    document.getElementById('aiNote').value = note.join('. ');
+    aiSelectedProducts = (d.products || []).map(function (p) { return { _id: String(p._id), name: p.name, price: Number(p.price) || 0, qty: Math.max(1, Number(p.qty) || 1) }; });
+    renderAiSelected();
+    document.getElementById('aiProductSearch').value = '';
+    document.getElementById('aiProductResults').style.display = 'none';
+    var count = aiSelectedProducts.reduce(function (n, p) { return n + p.qty; }, 0);
+    var found = count ? (count === 1 ? '1 book' : count + ' books') + ' found' +
+      (d.quotedTotal != null ? ' · customer was told ৳' + d.quotedTotal : '') +
+      (d.deliveryCharge != null ? ' · delivery ৳' + d.deliveryCharge : '') : '';
+    aiRenderReview(d.warnings || [], found, d.unmatched || []);
+  }
+
   window.extractOrderData = function() {
     var raw = document.getElementById('aiOrderText').value.trim();
     if (!raw) { alert('Paste order text first'); return; }
+    var button = document.querySelector('#aiFooterStep1 .btn-ai-extract');
+    var label = button ? button.innerHTML : '';
+    if (button) { button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Reading…'; }
+    function done() { if (button) { button.disabled = false; button.innerHTML = label; } }
+    fetch(API + '/api/order-assist/parse', { method: 'POST', headers: aiAuthHeaders(), body: JSON.stringify({ text: raw }) })
+      .then(function (r) {
+        if (r.status === 401 || r.status === 403) { aiShowLogin('Session expired. Please log in again.'); throw new Error('auth'); }
+        return r.json().then(function (res) { if (!r.ok || !res || res.success === false || !res.data) throw new Error((res && res.message) || 'HTTP ' + r.status); return res.data; });
+      })
+      .then(function (data) { done(); aiFillFromServer(data); aiShowStep2(); })
+      .catch(function (err) {
+        done();
+        if (err && err.message === 'auth') return;
+        aiLocalExtract(raw);
+        aiRenderReview(['The smart reader could not be reached, so a simpler one was used. Check every field.'], '', []);
+      });
+  };
+
+  function aiLocalExtract(raw) {
 
     var lines = raw.split('\n').map(function(l) { return l.trim(); }).filter(Boolean);
     var phone = '', name = '', address = '', city = '', product = '', paymentType = 'COD', price = '';
@@ -5008,7 +5387,7 @@
       psearch.value = product || '';
       if (product) aiSearchProducts();
     } catch (e) { /* picker is optional at extract time */ }
-  };
+  }
 
   /* ── AI Assist: product search + selection ── */
   var aiSelectedProducts = [];   // [{ _id, name, price, qty }]

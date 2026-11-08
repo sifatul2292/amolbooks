@@ -440,6 +440,22 @@ export const OrderSchema = new mongoose.Schema(
     customerRestockCompletedAt: { type: Date },
     inventoryRestockKey: { type: String, select: false },
     courierBookingStartedAt: { type: Date },
+    // Future delivery (owner, 2026-11-08): sent to the courier automatically at `at`
+    // (pages/sales/courier-schedule). status: scheduled | sending | sent | failed.
+    courierSchedule: {
+      at: { type: Date },
+      status: { type: String },
+      by: {
+        _id: { type: Schema.Types.ObjectId, ref: 'Admin' },
+        name: { type: String },
+        role: { type: String },
+      },
+      scheduledAt: { type: Date },
+      startedAt: { type: Date },
+      sentAt: { type: Date },
+      failedAt: { type: Date },
+      error: { type: String },
+    },
     stockOperationInProgress: { type: Boolean },
     stockDecremented: {
       type: Boolean,
@@ -459,6 +475,12 @@ export const OrderSchema = new mongoose.Schema(
 );
 
 OrderSchema.index({ phoneNo: 1, createdAt: 1 });
+
+// Future delivery: the every-minute run and the Orders page tab.
+OrderSchema.index(
+  { 'courierSchedule.status': 1, 'courierSchedule.at': 1 },
+  { name: 'courier_schedule', partialFilterExpression: { 'courierSchedule.status': { $exists: true } } },
+);
 
 OrderSchema.index({ customerCancelledAt: 1, customerRestockCompletedAt: 1 }, {
   name: 'customer_cancellation_recovery',
