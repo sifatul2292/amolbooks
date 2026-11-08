@@ -153,6 +153,14 @@
       .search-wrap { min-width: 0; flex: 1; }
       .topbar-btn .btn-label { display: none; }
       .topbar-btn { padding: 8px 10px; }
+      /* Phones (owner, 2026-11-08): the search box was squeezed to a 35px circle that
+         could not be typed in. Title and buttons on the first row, search full width below. */
+      .topbar { flex-wrap: wrap; height: auto; min-height: 56px; padding: 8px 12px 10px; row-gap: 8px; column-gap: 8px; }
+      .topbar-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+      .topbar-spacer { display: none; }
+      .topbar .search-wrap { order: 10; flex: 1 1 100%; min-width: 0; height: 40px; }
+      .topbar .search-wrap input { font-size: 16px; padding: 8px 0; }
+      .ai-topbar-btn .btn-label { display: none; }
     }
 
     /* ── Content ── */

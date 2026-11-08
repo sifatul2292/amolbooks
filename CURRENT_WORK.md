@@ -1,3 +1,7 @@
+## Orders page search usable on phones (2026-11-08, branch claude/staff-performance, committed and pushed 2026-11-08, not deployed)
+
+- Owner: the topbar search could not be used on a phone (squeezed to a 35px circle by the title and 5 buttons, which also ran off the right edge). custom-orders.html, phone rules only (max-width 768px): the topbar wraps; title + icon buttons (AI Assist label hidden too) on the first row, search full width below (40px tall, 16px text so iPhones do not zoom). Checked at 375px (typing 1022 lists #1022 first) and 1440px (unchanged: 62px topbar, 260px search). Deploy: safe-pull only (the page is read from disk per request).
+
 ## AI Assist reads WhatsApp orders much more reliably (2026-11-08, branch claude/staff-performance, committed and pushed 2026-11-08, not deployed)
 
 - Owner: AI Assist often missed the name, address or book; shared ~30 real WhatsApp orders (kept only in the session scratchpad, not in the repo). The old reader was fixed in-page rules (name = first line before a comma, book only after "বই:").
