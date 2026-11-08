@@ -182,7 +182,8 @@ const same = (value) => String(value || '').normalize('NFD').replace(/\s+/g, ' '
         shortDescription: book.description || null,
         seoTitle: clean(book.name),
         seoDescription: String(book.description || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300) || null,
-        costPrice: 0,
+        // Production cost when known (the owner's own titles), for the profit pages.
+        costPrice: Number.isFinite(book.costPrice) && book.costPrice >= 0 ? book.costPrice : 0,
         salePrice: book.mrp,
         discountType: 2,
         discountAmount,
@@ -214,7 +215,7 @@ const same = (value) => String(value || '').normalize('NFD').replace(/\s+/g, ' '
   for (const c of newCategories.values()) console.log(`${APPLY ? 'add' : 'would add'} category ${c.name}${c.nameEn ? ' (' + c.nameEn + ')' : ''}`);
   for (const p of newPublishers.values()) console.log(`${APPLY ? 'add' : 'would add'} publisher ${p.name}${p.nameEn ? ' (' + p.nameEn + ')' : ''}${p.image ? ', logo' : ''}${p.description ? ', description' : ''}`);
   for (const author of plan.authors.values()) console.log(`${APPLY ? 'add' : 'would add'} author  ${author.name}${author.nameEn ? ' (' + author.nameEn + ')' : ''}${author.image ? ', photo' : ''}${author.description ? ', bio' : ''}`);
-  for (const item of plan.products) console.log(`${APPLY ? 'add' : 'would add'} book    ${item.doc.name} — ৳${item.doc.salePrice} - ${item.doc.discountAmount} = ৳${item.doc.afterDiscountPrice}, ${item.doc.quantity} in stock, ${item.doc.category.map((c) => c.name).join(' / ')}${item.image ? '' : ' (no cover yet)'}${item.pdf ? ', sample PDF' : ''}`);
+  for (const item of plan.products) console.log(`${APPLY ? 'add' : 'would add'} book    ${item.doc.name} — ৳${item.doc.salePrice} - ${item.doc.discountAmount} = ৳${item.doc.afterDiscountPrice}${item.doc.costPrice ? ` (cost ৳${item.doc.costPrice})` : ''}, ${item.doc.quantity} in stock, ${item.doc.category.map((c) => c.name).join(' / ')}${item.image ? '' : ' (no cover yet)'}${item.pdf ? ', sample PDF' : ''}`);
   for (const line of plan.skipped) console.log(`skip         ${line}`);
 
   if (APPLY) {
