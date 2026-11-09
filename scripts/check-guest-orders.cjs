@@ -133,6 +133,8 @@ function httpCall(port,method,url,body,token){return new Promise((resolve,reject
   const {of}=lib('rxjs');const failed=new BulkSmsService({post:()=>of({data:[{status:'FAILED'}]})},{get:()=> 'test-only'});await assert.rejects(failed.sendOrderAccessOtp(PHONE,'test'),error=>error.status===503);
   const success=new BulkSmsService({post:()=>of({data:[{status:'SENT'}]})},{get:()=> 'test-only'});await success.sendOrderAccessOtp(PHONE,'test');
   new (require('node:vm').Script)(fs.readFileSync(path.join(root,'gtm-snippets/guest-orders.html'),'utf8').match(/<script>([\s\S]*?)<\/script>/)[1]);
+  // The header button's taps must skip the shop's fast-tap replay, which swallowed its click (2026-11-09).
+  assert.match(fs.readFileSync(path.join(root,'gtm-snippets/guest-orders.html'),'utf8'),/window\.addEventListener\('pointerup',letOwnClickThrough,true\);\s*window\.addEventListener\('touchend',letOwnClickThrough,true\);/);
   console.log('Guest orders: OTP, ownership, expiry, HTTP validation, concurrent cancellation, inventory recovery and courier exclusion pass');
  } finally{await app.close();await connection.dropDatabase();await connection.close();}
 })().catch(async error=>{console.error(error);if(failedConnection&&failedConnection.readyState===1){await failedConnection.dropDatabase();await failedConnection.close();}process.exitCode=1;});

@@ -197,6 +197,15 @@ app-home .super-deal-section { margin-top: 0 !important; }
 .ab-home-card { position: relative; min-width: 0; padding: var(--space-sm); border: var(--rule-thin) solid var(--color-rule); border-radius: var(--radius-md); background: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07); scroll-snap-align: start; }
 .ab-home-card-media { position: relative; aspect-ratio: 3 / 4; margin-bottom: var(--space-sm); overflow: hidden; background: #fff; }
 .ab-home-card-media img { width: 100%; height: 100%; object-fit: contain; transition: transform var(--dur-medium) var(--ease-out); }
+.ab-home-pack { background: linear-gradient(165deg, var(--color-paper), #fff 70%); }
+.ab-home-pack .ab-home-discount { z-index: 3; }
+.ab-home-author.ab-home-pack-offer { justify-self: start; width: fit-content; max-width: 100%; padding: 1px 6px; border-radius: var(--radius-sm); background: #fff0bb; color: #153b26; font-weight: 700; white-space: normal; text-overflow: clip; }
+.ab-home-pack-cover { position: absolute; inset-block-start: 17%; width: 54%; aspect-ratio: 3 / 4; overflow: hidden; border-radius: 2px; background: #fff; box-shadow: 0 6px 14px rgb(0 0 0 / 18%); }
+.ab-home-pack-cover img { object-fit: cover; }
+.ab-home-pack-cover--1 { inset-inline-start: 4%; transform: rotate(-6deg); }
+.ab-home-pack-cover--2 { inset-block-start: 9%; inset-inline-start: 23%; z-index: 1; }
+.ab-home-pack-cover--3 { inset-inline-end: 4%; transform: rotate(6deg); }
+.ab-home-pack-count { position: absolute; inset-block-end: var(--space-xs); inset-inline-start: 50%; z-index: 2; transform: translateX(-50%); padding: 2px 10px; border-radius: 999px; background: var(--color-accent-strong); color: #fff; font-size: var(--text-xs); font-weight: 600; white-space: nowrap; }
 .ab-home-discount { position: absolute; inset-block-start: 0; inset-inline-start: 0; z-index: 1; padding: var(--space-xs); border-radius: 0 0 var(--radius-sm) 0; background: var(--color-offer); color: #fff; font-size: var(--text-xs); font-weight: 600; white-space: nowrap; }
 .ab-cover-badge-host { position: relative !important; overflow: hidden; }
 .ab-cover-peek-badge { position: absolute; right: -2.7rem; bottom: 1.3rem; z-index: 3; width: 10.5rem; padding: 0.28rem 0; transform: rotate(-45deg); background: #168747; color: #fff; font: 500 0.6875rem/1.2 var(--font-body); text-align: center; pointer-events: none; }
@@ -277,6 +286,9 @@ app-home .super-deal-section { margin-top: 0 !important; }
   var productsBySlug = {};
   var pendingCarts = {};
   var cataloguePromise = null;
+  var shelfPicksPromise = null;
+  var shelfPackages = [];
+  var packagesPromise = null;
   var coverDataRequested = false;
   var localHost = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname) || /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(location.hostname);
   function wantsRedesign() {
@@ -311,20 +323,69 @@ app-home .super-deal-section { margin-top: 0 !important; }
       // phones (two rows filled column by column) is right beside it.
       pins: [{ slug: 'secrets-of-wealth-and-provision', after: 'the-barakah-effect' }]
     },
+    // Every shelf shows 12 cards unless it sets `size` (owner, 2026-11-09: rows must be full;
+    // 12 fills 6 across, 4 across and the two-row phone strip).
+    // Topic shelves (2026-11-09): books hand-picked for each shelf title, in order. Amol Books
+    // titles always come first; an Amol Books title tagged with the shelf's `categories` joins
+    // on its own. Other books from `categories` only fill gaps left by sold-out picks.
     {
       id: 'combo',
+      // Special packages (owner, 2026-11-09): shown first, as package cards that add the whole package.
+      packages: ['6abe2123b1f44997b7ca5950'],
       title: 'বেস্টসেলার বুক কম্বো',
-      words: ['কম্বো', 'সেট', 'প্যাকেজ', 'খণ্ড সেট', 'দুই খণ্ড', 'তিন খণ্ড', 'একত্রে'],
-      manualSlugs: ['Jibonpaltano4books', 'Jibon', 'Poro Collection']
+      words: ['কম্বো', ' সেট', 'প্যাকেজ', 'খণ্ড সেট', 'দুই খণ্ড', 'তিন খণ্ড', 'একত্রে'],
+      picks: ['productive-barakah', 'Jibonpaltano4books', 'Poro Collection', 'Mizanur Rahman Ajharir 3 ti boi akotre', 'Tinie-Amar-Rob', 'Jibon', 'Roufur Rohim Seerat', 'mohimannitoquran6set', 'Kitabulfitan', 'nobijir-hadiser-dorse', 'Islam-a-complete-course-for-beginners', 'riyadus-salihin', 'umar-ibn-al-khattab-two-part-31', 'shamayele-tirmiji', 'al-adabul-mufrad']
     },
-    { id: 'personal-growth', title: 'ব্যক্তিত্ব ও আত্মোন্নয়ন', categories: ['প্রোডাক্টিভিটি', 'আত্মশুদ্ধি ও অনুপ্রেরণা'] },
-    { id: 'business', title: 'অর্থ, ব্যবসা ও সম্পদ গঠন', categories: ['বিনিয়োগ ও অর্থনীতি', 'প্রোডাক্টিভিটি'] },
-    { id: 'quran', title: 'কুরআন ও তাফসির', categories: ['কুরআন শেখা', 'কুরআন বিষয়ক আলোচনা'] },
-    { id: 'hadith-seerah', title: 'হাদিস ও সীরাত', categories: ['আল হাদিস', 'সীরাতে রাসূল (সা.)'] },
-    { id: 'prayer', title: 'নামাজ, দুআ ও যিকির', categories: ['দোয়া, দরূদ ও যিকর', 'ইসলামি আমল ও আমলের সহায়িকা'] },
-    { id: 'character', title: 'আত্মশুদ্ধি, আদব ও আখলাক', categories: ['আত্মশুদ্ধি ও অনুপ্রেরণা', 'আদব, আখলাক'] },
-    { id: 'family', title: 'ইসলামি জীবন ও পরিবার', categories: ['ইসলামে নারী', 'বিয়ে ও সংসার', 'ইসলামী সাহিত্য'] },
-    { id: 'history', title: 'ইতিহাস, জীবনী ও মনীষী', categories: ['ইসলামি ইতিহাস ও ঐতিহ্য'] }
+    {
+      id: 'personal-growth',
+      title: 'ব্যক্তিত্ব ও আত্মোন্নয়ন',
+      categories: ['প্রোডাক্টিভিটি'],
+      picks: ['productive muslim', 'the-barakah-effect', 'olosotajibonershotru', 'Time Management', 'productive-lessons', 'muslim-mindset', 'baksher-baire', 'Emotional Intelligence', 'Ebar Bhinno kichu hok', 'tumio-hobe-prithibir-sofol-purush-61', 'Uddesshohin ar kotodin', 'enjoy-your-life', 'Bela Furabar Age']
+    },
+    {
+      id: 'business',
+      title: 'অর্থ, ব্যবসা ও সম্পদ গঠন',
+      categories: ['বিনিয়োগ ও অর্থনীতি'],
+      picks: ['islami-orthonity-o-uddokta-47', 'secrets-of-wealth-and-provision', 'sompodgorarkoushol', 'yourmustdobusiness', 'billiondollarmuslim', 'human-resource-management', 'leadership', 'Islami Ortho Bebosthar Itihash', 'islame-uttoradhikar-ain-o-somajer-osongoti', 'Time Management', 'bangla-bharat-pak-lutpat-er-itihash', 'africa-lutpat-er-itihash']
+    },
+    {
+      id: 'quran',
+      title: 'কুরআন ও তাফসির',
+      categories: ['কুরআন শেখা', 'কুরআন বিষয়ক আলোচনা'],
+      picks: ['500 shobder kuraner 75%', 'quran-bojhar-moja', 'Quran Bojhar Mulniti', 'kuranul-karim-30th-para', 'mohimannito-quran-1-khondo', 'quraner-shounorjo/', 'poro', 'sura-kahofer-aloke-muktir-moshal', 'reflection-from-sura-yusuf-28', 'tadabburer-shorobore', 'qurani-shobder-tafsir', 'quran-jiboner-guideline', 'jevabe-pelam-quran-er-dekha', 'hifz-korte-hole', 'Quran Sonkoloner Itihash']
+    },
+    {
+      id: 'hadith-seerah',
+      title: 'হাদিস ও সীরাত',
+      categories: ['আল হাদিস', 'সীরাতে রাসূল (সা.)'],
+      picks: ['the-story-of-muhammad', 'amar-nobi-muhammad-sa', 'riyadus-salihin', 'are-rahikul-makhtum', 'shamayele-tirmiji', 'nobiji-sallallahu-alaihi-wa-sallam-jemon-chilen-tini', 'al-adabul-mufrad', 'sirate-ibne-hisham', 'Nobi Jiboner Golpo', 'tadabbur-fil-hadis', 'rasuler-proti-valobasha-1', 'hariye-jaoa-mukto', 'sirajam-munira', 'nobijir-hadiser-dorse']
+    },
+    {
+      id: 'prayer',
+      title: 'নামাজ, দুআ ও যিকির',
+      categories: ['দোয়া, দরূদ ও যিকর', 'ইসলামি আমল ও আমলের সহায়িকা'],
+      picks: ['amolbissokosh', 'moner moto salat', 'khushu-khuju-96', 'haia-alas-salah', 'Islame Namajer Gurutto', 'salat-o-sokal-sondhar-dua', 'duwa bishhokosh', 'hisnulmuslim', 'muslimer-surokkha-hard-cover', 'istighfar', 'dorud-o-salam', 'mohimannito-jumua', 'jharfuker-dua']
+    },
+    {
+      id: 'character',
+      title: 'আত্মশুদ্ধি, আদব ও আখলাক',
+      categories: ['আদব, আখলাক'],
+      picks: ['Attar Osudh', 'kolbun-salim-nilmol-ontor-nirmol-jibon', 'choritro-shongsodhon-96', 'Nobobi Akhlak Nobobi', 'Ma, Ma, Ma abong Baba', 'sobor', 'bipod jokhon niyamot', 'takwa-muminer-sombol', 'al-fawaid-mukhtasar', 'reclaimyourheart', 'Tinii Amar Rob', 'shoytaner-fad', 'Adorsho Muslim', 'naseehah']
+    },
+    {
+      id: 'family',
+      title: 'ইসলামি জীবন ও পরিবার',
+      categories: ['ইসলামে নারী', 'বিয়ে ও সংসার'],
+      picks: ['sukhi-poribar-nirmaner-ruprekha', 'shongshar-vabona', 'Biyer Epith Opith', 'paribarik-somporker-bunon', 'sontan-gorar-karzokori-koushol', 'shishur-monone-iman', 'shishuder-somossa-amader-koroniyo', 'sontaner-boyosondikaler-monostotto', 'sontanke-boimukhi-korar-koushol', 'Jibon Jodi hoto nari sahabir moto', 'Narir Islami Jibon', 'adorsho-muslimah-21', 'sonali-juger-mayera-17', 'Kajer Majhe Rober Khoje']
+    },
+    {
+      id: 'history',
+      title: 'ইতিহাস, জীবনী ও মনীষী',
+      categories: ['ইসলামি ইতিহাস ও ঐতিহ্য'],
+      // Owner (2026-11-09): a bigger shelf with Sondipon's history titles and শিকড়ের সন্ধানে.
+      size: 24,
+      picks: ['the-story-of-muhammad', 'Shikorer Shondhane', 'muslimjatirItihash', 'saladin-ayyubi-ra', 'ummahor-kingbodontira', 'umar-ibn-al-khattab-two-part-31', 'Islami Shikkha Bebosthar Itihash', 'islami-bichar-babosthar-itihash-61', 'forayzi-adolon-akti-adorsik-lorai', 'sufi-mujahider-itihash', 'bangla-bharat-pak-lutpat-er-itihash', 'africa-lutpat-er-itihash', 'pracchobader-itikotha', 'nari-sahabider-jibonkotha', 'isa-ibnu-maryam', 'musa-alaihis-salamer-gotonabhul-jibon-and-amader-jonno-rekhe-jaoya-shikkha', 'karbalar-prokrito-itihas', 'Islami Ortho Bebosthar Itihash', 'salafder-jibon-kotha', 'sufiyan-as-sawri-rahimahullar-jibon-o-kormo', 'islami-siasat-1', 'islami-siyasat-2', 'jannater-susongbad-prapto-sahabider-jibon-kotha', 'chorchapod-na-bola-kichu-kotha']
+    }
   ];
 
   function escapeHtml(value) {
@@ -458,25 +519,48 @@ app-home .super-deal-section { margin-top: 0 !important; }
       var pinnedSlugs = pinned.map(function (entry) { return entry.product.slug; });
       var top = products.filter(function (product) { return pinnedSlugs.indexOf(product.slug) === -1; })
         .sort(function (a, b) { return number(b.totalSold) - number(a.totalSold); })
-        .slice(0, 10 - pinned.length);
+        .slice(0, (shelf.size || 12) - pinned.length);
       pinned.forEach(function (entry) {
         var anchor = top.findIndex(function (product) { return product.slug === entry.pin.after; });
         top.splice(anchor === -1 ? Math.min(5, top.length) : Math.min(anchor + 2, top.length), 0, entry.product);
       });
       return top;
     }
-    var matches = products.filter(function (product) {
-      if (shelf.words) return shelf.words.some(function (word) { return String(product.name || '').indexOf(word) !== -1; });
-      var names = categoryNames(product);
-      return shelf.categories.some(function (category) { return names.indexOf(category) !== -1; });
+    var bySlug = products.reduce(function (result, product) {
+      result[product.slug] = product;
+      return result;
+    }, {});
+    var topic = products.filter(function (product) {
+      return inShelfTopic(product, shelf) && (shelf.id === 'combo' || !isBundle(product));
     });
-    if (!shelf.manualSlugs) return matches.slice(0, 10);
-    var manual = shelf.manualSlugs.map(function (slug) {
-      return products.find(function (product) { return product.slug === slug; });
-    }).filter(Boolean);
-    return manual.concat(matches.filter(function (product) {
-      return shelf.manualSlugs.indexOf(product.slug) === -1;
-    })).slice(0, 10);
+    var chosen = [];
+    var taken = {};
+    var add = function (product) {
+      if (!product || taken[product.slug]) return;
+      taken[product.slug] = true;
+      chosen.push(product);
+    };
+    (shelf.picks || []).forEach(function (slug) { add(bySlug[slug]); });
+    topic.filter(isOwnBook).forEach(add);
+    topic.forEach(add);
+    return chosen.filter(isOwnBook).concat(chosen.filter(function (product) { return !isOwnBook(product); })).slice(0, shelf.size || 12);
+  }
+  function isOwnBook(product) {
+    var publishers = Array.isArray(product && product.publisher) ? product.publisher : [product && product.publisher];
+    return publishers.some(function (publisher) {
+      return !!publisher && (publisher.slug === OWN_PUBLISHER_SLUG || publisher.name === 'আমল বুকস');
+    });
+  }
+  function inShelfTopic(product, shelf) {
+    if (shelf.words) return shelf.words.some(function (word) { return String(product.name || '').indexOf(word) !== -1; });
+    var names = categoryNames(product);
+    return (shelf.categories || []).some(function (category) { return names.indexOf(category) !== -1; });
+  }
+  // Sets and bundles stay in the combo shelf.
+  function isBundle(product) {
+    return isCombo(product) || shelves.some(function (shelf) {
+      return shelf.id === 'combo' && (shelf.picks || []).indexOf(product.slug) !== -1;
+    });
   }
   function isCombo(product) {
     return shelves[1].words.some(function (word) { return String(product.name || '').indexOf(word) !== -1; });
@@ -597,11 +681,11 @@ app-home .super-deal-section { margin-top: 0 !important; }
       '<button class="ab-add-cart-button" type="button" data-product-id="' + escapeHtml(product._id) + '" data-ab-action-label="home">কার্টে যোগ করুন</button>' +
     '</article>';
   }
-  function sectionHtml(id, title, products, href) {
-    if (!products.length) return '';
+  function sectionHtml(id, title, products, href, leadHtml) {
+    if (!products.length && !leadHtml) return '';
     return '<section class="ab-home-products" aria-labelledby="' + id + '"><div class="ab-home-shell">' +
       '<div class="ab-home-section-head"><h2 id="' + id + '">' + escapeHtml(title) + '</h2><a class="ab-home-all-link" href="' + escapeHtml(href) + '">সব দেখুন</a></div>' +
-      '<div class="ab-home-grid">' + products.map(function (product) { return productCard(product, id); }).join('') + '</div>' +
+      '<div class="ab-home-grid">' + (leadHtml || '') + products.map(function (product) { return productCard(product, id); }).join('') + '</div>' +
     '</div></section>';
   }
   // First letter of the name (after a title such as "ড." or "শাইখ") for the picture placeholder.
@@ -635,19 +719,24 @@ app-home .super-deal-section { margin-top: 0 !important; }
     var src = logo && (logo.currentSrc || logo.src);
     return src && /^https?:\/\//.test(src) ? src : OWN_LOGO_FALLBACK;
   }
+  // null when the pictures could not be read (the API refuses some requests in a page-load
+  // burst), so the caller shows letters for now and does not cache that.
   function fetchEntityImages(kind, slugs) {
     if (!slugs.length) return Promise.resolve({});
-    return fetch(API_BASE + '/' + kind + '/get-all', {
-      method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ filter: { slug: { $in: slugs } }, pagination: { pageSize: slugs.length, currentPage: 0 }, select: { slug: 1, image: 1 } })
-    }).then(function (response) {
-      return response.ok ? response.json() : null;
-    }).then(function (result) {
+    return withRetries(function () {
+      return fetch(API_BASE + '/' + kind + '/get-all', {
+        method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filter: { slug: { $in: slugs } }, pagination: { pageSize: slugs.length, currentPage: 0 }, select: { slug: 1, image: 1 } })
+      }).then(function (response) {
+        if (!response.ok) throw new Error('Pictures unavailable');
+        return response.json();
+      });
+    }, [700, 2000]).then(function (result) {
       return (result && Array.isArray(result.data) ? result.data : []).reduce(function (images, item) {
         if (item && item.slug && typeof item.image === 'string' && /^(https?:)?\/\//.test(item.image)) images[item.slug] = item.image;
         return images;
       }, {});
-    }).catch(function () { return {}; });
+    }).catch(function () { return null; });
   }
   function showEntityImages(root) {
     var cards = Array.prototype.slice.call(root.querySelectorAll('.ab-home-name--media[data-entity-slug]'));
@@ -661,8 +750,10 @@ app-home .super-deal-section { margin-top: 0 !important; }
     var ready = cached && cached.author && cached.publisher
       ? Promise.resolve(cached)
       : Promise.all([fetchEntityImages('author', slugsFor('author')), fetchEntityImages('publisher', slugsFor('publisher'))]).then(function (found) {
-        var images = { author: found[0], publisher: found[1] };
-        try { sessionStorage.setItem(ENTITY_IMAGE_CACHE, JSON.stringify(images)); } catch (error) { /* Cache is optional. */ }
+        var images = { author: found[0] || {}, publisher: found[1] || {} };
+        if (found[0] && found[1]) {
+          try { sessionStorage.setItem(ENTITY_IMAGE_CACHE, JSON.stringify(images)); } catch (error) { /* Cache is optional. */ }
+        }
         return images;
       });
     ready.then(function (images) {
@@ -687,6 +778,7 @@ app-home .super-deal-section { margin-top: 0 !important; }
       });
     });
   }
+  var CATALOGUE_SELECT = { _id: 1, name: 1, slug: 1, images: 1, salePrice: 1, afterDiscountPrice: 1, discountAmount: 1, discountType: 1, totalSold: 1, author: 1, publisher: 1, category: 1, ratingCount: 1, ratingTotal: 1, reviewTotal: 1 };
   function requestCatalogue() {
     var request = sameOriginCatalogue ? fetch(API_BASE + '/library', { credentials: 'omit' }) : fetch(API_BASE + '/product/get-all', {
       method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json' },
@@ -694,12 +786,42 @@ app-home .super-deal-section { margin-top: 0 !important; }
         filter: { status: 'publish', quantity: { $gt: 0 } },
         pagination: { pageSize: 180, currentPage: 0 },
         sort: { totalSold: -1, priority: -1 },
-        select: { _id: 1, name: 1, slug: 1, images: 1, salePrice: 1, afterDiscountPrice: 1, discountAmount: 1, discountType: 1, totalSold: 1, author: 1, publisher: 1, category: 1, ratingCount: 1, ratingTotal: 1, reviewTotal: 1 }
+        select: CATALOGUE_SELECT
       })
     });
     return request.then(function (response) {
       if (!response.ok) throw new Error('Catalogue unavailable');
       return response.json();
+    });
+  }
+  /* The catalogue holds the 180 best sellers, so shelf picks that have not sold yet are
+     fetched by slug after the page shows (see loadShelfPicks). `shelfPicks` marks a full result. */
+  function addShelfPicks(result) {
+    var have = {};
+    var products = result && Array.isArray(result.data) ? result.data : [];
+    products.forEach(function (product) { have[product.slug] = true; });
+    var missing = [];
+    shelves.forEach(function (shelf) {
+      (shelf.picks || []).forEach(function (slug) {
+        if (!have[slug] && missing.indexOf(slug) === -1) missing.push(slug);
+      });
+    });
+    if (!missing.length) return Promise.resolve(Object.assign({}, result, { shelfPicks: true }));
+    return fetch(API_BASE + '/product/get-all', {
+      method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filter: { status: 'publish', quantity: { $gt: 0 }, slug: { $in: missing } },
+        pagination: { pageSize: missing.length, currentPage: 0 },
+        select: CATALOGUE_SELECT
+      })
+    }).then(function (response) {
+      if (!response.ok) throw new Error('Shelf picks unavailable');
+      return response.json();
+    }).then(function (extra) {
+      var added = (extra && Array.isArray(extra.data) ? extra.data : []).filter(function (product) {
+        return product && missing.indexOf(product.slug) !== -1 && !have[product.slug];
+      });
+      return Object.assign({}, result, { data: products.concat(added), shelfPicks: true });
     });
   }
   /* The live API's nginx answers some requests in a page-load burst with 404,
@@ -715,20 +837,159 @@ app-home .super-deal-section { margin-top: 0 !important; }
   function fetchProducts() {
     if (cataloguePromise) return cataloguePromise;
     try {
-      var cached = JSON.parse(sessionStorage.getItem('ab-home-catalogue-v3') || 'null');
+      var cached = JSON.parse(sessionStorage.getItem('ab-home-catalogue-v4') || 'null');
       if (cached && Array.isArray(cached.data) && cached.data.length) {
         cataloguePromise = Promise.resolve(cached);
         return cataloguePromise;
       }
     } catch (error) { /* Fetch when storage is unavailable. */ }
     cataloguePromise = withRetries(requestCatalogue, [700, 2000]).then(function (result) {
-      try { sessionStorage.setItem('ab-home-catalogue-v3', JSON.stringify(result)); } catch (error) { /* Cache is optional. */ }
+      try { sessionStorage.setItem('ab-home-catalogue-v4', JSON.stringify(result)); } catch (error) { /* Cache is optional. */ }
       return result;
     }).catch(function (error) {
       cataloguePromise = null;
       throw error;
     });
     return cataloguePromise;
+  }
+  // Runs after the shelves are on screen, so it never delays the page.
+  function loadShelfPicks(result) {
+    if (result && result.shelfPicks) return Promise.resolve(result);
+    if (shelfPicksPromise) return shelfPicksPromise;
+    shelfPicksPromise = withRetries(function () { return addShelfPicks(result); }, [700, 2000]).then(function (full) {
+      try { sessionStorage.setItem('ab-home-catalogue-v4', JSON.stringify(full)); } catch (error) { /* Cache is optional. */ }
+      cataloguePromise = Promise.resolve(full);
+      return full;
+    }).catch(function () {
+      shelfPicksPromise = null;
+      return null;
+    });
+    return shelfPicksPromise;
+  }
+  // Swaps in the late picks. The topic shelves sit below the first screen, so the swap
+  // happens out of view (scroll anchoring keeps the reader in place if they got there first).
+  function upgradeShelves(products) {
+    var root = document.getElementById(ROOT_ID);
+    if (!root) return;
+    products.forEach(function (product) {
+      productsById[String(product._id)] = product;
+      productsBySlug[String(product.slug || '')] = product;
+    });
+    shelves.forEach(function (shelf) {
+      if (shelf.id === 'popular') return;
+      var heading = document.getElementById('ab-home-' + shelf.id);
+      var grid = heading && root.contains(heading) && heading.closest('section').querySelector('.ab-home-grid');
+      if (!grid) return;
+      var packages = packagesForShelf(shelf);
+      var next = productsForShelf(products, shelf).slice(0, Math.max(0, (shelf.size || 12) - packages.length));
+      var shown = Array.prototype.map.call(grid.querySelectorAll('.ab-home-card[data-product-id]'), function (card) { return card.getAttribute('data-product-id'); });
+      if (!next.length || next.map(function (product) { return String(product._id); }).join() === shown.join()) return;
+      grid.innerHTML = packages.map(function (item) { return packageCard(item, 'ab-home-' + shelf.id); }).join('') +
+        next.map(function (product) { return productCard(product, 'ab-home-' + shelf.id); }).join('');
+    });
+    decorateCovers();
+  }
+  /* Special packages on a shelf (shelf.packages = package ids). They are not books, so they are
+     read from the package API next to the catalogue and never hold the page up for long. */
+  // On amolbooks.com the shop's own /api answers (same server), so no second host is involved.
+  var PACKAGE_API = sameOriginCatalogue ? location.origin + '/api' : 'https://apisub.amolbooks.com/api';
+  var PACKAGE_WAIT_MS = 1500;
+  function shelfPackageIds() {
+    return shelves.reduce(function (ids, shelf) {
+      (shelf.packages || []).forEach(function (id) { if (ids.indexOf(id) === -1) ids.push(id); });
+      return ids;
+    }, []);
+  }
+  function fetchShelfPackages() {
+    var ids = shelfPackageIds();
+    if (!ids.length) return Promise.resolve([]);
+    if (packagesPromise) return packagesPromise;
+    var key = 'ab-home-packages-v1:' + ids.join(',');
+    try {
+      var cached = JSON.parse(sessionStorage.getItem(key) || 'null');
+      if (Array.isArray(cached) && cached.length) return (packagesPromise = Promise.resolve(cached));
+    } catch (error) { /* Fetch when storage is unavailable. */ }
+    var load = Promise.all(ids.map(function (id) {
+      return fetch(PACKAGE_API + '/special-package/' + encodeURIComponent(id), { credentials: 'omit', headers: { Accept: 'application/json' } })
+        .then(function (response) { return response.ok ? response.json() : null; })
+        .then(function (result) { return result && result.success && result.data && result.data._id ? result.data : null; })
+        .catch(function () { return null; });
+    })).then(function (found) {
+      var packages = found.filter(Boolean);
+      if (packages.length === ids.length) {
+        try { sessionStorage.setItem(key, JSON.stringify(packages)); } catch (error) { /* Cache is optional. */ }
+      } else {
+        packagesPromise = null;
+      }
+      return packages;
+    });
+    packagesPromise = load;
+    return Promise.race([load, new Promise(function (resolve) { setTimeout(function () { resolve([]); }, PACKAGE_WAIT_MS); })]);
+  }
+  var PACKAGE_OFFERS = { '6abe2123b1f44997b7ca5950': 'ফ্রি ডেলিভারি + ফ্রি নোটবুক' };
+  function packagesForShelf(shelf) {
+    return (shelf.packages || []).map(function (id) {
+      return shelfPackages.find(function (item) { return String(item._id) === String(id); });
+    }).filter(Boolean);
+  }
+  function packageBooks(item) {
+    return (Array.isArray(item && item.products) ? item.products : []).filter(Boolean);
+  }
+  // Price of the books bought one by one (list prices), as the package page shows it.
+  function packageRegularPrice(item) {
+    return packageBooks(item).reduce(function (sum, book) {
+      return sum + number(book.salePrice) * Math.max(1, number(book.quantity) || 1);
+    }, 0);
+  }
+  function packageCard(item, listName) {
+    var books = packageBooks(item);
+    var price = finalPrice(item);
+    var regular = Math.max(packageRegularPrice(item), number(item.salePrice));
+    var discount = regular > price && regular ? Math.max(1, Math.min(99, Math.round((regular - price) * 100 / regular))) : 0;
+    var count = books.length;
+    var covers = books.slice(0, 3).map(function (book, index) {
+      return '<span class="ab-home-pack-cover ab-home-pack-cover--' + (index + 1) + '"><img ' + responsiveImage(book) + ' alt="" width="320" height="426" loading="lazy" fetchpriority="low" decoding="async"></span>';
+    }).join('');
+    var media = covers || '<img src="' + escapeHtml(item.image || '/assets/images/placeholder/test.png') + '" alt="" loading="lazy" decoding="async">';
+    var countLabel = count ? count.toLocaleString('bn-BD') + 'টি বইয়ের প্যাকেজ' : 'বিশেষ প্যাকেজ';
+    return '<article class="ab-home-card ab-home-card--package" data-package-id="' + escapeHtml(item._id) + '" data-list-name="' + escapeHtml(listName) + '">' +
+      '<a href="/special-package-details/' + encodeURIComponent(item._id) + '" aria-label="' + escapeHtml((item.name || 'প্যাকেজ') + ' — ' + countLabel) + '">' +
+        '<div class="ab-home-card-media ab-home-pack">' +
+          (discount ? '<span class="ab-home-discount">' + escapeHtml(discount) + '% ছাড়</span>' : '') +
+          media +
+          '<span class="ab-home-pack-count">' + escapeHtml(countLabel) + '</span>' +
+        '</div>' +
+        '<h3>' + escapeHtml(item.name || '') + '</h3>' +
+        (PACKAGE_OFFERS[String(item._id)]
+          ? '<p class="ab-home-author ab-home-pack-offer" title="' + escapeHtml(books.map(function (book) { return book.name; }).join(' + ')) + '">' + escapeHtml(PACKAGE_OFFERS[String(item._id)]) + '</p>'
+          : '<p class="ab-home-author">' + escapeHtml(books.map(function (book) { return book.name; }).join(' + ')) + '</p>') +
+        '<p class="ab-home-price"><span>' + escapeHtml(money(price)) + '</span>' + (regular > price ? '<s>' + escapeHtml(money(regular)) + '</s>' : '') + '</p>' +
+      '</a>' +
+      '<button class="ab-add-cart-button ab-add-package-button" type="button" data-package-id="' + escapeHtml(item._id) + '">কার্টে যোগ করুন</button>' +
+    '</article>';
+  }
+  // Packages go in through the cart code every shop page loads (storefront-product-sections);
+  // its button words are English, so they are kept in Bengali here.
+  var PACKAGE_BUTTON_WORDS = { 'Adding…': 'যোগ হচ্ছে…', 'Adding...': 'যোগ হচ্ছে…', 'Added': 'যোগ হয়েছে', 'Add to Cart': 'কার্টে যোগ করুন' };
+  function addPackageToCart(button) {
+    var id = button.getAttribute('data-package-id');
+    var bridge = window.__abCommerceBridge;
+    if (!id) return;
+    if (!bridge || typeof bridge.addSpecialPackageToCart !== 'function') {
+      location.href = '/special-package-details/' + encodeURIComponent(id);
+      return;
+    }
+    if (button.disabled) return;
+    var keepBengali = new MutationObserver(function () {
+      var word = PACKAGE_BUTTON_WORDS[String(button.textContent || '').trim()];
+      if (word && button.textContent !== word) button.textContent = word;
+    });
+    keepBengali.observe(button, { childList: true, characterData: true, subtree: true });
+    setTimeout(function () { keepBengali.disconnect(); }, 15000);
+    Promise.resolve(bridge.addSpecialPackageToCart(id, button)).catch(function () {
+      button.textContent = 'কার্টে যোগ করুন';
+      button.disabled = false;
+    });
   }
   function render(products) {
     var nativeHome = document.querySelector('app-home');
@@ -742,7 +1003,8 @@ app-home .super-deal-section { margin-top: 0 !important; }
       return '<a class="ab-home-goal" href="' + escapeHtml(categoryUrl(goal.match, goal.fallback)) + '" data-goal="' + escapeHtml(goal.label) + '"><span class="ab-home-goal-index">0' + (index + 1) + '</span><strong>' + escapeHtml(goal.label) + '</strong><span class="ab-home-goal-arrow" aria-hidden="true">→</span></a>';
     }).join('');
     var shelfData = shelves.map(function (shelf) {
-      return { shelf: shelf, products: productsForShelf(products, shelf) };
+      var packages = packagesForShelf(shelf);
+      return { shelf: shelf, packages: packages, products: productsForShelf(products, shelf).slice(0, Math.max(0, (shelf.size || 12) - packages.length)) };
     });
     var authorsHtml = nameStripHtml('ab-home-authors', 'জনপ্রিয় লেখক', uniqueEntities(products, 'author'), 'author', '/author-list');
     var publishersHtml = nameStripHtml('ab-home-publishers', 'জনপ্রিয় প্রকাশনী', uniqueEntities(products, 'publisher'), 'publisher', '/publisher-list');
@@ -751,7 +1013,7 @@ app-home .super-deal-section { margin-top: 0 !important; }
     var root = document.createElement('main');
     root.id = ROOT_ID;
     root.innerHTML = shelfData.map(function (entry, index) {
-      var shelfHtml = sectionHtml('ab-home-' + entry.shelf.id, entry.shelf.title, entry.products, '/product-list');
+      var shelfHtml = sectionHtml('ab-home-' + entry.shelf.id, entry.shelf.title, entry.products, '/product-list', entry.packages.map(function (item) { return packageCard(item, 'ab-home-' + entry.shelf.id); }).join(''));
       return shelfHtml + (index === 1 ? quizHtml() : '') + (index === 4 ? goalsHtml : '') + (index === 6 ? authorsHtml : '') + (index === 8 ? publishersHtml : '');
     }).join('') +
       '<nav class="ab-home-shell ab-home-trust" aria-label="অর্ডার সহায়তা"><a href="/pages/how-to-order-website">কীভাবে অর্ডার করবেন <span aria-hidden="true">→</span></a><a href="/pages/delivery-policy">ডেলিভারি নীতি <span aria-hidden="true">→</span></a><a href="/pages/return-&-refund-policy">ফেরত ও পরিবর্তন <span aria-hidden="true">→</span></a></nav>';
@@ -769,6 +1031,12 @@ app-home .super-deal-section { margin-top: 0 !important; }
       pushEvent('ab_home_quiz_start', {});
     });
     root.addEventListener('click', function (event) {
+      var packageButton = event.target.closest('.ab-add-package-button');
+      if (packageButton) {
+        event.preventDefault();
+        addPackageToCart(packageButton);
+        return;
+      }
       var goal = event.target.closest('.ab-home-goal');
       if (goal) pushEvent('ab_home_goal_click', { content_name: goal.getAttribute('data-goal') });
       var card = event.target.closest('.ab-home-card');
@@ -836,11 +1104,18 @@ app-home .super-deal-section { margin-top: 0 !important; }
     setPending(true);
     loading = true;
     var serial = ++requestSerial;
-    fetchProducts().then(function (result) {
+    Promise.all([fetchProducts(), fetchShelfPackages()]).then(function (loaded) {
+      var result = loaded[0];
+      shelfPackages = loaded[1] || [];
       if (serial !== requestSerial || location.pathname !== '/' || new URLSearchParams(location.search).get('home') === 'legacy') return;
       var products = result && Array.isArray(result.data) ? result.data : [];
       if (!products.length) throw new Error('Empty catalogue');
       render(products);
+      if (!result.shelfPicks) {
+        loadShelfPicks(result).then(function (full) {
+          if (full && serial === requestSerial && location.pathname === '/') upgradeShelves(full.data);
+        });
+      }
     }).catch(function () {
       if (serial !== requestSerial) return;
       failedRoute = routeKey;

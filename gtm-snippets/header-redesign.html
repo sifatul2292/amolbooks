@@ -33,13 +33,15 @@ html.ab-header-v2 app-header .services .service-icon img,
 html.ab-header-v2 app-header .header-action-icon img,
 html.ab-header-v2 #ab-desktop-cart-chip .ab-desktop-cart-chip-icon img { filter: hue-rotate(164deg) saturate(.7); }
 
-/* Menu: plain tabs, green line under the current page, outlined "আমার অর্ডার দেখুন". */
+/* Menu: plain tabs, green line under the current page, filled "আমার অর্ডার দেখুন". */
 html.ab-header-v2 app-header .header-middle-bottom { height: auto !important; background: #fff !important; border-top: 1px solid #edf2ee !important; border-bottom: 1px solid #e1e8e3 !important; box-shadow: none !important; }
 html.ab-header-v2 app-header .nav-list .nav-item { flex: 0 0 auto !important; width: auto !important; height: auto !important; margin: 0 !important; border: 0 !important; }
 html.ab-header-v2 app-header .nav-list .nav-link { position: relative; display: flex !important; align-items: center; width: auto !important; border: 0 !important; border-radius: 999px !important; background: transparent !important; color: #33413a !important; font-weight: 500 !important; white-space: nowrap; cursor: pointer; transition: background-color .15s ease, color .15s ease; }
 html.ab-header-v2 app-header .nav-list .nav-link.active { color: #175c36 !important; font-weight: 700 !important; background: transparent !important; }
 html.ab-header-v2 app-header .nav-list .nav-link.active::after { content: ""; position: absolute; bottom: -6px; height: 3px; border-radius: 3px 3px 0 0; background: #129245; }
-html.ab-header-v2 app-header .nav-list .nav-link[data-ab-guest-orders] { border: 1.5px solid #175c36 !important; color: #175c36 !important; font-weight: 600 !important; }
+/* Filled (owner, 2026-11-09), so it reads as the menu's one action. */
+html.ab-header-v2 app-header .nav-list .nav-link[data-ab-guest-orders] { border: 1.5px solid #175c36 !important; background: #175c36 !important; color: #fff !important; font-weight: 600 !important; box-shadow: 0 2px 6px rgb(23 92 54 / 22%); }
+html.ab-header-v2 app-header .nav-list .nav-link[data-ab-guest-orders]:focus-visible { outline: 2px solid #175c36; outline-offset: 2px; }
 
 /* Phones (767px and narrower): shorter header, one slim row of tabs you swipe. */
 @media (max-width: 767px) {
@@ -63,6 +65,11 @@ html.ab-header-v2 app-header .nav-list .nav-link[data-ab-guest-orders] { border:
 @media (max-width: 1070px) {
   html.ab-header-v2 app-header .nav-list { display: flex !important; align-items: center !important; margin: 0 !important; overflow-x: auto !important; overflow-y: hidden !important; scrollbar-width: none; -webkit-overflow-scrolling: touch; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 30px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 30px), transparent); }
   html.ab-header-v2 app-header .nav-list::-webkit-scrollbar { display: none; }
+  /* "আমার অর্ডার দেখুন" stays pinned at the right end, whole, while the tabs scroll under it
+     (owner, 2026-11-09: it was cut to "আমার অ…" on tablets and off-screen on phones). The tabs
+     fade out under its white edge, so the strip's own fade is not needed. */
+  html.ab-header-v2 app-header .nav-list:has([data-ab-guest-orders]) { padding-right: 0 !important; -webkit-mask-image: none; mask-image: none; }
+  html.ab-header-v2 app-header .nav-list .nav-item:has(> [data-ab-guest-orders]) { position: sticky !important; right: 0; z-index: 2; margin-left: auto !important; padding: 0 10px 0 22px !important; background: linear-gradient(to right, rgb(255 255 255 / 0), #fff 18px) !important; }
 }
 
 /* Tablet and desktop (768px and wider). */
@@ -90,7 +97,7 @@ html.ab-header-v2 app-header .nav-list .nav-link[data-ab-guest-orders] { border:
   html.ab-header-v2 app-header .nav-list .nav-link { height: 38px !important; padding: 0 16px !important; font-size: 16px !important; }
   html.ab-header-v2 app-header .nav-list .nav-link:hover { color: #175c36 !important; background: #eef6f0 !important; }
   html.ab-header-v2 app-header .nav-list .nav-link.active::after { left: 16px; right: 16px; }
-  html.ab-header-v2 app-header .nav-list .nav-link[data-ab-guest-orders]:hover { background: #175c36 !important; color: #fff !important; }
+  html.ab-header-v2 app-header .nav-list .nav-link[data-ab-guest-orders]:hover { background: #0f4527 !important; border-color: #0f4527 !important; color: #fff !important; }
 }
 
 /* Tablets (768-1070px): room for the fade at the end of the scrolling menu. */
@@ -125,7 +132,10 @@ html.ab-header-v2 app-header .nav-list .nav-link[data-ab-guest-orders] { border:
     if (!active || list.scrollWidth <= list.clientWidth) return;
     var item = active.closest('.nav-item') || active;
     var start = list.scrollLeft;
-    if (item.offsetLeft < start || item.offsetLeft + item.offsetWidth > start + list.clientWidth - 30) {
+    var pinned = list.querySelector('[data-ab-guest-orders]');
+    var pinnedItem = pinned && (pinned.closest('.nav-item') || pinned);
+    var cover = pinnedItem && pinnedItem !== item && getComputedStyle(pinnedItem).position === 'sticky' ? pinnedItem.offsetWidth : 30;
+    if (item.offsetLeft < start || item.offsetLeft + item.offsetWidth > start + list.clientWidth - cover) {
       list.scrollLeft = Math.max(0, item.offsetLeft - 10);
     }
   }

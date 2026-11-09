@@ -26,24 +26,113 @@ assert.equal(ratingHtml({ ratingTotal: 0, ratingCount: 0 }), '');
 assert.match(ratingHtml({ ratingTotal: 8, ratingCount: 40 }), /width:100%/);
 
 const shelfSource = script.slice(script.indexOf('function categoryNames'), script.indexOf('function isCombo'));
-const productsForShelf = new Function('number', shelfSource + '; return productsForShelf;')(
-  (value) => Math.max(0, Number(value) || 0)
+const shelvesConfig = new Function(script.match(/var shelves = \[[\s\S]*?\n  \];/)[0] + '; return shelves;')();
+const comboShelf = shelvesConfig.find((shelf) => shelf.id === 'combo');
+const isComboByName = (product) => comboShelf.words.some((word) => String(product.name || '').indexOf(word) !== -1);
+const productsForShelf = new Function('number', 'shelves', 'isCombo', 'OWN_PUBLISHER_SLUG', shelfSource + '; return productsForShelf;')(
+  (value) => Math.max(0, Number(value) || 0),
+  shelvesConfig,
+  isComboByName,
+  'আমল-বুকস'
 );
-const manualComboShelf = {
-  id: 'combo',
-  words: ['কম্বো'],
-  manualSlugs: ['Jibonpaltano4books', 'Jibon', 'Poro Collection']
-};
-const manualComboProducts = [
-  { name: 'স্বয়ংক্রিয় কম্বো', slug: 'automatic' },
-  { name: 'জীবন ও চরিত্র গঠন বান্ডেল', slug: 'Jibon' },
-  { name: 'পড়ো কালেকশন', slug: 'Poro Collection' },
-  { name: 'জীবন পাল্টে দেওয়ার মত ৪ টি বই', slug: 'Jibonpaltano4books' }
-];
+const ownPublisher = { name: 'আমল বুকস', slug: 'আমল-বুকস' };
+const otherPublisher = { name: 'অন্য প্রকাশনী', slug: 'other' };
+// Bundles: Amol Books first, then the owner's picks in order, then automatic matches.
 assert.deepEqual(
-  productsForShelf(manualComboProducts, manualComboShelf).map((product) => product.slug),
-  ['Jibonpaltano4books', 'Jibon', 'Poro Collection', 'automatic']
+  productsForShelf([
+    { name: 'স্বয়ংক্রিয় কম্বো', slug: 'automatic', publisher: otherPublisher },
+    { name: 'জীবন ও চরিত্র গঠন বান্ডেল', slug: 'Jibon', publisher: otherPublisher },
+    { name: 'পড়ো কালেকশন', slug: 'Poro Collection', publisher: otherPublisher },
+    { name: 'জীবন পাল্টে দেওয়ার মত ৪ টি বই', slug: 'Jibonpaltano4books', publisher: ownPublisher },
+    { name: 'প্রোডাক্টিভ মুসলিম + দ্য বারাকাহ ইফেক্ট', slug: 'productive-barakah', publisher: ownPublisher }
+  ], comboShelf).map((product) => product.slug),
+  ['productive-barakah', 'Jibonpaltano4books', 'Poro Collection', 'Jibon', 'automatic']
 );
+assert.equal(isComboByName({ name: 'মুসলিম মাইন্ডসেট' }), false, 'A title ending in "সেট" is not a set');
+assert.equal(isComboByName({ name: 'মহিমান্বিত কুরআন (৬ খণ্ড সেট)' }), true);
+// Topic shelves: picks, plus any Amol Books title tagged with the topic; Amol Books first;
+// other tagged books only fill gaps; bundles and off-topic Amol Books titles stay out.
+const businessShelf = shelvesConfig.find((shelf) => shelf.id === 'business');
+const businessTopic = [{ name: businessShelf.categories[0] }];
+assert.deepEqual(
+  productsForShelf([
+    { name: 'সম্পদ গড়ার কৌশল', slug: 'sompodgorarkoushol', publisher: otherPublisher, category: businessTopic },
+    { name: 'নতুন বই', slug: 'new-own', publisher: ownPublisher, category: businessTopic },
+    { name: 'প্রোডাক্টিভ মুসলিম', slug: 'productive muslim', publisher: ownPublisher, category: [{ name: 'প্রোডাক্টিভিটি' }] },
+    { name: 'অন্য বই', slug: 'filler', publisher: otherPublisher, category: businessTopic },
+    { name: 'ব্যবসা কম্বো', slug: 'bundle', publisher: ownPublisher, category: businessTopic },
+    { name: 'মাইন্ডম্যাপ', slug: 'islami-orthonity-o-uddokta-47', publisher: ownPublisher, category: [] }
+  ], businessShelf).map((product) => product.slug),
+  ['islami-orthonity-o-uddokta-47', 'new-own', 'sompodgorarkoushol', 'filler']
+);
+assert.equal(productsForShelf(Array.from({ length: 20 }, (_, index) => ({ name: 'বই ' + index, slug: 'pick-' + index, publisher: otherPublisher, category: businessTopic })), businessShelf).length, 12, 'Shelves show 12 books, so every row is full (6 or 4 across, 2 rows on phones)');
+const historyShelf = shelvesConfig.find((shelf) => shelf.id === 'history');
+const historyBooks = historyShelf.picks.map((slug, index) => ({ name: 'ইতিহাস ' + index, slug, publisher: otherPublisher, category: [] }));
+assert.equal(productsForShelf(historyBooks, historyShelf).length, 24, 'The history shelf shows up to 24 books (full rows)');
+shelvesConfig.forEach((shelf) => {
+  const size = shelf.size || 12;
+  assert.equal(size % 12, 0, 'Shelf size fills whole rows: ' + shelf.id);
+  if (shelf.id !== 'popular') assert.ok(shelf.picks.length + (shelf.packages || []).length >= size, 'Enough picks to fill the shelf: ' + shelf.id);
+});
+assert.equal(businessShelf.packages, undefined, 'The bundle is shown in the combo shelf only (owner, 2026-11-09)');
+assert.ok(historyShelf.picks.slice(0, 18).includes('Shikorer Shondhane'), 'শিকড়ের সন্ধানে is on the history shelf');
+shelvesConfig.filter((shelf) => shelf.id !== 'popular').forEach((shelf) => {
+  assert.ok(Array.isArray(shelf.picks) && shelf.picks.length >= 9, 'Shelf has hand-picked books: ' + shelf.id);
+  assert.equal(new Set(shelf.picks).size, shelf.picks.length, 'Shelf picks are listed once: ' + shelf.id);
+});
+// Special packages lead their shelf as package cards (owner, 2026-11-09).
+assert.deepEqual(comboShelf.packages, ['6abe2123b1f44997b7ca5950'], 'সফল উদ্যোক্তা বান্ডেল leads the combo shelf');
+const packageSource = script.slice(script.indexOf('function packagesForShelf'), script.indexOf('var PACKAGE_BUTTON_WORDS'));
+const packageHelpers = new Function('PACKAGE_OFFERS', 'shelfPackages', 'number', 'finalPrice', 'money', 'escapeHtml', 'responsiveImage',
+  packageSource + '; return { packagesForShelf: packagesForShelf, packageRegularPrice: packageRegularPrice, packageCard: packageCard };')(
+  { p1: 'ফ্রি ডেলিভারি + ফ্রি নোটবুক' },
+  [{ _id: 'p1', name: 'বান্ডেল', salePrice: 929, discountType: 2, discountAmount: null, products: [
+    { name: 'ক', salePrice: 470, quantity: 1, images: ['a.webp'] },
+    { name: 'খ', salePrice: 500, quantity: 1, images: ['b.webp'] },
+    { name: 'গ', salePrice: 600, quantity: 1, images: ['c.webp'] }
+  ] }],
+  (value) => Math.max(0, Number(value) || 0),
+  (item) => pricing.finalPrice(item),
+  (value) => '৳' + Math.round(value).toLocaleString('en-US'),
+  (value) => String(value == null ? '' : value).replace(/[&<>'"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c])),
+  (book) => 'src="' + book.images[0] + '"'
+);
+const shelfPackage = packageHelpers.packagesForShelf({ packages: ['p1', 'missing'] });
+assert.equal(shelfPackage.length, 1, 'A package that did not load is skipped');
+assert.equal(packageHelpers.packageRegularPrice(shelfPackage[0]), 1570);
+const packageHtml = packageHelpers.packageCard(shelfPackage[0], 'ab-home-combo');
+assert.match(packageHtml, /href="\/special-package-details\/p1"/);
+assert.match(packageHtml, /৳929<\/span><s>৳1,570<\/s>/);
+assert.match(packageHtml, /41% ছাড়/);
+assert.match(packageHtml, /<p class="ab-home-author ab-home-pack-offer" title="ক \+ খ \+ গ">ফ্রি ডেলিভারি \+ ফ্রি নোটবুক<\/p>/);
+assert.match(html, /var PACKAGE_OFFERS = \{ '6abe2123b1f44997b7ca5950': 'ফ্রি ডেলিভারি \+ ফ্রি নোটবুক' \}/, 'Only the package with the free-delivery offer says so');
+assert.equal((packageHtml.match(/ab-home-pack-cover--/g) || []).length, 3, 'The three covers are fanned out');
+assert.match(packageHtml, /class="ab-add-cart-button ab-add-package-button" type="button" data-package-id="p1"/);
+assert.doesNotMatch(packageHtml, /data-product-id/, 'The product add-to-cart code must not pick up the package button');
+assert.match(html, /bridge\.addSpecialPackageToCart\(id, button\)/, 'Packages are added with the shop-wide package cart code');
+assert.match(html, /Promise\.all\(\[fetchProducts\(\), fetchShelfPackages\(\)\]\)/);
+assert.match(html, /PACKAGE_WAIT_MS = 1500/, 'A slow package request cannot hold the homepage up');
+
+// Picks outside the 180 best sellers are fetched by slug after the shelves show.
+const addShelfPicks = new Function('shelves', 'API_BASE', 'CATALOGUE_SELECT', 'fetch',
+  script.slice(script.indexOf('function addShelfPicks'), script.indexOf('function withRetries')).replace(/\/\*[\s\S]*$/, '') + '; return addShelfPicks;');
+(async () => {
+  const requests = [];
+  const okFetch = async (url, options) => {
+    requests.push(JSON.parse(options.body));
+    return { ok: true, json: async () => ({ data: [{ slug: 'b' }, { slug: 'zzz' }] }) };
+  };
+  const merged = await addShelfPicks([{ picks: ['a', 'b'] }, { picks: ['b', 'c'] }], '', {}, okFetch)({ data: [{ slug: 'a' }] });
+  assert.deepEqual(requests[0].filter.slug.$in, ['b', 'c']);
+  assert.deepEqual(merged.data.map((product) => product.slug), ['a', 'b']);
+  assert.equal(merged.shelfPicks, true);
+  await assert.rejects(addShelfPicks([{ picks: ['b'] }], '', {}, async () => ({ ok: false }))({ data: [{ slug: 'a' }] }), 'A failed fetch is retried by the caller');
+  let called = false;
+  const complete = await addShelfPicks([{ picks: ['a'] }], '', {}, async () => { called = true; })({ data: [{ slug: 'a' }] });
+  assert.equal(called, false, 'No extra request when every pick is already loaded');
+  assert.equal(complete.data.length, 1);
+  assert.equal(complete.shelfPicks, true);
+})().catch((error) => { console.error(error); process.exit(1); });
 
 const recommendationSource = script.slice(script.indexOf('function isCombo'), script.indexOf('function quizHtml'));
 const recommendationHelpers = new Function(
@@ -129,13 +218,15 @@ assert.match(html, /ab_home_quiz_complete/);
 assert.match(html, /recommendProducts\(products, topic, reader, quantity\)/);
 assert.match(html, /result_count: recommendations\.length/);
 assert.match(html, /index === 1 \? quizHtml\(\)/);
-assert.match(html, /manualSlugs: \['Jibonpaltano4books', 'Jibon', 'Poro Collection'\]/);
+assert.match(html, /picks: \['productive-barakah', 'Jibonpaltano4books', 'Poro Collection'/);
 assert.match(html, /index === 4 \? goalsHtml/);
 assert.match(html, /index === 6 \? authorsHtml/);
 assert.match(html, /index === 8 \? publishersHtml/);
 assert.match(html, /class="ab-home-name-list ab-home-name-list--media"/);
 assert.match(html, /showEntityImages\(root\)/, 'Author photos and publisher logos are filled in after render');
 assert.match(html, /filter: \{ slug: \{ \$in: slugs \} \}/, 'Pictures are fetched by slug (the list API does not cast _id)');
+assert.match(html, /return withRetries\(function \(\) \{\s*return fetch\(API_BASE \+ '\/' \+ kind \+ '\/get-all'/, 'Author photos and publisher logos are retried when the API refuses a request');
+assert.match(html, /if \(found\[0\] && found\[1\]\) \{\s*try \{ sessionStorage\.setItem\(ENTITY_IMAGE_CACHE/, 'A failed picture request is not remembered for the session');
 assert.match(html, /ab_home_quiz_start/, 'Quiz starts are tracked next to completions');
 assert.match(html, /slug === OWN_PUBLISHER_SLUG \? ownLogo\(\)/, 'Our own publisher card shows the store logo');
 assert.match(html, /publisher: 1/);
@@ -187,5 +278,7 @@ assert.match(html, /html\.ab-home-pending app-home \{\s*visibility: hidden;\s*an
 assert.match(html, /\/\/ Set while the head parses[^\n]*\n\s*if \(wantsRedesign\(\)\) setPending\(true\);/);
 assert.match(html, /function cleanup\(\) \{[\s\S]*?setPending\(false\);[\s\S]*?\n  \}/);
 assert.match(html, /cataloguePromise = withRetries\(requestCatalogue, \[700, 2000\]\)/);
+assert.match(html, /shelfPicksPromise = withRetries\(function \(\) \{ return addShelfPicks\(result\); \}, \[700, 2000\]\)/);
+assert.match(html, /render\(products\);\s*if \(!result\.shelfPicks\) \{\s*loadShelfPicks\(result\)\.then[\s\S]*?upgradeShelves\(full\.data\)/, 'Late picks never hold up the first render');
 
 console.log('Homepage redesign checks passed');

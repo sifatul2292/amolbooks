@@ -183,6 +183,14 @@ app-login > .ab-guest-orders-entry { display:block; width:calc(100% - 32px); max
     link.className=nav?'nav-link':'ab-guest-orders-entry';
     if(nav){var li=document.createElement('li');li.className='nav-item';Array.prototype.forEach.call(host.attributes,function(attr){if(attr.name.indexOf('_ngcontent-')===0){li.setAttribute(attr.name,'');link.setAttribute(attr.name,'');}});li.appendChild(link);host.appendChild(li);}else if(host.tagName==='APP-LOGIN')host.insertBefore(link,host.firstChild);else host.appendChild(link);
   }
+  // Header taps: the shop's fast-tap code (storefront-product-sections handleMenuTap) answers a
+  // header button's pointer/touch release by calling button.click(), then blocks that very click
+  // as a duplicate, so this button never opened (owner, 2026-11-09). Keep the release away from it,
+  // the same way cart-page-navigation.html does for the catalogue; the browser's own click then
+  // reaches openOrders. Window capture runs before that code's document capture.
+  function letOwnClickThrough(event){var target=event.target;if(target&&target.closest&&target.closest('[data-ab-guest-orders]'))event.stopImmediatePropagation();}
+  window.addEventListener('pointerup',letOwnClickThrough,true);
+  window.addEventListener('touchend',letOwnClickThrough,true);
   var scheduled=false;
   function updateEntries(){scheduled=false;addEntry(document.querySelector('app-header ul.nav-list'),true);addEntry(document.querySelector('aside.side-nav ul'),true);addEntry(document.querySelector('app-login'),false);if(/\/checkout\/order-success\//.test(location.pathname))addEntry(document.querySelector('app-order-success .order-success-card'),false);}
   new MutationObserver(function(){if(!scheduled){scheduled=true;requestAnimationFrame(updateEntries);}}).observe(document.documentElement,{childList:true,subtree:true});
