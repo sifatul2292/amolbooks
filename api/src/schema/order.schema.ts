@@ -430,6 +430,9 @@ export const OrderSchema = new mongoose.Schema(
       at: { type: Date },
       via: { type: String },
       messageId: { type: String },
+      // Staff handled it (WhatsApp Inbox "Mark done"): the nudge goes away.
+      doneAt: { type: Date },
+      doneBy: { type: String },
     },
     // Order SMS held back while the WhatsApp order message is on its way (WhatsappService
     // settles it: SMS when not delivered in time, else orderSmsSkippedAt).

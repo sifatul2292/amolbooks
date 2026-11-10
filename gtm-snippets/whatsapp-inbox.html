@@ -71,6 +71,24 @@
       .chat-last { flex: 1; min-width: 0; font-size: 14px; line-height: 20px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .chat-item.unread .chat-last { color: var(--ink-soft); }
       .chat-last.typing { color: #1fa855; font-style: italic; }
+      /* Nudge: the customer asked for more books / a change (owner, 2026-11-11). */
+      .chat-item.needs { box-shadow: inset 4px 0 0 #f59e0b; }
+      .ask-pill { flex-shrink: 0; display: inline-flex; align-items: center; gap: 3px; padding: 1px 8px; border-radius: 10px; background: #f59e0b; color: #fff; font-size: 12px; font-weight: 700; white-space: nowrap; }
+      .filters button.needs-chip { color: #b45309; }
+      .filters button.needs-chip.has { background: #fff3dc; }
+      .filters button.needs-chip[aria-pressed='true'] { background: #f59e0b; color: #fff; }
+      .request { flex-shrink: 0; display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: #fff7e8; border-bottom: 1px solid #f5dfb3; border-left: 4px solid #f59e0b; }
+      .request[hidden] { display: none; }
+      .request-icon { width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%; background: #f59e0b; color: #fff; display: grid; place-items: center; font-size: 17px; font-weight: 700; }
+      .request-text { flex: 1; min-width: 0; }
+      .request-text strong { display: block; font-size: 14.5px; color: #7a4a00; }
+      .request-text p { font-size: 13px; color: #8a6a3a; margin-top: 1px; line-height: 18px; }
+      .request-actions { display: flex; gap: 8px; flex-shrink: 0; }
+      .request-actions a, .request-actions button { border-radius: 18px; padding: 7px 14px; font-size: 13.5px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+      .request-actions a { border: 1px solid #e8c98d; background: #fff; color: #7a4a00; }
+      .request-actions button { border: 0; background: var(--green); color: #fff; }
+      .request-actions button:hover { background: var(--green-dark); }
+      .request-actions button:disabled { opacity: 0.6; }
       .answered { display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; color: var(--muted); white-space: nowrap; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
       .here { display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; max-width: 120px; padding: 1px 7px; border-radius: 9px; background: #fff3dc; color: #a15c00; font-size: 11.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .presence { font-size: 13px; font-weight: 500; }
@@ -232,6 +250,8 @@
         .unread-line { margin-left: -12px; margin-right: -12px; }
         .msg { max-width: 85%; }
         .composer { padding: 6px 8px 8px; }
+        .request { flex-wrap: wrap; padding: 10px 12px; border-left-width: 3px; }
+        .request-actions { width: 100%; justify-content: flex-end; }
         .app.info-open { grid-template-columns: minmax(0, 1fr); }
         .info { position: fixed; inset: 0; width: auto; z-index: 350; box-shadow: none; }
         .info-card { padding: 14px 16px; }
@@ -259,6 +279,7 @@
           <div class="filters" role="group" aria-label="Which chats">
             <button type="button" id="tab-all" aria-pressed="true">All</button>
             <button type="button" id="tab-unread" aria-pressed="false">Unread</button>
+            <button type="button" id="tab-needs" class="needs-chip" aria-pressed="false" title="Customers who asked for more books or a change">Needs action</button>
           </div>
           <ul class="chats" id="chats"><li class="list-note">Loading…</li></ul>
           <button type="button" class="more-chats" id="more-chats" hidden>Show more chats</button>
@@ -287,6 +308,14 @@
               <span class="window" id="chat-window"></span>
             </header>
             <div class="orders" id="chat-orders"></div>
+            <div class="request" id="request-banner" role="alert" hidden>
+              <span class="request-icon" id="request-icon">+</span>
+              <div class="request-text"><strong id="request-title"></strong><p id="request-help"></p></div>
+              <div class="request-actions">
+                <a id="request-open" target="_blank" rel="noopener" href="#">Open order</a>
+                <button type="button" id="request-done">Mark done</button>
+              </div>
+            </div>
             <div class="messages" id="messages" aria-live="polite"></div>
             <div class="presence-bar" id="presence-bar" role="status" hidden></div>
             <p class="composer-note" id="composer-note" role="status"></p>
@@ -407,7 +436,7 @@
         function renderList() {
           const list = $('chats');
           if (!state.chats.length) {
-            list.innerHTML = '<li class="list-note">' + (state.q ? 'No chat matches this search.' : state.filter === 'unread' ? 'No unread chats.' : 'No customer has written yet.<br>New messages show up here on their own.') + '</li>';
+            list.innerHTML = '<li class="list-note">' + (state.q ? 'No chat matches this search.' : state.filter === 'unread' ? 'No unread chats.' : state.filter === 'needs' ? 'Nothing waiting: no customer asked for more books or a change.' : 'No customer has written yet.<br>New messages show up here on their own.') + '</li>';
           } else {
             list.innerHTML = state.chats.map((chat) => {
               const current = state.open && state.open.wa === chat.wa;
@@ -425,11 +454,14 @@
               const here = viewers.length && !typing.length
                 ? '<span class="here" title="' + esc(names(viewers)) + ' has this chat open">' + EYE + esc(names(viewers)) + '</span>'
                 : '';
-              return '<li><button type="button" class="chat-item' + (chat.unread ? ' unread' : '') + '" data-wa="' + esc(chat.wa) + '" aria-current="' + current + '">' +
+              const ask = chat.request
+                ? '<span class="ask-pill" title="Order #' + esc(chat.request.orderId) + '">' + (chat.request.kind === 'change' ? '✎ Wants a change' : '➕ Wants more books') + '</span>'
+                : '';
+              return '<li><button type="button" class="chat-item' + (chat.unread ? ' unread' : '') + (chat.request ? ' needs' : '') + '" data-wa="' + esc(chat.wa) + '" aria-current="' + current + '">' +
                 '<span class="avatar">' + PERSON + '</span>' +
                 '<span class="chat-body">' +
                 '<span class="row"><span class="chat-name">' + esc(chat.name || chat.phone) + '</span>' + answered + '<span class="chat-time">' + esc(chat.lastAt ? dayLabel(chat.lastAt, false) : '') + '</span></span>' +
-                '<span class="row">' + preview + here + (chat.unread ? '<span class="badge" aria-label="' + chat.unread + ' unread">' + chat.unread + '</span>' : '') + '</span>' +
+                '<span class="row">' + ask + preview + here + (chat.unread ? '<span class="badge" aria-label="' + chat.unread + ' unread">' + chat.unread + '</span>' : '') + '</span>' +
                 '</span></button></li>';
             }).join('');
           }
@@ -448,7 +480,7 @@
             let more = false;
             let data = null;
             for (let page = 0; page <= pages; page += 1) {
-              data = await request('/api/whatsapp-inbox/chats?page=' + page + (state.filter === 'unread' ? '&unread=1' : '') + (state.q ? '&q=' + encodeURIComponent(state.q) : ''));
+              data = await request('/api/whatsapp-inbox/chats?page=' + page + (state.filter === 'unread' ? '&unread=1' : '') + (state.filter === 'needs' ? '&needs=1' : '') + (state.q ? '&q=' + encodeURIComponent(state.q) : ''));
               chats = chats.concat(data.chats);
               more = data.more;
               if (!more) break;
@@ -458,6 +490,8 @@
             state.canSend = data.canSend;
             document.title = (data.unreadChats ? '(' + data.unreadChats + ') ' : '') + 'WhatsApp Inbox · Amolbooks';
             $('tab-unread').textContent = data.unreadChats ? 'Unread ' + data.unreadChats : 'Unread';
+            $('tab-needs').textContent = data.needsAction ? 'Needs action ' + data.needsAction : 'Needs action';
+            $('tab-needs').classList.toggle('has', !!data.needsAction);
             renderList();
           } catch (error) {
             if (!state.chats.length) $('chats').innerHTML = '<li class="list-note">' + esc(error.message) + '</li>';
@@ -595,6 +629,7 @@
             win.title = "More than 24 hours since the customer's last message";
           }
           renderPresence(data.viewers || []);
+          renderRequest(chat.request);
           state.orders = data.orders;
           $('chat-orders').innerHTML = data.orders.map((order) =>
             '<button type="button" class="order-chip" data-order="' + esc(order.orderId) + '" title="See what was ordered">' +
@@ -652,6 +687,38 @@
             toast(error.message);
           }
         }
+        /* ---------- "Wants more books" / "wants a change" nudge ---------- */
+        function renderRequest(ask) {
+          const banner = $('request-banner');
+          banner.hidden = !ask;
+          if (!ask) return;
+          const more = ask.kind !== 'change';
+          $('request-icon').textContent = more ? '+' : '✎';
+          $('request-title').textContent = (more ? 'Wants more books' : 'Wants a change') + (ask.orderId ? ' · order #' + ask.orderId : '');
+          $('request-help').textContent = more
+            ? 'Same delivery charge. Ask which books, add them to the order, then mark it done.'
+            : 'Ask what to change, update the order, then mark it done.';
+          $('request-open').href = 'custom-orders.html?q=' + encodeURIComponent(ask.orderId || state.open.phone || '');
+        }
+        $('request-done').onclick = async () => {
+          if (!state.open) return;
+          $('request-done').disabled = true;
+          try {
+            await request('/api/whatsapp-inbox/chats/' + encodeURIComponent(state.open.wa) + '/request-done', { method: 'POST', body: '{}' });
+            renderRequest(null);
+            toast('Marked done.');
+            const item = state.chats.find((chat) => chat.wa === state.open.wa);
+            if (item) item.request = null;
+            renderList();
+            loadChats(true);
+            loadChat(state.open.wa, false);
+          } catch (error) {
+            toast(error.message);
+          } finally {
+            $('request-done').disabled = false;
+          }
+        };
+
         /* ---------- Who else is in this chat ---------- */
         function renderPresence(viewers) {
           const typing = viewers.filter((viewer) => viewer.typing);
@@ -768,6 +835,7 @@
           $('chat-window').className = 'window';
           $('chat-window').textContent = '';
           renderPresence([]);
+          renderRequest(null);
           toast('');
           $('reply').value = '';
           sizeReply();
@@ -836,10 +904,12 @@
         };
         $('tab-all').onclick = () => setFilter('all');
         $('tab-unread').onclick = () => setFilter('unread');
+        $('tab-needs').onclick = () => setFilter('needs');
         function setFilter(filter) {
           state.filter = filter;
           $('tab-all').setAttribute('aria-pressed', String(filter === 'all'));
           $('tab-unread').setAttribute('aria-pressed', String(filter === 'unread'));
+          $('tab-needs').setAttribute('aria-pressed', String(filter === 'needs'));
           loadChats(false);
         }
         $('search').oninput = () => {

@@ -74,7 +74,23 @@ export class WhatsappInboxService {
       lastCustomerAt: chat.lastCustomerAt || null,
       unread: Number(chat.unread || 0),
       replyUntil: WhatsappInboxService.replyUntil(chat),
+      request: chat.request?.kind
+        ? { kind: chat.request.kind, orderId: chat.request.orderId || '', at: chat.request.at || null }
+        : null,
     };
+  }
+
+  /** The order can still be changed: not booked with the courier, not cancelled / delivered. */
+  static editable(order: any): boolean {
+    return [0, 1, 2, 3].includes(Number(order?.orderStatus)) && !order?.courierData?.consignmentId && !order?.customerCancelledAt;
+  }
+
+  /** The customer's open "more books" / "change" request (newest order first), if staff have not handled it. */
+  static pendingRequest(orders: any[]): any | null {
+    const order = orders.find((item) => item?.customerRequest?.kind && !item.customerRequest.doneAt && WhatsappInboxService.editable(item));
+    return order
+      ? { kind: order.customerRequest.kind, orderId: String(order.orderId || ''), order: order._id, at: order.customerRequest.at || new Date() }
+      : null;
   }
 
   private static messageRow(message: any) {
@@ -127,15 +143,19 @@ export class WhatsappInboxService {
         ? { name: order.courierData.providerName || '', tracking: String(order.courierData.trackingId || order.courierData.consignmentId || '') }
         : null,
       booked: !!order.courierData?.consignmentId,
-      request: order.customerRequest?.kind || '',
+      // Handled requests ("Mark done") are not shown as open any more.
+      request: order.customerRequest?.kind && !order.customerRequest.doneAt ? order.customerRequest.kind : '',
+      requestDone: order.customerRequest?.doneAt ? { at: order.customerRequest.doneAt, by: order.customerRequest.doneBy || '' } : null,
       confirmed: order.customerConfirmation?.status === 'confirmed',
     };
   }
 
-  /** Chats where the customer wrote, newest first; unread=1 for unread only; q = name or number. */
+  /** Chats where the customer wrote, newest first; unread=1 for unread only; needs=1 for open requests; q = name or number. */
   async chats(query: any, admin?: any) {
+    await this.dropSettledRequests();
     const filter: Record<string, any> = { lastCustomerAt: { $exists: true } };
     if (String(query?.unread || '') === '1') filter.unread = { $gt: 0 };
+    if (String(query?.needs || '') === '1') filter['request.kind'] = { $exists: true };
     const q = String(query?.q || '').trim().slice(0, 60);
     if (q) {
       const ascii = q.replace(/[০-৯]/g, (digit) => String('০১২৩৪৫৬৭৮৯'.indexOf(digit)));
@@ -145,9 +165,10 @@ export class WhatsappInboxService {
       filter.$or = or;
     }
     const page = Math.max(0, Math.min(1000, parseInt(query?.page, 10) || 0));
-    const [rows, unreadChats] = await Promise.all([
+    const [rows, unreadChats, needsAction] = await Promise.all([
       this.chatModel.find(filter).sort({ lastAt: -1 }).skip(page * CHATS_PER_PAGE).limit(CHATS_PER_PAGE + 1).lean(),
       this.chatModel.countDocuments({ lastCustomerAt: { $exists: true }, unread: { $gt: 0 } }),
+      this.chatModel.countDocuments({ 'request.kind': { $exists: true } }),
     ]);
     const me = admin ? await this.staff(admin) : null;
     return {
@@ -159,6 +180,7 @@ export class WhatsappInboxService {
         })),
         more: rows.length > CHATS_PER_PAGE,
         unreadChats,
+        needsAction,
         canSend: this.whatsapp.isConfigured(),
       },
     };
@@ -187,10 +209,22 @@ export class WhatsappInboxService {
       .limit(6)
       .select(
         'orderId orderStatus grandTotal subTotal deliveryCharge discount paymentType paymentStatus createdAt name ' +
-          'shippingAddress area zone city division note orderedItems customerRequest customerConfirmation ' +
+          'shippingAddress area zone city division note orderedItems customerRequest customerConfirmation customerCancelledAt ' +
           'courierData.providerName courierData.trackingId courierData.consignmentId',
       )
       .lean();
+    // Keep the nudge in step with the order (handled, booked or cancelled since; or tapped before the inbox kept it).
+    const pending = WhatsappInboxService.pendingRequest(orders);
+    if (!filter.at) {
+      const same = pending && chat.request?.kind === pending.kind && chat.request?.orderId === pending.orderId;
+      if (pending && !same) {
+        await this.chatModel.updateOne({ wa }, { $set: { request: pending } });
+        chat.request = pending;
+      } else if (!pending && chat.request?.kind) {
+        await this.chatModel.updateOne({ wa }, { $unset: { request: 1 } });
+        delete chat.request;
+      }
+    }
     return {
       success: true,
       data: {
@@ -240,6 +274,44 @@ export class WhatsappInboxService {
     } catch (error) {
       throw new NotFoundException(error?.message || 'This file is no longer available.');
     }
+  }
+
+  /** "Mark done": staff added the books / made the change; the order and the chat stop nudging. */
+  async requestDone(waParam: any, admin: any) {
+    const wa = WhatsappInboxService.wa(waParam);
+    const chat: any = await this.chatModel.findOne({ wa }).lean();
+    if (!chat) throw new NotFoundException('No messages with this number yet.');
+    const staff = await this.staff(admin);
+    const local = WhatsappInboxService.localPhone(wa);
+    // Every open request on this number's orders (normally one).
+    const result = await this.orderModel.updateMany(
+      {
+        phoneNo: { $in: [local, '+88' + local, '88' + local] },
+        'customerRequest.kind': { $exists: true },
+        'customerRequest.doneAt': { $exists: false },
+      },
+      { $set: { 'customerRequest.doneAt': new Date(), 'customerRequest.doneBy': staff.name } },
+    );
+    await this.chatModel.updateOne({ wa }, { $unset: { request: 1 } });
+    return { success: true, data: { orders: result.modifiedCount } };
+  }
+
+  /** Requests whose order was booked, cancelled or handled meanwhile stop nudging in the list. */
+  private async dropSettledRequests(): Promise<void> {
+    const open: any[] = await this.chatModel.find({ 'request.kind': { $exists: true } }).select('wa request').limit(200).lean();
+    if (!open.length) return;
+    const ids = open.map((chat) => chat.request?.order).filter((id) => id && Types.ObjectId.isValid(String(id)));
+    const orders: any[] = ids.length
+      ? await this.orderModel.find({ _id: { $in: ids } }).select('orderStatus courierData.consignmentId customerCancelledAt customerRequest').lean()
+      : [];
+    const byId = new Map(orders.map((order) => [String(order._id), order]));
+    const settled = open
+      .filter((chat) => {
+        const order = byId.get(String(chat.request?.order || ''));
+        return !order || order.customerRequest?.doneAt || !WhatsappInboxService.editable(order);
+      })
+      .map((chat) => chat.wa);
+    if (settled.length) await this.chatModel.updateMany({ wa: { $in: settled } }, { $unset: { request: 1 } });
   }
 
   /** The page says "typing" (every 3 s while staff type a reply). */

@@ -556,6 +556,13 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
       } catch (error) {
         this.logger.warn(`WhatsApp ${match[1]} for order ${match[2]} failed: ${error?.message || error}`);
       }
+      // "more books" / "change": the inbox shows a nudge on this chat until staff mark it done.
+      if ((result.status === 'more' || result.status === 'change') && this.chatModel) {
+        await this.chatModel.updateOne(
+          { wa: from },
+          { $set: { request: { kind: result.status, orderId: String(result.orderId || ''), order: match[2], at: new Date() } } },
+        ).catch((error) => this.logger.warn(`WhatsApp inbox request flag failed: ${error?.message || error}`));
+      }
       // Order gone (deleted) or not theirs: still name their latest order.
       if (!result.orderId) result = { ...result, orderId: await this.latestOrderId(from) };
       text = this.replyText(result);

@@ -55,6 +55,15 @@ export class WhatsappInboxController {
     return this.inbox.reply(wa, body, admin);
   }
 
+  /** Staff handled the customer's "more books" / "change" request. */
+  @Version(VERSION_NEUTRAL)
+  @Post('chats/:wa/request-done')
+  @HttpCode(200)
+  @AdminMetaRoles(...ALL_STAFF)
+  requestDone(@Param('wa') wa: string, @GetAdmin() admin: any) {
+    return this.inbox.requestDone(wa, admin);
+  }
+
   /** "Karim is typing…" for the others in this chat. */
   @Version(VERSION_NEUTRAL)
   @SkipThrottle()

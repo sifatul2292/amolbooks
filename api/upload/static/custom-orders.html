@@ -3607,7 +3607,8 @@
     var when = stamp(c.at);
     if (c.status === 'confirmed') html += '<span class="cc-badge is-confirmed" title="Customer tapped অর্ডার কনফার্ম on WhatsApp'+(when?' · '+esc(when):'')+'">✓ Customer confirmed</span>';
     // Older orders kept "change" in customerConfirmation; newer taps are in customerRequest.
-    var ask = r.kind || (c.status === 'change' ? 'change' : '');
+    // Handled in the WhatsApp Inbox ("Mark done"): no longer flagged.
+    var ask = r.kind ? (r.doneAt ? '' : r.kind) : (c.status === 'change' ? 'change' : '');
     var askWhen = stamp(r.kind ? r.at : c.at);
     if (ask === 'more') html += '<span class="cc-badge is-more" title="Customer tapped একই ডেলিভারি চার্জে আরও বই নিবো on WhatsApp'+(askWhen?' · '+esc(askWhen):'')+' — add the books they ask for (same delivery charge)">➕ Wants more books</span>';
     if (ask === 'change') html += '<span class="cc-badge is-change" title="Customer tapped পরিবর্তন চাই on WhatsApp'+(askWhen?' · '+esc(askWhen):'')+' — call or message them">✎ Wants change</span>';

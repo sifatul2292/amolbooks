@@ -45,7 +45,7 @@ let server;
   assert.match(read('api/src/pages/customer-manager/admin-sidebar.ts'), /label: 'WhatsApp Inbox', href: 'whatsapp-inbox\.html'/);
   const page = read('gtm-snippets/whatsapp-inbox.html');
   for (const match of page.matchAll(/<script>([\s\S]*?)<\/script>/g)) new vm.Script(match[1]);
-  for (const needle of ['<!-- AB_ADMIN_SIDEBAR -->', "'/api/whatsapp-inbox/chats", '/api/whatsapp-inbox/media/', "'/reply'", 'administrator: token()', 'Reply closed', 'class="workspace"', 'id="info"', 'function orderCard(order)', 'Open in Orders']) {
+  for (const needle of ['<!-- AB_ADMIN_SIDEBAR -->', "'/api/whatsapp-inbox/chats", '/api/whatsapp-inbox/media/', "'/reply'", 'administrator: token()', 'Reply closed', 'class="workspace"', 'id="info"', 'function orderCard(order)', 'Open in Orders', 'id="request-banner"', 'Mark done', '&needs=1', 'Wants more books']) {
     assert.ok(page.includes(needle), 'Inbox page has ' + needle);
   }
   // Customer text is escaped before links are added.
@@ -306,6 +306,43 @@ let server;
   assert.match(whatsapp.replyText({ status: 'unknown', orderId: '14869' }), /অর্ডার #14869 নিয়ে আমাদের টিম এখানেই উত্তর দেবে/);
   assert.ok(!/wa\.me/.test(whatsapp.replyText({ status: 'closed', orderId: '1' })), 'No link to the other number in inbox mode');
 
+  // "Wants more books" nudge: set by the tap, listed under Needs action, cleared by Mark done
+  // (order flagged done), re-shown from the order if the chat lost it, dropped once booked.
+  process.env.WHATSAPP_ENABLED = 'true';
+  whatsapp.onCustomerReply(async (reply) => {
+    await Order.updateOne({ _id: reply.orderId }, { $set: { customerRequest: { kind: reply.action, at: new Date(), via: 'whatsapp' } } });
+    return { status: reply.action, orderId: 'T-9001' };
+  });
+  await deliver(whatsapp, A, { id: 'wamid.IN-MORE1', type: 'button', button: { payload: 'more:' + order._id, text: 'একই ডেলিভারি চার্জে আরও বই নিবো' } });
+  chat = await Chat.findOne({ wa: A }).lean();
+  assert.deepEqual([chat.request.kind, chat.request.orderId, String(chat.request.order)], ['more', 'T-9001', String(order._id)]);
+  list = (await inbox.chats({ needs: '1' }, admin)).data;
+  assert.deepEqual(list.chats.map((c) => c.wa), [A]);
+  assert.equal(list.needsAction, 1);
+  assert.deepEqual([list.chats[0].request.kind, list.chats[0].request.orderId], ['more', 'T-9001']);
+  opened = (await inbox.messages(A, {}, admin)).data;
+  assert.equal(opened.chat.request.kind, 'more');
+  assert.equal(opened.orders[0].request, 'more');
+  assert.deepEqual((await inbox.requestDone(A, admin)).data, { orders: 1 });
+  const doneOrder = await Order.findById(order._id).lean();
+  assert.ok(doneOrder.customerRequest.doneAt instanceof Date, 'Kept on the order');
+  assert.equal(doneOrder.customerRequest.doneBy, 'Test Staff');
+  assert.equal((await Chat.findOne({ wa: A }).lean()).request, undefined);
+  list = (await inbox.chats({ needs: '1' }, admin)).data;
+  assert.deepEqual([list.chats.length, list.needsAction], [0, 0]);
+  opened = (await inbox.messages(A, {}, admin)).data;
+  assert.equal(opened.orders[0].request, '', 'Handled: no longer open');
+  assert.equal(opened.orders[0].requestDone.by, 'Test Staff');
+  assert.equal(opened.chat.request, null);
+  // A new tap opens it again; the chat picks it up from the order even without the flag.
+  await Order.updateOne({ _id: order._id }, { $set: { customerRequest: { kind: 'change', at: new Date(), via: 'whatsapp' } } });
+  assert.equal((await inbox.messages(A, {}, admin)).data.chat.request.kind, 'change');
+  assert.equal((await inbox.chats({}, admin)).data.needsAction, 1);
+  // Booked with the courier: nothing left to add, the nudge goes.
+  await Order.updateOne({ _id: order._id }, { $set: { 'courierData.consignmentId': 'C-1' } });
+  assert.equal((await inbox.chats({}, admin)).data.needsAction, 0);
+  assert.equal((await Chat.findOne({ wa: A }).lean()).request, undefined);
+
   // Chat list lines say what was sent.
   assert.equal(WhatsappService.previewText('image', 'এই বইটা'), '📷 Photo: এই বইটা');
   assert.equal(WhatsappService.previewText('audio', ''), '🎤 Voice note');
@@ -317,7 +354,7 @@ let server;
   bare.logger = silent;
   assert.equal(await bare.recordChat({ wa: A, direction: 'in', kind: 'customer', type: 'text', text: 'x' }), 'skipped');
 
-  console.log('WhatsApp Inbox: messages kept once (text/photo/voice/reaction/location), order messages, chat list/search/unread, open + read by staff, media through the API, staff replies + ticks, who answered / who is in the chat / typing, 24-hour rule, switch, automatic answer modes, staff-only routes and page wiring pass');
+  console.log('WhatsApp Inbox: messages kept once (text/photo/voice/reaction/location), order messages, chat list/search/unread, open + read by staff, media through the API, staff replies + ticks, who answered / who is in the chat / typing, more-books nudge + mark done, 24-hour rule, switch, automatic answer modes, staff-only routes and page wiring pass');
 })()
   .catch((error) => { console.error(error); process.exitCode = 1; })
   .finally(async () => {

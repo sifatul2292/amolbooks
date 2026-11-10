@@ -136,6 +136,10 @@ served with the shared admin menu). Routes `GET /api/whatsapp-inbox/chats`,
 - Staff can reply for 24 hours after the customer's last message (Meta's rule; free). After that
   the page says the chat is closed: call or SMS, or wait until they write again.
 - Photos / voice notes are fetched from WhatsApp when shown (Meta keeps them 30 days).
+- "একই ডেলিভারি চার্জে আরও বই নিবো" / "পরিবর্তন চাই" taps put an orange "Wants more books" / "Wants a
+  change" tag on the chat, count under "Needs action", and show a banner in the chat with
+  "Open order" and "Mark done" (marks the order's request handled). Booking or cancelling the order
+  also clears it.
 - Messages from before the inbox went live were not kept anywhere.
 
 Automatic answer to customers' own messages (`WHATSAPP_AUTO_REPLY`): `inbox` (default: "আপনার

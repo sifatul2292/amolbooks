@@ -26,11 +26,20 @@ export const WhatsappChatSchema = new mongoose.Schema(
     // The customer's latest message: staff may reply for 24 hours after it (Meta's rule).
     lastCustomerAt: { type: Date },
     unread: { type: Number, default: 0 },
+    // An open "একই ডেলিভারি চার্জে আরও বই নিবো" (more) / "পরিবর্তন চাই" (change) tap: the inbox
+    // nudges staff until someone marks it done or the order is booked / cancelled (owner, 2026-11-11).
+    request: {
+      kind: { type: String },
+      orderId: { type: String },
+      order: { type: mongoose.Schema.Types.ObjectId },
+      at: { type: Date },
+    },
     readAt: { type: Date },
     readBy: { type: String },
   },
   { timestamps: true, versionKey: false },
 );
+WhatsappChatSchema.index({ 'request.at': -1 }, { sparse: true });
 WhatsappChatSchema.index(
   { lastAt: -1 },
   { name: 'customer_chats_latest', partialFilterExpression: { lastCustomerAt: { $exists: true } } },
