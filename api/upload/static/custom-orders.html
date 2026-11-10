@@ -430,6 +430,7 @@
     .cc-badge { display: inline-flex; align-items: center; margin: 3px 0 0 4px; padding: 1px 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; line-height: 1.5; white-space: nowrap; }
     .cc-badge.is-confirmed { background: #e3f5ea; color: #16723f; }
     .cc-badge.is-change { background: #fff1db; color: #b45309; }
+    .cc-badge.is-more { background: #fff1db; color: #b45309; }
     .wa-badge { display: inline-flex; align-items: center; gap: 2px; margin-top: 3px; padding: 1px 6px; border-radius: 999px; font-size: 10.5px; font-weight: 700; line-height: 1.5; white-space: nowrap; background: #e9f7ee; color: #1a7f45; }
     .wa-badge i { font-size: 11px; }
     .wa-badge.is-sent { background: #f1f3f2; color: #5b6b62; }
@@ -2943,7 +2944,7 @@
         courierLink:1, fraudChecker:1, admin:1, user:1, deliveryDate:1, orderedItems:1,
         division:1, area:1, zone:1,
         note:1, adminNote:1, adminNoteBy:1, adminNotes:1, city:1, status:1, email:1,
-        orderOrigin:1, orderFrom:1, manualOrderSource:1, attribution:1, courierSchedule:1, whatsappMessages:1, customerConfirmation:1,
+        orderOrigin:1, orderFrom:1, manualOrderSource:1, attribution:1, courierSchedule:1, whatsappMessages:1, customerConfirmation:1, customerRequest:1, orderSmsSkippedAt:1,
       },
     };
     if (isIncompleteView) {
@@ -3585,19 +3586,25 @@
     var mark = failed ? '✕' : delivered ? '✓✓' : '✓';
     var tip = 'WhatsApp — ' + list.map(function(m){
       return (WA_KIND[m.kind]||m.kind) + ': ' + (WA_STATUS[m.status]||m.status) + (m.status==='failed'&&m.error ? ' ('+m.error+')' : '');
-    }).join(' · ');
+    }).join(' · ') + (o.orderSmsSkippedAt ? ' · order SMS not sent (WhatsApp delivered)' : '');
     return '<span class="wa-badge '+cls+'" title="'+esc(tip)+'" aria-label="'+esc(tip)+'"><i class="fab fa-whatsapp"></i>'+mark+'</span>';
   }
 
   // The customer's tap on the WhatsApp order message: "অর্ডার কনফার্ম" (status moves to Confirmed
   // by itself) or "পরিবর্তন চাই" (staff should call or message them).
   function customerConfirmBadge(o) {
-    var c = o.customerConfirmation;
-    if (!c || !c.status) return '';
-    var when = c.at ? new Date(c.at).toLocaleString('en-GB', { timeZone: 'Asia/Dhaka', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
-    if (c.status === 'confirmed') return '<span class="cc-badge is-confirmed" title="Customer tapped অর্ডার কনফার্ম on WhatsApp'+(when?' · '+esc(when):'')+'">✓ Customer confirmed</span>';
-    if (c.status === 'change') return '<span class="cc-badge is-change" title="Customer tapped পরিবর্তন চাই on WhatsApp'+(when?' · '+esc(when):'')+' — call or message them">✎ Wants change</span>';
-    return '';
+    var c = o.customerConfirmation || {};
+    var r = o.customerRequest || {};
+    var stamp = function(at){ return at ? new Date(at).toLocaleString('en-GB', { timeZone: 'Asia/Dhaka', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''; };
+    var html = '';
+    var when = stamp(c.at);
+    if (c.status === 'confirmed') html += '<span class="cc-badge is-confirmed" title="Customer tapped অর্ডার কনফার্ম on WhatsApp'+(when?' · '+esc(when):'')+'">✓ Customer confirmed</span>';
+    // Older orders kept "change" in customerConfirmation; newer taps are in customerRequest.
+    var ask = r.kind || (c.status === 'change' ? 'change' : '');
+    var askWhen = stamp(r.kind ? r.at : c.at);
+    if (ask === 'more') html += '<span class="cc-badge is-more" title="Customer tapped একই ডেলিভারি চার্জে আরও বই নিবো on WhatsApp'+(askWhen?' · '+esc(askWhen):'')+' — add the books they ask for (same delivery charge)">➕ Wants more books</span>';
+    if (ask === 'change') html += '<span class="cc-badge is-change" title="Customer tapped পরিবর্তন চাই on WhatsApp'+(askWhen?' · '+esc(askWhen):'')+' — call or message them">✎ Wants change</span>';
+    return html;
   }
 
   function phoneCell(phone) {

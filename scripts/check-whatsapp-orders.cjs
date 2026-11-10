@@ -1,6 +1,7 @@
 // Automatic WhatsApp order messages (api/src/shared/whatsapp): off by default, one message per
 // order and kind, failures recorded, Meta's webhook check/signature/status updates, the order and
-// courier hooks, and the page wiring. A fake WhatsApp server on 127.0.0.1 answers instead of Meta
+// courier hooks, the order SMS held for WhatsApp (sent only when not delivered), the buttons
+// (confirm / more books / change) and answers, and the page wiring. A fake WhatsApp server on 127.0.0.1 answers instead of Meta
 // (nothing is sent to anyone) and the database is a throwaway one on the local mongod. Needs `api/dist`.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -26,14 +27,15 @@ const silent = { error() {}, warn() {}, log() {} };
 const loose = () => new mongoose.Schema({}, { strict: false });
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const WA_ENV = ['WHATSAPP_ENABLED', 'WHATSAPP_ACCESS_TOKEN', 'WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_API_VERSION', 'WHATSAPP_GRAPH_BASE',
-  'WHATSAPP_TEMPLATE_LANGUAGE', 'WHATSAPP_TEMPLATE_ORDER_PLACED', 'WHATSAPP_TEMPLATE_ORDER_SHIPPED', 'WHATSAPP_APP_SECRET', 'WHATSAPP_WEBHOOK_VERIFY_TOKEN'];
+  'WHATSAPP_TEMPLATE_LANGUAGE', 'WHATSAPP_TEMPLATE_ORDER_PLACED', 'WHATSAPP_TEMPLATE_ORDER_SHIPPED', 'WHATSAPP_APP_SECRET', 'WHATSAPP_WEBHOOK_VERIFY_TOKEN',
+  'WHATSAPP_CONFIRM_BUTTONS', 'WHATSAPP_SMS_WAIT_SECONDS'];
 let connection;
 let server;
 
 (async () => {
   // 1. Page and app wiring.
   const page = fs.readFileSync(path.join(root, 'api/upload/static/custom-orders.html'), 'utf8');
-  for (const needle of ['whatsappMessages:1', 'customerConfirmation:1', "phoneCell(o.phoneNo)+whatsappBadge(o)+customerConfirmBadge(o)", 'function whatsappBadge(o)', 'function customerConfirmBadge(o)', '.wa-badge.is-failed', '.cc-badge.is-change']) {
+  for (const needle of ['whatsappMessages:1', 'customerConfirmation:1', 'customerRequest:1', 'orderSmsSkippedAt:1', "phoneCell(o.phoneNo)+whatsappBadge(o)+customerConfirmBadge(o)", 'function whatsappBadge(o)', 'function customerConfirmBadge(o)', '.wa-badge.is-failed', '.cc-badge.is-change', '.cc-badge.is-more', 'Wants more books', 'order SMS not sent (WhatsApp delivered)']) {
     assert.ok(page.includes(needle), 'Orders page has ' + needle);
   }
   const main = fs.readFileSync(path.join(root, 'api/src/main.ts'), 'utf8');
@@ -200,26 +202,94 @@ let server;
   Object.assign(orderService, {
     orderModel: Order, incompleteOrderModel: Incomplete, productModel: Product, settingModel: Setting,
     utilsService: Object.assign(new UtilsService(Product), { generateInvoicePdf: async () => {} }), courierService,
-    bulkSmsService: { sentSingleSms() {} }, emailService: { sendEmail() {} }, configService: { get: () => undefined },
+    bulkSmsService: { sentSingleSms(phone, text) { sms.push({ phone, text }); } }, emailService: { sendEmail() {} }, configService: { get: () => undefined },
     whatsappService: whatsapp, logger: silent,
   });
+  const sms = [];
+  const orderSms = () => sms.filter((item) => item.text.startsWith('অর্ডারটি কনফার্ম হয়েছে')).length;
+  // Without OrderService's sender nothing is held (the SMS goes out as before).
+  assert.equal(await whatsapp.holdOrderSms(await seed()), false);
+  whatsapp.onOrderSms((id) => orderService.sendHeldOrderSms(id));
   const C = await seed();
   const before = calls.length;
   await orderService.processOrderBackgroundTasks({ ...C }, { phoneNo: C.phoneNo });
   await sleep(300);
   assert.equal(calls.length, before + 1, 'Order placed sends one WhatsApp message');
   assert.equal(calls.at(-1).body.template.name, 'order_received');
+  // The order SMS waits for the WhatsApp message...
+  assert.equal(orderSms(), 0, 'No SMS while the WhatsApp message is on its way');
+  order = await get(C);
+  assert.ok(order.orderSmsDueAt > new Date(Date.now() + 100 * 1000), 'Waits two minutes by default');
+  assert.equal(await whatsapp.settleOrderSms(), 0, 'Sent but not delivered yet, wait not over: still waiting');
+  // ...and is dropped once WhatsApp says delivered.
+  hook = signed(statusBody(order.whatsappMessages[0].messageId, 'delivered'));
+  await controller.receive(hook.req, hook.signature, hook.payload);
+  assert.equal(await whatsapp.settleOrderSms(), 1);
+  order = await get(C);
+  assert.equal(order.orderSmsDueAt, undefined);
+  assert.ok(order.orderSmsSkippedAt instanceof Date, 'Recorded: SMS not needed');
+  assert.notEqual(order.orderSmsSent, true);
+  assert.equal(orderSms(), 0, 'Delivered on WhatsApp: no SMS');
+  // Not delivered when the wait is over: the SMS goes out (once).
+  const C2 = await seed();
+  await orderService.processOrderBackgroundTasks({ ...C2 }, { phoneNo: C2.phoneNo });
+  await sleep(300);
+  assert.equal(orderSms(), 0);
+  await Order.updateOne({ _id: C2._id }, { $set: { orderSmsDueAt: new Date(Date.now() - 1000) } });
+  assert.deepEqual(await Promise.all([whatsapp.settleOrderSms(), whatsapp.settleOrderSms(String(C2._id))]).then((r) => r[0] + r[1]), 1, 'Decided once');
+  assert.equal(orderSms(), 1, 'Not delivered in time: SMS');
+  order = await get(C2);
+  assert.equal(order.orderSmsSent, true);
+  assert.equal(order.orderSmsDueAt, undefined);
+  // Meta refuses the message: the SMS goes out at once.
+  reply = 'undeliverable';
+  const C3 = await seed();
+  await orderService.processOrderBackgroundTasks({ ...C3 }, { phoneNo: C3.phoneNo });
+  await sleep(300);
+  reply = 'ok';
+  assert.equal(orderSms(), 2, 'WhatsApp failed: SMS right away');
+  assert.equal((await get(C3)).orderSmsSent, true);
+  // Failed later (webhook, e.g. no WhatsApp on the number): SMS at the next check.
+  const C4 = await seed();
+  await orderService.processOrderBackgroundTasks({ ...C4 }, { phoneNo: C4.phoneNo });
+  await sleep(300);
+  hook = signed(statusBody((await get(C4)).whatsappMessages[0].messageId, 'failed', [{ code: 131026, title: 'Message undeliverable' }]));
+  await controller.receive(hook.req, hook.signature, hook.payload);
+  assert.equal(orderSms(), 2);
+  await whatsapp.settleOrderSms();
+  assert.equal(orderSms(), 3, 'Undeliverable: SMS');
+  // Switched off: the SMS goes out at once, as before.
+  process.env.WHATSAPP_ENABLED = 'false';
+  const C5 = await seed();
+  await orderService.processOrderBackgroundTasks({ ...C5 }, { phoneNo: C5.phoneNo });
+  assert.equal(orderSms(), 4, 'WhatsApp off: SMS as before');
+  assert.equal((await get(C5)).orderSmsDueAt, undefined);
+  setEnv(true);
+  // Added by staff (Orders page / Customer Manager / Incomplete Orders): no WhatsApp, SMS at once.
+  for (const staff of [{ orderOrigin: 'admin', manualOrderSource: 'whatsapp' }, { orderOrigin: 'incomplete', manualOrderSource: 'phone' }, { manualOrderSource: 'phone' }]) {
+    const S = await seed(staff);
+    const sent = calls.length;
+    const texts = orderSms();
+    await orderService.processOrderBackgroundTasks({ ...S }, { phoneNo: S.phoneNo });
+    await sleep(200);
+    assert.equal(calls.length, sent, 'Staff-added order: no WhatsApp message');
+    assert.equal(orderSms(), texts + 1, 'Staff-added order: SMS as before');
+    order = await get(S);
+    assert.equal(order.whatsappMessages, undefined);
+    assert.equal(order.orderSmsDueAt, undefined);
+  }
   const online = await seed({ paymentType: 'online_payment' });
+  const sentBefore = calls.length;
   await orderService.processOrderBackgroundTasks({ ...online }, { phoneNo: online.phoneNo });
   await sleep(300);
-  assert.equal(calls.length, before + 1, 'Online payments wait for the payment, like the order SMS');
+  assert.equal(calls.length, sentBefore, 'Online payments wait for the payment, like the order SMS');
   await orderService.sendToCourier(String(C._id));
   await sleep(300);
-  assert.equal(calls.length, before + 2, 'Sending to the courier sends the second message');
+  assert.equal(calls.length, sentBefore + 1, 'Sending to the courier sends the second message');
   assert.equal(calls.at(-1).body.template.name, 'order_shipped');
   assert.deepEqual(calls.at(-1).body.template.components[0].parameters.map((p) => p.text), [C.name, C.orderId, 'Steadfast', 'TRACKTEST1', String(C._id)]);
   order = await get(C);
-  assert.deepEqual(order.whatsappMessages.map((m) => [m.kind, m.status]), [['order_placed', 'sent'], ['order_shipped', 'sent']]);
+  assert.deepEqual(order.whatsappMessages.map((m) => [m.kind, m.status]), [['order_placed', 'delivered'], ['order_shipped', 'sent']]);
   // OrderService without WhatsApp (as in other checks) still works.
   const plain = Object.create(OrderService.prototype);
   Object.assign(plain, { logger: silent });
@@ -240,6 +310,7 @@ let server;
   const incoming = (id, from, message) => signed({ object: 'whatsapp_business_account', entry: [{ changes: [{ field: 'messages', value: { messages: [{ id, from, timestamp: '1', ...message }] } }] }] });
   const tap = (id, from, payload) => incoming(id, from, { type: 'button', button: { payload, text: 'অর্ডার কনফার্ম' } });
   const lastText = () => calls.at(-1).body.type === 'text' ? calls.at(-1).body.text.body : null;
+  const smsBefore = sms.length;
   let n = calls.length;
   hook = tap('wamid.IN1', '8801700000000', 'confirm:' + D._id);
   assert.deepEqual(await controller.receive(hook.req, hook.signature, hook.payload), { success: true, updated: 0, handled: 1 });
@@ -251,6 +322,8 @@ let server;
   assert.equal(calls.length, n + 1);
   assert.equal(calls.at(-1).body.to, '8801700000000');
   assert.match(lastText(), new RegExp('অর্ডার #' + D.orderId + ' কনফার্ম হয়েছে'));
+  assert.match(lastText(), /— amolbooks\.com$/);
+  assert.equal(sms.length, smsBefore, 'Confirmed on WhatsApp: no confirmation SMS (the WhatsApp answer instead)');
   n = calls.length;
   await controller.receive(hook.req, hook.signature, hook.payload);
   assert.equal(calls.length, n, 'The same message delivered twice by Meta is handled once');
@@ -266,28 +339,71 @@ let server;
   assert.equal(order.orderStatus, 1);
   assert.equal(order.customerConfirmation, undefined);
   assert.match(lastText(), /এই নম্বরটি শুধু অর্ডারের আপডেটের জন্য/);
-  // "পরিবর্তন চাই" flags the order for staff and sends them to the staff number.
+  // "পরিবর্তন চাই" (first template) flags the order for staff and sends them to the staff number.
   hook = tap('wamid.IN4', '8801700000000', 'change:' + E._id);
   await controller.receive(hook.req, hook.signature, hook.payload);
   order = await get(E);
   assert.equal(order.orderStatus, 1, 'A change request does not confirm');
-  assert.equal(order.customerConfirmation.status, 'change');
-  assert.match(lastText(), /কী পরিবর্তন করতে চান/);
-  assert.ok(lastText().includes('https://wa.me/8801893058682?text=' + encodeURIComponent('অর্ডার #' + E.orderId + ' পরিবর্তন করতে চাই')));
-  // ...and a later confirm still works.
+  assert.equal(order.customerRequest.kind, 'change');
+  assert.equal(order.customerConfirmation, undefined);
+  assert.match(lastText(), new RegExp('অর্ডার #' + E.orderId + '-এ কী পরিবর্তন করতে চান'));
+  assert.ok(lastText().includes('https://wa.me/8801893058682?text=' + encodeURIComponent('Order #' + E.orderId + ' - change')), 'Short chat link with the order number');
+  // ...and a later confirm still works, keeping the request for staff.
   hook = tap('wamid.IN5', '8801700000000', 'confirm:' + E._id);
   await controller.receive(hook.req, hook.signature, hook.payload);
-  assert.equal((await get(E)).orderStatus, 2);
+  order = await get(E);
+  assert.equal(order.orderStatus, 2);
+  assert.equal(order.customerRequest.kind, 'change');
   // Cancelled or already booked orders are not reopened.
   const F = await seed({ orderStatus: 6 });
   hook = tap('wamid.IN6', '8801700000000', 'confirm:' + F._id);
   await controller.receive(hook.req, hook.signature, hook.payload);
   assert.equal((await get(F)).orderStatus, 6);
-  assert.match(lastText(), new RegExp('অর্ডার #' + F.orderId + ' নিয়ে কথা বলতে'));
+  assert.match(lastText(), new RegExp('অর্ডার #' + F.orderId + ' কুরিয়ারে পাঠানো বা বাতিল'));
   const G = await seed({ orderStatus: 1, courierData: { providerName: 'Steadfast Courier', consignmentId: '9' } });
   hook = tap('wamid.IN7', '8801700000000', 'confirm:' + G._id);
   await controller.receive(hook.req, hook.signature, hook.payload);
   assert.equal((await get(G)).orderStatus, 1, 'A booked parcel is never re-confirmed');
+  // A staff confirm still sends the confirmation SMS.
+  const H = await seed({ orderStatus: 1 });
+  await orderService.changeOrderStatus(String(H._id), { orderStatus: 2 });
+  assert.ok(sms.some((item) => item.text.includes('অর্ডার আইডি ' + H.orderId + ' নিশ্চিত')), 'Staff confirm: SMS as before');
+
+  // 10. The new template (order_confirm_v2): second button "একই ডেলিভারি চার্জে আরও বই নিবো".
+  process.env.WHATSAPP_TEMPLATE_ORDER_PLACED = 'order_confirm_v2';
+  const M = await seed({ orderStatus: 1 });
+  assert.equal(await whatsapp.notifyOrder('order_placed', M), 'sent');
+  assert.equal(calls.at(-1).body.template.name, 'order_confirm_v2');
+  assert.deepEqual(calls.at(-1).body.template.components.slice(1).map((c) => c.parameters[0].payload), ['confirm:' + M._id, 'more:' + M._id]);
+  hook = tap('wamid.IN20', '8801700000000', 'more:' + M._id);
+  await controller.receive(hook.req, hook.signature, hook.payload);
+  order = await get(M);
+  assert.equal(order.orderStatus, 1, 'More books does not confirm');
+  assert.equal(order.customerRequest.kind, 'more');
+  assert.equal(order.customerRequest.via, 'whatsapp');
+  assert.match(lastText(), new RegExp('অর্ডার #' + M.orderId + '-এ একই ডেলিভারি চার্জে আরও বই যোগ করা যাবে'));
+  assert.ok(lastText().includes('https://wa.me/8801893058682?text=' + encodeURIComponent('Order #' + M.orderId + ' - add more books')));
+  hook = tap('wamid.IN21', '8801700000000', 'confirm:' + M._id);
+  await controller.receive(hook.req, hook.signature, hook.payload);
+  order = await get(M);
+  assert.equal(order.orderStatus, 2);
+  assert.equal(order.customerRequest.kind, 'more', 'Confirming keeps the more-books request for staff');
+  hook = tap('wamid.IN22', '8801700000000', 'more:' + M._id);
+  await controller.receive(hook.req, hook.signature, hook.payload);
+  assert.match(lastText(), /আরও বই যোগ করা যাবে/, 'Confirmed but not booked yet: books can still be added');
+  hook = tap('wamid.IN23', '8801700000000', 'more:' + G._id);
+  await controller.receive(hook.req, hook.signature, hook.payload);
+  assert.equal((await get(G)).customerRequest, undefined);
+  assert.match(lastText(), new RegExp('অর্ডার #' + G.orderId + ' কুরিয়ারে পাঠানো বা বাতিল'), 'Booked: nothing can be added');
+  // Which second button: follows the template, or set outright.
+  process.env.WHATSAPP_CONFIRM_BUTTONS = 'confirm,change';
+  assert.equal(whatsapp.config().secondButton, 'change');
+  process.env.WHATSAPP_CONFIRM_BUTTONS = 'confirm, more';
+  assert.equal(whatsapp.config().secondButton, 'more');
+  process.env.WHATSAPP_CONFIRM_BUTTONS = 'true';
+  process.env.WHATSAPP_TEMPLATE_ORDER_PLACED = 'order_confirm';
+  assert.equal(whatsapp.config().secondButton, 'change');
+  process.env.WHATSAPP_TEMPLATE_ORDER_PLACED = 'order_confirm_v2';
   // Any other message: one hand-over answer per customer, not one per message.
   n = calls.length;
   hook = incoming('wamid.IN8', '8801711111111', { type: 'text', text: { body: 'আসসালামু আলাইকুম, বইটা কবে পাব?' } });
@@ -295,16 +411,25 @@ let server;
   assert.equal(calls.length, n + 1);
   assert.equal(calls.at(-1).body.to, '8801711111111');
   assert.match(lastText(), /এই নম্বরটি শুধু অর্ডারের আপডেটের জন্য/);
+  assert.ok(lastText().includes('https://wa.me/8801893058682?text=' + encodeURIComponent('Amol Books order')), 'No order on that number: no order number');
   hook = incoming('wamid.IN9', '8801711111111', { type: 'image', image: { id: 'x' } });
   await controller.receive(hook.req, hook.signature, hook.payload);
   assert.equal(calls.length, n + 1, 'No second hand-over within 12 hours');
+  // A customer with orders: the answer names their latest order.
+  const L = await seed({ phoneNo: '01733333333', createdAt: new Date(Date.now() + 60000) });
+  await seed({ phoneNo: '01733333333', createdAt: new Date(Date.now() - 86400000), whatsappMessages: [{ kind: 'order_placed', to: '8801733333333', status: 'read' }] });
+  assert.equal(await whatsapp.notifyOrder('order_placed', L), 'sent');
+  hook = incoming('wamid.IN11', '8801733333333', { type: 'text', text: { body: 'বইটা কবে পাব?' } });
+  await controller.receive(hook.req, hook.signature, hook.payload);
+  assert.equal(lastText(), 'এই নম্বরটি শুধু অর্ডারের আপডেটের জন্য।\nঅর্ডার #' + L.orderId + ' নিয়ে প্রশ্ন বা কথা বলতে আমাদের অফিসিয়াল WhatsApp-এ লিখুন 👇\nhttps://wa.me/8801893058682?text=Order%20%23' + L.orderId + '\n— amolbooks.com');
   // Switched off: customers' messages are left alone.
+  n = calls.length;
   process.env.WHATSAPP_ENABLED = 'false';
   hook = incoming('wamid.IN10', '8801722222222', { type: 'text', text: { body: 'hi' } });
   await controller.receive(hook.req, hook.signature, hook.payload);
-  assert.equal(calls.length, n + 1);
+  assert.equal(calls.length, n);
 
-  console.log('WhatsApp order messages: off by default, one per order, failures, webhook check/signature/statuses, order + courier hooks, confirm buttons (confirm/change/replies/hand-over) and page wiring pass');
+  console.log('WhatsApp order messages: off by default, one per order, failures, webhook check/signature/statuses, order + courier hooks (customer orders only), order SMS only when WhatsApp is not delivered, buttons (confirm/more/change, no confirm SMS), answers with the order number and page wiring pass');
 })()
   .catch((error) => { console.error(error); process.exitCode = 1; })
   .finally(async () => {

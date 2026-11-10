@@ -141,6 +141,8 @@ export class OrderService {
     this.scheduleWebsitePurchaseGapFill();
     // A tap on the WhatsApp order message's buttons (shared/whatsapp).
     this.whatsappService?.onCustomerReply((reply) => this.handleWhatsappReply(reply));
+    // An order SMS held back for WhatsApp, sent when the message was not delivered in time.
+    this.whatsappService?.onOrderSms((orderId) => this.sendHeldOrderSms(orderId));
     schedule.scheduleJob('*/1 * * * *', () => {
       this.reconcileCustomerCancellationStock().catch(() => this.logger.error('Customer cancellation stock reconciliation failed'));
     });
@@ -775,42 +777,17 @@ export class OrderService {
 
       // 4) Generate Invoice PDF
       await this.utilsService.generateInvoicePdf(saveData);
-      const pdfLink = `https://apisub.amolbooks.com/invoice/invoice-${saveData.orderId}.pdf`;
 
       // 5) Send SMS and Email for Cash on Delivery
-      // Check from database if SMS has already been sent to prevent duplicate SMS
+      // With WhatsApp order messages on, the SMS waits and goes out only when the WhatsApp
+      // message is not delivered in time (owner, 2026-11-10; WhatsappService.settleOrderSms).
       if (saveData['paymentType'] === 'cash_on_delivery') {
-        // Check database to see if SMS was already sent (prevents race condition)
-        const orderCheck: any = await this.orderModel
-          .findById(saveData._id)
-          .select('orderSmsSent');
-        if (!orderCheck?.orderSmsSent) {
-          const message = `অর্ডারটি কনফার্ম হয়েছে, ৩ দিনের মধ্যে ডেলিভারি করা হবে, amolbooks.com`;
-          // const message = `আপনার অর্ডারটি amolbooks.com-এ সফলভাবে সম্পন্ন হয়েছে। আপনার অর্ডার আইডি (${saveData.orderId}) যেকোনো প্রয়োজনে আমাদের সাথে যোগাযোগ করুন 01754896763`;
-          // const message = `Thank you for your purchase from amolbooks.com. Your order (${saveData.orderId}) has been placed successfully. Please wait for a confirmation Call.`;
-          this.bulkSmsService.sentSingleSms(saveData.phoneNo, message);
-
-          // Mark SMS as sent to prevent duplicate (atomic update)
-          await this.orderModel.updateOne(
-            { _id: saveData._id },
-            { $set: { orderSmsSent: true } },
-          );
-        }
-
-        // Sent Email
-        if (saveData.email) {
-          const html = `
-      <p>Thank you for your purchase from Amol Books. Your order (${saveData.orderId}) has been placed successfully. Please wait for a confirmation call. Track your order at https://www.amolbooks.com/order-track/${saveData._id}
-      </p>
-      <iframe src="${pdfLink}" frameborder="0" width="100%" height="500px"></iframe>
-      <a href="${pdfLink}">Download your invoice</a>
-      `;
-          this.emailService.sendEmail(saveData.email, 'Amol Books', html);
-        }
+        const smsHeld = await this.holdOrderSmsForWhatsapp(saveData);
+        await this.sendOrderPlacedNotifications(saveData, { sms: !smsHeld });
       }
 
-      // 6) WhatsApp order message (off unless WHATSAPP_* is set; the SMS above still goes out)
-      if (saveData['paymentType'] === 'cash_on_delivery') {
+      // 6) WhatsApp order message (off unless WHATSAPP_* is set); customers' own orders only
+      if (saveData['paymentType'] === 'cash_on_delivery' && !this.staffAddedOrder(saveData)) {
         this.notifyWhatsapp('order_placed', saveData);
       }
     } catch (error) {
@@ -819,6 +796,39 @@ export class OrderService {
         error,
       );
       // Don't throw - background tasks should not fail the order
+    }
+  }
+
+  /** Order-confirmed SMS (once per order) and email with the invoice link. */
+  async sendOrderPlacedNotifications(saveData: any, options: { sms?: boolean; email?: boolean } = {}): Promise<void> {
+    const pdfLink = `https://apisub.amolbooks.com/invoice/invoice-${saveData.orderId}.pdf`;
+    // Check from database if SMS has already been sent to prevent duplicate SMS
+    // Check database to see if SMS was already sent (prevents race condition)
+    const orderCheck: any = await this.orderModel
+      .findById(saveData._id)
+      .select('orderSmsSent');
+    if (options.sms !== false && !orderCheck?.orderSmsSent) {
+      const message = `অর্ডারটি কনফার্ম হয়েছে, ৩ দিনের মধ্যে ডেলিভারি করা হবে, amolbooks.com`;
+      // const message = `আপনার অর্ডারটি amolbooks.com-এ সফলভাবে সম্পন্ন হয়েছে। আপনার অর্ডার আইডি (${saveData.orderId}) যেকোনো প্রয়োজনে আমাদের সাথে যোগাযোগ করুন 01754896763`;
+      // const message = `Thank you for your purchase from amolbooks.com. Your order (${saveData.orderId}) has been placed successfully. Please wait for a confirmation Call.`;
+      this.bulkSmsService.sentSingleSms(saveData.phoneNo, message);
+
+      // Mark SMS as sent to prevent duplicate (atomic update)
+      await this.orderModel.updateOne(
+        { _id: saveData._id },
+        { $set: { orderSmsSent: true } },
+      );
+    }
+
+    // Sent Email
+    if (options.email !== false && saveData.email) {
+      const html = `
+      <p>Thank you for your purchase from Amol Books. Your order (${saveData.orderId}) has been placed successfully. Please wait for a confirmation call. Track your order at https://www.amolbooks.com/order-track/${saveData._id}
+      </p>
+      <iframe src="${pdfLink}" frameborder="0" width="100%" height="500px"></iframe>
+      <a href="${pdfLink}">Download your invoice</a>
+      `;
+      this.emailService.sendEmail(saveData.email, 'Amol Books', html);
     }
   }
 
@@ -3082,35 +3092,64 @@ export class OrderService {
 
   // Staff attribution is bookkeeping only: it never fails or blocks an order action.
   /**
-   * The customer tapped "অর্ডার কনফার্ম" or "পরিবর্তন চাই" on the WhatsApp order message.
-   * Confirm works like a staff confirm (status Confirmed, timeline, confirmation SMS); only for
-   * an open order (Pending/Processing, not booked or cancelled) and only from the order's own
-   * number. "Change" marks the order for staff. The answer decides the reply the customer gets.
+   * The customer tapped a button on the WhatsApp order message: "অর্ডার কনফার্ম", "একই ডেলিভারি চার্জে আরও বই নিবো"
+   * (template order_confirm_v2) or "পরিবর্তন চাই" (first template). Only from the order's own number.
+   * Confirm works like a staff confirm (status Confirmed, timeline) for an open order (Pending/
+   * Processing, not booked or cancelled), without the confirmation SMS: the customer gets the
+   * WhatsApp answer instead (owner, 2026-11-10). "More books" / "change" mark the order for staff
+   * (customerRequest) until it is booked with the courier. The answer decides the reply.
    */
-  async handleWhatsappReply(reply: { action: 'confirm' | 'change'; orderId: string; from: string; messageId?: string }): Promise<{ status: 'confirmed' | 'already' | 'change' | 'closed' | 'unknown'; orderId?: string }> {
+  async handleWhatsappReply(reply: { action: 'confirm' | 'change' | 'more'; orderId: string; from: string; messageId?: string }): Promise<{ status: 'confirmed' | 'already' | 'change' | 'more' | 'closed' | 'unknown'; orderId?: string }> {
     const order: any = await this.orderModel.findById(reply.orderId).select('orderId phoneNo orderStatus customerCancelledAt courierData').lean();
     if (!order || WhatsappService.toWhatsappNumber(order.phoneNo) !== String(reply.from)) return { status: 'unknown' };
     const orderId = String(order.orderId || '');
+    const status = Number(order.orderStatus);
     const OPEN = [OrderStatus.NONE, OrderStatus.PENDING, OrderStatus.PROCESSING];
-    const open = OPEN.includes(Number(order.orderStatus)) && !order.customerCancelledAt && !order.courierData?.consignmentId;
-    const stamp = (status: string) => ({ status, at: new Date(), via: 'whatsapp', messageId: reply.messageId });
-    if (reply.action === 'change') {
-      if (!open) return { status: 'closed', orderId };
-      await this.orderModel.updateOne({ _id: order._id }, { $set: { customerConfirmation: stamp('change') } });
-      return { status: 'change', orderId };
+    const booked = !!order.customerCancelledAt || !!order.courierData?.consignmentId;
+    const by = { at: new Date(), via: 'whatsapp', messageId: reply.messageId };
+    if (reply.action === 'change' || reply.action === 'more') {
+      // Books can be added or changed until the order is booked (a confirmed order too).
+      if (booked || ![...OPEN, OrderStatus.CONFIRM].includes(status)) return { status: 'closed', orderId };
+      await this.orderModel.updateOne({ _id: order._id }, { $set: { customerRequest: { kind: reply.action, ...by } } });
+      return { status: reply.action, orderId };
     }
-    if (!open) {
-      const moving = [OrderStatus.CONFIRM, OrderStatus.SHIPPING, OrderStatus.DELIVERED, OrderStatus.Courier].includes(Number(order.orderStatus));
+    if (booked || !OPEN.includes(status)) {
+      const moving = [OrderStatus.CONFIRM, OrderStatus.SHIPPING, OrderStatus.DELIVERED, OrderStatus.Courier].includes(status);
       return { status: moving ? 'already' : 'closed', orderId };
     }
     // One tap confirms; a second tap (or a staff confirm in between) only gets "already confirmed".
     const claim = await this.orderModel.updateOne(
       { _id: order._id, orderStatus: { $in: OPEN }, 'customerConfirmation.status': { $ne: 'confirmed' } },
-      { $set: { customerConfirmation: stamp('confirmed') } },
+      { $set: { customerConfirmation: { status: 'confirmed', ...by } } },
     );
     if (!claim.modifiedCount) return { status: 'already', orderId };
-    await this.changeOrderStatus(String(order._id), { orderStatus: OrderStatus.CONFIRM } as any);
+    await this.changeOrderStatus(String(order._id), { orderStatus: OrderStatus.CONFIRM } as any, undefined, { skipConfirmSms: true });
     return { status: 'confirmed', orderId };
+  }
+
+  /**
+   * Added by staff (Orders page, Customer Manager, Incomplete Orders): the customer already agreed
+   * the order with staff, so no WhatsApp order message and the SMS goes out as before (owner, 2026-11-10).
+   */
+  private staffAddedOrder(order: any): boolean {
+    return ['admin', 'incomplete'].includes(String(order?.orderOrigin || '')) || !!order?.manualOrderSource;
+  }
+
+  /** True when the order SMS now waits for the WhatsApp message (WhatsappService.holdOrderSms). */
+  private async holdOrderSmsForWhatsapp(order: any): Promise<boolean> {
+    if (!this.whatsappService || this.staffAddedOrder(order)) return false;
+    try {
+      return await this.whatsappService.holdOrderSms(order);
+    } catch (error) {
+      this.logger.warn(`WhatsApp SMS hold failed for order ${order?.orderId}: ${error?.message || error}`);
+      return false;
+    }
+  }
+
+  /** The WhatsApp order message was not delivered in time: send the order SMS that was held back. */
+  private async sendHeldOrderSms(orderId: string): Promise<void> {
+    const order: any = await this.orderModel.findById(orderId).select('orderId phoneNo').lean();
+    if (order) await this.sendOrderPlacedNotifications(order, { email: false });
   }
 
   /** WhatsApp order message (shared/whatsapp); never holds up or fails the order flow. */
@@ -4802,6 +4841,8 @@ export class OrderService {
     id: string,
     updateOrderStatusDto: UpdateOrderStatusDto,
     admin?: Admin,
+    // skipConfirmSms: the customer confirmed on WhatsApp and got the answer there.
+    options: { skipConfirmSms?: boolean } = {},
   ): Promise<ResponsePayload> {
     const { orderStatus } = updateOrderStatusDto;
 
@@ -4937,7 +4978,7 @@ export class OrderService {
         await this.restockProducts(id, data['orderedItems'], restockReason);
       }
 
-      if (orderStatus === 2) {
+      if (orderStatus === 2 && !options.skipConfirmSms) {
         const message = `আপনার অর্ডার আইডি ${data?.orderId} নিশ্চিত করা হয়েছে। ডেলিভারি সময়: ঢাকার ভিতরে ১–২ কার্যদিবস, ঢাকার বাইরে ৩–৬ কার্যদিবস। আমল বুকসের সঙ্গে থাকার জন্য ধন্যবাদ।`;
         //const message = `Your order No: ${data?.orderId} has been Shipped. Total Amount ${data?.grandTotal} Tk. Thanks from amolbooks.com`;
         // const message = `Hi ${data.name} \nwe just confirmed your order from amolbooks.com. Your order is estimated to arrive in 1-2 business days.`;

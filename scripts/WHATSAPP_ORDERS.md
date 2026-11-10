@@ -1,9 +1,19 @@
 # Automatic WhatsApp order messages
 
-When a customer places an order (cash on delivery, like the order SMS), the shop sends a WhatsApp
-message to the order's phone number. When the order is booked with the courier (by staff, in bulk,
-or by Future delivery) it sends a second message with the tracking code. The order SMS keeps going
-out as before.
+When a customer places an order on the website (cash on delivery, like the order SMS), the shop
+sends a WhatsApp message to the order's phone number. Orders added by staff (Orders page "Add
+Order", Customer Manager, Incomplete Orders) get no WhatsApp order message, only the SMS as before:
+the customer already agreed the order with staff (owner, 2026-11-10; `OrderService.staffAddedOrder`
+= orderOrigin admin/incomplete or a manualOrderSource). When the order is booked with the courier (by staff, in bulk,
+or by Future delivery) it can send a second message with the tracking code (off since 2026-11-10).
+
+Order SMS (owner, 2026-11-10): while WhatsApp messages are on, the order SMS waits. If WhatsApp
+reports the message **delivered** (✓✓) the SMS is not sent (the order gets `orderSmsSkippedAt`; the
+Orders page badge tooltip says "order SMS not sent"). If the message fails, or is still not
+delivered after 2 minutes (`WHATSAPP_SMS_WAIT_SECONDS`, default 120), the SMS goes out as before.
+Waiting SMS are on the order (`orderSmsDueAt`) and checked every 15 seconds, so a restart loses none.
+A customer who confirms on WhatsApp gets the WhatsApp answer and no confirmation SMS; a staff
+confirm still sends the confirmation SMS.
 
 Code: `api/src/shared/whatsapp/` (WhatsappService, webhook controller), hooks in
 `api/src/pages/sales/order/order.service.ts` (`notifyWhatsapp`), record on the order
@@ -68,7 +78,24 @@ Sample values: `রহিম`, `1024`, `Steadfast`, `SFR123456`, `6a000000000000
 Meta usually approves Utility templates within minutes to a day. Leave a template's name empty in
 `.env` to stop just that message.
 
-**`order_confirm`** (approved version of the order message with buttons; submitted 2026-11-10)
+**`order_confirm_v2`** (current order message, owner's text; submitted 2026-11-10, Utility, Bengali, in review)
+
+```
+আসসালামু আলাইকুম {{1}},
+আমল বুকস থেকে আপনার অর্ডার #{{2}} পেয়েছি।
+বই: {{3}}
+মোট: ৳{{4}} (ডেলিভারি চার্জসহ)
+সব ঠিক থাকলে নিচে "অর্ডার কনফার্ম" চাপুন। একই ডেলিভারি চার্জে আরও বই যোগ করতে, নিচের "একই ডেলিভারি চার্জে আরও বই নিবো" চাপুন।
+৩ দিনের মধ্যে ডেলিভারি করা হবে ইনশাআল্লাহ।
+— amolbooks.com
+```
+
+Two **Quick reply** buttons (type "Custom"), in this order: **অর্ডার কনফার্ম**, **একই ডেলিভারি চার্জে আরও বই নিবো**
+(Meta's form allows 40 characters per button; this one is 31 and fits one line). Same sample values as `order_received`. The shop sends the payloads `confirm:<order id>` /
+`more:<order id>`. The "same delivery charge" line is an offer, so Meta may file the template as
+Marketing (dearer per message); check the category Meta shows before switching to it.
+
+**`order_confirm`** (first version with buttons; approved 2026-11-10)
 
 Same body as `order_received`, but the line about questions is replaced by
 `সব ঠিক থাকলে নিচে "অর্ডার কনফার্ম" চাপুন। কিছু বদলাতে চাইলে "পরিবর্তন চাই" চাপুন।`
@@ -78,14 +105,19 @@ followed by `৩ দিনের মধ্যে ডেলিভারি কর
 
 What a tap does (`OrderService.handleWhatsappReply`), only from the order's own phone number:
 - **অর্ডার কনফার্ম** on a Pending/Processing order that is not booked or cancelled: status becomes
-  Confirmed exactly like a staff confirm (timeline + the usual confirmation SMS), the order shows
-  "✓ Customer confirmed" on the Orders page, and the customer gets "ধন্যবাদ! আপনার অর্ডার #… কনফার্ম হয়েছে ✅".
-  A second tap gets "আগেই কনফার্ম করা আছে". Booked/cancelled orders are never reopened.
-- **পরিবর্তন চাই**: status unchanged, the order shows "✎ Wants change", and the customer gets a tap-to-chat
-  link to the staff number (`WHATSAPP_HELP_NUMBER`, default 8801893058682) with
-  "অর্ডার #… পরিবর্তন করতে চাই" already typed.
-- Any other message to the API number: one answer per customer per 12 hours pointing to the staff number.
-Replies are free-form messages inside Meta's 24-hour window (first 1,000 a month free).
+  Confirmed like a staff confirm (timeline; no confirmation SMS, the WhatsApp answer replaces it),
+  the order shows "✓ Customer confirmed" on the Orders page, and the customer gets
+  "ধন্যবাদ! আপনার অর্ডার #… কনফার্ম হয়েছে ✅". A second tap gets "আগেই কনফার্ম করা আছে".
+  Booked/cancelled orders are never reopened.
+- **একই ডেলিভারি চার্জে আরও বই নিবো** (order_confirm_v2) / **পরিবর্তন চাই** (order_confirm): status unchanged, the order
+  shows "➕ Wants more books" / "✎ Wants change" (`customerRequest`), and the customer gets a
+  tap-to-chat link to the staff number (`WHATSAPP_HELP_NUMBER`, default 8801893058682) with
+  "Order #… - add more books" / "Order #… - change" already typed. Works until the order is booked
+  with the courier (a confirmed order too); after that the answer says nothing can be added.
+- Any other message to the API number: one answer per customer per 12 hours pointing to the staff
+  number, naming their latest order ("অর্ডার #… নিয়ে প্রশ্ন বা কথা বলতে…").
+All answers end with "— amolbooks.com". They are free-form messages inside Meta's 24-hour
+customer-service window, which the customer opens by tapping or writing: Meta does not charge them.
 Not sent to the courier automatically (staff still press "send to courier").
 
 ## 3. Server settings (`api/.env`, then restart)
@@ -96,7 +128,8 @@ WHATSAPP_ACCESS_TOKEN=<system user token>
 WHATSAPP_PHONE_NUMBER_ID=<phone number id>
 WHATSAPP_APP_SECRET=<app secret>
 WHATSAPP_WEBHOOK_VERIFY_TOKEN=<any long random text you choose>
-WHATSAPP_TEMPLATE_ORDER_PLACED=order_confirm
+WHATSAPP_TEMPLATE_ORDER_PLACED=order_confirm_v2
+# true: second button follows the template (order_confirm = পরিবর্তন চাই, order_confirm_v2 = একই ডেলিভারি চার্জে আরও বই নিবো)
 WHATSAPP_CONFIRM_BUTTONS=true
 # courier message off (owner, 2026-11-10); set to order_shipped to turn it on
 WHATSAPP_TEMPLATE_ORDER_SHIPPED=
@@ -104,6 +137,8 @@ WHATSAPP_TEMPLATE_ORDER_SHIPPED=
 WHATSAPP_TEMPLATE_LANGUAGE=bn
 WHATSAPP_API_VERSION=v26.0
 WHATSAPP_HELP_NUMBER=8801893058682
+# seconds the order SMS waits for WhatsApp delivery (min 30)
+WHATSAPP_SMS_WAIT_SECONDS=120
 ```
 
 Then `pm2 restart amolbooks-api`. Turning it off: `WHATSAPP_ENABLED=false` and restart.
@@ -127,5 +162,6 @@ arrives and the badge turns blue after you read it. Cancel that order afterwards
 
 ## Cost
 
-Meta charges per template message; for Bangladesh about $0.0037 per Utility message (from
-1 October 2026; check Meta's rate card). Two messages per order cost about one taka per order.
+Meta charges per delivered template message; for Bangladesh about $0.0037 per Utility message
+(from 1 October 2026; check Meta's rate card), more if Meta files the template as Marketing.
+Answers to taps and messages are free. Each order whose WhatsApp is delivered also saves its SMS.

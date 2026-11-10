@@ -415,13 +415,26 @@ export const OrderSchema = new mongoose.Schema(
       default: undefined,
     },
     // The customer's answer on the WhatsApp order message: confirmed (status set to
-    // Confirmed) or change (staff should call). Unset until they tap a button.
+    // Confirmed). Older orders may have status change (now customerRequest). Unset until
+    // they tap a button.
     customerConfirmation: {
       status: { type: String },
       at: { type: Date },
       via: { type: String },
       messageId: { type: String },
     },
+    // "একই ডেলিভারি চার্জে আরও বই নিবো" (kind more) or "পরিবর্তন চাই" (kind change) tapped on the WhatsApp order
+    // message: staff add the books / call. Unset until the customer asks.
+    customerRequest: {
+      kind: { type: String },
+      at: { type: Date },
+      via: { type: String },
+      messageId: { type: String },
+    },
+    // Order SMS held back while the WhatsApp order message is on its way (WhatsappService
+    // settles it: SMS when not delivered in time, else orderSmsSkippedAt).
+    orderSmsDueAt: { type: Date, required: false },
+    orderSmsSkippedAt: { type: Date, required: false },
     // Staff whose action booked the courier parcel.
     courierSentBy: {
       _id: { type: Schema.Types.ObjectId, ref: 'Admin' },
@@ -504,6 +517,10 @@ OrderSchema.index({ phoneNo: 1, createdAt: 1 });
 
 // WhatsApp delivery updates find their order by message id.
 OrderSchema.index({ 'whatsappMessages.messageId': 1 }, { sparse: true });
+// Held order SMS (only orders waiting for their WhatsApp delivery) and the hand-over
+// answer's latest order for a customer's number.
+OrderSchema.index({ orderSmsDueAt: 1 }, { sparse: true });
+OrderSchema.index({ 'whatsappMessages.to': 1, createdAt: -1 }, { name: 'whatsapp_to_latest', partialFilterExpression: { 'whatsappMessages.to': { $exists: true } } });
 
 // Future delivery: the every-minute run and the Orders page tab.
 OrderSchema.index(
