@@ -37,6 +37,7 @@ import { ProfileModule } from './pages/profile/profile/profile.module';
 import { OrderModule } from './pages/sales/order/order.module';
 import { CourierScheduleModule } from './pages/sales/courier-schedule/courier-schedule.module';
 import { OrderAssistModule } from './pages/sales/order-assist/order-assist.module';
+import { WhatsappModule } from './shared/whatsapp/whatsapp.module';
 import { ShippingChargeModule } from './pages/sales/shipping-charge/shipping-charge.module';
 import { CouponModule } from './pages/offers/coupon/coupon.module';
 import { AdditionalPageModule } from './pages/additional-page/additional-page.module';
@@ -150,6 +151,7 @@ import { MetaAdsModule } from './pages/meta-ads/meta-ads.module';
     OrderModule,
     CourierScheduleModule,
     OrderAssistModule,
+    WhatsappModule,
     GuestOrdersModule,
     ShippingChargeModule,
     CouponModule,

@@ -427,6 +427,14 @@
       display:block; max-width:150px; margin-top:3px; color:#64748b;
       font-size:9.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
+    .cc-badge { display: inline-flex; align-items: center; margin: 3px 0 0 4px; padding: 1px 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; line-height: 1.5; white-space: nowrap; }
+    .cc-badge.is-confirmed { background: #e3f5ea; color: #16723f; }
+    .cc-badge.is-change { background: #fff1db; color: #b45309; }
+    .wa-badge { display: inline-flex; align-items: center; gap: 2px; margin-top: 3px; padding: 1px 6px; border-radius: 999px; font-size: 10.5px; font-weight: 700; line-height: 1.5; white-space: nowrap; background: #e9f7ee; color: #1a7f45; }
+    .wa-badge i { font-size: 11px; }
+    .wa-badge.is-sent { background: #f1f3f2; color: #5b6b62; }
+    .wa-badge.is-read { background: #e6f1fd; color: #1d63c9; }
+    .wa-badge.is-failed { background: #fdecec; color: #b91c1c; }
     .repeat-badge {
       display: inline-block; padding: 1px 6px; border-radius: 20px;
       font-size: 10px; font-weight: 800; color: #fff; margin-left: 4px;
@@ -2935,7 +2943,7 @@
         courierLink:1, fraudChecker:1, admin:1, user:1, deliveryDate:1, orderedItems:1,
         division:1, area:1, zone:1,
         note:1, adminNote:1, adminNoteBy:1, adminNotes:1, city:1, status:1, email:1,
-        orderOrigin:1, orderFrom:1, manualOrderSource:1, attribution:1, courierSchedule:1,
+        orderOrigin:1, orderFrom:1, manualOrderSource:1, attribution:1, courierSchedule:1, whatsappMessages:1, customerConfirmation:1,
       },
     };
     if (isIncompleteView) {
@@ -3563,6 +3571,35 @@
   }
 
   /* ── Phone cell ── */
+  // Automatic WhatsApp order messages (api/src/shared/whatsapp): one small badge per order with the
+  // furthest status; the tooltip lists each message. Nothing shows until a message was sent.
+  var WA_KIND = { order_placed: 'Order placed', order_shipped: 'Sent to courier' };
+  var WA_STATUS = { sending: 'sending', sent: 'sent', delivered: 'delivered', read: 'read', failed: 'not delivered' };
+  function whatsappBadge(o) {
+    var list = Array.isArray(o.whatsappMessages) ? o.whatsappMessages : [];
+    if (!list.length) return '';
+    var failed = list.some(function(m){ return m.status==='failed'; });
+    var read = list.some(function(m){ return m.status==='read'; });
+    var delivered = read || list.some(function(m){ return m.status==='delivered'; });
+    var cls = failed ? 'is-failed' : read ? 'is-read' : delivered ? 'is-delivered' : 'is-sent';
+    var mark = failed ? '✕' : delivered ? '✓✓' : '✓';
+    var tip = 'WhatsApp — ' + list.map(function(m){
+      return (WA_KIND[m.kind]||m.kind) + ': ' + (WA_STATUS[m.status]||m.status) + (m.status==='failed'&&m.error ? ' ('+m.error+')' : '');
+    }).join(' · ');
+    return '<span class="wa-badge '+cls+'" title="'+esc(tip)+'" aria-label="'+esc(tip)+'"><i class="fab fa-whatsapp"></i>'+mark+'</span>';
+  }
+
+  // The customer's tap on the WhatsApp order message: "অর্ডার কনফার্ম" (status moves to Confirmed
+  // by itself) or "পরিবর্তন চাই" (staff should call or message them).
+  function customerConfirmBadge(o) {
+    var c = o.customerConfirmation;
+    if (!c || !c.status) return '';
+    var when = c.at ? new Date(c.at).toLocaleString('en-GB', { timeZone: 'Asia/Dhaka', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+    if (c.status === 'confirmed') return '<span class="cc-badge is-confirmed" title="Customer tapped অর্ডার কনফার্ম on WhatsApp'+(when?' · '+esc(when):'')+'">✓ Customer confirmed</span>';
+    if (c.status === 'change') return '<span class="cc-badge is-change" title="Customer tapped পরিবর্তন চাই on WhatsApp'+(when?' · '+esc(when):'')+' — call or message them">✎ Wants change</span>';
+    return '';
+  }
+
   function phoneCell(phone) {
     if (!phone) return '—';
     var count=repeatMap[phone]||0;
@@ -3897,7 +3934,7 @@
         '<tr class="'+rowCls+'">',
         '<td class="col-check"><input type="checkbox" class="row-check" value="'+o._id+'" onchange="updateBulkBar()"></td>',
         '<td class="col-no"><a href="'+ADMIN_URL+'/sales/order-details/'+o._id+'" target="_blank" class="order-no">#'+esc(o.orderId||o._id.slice(-6))+'</a></td>',
-        '<td>'+phoneCell(o.phoneNo)+'</td>',
+        '<td>'+phoneCell(o.phoneNo)+whatsappBadge(o)+customerConfirmBadge(o)+'</td>',
         '<td class="col-name"><div class="cell-clamp" title="'+esc(o.name||'')+'">'+esc(o.name||'—')+'</div></td>',
         '<td class="col-address"><div class="cell-clamp" title="'+esc(rowAddress(o))+'">'+esc(rowAddress(o))+'</div></td>',
         '<td>'+fmtDate(o.createdAt||o.checkoutDate)+'</td>',

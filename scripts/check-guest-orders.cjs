@@ -134,6 +134,12 @@ function httpCall(port,method,url,body,token){return new Promise((resolve,reject
   const success=new BulkSmsService({post:()=>of({data:[{status:'SENT'}]})},{get:()=> 'test-only'});await success.sendOrderAccessOtp(PHONE,'test');
   new (require('node:vm').Script)(fs.readFileSync(path.join(root,'gtm-snippets/guest-orders.html'),'utf8').match(/<script>([\s\S]*?)<\/script>/)[1]);
   // The header button's taps must skip the shop's fast-tap replay, which swallowed its click (2026-11-09).
+  { const popup=fs.readFileSync(path.join(root,'gtm-snippets/guest-orders.html'),'utf8');
+    // The code step survives a reload (customers switch to the SMS app), and "too soon" opens it.
+    assert.match(popup,/var PENDING_KEY = 'amol-guest-order-pending-v1';/);
+    assert.match(popup,/phase='code';retryAt=Date\.now\(\)\+60000;savePending\(Date\.now\(\)\);render\(\);/);
+    assert.match(popup,/if\(error\.status===429&&phase==='phone'\)\{/);
+    assert.match(popup,/if\(!session&&phase==='phone'\)restorePending\(\);/); }
   assert.match(fs.readFileSync(path.join(root,'gtm-snippets/guest-orders.html'),'utf8'),/window\.addEventListener\('pointerup',letOwnClickThrough,true\);\s*window\.addEventListener\('touchend',letOwnClickThrough,true\);/);
   console.log('Guest orders: OTP, ownership, expiry, HTTP validation, concurrent cancellation, inventory recovery and courier exclusion pass');
  } finally{await app.close();await connection.dropDatabase();await connection.close();}

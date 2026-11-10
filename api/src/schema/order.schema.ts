@@ -396,6 +396,32 @@ export const OrderSchema = new mongoose.Schema(
       ],
       default: undefined,
     },
+    // Automatic WhatsApp messages (shared/whatsapp): one per kind, with Meta's
+    // delivery status. Unset until the first message.
+    whatsappMessages: {
+      type: [
+        {
+          _id: false,
+          kind: { type: String },
+          template: { type: String },
+          to: { type: String },
+          status: { type: String },
+          messageId: { type: String },
+          error: { type: String },
+          at: { type: Date },
+          updatedAt: { type: Date },
+        },
+      ],
+      default: undefined,
+    },
+    // The customer's answer on the WhatsApp order message: confirmed (status set to
+    // Confirmed) or change (staff should call). Unset until they tap a button.
+    customerConfirmation: {
+      status: { type: String },
+      at: { type: Date },
+      via: { type: String },
+      messageId: { type: String },
+    },
     // Staff whose action booked the courier parcel.
     courierSentBy: {
       _id: { type: Schema.Types.ObjectId, ref: 'Admin' },
@@ -475,6 +501,9 @@ export const OrderSchema = new mongoose.Schema(
 );
 
 OrderSchema.index({ phoneNo: 1, createdAt: 1 });
+
+// WhatsApp delivery updates find their order by message id.
+OrderSchema.index({ 'whatsappMessages.messageId': 1 }, { sparse: true });
 
 // Future delivery: the every-minute run and the Orders page tab.
 OrderSchema.index(

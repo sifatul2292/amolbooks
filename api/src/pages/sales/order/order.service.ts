@@ -56,6 +56,7 @@ import { AnalyticsService } from '../../../shared/analytics/analytics.service';
 import { StockMovement } from '../../../interfaces/common/stock-movement.interface';
 import { withCalculatedSpecialPackageSubtotal } from '../../../shared/utils/special-package-price.util';
 import { StaffActivityService } from '../../staff-activity/staff-activity.service';
+import { WhatsappService } from '../../../shared/whatsapp/whatsapp.service';
 const ObjectId = Types.ObjectId;
 
 // Process-level TTL cache for the public recent-buyers feed. Caps DB load on a
@@ -132,10 +133,14 @@ export class OrderService {
     private analyticsService: AnalyticsService,
     @Optional()
     private readonly staffActivityService?: StaffActivityService,
+    @Optional()
+    private readonly whatsappService?: WhatsappService,
   ) {
     this.checkAndUpdateCourierStatus();
     this.scheduleManualMetaPurchaseRetries();
     this.scheduleWebsitePurchaseGapFill();
+    // A tap on the WhatsApp order message's buttons (shared/whatsapp).
+    this.whatsappService?.onCustomerReply((reply) => this.handleWhatsappReply(reply));
     schedule.scheduleJob('*/1 * * * *', () => {
       this.reconcileCustomerCancellationStock().catch(() => this.logger.error('Customer cancellation stock reconciliation failed'));
     });
@@ -802,6 +807,11 @@ export class OrderService {
       `;
           this.emailService.sendEmail(saveData.email, 'Amol Books', html);
         }
+      }
+
+      // 6) WhatsApp order message (off unless WHATSAPP_* is set; the SMS above still goes out)
+      if (saveData['paymentType'] === 'cash_on_delivery') {
+        this.notifyWhatsapp('order_placed', saveData);
       }
     } catch (error) {
       this.logger.error(
@@ -3071,6 +3081,46 @@ export class OrderService {
   }
 
   // Staff attribution is bookkeeping only: it never fails or blocks an order action.
+  /**
+   * The customer tapped "অর্ডার কনফার্ম" or "পরিবর্তন চাই" on the WhatsApp order message.
+   * Confirm works like a staff confirm (status Confirmed, timeline, confirmation SMS); only for
+   * an open order (Pending/Processing, not booked or cancelled) and only from the order's own
+   * number. "Change" marks the order for staff. The answer decides the reply the customer gets.
+   */
+  async handleWhatsappReply(reply: { action: 'confirm' | 'change'; orderId: string; from: string; messageId?: string }): Promise<{ status: 'confirmed' | 'already' | 'change' | 'closed' | 'unknown'; orderId?: string }> {
+    const order: any = await this.orderModel.findById(reply.orderId).select('orderId phoneNo orderStatus customerCancelledAt courierData').lean();
+    if (!order || WhatsappService.toWhatsappNumber(order.phoneNo) !== String(reply.from)) return { status: 'unknown' };
+    const orderId = String(order.orderId || '');
+    const OPEN = [OrderStatus.NONE, OrderStatus.PENDING, OrderStatus.PROCESSING];
+    const open = OPEN.includes(Number(order.orderStatus)) && !order.customerCancelledAt && !order.courierData?.consignmentId;
+    const stamp = (status: string) => ({ status, at: new Date(), via: 'whatsapp', messageId: reply.messageId });
+    if (reply.action === 'change') {
+      if (!open) return { status: 'closed', orderId };
+      await this.orderModel.updateOne({ _id: order._id }, { $set: { customerConfirmation: stamp('change') } });
+      return { status: 'change', orderId };
+    }
+    if (!open) {
+      const moving = [OrderStatus.CONFIRM, OrderStatus.SHIPPING, OrderStatus.DELIVERED, OrderStatus.Courier].includes(Number(order.orderStatus));
+      return { status: moving ? 'already' : 'closed', orderId };
+    }
+    // One tap confirms; a second tap (or a staff confirm in between) only gets "already confirmed".
+    const claim = await this.orderModel.updateOne(
+      { _id: order._id, orderStatus: { $in: OPEN }, 'customerConfirmation.status': { $ne: 'confirmed' } },
+      { $set: { customerConfirmation: stamp('confirmed') } },
+    );
+    if (!claim.modifiedCount) return { status: 'already', orderId };
+    await this.changeOrderStatus(String(order._id), { orderStatus: OrderStatus.CONFIRM } as any);
+    return { status: 'confirmed', orderId };
+  }
+
+  /** WhatsApp order message (shared/whatsapp); never holds up or fails the order flow. */
+  private notifyWhatsapp(kind: 'order_placed' | 'order_shipped', order: any, courierData?: any): void {
+    if (!this.whatsappService || !order) return;
+    this.whatsappService.notifyOrder(kind, order, courierData).catch((error) =>
+      this.logger.warn(`WhatsApp ${kind} failed for order ${order?.orderId}: ${error?.message || error}`),
+    );
+  }
+
   private async trackStaff(
     task: (staff: StaffActivityService) => Promise<any>,
   ): Promise<void> {
@@ -4414,6 +4464,7 @@ export class OrderService {
             await this.trackStaff((staff) =>
               staff.courierSent(fOrder, orderCourierData, actor),
             );
+            this.notifyWhatsapp('order_shipped', fOrder, orderCourierData);
           }
         }
       }
@@ -4446,6 +4497,7 @@ export class OrderService {
             await this.trackStaff((staff) =>
               staff.courierSent(fOrder, orderCourierData, actor),
             );
+            this.notifyWhatsapp('order_shipped', fOrder, orderCourierData);
           }
         }
       }
@@ -4506,6 +4558,7 @@ export class OrderService {
             await this.trackStaff((staff) =>
               staff.courierSent(fOrder, orderCourierData, actor),
             );
+            this.notifyWhatsapp('order_shipped', fOrder, orderCourierData);
           }
         }
       }
@@ -4627,6 +4680,7 @@ export class OrderService {
               await this.trackStaff((staff) =>
                 staff.courierSent(fOrder, orderCourierData, actor),
               );
+              this.notifyWhatsapp('order_shipped', fOrder, orderCourierData);
             }
           }
         }
@@ -4656,6 +4710,7 @@ export class OrderService {
               await this.trackStaff((staff) =>
                 staff.courierSent(fOrder, orderCourierData, actor),
               );
+              this.notifyWhatsapp('order_shipped', fOrder, orderCourierData);
             }
           }
         }
@@ -4717,6 +4772,7 @@ export class OrderService {
               await this.trackStaff((staff) =>
                 staff.courierSent(fOrder, orderCourierData, actor),
               );
+              this.notifyWhatsapp('order_shipped', fOrder, orderCourierData);
             }
           }
         }

@@ -56,6 +56,17 @@ app-login > .ab-guest-orders-entry { display:block; width:calc(100% - 32px); max
   function esc(value) { return String(value == null ? '' : value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
   function money(value) { return '৳' + Math.max(0,Number(value)||0).toLocaleString('en-BD'); }
   function clearSession() { session=null; try { sessionStorage.removeItem(SESSION_KEY); } catch (_) {} }
+  // The code step survives a reload (customers leave for the SMS app and the page can reload).
+  var PENDING_KEY = 'amol-guest-order-pending-v1';
+  var CODE_LIFETIME_MS = 300000;
+  function savePending(sentAt) { try { sessionStorage.setItem(PENDING_KEY, JSON.stringify({ phone: phone, sentAt: sentAt })); } catch (_) {} }
+  function clearPending() { try { sessionStorage.removeItem(PENDING_KEY); } catch (_) {} }
+  function restorePending() {
+    var pending = null;
+    try { pending = JSON.parse(sessionStorage.getItem(PENDING_KEY) || 'null'); } catch (_) {}
+    if (!pending || !pending.phone || !(Date.now() - Number(pending.sentAt) < CODE_LIFETIME_MS)) { clearPending(); return; }
+    phone = String(pending.phone); phase = 'code'; retryAt = Math.max(retryAt, Number(pending.sentAt) + 60000);
+  }
   try { session=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null'); } catch (_) {}
   if (!session || !/^[a-f0-9]{64}$/.test(session.token||'') || !(Date.parse(session.expiresAt)>Date.now())) clearSession();
   function message(text,error) {
@@ -73,7 +84,7 @@ app-login > .ab-guest-orders-entry { display:block; width:calc(100% - 32px); max
         if (!response.ok || !result.success) {
           if (response.status===401 && !/verify-code/.test(path) && session&&session.token===sentToken) { clearSession();phase='phone';render(); }
           var text=typeof result.message==='string'&&/[\u0980-\u09ff]/.test(result.message)?result.message:(response.status===429?'অনেকবার চেষ্টা হয়েছে। কিছুক্ষণ পরে আবার চেষ্টা করুন':'অনুরোধ সম্পন্ন হয়নি। নম্বর ও কোড যাচাই করে আবার চেষ্টা করুন');
-          var failure=new Error(text);failure.userMessage=true;throw failure;
+          var failure=new Error(text);failure.userMessage=true;failure.status=response.status;throw failure;
         }
         return result;
       });}).catch(function(error){if(error.userMessage)throw error;throw new Error('ইন্টারনেট সংযোগে সমস্যা হচ্ছে। আবার চেষ্টা করুন');});
@@ -112,8 +123,16 @@ app-login > .ab-guest-orders-entry { display:block; width:calc(100% - 32px); max
     sending=true;
     dialog.querySelectorAll('form button,[data-go="resend"]').forEach(function(button){button.disabled=true;});
     message('কোড পাঠানো হচ্ছে…');
-    request('/request-code',{phoneNo:phone}).then(function(result){phase='code';retryAt=Date.now()+60000;render();if(dialog.open)dialog.querySelector('#go-code').focus();if(LOCAL_PREVIEW&&/^\d{6}$/.test(result.developmentCode||''))message('পরীক্ষামূলক প্রিভিউ — SMS পাঠানো হয়নি। পরীক্ষার কোড: '+result.developmentCode);})
-      .catch(function(error){message(error.message,true);})
+    request('/request-code',{phoneNo:phone}).then(function(result){phase='code';retryAt=Date.now()+60000;savePending(Date.now());render();if(dialog.open)dialog.querySelector('#go-code').focus();if(LOCAL_PREVIEW&&/^\d{6}$/.test(result.developmentCode||''))message('পরীক্ষামূলক প্রিভিউ — SMS পাঠানো হয়নি। পরীক্ষার কোড: '+result.developmentCode);})
+      .catch(function(error){
+        if(error.status===429&&phase==='phone'){
+          // A code went to this number less than a minute ago (or the hourly limit is reached): let them type it.
+          phase='code';retryAt=Math.max(retryAt,Date.now()+60000);render();
+          message('এই নম্বরে কিছুক্ষণ আগে একটি কোড পাঠানো হয়েছে। SMS-এর ৬ সংখ্যার কোডটি নিচে লিখুন।');
+          var codeInput=dialog.open&&dialog.querySelector('#go-code');if(codeInput)codeInput.focus();
+          return;
+        }
+        message(error.message,true);})
       .finally(function(){sending=false;dialog.querySelectorAll('form button').forEach(function(button){button.disabled=false;});updateResend();});
   }
   function loadOrders(more) {
@@ -136,7 +155,7 @@ app-login > .ab-guest-orders-entry { display:block; width:calc(100% - 32px); max
       if(form.dataset.goForm==='phone'){phone=form.elements.phoneNo.value.trim();sendCode();return;}
       var code=form.elements.code.value.replace(/[০-৯]/g,function(digit){return String('০১২৩৪৫৬৭৮৯'.indexOf(digit));});
       sending=true;form.querySelector('button').disabled=true;message('যাচাই হচ্ছে…');
-      request('/verify-code',{phoneNo:phone,code:code}).then(function(result){session=result.data;orders=[];try{sessionStorage.setItem(SESSION_KEY,JSON.stringify(session));}catch(_){}render();loadOrders(false);})
+      request('/verify-code',{phoneNo:phone,code:code}).then(function(result){session=result.data;orders=[];clearPending();try{sessionStorage.setItem(SESSION_KEY,JSON.stringify(session));}catch(_){}render();loadOrders(false);})
         .catch(function(error){message(error.message,true);}).finally(function(){sending=false;if(form.isConnected)form.querySelector('button').disabled=false;});
     });
     dialog.addEventListener('click',function(event){
@@ -144,11 +163,11 @@ app-login > .ab-guest-orders-entry { display:block; width:calc(100% - 32px); max
       var action=button.dataset.go;
       if(sending&&(action==='change'||action==='resend'))return;
       if(action==='close'){dialog.close();return;}
-      if(action==='change'){phase='phone';render();return;}
+      if(action==='change'){phase='phone';clearPending();render();return;}
       if(action==='resend'){sendCode();return;}
       if(action==='refresh'||action==='more'){loadOrders(action==='more');return;}
       if(action==='logout'){
-        button.disabled=true;request('/logout',{}).catch(function(){}).finally(function(){clearSession();orders=[];phone='';phase='phone';render();});return;
+        button.disabled=true;request('/logout',{}).catch(function(){}).finally(function(){clearSession();clearPending();orders=[];phone='';phase='phone';render();});return;
       }
       var card=button.closest('[data-order-id]');if(!card)return;
       if(action==='ask-cancel'){
@@ -173,8 +192,9 @@ app-login > .ab-guest-orders-entry { display:block; width:calc(100% - 32px); max
     event.preventDefault();lastFocus=event.target;
     if(!dialog)createDialog();
     if(session&&!(Date.parse(session.expiresAt)>Date.now()))clearSession();
+    if(!session&&phase==='phone')restorePending();
     dialog.showModal();render();
-    if(session)loadOrders(false);else dialog.querySelector('input').focus();
+    if(session)loadOrders(false);else{dialog.querySelector('input').focus();if(phase==='code')message('আপনার নম্বরে পাঠানো ৬ সংখ্যার কোডটি লিখুন।');}
     clearInterval(timer);timer=setInterval(function(){updateResend();if(session&&!(Date.parse(session.expiresAt)>Date.now())){clearSession();orders=[];phase='phone';render();message('সেশনের মেয়াদ শেষ। আবার মোবাইল নম্বর যাচাই করুন',true);}},1000);
   }
   function addEntry(host,nav) {

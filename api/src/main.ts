@@ -600,6 +600,8 @@ ${storefrontPurchaseExternalIdHelper}
     // After package-free-delivery.html: both hook the app's chunk loading.
     'book-pair-offer.html',
     'guest-orders.html',
+    // "Order updates will come on WhatsApp" at checkout, only while WhatsApp messages are on.
+    'checkout-whatsapp-note.html',
     'commerce-events.html',
     'mobile-browsing.html',
     // Tidies autofilled +880 numbers in the checkout phone box (the box used to cut them).
@@ -1171,7 +1173,15 @@ ${storefrontPurchaseExternalIdHelper}
       });
     }
   );
-  app.use(json({ limit: '50mb' }));
+  // The WhatsApp webhook checks Meta's signature over the exact bytes it sent.
+  app.use(
+    json({
+      limit: '50mb',
+      verify: (req: any, _res, buffer) => {
+        if (String(req.originalUrl || req.url || '').startsWith('/api/whatsapp/webhook')) req.rawBody = buffer;
+      },
+    }),
+  );
   app.use(urlencoded({ extended: true, limit: '50mb' }));
 
   // The local Mongo database intentionally contains only development fixtures,
