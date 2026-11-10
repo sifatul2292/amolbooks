@@ -433,6 +433,8 @@
     .cc-badge.is-more { background: #fff1db; color: #b45309; }
     .wa-badge { display: inline-flex; align-items: center; gap: 2px; margin-top: 3px; padding: 1px 6px; border-radius: 999px; font-size: 10.5px; font-weight: 700; line-height: 1.5; white-space: nowrap; background: #e9f7ee; color: #1a7f45; }
     .wa-badge i { font-size: 11px; }
+    a.wa-badge { text-decoration: none; }
+    a.wa-badge[href]:hover { filter: brightness(0.94); }
     .wa-badge.is-sent { background: #f1f3f2; color: #5b6b62; }
     .wa-badge.is-read { background: #e6f1fd; color: #1d63c9; }
     .wa-badge.is-failed { background: #fdecec; color: #b91c1c; }
@@ -2253,7 +2255,8 @@
 
   /* ── State ── */
   var state = {
-    page: 0, pageSize: 25, search: '',
+    // ?q= opens the list already searched (WhatsApp Inbox order links).
+    page: 0, pageSize: 25, search: String(params.get('q') || '').trim().slice(0, 80),
     paymentStatus: '', paymentType: '', orderStatus: '',
     createdFrom: '', createdTo: '', deliveryFrom: '', deliveryTo: '',
     totalCount: 0, totalAmount: 0,
@@ -2287,6 +2290,7 @@
     if (title) title.textContent = isIncompleteView ? 'Incomplete Orders' : 'Order List';
     var search = document.getElementById('searchInput');
     if (search) search.placeholder = isIncompleteView ? 'Search abandoned order / phone / name...' : 'Search order / phone / name...';
+    if (search && state.search && !search.value) search.value = state.search;
     var totalLabel = document.getElementById('totalOrdersLabel');
     if (totalLabel) totalLabel.textContent = isIncompleteView ? 'Incomplete Orders' : 'Processing Orders';
     var statusTabs = document.getElementById('statusTabs');
@@ -3587,7 +3591,10 @@
     var tip = 'WhatsApp — ' + list.map(function(m){
       return (WA_KIND[m.kind]||m.kind) + ': ' + (WA_STATUS[m.status]||m.status) + (m.status==='failed'&&m.error ? ' ('+m.error+')' : '');
     }).join(' · ') + (o.orderSmsSkippedAt ? ' · order SMS not sent (WhatsApp delivered)' : '');
-    return '<span class="wa-badge '+cls+'" title="'+esc(tip)+'" aria-label="'+esc(tip)+'"><i class="fab fa-whatsapp"></i>'+mark+'</span>';
+    // Click: the customer's chat in the WhatsApp Inbox.
+    var to = (list.find(function(m){ return m.to; }) || {}).to;
+    var href = to ? ' href="whatsapp-inbox.html?wa='+encodeURIComponent(to)+'" target="_blank" rel="noopener"' : '';
+    return '<a class="wa-badge '+cls+'"'+href+' title="'+esc(tip+(to?' · click to open the chat':''))+'" aria-label="'+esc(tip)+'"><i class="fab fa-whatsapp"></i>'+mark+'</a>';
   }
 
   // The customer's tap on the WhatsApp order message: "অর্ডার কনফার্ম" (status moves to Confirmed

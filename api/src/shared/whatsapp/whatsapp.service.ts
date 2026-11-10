@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as crypto from 'crypto';
@@ -21,6 +21,24 @@ export interface WhatsappReplyResult {
 }
 type ReplyHandler = (reply: WhatsappCustomerReply) => Promise<WhatsappReplyResult>;
 type OrderSmsHandler = (orderId: string) => Promise<void>;
+/** One message for the WhatsApp Inbox (whatsapp-chat.schema.ts). */
+export interface WhatsappChatEntry {
+  wa: string;
+  direction: 'in' | 'out';
+  kind: 'customer' | 'order' | 'auto' | 'staff';
+  type: string;
+  text?: string;
+  media?: { id?: string; mime?: string; filename?: string };
+  messageId?: string;
+  status?: string;
+  error?: string;
+  orderId?: string;
+  by?: { _id?: any; name?: string };
+  at?: Date;
+  name?: string;
+}
+/** What customers get when they write (not a button): see replyText. */
+export type WhatsappAutoReply = 'inbox' | 'handover' | 'off';
 
 /** Status order, so a late "delivered" never overwrites "read". */
 const STATUS_RANK: Record<string, number> = { sending: 0, sent: 1, delivered: 2, read: 3, failed: 4 };
@@ -33,6 +51,7 @@ const SEEN_LIMIT = 2000;
 const DEFAULT_SMS_WAIT_SECONDS = 120;
 const SMS_CHECK_EVERY_MS = 15 * 1000;
 const SMS_BATCH = 100;
+const MAX_MEDIA_BYTES = 16 * 1024 * 1024;
 
 /**
  * Automatic WhatsApp order messages through Meta's WhatsApp Cloud API (template messages).
@@ -52,7 +71,12 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
   private smsTimer: NodeJS.Timeout | null = null;
   private settling = false;
 
-  constructor(@InjectModel('Order') private readonly orderModel: Model<any>) {}
+  constructor(
+    @InjectModel('Order') private readonly orderModel: Model<any>,
+    // WhatsApp Inbox storage; without it (some checks) messages are simply not kept.
+    @Optional() @InjectModel('WhatsappChat') private readonly chatModel?: Model<any>,
+    @Optional() @InjectModel('WhatsappChatMessage') private readonly chatMessageModel?: Model<any>,
+  ) {}
 
   /** Held SMS are checked all the time (also after WhatsApp is switched off), so none is lost. */
   onModuleInit() {
@@ -93,7 +117,112 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
       smsWaitMs: Math.max(30, Number(env.WHATSAPP_SMS_WAIT_SECONDS) || DEFAULT_SMS_WAIT_SECONDS) * 1000,
       // The staff WhatsApp (Business app) number customers are sent to for questions.
       helpNumber: String(env.WHATSAPP_HELP_NUMBER || '8801893058682').replace(/\D/g, ''),
+      // Customers' own messages: inbox (default since the WhatsApp Inbox, 2026-11-10: "we got it,
+      // our team answers here"), handover (point them to helpNumber) or off (no automatic answer).
+      autoReply: (['inbox', 'handover', 'off'].includes(String(env.WHATSAPP_AUTO_REPLY || '').trim().toLowerCase())
+        ? String(env.WHATSAPP_AUTO_REPLY).trim().toLowerCase() : 'inbox') as WhatsappAutoReply,
     };
+  }
+
+  /**
+   * Keep one message for the WhatsApp Inbox and update its chat row. 'duplicate' when Meta
+   * delivered the same message again (stored once). Never throws: the inbox must not break
+   * order messages or button taps.
+   */
+  async recordChat(entry: WhatsappChatEntry): Promise<'saved' | 'duplicate' | 'skipped'> {
+    if (!this.chatModel || !this.chatMessageModel || !entry?.wa) return 'skipped';
+    const at = entry.at instanceof Date && !Number.isNaN(entry.at.getTime()) ? entry.at : new Date();
+    const text = String(entry.text || '').slice(0, 4096);
+    try {
+      await this.chatMessageModel.create({
+        wa: entry.wa, direction: entry.direction, kind: entry.kind, type: entry.type, text,
+        ...(entry.media?.id ? { media: entry.media } : {}),
+        ...(entry.messageId ? { messageId: entry.messageId } : {}),
+        ...(entry.status ? { status: entry.status } : {}),
+        ...(entry.error ? { error: entry.error } : {}),
+        ...(entry.orderId ? { orderId: String(entry.orderId) } : {}),
+        ...(entry.by?.name ? { by: entry.by } : {}),
+        at,
+      });
+    } catch (error) {
+      if (error?.code === 11000) return 'duplicate';
+      this.logger.warn(`WhatsApp inbox could not keep a message: ${error?.message || error}`);
+      return 'skipped';
+    }
+    const incoming = entry.direction === 'in';
+    const preview = WhatsappService.previewText(entry.type, text);
+    try {
+      await this.chatModel.updateOne(
+        { wa: entry.wa },
+        {
+          $set: {
+            lastAt: at, lastText: preview, lastDirection: entry.direction,
+            lastKind: entry.kind, lastBy: entry.kind === 'staff' ? String(entry.by?.name || '') : '',
+            ...(incoming ? { lastCustomerAt: at } : {}),
+            ...(entry.kind === 'staff' && entry.by?.name ? { lastStaff: { name: String(entry.by.name).slice(0, 80), at } } : {}),
+            ...(entry.name ? { name: String(entry.name).slice(0, 120) } : {}),
+          },
+          ...(incoming ? { $inc: { unread: 1 } } : {}),
+          $setOnInsert: { wa: entry.wa },
+        },
+        { upsert: true },
+      );
+    } catch (error) {
+      this.logger.warn(`WhatsApp inbox could not update a chat: ${error?.message || error}`);
+    }
+    return 'saved';
+  }
+
+  /** One line for the chat list: the text, or what was sent ("🎤 Voice note"). */
+  static previewText(type: string, text: string): string {
+    const label: Record<string, string> = { image: '📷 Photo', audio: '🎤 Voice note', video: '🎥 Video', document: '📄 File', sticker: 'Sticker', location: '📍 Location', contacts: '👤 Contact' };
+    const body = String(text || '').replace(/\s+/g, ' ').trim();
+    const line = label[type] && type !== 'location' && type !== 'contacts' ? (body ? `${label[type]}: ${body}` : label[type]) : body || label[type] || `[${type}]`;
+    return line.slice(0, 160);
+  }
+
+  /** Free-form message that is also kept in the inbox (automatic answers and staff replies). */
+  async sendChatText(to: string, text: string, meta: { kind: 'auto' | 'staff'; by?: { _id?: any; name?: string }; orderId?: string }): Promise<string> {
+    const messageId = await this.sendText(to, text);
+    await this.recordChat({ wa: to, direction: 'out', kind: meta.kind, type: 'text', text, messageId, status: 'sent', by: meta.by, orderId: meta.orderId });
+    return messageId;
+  }
+
+  /** Inbox summary of an order message (the template text itself lives at Meta). */
+  static templateSummary(kind: WhatsappOrderKind, params: string[]): string {
+    return kind === 'order_placed'
+      ? `Order message #${params[1]}: ${params[2]} · ৳${params[3]}`
+      : `Courier message #${params[1]}: ${params[2]} ${params[3]}`;
+  }
+
+  /** What a customer's message says, for the inbox: text, caption, button label, or a short note. */
+  static incomingContent(message: any): { type: string; text: string; media?: { id?: string; mime?: string; filename?: string } } {
+    const type = String(message?.type || 'unsupported');
+    const part = message?.[type] || {};
+    if (type === 'text') return { type, text: String(part.body || '') };
+    if (type === 'button') return { type, text: String(part.text || part.payload || '') };
+    if (type === 'interactive') {
+      const reply = part.button_reply || part.list_reply || {};
+      return { type: 'button', text: String(reply.title || reply.id || '') };
+    }
+    if (['image', 'audio', 'video', 'document', 'sticker'].includes(type)) {
+      return {
+        type,
+        text: String(part.caption || part.filename || ''),
+        media: { id: String(part.id || ''), mime: String(part.mime_type || ''), filename: part.filename ? String(part.filename) : undefined },
+      };
+    }
+    if (type === 'location') {
+      const place = [part.name, part.address].filter(Boolean).join(', ');
+      return { type, text: `📍 ${place ? place + ' ' : ''}https://maps.google.com/?q=${Number(part.latitude)},${Number(part.longitude)}` };
+    }
+    if (type === 'contacts') {
+      const names = (Array.isArray(message.contacts) ? message.contacts : [])
+        .map((contact: any) => [contact?.name?.formatted_name, ...(contact?.phones || []).map((p: any) => p?.phone)].filter(Boolean).join(' '));
+      return { type, text: `Contact: ${names.join('; ')}` };
+    }
+    if (type === 'reaction') return { type, text: `Reacted ${String(part.emoji || '')}`.trim() };
+    return { type: 'unsupported', text: '[This message type cannot be shown]' };
   }
 
   /** OrderService registers what a button tap does (confirm / more / change); see handleWhatsappReply. */
@@ -253,18 +382,23 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
     );
     if (!claim.modifiedCount) return 'skipped';
     let update: Record<string, any>;
+    const params = WhatsappService.templateParams(kind, order, courierData);
+    const chat: WhatsappChatEntry = { wa: to, direction: 'out', kind: 'order', type: 'template', text: WhatsappService.templateSummary(kind, params), orderId: String(order.orderId || '') };
     try {
       const buttons = kind === 'order_placed' && config.confirmButtons
         ? [`confirm:${order._id}`, `${config.secondButton}:${order._id}`]
         : undefined;
-      const messageId = await this.sendTemplate(to, template, WhatsappService.templateParams(kind, order, courierData), buttons);
+      const messageId = await this.sendTemplate(to, template, params, buttons);
       update = { 'whatsappMessages.$.status': 'sent', 'whatsappMessages.$.messageId': messageId, 'whatsappMessages.$.updatedAt': new Date() };
+      Object.assign(chat, { messageId, status: 'sent' });
     } catch (error) {
       const message = String(error?.message || error).slice(0, 300);
       this.logger.warn(`WhatsApp ${kind} not sent for order ${order.orderId}: ${message}`);
       update = { 'whatsappMessages.$.status': 'failed', 'whatsappMessages.$.error': message, 'whatsappMessages.$.updatedAt': new Date() };
+      Object.assign(chat, { status: 'failed', error: message });
     }
     await this.orderModel.updateOne({ _id: order._id, 'whatsappMessages.kind': kind }, { $set: update });
+    await this.recordChat(chat);
     // Not sent: a held order SMS goes out now instead of after the wait.
     if (kind === 'order_placed' && update['whatsappMessages.$.status'] === 'failed') {
       await this.settleOrderSms(String(order._id)).catch((error) =>
@@ -283,6 +417,23 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
       components.push({ type: 'button', sub_type: 'quick_reply', index: String(index), parameters: [{ type: 'payload', payload }] });
     });
     return this.post(to, { type: 'template', template: { name: template, language: { code: config.language }, components } });
+  }
+
+  /** A customer's photo / voice note / file (Meta keeps them 30 days): look up its address, then download it with the token. */
+  async fetchMedia(mediaId: string): Promise<{ buffer: Buffer; mime: string }> {
+    const config = this.config();
+    if (!config.token) throw new Error('WhatsApp is not configured');
+    const headers = { Authorization: `Bearer ${config.token}` };
+    const signal = AbortSignal.timeout(SEND_TIMEOUT_MS * 2);
+    const info: any = await fetch(`${config.graphBase}/${config.apiVersion}/${encodeURIComponent(mediaId)}`, { headers, signal })
+      .then((response) => response.json().catch(() => ({})));
+    if (!info?.url) throw new Error(info?.error?.message || 'This file is no longer available at WhatsApp');
+    if (Number(info.file_size) > MAX_MEDIA_BYTES) throw new Error('File too large to show');
+    const file = await fetch(String(info.url), { headers, signal });
+    if (!file.ok) throw new Error(`WhatsApp file download failed (${file.status})`);
+    const buffer = Buffer.from(await file.arrayBuffer());
+    if (buffer.length > MAX_MEDIA_BYTES) throw new Error('File too large to show');
+    return { buffer, mime: String(info.mime_type || file.headers.get('content-type') || 'application/octet-stream') };
   }
 
   /** Free-form text; only allowed within 24 hours of the customer's last message (Meta's rule). */
@@ -349,8 +500,14 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
         for (const status of Array.isArray(change?.value?.statuses) ? change.value.statuses : []) {
           if (await this.applyStatus(status)) updated += 1;
         }
+        // The customer's WhatsApp profile name comes next to their messages.
+        const names = new Map<string, string>();
+        for (const contact of Array.isArray(change?.value?.contacts) ? change.value.contacts : []) {
+          const wa = String(contact?.wa_id || '').replace(/\D/g, '');
+          if (wa && contact?.profile?.name) names.set(wa, String(contact.profile.name));
+        }
         for (const message of Array.isArray(change?.value?.messages) ? change.value.messages : []) {
-          if (await this.handleMessage(message)) handled += 1;
+          if (await this.handleMessage(message, names)) handled += 1;
         }
       }
     }
@@ -363,16 +520,26 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * A customer wrote to the API number. A tap on "অর্ডার কনফার্ম" / "একই ডেলিভারি চার্জে আরও বই নিবো" / "পরিবর্তন চাই"
-   * goes to OrderService; anything else gets one hand-over answer pointing to the staff number,
-   * naming the customer's latest order.
+   * A customer wrote to the API number. Every message is kept for the WhatsApp Inbox. A tap on
+   * "অর্ডার কনফার্ম" / "একই ডেলিভারি চার্জে আরও বই নিবো" / "পরিবর্তন চাই" goes to OrderService;
+   * anything else gets at most one automatic answer per 12 hours (WHATSAPP_AUTO_REPLY), naming
+   * the customer's latest order.
    */
-  private async handleMessage(message: any): Promise<boolean> {
+  private async handleMessage(message: any, names: Map<string, string> = new Map()): Promise<boolean> {
     const id = String(message?.id || '');
     const from = String(message?.from || '').replace(/\D/g, '');
     if (!id || !from || this.seenMessages.has(id)) return false;
     this.seenMessages.add(id);
     if (this.seenMessages.size > SEEN_LIMIT) this.seenMessages.delete(this.seenMessages.values().next().value);
+    const content = WhatsappService.incomingContent(message);
+    // Arrival time (Meta's timestamp has whole seconds only), so the chat reads in the order
+    // things happened, our answers included.
+    const kept = await this.recordChat({
+      wa: from, direction: 'in', kind: 'customer', type: content.type, text: content.text,
+      media: content.media, messageId: id, at: new Date(), name: names.get(from),
+    });
+    // Meta sent it again (e.g. after a restart): already handled.
+    if (kept === 'duplicate') return false;
     if (!this.isConfigured()) return false;
 
     const payload = String(
@@ -393,21 +560,35 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
       if (!result.orderId) result = { ...result, orderId: await this.latestOrderId(from) };
       text = this.replyText(result);
     } else {
+      const mode = this.config().autoReply;
+      // Reactions need no answer; "off" leaves customers' messages to staff in the inbox.
+      if (mode === 'off' || content.type === 'reaction') return true;
       const last = this.lastHandover.get(from) || 0;
       if (Date.now() - last < HANDOVER_EVERY_MS) return true;
+      // Staff are already talking with them in the inbox: no automatic note in between.
+      if (mode === 'inbox' && (await this.staffRepliedSince(from, Date.now() - HANDOVER_EVERY_MS))) return true;
       this.lastHandover.set(from, Date.now());
       text = this.replyText({ status: 'unknown', orderId: await this.latestOrderId(from) });
     }
     try {
-      await this.sendText(from, text);
+      await this.sendChatText(from, text, { kind: 'auto' });
     } catch (error) {
       this.logger.warn(`WhatsApp reply to a customer failed: ${error?.message || error}`);
     }
     return true;
   }
 
+  private async staffRepliedSince(wa: string, since: number): Promise<boolean> {
+    if (!this.chatMessageModel) return false;
+    try {
+      return !!(await this.chatMessageModel.exists({ wa, kind: 'staff', at: { $gte: new Date(since) } }));
+    } catch {
+      return false;
+    }
+  }
+
   /** Sending is possible (enabled + keys); replies don't need a template. */
-  private isConfigured(): boolean {
+  isConfigured(): boolean {
     const config = this.config();
     return config.enabled && !!config.token && !!config.phoneNumberId;
   }
@@ -424,13 +605,32 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Answers on the API number. The chat link to the staff number has a short English text
-   * ("Order #14869") so the link stays short and staff see the order number at once.
+   * Answers on the API number. With the WhatsApp Inbox (WHATSAPP_AUTO_REPLY inbox or off) customers
+   * are asked to write right here; with "handover" they get a chat link to the staff number with a
+   * short English text ("Order #14869") so the link stays short and staff see the order number.
    */
   replyText(result: WhatsappReplyResult): string {
     const id = result.orderId ? String(result.orderId) : '';
     const order = id ? `#${id}` : '';
     const sign = '— amolbooks.com';
+    if (this.config().autoReply !== 'handover') {
+      if (result.status === 'confirmed') {
+        return `ধন্যবাদ! আপনার অর্ডার ${order} কনফার্ম হয়েছে ✅\n৩ দিনের মধ্যে ডেলিভারি করা হবে ইনশাআল্লাহ।\n${sign}`;
+      }
+      if (result.status === 'already') {
+        return `আপনার অর্ডার ${order} আগেই কনফার্ম করা আছে ✅\nকোনো প্রশ্ন থাকলে এখানেই লিখুন, আমাদের টিম উত্তর দেবে ইনশাআল্লাহ।\n${sign}`;
+      }
+      if (result.status === 'more') {
+        return `অবশ্যই! অর্ডার ${order}-এ একই ডেলিভারি চার্জে আরও বই যোগ করা যাবে।\nকোন বই নিতে চান, এখানেই লিখুন, আমাদের টিম যোগ করে দেবে ইনশাআল্লাহ।\n${sign}`;
+      }
+      if (result.status === 'change') {
+        return `অর্ডার ${order}-এ কী পরিবর্তন করতে চান, এখানেই লিখুন।\nআমাদের টিম দ্রুত ঠিক করে দেবে ইনশাআল্লাহ।\n${sign}`;
+      }
+      if (result.status === 'closed') {
+        return `অর্ডার ${order} কুরিয়ারে পাঠানো বা বাতিল হয়ে গেছে, তাই এতে আর কিছু যোগ বা পরিবর্তন করা যাবে না।\nনতুন অর্ডার বা যেকোনো প্রশ্নে এখানেই লিখুন।\n${sign}`;
+      }
+      return `আপনার মেসেজ পেয়েছি ✅\n${id ? `অর্ডার ${order} নিয়ে ` : ''}আমাদের টিম এখানেই উত্তর দেবে ইনশাআল্লাহ।\n${sign}`;
+    }
     const chat = (note = '') => this.handoverLink(id ? `Order #${id}${note ? ` - ${note}` : ''}` : 'Amol Books order');
     if (result.status === 'confirmed') {
       return `ধন্যবাদ! আপনার অর্ডার ${order} কনফার্ম হয়েছে ✅\n৩ দিনের মধ্যে ডেলিভারি করা হবে ইনশাআল্লাহ।\n${sign}`;
@@ -454,6 +654,10 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
     const messageId = String(status?.id || '');
     const next = String(status?.status || '');
     if (!messageId || !(next in STATUS_RANK)) return false;
+    const error = Array.isArray(status?.errors) && status.errors[0]
+      ? `${status.errors[0].code || ''} ${status.errors[0].title || status.errors[0].message || ''}`.trim().slice(0, 300)
+      : undefined;
+    await this.applyChatStatus(messageId, next, error);
     const order: any = await this.orderModel
       .findOne({ 'whatsappMessages.messageId': messageId })
       .select('whatsappMessages')
@@ -461,9 +665,6 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
     const current = order?.whatsappMessages?.find((item: any) => item?.messageId === messageId);
     if (!current) return false;
     if (next !== 'failed' && (STATUS_RANK[current.status] ?? 0) >= STATUS_RANK[next]) return false;
-    const error = Array.isArray(status?.errors) && status.errors[0]
-      ? `${status.errors[0].code || ''} ${status.errors[0].title || status.errors[0].message || ''}`.trim().slice(0, 300)
-      : undefined;
     const set: Record<string, any> = { 'whatsappMessages.$.status': next, 'whatsappMessages.$.updatedAt': new Date() };
     if (error) set['whatsappMessages.$.error'] = error;
     const result = await this.orderModel.updateOne(
@@ -471,5 +672,19 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
       { $set: set },
     );
     return result.modifiedCount > 0;
+  }
+
+  /** The inbox's ticks for the shop's messages (never backwards, like the order record). */
+  private async applyChatStatus(messageId: string, next: string, error?: string): Promise<void> {
+    if (!this.chatMessageModel) return;
+    const lower = Object.keys(STATUS_RANK).filter((name) => next === 'failed' ? name !== 'failed' : STATUS_RANK[name] < STATUS_RANK[next]);
+    try {
+      await this.chatMessageModel.updateOne(
+        { messageId, direction: 'out', status: { $in: lower } },
+        { $set: { status: next, ...(error ? { error } : {}) } },
+      );
+    } catch (error) {
+      this.logger.warn(`WhatsApp inbox tick update failed: ${error?.message || error}`);
+    }
   }
 }

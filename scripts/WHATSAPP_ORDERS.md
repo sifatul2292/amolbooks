@@ -120,6 +120,29 @@ All answers end with "— amolbooks.com". They are free-form messages inside Met
 customer-service window, which the customer opens by tapping or writing: Meta does not charge them.
 Not sent to the courier automatically (staff still press "send to courier").
 
+## WhatsApp Inbox (admin menu → Sales → WhatsApp Inbox)
+
+Everything customers send to the API number is kept (text, photos, voice notes, files, location,
+button taps), together with the shop's own messages (order message, automatic answers, staff
+replies). Page: `/upload/static/whatsapp-inbox.html` (source `gtm-snippets/whatsapp-inbox.html`,
+served with the shared admin menu). Routes `GET /api/whatsapp-inbox/chats`,
+`GET /api/whatsapp-inbox/chats/:number`, `POST /api/whatsapp-inbox/chats/:number/reply`,
+`GET /api/whatsapp-inbox/media/:id`, all staff-login only. Storage: collections `whatsappchats`
+(one per number: name, last message, unread, last customer message) and `whatsappchatmessages`.
+
+- The list shows numbers that wrote to the shop, newest first, with unread counts; search by name
+  or number. Opening a chat marks it read (by that staff member) and shows the customer's orders
+  (links open them on the Orders page). The WhatsApp badge on the Orders page opens the chat.
+- Staff can reply for 24 hours after the customer's last message (Meta's rule; free). After that
+  the page says the chat is closed: call or SMS, or wait until they write again.
+- Photos / voice notes are fetched from WhatsApp when shown (Meta keeps them 30 days).
+- Messages from before the inbox went live were not kept anywhere.
+
+Automatic answer to customers' own messages (`WHATSAPP_AUTO_REPLY`): `inbox` (default: "আপনার
+মেসেজ পেয়েছি ✅ … আমাদের টিম এখানেই উত্তর দেবে", once per 12 hours, not while staff are replying;
+button answers also say "এখানেই লিখুন"), `handover` (point them to the staff number, as before) or
+`off` (no automatic answer). Check: `node scripts/check-whatsapp-inbox.cjs`.
+
 ## 3. Server settings (`api/.env`, then restart)
 
 ```
@@ -139,6 +162,8 @@ WHATSAPP_API_VERSION=v26.0
 WHATSAPP_HELP_NUMBER=8801893058682
 # seconds the order SMS waits for WhatsApp delivery (min 30)
 WHATSAPP_SMS_WAIT_SECONDS=120
+# customers' own messages: inbox (default) | handover | off
+WHATSAPP_AUTO_REPLY=inbox
 ```
 
 Then `pm2 restart amolbooks-api`. Turning it off: `WHATSAPP_ENABLED=false` and restart.

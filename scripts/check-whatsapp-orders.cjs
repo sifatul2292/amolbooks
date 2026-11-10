@@ -28,7 +28,7 @@ const loose = () => new mongoose.Schema({}, { strict: false });
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const WA_ENV = ['WHATSAPP_ENABLED', 'WHATSAPP_ACCESS_TOKEN', 'WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_API_VERSION', 'WHATSAPP_GRAPH_BASE',
   'WHATSAPP_TEMPLATE_LANGUAGE', 'WHATSAPP_TEMPLATE_ORDER_PLACED', 'WHATSAPP_TEMPLATE_ORDER_SHIPPED', 'WHATSAPP_APP_SECRET', 'WHATSAPP_WEBHOOK_VERIFY_TOKEN',
-  'WHATSAPP_CONFIRM_BUTTONS', 'WHATSAPP_SMS_WAIT_SECONDS'];
+  'WHATSAPP_CONFIRM_BUTTONS', 'WHATSAPP_SMS_WAIT_SECONDS', 'WHATSAPP_AUTO_REPLY'];
 let connection;
 let server;
 
@@ -89,6 +89,8 @@ let server;
       WHATSAPP_ENABLED: 'true', WHATSAPP_ACCESS_TOKEN: 'test-only-token', WHATSAPP_PHONE_NUMBER_ID: 'TEST_PHONE_ID',
       WHATSAPP_GRAPH_BASE: base, WHATSAPP_TEMPLATE_ORDER_PLACED: 'order_received', WHATSAPP_TEMPLATE_ORDER_SHIPPED: 'order_shipped',
       WHATSAPP_APP_SECRET: 'test-only-secret', WHATSAPP_WEBHOOK_VERIFY_TOKEN: 'test-only-verify',
+      // This check covers the hand-over answers; check-whatsapp-inbox covers the inbox ones.
+      WHATSAPP_AUTO_REPLY: 'handover',
     });
   };
 

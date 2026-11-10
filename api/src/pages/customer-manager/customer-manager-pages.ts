@@ -18,6 +18,10 @@ const PAGES: Record<string, { file: string; sidebar: SharedSidebarPage }> = {
     file: 'gtm-snippets/staff-performance.html',
     sidebar: { active: 'staff-performance.html', asideId: 'navigation', breakpoint: 900, offset: '.workspace', addMenuButton: false },
   },
+  '/upload/static/whatsapp-inbox.html': {
+    file: 'gtm-snippets/whatsapp-inbox.html',
+    sidebar: { active: 'whatsapp-inbox.html', asideId: 'navigation', breakpoint: 900, offset: '.workspace', addMenuButton: false },
+  },
   '/upload/static/search-insights.html': {
     file: 'gtm-snippets/search-insights.html',
     sidebar: { active: 'search-insights.html', asideId: 'navigation', breakpoint: 900, offset: '.workspace', addMenuButton: false },

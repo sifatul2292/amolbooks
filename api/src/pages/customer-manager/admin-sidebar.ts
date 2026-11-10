@@ -1,5 +1,5 @@
 // One menu for every custom admin page (orders, customer manager, staff
-// performance, book gift offers, profit dashboard, customer searches, WooCommerce import).
+// performance, WhatsApp inbox, book gift offers, profit dashboard, customer searches, WooCommerce import).
 // Add or move a menu item here only; pages receive it when they are served.
 const ADMIN_DASHBOARD = 'https://adminsub.amolbooks.com/dashboard';
 
@@ -27,6 +27,7 @@ export const ADMIN_NAV: NavSection[] = [
       { label: 'Incomplete Order', href: 'custom-orders.html?view=incomplete', icon: 'fa-clock', id: 'navIncompleteOrders', sub: true },
       { label: 'Import WooCommerce', href: 'import-woo-orders.html', icon: 'fa-file-import', hideForSalesman: true },
       { label: 'Customer Manager', href: 'customer-manager.html', icon: 'fa-address-book', id: 'navCustomerManager' },
+      { label: 'WhatsApp Inbox', href: 'whatsapp-inbox.html', icon: 'fa-comments', id: 'navWhatsappInbox' },
       { label: 'Staff Performance', href: 'staff-performance.html', icon: 'fa-trophy', id: 'navStaffPerformance' },
     ],
   },

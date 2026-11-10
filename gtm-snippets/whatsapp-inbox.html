@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>WhatsApp Inbox · Amolbooks</title>
+    <!-- WhatsApp Inbox (owner, 2026-11-10; WhatsApp-style look 2026-11-11): what customers write to
+         the API number 01302-771586, answered by staff. Served by customer-manager-pages.ts with the
+         shared sidebar; data from /api/whatsapp-inbox (staff login). Customer text is untrusted:
+         everything is escaped. -->
+    <style>
+      :root {
+        --panel: #ffffff;
+        --panel-head: #f0f2f5;
+        --line: #e9edef;
+        --ink: #111b21;
+        --ink-soft: #3b4a54;
+        --muted: #667781;
+        --icon: #54656f;
+        --green: #00a884;
+        --green-dark: #008069;
+        --badge: #25d366;
+        --chip-on: #e7fce3;
+        --hover: #f5f6f6;
+        --selected: #f0f2f5;
+        --chat-bg: #efeae2;
+        --bubble-in: #ffffff;
+        --bubble-out: #d9fdd3;
+        --tick-read: #53bdeb;
+        --tick: #8696a0;
+        --danger: #ea0038;
+        font-family: 'Segoe UI', 'Helvetica Neue', Helvetica, 'Hind Siliguri', 'Noto Sans Bengali', Arial, sans-serif;
+        color: var(--ink);
+        background: #eae6df;
+        font-size: 14px;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; }
+      button, input, textarea { font: inherit; color: inherit; }
+      button { cursor: pointer; touch-action: manipulation; }
+      :focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+      h1, h2, p { margin: 0; }
+      svg { display: block; flex-shrink: 0; }
+      .workspace { height: 100vh; height: 100dvh; }
+      .app { height: 100%; display: grid; grid-template-columns: minmax(320px, 30%) minmax(0, 1fr); background: var(--panel); }
+      .icon-btn { width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent; color: var(--icon); display: inline-grid; place-items: center; }
+      .icon-btn:hover { background: rgba(11, 20, 26, 0.06); }
+
+      /* ---------- Left: chat list ---------- */
+      .side { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--line); background: var(--panel); }
+      .side-head { height: 64px; padding: 10px 12px 10px 16px; display: flex; align-items: center; gap: 4px; }
+      .side-head h1 { font-size: 22px; font-weight: 700; flex: 1; letter-spacing: -0.2px; }
+      .menu { display: none; }
+      .search { margin: 0 12px; position: relative; }
+      .search svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--icon); pointer-events: none; }
+      .search input { width: 100%; height: 38px; border: 0; border-radius: 8px; background: var(--panel-head); padding: 0 12px 0 48px; font-size: 15px; }
+      .search input::placeholder { color: var(--muted); }
+      .filters { display: flex; gap: 8px; padding: 10px 12px 8px; }
+      .filters button { border: 0; border-radius: 18px; padding: 6px 14px; background: var(--panel-head); color: var(--muted); font-size: 14px; font-weight: 500; }
+      .filters button:hover { background: #e4e8eb; }
+      .filters button[aria-pressed='true'] { background: var(--chip-on); color: var(--green-dark); }
+      .chats { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; }
+      .chat-item { width: 100%; display: flex; align-items: center; gap: 13px; padding: 0 0 0 13px; border: 0; background: transparent; text-align: left; height: 72px; }
+      .chat-item:hover { background: var(--hover); }
+      .chat-item[aria-current='true'] { background: var(--selected); }
+      .chat-body { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 2px; padding-right: 15px; border-bottom: 1px solid var(--line); }
+      .row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+      .chat-name { flex: 1; min-width: 0; font-size: 17px; line-height: 21px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .chat-time { font-size: 12px; color: var(--muted); white-space: nowrap; }
+      .chat-item.unread .chat-time { color: #1fa855; font-weight: 500; }
+      .chat-last { flex: 1; min-width: 0; font-size: 14px; line-height: 20px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .chat-item.unread .chat-last { color: var(--ink-soft); }
+      .chat-last.typing { color: #1fa855; font-style: italic; }
+      .answered { display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; color: var(--muted); white-space: nowrap; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
+      .here { display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; max-width: 120px; padding: 1px 7px; border-radius: 9px; background: #fff3dc; color: #a15c00; font-size: 11.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .presence { font-size: 13px; font-weight: 500; }
+      .presence.viewing { color: #c26a00; }
+      .presence.typing { color: #1fa855; font-style: italic; }
+      .presence-bar { flex-shrink: 0; padding: 7px 16px; background: #fff3dc; color: #7a4a00; font-size: 13px; text-align: center; border-top: 1px solid #f5dfb3; }
+      .presence-bar[hidden] { display: none; }
+      .badge { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--badge); color: #fff; font-size: 12px; font-weight: 600; display: inline-grid; place-items: center; }
+      .avatar { width: 49px; height: 49px; border-radius: 50%; background: #dfe5e7; color: #fff; display: grid; place-items: center; overflow: hidden; flex-shrink: 0; }
+      .avatar.small { width: 40px; height: 40px; }
+      .list-note { padding: 32px 24px; text-align: center; color: var(--muted); line-height: 1.6; font-size: 14px; }
+      .more-chats { margin: 12px auto; border: 1px solid var(--line); background: #fff; border-radius: 18px; padding: 7px 16px; color: var(--green-dark); }
+
+      /* ---------- Right: conversation ---------- */
+      .main { position: relative; display: flex; flex-direction: column; min-height: 0; min-width: 0; background: var(--chat-bg); }
+      .intro { flex: 1; display: grid; place-items: center; text-align: center; background: #f0f2f5; border-bottom: 6px solid var(--badge); padding: 24px; }
+      .intro h2 { font-size: 30px; font-weight: 300; color: #41525d; margin: 22px 0 10px; }
+      .intro p { color: var(--muted); font-size: 14px; line-height: 20px; max-width: 460px; }
+      .intro-icon { width: 96px; height: 96px; margin: 0 auto; border-radius: 50%; background: #dfe5e7; color: #fff; display: grid; place-items: center; }
+      .chat { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+      .chat[hidden], .intro[hidden] { display: none; }
+      .chat-head { height: 64px; flex-shrink: 0; display: flex; align-items: center; gap: 13px; padding: 10px 16px; background: var(--panel-head); border-left: 1px solid var(--line); }
+      .back { display: none; margin-left: -8px; }
+      .head-title { flex: 1; min-width: 0; line-height: 1.25; }
+      .head-title strong { display: block; font-size: 16px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .head-title a { font-size: 13px; color: var(--muted); text-decoration: none; }
+      .head-title a:hover { text-decoration: underline; }
+      .window { font-size: 12.5px; font-weight: 500; padding: 4px 10px; border-radius: 12px; white-space: nowrap; }
+      .window.open { background: var(--chip-on); color: var(--green-dark); }
+      .window.closed { background: #fde8ec; color: #c4002b; }
+      .orders { display: flex; gap: 6px; padding: 7px 16px; background: #fff; border-bottom: 1px solid var(--line); border-left: 1px solid var(--line); overflow-x: auto; flex-shrink: 0; scrollbar-width: none; }
+      .orders:empty { display: none; }
+      .order-chip { flex-shrink: 0; font-size: 13px; padding: 4px 10px; border-radius: 14px; background: var(--panel-head); color: var(--ink-soft); text-decoration: none; white-space: nowrap; }
+      .order-chip:hover { background: #e4e8eb; }
+      .order-chip b { font-weight: 600; color: var(--ink); }
+      .order-chip .ask { color: #b45309; font-weight: 600; }
+      .messages {
+        flex: 1; min-height: 0; overflow-y: auto; padding: 12px 7% 8px; display: flex; flex-direction: column;
+        background-color: var(--chat-bg);
+        background-image: radial-gradient(rgba(0, 0, 0, 0.035) 1.2px, transparent 1.3px), radial-gradient(rgba(0, 0, 0, 0.025) 1px, transparent 1.1px);
+        background-size: 22px 22px, 34px 34px;
+        background-position: 0 0, 11px 17px;
+      }
+      .day { align-self: center; margin: 10px 0 8px; padding: 5px 12px 6px; border-radius: 7.5px; background: #fff; color: #54656f; font-size: 12.5px; box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13); }
+      .unread-line { align-self: stretch; text-align: center; margin: 10px -7% 8px; padding: 5px; background: rgba(255, 255, 255, 0.6); color: #54656f; font-size: 12.5px; }
+      .notice { align-self: center; margin: 6px 0; max-width: 85%; padding: 6px 12px; border-radius: 7.5px; background: #ffeecd; color: #54656f; font-size: 12.5px; text-align: center; box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13); }
+      .msg { position: relative; max-width: min(65%, 560px); margin-top: 2px; padding: 6px 7px 8px 9px; border-radius: 7.5px; background: var(--bubble-in); align-self: flex-start; box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13); font-size: 14.2px; line-height: 19px; overflow-wrap: anywhere; }
+      .msg.out { align-self: flex-end; background: var(--bubble-out); }
+      .msg.first { margin-top: 12px; }
+      .msg.first.in { border-top-left-radius: 0; }
+      .msg.first.out { border-top-right-radius: 0; }
+      .msg.first.in::before, .msg.first.out::before { content: ''; position: absolute; top: 0; width: 8px; height: 13px; }
+      .msg.first.in::before { left: -8px; background: linear-gradient(to bottom left, var(--bubble-in) 50%, transparent 50%); }
+      .msg.first.out::before { right: -8px; background: linear-gradient(to bottom right, var(--bubble-out) 50%, transparent 50%); }
+      .msg-tag { display: block; font-size: 12.8px; font-weight: 500; line-height: 20px; color: #06cf9c; }
+      .msg.out .msg-tag { color: var(--green-dark); }
+      .msg-tag.system { color: var(--muted); font-style: italic; font-weight: 400; }
+      .msg-text { white-space: pre-wrap; }
+      .msg-text a { color: #027eb5; }
+      .msg-text a:hover { text-decoration: underline; }
+      .tapped { display: flex; align-items: center; gap: 6px; color: var(--ink-soft); }
+      .tapped svg { color: var(--icon); }
+      .meta { float: right; display: inline-flex; align-items: center; gap: 3px; margin: 6px 0 -6px 12px; font-size: 11px; line-height: 15px; color: var(--muted); white-space: nowrap; position: relative; top: 2px; }
+      .meta .tick { color: var(--tick); }
+      .meta .tick.read { color: var(--tick-read); }
+      .meta .tick.failed { color: var(--danger); }
+      .msg-error { clear: both; font-size: 12px; color: var(--danger); padding-top: 4px; }
+      .media { margin: -3px -4px 4px -6px; }
+      .media img { display: block; width: 100%; max-width: 330px; max-height: 340px; object-fit: cover; border-radius: 6px; cursor: zoom-in; background: #e9edef; }
+      .media img.sticker { width: auto; max-width: 140px; background: transparent; cursor: default; }
+      .media audio { display: block; width: 260px; max-width: 100%; height: 40px; margin: 2px 0 0 4px; }
+      .media video { display: block; width: 100%; max-width: 330px; border-radius: 6px; }
+      .media-note { display: block; padding: 6px 4px 2px 6px; font-size: 13px; color: var(--muted); font-style: italic; }
+      .file-btn { display: flex; align-items: center; gap: 10px; width: 100%; min-width: 220px; border: 0; border-radius: 6px; padding: 10px 12px; background: rgba(11, 20, 26, 0.05); text-align: left; }
+      .older { align-self: center; margin: 4px 0 8px; border: 0; border-radius: 16px; padding: 6px 14px; background: #fff; color: var(--green-dark); box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13); font-size: 13px; }
+      .composer { flex-shrink: 0; display: flex; align-items: flex-end; gap: 8px; padding: 8px 16px 10px; background: var(--panel-head); border-left: 1px solid var(--line); }
+      .composer textarea { flex: 1; min-width: 0; min-height: 42px; max-height: 140px; resize: none; border: 0; border-radius: 8px; padding: 11px 14px; background: #fff; font-size: 15px; line-height: 20px; }
+      .composer textarea::placeholder { color: var(--muted); }
+      .send { width: 42px; height: 42px; border: 0; border-radius: 50%; background: var(--green); color: #fff; display: grid; place-items: center; }
+      .send:hover { background: var(--green-dark); }
+      .send:disabled { background: #b5c2c8; cursor: default; }
+      .composer-closed { flex: 1; text-align: center; color: var(--muted); font-size: 13.5px; line-height: 19px; padding: 8px 0; }
+      .composer-closed[hidden], .composer textarea[hidden], .send[hidden] { display: none; }
+      .composer-note { position: absolute; left: 50%; bottom: 72px; transform: translateX(-50%); max-width: 80%; padding: 7px 14px; border-radius: 8px; background: #3b4a54; color: #fff; font-size: 13px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
+      .composer-note:empty { display: none; }
+
+      /* ---------- Order details panel (like WhatsApp's contact info) ---------- */
+      .app { position: relative; }
+      .app.info-open { grid-template-columns: minmax(300px, 27%) minmax(0, 1fr) 390px; }
+      .head-title, #chat-avatar { cursor: pointer; }
+      .info { display: flex; flex-direction: column; min-height: 0; background: #f0f2f5; border-left: 1px solid var(--line); }
+      .info[hidden] { display: none; }
+      .info-head { height: 64px; flex-shrink: 0; display: flex; align-items: center; gap: 14px; padding: 10px 14px; background: var(--panel-head); }
+      .info-head h2 { font-size: 16px; font-weight: 500; }
+      .info-body { flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 20px; }
+      .info-card { background: #fff; margin-bottom: 10px; padding: 16px 22px; box-shadow: 0 1px 3px rgba(11, 20, 26, 0.08); }
+      .info-person { text-align: center; padding: 26px 22px 20px; }
+      .info-person .avatar { width: 96px; height: 96px; margin: 0 auto 14px; }
+      .info-person strong { display: block; font-size: 20px; font-weight: 400; }
+      .info-person a { display: inline-block; margin-top: 4px; font-size: 15px; color: var(--muted); text-decoration: none; }
+      .info-label { font-size: 14px; color: var(--muted); margin-bottom: 10px; }
+      .order-card { scroll-margin-top: 10px; }
+      .order-card.flash { animation: flash 1.6s ease; }
+      @keyframes flash { 0%, 40% { background: #e7fce3; } 100% { background: #fff; } }
+      .order-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+      .order-top strong { font-size: 17px; font-weight: 600; }
+      .order-date { margin-left: auto; font-size: 12.5px; color: var(--muted); }
+      .status { font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 10px; background: #f0f2f5; color: var(--ink-soft); }
+      .status.s1, .status.s0 { background: #fff3dc; color: #a15c00; }
+      .status.s2 { background: #e7fce3; color: var(--green-dark); }
+      .status.s3 { background: #e5f2ff; color: #1167b1; }
+      .status.s4, .status.s8 { background: #efe8ff; color: #6b3fd4; }
+      .status.s5 { background: #d9f5e5; color: #0b6b3a; }
+      .status.s6, .status.s7, .status.s9, .status.s10 { background: #fde8ec; color: #c4002b; }
+      .order-flags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+      .flag { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: #fff3dc; color: #a15c00; font-weight: 600; }
+      .flag.ok { background: #e7fce3; color: var(--green-dark); }
+      .items { list-style: none; margin: 12px 0 0; padding: 0; }
+      .item { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+      .item:first-child { border-top: 0; }
+      .thumb { width: 40px; height: 52px; border-radius: 4px; background: #f0f2f5; object-fit: cover; flex-shrink: 0; display: grid; place-items: center; color: #8696a0; }
+      .item-name { flex: 1; min-width: 0; font-size: 14px; line-height: 19px; }
+      .item-name small { display: block; color: var(--muted); font-size: 12.5px; }
+      .item-price { font-size: 14px; white-space: nowrap; }
+      .gift { font-size: 11px; font-weight: 600; color: #a15c00; background: #fff3dc; border-radius: 8px; padding: 1px 6px; margin-left: 4px; }
+      .sums { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 14px; }
+      .sums div { display: flex; justify-content: space-between; padding: 2px 0; color: var(--ink-soft); }
+      .sums .grand { color: var(--ink); font-weight: 700; font-size: 15px; padding-top: 6px; }
+      .facts { margin-top: 10px; font-size: 13.5px; line-height: 19px; color: var(--ink-soft); display: grid; gap: 6px; }
+      .facts span { color: var(--muted); display: block; font-size: 12.5px; }
+      .open-order { display: inline-block; margin-top: 12px; color: var(--green-dark); font-weight: 500; text-decoration: none; font-size: 14px; }
+      .open-order:hover { text-decoration: underline; }
+      .order-chip { border: 0; cursor: pointer; font: inherit; font-size: 13px; }
+      .msg.order-link { cursor: pointer; }
+      .msg.order-link:hover { filter: brightness(0.98); }
+      @media (max-width: 1250px) {
+        .app.info-open { grid-template-columns: minmax(320px, 30%) minmax(0, 1fr); }
+        .info { position: absolute; top: 0; right: 0; bottom: 0; width: min(390px, 100%); z-index: 20; box-shadow: -6px 0 24px rgba(11, 20, 26, 0.16); }
+      }
+
+      .login { position: fixed; inset: 0; background: rgba(11, 20, 26, 0.6); display: grid; place-items: center; z-index: 400; padding: 16px; }
+      .login[hidden] { display: none; }
+      .login form { background: #fff; border-radius: 12px; padding: 26px; width: min(360px, 100%); display: grid; gap: 12px; }
+      .login h2 { font-size: 20px; }
+      .login p { color: var(--muted); }
+      .login input { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+      .login button { border: 0; border-radius: 20px; padding: 10px; background: var(--green); color: #fff; font-weight: 600; }
+      .login .status { color: var(--danger); min-height: 1em; }
+
+      @media (max-width: 900px) {
+        .app { grid-template-columns: minmax(0, 1fr); }
+        .app[data-view='list'] .main { display: none; }
+        .app[data-view='chat'] .side { display: none; }
+        .menu { display: inline-grid; margin-left: -8px; }
+        .back { display: inline-grid; }
+        .chat-head { padding: 8px 10px; gap: 10px; }
+        .chat-head, .orders, .composer { border-left: 0; }
+        .messages { padding: 10px 12px 6px; }
+        .unread-line { margin-left: -12px; margin-right: -12px; }
+        .msg { max-width: 85%; }
+        .composer { padding: 6px 8px 8px; }
+        .app.info-open { grid-template-columns: minmax(0, 1fr); }
+        .info { position: fixed; inset: 0; width: auto; z-index: 350; box-shadow: none; }
+        .info-card { padding: 14px 16px; }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- AB_ADMIN_SIDEBAR -->
+    <div class="workspace">
+      <div class="app" id="app" data-view="list">
+        <section class="side" aria-label="Chats">
+          <header class="side-head">
+            <button class="icon-btn menu" id="menu" aria-label="Open menu" title="Menu">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+            </button>
+            <h1>Chats</h1>
+            <button class="icon-btn" id="logout" aria-label="Sign out" title="Sign out">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 3h9a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-9v-2h9V5h-9zm-.6 4.6 1.4-1.4L16.6 12l-5.8 5.8-1.4-1.4 3.4-3.4H3v-2h9.8z"/></svg>
+            </button>
+          </header>
+          <div class="search">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.5 14h-.8l-.3-.3A6.5 6.5 0 1 0 14 15.5l.3.3v.8l5 5 1.5-1.5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>
+            <input id="search" type="search" placeholder="Search name or number" autocomplete="off" aria-label="Search chats" />
+          </div>
+          <div class="filters" role="group" aria-label="Which chats">
+            <button type="button" id="tab-all" aria-pressed="true">All</button>
+            <button type="button" id="tab-unread" aria-pressed="false">Unread</button>
+          </div>
+          <ul class="chats" id="chats"><li class="list-note">Loading…</li></ul>
+          <button type="button" class="more-chats" id="more-chats" hidden>Show more chats</button>
+        </section>
+
+        <section class="main" aria-label="Conversation">
+          <div class="intro" id="placeholder">
+            <div>
+              <div class="intro-icon">
+                <svg width="52" height="52" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2zm3 5v2h10V9zm0 4v2h7v-2z"/></svg>
+              </div>
+              <h2>WhatsApp Inbox</h2>
+              <p>Messages customers send to 01302-771586. Choose a chat to read it and reply. You can reply within 24 hours of the customer's last message.</p>
+            </div>
+          </div>
+          <div class="chat" id="chat-view" hidden>
+            <header class="chat-head">
+              <button type="button" class="icon-btn back" id="back" aria-label="Back to chats">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg>
+              </button>
+              <span class="avatar small" id="chat-avatar"></span>
+              <div class="head-title">
+                <strong id="chat-name"></strong>
+                <a id="chat-phone" href="#"></a> <span class="presence" id="chat-presence"></span>
+              </div>
+              <span class="window" id="chat-window"></span>
+            </header>
+            <div class="orders" id="chat-orders"></div>
+            <div class="messages" id="messages" aria-live="polite"></div>
+            <div class="presence-bar" id="presence-bar" role="status" hidden></div>
+            <p class="composer-note" id="composer-note" role="status"></p>
+            <form class="composer" id="composer">
+              <textarea id="reply" rows="1" placeholder="Type a message" aria-label="Reply"></textarea>
+              <p class="composer-closed" id="composer-closed" hidden></p>
+              <button class="send" id="send" type="submit" aria-label="Send">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.4 20.4 21 12 3.4 3.6 3.3 10l12.6 2-12.6 2z"/></svg>
+              </button>
+            </form>
+          </div>
+        </section>
+
+        <aside class="info" id="info" hidden aria-label="Order details">
+          <header class="info-head">
+            <button type="button" class="icon-btn" id="info-close" aria-label="Close order details">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 6.4 17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19l5.6-5.6 5.6 5.6 1.4-1.4-5.6-5.6z"/></svg>
+            </button>
+            <h2>Customer &amp; orders</h2>
+          </header>
+          <div class="info-body" id="info-body"></div>
+        </aside>
+      </div>
+    </div>
+
+    <div class="login" id="login" hidden>
+      <form id="login-form">
+        <h2>Sign in</h2>
+        <p>Use your admin username and password.</p>
+        <input id="username" autocomplete="username" placeholder="Username" required />
+        <input id="password" type="password" autocomplete="current-password" placeholder="Password" required />
+        <button id="login-button">Sign in</button>
+        <p id="login-status" class="status" role="status"></p>
+      </form>
+    </div>
+
+    <script>
+      (function () {
+        'use strict';
+        // Same-origin on local previews; production uses the current API environment.
+        const API_BASE = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)
+          ? location.origin
+          : 'https://apisub.amolbooks.com';
+        const LIST_EVERY_MS = 10000;
+        const TYPING_EVERY_MS = 3000;
+        const EYE = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 5c-5 0-9 4.5-10 7 1 2.5 5 7 10 7s9-4.5 10-7c-1-2.5-5-7-10-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-2a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></svg>';
+        const names = (list) => list.map((viewer) => viewer.name).join(', ');
+        const CHAT_EVERY_MS = 6000;
+        const GROUP_MS = 5 * 60 * 1000;
+        const STATUS = { 0: 'New', 1: 'Pending', 2: 'Confirmed', 3: 'Processing', 4: 'Shipping', 5: 'Delivered', 6: 'Cancelled', 7: 'Refund', 8: 'With courier', 9: 'Returned', 10: 'Trash' };
+        // The order message's own text already starts with "Order message #…".
+        const KIND_TAG = { auto: 'Automatic reply' };
+        const PERSON = '<svg width="60%" height="60%" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-5.3 0-9 2.7-9 6v2h18v-2c0-3.3-3.7-6-9-6z"/></svg>';
+        const CHECK = '<svg width="12" height="11" viewBox="0 0 12 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 6 4.3 8.8 10.5 2"/></svg>';
+        const DOUBLE = '<svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 6 3.8 8.8 10 2M7.6 8.6l.2.2L14 2"/></svg>';
+        const CLOCK = '<svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><circle cx="6" cy="6" r="4.6"/><path d="M6 3.4V6l1.8 1.2"/></svg>';
+        const ALERT = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-2h2zm0-4h-2V7h2z"/></svg>';
+        const REPLY_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>';
+        const FILE_ICON = '<svg width="26" height="26" viewBox="0 0 24 24" fill="#8696a0" aria-hidden="true"><path d="M6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm7 1.5V9h5.5z"/></svg>';
+        const $ = (id) => document.getElementById(id);
+        const esc = (v) =>
+          String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+        const state = { filter: 'all', q: '', page: 0, chats: [], more: false, open: null, messages: [], orders: [], mediaUrls: new Map(), canSend: true, sending: false, stick: true, unreadAtOpen: 0, info: false };
+        const BOOK_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2v16h12V4h-2v7l-2.5-1.5L11 11V4z"/></svg>';
+        const PAYMENT = { cash_on_delivery: 'Cash on delivery', online_payment: 'Online payment' };
+        const taka = (value) => '৳' + Math.round(Number(value) || 0).toLocaleString('en-US');
+        let chatTimer = null;
+        let searchTimer = null;
+
+        function token() {
+          return localStorage.getItem('co_admin_token') || '';
+        }
+        function dhaka(value, options) {
+          return new Date(value).toLocaleString('en-GB', Object.assign({ timeZone: 'Asia/Dhaka' }, options));
+        }
+        function dayKey(value) {
+          return dhaka(value, { year: 'numeric', month: '2-digit', day: '2-digit' });
+        }
+        const clock = (value) => dhaka(value, { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
+        // Today: time · yesterday · weekday (this week) · date, like WhatsApp.
+        function dayLabel(value, long) {
+          const key = dayKey(value);
+          if (key === dayKey(Date.now())) return long ? 'Today' : clock(value);
+          if (key === dayKey(Date.now() - 86400000)) return 'Yesterday';
+          if (Date.now() - new Date(value).getTime() < 6 * 86400000) return dhaka(value, { weekday: 'long' });
+          return long ? dhaka(value, { day: 'numeric', month: 'long', year: 'numeric' }) : dhaka(value, { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+        // Escape first, then turn web addresses into links.
+        function richText(text) {
+          return esc(text).replace(/(https?:\/\/[^\s<]+)/g, (url) => '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url + '</a>');
+        }
+        async function request(path, options) {
+          const response = await fetch(API_BASE + path, Object.assign({}, options, {
+            headers: Object.assign({ administrator: token() }, options && options.body ? { 'Content-Type': 'application/json' } : {}),
+          }));
+          let payload = {};
+          try { payload = await response.json(); } catch (_) {}
+          if (!response.ok || payload.success === false) {
+            if (response.status === 401) $('login').hidden = false;
+            const error = new Error(
+              response.status === 401
+                ? 'Sign in to see WhatsApp messages.'
+                : (Array.isArray(payload.message) ? payload.message.join(' ') : payload.message) || 'Something went wrong. Please try again.'
+            );
+            error.status = response.status;
+            throw error;
+          }
+          return payload.data;
+        }
+        function toast(text) {
+          const note = $('composer-note');
+          note.textContent = text;
+          clearTimeout(toast.timer);
+          if (text) toast.timer = setTimeout(() => { note.textContent = ''; }, 6000);
+        }
+
+        /* ---------- Chat list ---------- */
+        function renderList() {
+          const list = $('chats');
+          if (!state.chats.length) {
+            list.innerHTML = '<li class="list-note">' + (state.q ? 'No chat matches this search.' : state.filter === 'unread' ? 'No unread chats.' : 'No customer has written yet.<br>New messages show up here on their own.') + '</li>';
+          } else {
+            list.innerHTML = state.chats.map((chat) => {
+              const current = state.open && state.open.wa === chat.wa;
+              // Who wrote the last message: the staff name (several people answer), "Auto reply", or nothing for the customer.
+              const sender = chat.lastDirection !== 'out' ? '' : chat.lastKind === 'staff' ? (chat.lastBy || 'Staff') + ': ' : chat.lastKind === 'auto' ? 'Auto reply: ' : '';
+              const viewers = chat.viewers || [];
+              const typing = viewers.filter((viewer) => viewer.typing);
+              const preview = typing.length
+                ? '<span class="chat-last typing">' + esc(names(typing)) + ' is typing…</span>'
+                : '<span class="chat-last">' + esc(sender + (chat.lastText || '')) + '</span>';
+              // Last staff answer, when the customer has written since.
+              const answered = chat.lastStaff && chat.lastKind !== 'staff'
+                ? '<span class="answered" title="Last answered by ' + esc(chat.lastStaff.name) + ' ' + esc(dayLabel(chat.lastStaff.at, false)) + '">' + REPLY_ICON + esc(chat.lastStaff.name) + '</span>'
+                : '';
+              const here = viewers.length && !typing.length
+                ? '<span class="here" title="' + esc(names(viewers)) + ' has this chat open">' + EYE + esc(names(viewers)) + '</span>'
+                : '';
+              return '<li><button type="button" class="chat-item' + (chat.unread ? ' unread' : '') + '" data-wa="' + esc(chat.wa) + '" aria-current="' + current + '">' +
+                '<span class="avatar">' + PERSON + '</span>' +
+                '<span class="chat-body">' +
+                '<span class="row"><span class="chat-name">' + esc(chat.name || chat.phone) + '</span>' + answered + '<span class="chat-time">' + esc(chat.lastAt ? dayLabel(chat.lastAt, false) : '') + '</span></span>' +
+                '<span class="row">' + preview + here + (chat.unread ? '<span class="badge" aria-label="' + chat.unread + ' unread">' + chat.unread + '</span>' : '') + '</span>' +
+                '</span></button></li>';
+            }).join('');
+          }
+          $('more-chats').hidden = !state.more;
+        }
+        async function loadChats(keepPage) {
+          if (!token()) {
+            $('login').hidden = false;
+            $('chats').innerHTML = '<li class="list-note">Sign in to see WhatsApp messages.</li>';
+            return;
+          }
+          const pages = keepPage ? state.page : 0;
+          if (!keepPage) state.page = 0;
+          try {
+            let chats = [];
+            let more = false;
+            let data = null;
+            for (let page = 0; page <= pages; page += 1) {
+              data = await request('/api/whatsapp-inbox/chats?page=' + page + (state.filter === 'unread' ? '&unread=1' : '') + (state.q ? '&q=' + encodeURIComponent(state.q) : ''));
+              chats = chats.concat(data.chats);
+              more = data.more;
+              if (!more) break;
+            }
+            state.chats = chats;
+            state.more = more;
+            state.canSend = data.canSend;
+            document.title = (data.unreadChats ? '(' + data.unreadChats + ') ' : '') + 'WhatsApp Inbox · Amolbooks';
+            $('tab-unread').textContent = data.unreadChats ? 'Unread ' + data.unreadChats : 'Unread';
+            renderList();
+          } catch (error) {
+            if (!state.chats.length) $('chats').innerHTML = '<li class="list-note">' + esc(error.message) + '</li>';
+          }
+        }
+
+        /* ---------- Conversation ---------- */
+        function ticks(message) {
+          if (message.direction !== 'out') return '';
+          if (message.status === 'failed') return '<span class="tick failed" title="Not delivered">' + ALERT + '</span>';
+          if (message.status === 'read') return '<span class="tick read" title="Read">' + DOUBLE + '</span>';
+          if (message.status === 'delivered') return '<span class="tick" title="Delivered">' + DOUBLE + '</span>';
+          if (message.status === 'sent') return '<span class="tick" title="Sent">' + CHECK + '</span>';
+          return '<span class="tick" title="Sending">' + CLOCK + '</span>';
+        }
+        function mediaHtml(message) {
+          if (!message.media) return '';
+          const id = esc(message.media.id);
+          if (message.type === 'image' || message.type === 'sticker') {
+            return '<div class="media" data-media="' + id + '" data-kind="' + esc(message.type) + '"><span class="media-note">Loading photo…</span></div>';
+          }
+          if (message.type === 'audio') return '<div class="media" data-media="' + id + '" data-kind="audio"><span class="media-note">Loading voice note…</span></div>';
+          if (message.type === 'video') return '<div class="media" data-media="' + id + '" data-kind="video"><span class="media-note">Loading video…</span></div>';
+          return '<div class="media" data-media="' + id + '" data-kind="document" data-name="' + esc(message.media.filename || 'file') + '"><button type="button" class="file-btn media-download">' + FILE_ICON + '<span>' + esc(message.media.filename || 'Download file') + '</span></button></div>';
+        }
+        function messageHtml(message, first) {
+          const out = message.direction === 'out';
+          let tag = '';
+          if (out && message.kind === 'staff' && message.by) tag = '<span class="msg-tag">' + esc(message.by) + '</span>';
+          else if (out && KIND_TAG[message.kind]) tag = '<span class="msg-tag system">' + esc(KIND_TAG[message.kind]) + '</span>';
+          let text = message.text || '';
+          // A caption that is only the file name adds nothing under the file button.
+          if (message.type === 'document' && message.media && text === message.media.filename) text = '';
+          const body = message.type === 'button'
+            ? '<span class="tapped">' + REPLY_ICON + '<span class="msg-text">' + richText(text) + '</span></span>'
+            : text ? '<span class="msg-text">' + richText(text) + '</span>' : '';
+          const orderLink = message.kind === 'order' && message.orderId ? ' order-link" data-order="' + esc(message.orderId) + '" title="See what was ordered' : '';
+          return '<div class="msg ' + (out ? 'out' : 'in') + (first ? ' first' : '') + orderLink + '" data-id="' + esc(message._id) + '">' +
+            tag + mediaHtml(message) + body +
+            '<span class="meta">' + esc(clock(message.at)) + ticks(message) + '</span>' +
+            (message.status === 'failed' && message.error ? '<div class="msg-error">Not delivered: ' + esc(message.error) + '</div>' : '') +
+            '</div>';
+        }
+        function renderMessages(stickToBottom) {
+          const box = $('messages');
+          const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+          let html = state.moreMessages ? '<button type="button" class="older" id="older">Show older messages</button>' : '';
+          // "N unread messages" line before the first unread message, while the chat stays open.
+          let unreadFrom = -1;
+          if (state.unreadAtOpen) {
+            let seen = 0;
+            for (let i = state.messages.length - 1; i >= 0; i -= 1) {
+              if (state.messages[i].direction === 'in') seen += 1;
+              if (seen === state.unreadAtOpen) { unreadFrom = i; break; }
+            }
+          }
+          let lastDay = '';
+          let previous = null;
+          state.messages.forEach((message, index) => {
+            const day = dayKey(message.at);
+            let newGroup = !previous || previous.direction !== message.direction || new Date(message.at) - new Date(previous.at) > GROUP_MS;
+            if (day !== lastDay) {
+              lastDay = day;
+              html += '<div class="day">' + esc(dayLabel(message.at, true)) + '</div>';
+              newGroup = true;
+            }
+            if (index === unreadFrom) {
+              html += '<div class="unread-line">' + state.unreadAtOpen + ' unread message' + (state.unreadAtOpen > 1 ? 's' : '') + '</div>';
+              newGroup = true;
+            }
+            html += messageHtml(message, newGroup);
+            previous = message;
+          });
+          box.innerHTML = html;
+          state.stick = stickToBottom || nearBottom;
+          if (state.stick) box.scrollTop = box.scrollHeight;
+          loadMedia();
+        }
+        // Photos arrive after the text: keep the newest message in view if it was.
+        function keepBottom() {
+          const box = $('messages');
+          if (state.stick) box.scrollTop = box.scrollHeight;
+        }
+        // Photos and voice notes need the staff login, so they are fetched and shown from memory.
+        async function mediaUrl(id) {
+          if (state.mediaUrls.has(id)) return state.mediaUrls.get(id);
+          const promise = fetch(API_BASE + '/api/whatsapp-inbox/media/' + encodeURIComponent(id), { headers: { administrator: token() } })
+            .then((response) => {
+              if (!response.ok) throw new Error('not available');
+              return response.blob();
+            })
+            .then((blob) => URL.createObjectURL(blob));
+          // A file that is gone stays gone: not asked for again on every refresh.
+          state.mediaUrls.set(id, promise);
+          promise.catch(() => {});
+          return promise;
+        }
+        function loadMedia() {
+          document.querySelectorAll('#messages [data-media]').forEach((holder) => {
+            const kind = holder.getAttribute('data-kind');
+            if (kind === 'document') return;
+            mediaUrl(holder.getAttribute('data-media'))
+              .then((url) => {
+                if (kind === 'image') holder.innerHTML = '<img alt="Photo from the customer" src="' + url + '" data-full="' + url + '">';
+                else if (kind === 'sticker') holder.innerHTML = '<img class="sticker" alt="Sticker" src="' + url + '">';
+                else if (kind === 'audio') holder.innerHTML = '<audio controls preload="metadata" src="' + url + '"></audio>';
+                else if (kind === 'video') holder.innerHTML = '<video controls preload="metadata" src="' + url + '"></video>';
+                const shown = holder.querySelector('img,video');
+                if (shown) shown.addEventListener('load', keepBottom, { once: true });
+                keepBottom();
+              })
+              .catch(() => {
+                holder.innerHTML = '<span class="media-note">' + (kind === 'audio' ? 'Voice note' : kind === 'video' ? 'Video' : 'Photo') + ' no longer available (WhatsApp keeps files for 30 days)</span>';
+                keepBottom();
+              });
+          });
+        }
+        function renderHead(data) {
+          const chat = data.chat;
+          $('chat-avatar').innerHTML = PERSON;
+          $('chat-name').textContent = chat.name || chat.phone;
+          // No WhatsApp name: the number is already the title.
+          $('chat-phone').textContent = chat.name ? chat.phone : 'Call this number';
+          $('chat-phone').href = 'tel:' + chat.phone;
+          const until = chat.replyUntil ? new Date(chat.replyUntil).getTime() : 0;
+          const win = $('chat-window');
+          if (until > Date.now()) {
+            const hours = Math.max(1, Math.round((until - Date.now()) / 3600000));
+            win.className = 'window open';
+            win.textContent = 'Reply open · ' + (hours >= 23 ? '24h' : hours + 'h') + ' left';
+            win.title = 'WhatsApp allows replies until 24 hours after the customer last wrote';
+          } else {
+            win.className = 'window closed';
+            win.textContent = 'Reply closed';
+            win.title = "More than 24 hours since the customer's last message";
+          }
+          renderPresence(data.viewers || []);
+          state.orders = data.orders;
+          $('chat-orders').innerHTML = data.orders.map((order) =>
+            '<button type="button" class="order-chip" data-order="' + esc(order.orderId) + '" title="See what was ordered">' +
+            '<b>#' + esc(order.orderId) + '</b> · ' + esc(STATUS[order.orderStatus] || 'Order') + ' · ' + esc(taka(order.grandTotal)) +
+            (order.request === 'more' ? ' · <span class="ask">wants more books</span>' : order.request === 'change' ? ' · <span class="ask">wants a change</span>' : '') +
+            '</button>'
+          ).join('');
+          if (state.info) renderInfo();
+          const open = until > Date.now() && data.canSend;
+          $('reply').hidden = !open;
+          $('send').hidden = !open;
+          $('composer-closed').hidden = open;
+          $('composer-closed').textContent = !data.canSend
+            ? 'WhatsApp is switched off on the server, so replies cannot be sent.'
+            : "You can't reply now: it's more than 24 hours since the customer's last message. Call or SMS " + chat.phone + ', or wait until they write again.';
+          $('send').disabled = state.sending;
+        }
+        async function loadChat(wa, first) {
+          try {
+            const data = await request('/api/whatsapp-inbox/chats/' + encodeURIComponent(wa));
+            if (!state.open || state.open.wa !== wa) return;
+            const known = state.messages.map((m) => m._id + m.status).join();
+            const fresh = data.messages.map((m) => m._id + m.status).join();
+            state.open = data.chat;
+            if (first) state.moreMessages = data.more;
+            if (first || known !== fresh) {
+              // Keep older pages that were loaded with "Show older messages".
+              const oldest = data.messages[0] ? new Date(data.messages[0].at).getTime() : Infinity;
+              const older = first ? [] : state.messages.filter((m) => new Date(m.at).getTime() < oldest);
+              state.messages = older.concat(data.messages);
+              renderMessages(first);
+            }
+            renderHead(data);
+            const item = state.chats.find((chat) => chat.wa === wa);
+            if (item && item.unread) {
+              item.unread = 0;
+              renderList();
+            }
+          } catch (error) {
+            if (first) $('messages').innerHTML = '<div class="notice">' + esc(error.message) + '</div>';
+          }
+        }
+        async function loadOlder() {
+          if (!state.open || !state.messages.length) return;
+          const box = $('messages');
+          const before = state.messages[0].at;
+          const height = box.scrollHeight;
+          try {
+            const data = await request('/api/whatsapp-inbox/chats/' + encodeURIComponent(state.open.wa) + '?before=' + encodeURIComponent(before));
+            state.messages = data.messages.concat(state.messages);
+            state.moreMessages = data.more;
+            renderMessages(false);
+            box.scrollTop = box.scrollHeight - height;
+          } catch (error) {
+            toast(error.message);
+          }
+        }
+        /* ---------- Who else is in this chat ---------- */
+        function renderPresence(viewers) {
+          const typing = viewers.filter((viewer) => viewer.typing);
+          const label = $('chat-presence');
+          if (typing.length) {
+            label.className = 'presence typing';
+            label.textContent = '· ' + names(typing) + ' is typing…';
+          } else if (viewers.length) {
+            label.className = 'presence viewing';
+            label.textContent = '· ' + names(viewers) + (viewers.length > 1 ? ' are' : ' is') + ' also in this chat';
+          } else {
+            label.className = 'presence';
+            label.textContent = '';
+          }
+          const bar = $('presence-bar');
+          bar.hidden = !viewers.length;
+          bar.textContent = typing.length
+            ? names(typing) + ' is writing a reply to this customer. Check with them before you answer.'
+            : viewers.length
+              ? names(viewers) + (viewers.length > 1 ? ' have' : ' has') + ' this chat open too.'
+              : '';
+        }
+        function tellServer(path) {
+          if (!token()) return;
+          fetch(API_BASE + path, { method: 'POST', headers: { administrator: token() }, keepalive: true }).catch(() => {});
+        }
+        function leaveChat() {
+          if (state.open && state.open.wa) tellServer('/api/whatsapp-inbox/chats/' + encodeURIComponent(state.open.wa) + '/leave');
+        }
+
+        /* ---------- Order details panel ---------- */
+        function itemImage(src) {
+          const url = String(src || '');
+          const full = /^https?:\/\//i.test(url) ? url : url.startsWith('/') ? API_BASE + url : '';
+          return full ? '<img class="thumb" alt="" loading="lazy" src="' + esc(full) + '" onerror="this.replaceWith(Object.assign(document.createElement(\'span\'),{className:\'thumb\'}))">' : '<span class="thumb">' + BOOK_ICON + '</span>';
+        }
+        function orderCard(order) {
+          const flags = [];
+          if (order.confirmed) flags.push('<span class="flag ok">✓ Confirmed on WhatsApp</span>');
+          if (order.request === 'more') flags.push('<span class="flag">➕ Wants more books</span>');
+          if (order.request === 'change') flags.push('<span class="flag">✎ Wants a change</span>');
+          const items = order.items.map((item) =>
+            '<li class="item">' + itemImage(item.image) +
+            '<span class="item-name">' + esc(item.name) + (item.gift ? '<span class="gift">Gift</span>' : '') + '<small>' + esc(item.quantity) + ' × ' + esc(taka(item.price)) + '</small></span>' +
+            '<span class="item-price">' + esc(item.gift && !item.total ? 'Free' : taka(item.total)) + '</span></li>'
+          ).join('');
+          const payment = (PAYMENT[order.paymentType] || order.paymentType || '') + (order.paymentStatus ? ' · ' + order.paymentStatus : '');
+          return '<section class="info-card order-card" id="order-card-' + esc(order.orderId) + '">' +
+            '<div class="order-top"><strong>#' + esc(order.orderId) + '</strong><span class="status s' + esc(order.orderStatus) + '">' + esc(STATUS[order.orderStatus] || 'Order') + '</span>' +
+            '<span class="order-date">' + esc(dhaka(order.createdAt, { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })) + '</span></div>' +
+            (flags.length ? '<div class="order-flags">' + flags.join('') + '</div>' : '') +
+            '<ul class="items">' + (items || '<li class="item"><span class="item-name">No items</span></li>') + '</ul>' +
+            '<div class="sums"><div><span>Subtotal</span><span>' + esc(taka(order.subTotal)) + '</span></div>' +
+            '<div><span>Delivery</span><span>' + esc(order.deliveryCharge ? taka(order.deliveryCharge) : 'Free') + '</span></div>' +
+            (order.discount ? '<div><span>Discount</span><span>−' + esc(taka(order.discount)) + '</span></div>' : '') +
+            '<div class="grand"><span>Total</span><span>' + esc(taka(order.grandTotal)) + '</span></div></div>' +
+            '<div class="facts">' +
+            (payment ? '<div><span>Payment</span>' + esc(payment) + '</div>' : '') +
+            (order.address ? '<div><span>Delivery address</span>' + esc(order.address) + '</div>' : '') +
+            (order.courier ? '<div><span>Courier</span>' + esc((order.courier.name || 'Courier') + ' · ' + order.courier.tracking) + '</div>' : '') +
+            (order.note ? '<div><span>Customer note</span>' + esc(order.note) + '</div>' : '') +
+            '</div>' +
+            '<a class="open-order" target="_blank" rel="noopener" href="custom-orders.html?q=' + encodeURIComponent(order.orderId) + '">Open in Orders →</a>' +
+            '</section>';
+        }
+        function renderInfo() {
+          const chat = state.open || {};
+          const phone = chat.phone || '';
+          $('info-body').innerHTML =
+            '<section class="info-card info-person"><span class="avatar">' + PERSON + '</span>' +
+            '<strong>' + esc(chat.name || phone) + '</strong>' + (phone ? '<a href="tel:' + esc(phone) + '">' + esc(phone) + '</a>' : '') + '</section>' +
+            (state.orders.length
+              ? '<div class="info-card" style="padding-bottom:6px"><p class="info-label">' + state.orders.length + ' order' + (state.orders.length > 1 ? 's' : '') + ' with this number (latest first)</p></div>' + state.orders.map(orderCard).join('')
+              : '<section class="info-card"><p class="info-label">No orders with this number yet.</p></section>');
+        }
+        function openInfo(orderId) {
+          state.info = true;
+          $('info').hidden = false;
+          $('app').classList.add('info-open');
+          renderInfo();
+          if (orderId) {
+            const card = document.getElementById('order-card-' + orderId);
+            if (card) {
+              card.scrollIntoView({ block: 'start' });
+              card.classList.add('flash');
+            }
+          } else {
+            $('info-body').scrollTop = 0;
+          }
+        }
+        function closeInfo() {
+          state.info = false;
+          $('info').hidden = true;
+          $('app').classList.remove('info-open');
+        }
+
+        function openChat(wa) {
+          if (!wa) return;
+          if (state.open && state.open.wa !== wa) leaveChat();
+          const item = state.chats.find((chat) => chat.wa === wa);
+          state.unreadAtOpen = item ? item.unread : 0;
+          state.open = { wa };
+          state.messages = [];
+          state.moreMessages = false;
+          $('placeholder').hidden = true;
+          $('chat-view').hidden = false;
+          $('app').setAttribute('data-view', 'chat');
+          $('messages').innerHTML = '';
+          $('chat-orders').innerHTML = '';
+          state.orders = [];
+          if (state.info) $('info-body').innerHTML = '';
+          $('chat-name').textContent = item ? item.name || item.phone : '';
+          $('chat-phone').textContent = '';
+          $('chat-window').className = 'window';
+          $('chat-window').textContent = '';
+          renderPresence([]);
+          toast('');
+          $('reply').value = '';
+          sizeReply();
+          const url = new URL(location.href);
+          url.searchParams.set('wa', wa);
+          history.replaceState(null, '', url);
+          renderList();
+          loadChat(wa, true);
+          clearInterval(chatTimer);
+          chatTimer = setInterval(() => {
+            if (!document.hidden && state.open) loadChat(state.open.wa, false);
+          }, CHAT_EVERY_MS);
+        }
+        function closeChat() {
+          closeInfo();
+          leaveChat();
+          state.open = null;
+          clearInterval(chatTimer);
+          $('app').setAttribute('data-view', 'list');
+          $('chat-view').hidden = true;
+          $('placeholder').hidden = false;
+          const url = new URL(location.href);
+          url.searchParams.delete('wa');
+          history.replaceState(null, '', url);
+          renderList();
+        }
+        function sizeReply() {
+          const box = $('reply');
+          box.style.height = 'auto';
+          box.style.height = Math.min(140, box.scrollHeight) + 'px';
+        }
+        async function send() {
+          const text = $('reply').value.trim();
+          if (!text || !state.open || state.sending) return;
+          state.sending = true;
+          $('send').disabled = true;
+          try {
+            const message = await request('/api/whatsapp-inbox/chats/' + encodeURIComponent(state.open.wa) + '/reply', {
+              method: 'POST',
+              body: JSON.stringify({ text }),
+            });
+            $('reply').value = '';
+            sizeReply();
+            toast('');
+            state.unreadAtOpen = 0;
+            if (message) state.messages.push(message);
+            renderMessages(true);
+            loadChats(true);
+          } catch (error) {
+            toast(error.message);
+          } finally {
+            state.sending = false;
+            $('send').disabled = false;
+            $('reply').focus();
+          }
+        }
+
+        /* ---------- Events ---------- */
+        $('chats').addEventListener('click', (event) => {
+          const item = event.target.closest('[data-wa]');
+          if (item) openChat(item.getAttribute('data-wa'));
+        });
+        $('more-chats').onclick = async () => {
+          state.page += 1;
+          await loadChats(true);
+        };
+        $('tab-all').onclick = () => setFilter('all');
+        $('tab-unread').onclick = () => setFilter('unread');
+        function setFilter(filter) {
+          state.filter = filter;
+          $('tab-all').setAttribute('aria-pressed', String(filter === 'all'));
+          $('tab-unread').setAttribute('aria-pressed', String(filter === 'unread'));
+          loadChats(false);
+        }
+        $('search').oninput = () => {
+          clearTimeout(searchTimer);
+          searchTimer = setTimeout(() => {
+            state.q = $('search').value.trim();
+            loadChats(false);
+          }, 350);
+        };
+        $('back').onclick = closeChat;
+        $('info-close').onclick = closeInfo;
+        $('chat-orders').addEventListener('click', (event) => {
+          const chip = event.target.closest('[data-order]');
+          if (chip) openInfo(chip.getAttribute('data-order'));
+        });
+        document.querySelector('.head-title').addEventListener('click', (event) => {
+          if (!event.target.closest('a')) openInfo('');
+        });
+        $('chat-avatar').addEventListener('click', () => openInfo(''));
+        $('messages').addEventListener('scroll', () => {
+          const box = $('messages');
+          state.stick = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+        }, { passive: true });
+        $('messages').addEventListener('click', (event) => {
+          if (event.target.id === 'older') return loadOlder();
+          const orderBubble = event.target.closest('.msg[data-order]');
+          if (orderBubble && !event.target.closest('a')) return openInfo(orderBubble.getAttribute('data-order'));
+          const image = event.target.closest('img[data-full]');
+          if (image) return window.open(image.getAttribute('data-full'), '_blank', 'noopener');
+          const download = event.target.closest('.media-download');
+          if (download) {
+            const holder = download.closest('[data-media]');
+            download.disabled = true;
+            mediaUrl(holder.getAttribute('data-media'))
+              .then((url) => {
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = holder.getAttribute('data-name') || 'file';
+                link.click();
+              })
+              .catch(() => { download.textContent = 'File no longer available'; })
+              .finally(() => { download.disabled = false; });
+          }
+        });
+        $('composer').onsubmit = (event) => {
+          event.preventDefault();
+          send();
+        };
+        $('reply').addEventListener('input', () => {
+          sizeReply();
+          // Tell the others "is typing" (at most every 3 s).
+          if (state.open && $('reply').value.trim() && Date.now() - (state.typingSent || 0) > TYPING_EVERY_MS) {
+            state.typingSent = Date.now();
+            tellServer('/api/whatsapp-inbox/chats/' + encodeURIComponent(state.open.wa) + '/typing');
+          }
+        });
+        window.addEventListener('pagehide', leaveChat);
+        $('reply').addEventListener('keydown', (event) => {
+          // Enter sends on a keyboard (Shift+Enter for a new line); phones use the send button.
+          if (event.key === 'Enter' && !event.shiftKey && !event.isComposing && !matchMedia('(pointer: coarse)').matches) {
+            event.preventDefault();
+            send();
+          }
+        });
+        $('menu').onclick = () => $('navigation') && $('navigation').classList.toggle('open');
+        $('logout').onclick = () => {
+          localStorage.removeItem('co_admin_token');
+          state.chats = [];
+          closeChat();
+          $('chats').innerHTML = '<li class="list-note">Sign in to see WhatsApp messages.</li>';
+          $('login').hidden = false;
+        };
+        $('login-form').onsubmit = async (event) => {
+          event.preventDefault();
+          $('login-button').disabled = true;
+          $('login-status').textContent = 'Signing in…';
+          try {
+            const response = await fetch(API_BASE + '/api/admin/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username: $('username').value, password: $('password').value }),
+            });
+            const payload = await response.json();
+            if (!response.ok || !payload.token) throw new Error(payload.message || 'Sign in failed');
+            localStorage.setItem('co_admin_token', payload.token);
+            $('password').value = '';
+            $('login-status').textContent = '';
+            $('login').hidden = true;
+            await loadChats(false);
+            const wa = new URLSearchParams(location.search).get('wa');
+            if (wa) openChat(wa);
+          } catch (error) {
+            $('login-status').textContent = error.message;
+          } finally {
+            $('login-button').disabled = false;
+          }
+        };
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden && token()) {
+            loadChats(true);
+            if (state.open) loadChat(state.open.wa, false);
+          }
+        });
+
+        loadChats(false).then(() => {
+          const wa = new URLSearchParams(location.search).get('wa');
+          if (wa && token()) openChat(wa);
+        });
+        setInterval(() => {
+          if (!document.hidden && token()) loadChats(true);
+        }, LIST_EVERY_MS);
+      })();
+    </script>
+  </body>
+</html>
