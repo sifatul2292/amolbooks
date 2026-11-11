@@ -78,7 +78,7 @@ export class DecisionDashboardService {
     const products = productIds.length
       ? await this.productModel
           .find({ _id: { $in: productIds } })
-          .select('_id name stock quantity totalSold costPrice')
+          .select('_id name stock quantity totalSold costPrice publisher.name')
           .lean()
       : [];
     const productMap = new Map(products.map((product: any) => [String(product._id), product]));
@@ -689,6 +689,7 @@ export class DecisionDashboardService {
           rows.set(id, {
             productId: String(item._id || ''),
             name: item.name || product?.name || 'Unknown product',
+            publisher: this.publisherName(product?.publisher),
             units: 0,
             orderIds: new Set<string>(),
             lossOrderIds: new Set<string>(),
@@ -700,6 +701,7 @@ export class DecisionDashboardService {
           });
         }
         const row = rows.get(id);
+        if (!row.publisher) row.publisher = this.publisherName(item.publisher);
         const quantity = Math.max(1, this.number(item.quantity, 1));
         const itemRevenue = this.number(item.salePrice ?? item.unitPrice) * quantity;
         const snapshotCost = this.optionalNumber(item.costPriceAtOrder);
@@ -749,6 +751,7 @@ export class DecisionDashboardService {
       return {
         productId: row.productId,
         name: row.name,
+        publisher: row.publisher,
         units: row.units,
         orders: row.orderIds.size,
         sourceMix: Object.entries(row.sourceUnits)
@@ -1705,6 +1708,11 @@ export class DecisionDashboardService {
     return value !== null && value !== undefined && value !== '' && Number.isFinite(parsed) && parsed >= 0
       ? parsed
       : undefined;
+  }
+
+  private publisherName(publisher: any): string | null {
+    const name = publisher && typeof publisher === 'object' ? publisher.name : null;
+    return typeof name === 'string' && name.trim() ? name.trim() : null;
   }
 
   private hasNumber(value: any): boolean {

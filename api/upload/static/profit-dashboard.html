@@ -187,6 +187,9 @@
     tbody tr:hover { background: var(--color-paper); }
     tbody tr:last-child td { border-bottom: 0; }
     .product-name { max-width: 20rem; font-weight: 700; }
+    .product-publisher { display: block; margin-top: 0.2rem; color: var(--color-muted); font-size: 0.75rem; font-weight: 600; }
+    .product-count { flex-shrink: 0; white-space: nowrap; }
+    .product-filter { width: auto; min-width: 13rem; max-width: 20rem; color: var(--color-ink); font-size: var(--text-sm); font-weight: 600; cursor: pointer; }
     .product-table { min-width: 88rem; }
     .product-source-mix { display: flex; min-width: 16rem; max-width: 24rem; flex-wrap: wrap; gap: var(--space-3xs); }
     .product-source-chip { display: inline-flex; min-height: 1.65rem; align-items: center; gap: 0.3rem; padding: 0 var(--space-2xs); border-radius: var(--radius-pill); background: var(--color-paper-3); color: var(--color-ink-2); font-size: 0.6875rem; font-weight: 700; white-space: nowrap; }
@@ -317,6 +320,7 @@
       .metric { min-height: 8.25rem; }
       .panel-head { align-items: flex-start; flex-direction: column; }
       .panel-tools { width: 100%; margin-left: 0; }
+      .product-filter { width: 100%; max-width: none; }
       .opportunity { grid-template-columns: auto minmax(0, 1fr); }
       .action-tag { grid-column: 2; }
       .quality-score { grid-template-columns: minmax(0, 1fr); }
@@ -446,8 +450,8 @@
         </section>
 
         <section class="panel panel-gap">
-          <header class="panel-head"><div class="panel-title"><h3>Product performance</h3><p>Every product sold in a valid order during the selected period. Contribution excludes order-level fulfillment and allocated advertising.</p></div><span class="status-pill" id="productCount">— products</span></header>
-          <div class="table-wrap"><table class="product-table"><thead><tr><th>Product</th><th>Units</th><th>Source mix (units)</th><th>Net sales</th><th>Contribution</th><th>Margin</th><th>Views</th><th>Conversion</th><th>Loss rate</th><th>Stock cover</th><th>Decision</th></tr></thead><tbody id="productRows"><tr><td colspan="11"><div class="empty">Loading product economics…</div></td></tr></tbody></table></div>
+          <header class="panel-head"><div class="panel-title"><h3>Product performance</h3><p>Every product sold in a valid order during the selected period. Contribution excludes order-level fulfillment and allocated advertising.</p></div><span class="status-pill product-count" id="productCount">— products</span><div class="panel-tools"><select class="control product-filter" id="productPublisher" aria-label="Filter products by publication" onchange="setProductPublisher(this.value)"><option value="">All publications</option></select></div></header>
+          <div class="table-wrap"><table class="product-table"><thead><tr><th>Product / publication</th><th>Units</th><th>Source mix (units)</th><th>Net sales</th><th>Contribution</th><th>Margin</th><th>Views</th><th>Conversion</th><th>Loss rate</th><th>Stock cover</th><th>Decision</th></tr></thead><tbody id="productRows"><tr><td colspan="11"><div class="empty">Loading product economics…</div></td></tr></tbody></table></div>
         </section>
 
         <div class="workbench-grid">
@@ -537,6 +541,8 @@
   var trendData = [];
   var granularity = 'daily';
   var qualityView = 'bySource';
+  var productPublisher = '';
+  var NO_PUBLISHER = '__none__';
   var metaConnected = false;
   var lastFocus = null;
   var authRefreshInProgress = false;
@@ -814,17 +820,39 @@
     chips.push('<span class="product-source-chip total"><span>Total</span><strong>' + fmt(row.units) + '</strong></span>');
     return '<div class="product-source-mix">' + chips.join('') + '</div>';
   }
+  function publisherKey(row) { return row.publisher ? String(row.publisher) : NO_PUBLISHER; }
+  function renderPublisherFilter(rows) {
+    var select = document.getElementById('productPublisher');
+    if (!select) return;
+    var counts = {};
+    rows.forEach(function (row) { var key = publisherKey(row); counts[key] = (counts[key] || 0) + 1; });
+    if (productPublisher && counts[productPublisher] == null) counts[productPublisher] = 0;
+    var keys = Object.keys(counts).filter(function (key) { return key !== NO_PUBLISHER; }).sort(function (a, b) { return a.localeCompare(b, 'bn'); });
+    if (counts[NO_PUBLISHER] != null) keys.push(NO_PUBLISHER);
+    select.innerHTML = '<option value="">All publications (' + fmt(rows.length) + ')</option>' + keys.map(function (key) {
+      return '<option value="' + esc(key) + '">' + esc(key === NO_PUBLISHER ? 'No publication' : key) + ' (' + fmt(counts[key]) + ')</option>';
+    }).join('');
+    select.value = productPublisher;
+  }
   function renderProducts() {
     var performance = dashboardData.productPerformance || {};
-    var rows = performance.rows || [];
-    var totalProducts = performance.totalProducts == null ? rows.length : performance.totalProducts;
-    var totalUnits = performance.totalUnits == null ? rows.reduce(function (sum, row) { return sum + (Number(row.units) || 0); }, 0) : performance.totalUnits;
-    setText('productCount', fmt(totalProducts) + (totalProducts === 1 ? ' product' : ' products') + ' · ' + fmt(totalUnits) + ' units');
+    var allRows = performance.rows || [];
+    renderPublisherFilter(allRows);
+    var rows = productPublisher ? allRows.filter(function (row) { return publisherKey(row) === productPublisher; }) : allRows;
+    var totalProducts = performance.totalProducts == null ? allRows.length : performance.totalProducts;
+    var totalUnits = performance.totalUnits == null ? allRows.reduce(function (sum, row) { return sum + (Number(row.units) || 0); }, 0) : performance.totalUnits;
+    if (productPublisher) {
+      var shownUnits = rows.reduce(function (sum, row) { return sum + (Number(row.units) || 0); }, 0);
+      setText('productCount', fmt(rows.length) + ' of ' + fmt(totalProducts) + ' products · ' + fmt(shownUnits) + ' units');
+    } else {
+      setText('productCount', fmt(totalProducts) + (totalProducts === 1 ? ' product' : ' products') + ' · ' + fmt(totalUnits) + ' units');
+    }
     document.getElementById('productRows').innerHTML = rows.length ? rows.map(function (row) {
       var contribution = row.contribution.amount;
-      return '<tr><td class="product-name">' + esc(row.name) + '</td><td><strong>' + fmt(row.units) + '</strong></td><td>' + productSourceMix(row) + '</td><td>' + money(row.netSales.amount, row.netSales.basis) + '</td><td class="' + (contribution < 0 ? 'money-negative' : 'money-positive') + '">' + money(contribution, row.contribution.basis) + '</td><td>' + pct(row.margin.value) + '</td><td>' + (row.views == null ? '—' : fmt(row.views)) + '</td><td>' + pct(row.conversion.value) + '</td><td>' + pct(row.cancellationRate) + '</td><td>' + (row.stockCoverageDays == null ? '—' : Math.round(row.stockCoverageDays) + 'd') + '</td><td><span class="recommendation ' + recClass(row.recommendation) + '">' + esc(row.recommendation) + '</span></td></tr>';
-    }).join('') : '<tr><td colspan="11"><div class="empty">No sold products in this range.</div></td></tr>';
+      return '<tr><td class="product-name">' + esc(row.name) + '<span class="product-publisher">' + (row.publisher ? esc(row.publisher) : '—') + '</span></td><td><strong>' + fmt(row.units) + '</strong></td><td>' + productSourceMix(row) + '</td><td>' + money(row.netSales.amount, row.netSales.basis) + '</td><td class="' + (contribution < 0 ? 'money-negative' : 'money-positive') + '">' + money(contribution, row.contribution.basis) + '</td><td>' + pct(row.margin.value) + '</td><td>' + (row.views == null ? '—' : fmt(row.views)) + '</td><td>' + pct(row.conversion.value) + '</td><td>' + pct(row.cancellationRate) + '</td><td>' + (row.stockCoverageDays == null ? '—' : Math.round(row.stockCoverageDays) + 'd') + '</td><td><span class="recommendation ' + recClass(row.recommendation) + '">' + esc(row.recommendation) + '</span></td></tr>';
+    }).join('') : '<tr><td colspan="11"><div class="empty">' + (productPublisher && allRows.length ? 'No products from this publication in this range.' : 'No sold products in this range.') + '</div></td></tr>';
   }
+  window.setProductPublisher = function (value) { productPublisher = value || ''; if (dashboardData) renderProducts(); };
 
   window.setQualityView = function (value, button) { qualityView = value; document.querySelectorAll('[data-quality]').forEach(function (item) { item.classList.toggle('active', item === button); }); renderQualityTable(); };
   function renderOrderQuality() { var status = dashboardData.orderQuality.status || {}; var cards = [{ label: 'Delivery rate', value: pct(status.deliveryRate) }, { label: 'Cancellation', value: pct(status.cancellationRate) }, { label: 'Refund', value: pct(status.refundRate) }, { label: 'Return', value: pct(status.returnRate) }]; document.getElementById('statusGrid').innerHTML = cards.map(function (card) { return '<div class="status-card"><span>' + esc(card.label) + '</span><strong>' + esc(card.value) + '</strong></div>'; }).join(''); renderQualityTable(); }
