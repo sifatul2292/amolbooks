@@ -114,5 +114,17 @@
       "drive: Aslaf.pdf (publisher title list, Islami Tower, 11 Banglabazar, Dhaka)"
     ],
     "note": "not in the shop yet: scripts/import-books.cjs creates it for the maktabatul-aslaf set"
+  },
+  {
+    "id": null,
+    "name": "আস-সুন্নাহ পাবলিকেশন্স",
+    "nameEn": "As-Sunnah Publications",
+    "image": "publisher-as-sunnah-publications-7b8c.webp",
+    "description": "<p>আস-সুন্নাহ পাবলিকেশন্স ঝিনাইদহভিত্তিক আস-সুন্নাহ ট্রাস্টের প্রকাশনা প্রতিষ্ঠান। প্রফেসর ড. খোন্দকার আব্দুল্লাহ জাহাঙ্গীর রহ.-এর রচনা ও অনুবাদ প্রকাশ করাই এর মূল কাজ; কুরআন ও সহীহ হাদীসের আলোকে আকীদা, ইবাদত, যিকর-দুআ, হাদীস যাচাই এবং সমকালীন নানা প্রশ্নে লেখা তাঁর বইগুলো এখান থেকে প্রকাশিত হয়।</p><p>‘রাহে বেলায়াত’, ‘হাদীসের নামে জালিয়াতি’, ‘কুরআন-সুন্নাহর আলোকে ইসলামী আকীদা’, ‘এহ্ইয়াউস সুনান’, ‘খুতবাতুল ইসলাম’ এবং ‘জিজ্ঞাসা ও জবাব’ সিরিজ তাদের পাঠকপ্রিয় বইগুলোর কয়েকটি।</p>",
+    "sources": [
+      "https://assunnahtrust.org/publication/",
+      "https://www.rokomari.com/book/publisher/672"
+    ],
+    "note": "not in the shop yet: scripts/import-books.cjs creates it for the as-sunnah set"
   }
 ]
