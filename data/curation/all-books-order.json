@@ -1,0 +1,1557 @@
+{
+  "note": "Shop book lists (all books, category, publisher, author pages) show these books first, in this order; every other book follows, newest first. Built 2026-11-12: Amol Books' own titles first (owner's order), then the rest by 0.5 x Amolbooks sales (totalSold, log scale, 25+ = full) + 0.5 x Rokomari \"Islamic books\" best-seller rank (category 81, sort SOLD_COUNT_DESC, top 3000). Out-of-stock books and Amol Notebook are left out. Applied by scripts/curate-product-order.cjs (writes product.priority); the /storefront-catalog proxy sorts lists by priority, then newest.",
+  "books": [
+    {
+      "slug": "the-barakah-effect",
+      "name": "দ্য বারাকাহ ইফেক্ট",
+      "publisher": "আমল বুকস",
+      "amolbooksSold": 727,
+      "rokomariRank": null,
+      "score": 0.5
+    },
+    {
+      "slug": "500 shobder kuraner 75%",
+      "name": "৫০০ শব্দে কুরআনের ৭৫% (নতুন সংস্করণ)",
+      "publisher": "আমল বুকস",
+      "amolbooksSold": 2074,
+      "rokomariRank": null,
+      "score": 0.5
+    },
+    {
+      "slug": "the-story-of-muhammad",
+      "name": "দ্য স্টোরি অব মুহাম্মাদ (সা.)",
+      "publisher": "আমল বুকস",
+      "amolbooksSold": 0,
+      "rokomariRank": null,
+      "score": 0.0
+    },
+    {
+      "slug": "productive muslim",
+      "name": "প্রোডাক্টিভ মুসলিম",
+      "publisher": "আমল বুকস",
+      "amolbooksSold": 989,
+      "rokomariRank": 15,
+      "score": 0.9977
+    },
+    {
+      "slug": "productive-barakah",
+      "name": "প্রোডাক্টিভ মুসলিম + দ্য বারাকাহ ইফেক্ট",
+      "publisher": "আমল বুকস",
+      "amolbooksSold": 740,
+      "rokomariRank": null,
+      "score": 0.5
+    },
+    {
+      "slug": "islami-orthonity-o-uddokta-47",
+      "name": "ইসলামি অর্থনীতি ও সফল উদ্যোক্তার মাইন্ডম্যাপ",
+      "publisher": "আমল বুকস",
+      "amolbooksSold": 297,
+      "rokomariRank": null,
+      "score": 0.5
+    },
+    {
+      "slug": "secrets-of-wealth-and-provision",
+      "name": "সম্পদ ও রিজিকের গোপন রহস্য",
+      "publisher": "আমল বুকস",
+      "amolbooksSold": 0,
+      "rokomariRank": null,
+      "score": 0.0
+    },
+    {
+      "slug": "Jibonpaltano4books",
+      "name": "জীবন পাল্টে দেওয়ার মত ৪ টি বই",
+      "publisher": "আমল বুকস",
+      "amolbooksSold": 8,
+      "rokomariRank": null,
+      "score": 0.3372
+    },
+    {
+      "slug": "sompodgorarkoushol",
+      "name": "সম্পদ গড়ার কৌশল",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 17,
+      "rokomariRank": 200,
+      "score": 0.9104
+    },
+    {
+      "slug": "olosotajibonershotru",
+      "name": "অলসতা : জীবনের শত্রু",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 14,
+      "rokomariRank": 81,
+      "score": 0.9023
+    },
+    {
+      "slug": "yourmustdobusiness",
+      "name": "ইউ মাস্ট ডু বিজনেস",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 13,
+      "rokomariRank": 50,
+      "score": 0.8968
+    },
+    {
+      "slug": "moner moto salat",
+      "name": "মনের মতো সালাত",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 13,
+      "rokomariRank": 204,
+      "score": 0.8712
+    },
+    {
+      "slug": "Time Management",
+      "name": "টাইম ম্যানেজমেন্ট",
+      "publisher": "সিয়ান পাবলিকেশন",
+      "amolbooksSold": 11,
+      "rokomariRank": 150,
+      "score": 0.8565
+    },
+    {
+      "slug": "bipod jokhon niyamot",
+      "name": "বিপদ যখন নিয়ামাত",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 7,
+      "rokomariRank": 59,
+      "score": 0.8095
+    },
+    {
+      "slug": "billiondollarmuslim",
+      "name": "বিলিয়ন ডলার মুসলিম",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 8,
+      "rokomariRank": 174,
+      "score": 0.8084
+    },
+    {
+      "slug": "quran-bojhar-moja",
+      "name": "কুরআন বোঝার মজা",
+      "publisher": "দারুল ফালাহ",
+      "amolbooksSold": 13,
+      "rokomariRank": 1050,
+      "score": 0.7302
+    },
+    {
+      "slug": "hisnulmuslim",
+      "name": "হিসনুল মুসলিম",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 4,
+      "rokomariRank": 106,
+      "score": 0.7295
+    },
+    {
+      "slug": "shamayele-tirmiji",
+      "name": "শামায়েলে তিরমিজি [নবিজি এমন ছিলেন] (দুই খণ্ড)",
+      "publisher": "পথিক প্রকাশন",
+      "amolbooksSold": 2,
+      "rokomariRank": 35,
+      "score": 0.6629
+    },
+    {
+      "slug": "Kajer Majhe Rober Khoje",
+      "name": "কাজের মাঝে রবের খোঁজে",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 2,
+      "rokomariRank": 109,
+      "score": 0.6506
+    },
+    {
+      "slug": "amar-nobi-muhammad-sa",
+      "name": "আমার নবি মুহাম্মাদ (স)",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 4,
+      "rokomariRank": 737,
+      "score": 0.6243
+    },
+    {
+      "slug": "Ma, Ma, Ma abong Baba",
+      "name": "মা, মা, মা এবং বাবা",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 1,
+      "rokomariRank": 13,
+      "score": 0.6044
+    },
+    {
+      "slug": "Nobi Jiboner Golpo",
+      "name": "নবি জীবনের গল্প",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 1,
+      "rokomariRank": 17,
+      "score": 0.6037
+    },
+    {
+      "slug": "poro",
+      "name": "পড়ো",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 1,
+      "rokomariRank": 78,
+      "score": 0.5935
+    },
+    {
+      "slug": "Uddesshohin ar kotodin",
+      "name": "উদ্দেশ্যহীন আর কত দিন?",
+      "publisher": "পথিক প্রকাশন",
+      "amolbooksSold": 1,
+      "rokomariRank": 145,
+      "score": 0.5824
+    },
+    {
+      "slug": "riyadus-salihin",
+      "name": "রিয়াদুস সালিহীন (প্রথম ও দ্বিতীয় খণ্ড)",
+      "publisher": "পথিক প্রকাশন",
+      "amolbooksSold": 1,
+      "rokomariRank": 190,
+      "score": 0.5749
+    },
+    {
+      "slug": "amolbissokosh",
+      "name": "আমল বিশ্বকোষ - ৩৬৫ দিনের আমল একসাথে",
+      "publisher": "দারুল ফালাহ",
+      "amolbooksSold": 25,
+      "rokomariRank": null,
+      "score": 0.5
+    },
+    {
+      "slug": "Bela Furabar Age",
+      "name": "বেলা ফুরাবার আগে",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 4,
+      "score": 0.4995
+    },
+    {
+      "slug": "Paradoxical Sajid 2",
+      "name": "প্যারাডক্সিক্যাল সাজিদ ২",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 5,
+      "score": 0.4993
+    },
+    {
+      "slug": "Jibon Jekhane Jemon",
+      "name": "জীবন যেখানে যেমন",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 6,
+      "score": 0.4992
+    },
+    {
+      "slug": "message",
+      "name": "ম্যাসেজ",
+      "publisher": "গার্ডিয়ান পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 8,
+      "score": 0.4988
+    },
+    {
+      "slug": "rahe-belayat",
+      "name": "রাহে বেলায়াত",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 14,
+      "score": 0.4978
+    },
+    {
+      "slug": "Ebar Bhinno kichu hok",
+      "name": "এবার ভিন্ন কিছু হোক",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 16,
+      "score": 0.4975
+    },
+    {
+      "slug": "Prottaborton",
+      "name": "প্রত্যাবর্তন",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 20,
+      "score": 0.4968
+    },
+    {
+      "slug": "sahih-masnun-wazifa",
+      "name": "সহীহ মাসনূন ওযীফা",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 23,
+      "score": 0.4963
+    },
+    {
+      "slug": "munajat-o-namaj",
+      "name": "মুনাজাত ও নামায",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 29,
+      "score": 0.4953
+    },
+    {
+      "slug": "golpo-gulo-onno-rokom",
+      "name": "গল্পগুলো অন্যরকম",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 30,
+      "score": 0.4952
+    },
+    {
+      "slug": "Aroj Ali Somipe",
+      "name": "আরজ আলী সমীপে",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 31,
+      "score": 0.495
+    },
+    {
+      "slug": "Jobab",
+      "name": "জবাব",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 33,
+      "score": 0.4947
+    },
+    {
+      "slug": "hadiser-name-jaliyati",
+      "name": "হাদীসের নামে জালিয়াতি",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 40,
+      "score": 0.4935
+    },
+    {
+      "slug": "quran-sunnahr-aloke-poshak-porda-o-deho-sojja",
+      "name": "কুরআন-সুন্নাহর আলোকে পোশাক, পর্দা ও দেহ-সজ্জা",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 42,
+      "score": 0.4932
+    },
+    {
+      "slug": "salat-dua-o-zikr",
+      "name": "সালাত, দু’আ ও যিকর",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 45,
+      "score": 0.4927
+    },
+    {
+      "slug": "quran-sunnahr-aloke-islami-aqidah",
+      "name": "কুরআন-সুন্নাহর আলোকে ইসলামী আকীদা",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 57,
+      "score": 0.4907
+    },
+    {
+      "slug": "hijab-amar-porichoy-93",
+      "name": "হিজাব আমার পরিচয়",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 64,
+      "score": 0.4895
+    },
+    {
+      "slug": "rukaiyah",
+      "name": "রুকইয়াহ",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 66,
+      "score": 0.4892
+    },
+    {
+      "slug": "Shikorer Shondhane",
+      "name": "শিকড়ের সন্ধানে",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 70,
+      "score": 0.4885
+    },
+    {
+      "slug": "allahr-pothe-dawat",
+      "name": "আল্লাহর পথে দাওয়াত",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 72,
+      "score": 0.4882
+    },
+    {
+      "slug": "Obaddhotar Itihash",
+      "name": "অবাধ্যতার ইতিহাস",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 73,
+      "score": 0.488
+    },
+    {
+      "slug": "hajjer-adhyatmik-shikkha",
+      "name": "হজ্জের আধ্যাত্মিক শিক্ষা",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 74,
+      "score": 0.4878
+    },
+    {
+      "slug": "ramadaner-sawgat",
+      "name": "রামাদানের সওগাত",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 80,
+      "score": 0.4868
+    },
+    {
+      "slug": "qurratu-ayun-1",
+      "name": "কুররাতু আইয়ুন : যে জীবন জুড়ায় নয়ন",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 86,
+      "score": 0.4858
+    },
+    {
+      "slug": "muslimjatirItihash",
+      "name": "মুসলিম জাতির ইতিহাস",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 1,
+      "rokomariRank": 739,
+      "score": 0.4834
+    },
+    {
+      "slug": "doinondin-masnun-dua-o-zikr",
+      "name": "দৈনন্দিন মাসনূন দুআ ও যিকর",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 107,
+      "score": 0.4823
+    },
+    {
+      "slug": "jiggasa-o-jobab-1",
+      "name": "জিজ্ঞাসা ও জবাব (১ম খণ্ড)",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 112,
+      "score": 0.4815
+    },
+    {
+      "slug": "al-fiqhul-akbar",
+      "name": "আল-ফিকহুল আকবার (বঙ্গানুবাদ ও ব্যাখ্যা)",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 115,
+      "score": 0.481
+    },
+    {
+      "slug": "islamer-itihas-nobobi-jug-theke-bortoman",
+      "name": "ইসলামের ইতিহাস : নববী যুগ থেকে বর্তমান",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 117,
+      "score": 0.4807
+    },
+    {
+      "slug": "reflection-from-sura-yusuf-28",
+      "name": "রিফ্লেকশন ফ্রম সূরা ইউসুফ",
+      "publisher": "গার্ডিয়ান পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 119,
+      "score": 0.4803
+    },
+    {
+      "slug": "poro-2-89",
+      "name": "পড়ো ২",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 127,
+      "score": 0.479
+    },
+    {
+      "slug": "ehyaus-sunan",
+      "name": "এহ্ইয়াউস সুনান",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 129,
+      "score": 0.4787
+    },
+    {
+      "slug": "quran-sunnahr-aloke-jamaat-o-oikko",
+      "name": "কুরআন-সুন্নাহর আলোকে জামাআত ও ঐক্য",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 133,
+      "score": 0.478
+    },
+    {
+      "slug": "reclaimyourheart",
+      "name": "রিক্লেইম ইয়োর হার্ট",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 141,
+      "score": 0.4767
+    },
+    {
+      "slug": "prottaborton-2",
+      "name": "প্রত্যাবর্তন ২",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 143,
+      "score": 0.4763
+    },
+    {
+      "slug": "salater-moddhe-hat-badhar-bidhan",
+      "name": "সালাতের মধ্যে হাত বাঁধার বিধান : একটি হাদীসতাত্ত্বিক পর্যালোচনা",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 146,
+      "score": 0.4758
+    },
+    {
+      "slug": "ma-ma-ma-and-baba",
+      "name": "মা, মা, মা এবং বাবা - [দ্বিতীয় খণ্ড]",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 156,
+      "score": 0.4742
+    },
+    {
+      "slug": "quran-sunnahr-aloke-shobe-borat",
+      "name": "কুরআন-সুন্নাহর আলোকে শবে বরাত : ফযীলত ও আমল",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 159,
+      "score": 0.4737
+    },
+    {
+      "slug": "poro-3-85",
+      "name": "পড়ো ৩",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 169,
+      "score": 0.472
+    },
+    {
+      "slug": "qurratu-ayun-2",
+      "name": "কুররাতু আইয়ুন ২ : যে জীবন জুড়ায় মনন",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 175,
+      "score": 0.471
+    },
+    {
+      "slug": "jiggasa-o-jobab-2",
+      "name": "জিজ্ঞাসা ও জবাব (২য় খণ্ড)",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 180,
+      "score": 0.4702
+    },
+    {
+      "slug": "nobijir-songsar",
+      "name": "নবীজির ﷺ সংসার",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 197,
+      "score": 0.4673
+    },
+    {
+      "slug": "shishur-monone-iman",
+      "name": "শিশুর মননে ঈমান",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 198,
+      "score": 0.4672
+    },
+    {
+      "slug": "jiggasa-o-jobab-3",
+      "name": "জিজ্ঞাসা ও জবাব (৩য় খণ্ড)",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 208,
+      "score": 0.4655
+    },
+    {
+      "slug": "poro-4-56",
+      "name": "পড়ো ৪",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 213,
+      "score": 0.4647
+    },
+    {
+      "slug": "eide-miladunnabi",
+      "name": "ঈদে মিলাদুন্নবী",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 223,
+      "score": 0.463
+    },
+    {
+      "slug": "kitabul-mokaddos-injil-sharif-o-isayi-dhormo",
+      "name": "কিতাবুল মোকাদ্দস, ইঞ্জিল শরীফ ও ঈসায়ী ধর্ম",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 224,
+      "score": 0.4628
+    },
+    {
+      "slug": "productive-lessons",
+      "name": "প্রোডাক্টিভিটি লেসনস",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 228,
+      "score": 0.4622
+    },
+    {
+      "slug": "qurbani-o-zabihullah",
+      "name": "কুরবানী ও জাবীহুল্লাহ",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 237,
+      "score": 0.4607
+    },
+    {
+      "slug": "productive-ramadan",
+      "name": "প্রোডাক্টিভ রামাদান",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 246,
+      "score": 0.4592
+    },
+    {
+      "slug": "bibaho-path",
+      "name": "বিবাহ-পাঠ",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 250,
+      "score": 0.4585
+    },
+    {
+      "slug": "hifz-korte-hole",
+      "name": "হিফয করতে হলে",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 256,
+      "score": 0.4575
+    },
+    {
+      "slug": "sontan-gorar-110-tips",
+      "name": "সন্তান গড়ার ১১০ টিপস",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 261,
+      "score": 0.4567
+    },
+    {
+      "slug": "islamer-name-jongibad",
+      "name": "ইসলামের নামে জঙ্গিবাদ : আলোচিত ও অনালোচিত কারণসমূহ",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 274,
+      "score": 0.4545
+    },
+    {
+      "slug": "jiggasa-o-jobab-4",
+      "name": "জিজ্ঞাসা ও জবাব (৪র্থ খণ্ড)",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 287,
+      "score": 0.4523
+    },
+    {
+      "slug": "khutbatul-islam",
+      "name": "খুতবাতুল ইসলাম : জুমআর খুতবা ও সমকালীন প্রসঙ্গ",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 311,
+      "score": 0.4483
+    },
+    {
+      "slug": "nobiji-sallallahu-alaihi-wa-sallam-jemon-chilen-tini",
+      "name": "নবীজি ﷺ—যেমন ছিলেন তিনি",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 356,
+      "score": 0.4408
+    },
+    {
+      "slug": "sobor",
+      "name": "সবর",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 366,
+      "score": 0.4392
+    },
+    {
+      "slug": "salatul-eider-otirikto-takbir",
+      "name": "হাদীসের সনদ-বিচার পদ্ধতি ও সহীহ হাদীসের আলোকে সালাতুল ঈদের অতিরিক্ত তাকবীর",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 368,
+      "score": 0.4388
+    },
+    {
+      "slug": "jobab-2",
+      "name": "জবাব ২",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 400,
+      "score": 0.4335
+    },
+    {
+      "slug": "jiggasa-o-jobab-5",
+      "name": "জিজ্ঞাসা ও জবাব (৫ম খণ্ড)",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 406,
+      "score": 0.4325
+    },
+    {
+      "slug": "halal-haramer-bidhan",
+      "name": "হালাল হারামের বিধান",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 407,
+      "score": 0.4323
+    },
+    {
+      "slug": "poro-5-97",
+      "name": "পড়ো ৫",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 441,
+      "score": 0.4267
+    },
+    {
+      "slug": "valobas-zina-kare-koy",
+      "name": "ভালোবাসা (যিনা) কারে কয়",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 458,
+      "score": 0.4238
+    },
+    {
+      "slug": "shoytaner-fad",
+      "name": "শয়তানের ফাঁদ",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 479,
+      "score": 0.4203
+    },
+    {
+      "slug": "mission-islam",
+      "name": "মিশন ইসলাম (দাওয়া সংস্করণ)",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 493,
+      "score": 0.418
+    },
+    {
+      "slug": "ke-uni",
+      "name": "কে উনি??",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 508,
+      "score": 0.4155
+    },
+    {
+      "slug": "salafder-jibon-kotha",
+      "name": "সালাফদের জীবনকথা",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 526,
+      "score": 0.4125
+    },
+    {
+      "slug": "Ful Hoye Futo",
+      "name": "ফুল হয়ে ফোটো",
+      "publisher": "পথিক প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 552,
+      "score": 0.4082
+    },
+    {
+      "slug": "pobitro-bible-porichiti-o-porjalochona",
+      "name": "পবিত্র বাইবেল : পরিচিতি ও পর্যালোচনা",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 557,
+      "score": 0.4073
+    },
+    {
+      "slug": "shukher-natai",
+      "name": "সুখের নাটাই",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 558,
+      "score": 0.4072
+    },
+    {
+      "slug": "sirate-ibne-hisham",
+      "name": "সিরাতে ইবনে হিশাম",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 564,
+      "score": 0.4062
+    },
+    {
+      "slug": "arguments-of-arju",
+      "name": "আর্গুমেন্টস অব আরজু",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 579,
+      "score": 0.4037
+    },
+    {
+      "slug": "izharul-haq-1",
+      "name": "ইযহারুল হক (১ম খণ্ড)",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 607,
+      "score": 0.399
+    },
+    {
+      "slug": "ruher-chikitsa",
+      "name": "রূহের চিকিৎসা",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 619,
+      "score": 0.397
+    },
+    {
+      "slug": "hajj-umrah-o-ziarat",
+      "name": "হজ্জ, উমরা ও যিয়ারত এবং মাসনূন দু‘আ-যিকর",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 638,
+      "score": 0.3938
+    },
+    {
+      "slug": "golpe-aka-chollish-hadis",
+      "name": "গল্পে আঁকা চল্লিশ হাদিস",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 641,
+      "score": 0.3933
+    },
+    {
+      "slug": "sohihvabe-quran-shikkha-tajweed",
+      "name": "সহিহভাবে কুরআন শিক্ষা : তাজওইদ",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 645,
+      "score": 0.3927
+    },
+    {
+      "slug": "doinondin-dua-o-ruqyah",
+      "name": "দৈনন্দিন দুআ ও রুকইয়াহ",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 656,
+      "score": 0.3908
+    },
+    {
+      "slug": "tinii-amar-praner-nobi",
+      "name": "তিনিই আমার প্রাণের নবি (সা.)",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 667,
+      "score": 0.389
+    },
+    {
+      "slug": "Islami Ortho Bebosthar Itihash",
+      "name": "ইসলামি অর্থব্যবস্থার ইতিহাস",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 1,
+      "rokomariRank": 1347,
+      "score": 0.382
+    },
+    {
+      "slug": "female-mind",
+      "name": "ফিমেল মাইন্ড",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 725,
+      "score": 0.3793
+    },
+    {
+      "slug": "vruner-artonad",
+      "name": "ভ্রূণের আর্তনাদ",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 730,
+      "score": 0.3785
+    },
+    {
+      "slug": "kathgora koshtipathor 3",
+      "name": "কাঠগড়া (কষ্টিপাথর-৩)",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 736,
+      "score": 0.3775
+    },
+    {
+      "slug": "bangladeshe-ushor-ba-fosoler-zakat",
+      "name": "বাংলাদেশে উশর বা ফসলের যাকাত : গুরুত্ব ও প্রয়োগ",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 743,
+      "score": 0.3763
+    },
+    {
+      "slug": "Biyer Epith Opith",
+      "name": "বিয়ের এপিঠ ওপিঠ",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 770,
+      "score": 0.3718
+    },
+    {
+      "slug": "takwa-muminer-sombol",
+      "name": "তাকওয়া: মুমিনের সম্বল",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 795,
+      "score": 0.3677
+    },
+    {
+      "slug": "jin-jadu-o-bodnojor-cikitsa-rokaiya",
+      "name": "জিন, জাদু ও বদনজরের চিকিৎসা (রুকইয়াহ)",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 808,
+      "score": 0.3655
+    },
+    {
+      "slug": "nobijir-dinlipi",
+      "name": "নবীজির দিনলিপি ﷺ",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 819,
+      "score": 0.3637
+    },
+    {
+      "slug": "oshru-jole-lekha",
+      "name": "অশ্রুজলে লেখা",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 854,
+      "score": 0.3578
+    },
+    {
+      "slug": "rasule-arabi-dawah",
+      "name": "রাসূলে আরাবি (সা.) (দাওয়াহ সংস্করণ)",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 876,
+      "score": 0.3542
+    },
+    {
+      "slug": "rasule-arabi",
+      "name": "রাসূলে আরাবি (সা.) (হার্ডকভার)",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 876,
+      "score": 0.3542
+    },
+    {
+      "slug": "izharul-haq-2",
+      "name": "ইযহারুল হক (২য় খণ্ড)",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 886,
+      "score": 0.3525
+    },
+    {
+      "slug": "Double Standard 3",
+      "name": "ডাবল স্ট্যান্ডার্ড ৩",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 906,
+      "score": 0.3492
+    },
+    {
+      "slug": "izharul-haq-3",
+      "name": "ইযহারুল হক (৩য় খণ্ড)",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 940,
+      "score": 0.3435
+    },
+    {
+      "slug": "30-mojlise-quraner-sarniryas",
+      "name": "৩০ মজলিসে কুরআনের সারনির্যাস",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 944,
+      "score": 0.3428
+    },
+    {
+      "slug": "is-music-halal",
+      "name": "ইজ মিউজিক হালাল?",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 948,
+      "score": 0.3422
+    },
+    {
+      "slug": "sukhi-poribar-nirmaner-ruprekha",
+      "name": "সুখী পরিবার নির্মাণের রূপরেখা",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 969,
+      "score": 0.3387
+    },
+    {
+      "slug": "paribarik-somporker-bunon",
+      "name": "পারিবারিক সম্পর্কের বুনন",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 979,
+      "score": 0.337
+    },
+    {
+      "slug": "haia-alas-salah",
+      "name": "হাইয়া আলাস সালাহ",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 984,
+      "score": 0.3362
+    },
+    {
+      "slug": "fiqhus-sunani-wal-asar-1",
+      "name": "ফিকহুস সুনানি ওয়াল আসার (১ম খণ্ড)",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 1026,
+      "score": 0.3292
+    },
+    {
+      "slug": "shesher-ossru",
+      "name": "শেষের অশ্রু",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 1052,
+      "score": 0.3248
+    },
+    {
+      "slug": "musolmani-nesab",
+      "name": "মুসলমানী নেসাব : আরকানে ইসলাম ও ওযীফায়ে রাসূল (সা.)",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 1099,
+      "score": 0.317
+    },
+    {
+      "slug": "jiboner-sera-ramadan",
+      "name": "জীবনের সেরা রামাদান",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 1148,
+      "score": 0.3088
+    },
+    {
+      "slug": "sontaner-boyosondikaler-monostotto",
+      "name": "সন্তানের বয়ঃসন্ধিকালের মনস্তত্ত্ব",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 1157,
+      "score": 0.3073
+    },
+    {
+      "slug": "islamer-itihase-juddho",
+      "name": "ইসলামের ইতিহাসে যুদ্ধ",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 1178,
+      "score": 0.3038
+    },
+    {
+      "slug": "ei-obelay",
+      "name": "এই অবেলায়",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 1179,
+      "score": 0.3037
+    },
+    {
+      "slug": "qiyamul-lail-o-tarabih-salater-rakat-songkha",
+      "name": "কিয়ামুল লাইল ও তারাবীহ সালাতের রাকআত সংখ্যা",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 1194,
+      "score": 0.3012
+    },
+    {
+      "slug": "khushu-khuju-96",
+      "name": "খুশু-খুযু",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 6,
+      "rokomariRank": null,
+      "score": 0.2986
+    },
+    {
+      "slug": "Poro Collection",
+      "name": "পড়ো কালেকশন (১, ২, ৩, ৪, ৫)",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 6,
+      "rokomariRank": null,
+      "score": 0.2986
+    },
+    {
+      "slug": "aqidatut-tahabi-sohoj-o-shongkhipto-bekkha-grontho",
+      "name": "আকিদাতুত ত্বাহাবি (সহজ ও সংক্ষিপ্ত ব্যাখ্যাগ্রন্থ)",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 1219,
+      "score": 0.297
+    },
+    {
+      "slug": "bishaser-jouktikota",
+      "name": "বিশ্বাসের যৌক্তিকতা",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 1273,
+      "score": 0.288
+    },
+    {
+      "slug": "fiqhus-sunani-wal-asar-2",
+      "name": "ফিকহুস সুনানি ওয়াল আসার (২য় খণ্ড)",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 1305,
+      "score": 0.2827
+    },
+    {
+      "slug": "fereshtader-jogot",
+      "name": "ফেরেশতাদের জগৎ",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 1328,
+      "score": 0.2788
+    },
+    {
+      "slug": "jannatider-amol",
+      "name": "জান্নাতিদের আমল",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 1329,
+      "score": 0.2787
+    },
+    {
+      "slug": "duwa bishhokosh",
+      "name": "দুআ বিশ্বকোষ (আরবি উচ্চারণসহ) ~ ১২০০ দুআ দেয়া আছে",
+      "publisher": "দারুল ফালাহ",
+      "amolbooksSold": 5,
+      "rokomariRank": null,
+      "score": 0.275
+    },
+    {
+      "slug": "ruqyah-quran-sunnahr-chikitsa",
+      "name": "রুকইয়াহ : কুরআন-সুন্নাহর চিকিৎসা",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 1370,
+      "score": 0.2718
+    },
+    {
+      "slug": "sirate-khatamul-ambiya",
+      "name": "সীরাতে খাতামুল আম্বিয়া",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 1399,
+      "score": 0.267
+    },
+    {
+      "slug": "allahor-prio-bandader-amol",
+      "name": "আল্লাহর প্রিয় বান্দাদের আমল",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 1413,
+      "score": 0.2647
+    },
+    {
+      "slug": "narir-farj-ilm-70",
+      "name": "নারীর ফরজ ইলম",
+      "publisher": "Ihdah Publication",
+      "amolbooksSold": 0,
+      "rokomariRank": 1443,
+      "score": 0.2597
+    },
+    {
+      "slug": "fiqhus-sunani-wal-asar-3",
+      "name": "ফিকহুস সুনানি ওয়াল আসার (৩য় খণ্ড)",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 1509,
+      "score": 0.2487
+    },
+    {
+      "slug": "kuranul-karim-30th-para",
+      "name": "কুরআনুল কারিম ৩০তম পারা",
+      "publisher": "দারুল ফালাহ",
+      "amolbooksSold": 4,
+      "rokomariRank": null,
+      "score": 0.247
+    },
+    {
+      "slug": "tumio-hobe-prithibir-sofol-purush-61",
+      "name": "তুমিও হবে পৃথিবীর একজন সফল পুরুষ",
+      "publisher": "পথিক প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 1564,
+      "score": 0.2395
+    },
+    {
+      "slug": "human-resource-management",
+      "name": "হিউম্যান রিসোর্স ম্যানেজমেন্ট",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 1565,
+      "score": 0.2393
+    },
+    {
+      "slug": "shoytaner-chokranto",
+      "name": "শয়তানের চক্রান্ত",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 1592,
+      "score": 0.2348
+    },
+    {
+      "slug": "golpo-noi-akmotho-alo",
+      "name": "গল্প নয়, একমুঠো আলো",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 1630,
+      "score": 0.2285
+    },
+    {
+      "slug": "ruher-khorak",
+      "name": "রূহের খোরাক",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 1633,
+      "score": 0.228
+    },
+    {
+      "slug": "bipod-jokhon-niyamot-2-91",
+      "name": "বিপদ যখন নিয়ামাত ২",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 3,
+      "rokomariRank": null,
+      "score": 0.2127
+    },
+    {
+      "slug": "mohimannito-quran-1-khondo",
+      "name": "মহিমান্বিত কুরআন (হার্ডকভার)",
+      "publisher": "সিয়ান পাবলিকেশন",
+      "amolbooksSold": 3,
+      "rokomariRank": null,
+      "score": 0.2127
+    },
+    {
+      "slug": "Quran Sonkoloner Itihash",
+      "name": "কুরআন সংকলনের ইতিহাস",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 1755,
+      "score": 0.2077
+    },
+    {
+      "slug": "nobiye-rohmot",
+      "name": "নবিয়ে রহমত ﷺ",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 1789,
+      "score": 0.202
+    },
+    {
+      "slug": "al-mawduat",
+      "name": "আল-মাউযূআত : একটি বিশ্লেষণাত্মক পর্যালোচনা",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 1804,
+      "score": 0.1995
+    },
+    {
+      "slug": "sirajam-munira",
+      "name": "সিরাজাম মুনির",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 1816,
+      "score": 0.1975
+    },
+    {
+      "slug": "hariye-jaoa-mukto",
+      "name": "হারিয়ে যাওয়া মুক্তো",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 1825,
+      "score": 0.196
+    },
+    {
+      "slug": "Islame Namajer Gurutto",
+      "name": "ইসলামে নামাজের গুরুত্ব",
+      "publisher": "Ihdah Publication",
+      "amolbooksSold": 2,
+      "rokomariRank": null,
+      "score": 0.1686
+    },
+    {
+      "slug": "Quran Bojhar Mulniti",
+      "name": "কুরআন বোঝার মূলনীতি",
+      "publisher": "সিয়ান পাবলিকেশন",
+      "amolbooksSold": 2,
+      "rokomariRank": null,
+      "score": 0.1686
+    },
+    {
+      "slug": "quraner-shounorjo/",
+      "name": "কুরআনের সৌন্দর্য",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 2,
+      "rokomariRank": null,
+      "score": 0.1686
+    },
+    {
+      "slug": "mohimannitoquran6set",
+      "name": "মহিমান্বিত কুরআন (৬ খণ্ড সেট)",
+      "publisher": "সিয়ান পাবলিকেশন",
+      "amolbooksSold": 2,
+      "rokomariRank": null,
+      "score": 0.1686
+    },
+    {
+      "slug": "musa-alaihis-salamer-gotonabhul-jibon-and-amader-jonno-rekhe-jaoya-shikkha",
+      "name": "মুসা আলাইহিস সালামের ঘটনাবহুল জীবন এবং আমাদের জন্য রেখে যাওয়া শিক্ষা",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 1994,
+      "score": 0.1678
+    },
+    {
+      "slug": "karbalar-prokrito-itihas",
+      "name": "কারবালার প্রকৃত ইতিহাস",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 2048,
+      "score": 0.1588
+    },
+    {
+      "slug": "hijama-sunnahsommoto-chikitsa",
+      "name": "হিজামা : সুন্নাহসম্মত চিকিৎসা",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 2072,
+      "score": 0.1548
+    },
+    {
+      "slug": "somoyer-hefazat-jiboner-hefazat",
+      "name": "সময়ের হেফাযত জীবনের হেফাযত",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 2095,
+      "score": 0.151
+    },
+    {
+      "slug": "gunah-mafer-amol",
+      "name": "গুনাহ মাফের আমল",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 2117,
+      "score": 0.1473
+    },
+    {
+      "slug": "quran-jiboner-guideline",
+      "name": "কুরআন জীবনের গাইডলাইন",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 2118,
+      "score": 0.1472
+    },
+    {
+      "slug": "Narir Islami Jibon",
+      "name": "নারীর ইসলামি জীবন",
+      "publisher": "Ihdah Publication",
+      "amolbooksSold": 0,
+      "rokomariRank": 2121,
+      "score": 0.1467
+    },
+    {
+      "slug": "bisshaser-joy",
+      "name": "বিশ্বাসের জয়",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 2172,
+      "score": 0.1382
+    },
+    {
+      "slug": "guraba-al-ajurri",
+      "name": "গুরাবা (ইমাম আজুররী রহ.)",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 2185,
+      "score": 0.136
+    },
+    {
+      "slug": "zikire-fikire-quran",
+      "name": "যিকিরে-ফিকিরে কুরআন",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 2190,
+      "score": 0.1352
+    },
+    {
+      "slug": "muslimder-porajito-manoshikota",
+      "name": "মুসলিমদের পরাজিত মানসিকতা",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 2217,
+      "score": 0.1307
+    },
+    {
+      "slug": "mimbarer-ahoban-2",
+      "name": "মিম্বারের আহ্বান ২ : সীরাতের আলোকে জীবন গঠন",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 2315,
+      "score": 0.1143
+    },
+    {
+      "slug": "salat-o-sokal-sondhar-dua",
+      "name": "সালাত ও সকাল-সন্ধ্যার দুআ",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 2333,
+      "score": 0.1113
+    },
+    {
+      "slug": "Attar Osudh",
+      "name": "আত্মার ওষুধ",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 1,
+      "rokomariRank": null,
+      "score": 0.1064
+    },
+    {
+      "slug": "Adhunik Fitna",
+      "name": "আধুনিক ফিতনা",
+      "publisher": "Ihdah Publication",
+      "amolbooksSold": 1,
+      "rokomariRank": null,
+      "score": 0.1064
+    },
+    {
+      "slug": "islami-bichar-babosthar-itihash-61",
+      "name": "ইসলামি বিচারব্যবস্থার ইতিহাস",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 1,
+      "rokomariRank": null,
+      "score": 0.1064
+    },
+    {
+      "slug": "Jibon Jodi hoto nari sahabir moto",
+      "name": "জীবন যদি হতো নারী সাহাবীর মত",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 1,
+      "rokomariRank": null,
+      "score": 0.1064
+    },
+    {
+      "slug": "Tinii Amar Rob",
+      "name": "তিনিই আমার রব",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 1,
+      "rokomariRank": null,
+      "score": 0.1064
+    },
+    {
+      "slug": "tinii-amar-rob-2-98",
+      "name": "তিনিই আমার রব (২য় খণ্ড)",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 1,
+      "rokomariRank": null,
+      "score": 0.1064
+    },
+    {
+      "slug": "tinii-amar-rob-3-14",
+      "name": "তিনিই আমার রব (৩য় খণ্ড)",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 1,
+      "rokomariRank": null,
+      "score": 0.1064
+    },
+    {
+      "slug": "tinii-amar-rob-4-39",
+      "name": "তিনিই আমার রব - [চতুর্থ খণ্ড]",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 1,
+      "rokomariRank": null,
+      "score": 0.1064
+    },
+    {
+      "slug": "rasuler-proti-valobasha-1",
+      "name": "রাসুলের প্রতি ভালোবাসা",
+      "publisher": "Ihdah Publication",
+      "amolbooksSold": 1,
+      "rokomariRank": null,
+      "score": 0.1064
+    },
+    {
+      "slug": "jharfuker-dua",
+      "name": "ঝাড়ফুঁকের দুআ",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 2492,
+      "score": 0.0848
+    },
+    {
+      "slug": "nobijir-pathshala",
+      "name": "নবীজির ﷺ পাঠশালা",
+      "publisher": "মাকতাবাতুল আসলাফ",
+      "amolbooksSold": 0,
+      "rokomariRank": 2570,
+      "score": 0.0718
+    },
+    {
+      "slug": "vranti-bilash",
+      "name": "ভ্রান্তিবিলাস",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 2625,
+      "score": 0.0627
+    },
+    {
+      "slug": "fotoyar-lekhar-kowshol",
+      "name": "ফতোয়া লেখার কলাকৌশল",
+      "publisher": "সমকালীন",
+      "amolbooksSold": 0,
+      "rokomariRank": 2637,
+      "score": 0.0607
+    },
+    {
+      "slug": "pracchobader-itikotha",
+      "name": "প্রাচ্যবাদের ইতিকথা",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 2683,
+      "score": 0.053
+    },
+    {
+      "slug": "shongshar-vabona",
+      "name": "সংসার ভাবনা",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 2709,
+      "score": 0.0487
+    },
+    {
+      "slug": "mimbarer-ahoban-3",
+      "name": "মিম্বারের আহ্বান ৩ : সমাজ ও ব্যক্তিজীবনে পরিশুদ্ধতা অর্জন",
+      "publisher": "আস-সুন্নাহ পাবলিকেশন্স",
+      "amolbooksSold": 0,
+      "rokomariRank": 2816,
+      "score": 0.0308
+    },
+    {
+      "slug": "furqan-rohomaner-awlia-o-shoytander-awlia-chinhitokoroner-shutraboli",
+      "name": "আল্লাহর বন্ধু ও শয়তানের বন্ধু",
+      "publisher": "সন্দীপন প্রকাশন",
+      "amolbooksSold": 0,
+      "rokomariRank": 2854,
+      "score": 0.0245
+    }
+  ]
+}

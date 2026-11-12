@@ -23,6 +23,7 @@ import { ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT } from './admin-incomplete-order-e
 import { STOREFRONT_ATTRIBUTION_SCRIPT } from './storefront-attribution-script';
 import { STOREFRONT_PRODUCT_SECTIONS_SCRIPT } from './storefront-product-sections-script';
 import { patchTrackingListPrices, patchViewCartPrices } from './storefront-view-cart-tracking';
+import { curatedListRequest } from './storefront-list-sort';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule, { cors: true });
@@ -1337,7 +1338,11 @@ ${storefrontPurchaseExternalIdHelper}
           })
         : ['GET', 'HEAD'].includes(req.method)
         ? ''
-        : JSON.stringify(req.body || {});
+        : JSON.stringify(
+            req.path === '/product/get-all'
+              ? curatedListRequest(req.body || {}, req.query?.q as string)
+              : req.body || {}
+          );
       const remotePath = isLibraryRequest ? '/product/get-all' : req.url;
       const remoteRequest = httpsRequest(
         `https://apisub.amolbooks.com/api${remotePath}`,
