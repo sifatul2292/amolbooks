@@ -1236,6 +1236,45 @@
       box-shadow: 0 1px 3px rgba(0,0,0,.05); user-select: none; white-space: nowrap;
     }
     .stock-low-toggle.active { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+    .stock-sort-filter { min-width: 190px; max-width: 240px; }
+    .stock-buy-btn {
+      display: flex; align-items: center; gap: 7px; background: #fff7ed; color: #9a3412;
+      border: 1.5px solid #fdba74; border-radius: 10px; padding: 8px 13px; font-family: inherit;
+      font-size: 12.5px; font-weight: 800; cursor: pointer; white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    }
+    .stock-buy-btn:hover { background: #ffedd5; }
+    .stock-buy-count { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: #ea580c; color: #fff; font-size: 11px; line-height: 20px; text-align: center; }
+    .stock-wait {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 9px 11px; border-radius: 10px;
+      background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; font-size: 12px; font-weight: 700;
+    }
+    .stock-wait strong { font-weight: 900; }
+    .stock-wait .stock-wait-buy { margin-left: auto; background: #ea580c; color: #fff; border-radius: 999px; padding: 3px 10px; font-weight: 900; }
+    .stock-wait .stock-wait-buy.covered { background: #059669; }
+    .stock-wait-ids { width: 100%; color: #b45309; font-size: 11px; font-weight: 600; }
+    .buy-list-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .buy-list-tools button, .buy-group-head button {
+      border: 1.5px solid var(--g200); background: #fff; color: var(--g700); border-radius: 9px; padding: 7px 11px;
+      font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+    .buy-list-tools button:hover, .buy-group-head button:hover { border-color: var(--p); color: var(--p-dark); }
+    .buy-list-summary { color: var(--g500); font-size: 12.5px; font-weight: 600; margin-bottom: 10px; }
+    .buy-group { border: 1px solid var(--g200); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+    .buy-group-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--g50); border-bottom: 1px solid var(--g200); }
+    .buy-group-name { font-weight: 900; color: var(--g900); font-size: 14px; }
+    .buy-group-meta { color: var(--g500); font-size: 12px; font-weight: 700; }
+    .buy-group-head button { margin-left: auto; }
+    .buy-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 4px 12px; padding: 9px 12px; border-top: 1px solid var(--g100); }
+    .buy-row:first-of-type { border-top: none; }
+    .buy-row-name { font-weight: 800; color: var(--g900); font-size: 13px; }
+    .buy-row-qty { font-weight: 900; color: #9a3412; font-size: 15px; text-align: right; }
+    .buy-row-meta { grid-column: 1 / -1; color: var(--g500); font-size: 11.5px; font-weight: 600; }
+    @media print {
+      body.printing-buy-list > *:not(#buyListModal) { display: none !important; }
+      body.printing-buy-list #buyListModal { position: static; display: block; background: none; padding: 0; }
+      body.printing-buy-list #buyListModal .modal-box { box-shadow: none; max-width: none; max-height: none; overflow: visible; }
+      body.printing-buy-list .buy-list-tools, body.printing-buy-list .modal-close, body.printing-buy-list .buy-group-head button { display: none !important; }
+    }
     .stock-layout {
       display: grid; grid-template-columns: minmax(0,1fr) 340px;
       grid-template-areas: "main rail"; gap: 14px; align-items: start;
@@ -1745,9 +1784,21 @@
               <option value="">All publishers</option>
             </select>
           </div>
+          <div class="stock-publisher-filter stock-sort-filter">
+            <i class="fas fa-arrow-down-wide-short"></i>
+            <select id="stockSort" aria-label="Sort stock list" onchange="setStockSort(this.value)">
+              <option value="buy">Buy first (waiting orders)</option>
+              <option value="sold30">Most sold · 30 days</option>
+              <option value="total">Most sold · all time</option>
+              <option value="name">Name A–Z</option>
+            </select>
+          </div>
           <div class="stock-low-toggle" id="stockLowToggle" onclick="toggleStockLowOnly()">
             <i class="fas fa-triangle-exclamation"></i> Low stock only
           </div>
+          <button type="button" class="stock-buy-btn" onclick="openBuyList()" title="Books that waiting orders need, by publisher">
+            <i class="fas fa-cart-shopping"></i> Buy list <span class="stock-buy-count" id="stockBuyCount">…</span>
+          </button>
           <button class="btn-reset" onclick="loadStockPublishers();loadStockList();loadUrgentStock()"><i class="fas fa-sync-alt"></i> Refresh</button>
         </div>
         <div class="stock-layout">
@@ -2196,6 +2247,29 @@
     <div class="modal-footer">
       <button class="btn-m-close" onclick="document.getElementById('restockModal').classList.remove('open')">Cancel</button>
       <button class="btn-stock-save" id="restockSubmitBtn" onclick="submitRestock()">Save Restock</button>
+    </div>
+  </div>
+</div>
+
+<!-- Purchase list (books waiting orders need, by publisher) -->
+<div class="modal-overlay" id="buyListModal" onclick="if(event.target===this) this.classList.remove('open')">
+  <div class="modal-box" style="max-width:720px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-order-id"><i class="fas fa-cart-shopping"></i> Buy list</div>
+        <div class="buy-list-summary" id="buyListSummary" style="margin:4px 0 0">—</div>
+      </div>
+      <div class="modal-header-right">
+        <button class="modal-close" onclick="document.getElementById('buyListModal').classList.remove('open')">&times;</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="buy-list-tools">
+        <button type="button" onclick="copyBuyList()"><i class="fas fa-copy"></i> Copy all</button>
+        <button type="button" onclick="printBuyList()"><i class="fas fa-print"></i> Print</button>
+        <button type="button" onclick="openBuyList()"><i class="fas fa-sync-alt"></i> Refresh</button>
+      </div>
+      <div id="buyListBody"><div class="spinner"></div></div>
     </div>
   </div>
 </div>
@@ -4781,7 +4855,7 @@
   window.loadOrders = loadOrders;
 
   /* ── Stock Management ── */
-  var stockState = { page: 1, limit: 50, q: '', publisherId: '', lowOnly: false, totalCount: 0 };
+  var stockState = { page: 1, limit: 50, q: '', publisherId: '', lowOnly: false, sort: 'buy', totalCount: 0 };
   var stockSaveTimers = {};
   var urgentLoadVersion = 0;
 
@@ -4800,7 +4874,8 @@
     var url = API + '/api/product/stock-list?page=' + stockState.page + '&limit=' + stockState.limit
       + '&q=' + encodeURIComponent(stockState.q)
       + (stockState.publisherId ? '&publisherId=' + encodeURIComponent(stockState.publisherId) : '')
-      + (stockState.lowOnly ? '&lowOnly=true' : '');
+      + (stockState.lowOnly ? '&lowOnly=true' : '')
+      + '&sort=' + encodeURIComponent(stockState.sort || 'buy');
     fetch(url, { headers: authHeaders() })
       .then(function(r){ if (r.status===401){ clearToken(); showLogin('Session expired. Please log in again.'); throw new Error('auth'); } return r.json(); })
       .then(function(resp){
@@ -4809,6 +4884,7 @@
         renderStockRows(rows);
         updateStockPager();
         loadStockSummary();
+        loadBuyListCount();
       })
       .catch(function(err){
         if (err.message==='auth') return;
@@ -4873,6 +4949,108 @@
       });
   };
 
+  function daysAgoLabel(when) {
+    if (!when) return '';
+    var days = Math.floor((Date.now() - new Date(when).getTime()) / 86400000);
+    return days <= 0 ? 'today' : days === 1 ? '1 day ago' : days + ' days ago';
+  }
+
+  // Orders still waiting for this book (not sent to the courier yet) and how many copies to buy.
+  function stockWaitStrip(p) {
+    var waiting = Number(p.waitingQty) || 0;
+    if (!waiting) return '';
+    var buy = Number(p.toBuy) || 0;
+    var orders = Number(p.waitingOrders) || 0;
+    var ids = (p.waitingOrderIds || []).slice(0, 6).map(function(id){ return '#' + esc(String(id)); }).join(', ');
+    return '<div class="stock-wait"><i class="fas fa-hourglass-half"></i>'
+      + '<span><strong>' + waiting + '</strong> cop' + (waiting === 1 ? 'y' : 'ies') + ' in <strong>' + orders + '</strong> waiting order' + (orders === 1 ? '' : 's') + '</span>'
+      + (p.oldestWaitingAt ? '<span>· oldest ' + esc(daysAgoLabel(p.oldestWaitingAt)) + '</span>' : '')
+      + (buy ? '<span class="stock-wait-buy">Buy ' + buy + '</span>' : '<span class="stock-wait-buy covered">Covered by stock</span>')
+      + (ids ? '<span class="stock-wait-ids">Orders: ' + ids + ((p.waitingOrderIds || []).length > 6 ? ' …' : '') + '</span>' : '')
+      + '</div>';
+  }
+
+  window.setStockSort = function (value) {
+    stockState.sort = value || 'buy';
+    stockState.page = 1;
+    loadStockList();
+  };
+
+  var buyListGroups = [];
+  function buyListUrl() {
+    return API + '/api/product/stock-to-buy' + (stockState.publisherId ? '?publisherId=' + encodeURIComponent(stockState.publisherId) : '');
+  }
+  window.loadBuyListCount = function () {
+    if (!getToken()) return;
+    fetch(buyListUrl(), { headers: authHeaders() })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(resp){
+        var el = document.getElementById('stockBuyCount');
+        if (el) el.textContent = resp && resp.success ? String(resp.totalCopies || 0) : '!';
+      })
+      .catch(function(){ var el = document.getElementById('stockBuyCount'); if (el) el.textContent = '!'; });
+  };
+
+  function buyGroupText(group) {
+    var lines = [(group.publisher ? group.publisher.name : 'Other') + ' — Amolbooks order'];
+    group.items.forEach(function(item, i){ lines.push((i + 1) + '. ' + item.name + ' × ' + item.toBuy); });
+    lines.push('Total: ' + group.totalCopies + ' copies');
+    return lines.join('\n');
+  }
+  function copyText(text, done) {
+    var fallback = function(){
+      var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(true); } catch (_) { done(false); } document.body.removeChild(ta);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function(){ done(true); }, fallback);
+    else fallback();
+  }
+  window.copyBuyGroup = function (index, btn) {
+    var group = buyListGroups[index]; if (!group) return;
+    copyText(buyGroupText(group), function(ok){ if (btn) { btn.innerHTML = ok ? '<i class="fas fa-check"></i> Copied' : 'Copy failed'; setTimeout(function(){ btn.innerHTML = '<i class="fas fa-copy"></i> Copy'; }, 1800); } });
+  };
+  window.copyBuyList = function () {
+    if (!buyListGroups.length) return;
+    copyText(buyListGroups.map(buyGroupText).join('\n\n'), function(ok){ if (typeof showToast === 'function') showToast(ok ? 'Buy list copied' : 'Copy failed'); });
+  };
+  window.printBuyList = function () {
+    document.body.classList.add('printing-buy-list');
+    setTimeout(function(){ window.print(); document.body.classList.remove('printing-buy-list'); }, 50);
+  };
+
+  window.openBuyList = function () {
+    if (!getToken()) { showLogin('Please log in to see the buy list.'); return; }
+    var modal = document.getElementById('buyListModal');
+    var body = document.getElementById('buyListBody');
+    modal.classList.add('open');
+    body.innerHTML = '<div class="spinner"></div>';
+    fetch(buyListUrl(), { headers: authHeaders() })
+      .then(function(r){ if (r.status===401){ clearToken(); showLogin('Session expired. Please log in again.'); throw new Error('auth'); } if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function(resp){
+        buyListGroups = (resp && resp.data) || [];
+        var copies = (resp && resp.totalCopies) || 0;
+        document.getElementById('stockBuyCount').textContent = String(copies);
+        document.getElementById('buyListSummary').textContent = buyListGroups.length
+          ? copies + ' cop' + (copies === 1 ? 'y' : 'ies') + ' of ' + ((resp && resp.count) || 0) + ' book' + (((resp && resp.count) || 0) === 1 ? '' : 's') + ' from ' + buyListGroups.length + ' publisher' + (buyListGroups.length === 1 ? '' : 's') + ' · orders not sent to the courier yet'
+          : 'Nothing to buy: every waiting order is covered by stock.';
+        if (!buyListGroups.length) { body.innerHTML = '<div class="stock-grid-message"><i class="fas fa-circle-check" style="color:#059669"></i><div>Nothing to buy right now.</div></div>'; return; }
+        body.innerHTML = buyListGroups.map(function(group, gi){
+          return '<section class="buy-group"><div class="buy-group-head"><div><div class="buy-group-name">' + esc(group.publisher ? group.publisher.name : 'No publisher') + '</div>'
+            + '<div class="buy-group-meta">' + group.totalCopies + ' copies · ' + group.items.length + ' book' + (group.items.length === 1 ? '' : 's') + (group.totalCost ? ' · cost ≈ ৳' + Math.round(group.totalCost) : '') + '</div></div>'
+            + '<button type="button" onclick="copyBuyGroup(' + gi + ', this)"><i class="fas fa-copy"></i> Copy</button></div>'
+            + group.items.map(function(item){
+              var ids = (item.waitingOrderIds || []).slice(0, 8).map(function(id){ return '#' + esc(String(id)); }).join(', ');
+              return '<div class="buy-row"><div class="buy-row-name">' + esc(item.name || '—') + '</div><div class="buy-row-qty">× ' + item.toBuy + '</div>'
+                + '<div class="buy-row-meta">' + item.waitingOrders + ' waiting order' + (item.waitingOrders === 1 ? '' : 's') + ' (' + item.waitingQty + ' cop' + (item.waitingQty === 1 ? 'y' : 'ies') + ')'
+                + (item.oldestWaitingAt ? ' · oldest ' + esc(daysAgoLabel(item.oldestWaitingAt)) : '')
+                + (item.stock !== null && item.stock !== undefined ? ' · stock ' + esc(String(item.stock)) : ' · not tracked')
+                + (ids ? ' · ' + ids : '') + '</div></div>';
+            }).join('') + '</section>';
+        }).join('');
+      })
+      .catch(function(err){ if (err.message === 'auth') return; body.innerHTML = '<div class="stock-grid-message"><i class="fas fa-circle-exclamation"></i><div>Could not load the buy list. ' + esc(err.message) + '</div></div>'; });
+  };
+
   function renderStockRows(rows) {
     var body = document.getElementById('stockBody');
     if (!rows.length) { body.innerHTML = '<div class="stock-grid-message"><i class="fas fa-box-open"></i><div>No products found.</div></div>'; return; }
@@ -4890,6 +5068,7 @@
         + (Number(p.totalSold) > 0 ? '<span class="stock-prod-sold"><i class="fas fa-arrow-trend-up"></i> '+esc(String(p.totalSold))+' sold</span>' : '')
         + '</div></div>'
         + '<div class="stock-status">'+stockStatusPill(p.stock, p.lowStockThreshold)+'</div></div>'
+        + stockWaitStrip(p)
         + '<div class="stock-demand-metrics" aria-label="Product demand metrics">'
         + '<div class="stock-demand-metric"><span class="stock-demand-label">Today</span><span class="stock-demand-value">'+esc(String(Number(p.soldToday)||0))+' <span class="stock-demand-unit">sold</span></span></div>'
         + '<div class="stock-demand-metric"><span class="stock-demand-label">Last 30 days</span><span class="stock-demand-value">'+esc(String(Number(p.soldLast30Days)||0))+' <span class="stock-demand-unit">sold</span></span></div>'

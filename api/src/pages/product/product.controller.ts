@@ -151,6 +151,14 @@ export class ProductController {
     return await this.productService.getStockList(query);
   }
 
+  @Get('/stock-to-buy')
+  @UseGuards(AdminJwtAuthGuard)
+  async getStockToBuy(
+    @Query() query: Record<string, any>,
+  ): Promise<ResponsePayload> {
+    return await this.productService.getStockToBuy(query);
+  }
+
   @Get('/stock-urgent')
   @UseGuards(AdminJwtAuthGuard)
   async getUrgentStock(

@@ -1748,6 +1748,67 @@ ${items.join('\n')}
     return metrics;
   }
 
+  // Orders that still wait for their books: not cancelled, not yet booked with the courier
+  // (no consignment), created in the last 60 days. Most books are bought from the publisher only
+  // after an order comes in, so these copies are what has to be bought next.
+  private static readonly WAITING_ORDER_DAYS = 60;
+
+  private async getWaitingOrderMetrics(productIds?: Types.ObjectId[]): Promise<
+    Map<string, { waitingQty: number; waitingOrders: number; oldestWaitingAt: Date | null; waitingOrderIds: string[] }>
+  > {
+    const metrics = new Map();
+    if (productIds && !productIds.length) return metrics;
+    try {
+      const since = moment().tz('Asia/Dhaka').subtract(ProductService.WAITING_ORDER_DAYS, 'days').toDate();
+      const match: any = {
+        createdAt: { $gte: since },
+        orderStatus: {
+          $in: [OrderStatus.NONE, OrderStatus.PENDING, OrderStatus.CONFIRM, OrderStatus.PROCESSING, OrderStatus.HOLD],
+        },
+        customerCancelledAt: { $exists: false },
+        $or: [
+          { 'courierData.consignmentId': { $exists: false } },
+          { 'courierData.consignmentId': { $in: [null, ''] } },
+        ],
+      };
+      if (productIds) match['orderedItems._id'] = { $in: productIds };
+      const rows = await this.orderModel.aggregate([
+        { $match: match },
+        { $unwind: '$orderedItems' },
+        ...(productIds ? [{ $match: { 'orderedItems._id': { $in: productIds } } }] : []),
+        { $sort: { createdAt: 1 } },
+        {
+          $group: {
+            _id: '$orderedItems._id',
+            waitingQty: { $sum: { $max: [1, { $ifNull: ['$orderedItems.quantity', 1] }] } },
+            orders: { $addToSet: '$orderId' },
+            oldestWaitingAt: { $min: '$createdAt' },
+          },
+        },
+      ]);
+      rows.forEach((row) => {
+        const orders = (row.orders || []).filter((id: any) => id !== null && id !== undefined).map(String);
+        metrics.set(String(row._id), {
+          waitingQty: Math.max(0, Number(row.waitingQty) || 0),
+          waitingOrders: orders.length,
+          oldestWaitingAt: row.oldestWaitingAt || null,
+          waitingOrderIds: orders.slice(0, 20),
+        });
+      });
+    } catch (err) {
+      this.logger.warn(`Waiting order metrics unavailable: ${err?.message || err}`);
+    }
+    return metrics;
+  }
+
+  // Copies to buy now. A tracked book's stock already went down for these orders, so only the part
+  // the shelf cannot cover is missing; an untracked book has no shelf, so every waiting copy counts.
+  private toBuyNow(stock: any, waitingQty: number): number {
+    if (!waitingQty) return 0;
+    if (stock === null || stock === undefined) return waitingQty;
+    return Math.min(waitingQty, Math.max(0, -Number(stock) || 0));
+  }
+
   async getStockList(query: any): Promise<ResponsePayload> {
     try {
       const page = Math.max(1, parseInt(query?.page, 10) || 1);
@@ -1783,37 +1844,60 @@ ${items.join('\n')}
         };
       }
 
-      const total = await this.productModel.countDocuments(filter);
-      const data = await this.productModel
-        .find(filter)
-        .select(
-          'name nameEn sku images salePrice afterDiscountPrice discountAmount discountType costPrice stock lowStockThreshold totalSold publisher',
-        )
-        // Rank globally before pagination so best sellers always appear first.
-        .sort({ totalSold: -1, name: 1, _id: 1 })
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .lean();
-
-      let resultData: any[] = data.map((product: any) => ({
+      // sort=buy (default): books waiting orders need first, then the most sold in 30 days.
+      // sort=sold30: most sold in 30 days. sort=total: all-time sales. sort=name: A-Z.
+      const sortKey = ['buy', 'sold30', 'total', 'name'].includes(String(query?.sort)) ? String(query.sort) : 'buy';
+      const select =
+        'name nameEn sku images salePrice afterDiscountPrice discountAmount discountType costPrice stock lowStockThreshold totalSold publisher';
+      const priced = (product: any) => ({
         ...product,
         effectivePrice:
           Number(product.afterDiscountPrice) > 0
             ? Number(product.afterDiscountPrice)
             : this.utilsService.transform(product, 'salePrice'),
-      }));
-      if (includeSalesMetrics && data.length) {
-        const productIds = data.map((product: any) => new ObjectId(product._id));
-        const salesMetrics = await this.getStockSalesMetrics(productIds);
-        const emptyMetrics = {
-          soldToday: 0,
-          soldLast30Days: 0,
-          predictedNeedNext30Days: 0,
+      });
+      const emptyMetrics = { soldToday: 0, soldLast30Days: 0, predictedNeedNext30Days: 0 };
+      const emptyWaiting = { waitingQty: 0, waitingOrders: 0, oldestWaitingAt: null, waitingOrderIds: [] };
+      const withMetrics = async (products: any[]) => {
+        if (!includeSalesMetrics || !products.length) return products.map(priced);
+        const ids = products.map((product: any) => new ObjectId(product._id));
+        const [salesMetrics, waiting] = await Promise.all([
+          this.getStockSalesMetrics(ids),
+          this.getWaitingOrderMetrics(ids),
+        ]);
+        return products.map((product: any) => {
+          const wait = waiting.get(String(product._id)) || emptyWaiting;
+          return {
+            ...priced(product),
+            ...(salesMetrics.get(String(product._id)) || emptyMetrics),
+            ...wait,
+            toBuy: this.toBuyNow(product.stock, wait.waitingQty),
+          };
+        });
+      };
+
+      const total = await this.productModel.countDocuments(filter);
+      let resultData: any[];
+      if (includeSalesMetrics && (sortKey === 'buy' || sortKey === 'sold30')) {
+        // Rank the whole filtered list on live order data, then cut the page.
+        const all = await withMetrics(await this.productModel.find(filter).select(select).lean());
+        const by = (key: string) => (a: any, b: any) => (Number(b[key]) || 0) - (Number(a[key]) || 0);
+        const oldest = (a: any, b: any) =>
+          (a.oldestWaitingAt ? new Date(a.oldestWaitingAt).getTime() : Infinity) -
+          (b.oldestWaitingAt ? new Date(b.oldestWaitingAt).getTime() : Infinity);
+        const chain = (...rules: any[]) => (a: any, b: any) => {
+          for (const rule of rules) { const d = rule(a, b); if (d) return d; }
+          return String(a.name || '').localeCompare(String(b.name || ''));
         };
-        resultData = resultData.map((product: any) => ({
-          ...product,
-          ...(salesMetrics.get(String(product._id)) || emptyMetrics),
-        }));
+        all.sort(sortKey === 'buy'
+          ? chain(by('toBuy'), oldest, by('waitingQty'), by('soldLast30Days'), by('soldToday'), by('totalSold'))
+          : chain(by('soldLast30Days'), by('soldToday'), by('totalSold')));
+        resultData = all.slice((page - 1) * limit, page * limit);
+      } else {
+        const dbSort: any = sortKey === 'name' ? { name: 1, _id: 1 } : { totalSold: -1, name: 1, _id: 1 };
+        const data = await this.productModel.find(filter).select(select).sort(dbSort)
+          .skip((page - 1) * limit).limit(limit).lean();
+        resultData = await withMetrics(data);
       }
 
       return {
@@ -1823,6 +1907,54 @@ ${items.join('\n')}
         count: total,
       } as ResponsePayload;
     } catch (err) {
+      throw new InternalServerErrorException(err.message);
+    }
+  }
+
+  // Purchase list for the Stock page: every book that waiting orders need and the shelf cannot
+  // cover, grouped by publisher (the owner buys from each publisher after orders come in).
+  async getStockToBuy(query: any): Promise<ResponsePayload> {
+    try {
+      const publisherId = String(query?.publisherId || '').trim();
+      if (publisherId && !ObjectId.isValid(publisherId)) throw new BadRequestException('Invalid publisher');
+      const waiting = await this.getWaitingOrderMetrics();
+      const ids = [...waiting.keys()].filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
+      const filter: any = { _id: { $in: ids } };
+      if (publisherId) filter['publisher._id'] = new ObjectId(publisherId);
+      const products = await this.productModel.find(filter)
+        .select('name nameEn sku images salePrice costPrice stock publisher').lean();
+      const groups = new Map<string, any>();
+      for (const product of products as any[]) {
+        const wait = waiting.get(String(product._id));
+        const toBuy = this.toBuyNow(product.stock, wait.waitingQty);
+        if (!toBuy) continue;
+        const key = product.publisher?._id ? String(product.publisher._id) : 'none';
+        if (!groups.has(key)) {
+          groups.set(key, { publisher: product.publisher?.name ? { _id: product.publisher._id, name: product.publisher.name } : null, items: [], totalCopies: 0, totalCost: 0 });
+        }
+        const group = groups.get(key);
+        const costPrice = Number(product.costPrice) > 0 ? Number(product.costPrice) : 0;
+        group.items.push({
+          _id: product._id, name: product.name, sku: product.sku || null, image: product.images?.[0] || null,
+          stock: product.stock ?? null, costPrice, toBuy, ...wait,
+        });
+        group.totalCopies += toBuy;
+        group.totalCost += costPrice * toBuy;
+      }
+      const data = [...groups.values()].map((group) => ({
+        ...group,
+        items: group.items.sort((a: any, b: any) =>
+          (new Date(a.oldestWaitingAt || 0).getTime() - new Date(b.oldestWaitingAt || 0).getTime()) || b.toBuy - a.toBuy),
+      })).sort((a, b) => b.totalCopies - a.totalCopies || String(a.publisher?.name || '~').localeCompare(String(b.publisher?.name || '~')));
+      return {
+        success: true,
+        message: 'Success',
+        data,
+        count: data.reduce((sum, group) => sum + group.items.length, 0),
+        totalCopies: data.reduce((sum, group) => sum + group.totalCopies, 0),
+      } as ResponsePayload;
+    } catch (err) {
+      if (err instanceof BadRequestException) throw err;
       throw new InternalServerErrorException(err.message);
     }
   }
