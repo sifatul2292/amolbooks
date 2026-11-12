@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content" />
     <title>WhatsApp Inbox · Amolbooks</title>
     <!-- WhatsApp Inbox (owner, 2026-11-10; WhatsApp-style look 2026-11-11): what customers write to
          the API number 01302-771586, answered by staff. Served by customer-manager-pages.ts with the
@@ -59,9 +59,10 @@
       .filters button { border: 0; border-radius: 18px; padding: 6px 14px; background: var(--panel-head); color: var(--muted); font-size: 14px; font-weight: 500; }
       .filters button:hover { background: #e4e8eb; }
       .filters button[aria-pressed='true'] { background: var(--chip-on); color: var(--green-dark); }
-      .chats { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; }
+      .chats { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; overscroll-behavior: contain; }
       .chat-item { width: 100%; display: flex; align-items: center; gap: 13px; padding: 0 0 0 13px; border: 0; background: transparent; text-align: left; height: 72px; }
       .chat-item:hover { background: var(--hover); }
+      .chat-item:active { background: var(--selected); }
       .chat-item[aria-current='true'] { background: var(--selected); }
       .chat-body { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 2px; padding-right: 15px; border-bottom: 1px solid var(--line); }
       .row { display: flex; align-items: center; gap: 6px; min-width: 0; }
@@ -77,17 +78,20 @@
       .filters button.needs-chip { color: #b45309; }
       .filters button.needs-chip.has { background: #fff3dc; }
       .filters button.needs-chip[aria-pressed='true'] { background: #f59e0b; color: #fff; }
-      .request { flex-shrink: 0; display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: #fff7e8; border-bottom: 1px solid #f5dfb3; border-left: 4px solid #f59e0b; }
+      .request { flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 16px; background: #fff7e8; border-bottom: 1px solid #f5dfb3; border-left: 4px solid #f59e0b; }
       .request[hidden] { display: none; }
       .request-icon { width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%; background: #f59e0b; color: #fff; display: grid; place-items: center; font-size: 17px; font-weight: 700; }
-      .request-text { flex: 1; min-width: 0; }
+      /* Buttons go under the text when the chat is narrow, instead of squeezing it into a column. */
+      .request-text { flex: 1 1 240px; min-width: 0; }
       .request-text strong { display: block; font-size: 14.5px; color: #7a4a00; }
       .request-text p { font-size: 13px; color: #8a6a3a; margin-top: 1px; line-height: 18px; }
-      .request-actions { display: flex; gap: 8px; flex-shrink: 0; }
+      .request-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; flex-shrink: 0; margin-left: auto; }
       .request-actions a, .request-actions button { border-radius: 18px; padding: 7px 14px; font-size: 13.5px; font-weight: 600; text-decoration: none; white-space: nowrap; }
-      .request-actions a { border: 1px solid #e8c98d; background: #fff; color: #7a4a00; }
-      .request-actions button { border: 0; background: var(--green); color: #fff; }
-      .request-actions button:hover { background: var(--green-dark); }
+      .request-actions a, .request-actions .light { border: 1px solid #e8c98d; background: #fff; color: #7a4a00; }
+      .request-actions .light:hover { background: #fff3dc; }
+      .request-actions .light[hidden] { display: none; }
+      .request-actions button:not(.light) { border: 0; background: var(--green); color: #fff; }
+      .request-actions button:not(.light):hover { background: var(--green-dark); }
       .request-actions button:disabled { opacity: 0.6; }
       .answered { display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; color: var(--muted); white-space: nowrap; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
       .here { display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; max-width: 120px; padding: 1px 7px; border-radius: 9px; background: #fff3dc; color: #a15c00; font-size: 11.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -126,7 +130,7 @@
       .order-chip b { font-weight: 600; color: var(--ink); }
       .order-chip .ask { color: #b45309; font-weight: 600; }
       .messages {
-        flex: 1; min-height: 0; overflow-y: auto; padding: 12px 7% 8px; display: flex; flex-direction: column;
+        flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px 7% 8px; display: flex; flex-direction: column;
         background-color: var(--chat-bg);
         background-image: radial-gradient(rgba(0, 0, 0, 0.035) 1.2px, transparent 1.3px), radial-gradient(rgba(0, 0, 0, 0.025) 1px, transparent 1.1px);
         background-size: 22px 22px, 34px 34px;
@@ -174,6 +178,22 @@
       .composer-closed[hidden], .composer textarea[hidden], .send[hidden] { display: none; }
       .composer-note { position: absolute; left: 50%; bottom: 72px; transform: translateX(-50%); max-width: 80%; padding: 7px 14px; border-radius: 8px; background: #3b4a54; color: #fff; font-size: 13px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
       .composer-note:empty { display: none; }
+      .qr-btn { width: 42px; height: 42px; flex-shrink: 0; }
+      .qr-btn[aria-expanded='true'] { background: rgba(0, 168, 132, 0.12); color: var(--green-dark); }
+      .qr-btn[hidden] { display: none; }
+      .quick { flex-shrink: 0; max-height: min(330px, 45vh); overflow-y: auto; overscroll-behavior: contain; background: #fff; border-top: 1px solid var(--line); border-left: 1px solid var(--line); padding: 6px 0; }
+      .quick[hidden] { display: none; }
+      .quick-head { display: flex; justify-content: space-between; gap: 8px; padding: 4px 16px 6px; font-size: 12.5px; color: var(--muted); }
+      .quick-item { display: block; width: 100%; border: 0; background: transparent; text-align: left; padding: 8px 16px; cursor: pointer; }
+      .quick-item:hover, .quick-item.active { background: var(--panel-head); }
+      .quick-item strong { display: block; font-size: 14px; font-weight: 600; color: var(--ink); }
+      .quick-item span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 12.5px; line-height: 17px; color: var(--muted); }
+      .quick-note { padding: 10px 16px; font-size: 13px; color: var(--muted); }
+      @media (pointer: coarse) { .quick-keys { display: none; } }
+      .msg.local { opacity: 0.92; }
+      .msg-actions { clear: both; display: flex; gap: 6px; justify-content: flex-end; padding-top: 6px; }
+      .msg-actions button { border: 1px solid rgba(11, 20, 26, 0.15); border-radius: 14px; background: #fff; padding: 3px 12px; font-size: 12.5px; font-weight: 600; color: var(--green-dark); }
+      .msg-actions button:hover { background: var(--panel-head); }
 
       /* ---------- Order details panel (like WhatsApp's contact info) ---------- */
       .app { position: relative; }
@@ -245,16 +265,48 @@
         .menu { display: inline-grid; margin-left: -8px; }
         .back { display: inline-grid; }
         .chat-head { padding: 8px 10px; gap: 10px; }
-        .chat-head, .orders, .composer { border-left: 0; }
+        .chat-head, .orders, .composer, .quick { border-left: 0; }
         .messages { padding: 10px 12px 6px; }
         .unread-line { margin-left: -12px; margin-right: -12px; }
         .msg { max-width: 85%; }
-        .composer { padding: 6px 8px 8px; }
+        .composer { padding: 6px 8px calc(8px + env(safe-area-inset-bottom)); gap: 4px; }
+        /* Phones (owner, 2026-11-12: "super responsive for mobile"). */
+        /* The page fills exactly the part of the screen above the keyboard (see fitViewport). */
+        .workspace { position: fixed; left: 0; right: 0; top: var(--vv-top, 0px); height: var(--vv-height, 100dvh); }
+        body { overscroll-behavior: none; }
+        .side { border-right: 0; }
+        /* 16px text: iPhones zoom the page in when a smaller box is tapped. */
+        .search input, .composer textarea, .login input { font-size: 16px; }
+        .search input { height: 40px; }
+        .composer textarea { max-height: 120px; }
+        /* Finger-size targets. */
+        .filters button { min-height: 36px; padding: 0 15px; }
+        .order-chip { padding: 6px 12px; line-height: 22px; }
+        .older { min-height: 36px; }
+        .msg-actions button { min-height: 34px; padding: 0 14px; }
+        .quick-item { padding: 11px 14px; }
+        .quick { max-height: min(300px, calc(var(--vv-height, 100dvh) * 0.42)); }
+        .chat-head { height: 58px; }
+        .head-title a { display: inline-block; padding: 3px 0; }
+        .window .win-word { display: none; }
+        @media (hover: none) { .chat-item:hover { background: transparent; } .chat-item[aria-current='true']:hover { background: var(--selected); } }
+        .request-actions a, .request-actions button { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; }
+        /* While typing (keyboard open), the messages get the room: order chips and banner step aside. */
+        .app.composing .orders, .app.composing .request { display: none; }
         .request { flex-wrap: wrap; padding: 10px 12px; border-left-width: 3px; }
         .request-actions { width: 100%; justify-content: flex-end; }
         .app.info-open { grid-template-columns: minmax(0, 1fr); }
         .info { position: fixed; inset: 0; width: auto; z-index: 350; box-shadow: none; }
         .info-card { padding: 14px 16px; }
+      }
+      @media (max-width: 600px) {
+        /* "Wants more books" banner on phones: one line of title, buttons full width (help text on bigger screens). */
+        .request { padding: 8px 12px; gap: 6px 10px; }
+        .request-icon { width: 28px; height: 28px; font-size: 15px; }
+        .request-text strong { font-size: 14px; }
+        .request-text p { display: none; }
+        .request-actions { flex-wrap: nowrap; }
+        .request-actions a, .request-actions button { flex: 1; padding: 0 8px; }
       }
     </style>
   </head>
@@ -312,6 +364,7 @@
               <span class="request-icon" id="request-icon">+</span>
               <div class="request-text"><strong id="request-title"></strong><p id="request-help"></p></div>
               <div class="request-actions">
+                <button type="button" class="light" id="request-books" title="Put the book list in the reply box">Book list</button>
                 <a id="request-open" target="_blank" rel="noopener" href="#">Open order</a>
                 <button type="button" id="request-done">Mark done</button>
               </div>
@@ -319,8 +372,12 @@
             <div class="messages" id="messages" aria-live="polite"></div>
             <div class="presence-bar" id="presence-bar" role="status" hidden></div>
             <p class="composer-note" id="composer-note" role="status"></p>
+            <div class="quick" id="quick" hidden aria-label="Ready answers"></div>
             <form class="composer" id="composer">
-              <textarea id="reply" rows="1" placeholder="Type a message" aria-label="Reply"></textarea>
+              <button type="button" class="icon-btn qr-btn" id="quick-btn" aria-label="Ready answers" aria-expanded="false" title="Ready answers (or type / in the box)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12z"/></svg>
+              </button>
+              <textarea id="reply" rows="1" placeholder="Type a message · / for ready answers" aria-label="Reply"></textarea>
               <p class="composer-closed" id="composer-closed" hidden></p>
               <button class="send" id="send" type="submit" aria-label="Send">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.4 20.4 21 12 3.4 3.6 3.3 10l12.6 2-12.6 2z"/></svg>
@@ -363,7 +420,10 @@
         const TYPING_EVERY_MS = 3000;
         const EYE = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 5c-5 0-9 4.5-10 7 1 2.5 5 7 10 7s9-4.5 10-7c-1-2.5-5-7-10-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-2a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></svg>';
         const names = (list) => list.map((viewer) => viewer.name).join(', ');
-        const CHAT_EVERY_MS = 6000;
+        // Open chat refresh (owner, 2026-11-12: answering felt slow); the list every LIST_EVERY_MS.
+        const CHAT_EVERY_MS = 4000;
+        const DRAFTS_KEY = 'wa_inbox_drafts';
+        const DRAFT_KEEP_MS = 3 * 24 * 60 * 60 * 1000;
         const GROUP_MS = 5 * 60 * 1000;
         const STATUS = { 0: 'New', 1: 'Pending', 2: 'Confirmed', 3: 'Processing', 4: 'Shipping', 5: 'Delivered', 6: 'Cancelled', 7: 'Refund', 8: 'With courier', 9: 'Returned', 10: 'Trash' };
         // The order message's own text already starts with "Order message #…".
@@ -378,15 +438,38 @@
         const $ = (id) => document.getElementById(id);
         const esc = (v) =>
           String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-        const state = { filter: 'all', q: '', page: 0, chats: [], more: false, open: null, messages: [], orders: [], mediaUrls: new Map(), canSend: true, sending: false, stick: true, unreadAtOpen: 0, info: false };
+        const state = { filter: 'all', q: '', page: 0, chats: [], more: false, open: null, messages: [], orders: [], mediaUrls: new Map(), canSend: true, stick: true, unreadAtOpen: 0, info: false, outbox: [], sendingOutbox: false, drafts: readDrafts(), quick: { open: false, items: [], wa: '', filter: '', index: 0, slash: false } };
         const BOOK_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2v16h12V4h-2v7l-2.5-1.5L11 11V4z"/></svg>';
         const PAYMENT = { cash_on_delivery: 'Cash on delivery', online_payment: 'Online payment' };
         const taka = (value) => '৳' + Math.round(Number(value) || 0).toLocaleString('en-US');
         let chatTimer = null;
         let searchTimer = null;
+        const phoneQuery = matchMedia('(max-width: 900px)');
 
         function token() {
           return localStorage.getItem('co_admin_token') || '';
+        }
+        // Half-written answers stay with their chat (also after a reload), not lost when switching
+        // chats; after 3 days they are dropped so an old half-message never turns up later.
+        function readDrafts() {
+          const drafts = {};
+          try {
+            const saved = JSON.parse(localStorage.getItem(DRAFTS_KEY) || '{}');
+            Object.keys(saved || {}).forEach((wa) => {
+              const entry = saved[wa];
+              if (entry && typeof entry.text === 'string' && Date.now() - Number(entry.at) < DRAFT_KEEP_MS) drafts[wa] = entry;
+            });
+          } catch (_) {}
+          return drafts;
+        }
+        function draftText(wa) {
+          return state.drafts[wa] ? state.drafts[wa].text : '';
+        }
+        function saveDraft(wa, text) {
+          if (!wa) return;
+          if (text && text.trim()) state.drafts[wa] = { text, at: Date.now() };
+          else delete state.drafts[wa];
+          try { localStorage.setItem(DRAFTS_KEY, JSON.stringify(state.drafts)); } catch (_) {}
         }
         function dhaka(value, options) {
           return new Date(value).toLocaleString('en-GB', Object.assign({ timeZone: 'Asia/Dhaka' }, options));
@@ -505,7 +588,7 @@
           if (message.status === 'read') return '<span class="tick read" title="Read">' + DOUBLE + '</span>';
           if (message.status === 'delivered') return '<span class="tick" title="Delivered">' + DOUBLE + '</span>';
           if (message.status === 'sent') return '<span class="tick" title="Sent">' + CHECK + '</span>';
-          return '<span class="tick" title="Sending">' + CLOCK + '</span>';
+          return '<span class="tick" title="Sending…">' + CLOCK + '</span>';
         }
         function mediaHtml(message) {
           if (!message.media) return '';
@@ -529,10 +612,13 @@
             ? '<span class="tapped">' + REPLY_ICON + '<span class="msg-text">' + richText(text) + '</span></span>'
             : text ? '<span class="msg-text">' + richText(text) + '</span>' : '';
           const orderLink = message.kind === 'order' && message.orderId ? ' order-link" data-order="' + esc(message.orderId) + '" title="See what was ordered' : '';
-          return '<div class="msg ' + (out ? 'out' : 'in') + (first ? ' first' : '') + orderLink + '" data-id="' + esc(message._id) + '">' +
+          return '<div class="msg ' + (out ? 'out' : 'in') + (first ? ' first' : '') + (message.local ? ' local' : '') + orderLink + '" data-id="' + esc(message._id) + '">' +
             tag + mediaHtml(message) + body +
             '<span class="meta">' + esc(clock(message.at)) + ticks(message) + '</span>' +
-            (message.status === 'failed' && message.error ? '<div class="msg-error">Not delivered: ' + esc(message.error) + '</div>' : '') +
+            (message.local && message.status === 'failed'
+              ? '<div class="msg-error">Not sent: ' + esc(message.error || 'please try again.') + '</div>' +
+                '<div class="msg-actions"><button type="button" data-edit="' + esc(message._id) + '">Edit</button><button type="button" data-retry="' + esc(message._id) + '">Send again</button></div>'
+              : message.status === 'failed' && message.error ? '<div class="msg-error">Not delivered: ' + esc(message.error) + '</div>' : '') +
             '</div>';
         }
         function renderMessages(stickToBottom) {
@@ -550,7 +636,9 @@
           }
           let lastDay = '';
           let previous = null;
-          state.messages.forEach((message, index) => {
+          // Answers still going out (or not sent) come last, in the order they were written.
+          const outgoing = state.open ? state.outbox.filter((item) => item.wa === state.open.wa) : [];
+          state.messages.concat(outgoing).forEach((message, index) => {
             const day = dayKey(message.at);
             let newGroup = !previous || previous.direction !== message.direction || new Date(message.at) - new Date(previous.at) > GROUP_MS;
             if (day !== lastDay) {
@@ -621,7 +709,7 @@
           if (until > Date.now()) {
             const hours = Math.max(1, Math.round((until - Date.now()) / 3600000));
             win.className = 'window open';
-            win.textContent = 'Reply open · ' + (hours >= 23 ? '24h' : hours + 'h') + ' left';
+            win.innerHTML = '<span class="win-word">Reply open · </span>' + (hours >= 23 ? '24h' : hours + 'h') + ' left';
             win.title = 'WhatsApp allows replies until 24 hours after the customer last wrote';
           } else {
             win.className = 'window closed';
@@ -641,11 +729,12 @@
           const open = until > Date.now() && data.canSend;
           $('reply').hidden = !open;
           $('send').hidden = !open;
+          $('quick-btn').hidden = !open;
+          if (!open) closeQuick();
           $('composer-closed').hidden = open;
           $('composer-closed').textContent = !data.canSend
             ? 'WhatsApp is switched off on the server, so replies cannot be sent.'
             : "You can't reply now: it's more than 24 hours since the customer's last message. Call or SMS " + chat.phone + ', or wait until they write again.';
-          $('send').disabled = state.sending;
         }
         async function loadChat(wa, first) {
           try {
@@ -655,6 +744,9 @@
             const fresh = data.messages.map((m) => m._id + m.status).join();
             state.open = data.chat;
             if (first) state.moreMessages = data.more;
+            // Header, order chips and banner first: the message area has its final size before it
+            // scrolls to the newest message (else the banner pushes that message under the box).
+            renderHead(data);
             if (first || known !== fresh) {
               // Keep older pages that were loaded with "Show older messages".
               const oldest = data.messages[0] ? new Date(data.messages[0].at).getTime() : Infinity;
@@ -662,7 +754,6 @@
               state.messages = older.concat(data.messages);
               renderMessages(first);
             }
-            renderHead(data);
             const item = state.chats.find((chat) => chat.wa === wa);
             if (item && item.unread) {
               item.unread = 0;
@@ -699,6 +790,7 @@
             ? 'Same delivery charge. Ask which books, add them to the order, then mark it done.'
             : 'Ask what to change, update the order, then mark it done.';
           $('request-open').href = 'custom-orders.html?q=' + encodeURIComponent(ask.orderId || state.open.phone || '');
+          $('request-books').hidden = !more;
         }
         $('request-done').onclick = async () => {
           if (!state.open) return;
@@ -795,6 +887,10 @@
               : '<section class="info-card"><p class="info-label">No orders with this number yet.</p></section>');
         }
         function openInfo(orderId) {
+          // Phones: full screen, so the phone's Back button closes it.
+          if (phoneQuery.matches && !state.info && !(history.state && history.state.inboxInfo)) {
+            history.pushState({ inboxChat: state.open ? state.open.wa : '', inboxInfo: true }, '', location.href);
+          }
           state.info = true;
           $('info').hidden = false;
           $('app').classList.add('info-open');
@@ -809,15 +905,21 @@
             $('info-body').scrollTop = 0;
           }
         }
-        function closeInfo() {
+        function closeInfo(fromHistory) {
+          if (fromHistory !== true && history.state && history.state.inboxInfo) {
+            history.back(); // popstate closes it
+            return;
+          }
           state.info = false;
           $('info').hidden = true;
           $('app').classList.remove('info-open');
         }
 
-        function openChat(wa) {
+        function openChat(wa, fromHistory) {
           if (!wa) return;
           if (state.open && state.open.wa !== wa) leaveChat();
+          if (state.open) saveDraft(state.open.wa, $('reply').value);
+          closeQuick();
           const item = state.chats.find((chat) => chat.wa === wa);
           state.unreadAtOpen = item ? item.unread : 0;
           state.open = { wa };
@@ -837,11 +939,15 @@
           renderPresence([]);
           renderRequest(null);
           toast('');
-          $('reply').value = '';
+          $('reply').value = draftText(wa);
           sizeReply();
           const url = new URL(location.href);
           url.searchParams.set('wa', wa);
-          history.replaceState(null, '', url);
+          // Phones: the chat is a screen of its own, so the phone's Back button returns to the list.
+          if (fromHistory !== true) {
+            if (phoneQuery.matches && !(history.state && history.state.inboxChat)) history.pushState({ inboxChat: wa }, '', url);
+            else history.replaceState(history.state && history.state.inboxChat ? { inboxChat: wa } : null, '', url);
+          }
           renderList();
           loadChat(wa, true);
           clearInterval(chatTimer);
@@ -849,9 +955,18 @@
             if (!document.hidden && state.open) loadChat(state.open.wa, false);
           }, CHAT_EVERY_MS);
         }
-        function closeChat() {
-          closeInfo();
+        function closeChat(fromHistory) {
+          if (fromHistory !== true) {
+            const steps = history.state && history.state.inboxInfo ? 2 : history.state && history.state.inboxChat ? 1 : 0;
+            if (steps) {
+              history.go(-steps); // popstate closes it
+              return;
+            }
+          }
+          closeInfo(true);
           leaveChat();
+          if (state.open) saveDraft(state.open.wa, $('reply').value);
+          closeQuick();
           state.open = null;
           clearInterval(chatTimer);
           $('app').setAttribute('data-view', 'list');
@@ -867,30 +982,120 @@
           box.style.height = 'auto';
           box.style.height = Math.min(140, box.scrollHeight) + 'px';
         }
-        async function send() {
+        // Sending (owner, 2026-11-12: "clunky to respond"): the answer shows at once with a clock and the
+        // box is free for the next one; answers go out one after another, in order. One that fails
+        // stays in the chat with "Send again" / "Edit" instead of being lost.
+        function send() {
           const text = $('reply').value.trim();
-          if (!text || !state.open || state.sending) return;
-          state.sending = true;
-          $('send').disabled = true;
-          try {
-            const message = await request('/api/whatsapp-inbox/chats/' + encodeURIComponent(state.open.wa) + '/reply', {
-              method: 'POST',
-              body: JSON.stringify({ text }),
-            });
-            $('reply').value = '';
-            sizeReply();
-            toast('');
-            state.unreadAtOpen = 0;
-            if (message) state.messages.push(message);
-            renderMessages(true);
-            loadChats(true);
-          } catch (error) {
-            toast(error.message);
-          } finally {
-            state.sending = false;
-            $('send').disabled = false;
-            $('reply').focus();
+          if (!text || !state.open) return;
+          closeQuick();
+          state.outbox.push({
+            _id: 'local-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+            local: true, wa: state.open.wa, direction: 'out', kind: 'staff', type: 'text', text,
+            status: 'waiting', at: new Date().toISOString(), by: '',
+          });
+          $('reply').value = '';
+          saveDraft(state.open.wa, '');
+          sizeReply();
+          toast('');
+          state.unreadAtOpen = 0;
+          renderMessages(true);
+          sendOutbox();
+          $('reply').focus();
+        }
+        async function sendOutbox() {
+          if (state.sendingOutbox) return;
+          state.sendingOutbox = true;
+          let item;
+          while ((item = state.outbox.find((entry) => entry.status === 'waiting'))) {
+            item.status = 'sending';
+            try {
+              const message = await request('/api/whatsapp-inbox/chats/' + encodeURIComponent(item.wa) + '/reply', {
+                method: 'POST',
+                body: JSON.stringify({ text: item.text }),
+              });
+              state.outbox = state.outbox.filter((entry) => entry !== item);
+              if (message && state.open && state.open.wa === item.wa && !state.messages.some((m) => m._id === message._id)) {
+                state.messages.push(message);
+                state.messages.sort((a, b) => new Date(a.at) - new Date(b.at));
+              }
+            } catch (error) {
+              item.status = 'failed';
+              item.error = error.message;
+              // Later answers to the same customer wait, so nothing arrives out of order.
+              state.outbox.forEach((entry) => {
+                if (entry.wa === item.wa && entry.status === 'waiting') {
+                  entry.status = 'failed';
+                  entry.error = 'held back because the message before it was not sent.';
+                }
+              });
+            }
+            if (state.open && state.open.wa === item.wa) renderMessages(false);
           }
+          state.sendingOutbox = false;
+          loadChats(true);
+        }
+
+        /* ---------- Ready answers (button or "/" in the box) ---------- */
+        async function openQuick(filter, slash) {
+          if (!state.open) return;
+          const wa = state.open.wa;
+          const panel = $('quick');
+          const wasOpen = state.quick.open;
+          state.quick.open = true;
+          state.quick.slash = !!slash;
+          state.quick.filter = filter || '';
+          state.quick.index = 0;
+          panel.hidden = false;
+          $('quick-btn').setAttribute('aria-expanded', 'true');
+          if (wasOpen && state.quick.wa === wa) return renderQuick();
+          // Fetched each time it opens: "Books added" shows the order's total after staff changed it.
+          panel.innerHTML = '<div class="quick-note">Loading ready answers…</div>';
+          try {
+            const data = await request('/api/whatsapp-inbox/chats/' + encodeURIComponent(wa) + '/quick-replies');
+            if (!state.open || state.open.wa !== wa || !state.quick.open) return;
+            state.quick.items = data.replies || [];
+            state.quick.wa = wa;
+            renderQuick();
+          } catch (error) {
+            panel.innerHTML = '<div class="quick-note">' + esc(error.message) + '</div>';
+          }
+        }
+        function quickMatches() {
+          const q = state.quick.filter.trim().toLowerCase();
+          return state.quick.items.filter((item) => !q || item.title.toLowerCase().includes(q) || item.text.toLowerCase().includes(q));
+        }
+        function renderQuick() {
+          const items = quickMatches();
+          if (state.quick.index >= items.length) state.quick.index = Math.max(0, items.length - 1);
+          $('quick').innerHTML = '<div class="quick-head"><span>Ready answers — pick one to put it in the box</span><span class="quick-keys">↑↓ Enter · Esc to close</span></div>' +
+            (items.length
+              ? items.map((item, index) =>
+                  '<button type="button" class="quick-item' + (index === state.quick.index ? ' active' : '') + '" data-quick="' + esc(item.id) + '">' +
+                  '<strong>' + esc(item.title) + '</strong><span>' + esc(item.text.replace(/\s*\n+\s*/g, ' · ')) + '</span></button>'
+                ).join('')
+              : '<div class="quick-note">No ready answer matches “' + esc(state.quick.filter) + '”.</div>');
+          const active = $('quick').querySelector('.quick-item.active');
+          if (active) active.scrollIntoView({ block: 'nearest' });
+        }
+        function closeQuick() {
+          state.quick.open = false;
+          state.quick.slash = false;
+          $('quick').hidden = true;
+          $('quick-btn').setAttribute('aria-expanded', 'false');
+        }
+        function useQuick(id) {
+          const item = state.quick.items.find((entry) => entry.id === id);
+          if (!item) return;
+          const box = $('reply');
+          const current = box.value;
+          // "/price" was only the search: replace it. Otherwise add below what is already written.
+          box.value = !current.trim() || current.startsWith('/') ? item.text : current.replace(/\s+$/, '') + '\n' + item.text;
+          closeQuick();
+          sizeReply();
+          if (state.open) saveDraft(state.open.wa, box.value);
+          box.focus();
+          box.setSelectionRange(box.value.length, box.value.length);
         }
 
         /* ---------- Events ---------- */
@@ -919,8 +1124,15 @@
             loadChats(false);
           }, 350);
         };
-        $('back').onclick = closeChat;
-        $('info-close').onclick = closeInfo;
+        $('back').onclick = () => closeChat(false);
+        $('info-close').onclick = () => closeInfo(false);
+        window.addEventListener('popstate', () => {
+          const step = history.state || {};
+          if (state.info && !step.inboxInfo) closeInfo(true);
+          const wa = new URLSearchParams(location.search).get('wa');
+          if (!wa && state.open) closeChat(true);
+          else if (wa && token() && (!state.open || state.open.wa !== wa)) openChat(wa, true);
+        });
         $('chat-orders').addEventListener('click', (event) => {
           const chip = event.target.closest('[data-order]');
           if (chip) openInfo(chip.getAttribute('data-order'));
@@ -935,6 +1147,31 @@
         }, { passive: true });
         $('messages').addEventListener('click', (event) => {
           if (event.target.id === 'older') return loadOlder();
+          const retry = event.target.closest('[data-retry]');
+          if (retry) {
+            const item = state.outbox.find((entry) => entry._id === retry.getAttribute('data-retry'));
+            if (item) {
+              item.status = 'waiting';
+              item.error = '';
+              renderMessages(false);
+              sendOutbox();
+            }
+            return;
+          }
+          const edit = event.target.closest('[data-edit]');
+          if (edit) {
+            const item = state.outbox.find((entry) => entry._id === edit.getAttribute('data-edit'));
+            if (item) {
+              state.outbox = state.outbox.filter((entry) => entry !== item);
+              const box = $('reply');
+              box.value = box.value.trim() ? box.value.replace(/\s+$/, '') + '\n' + item.text : item.text;
+              sizeReply();
+              saveDraft(item.wa, box.value);
+              renderMessages(false);
+              box.focus();
+            }
+            return;
+          }
           const orderBubble = event.target.closest('.msg[data-order]');
           if (orderBubble && !event.target.closest('a')) return openInfo(orderBubble.getAttribute('data-order'));
           const image = event.target.closest('img[data-full]');
@@ -958,8 +1195,83 @@
           event.preventDefault();
           send();
         };
+        $('quick-btn').onclick = () => {
+          if (state.quick.open) closeQuick();
+          else openQuick('', false);
+          $('reply').focus();
+        };
+        $('quick').addEventListener('mousedown', (event) => event.preventDefault()); // keep the box focused
+        $('quick').addEventListener('click', (event) => {
+          const item = event.target.closest('[data-quick]');
+          if (item) useQuick(item.getAttribute('data-quick'));
+        });
+        document.addEventListener('click', (event) => {
+          if (state.quick.open && !event.target.closest('#quick, #quick-btn, #reply, #request-books')) closeQuick();
+        });
+        $('request-books').onclick = async () => {
+          if (!state.open) return;
+          await openQuick('', false);
+          if (state.quick.items.some((item) => item.id === 'more')) {
+            useQuick('more');
+            toast('Book list is in the reply box: check it, then press send.');
+          }
+        };
+        // Phones: keep the keyboard open after Send / ready answers (the tap must not take the focus).
+        ['send', 'quick-btn'].forEach((id) => $(id).addEventListener('mousedown', (event) => event.preventDefault()));
+        // While typing on a phone, order chips and the banner step aside for the messages.
+        // The chat area changes height: keep the newest message in view if it was.
+        $('reply').addEventListener('focus', () => {
+          if (phoneQuery.matches) $('app').classList.add('composing');
+          requestAnimationFrame(keepBottom);
+        });
+        $('reply').addEventListener('blur', () => {
+          $('app').classList.remove('composing');
+          requestAnimationFrame(keepBottom);
+        });
+        // Banner, order chips, keyboard, a growing reply box: whenever the message area changes size,
+        // the newest message stays in view (if it was). Opening a chat used to leave it under the box.
+        if (window.ResizeObserver) new ResizeObserver(() => keepBottom()).observe($('messages'));
+        // iPhones keep 100dvh under the keyboard: size the page to what is visible instead.
+        const viewport = window.visualViewport;
+        function fitViewport() {
+          if (!viewport) return;
+          document.documentElement.style.setProperty('--vv-height', Math.round(viewport.height) + 'px');
+          document.documentElement.style.setProperty('--vv-top', Math.round(viewport.offsetTop) + 'px');
+          keepBottom();
+        }
+        if (viewport) {
+          viewport.addEventListener('resize', fitViewport);
+          viewport.addEventListener('scroll', fitViewport);
+          fitViewport();
+        }
+        function setPlaceholder() {
+          $('reply').placeholder = phoneQuery.matches ? 'Message' : 'Type a message · / for ready answers';
+        }
+        if (phoneQuery.addEventListener) phoneQuery.addEventListener('change', setPlaceholder);
+        else if (phoneQuery.addListener) phoneQuery.addListener(setPlaceholder);
+        setPlaceholder();
+        window.addEventListener('beforeunload', (event) => {
+          // Answers still going out would be lost with the page.
+          if (state.outbox.some((item) => item.status === 'waiting' || item.status === 'sending')) {
+            event.preventDefault();
+            event.returnValue = '';
+          }
+        });
         $('reply').addEventListener('input', () => {
           sizeReply();
+          if (state.open) saveDraft(state.open.wa, $('reply').value);
+          // "/" at the start opens the ready answers; what follows filters them.
+          const value = $('reply').value;
+          if (/^\/[^\n]*$/.test(value)) {
+            if (!state.quick.open) openQuick(value.slice(1), true);
+            else {
+              state.quick.filter = value.slice(1);
+              state.quick.index = 0;
+              renderQuick();
+            }
+          } else if (state.quick.open && state.quick.slash) {
+            closeQuick();
+          }
           // Tell the others "is typing" (at most every 3 s).
           if (state.open && $('reply').value.trim() && Date.now() - (state.typingSent || 0) > TYPING_EVERY_MS) {
             state.typingSent = Date.now();
@@ -968,6 +1280,25 @@
         });
         window.addEventListener('pagehide', leaveChat);
         $('reply').addEventListener('keydown', (event) => {
+          if (state.quick.open && !event.isComposing) {
+            const items = quickMatches();
+            if (event.key === 'Escape') {
+              event.preventDefault();
+              closeQuick();
+              return;
+            }
+            if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && items.length) {
+              event.preventDefault();
+              state.quick.index = (state.quick.index + (event.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length;
+              renderQuick();
+              return;
+            }
+            if ((event.key === 'Enter' || event.key === 'Tab') && !event.shiftKey && items[state.quick.index]) {
+              event.preventDefault();
+              useQuick(items[state.quick.index].id);
+              return;
+            }
+          }
           // Enter sends on a keyboard (Shift+Enter for a new line); phones use the send button.
           if (event.key === 'Enter' && !event.shiftKey && !event.isComposing && !matchMedia('(pointer: coarse)').matches) {
             event.preventDefault();
@@ -1016,7 +1347,14 @@
 
         loadChats(false).then(() => {
           const wa = new URLSearchParams(location.search).get('wa');
-          if (wa && token()) openChat(wa);
+          if (wa && token()) {
+            if (phoneQuery.matches) {
+              const url = new URL(location.href);
+              url.searchParams.delete('wa');
+              history.replaceState(null, '', url);
+            }
+            openChat(wa);
+          }
         });
         setInterval(() => {
           if (!document.hidden && token()) loadChats(true);

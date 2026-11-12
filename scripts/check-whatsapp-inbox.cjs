@@ -354,7 +354,89 @@ let server;
   bare.logger = silent;
   assert.equal(await bare.recordChat({ wa: A, direction: 'in', kind: 'customer', type: 'text', text: 'x' }), 'skipped');
 
-  console.log('WhatsApp Inbox: messages kept once (text/photo/voice/reaction/location), order messages, chat list/search/unread, open + read by staff, media through the API, staff replies + ticks, who answered / who is in the chat / typing, more-books nudge + mark done, 24-hour rule, switch, automatic answer modes, staff-only routes and page wiring pass');
+  // 12. "More books" answer lists the shop's popular books with today's price, leaving out what is
+  // already in the order (owner, 2026-11-12); the reply box's ready answers; page wiring.
+  const { ProductSchema } = require('../api/dist/schema/product.schema');
+  const Product = connection.model('Product', ProductSchema);
+  const pid = () => new mongoose.Types.ObjectId();
+  const books = [
+    { _id: pid(), slug: '500 shobder kuraner 75%', name: '৫০০ শব্দে কুরআনের ৭৫% (নতুন সংস্করণ)', salePrice: 470, discountType: 2, discountAmount: 160, status: 'publish' },
+    { _id: pid(), slug: 'productive muslim', name: 'প্রোডাক্টিভ মুসলিম', salePrice: 500, discountType: 2, discountAmount: 185, status: 'publish' },
+    { _id: pid(), slug: 'the-barakah-effect', name: 'দ্য বারাকাহ ইফেক্ট', salePrice: 600, discountType: 1, discountAmount: 50, status: 'publish' },
+    { _id: pid(), slug: 'the-story-of-muhammad', name: 'দ্য স্টোরি অব মুহাম্মাদ (সা.)', salePrice: 320, status: 'draft' },
+  ];
+  await Product.collection.insertMany(books);
+  const shop = new WhatsappService(Order, Chat, ChatMessage, Product);
+  shop.logger = silent;
+  assert.deepEqual((await shop.offeredBooks()).map((b) => [b.name, b.price]), [
+    ['৫০০ শব্দে কুরআনের ৭৫% (নতুন সংস্করণ)', 310], ['প্রোডাক্টিভ মুসলিম', 315], ['দ্য বারাকাহ ইফেক্ট', 300],
+  ], 'List order, website price (taka and percent discounts), drafts left out');
+  assert.equal(WhatsappService.bengaliNumber(1234), '১২৩৪');
+  const K = '8801700000077';
+  const moreOrder = { _id: pid(), orderId: 'T-9100', name: 'Karim Test', phoneNo: '01700000077', paymentType: 'cash_on_delivery', orderStatus: 1, grandTotal: 375,
+    orderedItems: [{ _id: books[1]._id, name: 'প্রোডাক্টিভ মুসলিম', quantity: 1, salePrice: 315 }], createdAt: new Date() };
+  await Order.collection.insertOne(moreOrder);
+  shop.onCustomerReply(async (reply) => {
+    await Order.updateOne({ _id: reply.orderId }, { $set: { customerRequest: { kind: reply.action, at: new Date(), via: 'whatsapp' } } });
+    return { status: reply.action, orderId: 'T-9100' };
+  });
+  n = sentTexts().length;
+  await deliver(shop, K, { id: 'wamid.IN-MORE-LIST', type: 'button', button: { payload: 'more:' + moreOrder._id, text: 'একই ডেলিভারি চার্জে আরও বই নিবো' } });
+  assert.equal(sentTexts().length, n + 1, 'One answer to the tap');
+  const moreAnswer = [
+    'অবশ্যই! অর্ডার #T-9100-এ একই ডেলিভারি চার্জে আরও বই যোগ করা যাবে।',
+    '',
+    'আমাদের জনপ্রিয় বই ও মূল্য:',
+    '১. ৫০০ শব্দে কুরআনের ৭৫% (নতুন সংস্করণ) — ৩১০ টাকা',
+    '২. দ্য বারাকাহ ইফেক্ট — ৩০০ টাকা',
+    '',
+    'আরও বই দেখুন: https://amolbooks.com',
+    '',
+    'কোন বই নিতে চান, বইয়ের নাম বা নম্বর এখানে লিখুন। আমাদের টিম অর্ডারে যোগ করে দেবে ইনশাআল্লাহ।',
+    '— amolbooks.com',
+  ].join('\n');
+  assert.equal(sentTexts().at(-1).body.text.body, moreAnswer, 'Book list without the book already ordered');
+  assert.equal((await Chat.findOne({ wa: K }).lean()).request.kind, 'more', 'The nudge still shows');
+  // No shop books (or no product storage): the short answer as before.
+  assert.match(shop.replyText({ status: 'more', orderId: '1', books: [] }), /\nকোন বই নিতে চান, এখানেই লিখুন/);
+  process.env.WHATSAPP_AUTO_REPLY = 'handover';
+  assert.match(shop.replyText({ status: 'more', orderId: '1', books: await shop.offeredBooks() }), /wa\.me/, 'Hand-over answers unchanged');
+  delete process.env.WHATSAPP_AUTO_REPLY;
+  process.env.WHATSAPP_BOOK_LIST = 'the-barakah-effect, productive muslim';
+  assert.deepEqual((await shop.offeredBooks()).map((b) => b.slug), ['the-barakah-effect', 'productive muslim'], 'WHATSAPP_BOOK_LIST replaces the list');
+  delete process.env.WHATSAPP_BOOK_LIST;
+
+  const shopInbox = new WhatsappInboxService(Chat, ChatMessage, Order, Admin, shop);
+  let quick = (await shopInbox.quickReplies('01700000077')).data;
+  assert.equal(quick.orderId, 'T-9100');
+  assert.deepEqual(quick.replies.map((r) => r.id), ['more', 'added', 'prices', 'address', 'delivery', 'thanks']);
+  assert.equal(quick.replies[0].text, moreAnswer, 'Same list as the automatic answer');
+  assert.match(quick.replies[1].text, /^আপনার অর্ডার #T-9100-এ বই যোগ করা হয়েছে ✅\nএখন মোট: ৩৭৫ টাকা \(ডেলিভারি চার্জসহ\)।/);
+  assert.match(quick.replies[2].text, /^আসসালামু আলাইকুম,\n\nআমাদের জনপ্রিয় বই ও মূল্যতালিকা:\n১\. ৫০০ শব্দে কুরআনের ৭৫% \(নতুন সংস্করণ\) — ৩১০ টাকা\n২\. প্রোডাক্টিভ মুসলিম — ৩১৫ টাকা\n৩\. দ্য বারাকাহ ইফেক্ট — ৩০০ টাকা\n\n৩টি বা তার বেশি বই নিলে সারাদেশে ফ্রি ডেলিভারি।/);
+  // Staff added books: "Books added" shows the new total.
+  await Order.updateOne({ _id: moreOrder._id }, { $set: { grandTotal: 685 } });
+  assert.match((await shopInbox.quickReplies(K)).data.replies[1].text, /এখন মোট: ৬৮৫ টাকা/);
+  // Booked with the courier: no order answers, the general ones stay.
+  await Order.updateOne({ _id: moreOrder._id }, { $set: { 'courierData.consignmentId': 'C-77' } });
+  assert.deepEqual((await shopInbox.quickReplies(K)).data.replies.map((r) => r.id), ['prices', 'address', 'delivery', 'thanks']);
+  await assert.rejects(() => shopInbox.quickReplies('12'), /Unknown WhatsApp number/);
+  assert.ok(Reflect.getMetadata('path', WhatsappInboxController.prototype.quickReplies) === 'chats/:wa/quick-replies', 'Route');
+
+  // Page: instant sending with Send again / Edit, drafts per chat, ready answers (button and "/"), Book list button.
+  for (const needle of ["'/quick-replies'", 'id="quick-btn"', 'id="quick"', 'id="request-books"', 'function sendOutbox()', 'data-retry="', 'data-edit="', 'DRAFTS_KEY', "/^\\/[^\\n]*$/.test(value)", 'const CHAT_EVERY_MS = 4000;']) {
+    assert.ok(page.includes(needle), 'Inbox page has ' + needle);
+  }
+  assert.ok(!/\$\('send'\)\.disabled = true/.test(page), 'The send button is never locked while a message goes out');
+  // Phones (2026-11-12): no zoom on tapping the box, page sized above the keyboard, Back = chat list,
+  // keyboard stays up after Send, newest message stays in view when the area changes size.
+  for (const needle of ['interactive-widget=resizes-content', 'viewport-fit=cover', "matchMedia('(max-width: 900px)')", 'function fitViewport()', "window.addEventListener('popstate'",
+    'history.pushState({ inboxChat: wa }', 'new ResizeObserver(() => keepBottom())', "['send', 'quick-btn'].forEach((id) => $(id).addEventListener('mousedown'", '.app.composing .orders, .app.composing .request { display: none; }', 'env(safe-area-inset-bottom)']) {
+    assert.ok(page.includes(needle), 'Inbox page has ' + needle);
+  }
+  assert.match(page, /@media \(max-width: 900px\) \{[\s\S]*?\.search input, \.composer textarea, \.login input \{ font-size: 16px; \}/, '16px boxes on phones (iPhone zoom)');
+  assert.ok(page.indexOf('renderHead(data);') < page.indexOf('renderMessages(first);'), 'Banner drawn before scrolling to the newest message');
+
+  console.log('WhatsApp Inbox: messages kept once (text/photo/voice/reaction/location), order messages, chat list/search/unread, open + read by staff, media through the API, staff replies + ticks, who answered / who is in the chat / typing, more-books nudge + mark done, 24-hour rule, switch, automatic answer modes, more-books book list, ready answers, staff-only routes and page wiring pass');
 })()
   .catch((error) => { console.error(error); process.exitCode = 1; })
   .finally(async () => {

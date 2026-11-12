@@ -2,6 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AdminSchema } from '../../schema/admin.schema';
 import { OrderSchema } from '../../schema/order.schema';
+import { ProductSchema } from '../../schema/product.schema';
 import { WhatsappChatMessageSchema, WhatsappChatSchema } from './whatsapp-chat.schema';
 import { WhatsappController } from './whatsapp.controller';
 import { WhatsappInboxController } from './whatsapp-inbox.controller';
@@ -15,6 +16,7 @@ import { WhatsappService } from './whatsapp.service';
     MongooseModule.forFeature([
       { name: 'Order', schema: OrderSchema },
       { name: 'Admin', schema: AdminSchema },
+      { name: 'Product', schema: ProductSchema },
       { name: 'WhatsappChat', schema: WhatsappChatSchema },
       { name: 'WhatsappChatMessage', schema: WhatsappChatMessageSchema },
     ]),

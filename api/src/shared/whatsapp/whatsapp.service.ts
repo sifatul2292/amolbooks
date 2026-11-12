@@ -18,6 +18,14 @@ export interface WhatsappCustomerReply {
 export interface WhatsappReplyResult {
   status: 'confirmed' | 'already' | 'change' | 'more' | 'closed' | 'unknown';
   orderId?: string;
+  /** "more": books to offer (not the ones already in the order), with today's shop price. */
+  books?: WhatsappBook[];
+}
+/** A book offered on WhatsApp (the "আরও বই" answer and the inbox's price list). */
+export interface WhatsappBook {
+  name: string;
+  price: number;
+  slug: string;
 }
 type ReplyHandler = (reply: WhatsappCustomerReply) => Promise<WhatsappReplyResult>;
 type OrderSmsHandler = (orderId: string) => Promise<void>;
@@ -52,6 +60,22 @@ const DEFAULT_SMS_WAIT_SECONDS = 120;
 const SMS_CHECK_EVERY_MS = 15 * 1000;
 const SMS_BATCH = 100;
 const MAX_MEDIA_BYTES = 16 * 1024 * 1024;
+const SITE_URL = 'https://amolbooks.com';
+/**
+ * Books offered when a customer wants more (the owner's WhatsApp price list, 2026-11-12), by their
+ * slug on amolbooks.com. Name and price are read from the shop each time, so price changes follow;
+ * unpublished or unknown slugs are skipped ("পাওয়ার অব দুয়া" is not on the site yet).
+ * WHATSAPP_BOOK_LIST (slugs, comma-separated) replaces the list without a code change.
+ */
+const DEFAULT_BOOK_LIST = [
+  '500 shobder kuraner 75%',
+  'productive muslim',
+  'the-barakah-effect',
+  'islami-orthonity-o-uddokta-47',
+  'the-story-of-muhammad',
+  'secrets-of-wealth-and-provision',
+];
+const BENGALI_DIGITS = '০১২৩৪৫৬৭৮৯';
 
 /**
  * Automatic WhatsApp order messages through Meta's WhatsApp Cloud API (template messages).
@@ -76,6 +100,8 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
     // WhatsApp Inbox storage; without it (some checks) messages are simply not kept.
     @Optional() @InjectModel('WhatsappChat') private readonly chatModel?: Model<any>,
     @Optional() @InjectModel('WhatsappChatMessage') private readonly chatMessageModel?: Model<any>,
+    // Book list in the "more books" answer; without it (some checks) the short answer is used.
+    @Optional() @InjectModel('Product') private readonly productModel?: Model<any>,
   ) {}
 
   /** Held SMS are checked all the time (also after WhatsApp is switched off), so none is lost. */
@@ -121,6 +147,10 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
       // our team answers here"), handover (point them to helpNumber) or off (no automatic answer).
       autoReply: (['inbox', 'handover', 'off'].includes(String(env.WHATSAPP_AUTO_REPLY || '').trim().toLowerCase())
         ? String(env.WHATSAPP_AUTO_REPLY).trim().toLowerCase() : 'inbox') as WhatsappAutoReply,
+      // Books offered to customers who want more (slugs on amolbooks.com).
+      bookList: String(env.WHATSAPP_BOOK_LIST || '').trim()
+        ? String(env.WHATSAPP_BOOK_LIST).split(',').map((slug) => slug.trim()).filter(Boolean)
+        : DEFAULT_BOOK_LIST,
     };
   }
 
@@ -565,6 +595,10 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
       }
       // Order gone (deleted) or not theirs: still name their latest order.
       if (!result.orderId) result = { ...result, orderId: await this.latestOrderId(from) };
+      // "More books": offer the shop's popular books they don't have in this order yet (owner, 2026-11-12).
+      if (result.status === 'more' && this.config().autoReply !== 'handover') {
+        result = { ...result, books: await this.offeredBooks(await this.orderProductIds(match[2])) };
+      }
       text = this.replyText(result);
     } else {
       const mode = this.config().autoReply;
@@ -611,6 +645,95 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  /** Product ids in an order (by its _id), so the book list skips what the customer already ordered. */
+  private async orderProductIds(orderObjectId: string): Promise<string[]> {
+    try {
+      const order: any = await this.orderModel.findById(orderObjectId).select('orderedItems._id').lean();
+      return (order?.orderedItems || []).map((item: any) => String(item?._id || '')).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * The books to offer (WHATSAPP_BOOK_LIST order) with the price the shop shows today; published
+   * books only, `exclude` = product ids left out. Never throws: empty means "use the short answer".
+   */
+  async offeredBooks(exclude: string[] = []): Promise<WhatsappBook[]> {
+    const slugs = this.config().bookList;
+    if (!this.productModel || !slugs.length) return [];
+    try {
+      const products: any[] = await this.productModel
+        .find({ slug: { $in: slugs }, status: 'publish' })
+        .select('name slug salePrice discountType discountAmount')
+        .lean();
+      const skip = new Set(exclude.map(String));
+      return slugs
+        .map((slug) => products.find((product) => product.slug === slug))
+        .filter((product) => product && !skip.has(String(product._id)))
+        .map((product) => ({ name: String(product.name || '').trim(), price: WhatsappService.shopPrice(product), slug: String(product.slug) }))
+        .filter((book) => book.name && book.price > 0);
+    } catch (error) {
+      this.logger.warn(`WhatsApp book list failed: ${error?.message || error}`);
+      return [];
+    }
+  }
+
+  /** The price on the website: sale price less the discount (1 = percent, 2 = taka), as the storefront does. */
+  static shopPrice(product: any): number {
+    const sale = Math.max(0, Number(product?.salePrice) || 0);
+    const discount = Math.max(0, Number(product?.discountAmount) || 0);
+    const type = Number(product?.discountType) || 0;
+    if (type === 1) return Math.max(0, Math.floor(sale - (sale * discount) / 100));
+    if (type === 2) return Math.max(0, Math.floor(sale - discount));
+    return Math.floor(sale);
+  }
+
+  static bengaliNumber(value: number | string): string {
+    return String(value).replace(/\d/g, (digit) => BENGALI_DIGITS[Number(digit)]);
+  }
+
+  /** "১. প্রোডাক্টিভ মুসলিম — ৩১৫ টাকা", one book per line. */
+  static bookLines(books: WhatsappBook[]): string {
+    return books
+      .map((book, index) => `${WhatsappService.bengaliNumber(index + 1)}. ${book.name} — ${WhatsappService.bengaliNumber(book.price)} টাকা`)
+      .join('\n');
+  }
+
+  /** Answer to "একই ডেলিভারি চার্জে আরও বই নিবো": the book list and the website, then "write the names here". */
+  static moreBooksText(order: string, books: WhatsappBook[]): string {
+    return [
+      `অবশ্যই! ${order ? `অর্ডার ${order}-এ ` : ''}একই ডেলিভারি চার্জে আরও বই যোগ করা যাবে।`,
+      '',
+      'আমাদের জনপ্রিয় বই ও মূল্য:',
+      WhatsappService.bookLines(books),
+      '',
+      `আরও বই দেখুন: ${SITE_URL}`,
+      '',
+      'কোন বই নিতে চান, বইয়ের নাম বা নম্বর এখানে লিখুন। আমাদের টিম অর্ডারে যোগ করে দেবে ইনশাআল্লাহ।',
+      '— amolbooks.com',
+    ].join('\n');
+  }
+
+  /** The owner's price-list message (inbox ready answer), with the shop's books and prices. */
+  static priceListText(books: WhatsappBook[]): string {
+    return [
+      'আসসালামু আলাইকুম,',
+      '',
+      'আমাদের জনপ্রিয় বই ও মূল্যতালিকা:',
+      WhatsappService.bookLines(books),
+      '',
+      '৩টি বা তার বেশি বই নিলে সারাদেশে ফ্রি ডেলিভারি।',
+      '',
+      'ডেলিভারি চার্জ',
+      'ঢাকার মধ্যে ৬০/-',
+      'ঢাকার বাইরে ৭৫/-',
+      '',
+      'অর্ডার করতে মোবাইল নম্বর, নাম, সম্পূর্ণ ঠিকানা ও পছন্দের বইয়ের নাম নম্বর পাঠিয়ে দিন।',
+      `সব বই দেখুন: ${SITE_URL}`,
+    ].join('\n');
+  }
+
   /**
    * Answers on the API number. With the WhatsApp Inbox (WHATSAPP_AUTO_REPLY inbox or off) customers
    * are asked to write right here; with "handover" they get a chat link to the staff number with a
@@ -628,6 +751,7 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
         return `আপনার অর্ডার ${order} আগেই কনফার্ম করা আছে ✅\nকোনো প্রশ্ন থাকলে এখানেই লিখুন, আমাদের টিম উত্তর দেবে ইনশাআল্লাহ।\n${sign}`;
       }
       if (result.status === 'more') {
+        if (result.books?.length) return WhatsappService.moreBooksText(order, result.books);
         return `অবশ্যই! অর্ডার ${order}-এ একই ডেলিভারি চার্জে আরও বই যোগ করা যাবে।\nকোন বই নিতে চান, এখানেই লিখুন, আমাদের টিম যোগ করে দেবে ইনশাআল্লাহ।\n${sign}`;
       }
       if (result.status === 'change') {

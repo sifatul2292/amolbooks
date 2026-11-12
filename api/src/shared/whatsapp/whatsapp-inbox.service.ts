@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { WhatsappService } from './whatsapp.service';
+import { WhatsappBook, WhatsappService } from './whatsapp.service';
 
 /** Meta lets the shop answer freely for 24 hours after the customer's latest message. */
 export const REPLY_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -262,6 +262,46 @@ export class WhatsappInboxService {
     this.touch(wa, staff, false, true);
     const saved: any = await this.messageModel.findOne({ messageId }).lean();
     return { success: true, data: saved ? WhatsappInboxService.messageRow(saved) : null };
+  }
+
+  /**
+   * Ready answers for the reply box (owner, 2026-11-12: replying was clunky): the more-books list
+   * for the customer's open order, "books added" with the order's current total, the price list,
+   * asking for name and address, delivery charge, thanks. Staff can edit before sending.
+   */
+  async quickReplies(waParam: any) {
+    const wa = WhatsappInboxService.wa(waParam);
+    const local = WhatsappInboxService.localPhone(wa);
+    const orders: any[] = await this.orderModel
+      .find({ phoneNo: { $in: [local, '+88' + local, '88' + local] } })
+      .sort({ createdAt: -1 })
+      .limit(6)
+      .select('orderId orderStatus grandTotal orderedItems._id customerRequest customerCancelledAt courierData.consignmentId')
+      .lean();
+    // The order the customer asked about, else their newest order that can still change.
+    const pending = WhatsappInboxService.pendingRequest(orders);
+    const order = (pending && orders.find((item) => String(item._id) === String(pending.order))) || orders.find(WhatsappInboxService.editable) || null;
+    const bn = WhatsappService.bengaliNumber;
+    const replies: { id: string; title: string; text: string }[] = [];
+    if (order) {
+      const id = String(order.orderId || '');
+      const inOrder = (order.orderedItems || []).map((item: any) => String(item?._id || ''));
+      const more: WhatsappBook[] = await this.whatsapp.offeredBooks(inOrder);
+      if (more.length) replies.push({ id: 'more', title: `More books · order #${id}`, text: WhatsappService.moreBooksText(`#${id}`, more) });
+      replies.push({
+        id: 'added',
+        title: `Books added · order #${id}`,
+        text: `আপনার অর্ডার #${id}-এ বই যোগ করা হয়েছে ✅\nএখন মোট: ${bn(Math.round(Number(order.grandTotal) || 0))} টাকা (ডেলিভারি চার্জসহ)।\nইনশাআল্লাহ ৩ দিনের মধ্যে ডেলিভারি করা হবে।\n— amolbooks.com`,
+      });
+    }
+    const books = await this.whatsapp.offeredBooks();
+    if (books.length) replies.push({ id: 'prices', title: 'Price list (popular books)', text: WhatsappService.priceListText(books) });
+    replies.push(
+      { id: 'address', title: 'Ask for name & address', text: 'অর্ডার করতে আপনার নাম, মোবাইল নম্বর, সম্পূর্ণ ঠিকানা ও পছন্দের বইয়ের নাম পাঠিয়ে দিন।' },
+      { id: 'delivery', title: 'Delivery charge', text: 'ডেলিভারি চার্জ\nঢাকার মধ্যে ৬০/-\nঢাকার বাইরে ৭৫/-\n৩টি বা তার বেশি বই নিলে সারাদেশে ফ্রি ডেলিভারি।' },
+      { id: 'thanks', title: 'Thank you', text: 'ধন্যবাদ! আর কিছু লাগলে এখানেই লিখুন।\n— amolbooks.com' },
+    );
+    return { success: true, data: { replies, orderId: order ? String(order.orderId || '') : '' } };
   }
 
   /** A customer's photo / voice note / file, only for media that arrived in the inbox. */

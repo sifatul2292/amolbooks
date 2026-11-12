@@ -55,6 +55,15 @@ export class WhatsappInboxController {
     return this.inbox.reply(wa, body, admin);
   }
 
+  /** Ready answers for the reply box (price list, more books for the open order, …). */
+  @Version(VERSION_NEUTRAL)
+  @SkipThrottle()
+  @Get('chats/:wa/quick-replies')
+  @AdminMetaRoles(...ALL_STAFF)
+  quickReplies(@Param('wa') wa: string) {
+    return this.inbox.quickReplies(wa);
+  }
+
   /** Staff handled the customer's "more books" / "change" request. */
   @Version(VERSION_NEUTRAL)
   @Post('chats/:wa/request-done')

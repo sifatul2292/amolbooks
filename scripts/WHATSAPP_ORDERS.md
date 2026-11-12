@@ -141,6 +141,23 @@ served with the shared admin menu). Routes `GET /api/whatsapp-inbox/chats`,
   "Open order" and "Mark done" (marks the order's request handled). Booking or cancelling the order
   also clears it.
 - Messages from before the inbox went live were not kept anywhere.
+- Replying (2026-11-12): an answer shows at once with a clock and the box is free for the next;
+  answers go out one after another in order. One that WhatsApp refuses stays in the chat with the
+  reason and "Send again" / "Edit". Half-written answers stay with their chat (this browser, 3 days).
+  The open chat refreshes every 4 s.
+- Phones: one screen at a time (list, chat, order details) and the phone's Back button steps back
+  through them; the page fits above the keyboard, order chips and the banner step aside while typing,
+  and the keyboard stays open after Send.
+- Ready answers: the ⚡ button left of the box, or type `/` (e.g. `/price`), arrows + Enter to pick.
+  They go into the box for checking, never straight to the customer: "More books · order #N"
+  (book list without what is in that order), "Books added · order #N" (the order's current total),
+  "Price list (popular books)" (the owner's price-list message), "Ask for name & address",
+  "Delivery charge", "Thank you". Route `GET /api/whatsapp-inbox/chats/:number/quick-replies`.
+  The "Wants more books" banner has a "Book list" button that puts the more-books list in the box.
+- "একই ডেলিভারি চার্জে আরও বই নিবো" now gets the popular books with today's website price (books
+  already in that order left out) and the amolbooks.com link, asking for the names or numbers.
+  The list is `DEFAULT_BOOK_LIST` in `whatsapp.service.ts` (slugs on the website); unpublished
+  books are skipped. `WHATSAPP_BOOK_LIST` (comma-separated slugs) replaces it without a code change.
 
 Automatic answer to customers' own messages (`WHATSAPP_AUTO_REPLY`): `inbox` (default: "আপনার
 মেসেজ পেয়েছি ✅ … আমাদের টিম এখানেই উত্তর দেবে", once per 12 hours, not while staff are replying;
@@ -168,6 +185,8 @@ WHATSAPP_HELP_NUMBER=8801893058682
 WHATSAPP_SMS_WAIT_SECONDS=120
 # customers' own messages: inbox (default) | handover | off
 WHATSAPP_AUTO_REPLY=inbox
+# books offered on "আরও বই নিবো" and in the price list (website slugs, comma-separated); empty = built-in list
+WHATSAPP_BOOK_LIST=
 ```
 
 Then `pm2 restart amolbooks-api`. Turning it off: `WHATSAPP_ENABLED=false` and restart.
