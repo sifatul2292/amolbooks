@@ -41,6 +41,18 @@ for (const set of fs.readdirSync(base)) {
     for (const c of b.categories) assert.ok(CATEGORIES.has(c.normalize('NFD')), `${where}: category "${c}" exists`);
     assert.ok(b.authors.length <= 3, `${where}: at most three authors`);
     for (const a of b.authors) assert.ok(a.name && a.nameEn, `${where}: author ${a.name} has an English name`);
+    if (b.seoDescription !== undefined) {
+      // Search snippet: plain text, names the book, fits Google's ~160-character snippet.
+      const seo = String(b.seoDescription);
+      assert.doesNotMatch(seo, /[<>]|&[a-z]+;/, `${where}: seoDescription is plain text`);
+      assert.ok(seo.length >= 70 && seo.length <= 180, `${where}: seoDescription is 70-180 characters (${seo.length})`);
+      assert.ok(seo.normalize('NFD').includes(b.name.split(/\s*[:(]/)[0].trim().normalize('NFD')), `${where}: seoDescription names the book`);
+    }
+    if (b.isbn !== undefined) {
+      const isbn = String(b.isbn);
+      assert.match(isbn, /^97[89]\d{10}$/, `${where}: ISBN-13 digits only`);
+      assert.equal([...isbn].reduce((sum, d, i) => sum + Number(d) * (i % 2 ? 3 : 1), 0) % 10, 0, `${where}: ISBN check digit`);
+    }
     if (b.image) {
       assert.ok(images.has(b.image), `${where}: images/${b.image} exists`);
       assert.ok(!seen.image.has(b.image), `${where}: cover not shared`);

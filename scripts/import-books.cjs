@@ -181,7 +181,10 @@ const same = (value) => String(value || '').normalize('NFD').replace(/\s+/g, ' '
         description: book.description || null,
         shortDescription: book.description || null,
         seoTitle: clean(book.name),
-        seoDescription: String(book.description || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300) || null,
+        // A hand-written search snippet (books.json seoDescription) wins over the start of the description.
+        seoDescription: clean(book.seoDescription) || String(book.description || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300) || null,
+        // ISBN-13/10 when known: shown on the product page and in the Book structured data.
+        isbn: book.isbn || null,
         // Production cost when known (the owner's own titles), for the profit pages.
         costPrice: Number.isFinite(book.costPrice) && book.costPrice >= 0 ? book.costPrice : 0,
         salePrice: book.mrp,
