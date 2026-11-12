@@ -102,5 +102,17 @@
       "https://www.rokomari.com/book/publisher/20584"
     ],
     "note": "not in the shop yet: scripts/import-books.cjs creates it for the Sondipon set"
+  },
+  {
+    "id": null,
+    "name": "মাকতাবাতুল আসলাফ",
+    "nameEn": "Maktabatul Aslaf",
+    "image": "publisher-maktabatul-aslaf-a0af.webp",
+    "description": "<p>মাকতাবাতুল আসলাফ ঢাকার বাংলাবাজারভিত্তিক একটি ইসলামি প্রকাশনী। ‘আসলাফ’ শব্দের অর্থ পূর্বসূরিগণ; নামের মতোই পূর্বসূরি আলেমদের রচনা বাংলাভাষী পাঠকের কাছে পৌঁছে দেওয়া তাদের কাজের বড় অংশ। ইমাম ইবনু রজব হাম্বলী, ইবনুল জাওযী, ইবনু আবিদ দুনইয়া, আবু বকর আল-আজুররী ও ইমাম গাযালী রহ.-এর মতো মনীষীদের গ্রন্থের অনুবাদ তারা প্রকাশ করেছে।</p><p>পাশাপাশি সীরাত, বিয়ে ও পরিবার, সন্তান প্রতিপালন, দুআ-রুকইয়াহ ও আত্মউন্নয়ন বিষয়ে সমকালীন লেখকদের বইও প্রকাশ করে তারা। ডা. শামসুল আরেফীনের ‘কুররাতু আইয়ুন’ ও ‘বিবাহ-পাঠ’, মাওলানা মাহবুবুল হাসান আরিফীর ‘দুআ ও যিকির বিশ্বকোষ’ এবং ‘নবীজির ﷺ সংসার’ তাদের পাঠকপ্রিয় কয়েকটি বই।</p>",
+    "sources": [
+      "https://www.rokomari.com/book/publisher/8381",
+      "drive: Aslaf.pdf (publisher title list, Islami Tower, 11 Banglabazar, Dhaka)"
+    ],
+    "note": "not in the shop yet: scripts/import-books.cjs creates it for the maktabatul-aslaf set"
   }
 ]
