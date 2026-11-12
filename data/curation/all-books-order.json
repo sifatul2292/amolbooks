@@ -1,70 +1,6 @@
 {
-  "note": "Shop book lists (all books, category, publisher, author pages) show these books first, in this order; every other book follows, newest first. Built 2026-11-12: Amol Books' own titles first (owner's order), then the rest by 0.5 x Amolbooks sales (totalSold, log scale, 25+ = full) + 0.5 x Rokomari \"Islamic books\" best-seller rank (category 81, sort SOLD_COUNT_DESC, top 3000). Out-of-stock books and Amol Notebook are left out. Applied by scripts/curate-product-order.cjs (writes product.priority); the /storefront-catalog proxy sorts lists by priority, then newest.",
+  "note": "Shop book lists (all books, category, publisher, author pages): the owner's hand-set priorities (1 or more, set in admin) always come first, in the owner's order; then these books in this order; then every other book, newest first. Built 2026-11-12 from 0.5 x Amolbooks sales (totalSold, log scale, 25+ = full) + 0.5 x Rokomari \"Islamic books\" best-seller rank (category 81, sort SOLD_COUNT_DESC, top 3000). Books the owner pinned, out-of-stock books and Amol Notebook are left out. Applied by scripts/curate-product-order.cjs, which writes priorities between 0 and 1 only; the /storefront-catalog proxy sorts lists by priority, then newest.",
   "books": [
-    {
-      "slug": "the-barakah-effect",
-      "name": "দ্য বারাকাহ ইফেক্ট",
-      "publisher": "আমল বুকস",
-      "amolbooksSold": 727,
-      "rokomariRank": null,
-      "score": 0.5
-    },
-    {
-      "slug": "500 shobder kuraner 75%",
-      "name": "৫০০ শব্দে কুরআনের ৭৫% (নতুন সংস্করণ)",
-      "publisher": "আমল বুকস",
-      "amolbooksSold": 2074,
-      "rokomariRank": null,
-      "score": 0.5
-    },
-    {
-      "slug": "the-story-of-muhammad",
-      "name": "দ্য স্টোরি অব মুহাম্মাদ (সা.)",
-      "publisher": "আমল বুকস",
-      "amolbooksSold": 0,
-      "rokomariRank": null,
-      "score": 0.0
-    },
-    {
-      "slug": "productive muslim",
-      "name": "প্রোডাক্টিভ মুসলিম",
-      "publisher": "আমল বুকস",
-      "amolbooksSold": 989,
-      "rokomariRank": 15,
-      "score": 0.9977
-    },
-    {
-      "slug": "productive-barakah",
-      "name": "প্রোডাক্টিভ মুসলিম + দ্য বারাকাহ ইফেক্ট",
-      "publisher": "আমল বুকস",
-      "amolbooksSold": 740,
-      "rokomariRank": null,
-      "score": 0.5
-    },
-    {
-      "slug": "islami-orthonity-o-uddokta-47",
-      "name": "ইসলামি অর্থনীতি ও সফল উদ্যোক্তার মাইন্ডম্যাপ",
-      "publisher": "আমল বুকস",
-      "amolbooksSold": 297,
-      "rokomariRank": null,
-      "score": 0.5
-    },
-    {
-      "slug": "secrets-of-wealth-and-provision",
-      "name": "সম্পদ ও রিজিকের গোপন রহস্য",
-      "publisher": "আমল বুকস",
-      "amolbooksSold": 0,
-      "rokomariRank": null,
-      "score": 0.0
-    },
-    {
-      "slug": "Jibonpaltano4books",
-      "name": "জীবন পাল্টে দেওয়ার মত ৪ টি বই",
-      "publisher": "আমল বুকস",
-      "amolbooksSold": 8,
-      "rokomariRank": null,
-      "score": 0.3372
-    },
     {
       "slug": "sompodgorarkoushol",
       "name": "সম্পদ গড়ার কৌশল",
@@ -72,14 +8,6 @@
       "amolbooksSold": 17,
       "rokomariRank": 200,
       "score": 0.9104
-    },
-    {
-      "slug": "olosotajibonershotru",
-      "name": "অলসতা : জীবনের শত্রু",
-      "publisher": "সন্দীপন প্রকাশন",
-      "amolbooksSold": 14,
-      "rokomariRank": 81,
-      "score": 0.9023
     },
     {
       "slug": "yourmustdobusiness",
@@ -90,44 +18,12 @@
       "score": 0.8968
     },
     {
-      "slug": "moner moto salat",
-      "name": "মনের মতো সালাত",
-      "publisher": "সন্দীপন প্রকাশন",
-      "amolbooksSold": 13,
-      "rokomariRank": 204,
-      "score": 0.8712
-    },
-    {
-      "slug": "Time Management",
-      "name": "টাইম ম্যানেজমেন্ট",
-      "publisher": "সিয়ান পাবলিকেশন",
-      "amolbooksSold": 11,
-      "rokomariRank": 150,
-      "score": 0.8565
-    },
-    {
-      "slug": "bipod jokhon niyamot",
-      "name": "বিপদ যখন নিয়ামাত",
-      "publisher": "সন্দীপন প্রকাশন",
-      "amolbooksSold": 7,
-      "rokomariRank": 59,
-      "score": 0.8095
-    },
-    {
       "slug": "billiondollarmuslim",
       "name": "বিলিয়ন ডলার মুসলিম",
       "publisher": "সমকালীন",
       "amolbooksSold": 8,
       "rokomariRank": 174,
       "score": 0.8084
-    },
-    {
-      "slug": "quran-bojhar-moja",
-      "name": "কুরআন বোঝার মজা",
-      "publisher": "দারুল ফালাহ",
-      "amolbooksSold": 13,
-      "rokomariRank": 1050,
-      "score": 0.7302
     },
     {
       "slug": "hisnulmuslim",
@@ -472,14 +368,6 @@
       "amolbooksSold": 0,
       "rokomariRank": 133,
       "score": 0.478
-    },
-    {
-      "slug": "reclaimyourheart",
-      "name": "রিক্লেইম ইয়োর হার্ট",
-      "publisher": "সমকালীন",
-      "amolbooksSold": 0,
-      "rokomariRank": 141,
-      "score": 0.4767
     },
     {
       "slug": "prottaborton-2",
@@ -1224,14 +1112,6 @@
       "amolbooksSold": 0,
       "rokomariRank": 1633,
       "score": 0.228
-    },
-    {
-      "slug": "bipod-jokhon-niyamot-2-91",
-      "name": "বিপদ যখন নিয়ামাত ২",
-      "publisher": "সন্দীপন প্রকাশন",
-      "amolbooksSold": 3,
-      "rokomariRank": null,
-      "score": 0.2127
     },
     {
       "slug": "mohimannito-quran-1-khondo",

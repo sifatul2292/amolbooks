@@ -1,8 +1,9 @@
-// Puts the shop's best sellers at the top of every book list (all books, category, publisher and
-// author pages). data/curation/all-books-order.json lists product slugs in the wanted order; this
-// script gives them a descending `priority` and clears `priority` on every other product, so they
-// follow newest first (the /storefront-catalog proxy sorts lists by priority, then createdAt; see
-// api/src/storefront-list-sort.ts). Every product's old priority is saved to a backup file first.
+// Puts the shop's best sellers near the top of every book list (all books, category, publisher and
+// author pages). Lists sort by `priority` (highest first), then newest (see api/src/storefront-list-sort.ts).
+// The owner's own priorities (1 or more, set in admin) always stay first and are never changed here.
+// This script only uses priorities between 0 and 1: the books in data/curation/all-books-order.json
+// get descending values in that range (skipping books the owner pinned), and older curation values on
+// books no longer listed are cleared, so the rest follow newest first. Old values are backed up first.
 // Uses the API's own mongoose schema (api/dist, so run after `npm run build`).
 //
 // On the VPS, from /home/amolbooks:
@@ -58,35 +59,47 @@ function mongoUri(env) {
   const products = await Product.find({}).select('name slug status priority').lean();
   const bySlug = new Map(products.map((p) => [p.slug, p]));
 
+  // The owner's pins (priority 1 or more) are theirs; curation owns only values between 0 and 1.
+  const isPin = (value) => typeof value === 'number' && value >= 1;
+  const isCurated = (value) => typeof value === 'number' && value > 0 && value < 1;
   // Wanted priority per product id: from the backup when restoring, else from the order file.
   const wanted = new Map();
   const missing = [];
+  const keptPins = [];
   if (RESTORE) {
     const saved = JSON.parse(fs.readFileSync(path.resolve(root, RESTORE), 'utf8'));
     for (const row of saved.products) wanted.set(String(row._id), row.priority ?? null);
   } else {
     const { books } = JSON.parse(fs.readFileSync(ORDER_FILE, 'utf8'));
-    const listed = books.map((b) => b.slug).filter((slug, i, all) => all.indexOf(slug) === i);
-    let rank = 0;
-    for (const slug of listed) {
+    const listed = [];
+    for (const slug of books.map((b) => b.slug)) {
       const product = bySlug.get(slug);
       if (!product) { missing.push(slug); continue; }
-      wanted.set(String(product._id), (listed.length - rank) * 10);
-      rank++;
+      if (isPin(product.priority)) { keptPins.push(product.name); continue; }
+      if (!listed.includes(product)) listed.push(product);
+    }
+    listed.forEach((product, i) => wanted.set(String(product._id), Number(((listed.length - i) / (listed.length + 1)).toFixed(6))));
+    for (const p of products) {
+      if (wanted.has(String(p._id))) continue;
+      wanted.set(String(p._id), isCurated(p.priority) ? null : p.priority ?? null); // clear old curation, keep the rest
     }
   }
 
   const changes = [];
   for (const p of products) {
-    const target = wanted.has(String(p._id)) ? wanted.get(String(p._id)) : null;
+    const target = wanted.has(String(p._id)) ? wanted.get(String(p._id)) : p.priority ?? null;
     const current = p.priority ?? null;
+    if (!RESTORE && isPin(current)) continue; // never touch the owner's pins
     if (current !== target) changes.push({ _id: p._id, name: p.name, from: current, to: target });
   }
-  const top = products.filter((p) => p.status === 'publish' && wanted.get(String(p._id)) != null)
-    .sort((a, b) => wanted.get(String(b._id)) - wanted.get(String(a._id)));
-  console.log(`${RESTORE ? 'restore from ' + RESTORE : 'order file ' + path.relative(root, ORDER_FILE)}: ${wanted.size} products ranked, ${products.length - wanted.size} unranked (newest first)`);
-  top.slice(0, 24).forEach((p, i) => console.log(`${String(i + 1).padStart(3)}. ${p.name}`));
-  if (top.length > 24) console.log(`     … ${top.length - 24} more ranked books`);
+  const shown = (p) => (wanted.has(String(p._id)) ? wanted.get(String(p._id)) : p.priority) ?? null;
+  const top = products.filter((p) => p.status === 'publish' && shown(p) != null && shown(p) > 0)
+    .sort((a, b) => shown(b) - shown(a));
+  const pins = top.filter((p) => isPin(shown(p))).length;
+  console.log(`${RESTORE ? 'restore from ' + RESTORE : 'order file ' + path.relative(root, ORDER_FILE)}: ${pins} pinned by you (kept, first), ${top.length - pins} curated, the rest newest first`);
+  top.slice(0, 30).forEach((p, i) => console.log(`${String(i + 1).padStart(3)}. ${isPin(shown(p)) ? '[your pin] ' : ''}${p.name}`));
+  if (top.length > 30) console.log(`     … ${top.length - 30} more`);
+  if (keptPins.length) console.log(`in the order file but pinned by you, left as you set them: ${keptPins.length}`);
   for (const slug of missing) console.log(`not in the shop (skipped): ${slug}`);
   console.log(`${changes.length} product(s) ${APPLY ? 'updated' : 'would change'}${APPLY ? '' : ' (dry run; add --apply to write)'}`);
 

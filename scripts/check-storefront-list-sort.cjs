@@ -32,9 +32,14 @@ assert.match(main, /req\.path === '\/product\/get-all'\s*\?\s*curatedListRequest
 const { books } = JSON.parse(fs.readFileSync(path.join(root, 'data/curation/all-books-order.json'), 'utf8'));
 assert.ok(books.length > 0);
 assert.equal(new Set(books.map((b) => b.slug)).size, books.length, 'slugs are unique');
-for (const b of books) assert.ok(b.slug && b.name && (b.publisher === 'আমল বুকস' || b.amolbooksSold > 0 || b.rokomariRank > 0), `${b.name}: has a sales signal`);
+for (const b of books) assert.ok(b.slug && b.name && (b.amolbooksSold > 0 || b.rokomariRank > 0), `${b.name}: has a sales signal`);
 
 const script = fs.readFileSync(path.join(root, 'scripts/curate-product-order.cjs'), 'utf8');
 assert.match(script, /const APPLY = args\.includes\('--apply'\)/, 'dry run unless --apply');
 assert.match(script, /product-priority-\$\{stamp\}\.json/, 'old priorities are backed up');
+// The owner's own priorities (1 or more) are never changed; curation writes values between 0 and 1 only.
+assert.match(script, /const isPin = \(value\) => typeof value === 'number' && value >= 1;/);
+assert.match(script, /if \(!RESTORE && isPin\(current\)\) continue;/, 'pins are skipped');
+assert.match(script, /\(listed\.length - i\) \/ \(listed\.length \+ 1\)/, 'curated values stay below 1');
+assert.match(script, /isCurated\(p\.priority\) \? null : p\.priority/, 'only earlier curation values are cleared');
 console.log(`storefront list sort: ok (${books.length} curated books)`);
