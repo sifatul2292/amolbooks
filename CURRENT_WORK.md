@@ -1,3 +1,10 @@
+## Cost price from publisher discount: Samakalin 60%, Sandipan 45% (2026-11-12, branch claude/staff-performance; committed and pushed 2026-11-12, not run on live yet)
+
+- Owner (Samakalin invoice: 20 × 60৳ = 1200, 40% off = 720৳): "somokalin gives me 40% ... sondipon gives me 55%" = trade discount, so cost = 60% / 45% of the sale price (MRP). Rounded UP to whole Taka like the owner's existing Sandipan entries (392 → 177).
+- Orders snapshot `orderedItems.costPriceAtOrder` from the product's cost at order time and the profit dashboard prefers that snapshot, so past orders of these books saved 0. `scripts/set-publisher-cost.cjs [--apply] [--products-only] [--rate "<publisher>=<pct>"]` sets product `costPrice` for publisher names সমকালীন / সন্দীপন প্রকাশন and fills old order lines whose cost is 0/null/missing (real non-zero snapshots kept); backup in api/backup/db/. Order update uses the plain driver (Mongoose adds `isGift` to arrayFilters and MongoDB rejects it).
+- Live preview (public get-all, 2026-11-12): Samakalin 126 books (103 from 0, 23 had ~55% and go up to 60%), Sandipan 110 (89 from 0, 17 already right, 4 change). Thin margins after the change: গল্পগুলো অন্যরকম, সেইসব দিনরাত্রি, মেঘ কেটে যায় (selling price only ~15% above cost).
+- Tested on a throwaway DB (set from 0, change, same, other publisher untouched, 0/null/missing lines fixed, real snapshot kept, second run no-op).
+
 ## Sample PDFs (+1 cover) for draft products that had none (2026-11-12, branch claude/staff-performance; committed and pushed 2026-11-12, not applied on live yet)
 
 - Owner: drafts uploaded without cover or sample PDF; "download the pdf from wafilife ... replaced the logo with amolbooks logo, do the same for others". Wafilife only (owner stopped a Rokomari attempt).
