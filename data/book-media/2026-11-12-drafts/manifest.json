@@ -1,0 +1,369 @@
+{
+  "note": "Sample pages and covers for draft products that had none (2026-11-12). Source: Wafilife look-inside pages (Wafilife corner mark replaced with the Amolbooks logo, 2-bit grey text pages, colour covers), max 24 pages. Rows with \"missing\" were not found on Wafilife. Apply with scripts/attach-book-media.cjs. Books not on Wafilife use Rokomari look-inside pages (owner agreed 2026-11-12); colour-only books (প্রিয় নবিজির গল্প শুনি) left out.",
+  "items": [
+    {
+      "productId": "6af586c5410757f107c8fcc4",
+      "name": "মুনাজাতে মাকবুল, দরূদ ও সালামের ওযীফা",
+      "pdf": "munajate-maqbul-durud-o-salamer-wazifa-95b9.pdf",
+      "image": "book-munajate-maqbul-durud-o-salamer-wazifa-1e76.webp",
+      "source": "rokomari.com/book/442777 look-inside (Rokomari logo removed, Amolbooks logo added; back cover/flap pages left out); cover: wafilife.com product 59615"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce1a9",
+      "name": "সেইসব দিনরাত্রি",
+      "pdf": "seisob-dinratri-b6ab.pdf",
+      "image": null,
+      "source": "rokomari.com/book/184379 look-inside (Rokomari logo removed, Amolbooks logo added; back cover/flap pages left out)",
+      "missing": "cover"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce1a6",
+      "name": "মেঘ কেটে যায়",
+      "pdf": "megh-kete-jay-608a.pdf",
+      "image": null,
+      "source": "rokomari.com/book/184376 look-inside (Rokomari logo removed, Amolbooks logo added; back cover/flap pages left out)",
+      "missing": "cover"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce1a3",
+      "name": "নানান রঙের মানুষ (১৮টি গল্প)",
+      "pdf": "nanan-ronger-manush-25e4.pdf",
+      "image": null,
+      "source": "rokomari.com/book/170984 look-inside (Rokomari logo removed, Amolbooks logo added; back cover/flap pages left out)",
+      "missing": "cover"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce1a0",
+      "name": "হৃদয় জাগার জন্য",
+      "pdf": "hridoy-jagar-jonno-2961.pdf",
+      "image": null,
+      "source": "rokomari.com/book/195355 look-inside (Rokomari logo removed, Amolbooks logo added; back cover/flap pages left out)",
+      "missing": "cover"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce19d",
+      "name": "জীবনের বাঁকে বাঁকে কুরআনের পাঠ - দ্বিতীয় খণ্ড",
+      "pdf": "jiboner-banke-banke-quraner-path-2-caa3.pdf",
+      "image": null,
+      "source": "rokomari.com/book/363173 look-inside (Rokomari logo removed, Amolbooks logo added; back cover/flap pages left out)",
+      "missing": "cover"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce19a",
+      "name": "কুরআনের সাথে হৃদয়ের কথা",
+      "pdf": null,
+      "image": null,
+      "source": null,
+      "missing": "cover"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce194",
+      "name": "যে জীবন মরীচিকা",
+      "pdf": "je-jibon-morichikar-6019.pdf",
+      "image": null,
+      "source": "wafilife.com product 3896"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce18b",
+      "name": "জিলহজ্জের উপহার",
+      "pdf": "jilhojjer-upohar-3a2a.pdf",
+      "image": null,
+      "source": "wafilife.com product 5137"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce185",
+      "name": "মেঘ রোদ্দুর বৃষ্টি",
+      "pdf": "megh-roddur-bristi-a0c1.pdf",
+      "image": null,
+      "source": "wafilife.com product 3871"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce17c",
+      "name": "তারাফুল",
+      "pdf": "taraful-413b.pdf",
+      "image": null,
+      "source": "wafilife.com product 3873"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce173",
+      "name": "জীবন পথে সফল হতে",
+      "pdf": "jibon-pothe-shofol-hote-4f78.pdf",
+      "image": null,
+      "source": "wafilife.com product 3872"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce170",
+      "name": "সবুজ রাতের কোলাজ",
+      "pdf": "shobuj-rater-kolaj-c5fc.pdf",
+      "image": null,
+      "source": "wafilife.com product 3275"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce16d",
+      "name": "ভালোবাসার রামাদান",
+      "pdf": "valobashar-romadan-454e.pdf",
+      "image": null,
+      "source": "wafilife.com product 4082"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce167",
+      "name": "সন্তান স্বপ্ন দিয়ে বোনা",
+      "pdf": "shontan-shopno-diye-bona-2dd3.pdf",
+      "image": null,
+      "source": "wafilife.com product 4012"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce15e",
+      "name": "ইমাম আব্দুল্লাহ ইবনু মুবারক (রা.) জীবন ও কর্ম",
+      "pdf": "imam-abullah-ibnu-mubarok-roh-209c.pdf",
+      "image": null,
+      "source": "rokomari.com/book/202033 look-inside (Rokomari logo removed, Amolbooks logo added; back cover/flap pages left out); cover: wafilife.com product 7824"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce15b",
+      "name": "ইমাম হাসান আল-বাসরি (রা.) জীবন ও কর্ম",
+      "pdf": "imam-hasan-al-basri-roh-2802.pdf",
+      "image": null,
+      "source": "rokomari.com/book/202032 look-inside (Rokomari logo removed, Amolbooks logo added; back cover/flap pages left out); cover: wafilife.com product 7823"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce158",
+      "name": "ইমাম শাফিয়ি (রা.) জীবন ও কর্ম",
+      "pdf": "imam-shafiyi-roh-1745.pdf",
+      "image": null,
+      "source": "rokomari.com/book/202030 look-inside (Rokomari logo removed, Amolbooks logo added; back cover/flap pages left out); cover: wafilife.com product 7819"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce155",
+      "name": "ইমাম আহমাদ ইবনু হাম্বল (রা.) জীবন ও কর্ম",
+      "pdf": "imam-ahmad-ibnu-hambol-roh-9457.pdf",
+      "image": null,
+      "source": "rokomari.com/book/202031 look-inside (Rokomari logo removed, Amolbooks logo added; back cover/flap pages left out); cover: wafilife.com product 7820"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce152",
+      "name": "ইমাম মালিক (রা.) জীবন ও কর্ম",
+      "pdf": "imam-malik-roh-0f7f.pdf",
+      "image": null,
+      "source": "rokomari.com/book/202029 look-inside (Rokomari logo removed, Amolbooks logo added; back cover/flap pages left out); cover: wafilife.com product 7818"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce14f",
+      "name": "ইমাম আবু হানিফা (রা.) জীবন ও কর্ম",
+      "pdf": "imam-abu-hanifa-roh-033f.pdf",
+      "image": null,
+      "source": "rokomari.com/book/202028 look-inside (Rokomari logo removed, Amolbooks logo added; back cover/flap pages left out); cover: wafilife.com product 7815"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce14c",
+      "name": "ওপারেতে সর্বসুখ: জান্নাতের মনোমুগ্ধকর বর্ণনা",
+      "pdf": "oparete-sorbosukh-0a34.pdf",
+      "image": null,
+      "source": "wafilife.com product 8312"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce146",
+      "name": "সুরা ইউসুফ: পবিত্র এক মানবের গল্প",
+      "pdf": "sura-yusuf-pobitro-ek-manober-golpo-741b.pdf",
+      "image": null,
+      "source": "wafilife.com product 8313"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce143",
+      "name": "আরবি রস",
+      "pdf": "arbi-rosh-edde.pdf",
+      "image": null,
+      "source": "wafilife.com product 8314"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce140",
+      "name": "সেরা হোক এবারের রামাদান",
+      "pdf": "sera-hok-ebarer-romadan-8469.pdf",
+      "image": null,
+      "source": "wafilife.com product 8571"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce122",
+      "name": "বিষয়ভিত্তিক বিশুদ্ধ হাদিস সংকলন",
+      "pdf": "bishoyvittik-bishuddha-hadis-songkolon-7fa9.pdf",
+      "image": null,
+      "source": "wafilife.com product 13659"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce113",
+      "name": "আরবি রস (দ্বিতীয় খণ্ড)",
+      "pdf": "arbi-ros-2ff6.pdf",
+      "image": null,
+      "source": "wafilife.com product 16957"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce110",
+      "name": "হৃদয় জুড়ানো সালাত",
+      "pdf": "hridoy-jurano-salat-6934.pdf",
+      "image": null,
+      "source": "wafilife.com product 16961"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce10d",
+      "name": "শেষরাত্রির গল্পগুলো",
+      "pdf": "seshratir-golpogulo-8f44.pdf",
+      "image": null,
+      "source": "wafilife.com product 16963"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce10a",
+      "name": "হাদিস সংকলনের ইতিহাস",
+      "pdf": "hadis-songkoloner-itihas-aa62.pdf",
+      "image": null,
+      "source": "wafilife.com product 16958"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce107",
+      "name": "বাইতুল্লাহ : প্রস্তুতি, বিধান ও সফরনামা",
+      "pdf": "baitullah-prostuti-bidhan-sofornama-fa7d.pdf",
+      "image": null,
+      "source": "wafilife.com product 16960"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce104",
+      "name": "উমার রাযিয়াল্লাহু আনহুর সমর্থনে অবতীর্ণ আয়াতসমূহের প্রেক্ষাপট",
+      "pdf": "umar-ra-er-somorthone-obotinro-ayatsomuher-prekkhapot-b58f.pdf",
+      "image": null,
+      "source": "wafilife.com product 20302"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce101",
+      "name": "জান্নাতের সৌন্দর্য ও জাহান্নামের ভয়াবহতা",
+      "pdf": "jannater-shoundorjo-o-jahannamer-bhoyabohota-76d3.pdf",
+      "image": null,
+      "source": "rokomari.com/book/429416 look-inside (Rokomari logo removed, Amolbooks logo added; back cover/flap pages left out); cover: wafilife.com product 20301"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce0f2",
+      "name": "আত্মশুদ্ধির ব্যাবহারিক পাঠ",
+      "pdf": "attoshuddhir-beboharik-path-c4ed.pdf",
+      "image": null,
+      "source": "wafilife.com product 27188"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce0ef",
+      "name": "ভ্রান্তির সমাধি",
+      "pdf": "vrantir-somadhi-558c.pdf",
+      "image": null,
+      "source": "rokomari.com/book/346706 look-inside (Rokomari logo removed, Amolbooks logo added; back cover/flap pages left out); cover: wafilife.com product 27187"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce0ec",
+      "name": "কিয়ামতের আলামত ও শেষ যুগের ভয়াবহ ফিতনা",
+      "pdf": "kiyamoter-alamot-o-shesh-zuger-voyaboho-fitna-8de1.pdf",
+      "image": null,
+      "source": "wafilife.com product 27186"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce0e3",
+      "name": "গুনাহ মাফের উপায়",
+      "pdf": "gunah-maper-upaiy-06ec.pdf",
+      "image": null,
+      "source": "wafilife.com product 29450"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce0d4",
+      "name": "জিনজাতির বিস্ময়কর জগৎ",
+      "pdf": "jinjatir-bismoykor-jogod-85c0.pdf",
+      "image": null,
+      "source": "wafilife.com product 29449"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce0d1",
+      "name": "কিতাবুল বুয়ু",
+      "pdf": "kitabul-bayu-af93.pdf",
+      "image": null,
+      "source": "wafilife.com product 29452"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce0c8",
+      "name": "শাইখুল ইসলাম ইবনু তাইমিয়া রাহিমাহুল্লাহ: জীবন ও কর্ম",
+      "pdf": "shaikhul-islam-ibnu-taimiya-rh-jibon-o-kormo-d9cd.pdf",
+      "image": null,
+      "source": "wafilife.com product 56384"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce0c5",
+      "name": "সাহাবিদের অনন্য জীবন",
+      "pdf": "sahabider-ononno-jibon-384b.pdf",
+      "image": null,
+      "source": "wafilife.com product 56387"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce0c2",
+      "name": "নবিজির শেষ দিনগুলো ﷺ",
+      "pdf": "nobijir-shesh-dingulo-d13f.pdf",
+      "image": null,
+      "source": "wafilife.com product 56386"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce0bf",
+      "name": "মায়েদের প্যারেন্টিং",
+      "pdf": "mayeder-parenting-c617.pdf",
+      "image": null,
+      "source": "wafilife.com product 56385"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce0ad",
+      "name": "হিন্দু থেকে মুসলিম হওয়ার ঈমান-জাগানিয়া সাক্ষাৎকার",
+      "pdf": "iman-jagania-sakkhatkar-b223.pdf",
+      "image": null,
+      "source": "wafilife.com product 63306"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce0aa",
+      "name": "ইমাম নববির ৪০ হাদিস ও তার ব্যাখ্যা",
+      "pdf": "imam-nobobir-40-hadis-o-tar-bekkha-c06d.pdf",
+      "image": null,
+      "source": "wafilife.com product 68047"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce0a1",
+      "name": "ইসলামের বিধান প্রণয়নে সুন্নাহর অবস্থান এবং প্রাচ্যবিদদের আপত্তির জবাব",
+      "pdf": "islamer-bidhan-pronoyoner-sunnaher-obosthan-ebong-prachobidder-apottir-jobab-9d2d.pdf",
+      "image": null,
+      "source": "wafilife.com product 69990"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce09e",
+      "name": "আপ কি আমানাত",
+      "pdf": "aap-ki-amanat-11c7.pdf",
+      "image": null,
+      "source": "wafilife.com product 69991"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce09b",
+      "name": "Double Standard",
+      "pdf": "double-standard-beaa.pdf",
+      "image": null,
+      "source": "wafilife.com product 70660"
+    },
+    {
+      "productId": "6aec359bc2fea0ede15ce098",
+      "name": "৩০ হাজার খ্রিষ্টানের গুরু যেভাবে দ্বীনের দাঈ",
+      "pdf": "30-hajar-khristan-guru-jevabe-diner-dayi-7db6.pdf",
+      "image": null,
+      "source": "wafilife.com product 70661"
+    },
+    {
+      "productId": "6ae897fbe0d3b6387b9e0f83",
+      "name": "প্রিয় নবিজির (সা.) গল্প শুনি",
+      "pdf": null,
+      "image": null,
+      "source": null,
+      "missing": "cover + sample PDF"
+    },
+    {
+      "productId": "6af586c5410757f107c8fce8",
+      "name": "সহিহভাবে কুরআন শিক্ষা : তাজওইদ",
+      "pdf": "sohihvabe-quran-shikkha-tajweed-e9ec.pdf",
+      "image": null,
+      "source": "wafilife.com product 3311 (pages 1-6; its pages 7-8 are from another book)"
+    }
+  ]
+}
