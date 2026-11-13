@@ -3094,9 +3094,10 @@ export class OrderService {
   /**
    * The customer tapped a button on the WhatsApp order message: "অর্ডার কনফার্ম", "একই ডেলিভারি চার্জে আরও বই নিবো"
    * (template order_confirm_v2) or "পরিবর্তন চাই" (first template). Only from the order's own number.
-   * Confirm works like a staff confirm (status Confirmed, timeline) for an open order (Pending/
-   * Processing, not booked or cancelled), without the confirmation SMS: the customer gets the
-   * WhatsApp answer instead (owner, 2026-11-10). "More books" / "change" mark the order for staff
+   * Confirm only records customerConfirmation ("Customer confirmed" on the Orders page) for an open
+   * order (Pending/Processing, not booked or cancelled); the status stays as it is, staff confirm
+   * themselves (owner, 2026-11-13; it used to switch to Confirmed). That later staff confirm sends no
+   * confirmation SMS: the customer already got the WhatsApp answer. "More books" / "change" mark the order for staff
    * (customerRequest) until it is booked with the courier. The answer decides the reply.
    */
   async handleWhatsappReply(reply: { action: 'confirm' | 'change' | 'more'; orderId: string; from: string; messageId?: string }): Promise<{ status: 'confirmed' | 'already' | 'change' | 'more' | 'closed' | 'unknown'; orderId?: string }> {
@@ -3123,7 +3124,6 @@ export class OrderService {
       { $set: { customerConfirmation: { status: 'confirmed', ...by } } },
     );
     if (!claim.modifiedCount) return { status: 'already', orderId };
-    await this.changeOrderStatus(String(order._id), { orderStatus: OrderStatus.CONFIRM } as any, undefined, { skipConfirmSms: true });
     return { status: 'confirmed', orderId };
   }
 
@@ -4978,7 +4978,8 @@ export class OrderService {
         await this.restockProducts(id, data['orderedItems'], restockReason);
       }
 
-      if (orderStatus === 2 && !options.skipConfirmSms) {
+      // No SMS when the customer already confirmed on WhatsApp (they got the answer there).
+      if (orderStatus === 2 && !options.skipConfirmSms && data?.customerConfirmation?.status !== 'confirmed') {
         const message = `আপনার অর্ডার আইডি ${data?.orderId} নিশ্চিত করা হয়েছে। ডেলিভারি সময়: ঢাকার ভিতরে ১–২ কার্যদিবস, ঢাকার বাইরে ৩–৬ কার্যদিবস। আমল বুকসের সঙ্গে থাকার জন্য ধন্যবাদ।`;
         //const message = `Your order No: ${data?.orderId} has been Shipped. Total Amount ${data?.grandTotal} Tk. Thanks from amolbooks.com`;
         // const message = `Hi ${data.name} \nwe just confirmed your order from amolbooks.com. Your order is estimated to arrive in 1-2 business days.`;

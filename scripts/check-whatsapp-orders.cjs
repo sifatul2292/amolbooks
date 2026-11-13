@@ -297,7 +297,8 @@ let server;
   Object.assign(plain, { logger: silent });
   plain.notifyWhatsapp('order_placed', C);
 
-  // 9. Confirm buttons: the order message carries them, a tap confirms like staff do or flags a
+  // 9. Confirm buttons: the order message carries them, a tap marks the order "customer confirmed"
+  //    (status stays for staff to confirm, owner 2026-11-13) or flags a
   //    change, every answer goes back on WhatsApp, and anything else gets one hand-over answer.
   process.env.WHATSAPP_CONFIRM_BUTTONS = 'true';
   process.env.WHATSAPP_TEMPLATE_ORDER_PLACED = 'order_confirm';
@@ -317,10 +318,10 @@ let server;
   hook = tap('wamid.IN1', '8801700000000', 'confirm:' + D._id);
   assert.deepEqual(await controller.receive(hook.req, hook.signature, hook.payload), { success: true, updated: 0, handled: 1 });
   order = await get(D);
-  assert.equal(order.orderStatus, 2, 'Confirmed like a staff confirm');
+  assert.equal(order.orderStatus, 1, 'Status stays Processing: staff confirm themselves');
   assert.equal(order.customerConfirmation.status, 'confirmed');
   assert.equal(order.customerConfirmation.via, 'whatsapp');
-  assert.ok(order.orderTimeline === undefined || order.orderTimeline === null || order.orderTimeline.confirmed, 'Timeline follows the staff path');
+  assert.ok(!order.orderTimeline || !order.orderTimeline.confirmed, 'No confirmed timeline step until staff confirm');
   assert.equal(calls.length, n + 1);
   assert.equal(calls.at(-1).body.to, '8801700000000');
   assert.match(lastText(), new RegExp('অর্ডার #' + D.orderId + ' কনফার্ম হয়েছে'));
@@ -354,7 +355,8 @@ let server;
   hook = tap('wamid.IN5', '8801700000000', 'confirm:' + E._id);
   await controller.receive(hook.req, hook.signature, hook.payload);
   order = await get(E);
-  assert.equal(order.orderStatus, 2);
+  assert.equal(order.orderStatus, 1);
+  assert.equal(order.customerConfirmation.status, 'confirmed');
   assert.equal(order.customerRequest.kind, 'change');
   // Cancelled or already booked orders are not reopened.
   const F = await seed({ orderStatus: 6 });
@@ -366,7 +368,12 @@ let server;
   hook = tap('wamid.IN7', '8801700000000', 'confirm:' + G._id);
   await controller.receive(hook.req, hook.signature, hook.payload);
   assert.equal((await get(G)).orderStatus, 1, 'A booked parcel is never re-confirmed');
-  // A staff confirm still sends the confirmation SMS.
+  // Staff then confirm a customer-confirmed order: status Confirmed, no SMS (they had the WhatsApp answer).
+  const smsBeforeStaff = sms.length;
+  await orderService.changeOrderStatus(String(D._id), { orderStatus: 2 });
+  assert.equal((await get(D)).orderStatus, 2);
+  assert.equal(sms.length, smsBeforeStaff, 'No confirmation SMS after a WhatsApp confirm');
+  // A staff confirm of any other order still sends the confirmation SMS.
   const H = await seed({ orderStatus: 1 });
   await orderService.changeOrderStatus(String(H._id), { orderStatus: 2 });
   assert.ok(sms.some((item) => item.text.includes('অর্ডার আইডি ' + H.orderId + ' নিশ্চিত')), 'Staff confirm: SMS as before');
@@ -388,7 +395,8 @@ let server;
   hook = tap('wamid.IN21', '8801700000000', 'confirm:' + M._id);
   await controller.receive(hook.req, hook.signature, hook.payload);
   order = await get(M);
-  assert.equal(order.orderStatus, 2);
+  assert.equal(order.orderStatus, 1);
+  assert.equal(order.customerConfirmation.status, 'confirmed');
   assert.equal(order.customerRequest.kind, 'more', 'Confirming keeps the more-books request for staff');
   hook = tap('wamid.IN22', '8801700000000', 'more:' + M._id);
   await controller.receive(hook.req, hook.signature, hook.payload);

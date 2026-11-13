@@ -1,3 +1,9 @@
+## WhatsApp "অর্ডার কনফার্ম" no longer confirms the order (2026-11-13, branch claude/staff-performance; committed and pushed 2026-11-13, not deployed)
+
+- Owner: when the customer confirms on WhatsApp, keep the order Processing (staff confirm themselves). `OrderService.handleWhatsappReply` now only records `customerConfirmation` (the "✓ Customer confirmed" badge) and answers on WhatsApp; it no longer calls `changeOrderStatus(..., CONFIRM)`. When staff later set Confirmed on such an order, the confirmation SMS is skipped (`customerConfirmation.status === 'confirmed'`): the customer already got the WhatsApp answer. Orders confirmed by WhatsApp before this stay Confirmed.
+- `order.service.ts` also holds uncommitted EPS draft edits: commit only this hunk. Checked: `tsc --noEmit`, `nest build`, check-whatsapp-orders (updated: status stays 1, later staff confirm → 2 with no SMS) and check-whatsapp-inbox pass.
+- Deploy: API build + `pm2 restart amolbooks-api`.
+
 ## SEAN Publication books (2026-11-12, branch claude/staff-performance; committed and pushed 2026-11-13, not imported on live yet)
 
 - Owner shared SEAN's sheet (Google Sheets "সকল বইয়ের তথ্য - সিয়ান পাবলিকেশন", public xlsx export): ~100 products incl. 11 children's box sets; per book a Drive folder (front/back/full cover + sample PDF) and a seanpublication.com link.
