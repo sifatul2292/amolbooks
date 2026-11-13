@@ -64,9 +64,15 @@ export class ReviewController {
     return await this.reviewService.addReview(user, addReviewDto);
   }
 
+  // Staff add a review by hand in the admin panel (it sends the admin token). It had no guard,
+  // so anyone could post reviews under any name (found 2026-11-13): admins only now.
   @Post('/add-by-admin')
   // @UsePipes(ValidationPipe)
-  // @UseGuards(UserJwtAuthGuard)
+  @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @UseGuards(AdminRolesGuard)
+  @AdminMetaPermissions(AdminPermissions.CREATE)
+  @UseGuards(AdminPermissionGuard)
+  @UseGuards(AdminJwtAuthGuard)
   async addReviewByAdmin(
     @Body()
       addReviewDto: AddReviewDto,

@@ -5,6 +5,7 @@ import { ProductService } from '../product/product.service';
 import { BlogService } from '../blog/blog/blog.service';
 import { SpecialPackageService } from '../offers/special-package/special-package.service';
 import { CatalogueSeoService } from './catalogue-seo.service';
+import { routePart } from '../product/product-seo.utils';
 
 const STOREFRONT_ORIGIN = 'https://www.amolbooks.com';
 
@@ -32,7 +33,7 @@ export class SitemapService {
     const products = await this.productService.findAllPublished();
     products.forEach((product) =>
       smStream.write({
-        url: `/product-details/${encodeURIComponent(product.slug)}`,
+        url: `/product-details/${routePart(product.slug)}`,
         lastmod: product.updatedAt,
         changefreq: 'weekly',
         priority: 0.9,

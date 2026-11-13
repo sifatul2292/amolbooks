@@ -64,6 +64,23 @@ export const ReviewSchema = new mongoose.Schema(
       type: Date,
       required: false,
     },
+    // Written from the order's review link (amolbooks.com/rate/<token>, owner 2026-11-13): the
+    // customer bought this book in that order, so the shop may show "verified buyer".
+    order: {
+      _id: {
+        type: Schema.Types.ObjectId,
+        ref: 'Order',
+        required: false,
+      },
+      orderId: {
+        type: String,
+        required: false,
+      },
+    },
+    verifiedPurchase: {
+      type: Boolean,
+      required: false,
+    },
   },
   {
     timestamps: true,
@@ -72,3 +89,8 @@ export const ReviewSchema = new mongoose.Schema(
 );
 
 ReviewSchema.index({ 'product._id': 1, status: 1 });
+// One review per book per order from the review link.
+ReviewSchema.index(
+  { 'order._id': 1, 'product._id': 1 },
+  { name: 'review_order_product', unique: true, partialFilterExpression: { 'order._id': { $type: 'objectId' } } },
+);

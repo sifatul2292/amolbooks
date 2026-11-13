@@ -22,6 +22,10 @@ export function summary(value: string): string {
   const word = prefix.lastIndexOf(' ');
   return prefix.slice(0, word > 0 ? word : 180).trimEnd() + '।';
 }
+// A slug in a storefront path: ( and ) as %28 / %29, or the storefront's router reads them as route
+// syntax and the page opens blank ("…-(রহ.)" authors, "(SA)" books; owner, 2026-11-13).
+export const routePart = (slug: any) => encodeURIComponent(String(slug ?? '')).replace(/\(/g, '%28').replace(/\)/g, '%29');
+
 function validIsbn(value: any): string | undefined {
   const isbn = String(value || '').replace(/[-\s]/g, '');
   if (/^\d{13}$/.test(isbn) && [...isbn].reduce((sum, digit, i) => sum + Number(digit) * (i % 2 ? 3 : 1), 0) % 10 === 0) return isbn;
@@ -29,7 +33,7 @@ function validIsbn(value: any): string | undefined {
 }
 function catalogueLink(label: string, kind: string, slug?: string): string {
   if (!slug) return escape(label);
-  const path = kind === 'author' ? `/author-list/author-details/${encodeURIComponent(slug)}`
+  const path = kind === 'author' ? `/author-list/author-details/${routePart(slug)}`
     : `/product-list?${kind}=${encodeURIComponent(slug)}`;
   return `<a href="${ORIGIN}${escape(path)}">${escape(label)}</a>`;
 }
@@ -47,7 +51,7 @@ export function renderProductSeo(book: any, ratings: any[] = [], related: any[] 
   const fullDescription = text(book.description || book.shortDescription || book.seoDescription)
     || `${name}${authorText ? ` — ${authorText}` : ''} বইটি Amolbooks থেকে অর্ডার করুন।`;
   const description = summary(text(book.seoDescription || book.shortDescription) || fullDescription);
-  const url = `${ORIGIN}/product-details/${encodeURIComponent(book.slug)}`;
+  const url = `${ORIGIN}/product-details/${routePart(book.slug)}`;
   const images = Array.isArray(book.images) && book.images.length ? book.images : [`${ORIGIN}/assets/images/logo/logo.png`];
   const salePrice = Number(book.salePrice || 0), storedPrice = Number(book.afterDiscountPrice || 0);
   let price = storedPrice > 0 ? storedPrice : salePrice;
@@ -111,6 +115,6 @@ ${isbn ? `<p>ISBN: ${escape(isbn)}</p>` : ''}${edition ? `<p>সংস্কর�
 ${product.numberOfPages ? `<p>পৃষ্ঠা: ${pages}</p>` : ''}${languages.length ? `<p>ভাষা: ${languages.map(escape).join(', ')}</p>` : ''}
 ${product.aggregateRating ? `<p>রেটিং: ${product.aggregateRating.ratingValue}/5 (${product.aggregateRating.ratingCount}টি অনুমোদিত রিভিউ)</p>` : ''}
 <a href="${escape(url)}">Amolbooks থেকে বইটি দেখুন ও অর্ডার করুন</a>
-${related.length ? `<nav aria-label="সম্পর্কিত বই"><h2>সম্পর্কিত বই</h2><ul>${related.filter(book => book.slug && book.name).map(book => `<li><a href="${ORIGIN}/product-details/${escape(encodeURIComponent(book.slug))}">${escape(book.name)}</a></li>`).join('')}</ul></nav>` : ''}
+${related.length ? `<nav aria-label="সম্পর্কিত বই"><h2>সম্পর্কিত বই</h2><ul>${related.filter(book => book.slug && book.name).map(book => `<li><a href="${ORIGIN}/product-details/${escape(routePart(book.slug))}">${escape(book.name)}</a></li>`).join('')}</ul></nav>` : ''}
 </article></main></body></html>`;
 }

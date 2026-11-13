@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Review Requests · Amolbooks</title>
+    <style>
+      :root {
+        font-family: Inter, system-ui, -apple-system, sans-serif;
+        color: #182039;
+        background: #f3f1fc;
+        font-size: 14px;
+        --purple: #7135e8;
+        --muted: #667697;
+        --border: #e3e6f1;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 10px 12px;
+        background: #fff;
+        color: inherit;
+        touch-action: manipulation;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:hover {
+        border-color: var(--purple);
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      :focus-visible {
+        outline: 3px solid #bba0fa;
+        outline-offset: 2px;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      h1,
+      h2,
+      p {
+        margin: 0;
+      }
+      h1 {
+        font-size: 28px;
+        letter-spacing: -0.8px;
+      }
+      h2 {
+        font-size: 17px;
+      }
+      .muted,
+      small {
+        color: var(--muted);
+      }
+      small {
+        font-size: 12px;
+      }
+      label {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+      .workspace {
+        min-height: 100vh;
+      }
+      main {
+        min-width: 0;
+        padding: 28px 24px;
+        max-width: 1280px;
+      }
+      .heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      .heading p {
+        margin-top: 7px;
+      }
+      .heading-actions {
+        display: flex;
+        gap: 8px;
+        white-space: nowrap;
+      }
+      .menu {
+        display: none;
+      }
+      .primary {
+        background: var(--purple);
+        border-color: var(--purple);
+        color: #fff;
+        font-weight: 650;
+      }
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: #fff;
+        padding: 19px;
+      }
+      .filters {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+        gap: 12px;
+        align-items: end;
+        margin-bottom: 18px;
+      }
+      .filters input,
+      .filters select {
+        width: 100%;
+        min-width: 0;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+      .stat {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .stat-icon {
+        background: #efe9ff;
+        color: #7135e8;
+        border-radius: 12px;
+        width: 46px;
+        height: 46px;
+        flex: none;
+        display: grid;
+        place-items: center;
+        font-size: 21px;
+      }
+      .stat:nth-child(2) .stat-icon {
+        background: #fff2df;
+        color: #ae6500;
+      }
+      .stat:nth-child(3) .stat-icon {
+        background: #e9fbef;
+        color: #138638;
+      }
+      .stat:nth-child(4) .stat-icon {
+        background: #fde8f3;
+        color: #b4236b;
+      }
+      .stat strong {
+        display: block;
+        font-size: 24px;
+        margin-top: 4px;
+      }
+      .table-card {
+        padding: 18px 10px 0;
+        margin-bottom: 18px;
+      }
+      .table-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 12px;
+        flex-wrap: wrap;
+        padding: 0 8px 16px;
+      }
+      .table-title p {
+        margin-top: 5px;
+      }
+      .table-scroll {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+      th {
+        background: #f5f4fc;
+        color: var(--muted);
+        font-size: 10px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        text-align: left;
+        padding: 14px 10px;
+      }
+      th.num,
+      td.num {
+        text-align: right;
+      }
+      td {
+        padding: 15px 10px;
+        border-bottom: 1px solid #edf0f6;
+      }
+      td small {
+        display: block;
+        margin-top: 4px;
+      }
+      tbody tr.me {
+        background: #f7f2ff;
+      }
+      .rank {
+        display: inline-grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #f0f3f8;
+        color: #52627e;
+        font-weight: 700;
+        font-size: 12px;
+      }
+      .rank.top {
+        background: #7135e8;
+        color: #fff;
+      }
+      .staff-name {
+        font-weight: 650;
+      }
+      .badge {
+        display: inline-block;
+        margin-top: 4px;
+        padding: 3px 8px;
+        border-radius: 20px;
+        background: #f0f3f8;
+        color: #52627e;
+        font-size: 11px;
+      }
+      .points {
+        font-size: 16px;
+        font-weight: 750;
+        color: #5b21b6;
+      }
+      tfoot td {
+        font-weight: 700;
+        border-bottom: 0;
+        background: #fbfaff;
+      }
+      .empty {
+        text-align: center;
+        color: var(--muted);
+        padding: 36px 10px;
+        white-space: normal;
+      }
+      .points-form {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+        gap: 12px;
+        align-items: end;
+        margin-top: 16px;
+      }
+      .points-form input {
+        width: 100%;
+      }
+      .notice {
+        margin-top: 12px;
+        padding: 10px 12px;
+        border-radius: 9px;
+        background: #fff7e6;
+        color: #8a5300;
+        font-size: 13px;
+      }
+      .status {
+        min-height: 18px;
+        margin-top: 10px;
+        font-size: 13px;
+      }
+      .status.error {
+        color: #b42318;
+      }
+      .status.ok {
+        color: #16763b;
+      }
+      .rules {
+        margin: 14px 0 0;
+        padding-left: 18px;
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 13px;
+      }
+      .login {
+        position: fixed;
+        inset: 0;
+        background: #141426cc;
+        display: grid;
+        place-items: center;
+        z-index: 50;
+        padding: 16px;
+      }
+      .login[hidden] {
+        display: none;
+      }
+      .login form {
+        background: #fff;
+        border-radius: 16px;
+        padding: 26px;
+        width: min(360px, 100%);
+        display: grid;
+        gap: 12px;
+      }
+      .login input {
+        width: 100%;
+      }
+      @media (max-width: 1100px) {
+        .filters,
+        .points-form {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .stats {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 900px) {
+        .menu {
+          display: inline-block;
+        }
+        .heading h1 {
+          font-size: 24px;
+        }
+        main {
+          padding: 20px 16px;
+        }
+      }
+      @media (max-width: 600px) {
+        .heading {
+          align-items: flex-start;
+        }
+        .filters,
+        .points-form {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .stats {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
+        .stats .stat:last-child {
+          grid-column: 1 / -1;
+        }
+        .stat {
+          padding: 14px;
+        }
+        .stat-icon {
+          display: none;
+        }
+      }
+      /* Review requests: six summary cards, the reasons, one table. */
+      .filters {
+        grid-template-columns: minmax(0, 200px) auto;
+        justify-content: start;
+      }
+      .stats {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .stat strong + small {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 2px;
+      }
+      .off {
+        border-radius: 12px;
+        padding: 12px 14px;
+        background: #fff7e8;
+        border: 1px solid #f3d9a4;
+        color: #7a4a00;
+      }
+      .off[hidden] {
+        display: none;
+      }
+      .pill {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 2px 9px;
+        font-size: 12px;
+        font-weight: 600;
+        background: #eef1f8;
+        color: #3c4a6b;
+        white-space: nowrap;
+      }
+      .pill.good {
+        background: #e7f6ee;
+        color: #116a3a;
+      }
+      .pill.bad {
+        background: #fdecec;
+        color: #b42318;
+      }
+      .reasons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 0;
+        padding: 0 8px 12px;
+        list-style: none;
+      }
+      @media (max-width: 600px) {
+        .stats {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- AB_ADMIN_SIDEBAR -->
+    <div class="workspace">
+      <main>
+        <header class="heading">
+          <div>
+            <h1>Review Requests</h1>
+            <p class="muted">WhatsApp message 14 days after delivery: replies, reviews and reorders</p>
+          </div>
+          <div class="heading-actions">
+            <button class="menu" id="menu" aria-label="Toggle navigation">☰</button
+            ><button id="logout">Sign out</button>
+          </div>
+        </header>
+
+        <p class="off" id="off" hidden>Review requests are off. They start once the approved WhatsApp template's name is set as WHATSAPP_TEMPLATE_REVIEW_REQUEST on the server.</p>
+
+        <form class="card filters" id="filters">
+          <div>
+            <label for="days">Period</label>
+            <select id="days">
+              <option value="7">Last 7 days</option>
+              <option value="30" selected>Last 30 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="180">Last 6 months</option>
+            </select>
+          </div>
+          <button class="primary" id="apply">Show</button>
+        </form>
+
+        <div class="stats">
+          <div class="card stat"><span class="stat-icon">✉</span><div><small>Sent</small><strong id="sent">—</strong><small id="sent-note"></small></div></div>
+          <div class="card stat"><span class="stat-icon">👆</span><div><small>Tapped a button</small><strong id="tapped">—</strong><small id="tapped-note"></small></div></div>
+          <div class="card stat"><span class="stat-icon">★</span><div><small>Wrote a review</small><strong id="reviewed">—</strong><small id="reviewed-note"></small></div></div>
+          <div class="card stat"><span class="stat-icon">↻</span><div><small>Ordered again in 30 days</small><strong id="reorders">—</strong><small id="reorders-note"></small></div></div>
+          <div class="card stat"><span class="stat-icon">!</span><div><small>Had a problem</small><strong id="problems">—</strong><small>see the WhatsApp Inbox</small></div></div>
+          <div class="card stat"><span class="stat-icon">⊘</span><div><small>Said stop (all time)</small><strong id="opted">—</strong><small>get no more of these</small></div></div>
+        </div>
+
+        <section class="card table-card">
+          <div class="table-title">
+            <div>
+              <h2>Latest requests</h2>
+              <p class="muted" id="skipped-note">Orders not asked, and why</p>
+            </div>
+          </div>
+          <ul class="reasons" id="reasons"></ul>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Order</th>
+                  <th>Customer</th>
+                  <th>Asked</th>
+                  <th>Message</th>
+                  <th>Reply</th>
+                  <th class="num">Reviews</th>
+                  <th>Suggested book</th>
+                </tr>
+              </thead>
+              <tbody id="rows">
+                <tr><td colspan="7" class="empty">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="status" id="status" role="status"></p>
+          <ul class="rules">
+            <li>Each delivered order is looked at once, 14 days after delivery, between 7 and 9 pm. One message per number in 30 days.</li>
+            <li>Not asked: cancelled or returned orders, numbers that said “stop”, chats with an open request in the WhatsApp Inbox, staff numbers.</li>
+            <li>Reviews from the link wait for approval in the admin panel's Reviews, like every customer review. Approve low ratings too; remove only abuse or spam.</li>
+            <li>“Ordered again” counts any new order on the same number within 30 days of the message. With a holdout group, compare it with the holdout's number.</li>
+          </ul>
+        </section>
+      </main>
+    </div>
+
+    <div class="login" id="login" hidden>
+      <form id="login-form">
+        <h2>Sign in</h2>
+        <p class="muted">Use your admin username and password.</p>
+        <input id="username" autocomplete="username" placeholder="Username" required />
+        <input id="password" type="password" autocomplete="current-password" placeholder="Password" required />
+        <button id="login-button" class="primary">Sign in</button>
+        <p id="login-status" class="status error" role="status"></p>
+      </form>
+    </div>
+
+    <script>
+      (function () {
+        'use strict';
+        // Same-origin on local previews; production uses the current API environment.
+        const API_BASE = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)
+          ? location.origin
+          : 'https://apisub.amolbooks.com';
+        const $ = (id) => document.getElementById(id);
+        const esc = (v) =>
+          String(v == null ? '' : v).replace(
+            /[&<>"']/g,
+            (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
+          );
+        const num = (v) => Number(v || 0).toLocaleString('en-US');
+        const pct = (part, whole) => (whole ? Math.round((part / whole) * 100) + '%' : '—');
+        const REASONS = {
+          asked_recently: 'Asked in the last 30 days',
+          opted_out: 'Said stop',
+          open_request: 'Open request in the inbox',
+          no_whatsapp_number: 'No Bangladeshi mobile number',
+          staff_number: 'Staff number',
+          no_books: 'Only gifts in the order',
+          delivered_too_long_ago: 'Delivered too long ago',
+          whatsapp_off: 'WhatsApp was off',
+        };
+        const REPLY = { liked: ['ভালো লাগছে', 'good'], unread: ['এখনো পড়িনি', ''], problem: ['সমস্যা আছে', 'bad'] };
+        const MESSAGE = { sending: 'sending', sent: 'sent', delivered: 'delivered', read: 'read', failed: 'not delivered' };
+
+        function token() {
+          return localStorage.getItem('co_admin_token') || '';
+        }
+        function when(value) {
+          return value
+            ? new Date(value).toLocaleString('en-GB', { timeZone: 'Asia/Dhaka', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
+            : '';
+        }
+        async function request(path) {
+          const response = await fetch(API_BASE + path, { headers: { administrator: token() } });
+          let payload = {};
+          try {
+            payload = await response.json();
+          } catch (_) {}
+          if (!response.ok || payload.success === false) {
+            if (response.status === 401) $('login').hidden = false;
+            throw new Error(
+              response.status === 401
+                ? 'Sign in to see review requests.'
+                : (Array.isArray(payload.message) ? payload.message.join(' ') : payload.message) ||
+                  'Could not load review requests. Please try again.'
+            );
+          }
+          return payload.data;
+        }
+        function render(data) {
+          const taps = data.replies.liked + data.replies.unread + data.replies.problem;
+          $('off').hidden = data.active;
+          $('sent').textContent = num(data.sent);
+          $('sent-note').textContent = data.sent ? pct(data.read, data.sent) + ' read' + (data.failed ? ' · ' + num(data.failed) + ' not delivered' : '') : '';
+          $('tapped').textContent = num(taps);
+          $('tapped-note').textContent = data.sent ? pct(taps, data.sent) + ' · ' + num(data.replies.liked) + ' liked, ' + num(data.replies.unread) + ' not read yet' : '';
+          $('reviewed').textContent = num(data.reviewedOrders);
+          $('reviewed-note').textContent = data.sent ? pct(data.reviewedOrders, data.sent) + ' · ' + num(data.reviews) + ' reviews' : '';
+          $('reorders').textContent = num(data.reorders);
+          $('reorders-note').textContent =
+            (data.sent ? pct(data.reorders, data.sent) : '') +
+            (data.suggestedBought ? ' · ' + num(data.suggestedBought) + ' bought the suggested book' : '') +
+            (data.holdout ? ' · holdout ' + pct(data.holdoutReorders, data.holdout) + ' of ' + num(data.holdout) : '');
+          $('problems').textContent = num(data.replies.problem);
+          $('opted').textContent = num(data.optedOut);
+          const reasons = Object.keys(data.skipped || {});
+          $('skipped-note').textContent = reasons.length ? 'Orders not asked, and why' : 'Every checked order was asked';
+          $('reasons').innerHTML = reasons
+            .map((key) => '<li class="pill">' + esc(REASONS[key] || key) + ': ' + num(data.skipped[key]) + '</li>')
+            .join('');
+          $('rows').innerHTML = data.recent.length
+            ? data.recent
+                .map((row) => {
+                  const reply = REPLY[row.reply];
+                  const asked =
+                    row.status === 'sent' ? '' :
+                    row.status === 'holdout' ? '<span class="pill">holdout</span>' :
+                    row.status === 'failed' ? '<span class="pill bad" title="' + esc(row.reason) + '">not sent</span>' :
+                    '<span class="pill">' + esc(REASONS[row.reason] || row.reason || row.status) + '</span>';
+                  return (
+                    '<tr><td><a href="custom-orders.html?q=' + encodeURIComponent(row.orderId) + '" target="_blank" rel="noopener">#' + esc(row.orderId) + '</a></td>' +
+                    '<td>' + esc(row.name) + '</td>' +
+                    '<td>' + esc(when(row.at)) + ' ' + asked + '</td>' +
+                    '<td>' + esc(MESSAGE[row.message] || row.message || '') + '</td>' +
+                    '<td>' + (reply ? '<span class="pill ' + reply[1] + '">' + esc(reply[0]) + '</span>' : '') + '</td>' +
+                    '<td class="num">' + (row.reviews ? num(row.reviews) : '') + '</td>' +
+                    '<td>' + (row.suggested ? '<a href="https://amolbooks.com/product-details/' + encodeURIComponent(row.suggested) + '" target="_blank" rel="noopener">' + esc(row.suggested) + '</a>' : '') + '</td></tr>'
+                  );
+                })
+                .join('')
+            : '<tr><td colspan="7" class="empty">No review requests in this period yet.</td></tr>';
+        }
+        async function load() {
+          if (!token()) {
+            $('login').hidden = false;
+            $('rows').innerHTML = '<tr><td colspan="7" class="empty">Sign in to see review requests.</td></tr>';
+            return;
+          }
+          $('apply').disabled = true;
+          $('status').textContent = '';
+          try {
+            render(await request('/api/order-review/admin/stats?days=' + encodeURIComponent($('days').value)));
+          } catch (error) {
+            $('rows').innerHTML = '<tr><td colspan="7" class="empty">' + esc(error.message) + '</td></tr>';
+          } finally {
+            $('apply').disabled = false;
+          }
+        }
+
+        $('filters').onsubmit = (event) => {
+          event.preventDefault();
+          load();
+        };
+        $('days').onchange = load;
+        $('menu').onclick = () => $('navigation').classList.toggle('open');
+        $('logout').onclick = () => {
+          localStorage.removeItem('co_admin_token');
+          $('rows').innerHTML = '<tr><td colspan="7" class="empty">Sign in to see review requests.</td></tr>';
+          $('login').hidden = false;
+        };
+        $('login-form').onsubmit = async (event) => {
+          event.preventDefault();
+          $('login-button').disabled = true;
+          $('login-status').textContent = 'Signing in…';
+          try {
+            const response = await fetch(API_BASE + '/api/admin/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username: $('username').value, password: $('password').value }),
+            });
+            const payload = await response.json();
+            if (!response.ok || !payload.token) throw new Error(payload.message || 'Sign in failed');
+            localStorage.setItem('co_admin_token', payload.token);
+            $('password').value = '';
+            $('login-status').textContent = '';
+            $('login').hidden = true;
+            await load();
+          } catch (error) {
+            $('login-status').textContent = error.message;
+          } finally {
+            $('login-button').disabled = false;
+          }
+        };
+
+        load();
+      })();
+    </script>
+  </body>
+</html>

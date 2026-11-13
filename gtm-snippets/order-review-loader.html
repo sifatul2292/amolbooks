@@ -1,0 +1,32 @@
+<script>
+/* Review page from the WhatsApp review request (owner, 2026-11-13). amolbooks.com/rate/<token>
+   (or /pages/order-review#t=<token> after the server's redirect) becomes /pages/order-review: the
+   storefront draws its header and footer there, and /api/storefront-page/order-review.js fills the middle.
+   The token leaves the address bar before anything else loads, so analytics never see it. */
+(function () {
+  'use strict';
+  var ROUTE = '/pages/order-review';
+  var match = /^\/rate\/([A-Za-z0-9_-]{16})\/?$/.exec(location.pathname) ||
+    (location.pathname === ROUTE ? /^#t=([A-Za-z0-9_-]{16})$/.exec(location.hash) : null);
+  if (match) {
+    window.__abOrderReviewToken = match[1];
+    try { sessionStorage.setItem('ab-order-review-token', match[1]); } catch (_) {}
+    history.replaceState(history.state, '', ROUTE);
+  }
+  function start() {
+    if (location.pathname !== ROUTE || window.__abOrderReviewLoading) return;
+    window.__abOrderReviewLoading = true;
+    var robots = document.createElement('meta');
+    robots.name = 'robots';
+    robots.content = 'noindex, nofollow';
+    document.head.appendChild(robots);
+    var local = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname);
+    var script = document.createElement('script');
+    script.src = (local ? location.origin + '/api' : 'https://apisub.amolbooks.com/api') + '/storefront-page/order-review.js';
+    script.async = true;
+    document.head.appendChild(script);
+  }
+  start();
+  window.addEventListener('popstate', start);
+})();
+</script>

@@ -157,4 +157,18 @@ const deliveryDate = new Function(deliverySource + '; return deliveryDate;')();
 assert.match(deliveryDate(2, Date.parse('2026-10-08T08:00:00Z')), /১০ অক্টোবর, শনিবার/);
 assert.match(deliveryDate(4, Date.parse('2026-10-08T08:00:00Z')), /১২ অক্টোবর, সোমবার/);
 assert.match(deliveryDate(2, Date.parse('2026-12-30T18:01:00Z')), /২ জানুয়ার[িী]/);
+// Sticky bar menu and bag are inline drawings, not icon-font glyphs.
+assert.ok(!/fa fa-bars|fa fa-shopping-bag/.test(source), 'No icon-font menu/bag in our storefront script');
+assert.match(source, /<button class="ab-sticky-catalogue"[^>]*><svg class="ab-sticky-icon"/);
+assert.match(source, /<button class="ab-sticky-cart"[^>]*><svg class="ab-sticky-icon"/);
+// Tablet (551-991 px): Buy Now and Add to Cart side by side, WhatsApp full width below.
+const tablet = source.slice(source.indexOf('@media (min-width: 551px) and (max-width: 991px)'));
+assert.ok(tablet.length > 100, 'Tablet layout for the purchase buttons exists');
+assert.match(tablet.slice(0, 1500), /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\) !important/);
+assert.match(tablet.slice(0, 1500), /product-action-btn > ul > div \{\s*grid-column: 1 \/ -1 !important;/);
+// Publisher shelf names the publisher and links all its books; cards keep price and button aligned.
+const publisherShelf = emittedFunction('publisherShelfHtml');
+assert.match(publisherShelf, /প্রকাশক: <a href="\/product-list\?publisher=/);
+assert.match(publisherShelf, /সব বই দেখুন →/);
+assert.match(source, /\.ab-library-link > \.ab-library-price \{\s*margin-block-start: auto !important;/);
 console.log('Dhaka delivery date checks passed.');

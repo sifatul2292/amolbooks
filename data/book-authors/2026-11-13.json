@@ -1,0 +1,35 @@
+{
+  "note": "Published books that had no author linked (author audit 2026-11-13). Source per book in 'source'. Authors missing from the shop are created.",
+  "items": [
+    {
+      "productId": "6a3c1d665676acb52a082df5",
+      "name": "Amol Notebook",
+      "authors": [{ "name": "আমল বুকস টিম" }],
+      "source": "owner: made by the Amolbooks team"
+    },
+    {
+      "productId": "6a2fc362417f5dcb771dcd4c",
+      "name": "জীবন যদি হতো নারী সাহাবীর মত",
+      "authors": [{ "name": "ড. হানান লাশিন", "nameEn": "Dr. Hanan Lashin" }],
+      "source": "Wafilife product 4614 (সমকালীন প্রকাশন, ISBN 9789849484431)"
+    },
+    {
+      "productId": "6af6a8c2bb00e30b7a6c8f9b",
+      "name": "যাকাত : হ্যান্ডবুক",
+      "authors": [{ "name": "ড. মোহাম্মদ মানজুরে ইলাহী", "nameEn": "Dr. Mohammad Manzoor-e-Elahi" }],
+      "source": "Wafilife product 3309 (সিয়ান পাবলিকেশন, ISBN 9789843368796)"
+    },
+    {
+      "productId": "6af6a8c2bb00e30b7a6c8fa7",
+      "name": "তত্ত্ব ছেড়ে জীবনে",
+      "authors": [{ "name": "শরীফ আবু হায়াত অপু" }],
+      "source": "name printed on the shop's own cover (not on Wafilife or Rokomari)"
+    },
+    {
+      "productId": "6ae897fbe0d3b6387b9e0f23",
+      "name": "উম্মাহর কিংবদন্তিরা",
+      "authors": [{ "name": "মুহাম্মাদ আম্মারুল হক", "nameEn": "Muhammad Ammarul Haque" }],
+      "source": "title page of the shop's own sample PDF: 'অনুবাদ ও সংকলন' (Wafilife lists no author)"
+    }
+  ]
+}

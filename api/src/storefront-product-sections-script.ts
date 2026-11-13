@@ -278,6 +278,49 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       }
     }
 
+    /* Tablet and large phones (551-991 px): the native row squeezed Buy Now / Add to Cart into
+       narrow wrapped boxes beside a wide WhatsApp button (phones up to 550 px stack them natively).
+       Two equal buttons side by side, WhatsApp across the full width below. */
+    @media (min-width: 551px) and (max-width: 991px) {
+      app-product-details .product-action-btn > ul {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 0.75rem !important;
+        align-items: stretch !important;
+        width: 100% !important;
+      }
+
+      app-product-details .product-action-btn > ul > li,
+      app-product-details .product-action-btn > ul > div {
+        width: 100% !important;
+        min-width: 0 !important;
+        margin: 0 !important;
+      }
+
+      app-product-details .product-action-btn > ul > li:has(> button[style*="display: none"]) {
+        display: none !important;
+      }
+
+      app-product-details .product-action-btn > ul > div {
+        grid-column: 1 / -1 !important;
+      }
+
+      app-product-details .product-action-btn button[data-ab-action-label],
+      app-product-details .product-action-btn #__wa-order-btn {
+        width: 100% !important;
+        min-height: 3.25rem !important;
+        padding: 0.75rem 1rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        white-space: nowrap !important;
+        font-size: 1rem !important;
+        line-height: 1.2 !important;
+        border-radius: 0.35rem !important;
+        box-sizing: border-box !important;
+      }
+    }
+
     /* The native component used an animated catch-all transition here, which
        made its button appear to flash while the pointer was over it. */
     app-bought-together .add-all-btn,
@@ -700,6 +743,47 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       margin-block-end: var(--ab-product-space-lg);
       padding-block-end: var(--ab-product-space-lg);
       border-block-end: 1px solid var(--ab-product-rule);
+    }
+
+    #\${CATEGORY_LIBRARY_ID} .ab-shelf-source {
+      margin: calc(-1 * var(--ab-product-space-sm)) 0 var(--ab-product-space-md) !important;
+      color: var(--ab-product-muted, #5d6b63);
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    #\${CATEGORY_LIBRARY_ID} .ab-shelf-source a {
+      display: inline !important;
+      color: var(--ab-product-accent-dark, #0f6b36);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    #\${CATEGORY_LIBRARY_ID} .ab-shelf-source a:hover {
+      text-decoration: underline;
+    }
+
+    /* Cards in a row share one height and keep price and Add to Cart on one line, even when
+       one card has a star row (added by the homepage script) and the others do not. */
+    #\${CATEGORY_LIBRARY_ID} .ab-library-grid {
+      align-items: stretch;
+    }
+
+    #\${CATEGORY_LIBRARY_ID} .ab-library-link {
+      display: flex !important;
+      flex-direction: column;
+    }
+
+    #\${CATEGORY_LIBRARY_ID} .ab-library-link > .ab-library-image-wrap {
+      flex: 0 0 auto;
+    }
+
+    #\${CATEGORY_LIBRARY_ID} .ab-library-link > .ab-library-title {
+      min-height: 2.5rem;
+    }
+
+    #\${CATEGORY_LIBRARY_ID} .ab-library-link > .ab-library-price {
+      margin-block-start: auto !important;
     }
 
     /* Tinted panel sets the visitor's own history apart from the catalogue
@@ -1689,6 +1773,14 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         font-size: 1.15rem;
       }
 
+      /* Menu and bag are inline drawings, not Font Awesome glyphs, so they show with the bar
+         (owner, 2026-11-13: "replace these two icons too"). */
+      #ab-sticky-commerce .ab-sticky-icon {
+        display: block;
+        width: 1.4rem;
+        height: 1.4rem;
+      }
+
       #ab-sticky-commerce .ab-sticky-search {
         width: 100%;
         min-width: 0;
@@ -2094,6 +2186,12 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         outline: 2px solid #0d62c8;
         outline-offset: 2px;
       }
+    }
+
+    /* Cart and checkout: phones AND tablets. 768–1023 px had no layout of their own (cover filling the
+     * width at checkout, cart text squeezed into the image column; owner, 2026-11-13), and the
+     * storefront shows both pages in one column there too. */
+    @media (max-width: 1023px) {
 
       /* Native cart/checkout repairs.  These are intentionally scoped to their
        * routes so the compiled storefront keeps ownership of its layout. */
@@ -2951,6 +3049,37 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       body.ab-cart-enhanced .products-list {
         display: none !important;
       }
+    }
+
+    /* Tablets only (768–1023 px). */
+    @media (min-width: 768px) and (max-width: 1023px) {
+      /* Checkout books: the storefront hides its phone list above 850 px and the desktop list is hidden
+       * below 1024 px (rule further down), so 851–1023 px showed no books at all. Keep the phone list. */
+      html body.ab-checkout-enhanced app-checkout .cart-products-area.summery-mbl {
+        display: block !important;
+      }
+
+      /* The cart summary on one line (item count left, total right). */
+      /* "html" outranks the desktop (768 px and up) grid rule that comes later in this sheet. */
+      html body.ab-cart-enhanced #ab-cart-summary-inline {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 0.5rem 1rem !important;
+        padding: 0.9rem 1rem !important;
+        text-align: left !important;
+      }
+
+      html body.ab-cart-enhanced #ab-cart-summary-inline .select-items-left,
+      html body.ab-cart-enhanced #ab-cart-summary-inline .select-items-right {
+        width: auto !important;
+        text-align: left !important;
+      }
+    }
+
+    @media (max-width: 767px) {
 
       @media (min-width: 768px) {
         body.ab-cart-enhanced {
@@ -5128,6 +5257,12 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         place-items: center;
       }
 
+      #ab-desktop-cart-chip .ab-desktop-cart-chip-svg {
+        display: block;
+        width: 1.3rem;
+        height: 1.3rem;
+      }
+
       #ab-desktop-cart-chip .ab-desktop-cart-chip-icon img {
         display: block;
         width: 1.55rem;
@@ -5231,6 +5366,13 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     var parts = location.pathname.split('/').filter(Boolean);
     if (!parts.length) return '';
     try { return decodeURIComponent(parts[parts.length - 1]); } catch (_) { return parts[parts.length - 1]; }
+  }
+
+  // A slug in a storefront path. encodeURIComponent leaves ( and ) alone, and the storefront's router
+  // reads them as route syntax: "…-(রহ.)" authors and "(SA)" books opened a blank page (owner,
+  // 2026-11-13). Written as %28 / %29 they open normally.
+  function routePart(value) {
+    return encodeURIComponent(String(value || '')).split('(').join('%28').split(')').join('%29');
   }
 
   function escapeHtml(value) {
@@ -6098,7 +6240,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   }
 
   function searchAuthorHtml(author) {
-    var href = '/author-list/author-details/' + encodeURIComponent(author.slug || '');
+    var href = '/author-list/author-details/' + routePart(author.slug);
     var photo = author.image
       ? '<img src="' + escapeHtml(imageUrl(author.image)) + '" alt="" loading="lazy" decoding="async">'
       : '<span class="ab-search-author-photo" aria-hidden="true"><i class="fa fa-user"></i></span>';
@@ -6125,7 +6267,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   }
 
   function stickySearchProductHtml(product) {
-    var href = '/product-details/' + encodeURIComponent(product.slug || '');
+    var href = '/product-details/' + routePart(product.slug);
     var author = authorName(product);
     var price = finalPrice(product);
     var sale = Math.max(0, Number(product.salePrice) || 0);
@@ -6317,7 +6459,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     var cartPage = document.getElementById('ab-cart-page');
     if (cartPage) cartPage.remove();
     if (history.state && history.state.abCartPage) history.back();
-    else history.replaceState({}, '', currentSlug ? '/product-details/' + encodeURIComponent(currentSlug) : '/');
+    else history.replaceState({}, '', currentSlug ? '/product-details/' + routePart(currentSlug) : '/');
   }
 
   function cartPageItems() {
@@ -6474,7 +6616,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       bar = document.createElement('div');
       bar.id = 'ab-sticky-commerce';
       bar.setAttribute('aria-label', 'দ্রুত নেভিগেশন');
-      bar.innerHTML = '<button class="ab-sticky-catalogue" type="button" aria-label="ক্যাটালগ খুলুন"><i class="fa fa-bars" aria-hidden="true"></i></button><div class="ab-sticky-search-wrap"><input class="ab-sticky-search" type="search" placeholder="বই খুঁজুন" aria-label="বই খুঁজুন" autocomplete="off"><div class="ab-sticky-search-results" hidden></div></div><button class="ab-sticky-cart" type="button" aria-label="ক্রয় তালিকা"><i class="fa fa-shopping-bag" aria-hidden="true"></i><span class="ab-sticky-cart-count"></span></button>';
+      bar.innerHTML = '<button class="ab-sticky-catalogue" type="button" aria-label="ক্যাটালগ খুলুন"><svg class="ab-sticky-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h16M4 12h16M4 17.5h16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button><div class="ab-sticky-search-wrap"><input class="ab-sticky-search" type="search" placeholder="বই খুঁজুন" aria-label="বই খুঁজুন" autocomplete="off"><div class="ab-sticky-search-results" hidden></div></div><button class="ab-sticky-cart" type="button" aria-label="ক্রয় তালিকা"><svg class="ab-sticky-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 8.5V6.6a3.5 3.5 0 0 1 7 0v1.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M5.3 8.5h13.4l1 11.1a2.1 2.1 0 0 1-2.1 2.4H6.4a2.1 2.1 0 0 1-2.1-2.4l1-11.1Z" fill="currentColor"/></svg><span class="ab-sticky-cart-count"></span></button>';
       document.body.appendChild(bar);
     }
     var visible = isProductPage() && window.scrollY > 150;
@@ -6698,7 +6840,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     chip.href = '/cart';
     chip.setAttribute('data-ab-added-cart-go', 'true');
     chip.innerHTML = '<span class="ab-desktop-cart-chip-icon" aria-hidden="true">' +
-      (bagSource ? '<img src="' + escapeHtml(bagSource) + '" alt="">' : '<i class="fa fa-shopping-bag"></i>') +
+      (bagSource ? '<img src="' + escapeHtml(bagSource) + '" alt="">' : '<svg class="ab-desktop-cart-chip-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 8.5V6.6a3.5 3.5 0 0 1 7 0v1.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M5.3 8.5h13.4l1 11.1a2.1 2.1 0 0 1-2.1 2.4H6.4a2.1 2.1 0 0 1-2.1-2.4l1-11.1Z" fill="currentColor"/></svg>') +
       '</span><span class="ab-desktop-cart-chip-label">ক্রয় তালিকা</span><span class="ab-desktop-cart-chip-count"></span>';
     chip.addEventListener('click', function () { hideDesktopCartChip(); });
     document.body.appendChild(chip);
@@ -7674,7 +7816,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     var name = source.name || fallback && fallback.name || 'লেখক';
     var authorImage = source.image || source.imageUrl || source.imagePath ||
       fallback && (fallback.image || fallback.imageUrl || fallback.imagePath) || legacyAuthorImageById[String(authorId)] || '';
-    var href = slug ? '/author-list/author-details/' + encodeURIComponent(slug) : '#';
+    var href = slug ? '/author-list/author-details/' + routePart(slug) : '#';
     var description = safeRichHtml(
       source.description || source.descriptionEn || source.biography || source.bio || source.about ||
       fallback && (fallback.description || fallback.descriptionEn || fallback.biography || fallback.bio || fallback.about) || '',
@@ -7784,7 +7926,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       var price = finalPrice(product);
       var sale = Number(product.salePrice) || 0;
       var author = Array.isArray(product.author) && product.author[0] ? product.author[0].name : '';
-      var href = '/product-details/' + encodeURIComponent(product.slug || '');
+      var href = '/product-details/' + routePart(product.slug);
       return '<article class="ab-product-card">' +
         '<a class="ab-product-link" href="' + escapeHtml(href) + '" aria-label="' + escapeHtml((product.name || 'বই') + ' দেখুন') + '">' +
           '<img src="' + escapeHtml(imageUrl(product.images && product.images[0], '/assets/images/placeholder/test.png')) + '" alt="' + escapeHtml(product.name || 'বই') + '" loading="lazy" decoding="async">' +
@@ -7803,7 +7945,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     var price = finalPrice(product);
     var percent = discountPercent(product);
     var author = Array.isArray(product.author) && product.author[0] ? product.author[0].name : '';
-    var href = '/product-details/' + encodeURIComponent(product.slug || '');
+    var href = '/product-details/' + routePart(product.slug);
     var badgeText = String(badge || '').trim();
     return '<article class="ab-library-card">' +
       '<a class="ab-library-link" href="' + escapeHtml(href) + '">' +
@@ -7820,10 +7962,18 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     '</article>';
   }
 
-  function publisherShelfHtml(products) {
+  function publisherShelfHtml(products, product) {
     if (!products.length) return '';
+    // Name the publisher and link its full list, so the shelf reads as "more from this publisher".
+    var publisher = Array.isArray(product && product.publisher) ? product.publisher[0] : product && product.publisher;
+    var source = publisher && publisher.name
+      ? '<p class="ab-shelf-source">প্রকাশক: <a href="/product-list?publisher=' + encodeURIComponent(publisher.slug || '') +
+        (publisher._id ? '&amp;publisherId=' + encodeURIComponent(String(publisher._id)) : '') + '">' + escapeHtml(publisher.name) +
+        '</a><span aria-hidden="true"> · </span><a href="/product-list?publisher=' + encodeURIComponent(publisher.slug || '') +
+        (publisher._id ? '&amp;publisherId=' + encodeURIComponent(String(publisher._id)) : '') + '">সব বই দেখুন →</a></p>'
+      : '';
     return '<section class="ab-publisher-shelf" aria-labelledby="ab-publisher-shelf-heading">' +
-      '<h2 class="ab-library-heading" id="ab-publisher-shelf-heading">এই প্রকাশনীর অন্যান্য বই</h2>' +
+      '<h2 class="ab-library-heading" id="ab-publisher-shelf-heading">এই প্রকাশনীর অন্যান্য বই</h2>' + source +
       '<div class="ab-library-grid" role="region" aria-label="এই প্রকাশনীর অন্যান্য বই">' +
         products.map(function (product) { return libraryProductHtml(product, ''); }).join('') +
       '</div></section>';
@@ -8690,7 +8840,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       }
       rememberCartProducts(products);
       box.innerHTML = '<h2>এই অফারটি পেতে আরও বই যোগ করুন</h2><div class="ab-cart-offer-books">' + products.map(function (product) {
-        var productUrl = '/product-details/' + encodeURIComponent(product.slug || '');
+        var productUrl = '/product-details/' + routePart(product.slug);
         var title = escapeHtml(product.name || '');
         return '<article class="ab-cart-offer-book" data-product-url="' + productUrl + '"><a class="ab-cart-offer-product-link" href="' + productUrl + '" aria-label="' + title + '"><img src="' + escapeHtml(imageUrl(product.images && product.images[0])) + '" alt="' + escapeHtml(product.name || 'বই') + '"></a><div><a class="ab-cart-offer-product-link" href="' + productUrl + '"><h3>' + title + '</h3></a><p>' + escapeHtml(money(finalPrice(product))) + '</p></div><button class="ab-add-cart-button ab-native-cart-add" type="button" data-product-id="' + escapeHtml(product._id || '') + '">Add to Cart</button></article>';
       }).join('') + '<a id="ab-cart-offer-all-books" href="/product-list">সব বই দেখুন</a></div>';
@@ -8745,7 +8895,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     var notebook = cartOfferNotebook || {};
     var notebookCover = notebook.image || Array.isArray(notebook.images) && notebook.images[0] || '';
     var notebookPages = String(NOTEBOOK_PAGE_COUNT).replace(/\\d/g, function (digit) { return String.fromCharCode(0x09e6 + Number(digit)); });
-    var notebookImage = notebookCover ? '<a class="ab-cart-offer-notebook-link" href="/product-details/' + encodeURIComponent(notebook.slug || cartOfferConfig.giftProduct && cartOfferConfig.giftProduct.slug || '') + '" aria-label="' + escapeHtml((notebook.name || 'ফ্রি নোটবুক') + ' দেখুন') + '"><img class="ab-cart-offer-notebook" src="' + escapeHtml(imageUrl(notebookCover)) + '" alt="' + escapeHtml(notebook.name || 'ফ্রি নোটবুক') + '"></a>' : '<span class="ab-cart-offer-icon" aria-hidden="true">🎁</span>';
+    var notebookImage = notebookCover ? '<a class="ab-cart-offer-notebook-link" href="/product-details/' + routePart(notebook.slug || cartOfferConfig.giftProduct && cartOfferConfig.giftProduct.slug) + '" aria-label="' + escapeHtml((notebook.name || 'ফ্রি নোটবুক') + ' দেখুন') + '"><img class="ab-cart-offer-notebook" src="' + escapeHtml(imageUrl(notebookCover)) + '" alt="' + escapeHtml(notebook.name || 'ফ্রি নোটবুক') + '"></a>' : '<span class="ab-cart-offer-icon" aria-hidden="true">🎁</span>';
     var earned = cartOfferConfig.giftEnabled && ((threshold > 0 && remaining === 0) || cartHasBookGift(items, products));
     var progressMarkup = notebookImage + '<p>' +
       (earned ? '<strong>অভিনন্দন!</strong> আপনার অর্ডারের সঙ্গে <strong>' + escapeHtml(notebookPages) + ' পৃষ্ঠার ফ্রি নোটবুক</strong> উপহার হিসেবে যুক্ত হয়েছে।' : 'আর মাত্র <strong>' + money(remaining) + '</strong> টাকার বই যোগ করুন — পেয়ে যান <strong>' + escapeHtml(notebookPages) + ' পৃষ্ঠার ফ্রি নোটবুক</strong>!') +
@@ -9025,7 +9175,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         var result = results[0];
         var publisherList = results[1] || [];
         var publisherTarget = activeLibrary.querySelector('.ab-publisher-products');
-        if (publisherTarget) publisherTarget.innerHTML = publisherShelfHtml(publisherList);
+        if (publisherTarget) publisherTarget.innerHTML = publisherShelfHtml(publisherList, product);
         var nativeRelated = document.querySelector('app-product-details app-related-product');
         if (nativeRelated && publisherList.length) nativeRelated.classList.add('ab-publisher-products-source');
         var recentList = recentShelfProducts(product, result);

@@ -844,7 +844,8 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
 
   function productPath(product) {
     return product && product.slug
-      ? '/product-details/' + encodeURIComponent(product.slug)
+      // ( and ) as %28 / %29: the storefront's router reads them as route syntax (blank page).
+      ? '/product-details/' + encodeURIComponent(product.slug).split('(').join('%28').split(')').join('%29')
       : '';
   }
 

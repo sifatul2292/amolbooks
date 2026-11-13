@@ -1,0 +1,34 @@
+<script>
+/* Customer dashboard (owner, 2026-11-13: "make the customer dashboard much more polish for both
+   desktop and mobile"). On /account pages it loads /api/storefront-page/customer-dashboard.js,
+   which draws the account menu, the overview, orders and reviews; the other account pages
+   (wishlist, notifications, ...) stay the storefront's own inside the same layout. The storefront
+   moves between pages without reloading, so page changes are watched here. */
+(function () {
+  'use strict';
+  if (window.__abCustomerDashboard) return;
+  window.__abCustomerDashboard = true;
+  var host = location.hostname;
+  var local = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(host) ||
+    /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host) || /\.trycloudflare\.com$/.test(host);
+  function check() {
+    window.dispatchEvent(new Event('ab-route'));
+    if (window.__abCustomerDashboardLoading || !/^\/account(?:\/|$)/.test(location.pathname)) return;
+    window.__abCustomerDashboardLoading = true;
+    var script = document.createElement('script');
+    script.src = (local ? location.origin + '/api' : 'https://apisub.amolbooks.com/api') + '/storefront-page/customer-dashboard.js';
+    script.async = true;
+    document.head.appendChild(script);
+  }
+  ['pushState', 'replaceState'].forEach(function (name) {
+    var original = history[name];
+    history[name] = function () {
+      var result = original.apply(this, arguments);
+      setTimeout(check, 0);
+      return result;
+    };
+  });
+  window.addEventListener('popstate', check);
+  check();
+})();
+</script>

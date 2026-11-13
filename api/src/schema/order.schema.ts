@@ -434,6 +434,36 @@ export const OrderSchema = new mongoose.Schema(
       doneAt: { type: Date },
       doneBy: { type: String },
     },
+    // WhatsApp review request 14 days after delivery (owner, 2026-11-13; ReviewRequestService).
+    // status: checking -> sent | failed | skipped (reason) | holdout. token = the review page link
+    // amolbooks.com/rate/<token>. reply = the customer's tap: liked | unread | problem (kind
+    // "problem" also opens customerRequest so staff see it in the WhatsApp Inbox).
+    reviewRequest: {
+      status: { type: String },
+      reason: { type: String },
+      token: { type: String },
+      wa: { type: String },
+      at: { type: Date },
+      deliveredAt: { type: Date },
+      reply: { type: String },
+      repliedAt: { type: Date },
+      // Book suggested after "ভালো লাগছে" (slug), so the dashboard can see if it was bought.
+      suggested: { type: String },
+      reviews: { type: Number },
+      reviewedAt: { type: Date },
+      // The account the customer logged in to on the review page (its reviews belong to it).
+      user: { type: Schema.Types.ObjectId, ref: 'User' },
+      loginAt: { type: Date },
+      // "Your review is published" message: the book, and the tap on its buttons (more / nomore).
+      approved: {
+        name: { type: String },
+        slug: { type: String },
+        review: { type: Schema.Types.ObjectId, ref: 'Review' },
+        at: { type: Date },
+      },
+      approvedReply: { type: String },
+      approvedReplyAt: { type: Date },
+    },
     // Order SMS held back while the WhatsApp order message is on its way (WhatsappService
     // settles it: SMS when not delivered in time, else orderSmsSkippedAt).
     orderSmsDueAt: { type: Date, required: false },
@@ -523,6 +553,19 @@ OrderSchema.index({ 'whatsappMessages.messageId': 1 }, { sparse: true });
 // Held order SMS (only orders waiting for their WhatsApp delivery) and the hand-over
 // answer's latest order for a customer's number.
 OrderSchema.index({ orderSmsDueAt: 1 }, { sparse: true });
+// Review request: the review page finds the order by its link; the 30-day "asked already" check per number.
+OrderSchema.index(
+  { 'reviewRequest.token': 1 },
+  { name: 'review_request_token', unique: true, partialFilterExpression: { 'reviewRequest.token': { $type: 'string' } } },
+);
+OrderSchema.index(
+  { 'reviewRequest.wa': 1, 'reviewRequest.at': -1 },
+  { name: 'review_request_wa', partialFilterExpression: { 'reviewRequest.wa': { $type: 'string' } } },
+);
+OrderSchema.index(
+  { 'reviewRequest.at': -1 },
+  { name: 'review_request_at', partialFilterExpression: { 'reviewRequest.at': { $type: 'date' } } },
+);
 OrderSchema.index({ 'whatsappMessages.to': 1, createdAt: -1 }, { name: 'whatsapp_to_latest', partialFilterExpression: { 'whatsappMessages.to': { $exists: true } } });
 
 // Future delivery: the every-minute run and the Orders page tab.

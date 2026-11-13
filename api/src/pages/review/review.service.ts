@@ -4,11 +4,13 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  Optional,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { UtilsService } from '../../shared/utils/utils.service';
+import { WhatsappService } from '../../shared/whatsapp/whatsapp.service';
 import { ResponsePayload } from '../../interfaces/core/response-payload.interface';
 import { ErrorCodes } from '../../enum/error-code.enum';
 import {
@@ -32,6 +34,8 @@ export class ReviewService {
     @InjectModel('User') private readonly userModel: Model<User>,
     private configService: ConfigService,
     private utilsService: UtilsService,
+    // "Your review is published" on WhatsApp for reviews from the review page (ReviewRequestService).
+    @Optional() private readonly whatsappService?: WhatsappService,
   ) {}
 
   /**
@@ -613,6 +617,11 @@ export class ReviewService {
             }
           }
         }
+      }
+
+      // Approved just now: the customer hears about it (only reviews written from the WhatsApp link).
+      if (data.status !== true && updateReviewDto.status === true) {
+        this.whatsappService?.reviewApproved(data._id);
       }
 
       return {

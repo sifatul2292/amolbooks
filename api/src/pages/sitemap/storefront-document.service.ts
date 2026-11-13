@@ -7,6 +7,7 @@ import { ProductService } from '../product/product.service';
 import { SpecialPackageService } from '../offers/special-package/special-package.service';
 import { CatalogueSeoService } from './catalogue-seo.service';
 import { CatalogueKind, renderCatalogueSeo } from './catalogue-seo.utils';
+import { routePart } from '../product/product-seo.utils';
 
 // Hide only the server fallback; Angular removes this wrapper when it renders.
 export const STOREFRONT_SEO_FALLBACK_HEAD = `<script>document.documentElement.classList.add('ab-js-startup');</script>
@@ -208,7 +209,7 @@ export class StorefrontDocumentService {
           ? (await this.products.findAllPublished())
               .map(
                 (book) =>
-                  `<li><a href="${ORIGIN}/product-details/${encodeURIComponent(
+                  `<li><a href="${ORIGIN}/product-details/${routePart(
                     book.slug,
                   )}">${escapeHtml(book.name)}</a></li>`,
               )

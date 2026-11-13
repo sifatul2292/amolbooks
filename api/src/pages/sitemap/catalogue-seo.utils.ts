@@ -1,4 +1,4 @@
-import { escape, summary, text } from '../product/product-seo.utils';
+import { escape, routePart, summary, text } from '../product/product-seo.utils';
 
 const ORIGIN = 'https://www.amolbooks.com';
 const SHOP = 'Amolbooks';
@@ -27,11 +27,11 @@ const KINDS = {
 const bangla = (value: number) => String(value).replace(/\d/g, (digit) => '০১২৩৪৫৬৭৮৯'[Number(digit)]);
 // Inline tags join words (<strong>লেখক</strong>।); block tags separate them.
 const plain = (html: any) => text(String(html || '').replace(/<\/?(?:a|b|strong|i|em|u|span)\b[^>]*>/gi, ''));
-const bookUrl = (book: any) => `${ORIGIN}/product-details/${encodeURIComponent(book.slug)}`;
+const bookUrl = (book: any) => `${ORIGIN}/product-details/${routePart(book.slug)}`;
 
 // The storefront's own addresses: the author page, and the book list filtered by publisher or category.
 export function cataloguePath(kind: CatalogueKind, slug: string): string {
-  if (kind === 'author') return `/author-list/author-details/${encodeURIComponent(slug)}`;
+  if (kind === 'author') return `/author-list/author-details/${routePart(slug)}`;
   return `/product-list?${kind === 'publisher' ? 'publisher' : 'categories'}=${encodeURIComponent(slug)}`;
 }
 

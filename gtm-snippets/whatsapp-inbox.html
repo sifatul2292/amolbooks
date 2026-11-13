@@ -538,7 +538,7 @@
                 ? '<span class="here" title="' + esc(names(viewers)) + ' has this chat open">' + EYE + esc(names(viewers)) + '</span>'
                 : '';
               const ask = chat.request
-                ? '<span class="ask-pill" title="Order #' + esc(chat.request.orderId) + '">' + (chat.request.kind === 'change' ? '✎ Wants a change' : '➕ Wants more books') + '</span>'
+                ? '<span class="ask-pill" title="Order #' + esc(chat.request.orderId) + '">' + (chat.request.kind === 'problem' ? '⚠ Has a problem' : chat.request.kind === 'change' ? '✎ Wants a change' : chat.request.kind === 'books' ? '📚 Wants new books' : '➕ Wants more books') + '</span>'
                 : '';
               return '<li><button type="button" class="chat-item' + (chat.unread ? ' unread' : '') + (chat.request ? ' needs' : '') + '" data-wa="' + esc(chat.wa) + '" aria-current="' + current + '">' +
                 '<span class="avatar">' + PERSON + '</span>' +
@@ -722,7 +722,7 @@
           $('chat-orders').innerHTML = data.orders.map((order) =>
             '<button type="button" class="order-chip" data-order="' + esc(order.orderId) + '" title="See what was ordered">' +
             '<b>#' + esc(order.orderId) + '</b> · ' + esc(STATUS[order.orderStatus] || 'Order') + ' · ' + esc(taka(order.grandTotal)) +
-            (order.request === 'more' ? ' · <span class="ask">wants more books</span>' : order.request === 'change' ? ' · <span class="ask">wants a change</span>' : '') +
+            (order.request === 'more' ? ' · <span class="ask">wants more books</span>' : order.request === 'change' ? ' · <span class="ask">wants a change</span>' : order.request === 'problem' ? ' · <span class="ask">has a problem</span>' : order.request === 'books' ? ' · <span class="ask">wants new books</span>' : '') +
             '</button>'
           ).join('');
           if (state.info) renderInfo();
@@ -783,12 +783,18 @@
           const banner = $('request-banner');
           banner.hidden = !ask;
           if (!ask) return;
-          const more = ask.kind !== 'change';
-          $('request-icon').textContent = more ? '+' : '✎';
-          $('request-title').textContent = (more ? 'Wants more books' : 'Wants a change') + (ask.orderId ? ' · order #' + ask.orderId : '');
-          $('request-help').textContent = more
-            ? 'Same delivery charge. Ask which books, add them to the order, then mark it done.'
-            : 'Ask what to change, update the order, then mark it done.';
+          const problem = ask.kind === 'problem';
+          const books = ask.kind === 'books';
+          const more = !problem && ask.kind !== 'change';
+          $('request-icon').textContent = problem ? '!' : more ? '+' : '✎';
+          $('request-title').textContent = (problem ? 'Has a problem with the order' : books ? 'Wants new books' : more ? 'Wants more books' : 'Wants a change') + (ask.orderId ? ' · order #' + ask.orderId : '');
+          $('request-help').textContent = problem
+            ? 'Tapped সমস্যা আছে on the review message. Ask what went wrong, sort it out, then mark it done.'
+            : books
+              ? 'Tapped হ্যাঁ, বই লাগবে after their review was published. Ask which books and make a NEW order (#' + (ask.orderId || '') + ' is delivered), then mark it done.'
+              : more
+                ? 'Same delivery charge. Ask which books, add them to the order, then mark it done.'
+                : 'Ask what to change, update the order, then mark it done.';
           $('request-open').href = 'custom-orders.html?q=' + encodeURIComponent(ask.orderId || state.open.phone || '');
           $('request-books').hidden = !more;
         }
@@ -852,6 +858,8 @@
           if (order.confirmed) flags.push('<span class="flag ok">✓ Confirmed on WhatsApp</span>');
           if (order.request === 'more') flags.push('<span class="flag">➕ Wants more books</span>');
           if (order.request === 'change') flags.push('<span class="flag">✎ Wants a change</span>');
+          if (order.request === 'problem') flags.push('<span class="flag">⚠ Has a problem</span>');
+          if (order.request === 'books') flags.push('<span class="flag">📚 Wants new books</span>');
           const items = order.items.map((item) =>
             '<li class="item">' + itemImage(item.image) +
             '<span class="item-name">' + esc(item.name) + (item.gift ? '<span class="gift">Gift</span>' : '') + '<small>' + esc(item.quantity) + ' × ' + esc(taka(item.price)) + '</small></span>' +

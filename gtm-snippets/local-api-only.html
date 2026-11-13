@@ -1,0 +1,61 @@
+<!-- Local preview only (localhost, LAN address, trycloudflare tunnel). The compiled storefront
+     calls the live API (apisub.amolbooks.com); here every such call goes to this machine's API
+     instead, so a login or an account page tried locally never reaches the live site (2026-11-13,
+     after a local login test sent account reads there). The read-only catalogue calls are left to
+     catalogue-local-requests.html, which sends them to the /storefront-catalog proxy. Does nothing
+     on amolbooks.com. -->
+<script>
+(function () {
+  'use strict';
+  var host = location.hostname;
+  var local = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(host) ||
+    /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host) || /\.trycloudflare\.com$/.test(host);
+  if (!local || window.__abLocalApiOnly) return;
+  window.__abLocalApiOnly = true;
+  var LIVE = 'https://apisub.amolbooks.com';
+  var CATALOGUE = /^(POST \/api\/product\/get-all|POST \/api\/product\/get-products-by-ids|POST \/api\/category\/get-all\/|GET \/api\/product\/get-all-data)$/;
+  // Public files (sample PDFs, covers, fonts) exist only on the live server; reading them carries
+  // no account data, so they stay there (the "একটু পড়ে দেখুন" viewer stalled on a local 404).
+  var PUBLIC_FILES = /^GET \/api\/(upload|storefront-assets)\//;
+  function here(method, url) {
+    try {
+      var target = new URL(String(url), location.href);
+      if (target.origin !== LIVE || target.pathname.indexOf('/api/') !== 0) return url;
+      var request = String(method || 'GET').toUpperCase() + ' ' + target.pathname;
+      if (CATALOGUE.test(request) || PUBLIC_FILES.test(request)) return url;
+      return location.origin + target.pathname + target.search;
+    } catch (_) {
+      return url;
+    }
+  }
+  window.__abLocalApiUrl = here;
+  function toLive(url) {
+    try { return new URL(String(url), location.href).origin === LIVE; } catch (_) { return false; }
+  }
+  var open = XMLHttpRequest.prototype.open;
+  var setHeader = XMLHttpRequest.prototype.setRequestHeader;
+  XMLHttpRequest.prototype.open = function (method, url) {
+    var args = Array.prototype.slice.call(arguments);
+    args[1] = here(method, url);
+    this.__abToLive = toLive(args[1]);
+    return open.apply(this, args);
+  };
+  // The catalogue reads that still go to the live API never carry a local login token.
+  XMLHttpRequest.prototype.setRequestHeader = function (name, value) {
+    if (this.__abToLive && /^authorization$/i.test(String(name))) return;
+    return setHeader.apply(this, arguments);
+  };
+  if (window.fetch) {
+    var nativeFetch = window.fetch;
+    window.fetch = function (input, init) {
+      if (typeof input === 'string' || input instanceof URL) input = here(init && init.method, input);
+      if (init && init.headers && toLive(input instanceof Request ? input.url : input)) {
+        var headers = new Headers(init.headers);
+        headers.delete('Authorization');
+        init = Object.assign({}, init, { headers: headers });
+      }
+      return nativeFetch.call(this, input, init);
+    };
+  }
+})();
+</script>

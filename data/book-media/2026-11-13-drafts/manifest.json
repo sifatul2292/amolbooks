@@ -1,0 +1,55 @@
+{
+ "note": "Covers (and one sample PDF) for the drafts that still had none after 2026-11-12-drafts. Not on Wafilife; taken from Rokomari with their stamp removed. Fills only empty fields.",
+ "items": [
+  {
+   "productId": "6aec359bc2fea0ede15ce1a9",
+   "name": "সেইসব দিনরাত্রি",
+   "pdf": null,
+   "image": "book-seisob-dinratri-aab0.webp",
+   "imageSource": "Rokomari cover (260x372), stamp removed, upscaled 2x"
+  },
+  {
+   "productId": "6aec359bc2fea0ede15ce1a6",
+   "name": "মেঘ কেটে যায়",
+   "pdf": null,
+   "image": "book-megh-kete-jay-87ac.webp",
+   "imageSource": "Rokomari cover (260x372), stamp removed, upscaled 2x"
+  },
+  {
+   "productId": "6aec359bc2fea0ede15ce1a3",
+   "name": "নানান রঙের মানুষ (১৮টি গল্প)",
+   "pdf": null,
+   "image": "book-nanan-ronger-manush-0aae.webp",
+   "imageSource": "Rokomari cover (260x372), stamp removed, upscaled 2x"
+  },
+  {
+   "productId": "6aec359bc2fea0ede15ce1a0",
+   "name": "হৃদয় জাগার জন্য",
+   "pdf": null,
+   "image": "book-hridoy-jagar-jonno-adaf.webp",
+   "imageSource": "Rokomari cover (260x372), stamp removed, upscaled 2x"
+  },
+  {
+   "productId": "6aec359bc2fea0ede15ce19d",
+   "name": "জীবনের বাঁকে বাঁকে কুরআনের পাঠ - দ্বিতীয় খণ্ড",
+   "pdf": null,
+   "image": "book-jiboner-banke-banke-quraner-path-2-9ea5.webp",
+   "imageSource": "Rokomari cover (260x372), stamp removed, upscaled 2x"
+  },
+  {
+   "productId": "6aec359bc2fea0ede15ce19a",
+   "name": "কুরআনের সাথে হৃদয়ের কথা",
+   "pdf": null,
+   "image": "book-quraner-sathe-hridoyer-kotha-160e.webp",
+   "imageSource": "Rokomari cover (260x372), stamp removed, upscaled 2x"
+  },
+  {
+   "productId": "6ae897fbe0d3b6387b9e0f83",
+   "name": "প্রিয় নবিজির (সা.) গল্প শুনি",
+   "pdf": "priyo-nobijir-golpo-shuni-3a34.pdf",
+   "image": "book-priyo-nobijir-golpo-shuni-e947.webp",
+   "imageSource": "Rokomari cover (260x372), stamp removed, upscaled 2x",
+   "pdfSource": "Rokomari look-inside (11 pages), centre logo removed, Amolbooks logo added"
+  }
+ ]
+}

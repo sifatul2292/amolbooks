@@ -3652,7 +3652,7 @@
   /* ── Phone cell ── */
   // Automatic WhatsApp order messages (api/src/shared/whatsapp): one small badge per order with the
   // furthest status; the tooltip lists each message. Nothing shows until a message was sent.
-  var WA_KIND = { order_placed: 'Order placed', order_shipped: 'Sent to courier' };
+  var WA_KIND = { order_placed: 'Order placed', order_shipped: 'Sent to courier', review_request: 'Review request', review_approved: 'Review published' };
   var WA_STATUS = { sending: 'sending', sent: 'sent', delivered: 'delivered', read: 'read', failed: 'not delivered' };
   function whatsappBadge(o) {
     var list = Array.isArray(o.whatsappMessages) ? o.whatsappMessages : [];
@@ -3686,6 +3686,8 @@
     var askWhen = stamp(r.kind ? r.at : c.at);
     if (ask === 'more') html += '<span class="cc-badge is-more" title="Customer tapped একই ডেলিভারি চার্জে আরও বই নিবো on WhatsApp'+(askWhen?' · '+esc(askWhen):'')+' — add the books they ask for (same delivery charge)">➕ Wants more books</span>';
     if (ask === 'change') html += '<span class="cc-badge is-change" title="Customer tapped পরিবর্তন চাই on WhatsApp'+(askWhen?' · '+esc(askWhen):'')+' — call or message them">✎ Wants change</span>';
+    if (ask === 'problem') html += '<span class="cc-badge is-change" title="Customer tapped সমস্যা আছে on the WhatsApp review message'+(askWhen?' · '+esc(askWhen):'')+' — call or message them">⚠ Has a problem</span>';
+    if (ask === 'books') html += '<span class="cc-badge is-more" title="Customer tapped হ্যাঁ, বই লাগবে after their review was published'+(askWhen?' · '+esc(askWhen):'')+' — ask which books and make a new order">📚 Wants new books</span>';
     return html;
   }
 

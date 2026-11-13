@@ -1,6 +1,15 @@
 <!-- All Pages. Mobile-only account navigation; existing Angular account actions remain authoritative. -->
 <style>
   body.ab-guest-checkout app-checkout .address-form-area .form > .radio-area { display: none !important; }
+  /* Wishlist "remove" button: trash drawn inline instead of the Font Awesome glyph, which shows late
+     (owner, 2026-11-13: "replace this icon as well"). The green circle and the click stay native. */
+  .wishlist-area .delete > span > i.fa-trash { display: none !important; }
+  .wishlist-area .delete > span {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9.2 2.5h5.6l.9 1.5H20a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2h4.3l.9-1.5zM5.5 7.5h13l-.9 12.6A2.1 2.1 0 0 1 15.5 22h-7a2.1 2.1 0 0 1-2.1-1.9L5.5 7.5z' fill='%23ffffff'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: 18px 18px !important;
+  }
   /* Hallmark · pre-emit critique: P5 H5 E4 S5 R5 V4
    */
   /* Hallmark · macrostructure: Account Hub · tone: utilitarian · anchor hue: Amol green
@@ -383,6 +392,9 @@
   var checkoutAddressesPending = false;
   var checkoutProfile = null;
   var checkoutProfilePending = false;
+  // Last order of a logged-in customer: fills checkout when they have no saved address (owner, 2026-11-13).
+  var checkoutLastOrder = null;
+  var checkoutLastOrderPending = false;
 
   /* Capture Angular's real bearer token before its deferred bundle starts.
      Production builds do not expose Angular component instances. */
@@ -546,7 +558,7 @@
     var authorization = checkoutAuthorization();
     if (!authorization || checkoutProfilePending || checkoutProfile) return;
     checkoutProfilePending = true;
-    fetch(API_BASE + '/user/logged-in-user-data?select=name%20phoneNo%20username', {
+    fetch(API_BASE + '/user/logged-in-user-data?select=name%20phoneNo%20username%20addressLine%20division%20area', {
       headers: { Authorization: authorization, Accept: 'application/json' },
       credentials: 'omit'
     }).then(function (response) {
@@ -560,6 +572,55 @@
     }).finally(function () {
       checkoutProfilePending = false;
     });
+  }
+  function loadCheckoutLastOrder() {
+    var authorization = checkoutAuthorization();
+    if (!authorization || checkoutLastOrderPending || checkoutLastOrder) return;
+    checkoutLastOrderPending = true;
+    fetch(API_BASE + '/order/get-orders-by-user', {
+      method: 'POST',
+      headers: { Authorization: authorization, Accept: 'application/json', 'Content-Type': 'application/json' },
+      credentials: 'omit',
+      body: JSON.stringify({ filter: null, sort: { createdAt: -1 }, pagination: { pageSize: 1, currentPage: 0 },
+        select: { name: 1, phoneNo: 1, shippingAddress: 1, division: 1, area: 1 } })
+    }).then(function (response) {
+      if (!response.ok) throw new Error('Orders unavailable');
+      return response.json();
+    }).then(function (result) {
+      checkoutLastOrder = result && Array.isArray(result.data) && result.data[0] || {};
+      scheduleMount();
+    }).catch(function () {
+      checkoutLastOrder = {};
+    }).finally(function () {
+      checkoutLastOrderPending = false;
+    });
+  }
+  /** No saved address: fill the empty fields from the account (name, phone, its address) or the last order. */
+  function prefillFromAccount(formArea) {
+    if (!formArea || formArea.dataset.abAccountPrefill === 'done' || !checkoutAuthenticated()) return;
+    loadCheckoutProfile();
+    loadCheckoutLastOrder();
+    if (!checkoutProfile || !checkoutLastOrder) return;
+    formArea.dataset.abAccountPrefill = 'done';
+    var profile = checkoutProfile;
+    var order = checkoutLastOrder;
+    var username = String(profile.username || '');
+    var values = {
+      name: profile.name || order.name || '',
+      phoneNo: profile.phoneNo || (/^(?:\+?88)?01[3-9]\d{8}$/.test(username) ? username : '') || order.phoneNo || '',
+      address: profile.addressLine || order.shippingAddress || ''
+    };
+    Object.keys(values).forEach(function (name) {
+      var control = document.querySelector('app-checkout [formcontrolname="' + name + '"]');
+      // Never over what the customer already typed.
+      if (control && !String(control.value || '').trim() && values[name]) setCheckoutControl(name, values[name]);
+    });
+    var divisionName = String(order.division && order.division.name || profile.division && profile.division.name || '');
+    var areaName = String(order.area && order.area.name || profile.area && profile.area.name || '');
+    if (divisionName) {
+      var outskirts = /Savar|Dohar|Nawabganj|Keraniganj|Dhamrai|সাভার|দোহার|নবাবগঞ্জ|কেরানীগঞ্জ|ধামরাই/i.test(areaName);
+      selectCheckoutDelivery(/Dhaka|ঢাকা/i.test(divisionName) && !outskirts ? '1' : '2');
+    }
   }
   function applyCheckoutAddress(component, address, picker) {
     if (!address) return;
@@ -628,7 +689,10 @@
       }
       return;
     }
-    if (!addresses.length) return;
+    if (!addresses.length) {
+      prefillFromAccount(formArea);
+      return;
+    }
     var signature = addresses.map(function (address) { return address._id; }).join('|');
     var picker = oldPicker;
     if (!picker || picker.dataset.signature !== signature) {

@@ -28,6 +28,9 @@ const escapeRegex = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'
  */
 @Injectable()
 export class WhatsappInboxService {
+  /** Requests made on a delivered order (review messages): open until staff mark them done. */
+  static readonly STAYS_OPEN = ['problem', 'books'];
+
   /**
    * Who has which chat open right now (owner, 2026-11-11: "how do we know who is talking to the
    * customer?"), in memory: number -> staff id -> name, last seen, last typed. Lost on restart,
@@ -85,9 +88,14 @@ export class WhatsappInboxService {
     return [0, 1, 2, 3].includes(Number(order?.orderStatus)) && !order?.courierData?.consignmentId && !order?.customerCancelledAt;
   }
 
-  /** The customer's open "more books" / "change" request (newest order first), if staff have not handled it. */
+  /**
+   * The customer's open "more books" / "change" request (newest order first), if staff have not handled it.
+   * A review request's "সমস্যা আছে" (problem) and the review-published message's "হ্যাঁ, বই লাগবে"
+   * (books) are on a delivered order, so they stay open until marked done.
+   */
   static pendingRequest(orders: any[]): any | null {
-    const order = orders.find((item) => item?.customerRequest?.kind && !item.customerRequest.doneAt && WhatsappInboxService.editable(item));
+    const order = orders.find((item) => item?.customerRequest?.kind && !item.customerRequest.doneAt
+      && (WhatsappInboxService.STAYS_OPEN.includes(item.customerRequest.kind) || WhatsappInboxService.editable(item)));
     return order
       ? { kind: order.customerRequest.kind, orderId: String(order.orderId || ''), order: order._id, at: order.customerRequest.at || new Date() }
       : null;
@@ -348,7 +356,8 @@ export class WhatsappInboxService {
     const settled = open
       .filter((chat) => {
         const order = byId.get(String(chat.request?.order || ''));
-        return !order || order.customerRequest?.doneAt || !WhatsappInboxService.editable(order);
+        return !order || order.customerRequest?.doneAt
+          || (!WhatsappInboxService.STAYS_OPEN.includes(order.customerRequest?.kind) && !WhatsappInboxService.editable(order));
       })
       .map((chat) => chat.wa);
     if (settled.length) await this.chatModel.updateMany({ wa: { $in: settled } }, { $unset: { request: 1 } });

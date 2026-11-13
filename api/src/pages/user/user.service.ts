@@ -324,10 +324,17 @@ export class UserService {
       });
 
       if (userData) {
-        const authUserDto: AuthSocialUserDto = {
-          username: userData.username,
-        };
-        return this.userLoginSocial(authUserDto);
+        // This route trusts the username it is sent (Google's details are read in the browser,
+        // the phone-only login sends just the number), so it gave anyone a login token for any
+        // existing account (found 2026-11-13). Existing accounts log in with their password, or
+        // with an SMS code on the review page (ReviewLoginService); this route only makes new ones.
+        return {
+          success: false,
+          message: 'এই অ্যাকাউন্টে পাসওয়ার্ড দিয়ে লগইন করুন। পাসওয়ার্ড মনে না থাকলে "পাসওয়ার্ড ভুলে গেছেন" চাপুন।',
+          data: null,
+          token: null,
+          tokenExpiredIn: null,
+        } as UserAuthResponse;
       } else {
         const newUser = new this.userModel(createUserDto);
 

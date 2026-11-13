@@ -280,5 +280,12 @@ assert.match(html, /function cleanup\(\) \{[\s\S]*?setPending\(false\);[\s\S]*?\
 assert.match(html, /cataloguePromise = withRetries\(requestCatalogue, \[700, 2000\]\)/);
 assert.match(html, /shelfPicksPromise = withRetries\(function \(\) \{ return addShelfPicks\(result\); \}, \[700, 2000\]\)/);
 assert.match(html, /render\(products\);\s*if \(!result\.shelfPicks\) \{\s*loadShelfPicks\(result\)\.then[\s\S]*?upgradeShelves\(full\.data\)/, 'Late picks never hold up the first render');
+// One rating row per book card: where the text-star row is added, the card's own icon stars are hidden.
+assert.match(html, /\.ab-card-rated \.text-aria ul\.star \{ display: none !important; \}/);
+assert.match(html, /if \(card\.querySelector\('\.ab-card-rating'\)\) \{ card\.classList\.add\('ab-card-rated'\); return; \}/);
+// Card wishlist heart is drawn inline (no icon font): outline when off, green when on.
+assert.match(html, /app-product-card-one \.heart > i \{ display: none !important; \}/);
+assert.match(html, /app-product-card-one \.heart \{\s*background-image: url\("data:image\/svg\+xml,[^"]*stroke='%23ffffff'/);
+assert.match(html, /app-product-card-one \.heart\.active \{\s*background-image: url\("data:image\/svg\+xml,[^"]*fill='%23129245'/);
 
 console.log('Homepage redesign checks passed');

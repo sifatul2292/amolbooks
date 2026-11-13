@@ -45,6 +45,7 @@ export const ADMIN_NAV: NavSection[] = [
       { label: 'Customer & Bundle Insights', href: 'custom-orders.html?view=insights', icon: 'fa-users', id: 'navInsights', hideForSalesman: true },
       { label: 'Profit Dashboard', href: 'profit-dashboard.html', icon: 'fa-chart-line', hideForSalesman: true },
       { label: 'Customer Searches', href: 'search-insights.html', icon: 'fa-magnifying-glass', id: 'navCustomerSearches', hideForSalesman: true },
+      { label: 'Review Requests', href: 'review-requests.html', icon: 'fa-star', id: 'navReviewRequests', hideForSalesman: true },
     ],
   },
   {

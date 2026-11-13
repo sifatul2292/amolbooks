@@ -120,6 +120,75 @@ All answers end with "— amolbooks.com". They are free-form messages inside Met
 customer-service window, which the customer opens by tapping or writing: Meta does not charge them.
 Not sent to the courier automatically (staff still press "send to courier").
 
+**`review_request`** (review request 14 days after delivery; owner, 2026-11-13; not submitted yet)
+
+```
+আসসালামু আলাইকুম {{1}},
+আমল বুকস থেকে আপনার বই ({{2}}) হাতে পেয়েছেন প্রায় দুই সপ্তাহ হলো। বইটি কেমন লাগছে?
+আপনার সৎ মতামত অন্য পাঠকদের বই বাছতে সাহায্য করবে। রিভিউ দিতে: {{3}}
+— amolbooks.com
+```
+
+Footer (optional): `মেসেজ বন্ধ করতে STOP লিখুন`. Three **Quick reply** buttons (type "Custom"), in
+this order: **ভালো লাগছে**, **এখনো পড়িনি**, **সমস্যা আছে**. Sample values: `রহিম`,
+`প্রোডাক্টিভ মুসলিম`, `https://amolbooks.com/rate/AbCdEfGh12345678`. Keep it plain (no discount or
+book offer in the text) so it stays Utility; check the category Meta shows before switching it on.
+
+`ReviewRequestService` (api/src/pages/review-request) looks at each delivered order once, 14 days
+after delivery (Delivered status date, else the courier's "delivered" update), between 7 and 9 pm
+Dhaka time, and sends this message with a private review page link (`amolbooks.com/rate/<code>`,
+no login, open 60 days). Not asked: cancelled/returned/partly delivered orders, numbers asked in
+the last 30 days, numbers that wrote "stop", chats with an open inbox request, staff numbers
+(`REVIEW_REQUEST_SKIP_NUMBERS`), orders with only gifts. Each order keeps the outcome in
+`reviewRequest` (sent / failed / skipped with the reason / holdout).
+
+What a tap does (free answers inside the 24-hour window the tap opens):
+- **ভালো লাগছে**: the review link again, the coupon line when `REVIEW_REWARD_COUPON` is set, and one
+  book suggestion (best seller by the same author, else publisher, else category; published, in
+  stock, never bought on that number) unless the customer already ordered again.
+- **এখনো পড়িনি**: the review link ("open for 60 days"). No reminder later.
+- **সমস্যা আছে**: "tell us here, a photo helps" plus the link; the chat shows "⚠ Has a problem" in
+  the WhatsApp Inbox (and the order on the Orders page) until staff press Mark done.
+- A customer who writes only "stop" / "বন্ধ" gets no more review requests or suggestions (order
+  messages still go out).
+
+Reviews from the page are saved like any customer review: pending until approved in the admin
+panel's Reviews, one per book per order (editable until approved), marked as a verified purchase.
+After the first review the page shows the reward coupon. Numbers: admin menu → Analytics →
+Review Requests.
+
+The review page (inside the shop, with its header and footer) shows writing ideas under each
+book, read from the book's description (its listed parts / features, else its category) plus five
+general ones. After the review the customer types their mobile number (it must be the order's),
+gets an SMS code and is logged in to their shop account (made for them if they have none). The
+account then has their name, number, the order's address, their orders by that number, and the
+review ("অনুমোদনের অপেক্ষায়" until approved) in the customer dashboard (/account/profile).
+
+**`review_approved`** (review published; owner, 2026-11-13; not submitted yet)
+
+```
+আসসালামু আলাইকুম {{1}},
+"{{2}}" বই নিয়ে আপনার রিভিউ আমল বুকসে প্রকাশিত হয়েছে। মতামতের জন্য ধন্যবাদ!
+দেখুন: {{3}}
+
+আরও কোনো বই লাগবে?
+— amolbooks.com
+```
+
+Footer (optional): `মেসেজ বন্ধ করতে STOP লিখুন`. Two **Quick reply** buttons, in this order:
+**হ্যাঁ, বই লাগবে**, **এখন না**. Sample values: `রহিম`, `প্রোডাক্টিভ মুসলিম`,
+`https://amolbooks.com/product-details/productive%20muslim`. It asks about more books, so Meta will
+most likely file it as **Marketing** (a higher price per message than Utility); that is expected.
+
+When staff approve a review written from the WhatsApp link (admin panel → Reviews), the customer
+gets this once per order, with the book's page (where the review now shows). Not for numbers that
+wrote "stop". A tap:
+- **হ্যাঁ, বই লাগবে**: "tell us which books here" plus one book suggestion (same rules as above);
+  the chat shows "📚 Wants new books" in the WhatsApp Inbox (and the Orders page) until staff press
+  Mark done. Make a new order for them (the reviewed order is delivered). An open "problem" on the
+  same order is kept first.
+- **এখন না**: a thank-you, nothing else.
+
 ## WhatsApp Inbox (admin menu → Sales → WhatsApp Inbox)
 
 Everything customers send to the API number is kept (text, photos, voice notes, files, location,
@@ -187,6 +256,19 @@ WHATSAPP_SMS_WAIT_SECONDS=120
 WHATSAPP_AUTO_REPLY=inbox
 # books offered on "আরও বই নিবো" and in the price list (website slugs, comma-separated); empty = built-in list
 WHATSAPP_BOOK_LIST=
+# review request 14 days after delivery: the approved template's name (empty = off)
+WHATSAPP_TEMPLATE_REVIEW_REQUEST=
+# "Your review is published" + more books? (template review_approved, above); empty = off
+WHATSAPP_TEMPLATE_REVIEW_APPROVED=
+# optional: days after delivery (14) and send hours in Dhaka time (19-21 = 7:00 to 8:59 pm)
+REVIEW_REQUEST_DAYS=14
+REVIEW_REQUEST_HOURS=19-21
+# optional: coupon code made in admin → Coupons, shown after a review (any rating); empty = no reward
+REVIEW_REWARD_COUPON=
+# optional: % of customers not asked, to see whether the message brings reorders (0 = ask everyone)
+REVIEW_REQUEST_HOLDOUT_PERCENT=0
+# optional: staff numbers that are never asked (comma-separated)
+REVIEW_REQUEST_SKIP_NUMBERS=
 ```
 
 Then `pm2 restart amolbooks-api`. Turning it off: `WHATSAPP_ENABLED=false` and restart.

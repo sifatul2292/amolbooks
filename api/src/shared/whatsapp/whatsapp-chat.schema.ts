@@ -28,6 +28,7 @@ export const WhatsappChatSchema = new mongoose.Schema(
     unread: { type: Number, default: 0 },
     // An open "একই ডেলিভারি চার্জে আরও বই নিবো" (more) / "পরিবর্তন চাই" (change) tap: the inbox
     // nudges staff until someone marks it done or the order is booked / cancelled (owner, 2026-11-11).
+    // "সমস্যা আছে" on the review request (problem) stays until staff mark it done.
     request: {
       kind: { type: String },
       orderId: { type: String },
@@ -36,6 +37,9 @@ export const WhatsappChatSchema = new mongoose.Schema(
     },
     readAt: { type: Date },
     readBy: { type: String },
+    // The customer wrote "stop": no review requests or book suggestions (order updates still go).
+    followUpOptOut: { type: Boolean },
+    followUpOptOutAt: { type: Date },
   },
   { timestamps: true, versionKey: false },
 );

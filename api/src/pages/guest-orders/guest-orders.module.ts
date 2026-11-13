@@ -15,5 +15,7 @@ import { GuestOrdersController } from './guest-orders.controller';
   ],
   providers: [GuestOrdersService],
   controllers: [GuestOrdersController],
+  // The review page's login uses the same SMS codes (ReviewLoginService).
+  exports: [GuestOrdersService],
 })
 export class GuestOrdersModule {}

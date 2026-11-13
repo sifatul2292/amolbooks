@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as crypto from 'crypto';
 
-export type WhatsappOrderKind = 'order_placed' | 'order_shipped';
+export type WhatsappOrderKind = 'order_placed' | 'order_shipped' | 'review_request' | 'review_approved';
 /** What the order message's second button means: "একই ডেলিভারি চার্জে আরও বই নিবো" (order_confirm_v2) or "পরিবর্তন চাই" (order_confirm). */
 export type WhatsappSecondButton = 'more' | 'change';
 
@@ -28,6 +28,23 @@ export interface WhatsappBook {
   slug: string;
 }
 type ReplyHandler = (reply: WhatsappCustomerReply) => Promise<WhatsappReplyResult>;
+/**
+ * A tap on the review request's buttons: ভালো লাগছে (liked) / এখনো পড়িনি (unread) / সমস্যা আছে
+ * (problem); or on the "review published" message's: হ্যাঁ, বই লাগবে (more) / এখন না (nomore).
+ */
+export interface WhatsappReviewReply {
+  action: 'liked' | 'unread' | 'problem' | 'more' | 'nomore';
+  orderId: string;
+  from: string;
+  messageId?: string;
+}
+/** ReviewRequestService's answer: the text, and for "problem" the inbox nudge for staff. */
+export interface WhatsappReviewAnswer {
+  text: string;
+  request?: { kind: string; orderId: string; order: any };
+}
+type ReviewReplyHandler = (reply: WhatsappReviewReply) => Promise<WhatsappReviewAnswer | null>;
+type ReviewApprovedHandler = (reviewId: string) => Promise<unknown>;
 type OrderSmsHandler = (orderId: string) => Promise<void>;
 /** One message for the WhatsApp Inbox (whatsapp-chat.schema.ts). */
 export interface WhatsappChatEntry {
@@ -76,6 +93,8 @@ const DEFAULT_BOOK_LIST = [
   'secrets-of-wealth-and-provision',
 ];
 const BENGALI_DIGITS = '০১২৩৪৫৬৭৮৯';
+/** A customer's "stop" (whole message): no more review requests or book suggestions; order updates still go out. */
+const STOP_WORDS = ['stop', 'unsubscribe', 'বন্ধ', 'বন্ধ করুন', 'বন্ধ করো', 'বন্ধ কর', 'মেসেজ বন্ধ', 'মেসেজ বন্ধ করুন', 'আর মেসেজ দিবেন না', 'আর মেসেজ দেবেন না'];
 
 /**
  * Automatic WhatsApp order messages through Meta's WhatsApp Cloud API (template messages).
@@ -89,6 +108,8 @@ const BENGALI_DIGITS = '০১২৩৪৫৬৭৮৯';
 export class WhatsappService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(WhatsappService.name);
   private replyHandler: ReplyHandler | null = null;
+  private reviewHandler: ReviewReplyHandler | null = null;
+  private reviewApprovedHandler: ReviewApprovedHandler | null = null;
   private orderSmsHandler: OrderSmsHandler | null = null;
   private readonly seenMessages = new Set<string>();
   private readonly lastHandover = new Map<string, number>();
@@ -130,6 +151,10 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
       templates: {
         order_placed: String(env.WHATSAPP_TEMPLATE_ORDER_PLACED || '').trim(),
         order_shipped: String(env.WHATSAPP_TEMPLATE_ORDER_SHIPPED || '').trim(),
+        // 14 days after delivery (ReviewRequestService); empty = no review requests.
+        review_request: String(env.WHATSAPP_TEMPLATE_REVIEW_REQUEST || '').trim(),
+        // When staff approve a review from the review page; empty = no message.
+        review_approved: String(env.WHATSAPP_TEMPLATE_REVIEW_APPROVED || '').trim(),
       } as Record<WhatsappOrderKind, string>,
       appSecret: String(env.WHATSAPP_APP_SECRET || '').trim(),
       verifyToken: String(env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || '').trim(),
@@ -220,6 +245,8 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
 
   /** Inbox summary of an order message (the template text itself lives at Meta). */
   static templateSummary(kind: WhatsappOrderKind, params: string[]): string {
+    if (kind === 'review_request') return `Review request: ${params[1]} · ${params[2]}`;
+    if (kind === 'review_approved') return `Review published: ${params[1]} · ${params[2]}`;
     return kind === 'order_placed'
       ? `Order message #${params[1]}: ${params[2]} · ৳${params[3]}`
       : `Courier message #${params[1]}: ${params[2]} ${params[3]}`;
@@ -258,6 +285,42 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
   /** OrderService registers what a button tap does (confirm / more / change); see handleWhatsappReply. */
   onCustomerReply(handler: ReplyHandler): void {
     this.replyHandler = handler;
+  }
+
+  /** ReviewRequestService registers the answers to the review request's buttons. */
+  onReviewReply(handler: ReviewReplyHandler): void {
+    this.reviewHandler = handler;
+  }
+
+  /** ReviewRequestService registers the "your review is published" message (ReviewRequestService.notifyApproved). */
+  onReviewApproved(handler: ReviewApprovedHandler): void {
+    this.reviewApprovedHandler = handler;
+  }
+
+  /** ReviewService calls this when staff approve a review. Never throws, never waits for WhatsApp. */
+  reviewApproved(reviewId: any): void {
+    if (!this.reviewApprovedHandler || !reviewId) return;
+    void Promise.resolve()
+      .then(() => this.reviewApprovedHandler(String(reviewId)))
+      .catch((error) => this.logger.warn(`Review published message for ${reviewId} failed: ${error?.message || error}`));
+  }
+
+  /**
+   * Why this number gets no review request now: it said "stop" (opted_out), or staff still have an
+   * open request in the inbox (open_request). null = fine to ask.
+   */
+  async followUpBlocked(wa: string): Promise<'opted_out' | 'open_request' | null> {
+    if (!this.chatModel || !wa) return null;
+    const chat: any = await this.chatModel.findOne({ wa }).select('followUpOptOut request').lean();
+    if (chat?.followUpOptOut) return 'opted_out';
+    if (chat?.request?.kind) return 'open_request';
+    return null;
+  }
+
+  /** The whole message is a "stop" (English or Bengali, any case, trailing punctuation ignored). */
+  static isStopWord(text: any): boolean {
+    const clean = String(text || '').toLowerCase().replace(/[\s।.!,?]+$/u, '').replace(/\s+/g, ' ').trim();
+    return STOP_WORDS.includes(clean);
   }
 
   /** OrderService registers how a held order SMS is sent (OrderService.sendHeldOrderSms). */
@@ -355,6 +418,17 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
     return text.length > MAX_PARAM_LENGTH ? text.slice(0, MAX_PARAM_LENGTH - 1) + '…' : text;
   }
 
+  /** The order's review page (no login): amolbooks.com/rate/<token>. */
+  static reviewLink(token: any): string {
+    return `${SITE_URL}/rate/${String(token || '')}`;
+  }
+
+  /** The book's page on the shop (where a published review shows). */
+  static productLink(slug: any): string {
+    // ( and ) as %28 / %29, or the storefront's router opens a blank page.
+    return `${SITE_URL}/product-details/${encodeURIComponent(String(slug || '')).replace(/\(/g, '%28').replace(/\)/g, '%29')}`;
+  }
+
   static money(value: any): string {
     return Math.round(Math.max(0, Number(value) || 0)).toLocaleString('en-US');
   }
@@ -380,6 +454,23 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
    * exactly these (scripts/WHATSAPP_ORDERS.md has the texts).
    */
   static templateParams(kind: WhatsappOrderKind, order: any, courierData?: any): string[] {
+    // Review request: {{1}} name, {{2}} the books, {{3}} the review page.
+    if (kind === 'review_request') {
+      return [
+        WhatsappService.customerName(order),
+        WhatsappService.itemsSummary(order),
+        WhatsappService.reviewLink(order?.reviewRequest?.token),
+      ].map(WhatsappService.cleanParam);
+    }
+    // Review published: {{1}} name, {{2}} the book, {{3}} its page (the review shows there).
+    if (kind === 'review_approved') {
+      const approved = order?.reviewRequest?.approved || {};
+      return [
+        WhatsappService.customerName(order),
+        String(approved.name || WhatsappService.itemsSummary(order)),
+        WhatsappService.productLink(approved.slug),
+      ].map(WhatsappService.cleanParam);
+    }
     if (kind === 'order_placed') {
       return [
         WhatsappService.customerName(order),
@@ -415,9 +506,15 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
     const params = WhatsappService.templateParams(kind, order, courierData);
     const chat: WhatsappChatEntry = { wa: to, direction: 'out', kind: 'order', type: 'template', text: WhatsappService.templateSummary(kind, params), orderId: String(order.orderId || '') };
     try {
+      // The review template has three quick replies in this order: ভালো লাগছে, এখনো পড়িনি, সমস্যা আছে.
       const buttons = kind === 'order_placed' && config.confirmButtons
         ? [`confirm:${order._id}`, `${config.secondButton}:${order._id}`]
-        : undefined;
+        : kind === 'review_request'
+          ? ['liked', 'unread', 'problem'].map((action) => `review_${action}:${order._id}`)
+          // The published template's two quick replies: হ্যাঁ, বই লাগবে / এখন না.
+          : kind === 'review_approved'
+            ? ['more', 'nomore'].map((action) => `review_${action}:${order._id}`)
+            : undefined;
       const messageId = await this.sendTemplate(to, template, params, buttons);
       update = { 'whatsappMessages.$.status': 'sent', 'whatsappMessages.$.messageId': messageId, 'whatsappMessages.$.updatedAt': new Date() };
       Object.assign(chat, { messageId, status: 'sent' });
@@ -578,8 +675,31 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
           : '',
     );
     const match = payload.match(/^(confirm|change|more):([a-f0-9]{24})$/);
+    const review = payload.match(/^review_(liked|unread|problem|more|nomore):([a-f0-9]{24})$/);
     let text: string;
-    if (match && this.replyHandler) {
+    if (review) {
+      // Review request tap: the answer comes from ReviewRequestService (review link, a book, or "tell us").
+      let answer: WhatsappReviewAnswer | null = null;
+      try {
+        answer = this.reviewHandler
+          ? await this.reviewHandler({ action: review[1] as WhatsappReviewReply['action'], orderId: review[2], from, messageId: id })
+          : null;
+      } catch (error) {
+        this.logger.warn(`WhatsApp review ${review[1]} for order ${review[2]} failed: ${error?.message || error}`);
+      }
+      if (answer?.request && this.chatModel) {
+        await this.chatModel.updateOne({ wa: from }, { $set: { request: { ...answer.request, at: new Date() } } })
+          .catch((error) => this.logger.warn(`WhatsApp inbox request flag failed: ${error?.message || error}`));
+      }
+      text = answer?.text || this.replyText({ status: 'unknown', orderId: await this.latestOrderId(from) });
+    } else if (content.type === 'text' && WhatsappService.isStopWord(content.text)) {
+      // "Stop": no more review requests / book suggestions (order updates still go out).
+      if (this.chatModel) {
+        await this.chatModel.updateOne({ wa: from }, { $set: { followUpOptOut: true, followUpOptOutAt: new Date() } })
+          .catch((error) => this.logger.warn(`WhatsApp opt-out not saved: ${error?.message || error}`));
+      }
+      text = 'ঠিক আছে, রিভিউ বা নতুন বইয়ের মেসেজ আর পাঠানো হবে না।\nঅর্ডারের আপডেট আগের মতোই পাবেন।\n— amolbooks.com';
+    } else if (match && this.replyHandler) {
       let result: WhatsappReplyResult = { status: 'unknown' };
       try {
         result = await this.replyHandler({ action: match[1] as WhatsappCustomerReply['action'], orderId: match[2], from, messageId: id });

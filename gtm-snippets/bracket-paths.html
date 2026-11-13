@@ -1,0 +1,12 @@
+<!-- Author and book pages whose address has ( or ) — 27 authors such as "…-(রহ.)" / "…-(সম্পাদক)" and
+     the book "… Rasul (SA)". The storefront's router reads ( and ) in a path as route syntax, finds no
+     page and shows a blank screen (owner, 2026-11-13; also on live). Links the shop builds now write
+     them as %28 / %29; this fixes old links (search results, shared links) before the router starts. -->
+<script>
+(function () {
+  'use strict';
+  var path = location.pathname;
+  if (!/[()]/.test(path) || !/^\/(author-list\/author-details|product-details)\//.test(path)) return;
+  history.replaceState(history.state, '', path.replace(/\(/g, '%28').replace(/\)/g, '%29') + location.search + location.hash);
+})();
+</script>
