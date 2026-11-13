@@ -13,7 +13,9 @@
   if (!local || window.__abLocalApiOnly) return;
   window.__abLocalApiOnly = true;
   var LIVE = 'https://apisub.amolbooks.com';
-  var CATALOGUE = /^(POST \/api\/product\/get-all|POST \/api\/product\/get-products-by-ids|POST \/api\/category\/get-all\/|GET \/api\/product\/get-all-data)$/;
+  // Bought-together sets are made by staff in the live admin; the preview database has none, so the
+  // book page's "+" bundle section came up empty locally (owner, 2026-11-13). Read them from live too.
+  var CATALOGUE = /^(POST \/api\/product\/get-all|POST \/api\/product\/get-products-by-ids|POST \/api\/category\/get-all\/|GET \/api\/product\/get-all-data|GET \/api\/product\/get-bought-together(?:-by-product\/[^/]+)?)$/;
   // Public files (sample PDFs, covers, fonts) exist only on the live server; reading them carries
   // no account data, so they stay there (the "একটু পড়ে দেখুন" viewer stalled on a local 404).
   var PUBLIC_FILES = /^GET \/api\/(upload|storefront-assets)\//;
