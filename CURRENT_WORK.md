@@ -1,3 +1,12 @@
+## SEAN Publication books (2026-11-12, branch claude/staff-performance; committed and pushed 2026-11-13, not imported on live yet)
+
+- Owner shared SEAN's sheet (Google Sheets "সকল বইয়ের তথ্য - সিয়ান পাবলিকেশন", public xlsx export): ~100 products incl. 11 children's box sets; per book a Drive folder (front/back/full cover + sample PDF) and a seanpublication.com link.
+- `data/new-books/sean-publication`: 79 books, 79 covers (Drive fronts; SEAN site / Wafilife flat covers for the আকিদা সিরিজ; PDF page 1 for the square Quran activity book), 76 sample PDFs (48 publisher Drive PDFs recompressed with links dropped — the two Qurans re-rendered 2-bit grey; 28 Wafilife look-insides with the Amolbooks logo), 22 new-author bios (Bengali, own words; facts from SEAN author pages and well-known public info). Publisher = existing shop "সিয়ান পাবলিকেশন". Prices: sheet price, "MRP" books 23% off (= Rokomari), "নির্ধারিত" 0%; paperback where SEAN sells both.
+- Skipped (in shop): মহিমান্বিত কুরআন ১ খণ্ড / ৬ খণ্ড সেট, রউফুর রহীম ৩ খণ্ড, উমার ১-২, টাইম ম্যানেজমেন্ট, কুরআন বোঝার মূলনীতি. Held for owner: 11 children's box sets (ToonToon L1-4 বাংলা/English, সহানুভূতি সিরিজ, ঈমানের প্রথম পাঠ, Raft of Colors); left out: Raising A Muslim Child, Marriage (English), রংধনু, আব্বু/আম্মু তুমি কী করো? (no cover/description anywhere). No sample: তত্ত্ব ছেড়ে জীবনে, এটা কী?, ঘুড়ি.
+- English editions named "Time Management (English)" / "Self Confidence (English)" — the importer matches English names and the shop's টাইম ম্যানেজমেন্ট is "Time Management". Existing writers linked by exact shop name (a substring lookup once linked আকিদা সিরিজ to the wrong আশকার — keys now must match one author).
+- Checked: check-new-books (all sets except the old amol-books discount failure), import dry run + apply on the local books preview DB (79 books, 30 new authors, 0 skipped; writer links verified; product og pages OK).
+- To go live: commit + push, safe-pull on VPS, `node scripts/import-books.cjs sean-publication` then `--apply`, review drafts, `node scripts/publish-books.cjs sean-publication --facebook-catalog [--apply]`.
+
 ## Cost price from publisher discount: Samakalin 60%, Sandipan 45% (2026-11-12, branch claude/staff-performance; committed and pushed 2026-11-12, not run on live yet)
 
 - Owner (Samakalin invoice: 20 × 60৳ = 1200, 40% off = 720৳): "somokalin gives me 40% ... sondipon gives me 55%" = trade discount, so cost = 60% / 45% of the sale price (MRP). Rounded UP to whole Taka like the owner's existing Sandipan entries (392 → 177).

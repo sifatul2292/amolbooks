@@ -1,0 +1,2664 @@
+{
+  "publisher": "সিয়ান পাবলিকেশন",
+  "note": "SEAN Publication (সিয়ান পাবলিকেশন) books not yet on Amol Books (2026-11-12), from the publisher's sheet (owner shared). Imported as draft, 20 in stock. Price = sheet cover price (\"MRP\") minus 23% (Rokomari's discount on SEAN books), \"নির্ধারিত\" fixed-price books 0% off; where SEAN sells hardcover and paperback, the paperback. Covers: publisher Drive front covers (else SEAN site / Wafilife flat covers). Samples: publisher Drive PDFs (recompressed, links dropped) or Wafilife look-inside pages with the Amolbooks logo. Descriptions from seanpublication.com; seoDescription hand-written. Held back: 11 children's box sets (ToonToon levels 1-4 Bangla/English, সহানুভূতি সিরিজ, ঈমানের প্রথম পাঠ, Raft of Colors) and 5 books with no cover/description anywhere; 6 titles already in the shop skipped.",
+  "books": [
+    {
+      "name": "মহিমান্বিত কুরআন (বয়স্ক ভার্সন)",
+      "nameEn": "Mohimannito Quran (Boyoshko Version)",
+      "slug": "mohimannito-quran-boyoshko-version",
+      "mrp": 1290,
+      "discountPercent": 0,
+      "discountAmount": 0,
+      "quantity": 20,
+      "pages": 936,
+      "edition": null,
+      "binding": null,
+      "translators": [
+        "মুফতি আবু উমামা কুতুবুদ্দিন মাহমুদ",
+        "মুফতি আব্দুল্লাহ শিহাব"
+      ],
+      "authors": [
+        {
+          "name": "আবু তাসমিয়া আহমদ রফিক (সম্পাদক)",
+          "nameEn": "Abu Tasmia Ahmad Rafiq"
+        }
+      ],
+      "categories": [
+        "কুরআন বিষয়ক আলোচনা",
+        "কুরআন শেখা"
+      ],
+      "description": "<p>মহিমান্বিত কুরআন। কুরআন মাজিদ। মানবজাতির মুক্তির লক্ষ্যে আল্লাহর পক্ষ থেকে পৃথিবীর বুকে অবতীর্ণ শ্রেষ্ঠ গ্রন্থের নাম। এতে আছে সমগ্র মানবজাতির জন্য হিদায়াত। সর্বোত্তম পবিত্রতম জীবনের জন্য একটি শ্রেষ্ঠ জীবন বিধান। এই কুরআন প্রাণে প্রাণে জ্বালে রহমানি আলোর জ্যোতি। যুগ যুগান্তর ও বহু ভৌগোলিক সীমানা ছাড়িয়ে এই কুরআন এখনো স্বমহিমায় উজ্জ্বল—অবিকৃত</p><p>পবিত্র কুরআন মজিদ তিলাওয়াতের সময় আমাদের প্রবলভাবে জানতে ইচ্ছে করে, আমার আল্লাহ এই আয়াতে আমাকে কী বলছেন! আমরা আল্লাহর সমস্ত কথা বুঝতে চাই—বাক্যে বাক্যে বুঝতে চাই, শব্দে শব্দে বুঝতে চাই। আমাদের এই চাওয়া পূরণ করেছে মহিমান্বিত কুরআন।</p>",
+      "seoDescription": "মহিমান্বিত কুরআন (বয়স্ক ভার্সন) — বড় হরফে সহজে পড়ার উপযোগী কুরআনের সরল বাংলা অনুবাদ; প্রবীণ পাঠকদের জন্য সিয়ান পাবলিকেশনের বিশেষ সংস্করণ।",
+      "image": "book-mohimannito-quran-boyoshko-version-75f8.webp",
+      "pdf": "mohimannito-quran-boyoshko-version-28d0.pdf",
+      "coverSource": "drive: মহিমান্বিত কুরআন (বয়স্ক ভার্সন) front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/mquran-elder-edition/",
+        "https://drive.google.com/drive/folders/13reIrsOLlEmMCoF4yd6mX-PoDRzbDwW5?usp=sharing"
+      ]
+    },
+    {
+      "name": "The Glorious Quran : Word for Word Translation",
+      "nameEn": "The Glorious Quran Word for Word Translation",
+      "slug": "the-glorious-quran-word-for-word-translation",
+      "mrp": 1090,
+      "discountPercent": 0,
+      "discountAmount": 0,
+      "quantity": 20,
+      "pages": 902,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. শেহনাজ শেখ",
+          "nameEn": "Dr. Shehnaz Shaikh"
+        },
+        {
+          "name": "কাওসার খাত্রী",
+          "nameEn": "Kausar Khatri"
+        }
+      ],
+      "categories": [
+        "কুরআন বিষয়ক আলোচনা",
+        "কুরআন শেখা"
+      ],
+      "description": "<p>Some features of this book :</p><p>Even though there are many translation of the meaning of the Quran, they do not help the reader in linking the Arabic words to their meanings. The only purpose of this word-for-word translation is to facilitate learning the language of the Quran. Even though a few word-for-word translations exist but the format of the present work is different from them.</p><p>* The meaning of each word is given right below it.</p><p>* The translation provided in the left column is kept close to the Arabic and not literal. The objective of the whole exercise is to enable the reader understand directly from Arabic.</p><p>* Last, but not the least, the layout is such that it can also be used for regular recitation enabling constant revision.</p>",
+      "seoDescription": "The Glorious Quran : Word for Word Translation — Dr. Shehnaz Shaikh ও Kausar Khatri সংকলিত কুরআনের শব্দে শব্দে ইংরেজি অনুবাদ, এক খণ্ডে।",
+      "image": "book-the-glorious-quran-word-for-word-translation-a271.webp",
+      "pdf": "the-glorious-quran-word-for-word-translation-558d.pdf",
+      "coverSource": "drive: THE GLORIOUS QURAN front.png",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/the-glorious-quran-word-for-word-translation-hardcover/",
+        "https://drive.google.com/drive/folders/1c58oERVdf4_aKg2Uk_tetIz29BH90vrh?usp=sharing"
+      ]
+    },
+    {
+      "name": "আবু বাকর আস-সিদ্দীক : জীবন ও শাসন",
+      "nameEn": "Abu Bakr As-Siddiq Jibon O Shashon",
+      "slug": "abu-bakr-as-siddiq-jibon-o-shashon",
+      "mrp": 825,
+      "discountPercent": 23,
+      "discountAmount": 190,
+      "quantity": 20,
+      "pages": 608,
+      "edition": null,
+      "binding": "হার্ডকভার",
+      "translators": [
+        "মাসুদ শরীফ",
+        "সানজিদা শারমিন",
+        "ফারজানা হাবিব"
+      ],
+      "authors": [
+        {
+          "name": "ড. আলি মুহাম্মাদ সাল্লাবি",
+          "nameEn": "Dr. Ali Muhammad Sallabi"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>প্রতিদিন ফজরের আগে খলিফা আবু বকর সিদ্দিক রাযিয়াল্লাহু আনহু মদিনার বাইরে একটি তাঁবুতে যেতেন। তিনি তাঁবুতে প্রবেশ করে সেখানে কিছুক্ষণ সময় কাটাতেন। আবু বকর রাযিয়াল্লাহু আনহু যখন মারা যান, তখন সাইয়্যিদুনা ওমর ইবনুল খাত্তাব রাযিয়াল্লাহু আনহু খুঁজে বের করার চেষ্টা করলেন যে ঐ তাঁবুতে কে থাকে?!</p><p>তিনি সেখানে গিয়ে এক বৃদ্ধ মহিলাকে দেখতে পেলেন, যে বয়সের কারণে প্রায় অন্ধ হয়ে গেছে। ওমর রাযিয়াল্লাহু আনহু বৃদ্ধার কাছে তার সম্পর্কে জানতে চান। বৃদ্ধা উত্তর দেন, ‘আমি এক বৃদ্ধা, যার এই দুনিয়াতে কেউ নেই এবং আমি আমার ভেড়াসহ একা এই তাঁবুতে থাকি। প্রতিদিন মদিনা থেকে একটা লোক এখানে এসে আমার তাঁবু ঝাড়ু দিয়ে দেয়, খাবার রান্না করে দেয়, ভেড়া থেকে দুধ দোহন করে দেয় এবং সেগুলোর যত্ন নেয়। তারপর চলে যায়। তার পরিচর্যা ছাড়া আমার পক্ষে বেঁচে থাকা সম্ভব ছিল না।’</p><p>ওমর রাযিয়াল্লাহু আনহু প্রশ্ন করলেন, ‘আপনি কী জানেন ঐ ব্যক্তি কে?’ মহিলা জানালেন, ঐ ব্যক্তি কে, সে সম্পর্কে তার কোনো ধারণাই নেই। মদিনার ওই লোক কখনোই বৃদ্ধার কাছে এই ব্যাপারে কিছু বলেনি। ওমর রাযিয়াল্লাহু আনহু তখন বৃদ্ধাকে বললেন, ‘তিনি ছিলেন খলিফাতুর রাসূল আবু বকর সিদ্দীক রাযিয়াল্লাহু আনহু’।</p>",
+      "seoDescription": "আবু বাকর আস-সিদ্দীক : জীবন ও শাসন — ড. আলি মুহাম্মাদ সাল্লাবি রচিত প্রথম খলিফার পূর্ণাঙ্গ জীবনী, খিলাফত পরিচালনা ও শাসননীতির বিবরণ।",
+      "image": "book-abu-bakr-as-siddiq-jibon-o-shashon-e241.webp",
+      "pdf": "abu-bakr-as-siddiq-jibon-o-shashon-609d.pdf",
+      "coverSource": "drive: আবু বাকর আস-সিদ্দীক front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/abu-bakr-as-siddiq-jibon-o-shashon/",
+        "https://www.rokomari.com/book/164799",
+        "https://drive.google.com/drive/folders/1pgRmJV-1cbsCD-DF7ybd6tnRV62vwgyZ?usp=sharing"
+      ]
+    },
+    {
+      "name": "উসমান ইবনু আফফান রা. : জীবন ও শাসন",
+      "nameEn": "Uthman Ibnu Affan RA Jibon O Shashon",
+      "slug": "uthman-ibnu-affan-ra-jibon-o-shashon",
+      "mrp": 780,
+      "discountPercent": 23,
+      "discountAmount": 179,
+      "quantity": 20,
+      "pages": 520,
+      "edition": null,
+      "binding": "হার্ডকভার",
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. আলি মুহাম্মাদ সাল্লাবি",
+          "nameEn": "Dr. Ali Muhammad Sallabi"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>রাসুলুল্লাহর পর খুলাফা রাশিদুন উম্মাতের সেরা প্রজন্ম। তাদের সময়ে ইসলাম যতটা বিশুদ্ধ, যতটা প্রভাবশালী ছিল, অন্য আর কোনো সময়ে ততটা ছিল না। যতটা সম্মান আর আত্মমর্যাদা নিয়ে কালের সে অধ্যায়ে মুসলিমরা জীবনযাপন করেছেন, ইতিহাসে তেমন আর কোনো অধ্যায় আজ অবধি আসেনি।</p><p>আফসোসের বিষয়, আমরা বর্তমান প্রজন্মের মুসলিমরা সমাজ ও জীবন-বিধ্বংসী নায়ক-গায়ক, খেলোয়াড়-মডেল কিংবা হালের প্রতাপশালী শাসকদের সম্পর্কে যতটা জানি, খুলাফা রাশিদুনের মহান ব্যক্তিবর্গ সম্পর্কে ততটাই কম জানি।</p><p>মুসলিম উম্মাহর সার্বিক অবস্থার সাথে আমাদের এই ঔদাসীন্যের সম্পর্ক অত্যন্ত গভীর। আমরা যদি পুনরায় আমাদের সেই গৌরবোজ্জ্বল সময়টা ফিরিয়ে আনতে চাই, তা হলে নক্ষত্রসম এই মানুষগুলোর জীবনাচার ও কর্মধারা সম্পর্কে জানা ও তা আমাদের বাস্তব জীবনে প্রয়োগ করার কোনো বিকল্প নেই।</p><p>দুর্দশাগ্রস্ত মুসলিম উম্মাহর বর্তমান করুণ অবস্থা নিয়ে ভাবতে বসলে আমাদের মন চলে যায় যুন-নুরাইন উসমান ইবনু আফফানের শাসনামলে। তার সততা, সরলতা আর নিজ রক্তের বিনিময়ে উম্মাহর রক্তের সুরক্ষা প্রদানের মানসিকতার সুযোগ নিয়ে দুর্বৃত্তরা সেই দুর্বৃত্তি শুরু করল, আজ পর্যন্ত তাঁর অবসান হলো না। মাঝেমধ্যে হয়তো তার মাত্রা ও তারতম্যে পার্থক্য হয়েছে; কিন্তু কখনো তা বন্ধ হয়নি।</p><p>খলিফা উসমানের অন্তরে যে আল্লাহভীরুতা, মনের যে সরলতা, উম্মাহর যে কল্যাণকামিতা এবং ব্যক্তিত্বে যে মূর্ছনা ছিল—সেসবের কাছে এই উম্মাহ চিরকাল ঋণী।</p><p>আবু বাক্‌র উমারের পর উসমানই ছিলেন উম্মাহর শ্রেষ্ঠ সন্তান। ক্ষমতা থাকা সত্ত্বেও তা ব্যবহার করেননি, কেবল উম্মাহর রক্তের প্রতি তার অকুণ্ঠ দায়িত্ববোধের কারণে। দুষ্কৃতকারীদের হাতে তার নিহত হওয়ার মধ্য দিয়ে যে ফিতনার মধ্যে উম্মাহ পতিত হয়েছে, আর তা বন্ধ করা যায়নি—আজও।</p><p>আমরা আশা করি, কায়মনোবাক্যে প্রার্থনা করি : এই মহান ব্যক্তিত্বের জীবনীর আলোকচ্ছটা যেন সর্বপ্রথম আমাদের এই জাতিকে উদ্ভাসিত করে। এর হাত ধরে যেন আগামী দিনে খিলাফাত আলা মানহাজিন নুবুওয়্যাহ ফিরিয়ে আনার মতো যোগ্য নেতৃত্ব বেরিয়ে আসে উম্মাহর কল্যাণ সাধনে।</p>",
+      "seoDescription": "উসমান ইবনু আফফান রা. : জীবন ও শাসন — তৃতীয় খলিফার জীবন, কুরআন সংকলন, শাসনব্যবস্থা ও ফিতনার সময়কাল নিয়ে ড. সাল্লাবির গবেষণাগ্রন্থ।",
+      "image": "book-uthman-ibnu-affan-ra-jibon-o-shashon-486b.webp",
+      "pdf": "uthman-ibnu-affan-ra-jibon-o-shashon-baea.pdf",
+      "coverSource": "drive: উসমান ইবনু আফফান রা. জীবন ও শাসন front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/uthman-ibn-affan-ra-jibon-o-shashon/",
+        "https://www.rokomari.com/book/192488",
+        "https://drive.google.com/drive/folders/1sjmQbmI5NQ-R4P2CUK18fqZ6Zfda4Y5G?usp=sharing"
+      ]
+    },
+    {
+      "name": "আলি ইবনু আবি-তালিব : জীবন ও শাসন (২ খণ্ড একত্রে)",
+      "nameEn": "Ali Ibnu Abi Talib Jibon O Shashon (2 Volumes)",
+      "slug": "ali-ibnu-abi-talib-jibon-o-shashon-2-volumes",
+      "mrp": 1560,
+      "discountPercent": 23,
+      "discountAmount": 359,
+      "quantity": 20,
+      "pages": 1045,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. আলি মুহাম্মাদ সাল্লাবি",
+          "nameEn": "Dr. Ali Muhammad Sallabi"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>ইসলামের ইতিহাসে সবচেয়ে স্পর্শকাতর ও সঙ্গিন মুহূর্তে মহান অভিভাবক হয়ে খেলাফতের ভার গ্রহণ করেন ‘আলি ইবনু আবি তালিব। তার কাঁধে বর্তায় আগামী পৃথিবীর ভবিষ্যৎ।</p><p>খলিফা উসমানের হত্যাকাণ্ডের পর মুসলিমদের মাঝে খারেজি ও শিয়াদের যে ব্যাপক নৈরাজ্য ছড়িয়ে পড়েছিল, তাকে সফলভাবে মোকাবেলা করেছিলেন তিনি। সুদূরপ্রসারী প্রজ্ঞার মাধ্যমে তিনি যে সিদ্ধান্তগুলো নিয়েছিলেন, সেগুলো সার্থকভাবেই মুসলিমদের সত্যপথে অবিচল রাখতে বিরাট ভূমিকা পালন করেছিল।</p><p>রাসুলের জীবদ্দশায় আলি ছিলেন রাসুলের অন্যতম আস্থাভাজন সাহাবী। তিনি স্থাপন করেছিলেন আত্মোৎসর্গের অনন্য নজির।আলি ইবনু আবি তালিবের বর্ণাঢ্য জীবনের বর্ণনাসমৃদ্ধ এ-গ্রন্থ পাঠে আমাদের অর্জিত হতে পারে রাষ্ট্র, সমাজ, আইন, সংবিধান ও বিচারপদ্ধতিসহ অগণন জ্ঞানের অতুলনীয় ভাণ্ডার।</p><p>তার জীবনেতিহাস করতে পারে আমাদের জীবনকে দীপান্বিত এবং নির্মাণ করতে পারে জান্নাতি ও আলোকিত এক রূপরেখা—নীড়ে ফেরার মানচিত্র।</p>",
+      "seoDescription": "আলি ইবনু আবি-তালিব : জীবন ও শাসন — চতুর্থ খলিফা আলি রা.-এর জীবন, খিলাফত ও কঠিন সময়ের ইতিহাস নিয়ে ড. সাল্লাবির দুই খণ্ডের গ্রন্থ একত্রে।",
+      "image": "book-ali-ibnu-abi-talib-jibon-o-shashon-2-volumes-6969.webp",
+      "pdf": "ali-ibnu-abi-talib-jibon-o-shashon-2-volumes-7665.pdf",
+      "coverSource": "drive: আলি ইবনু আবি-তালিব  জীবন ও শাসন front.png",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/ali-ibn-abi-talib-life-2-volumes/",
+        "https://drive.google.com/drive/folders/14O0CLwydJmMzfMGLqokJxhGAbLhQ5_kn?usp=sharing"
+      ]
+    },
+    {
+      "name": "হাসান ইবনু আলি রা. : জীবন ও শাসন",
+      "nameEn": "Hasan Ibnu Ali RA Jibon O Shashon",
+      "slug": "hasan-ibnu-ali-ra-jibon-o-shashon",
+      "mrp": 475,
+      "discountPercent": 23,
+      "discountAmount": 109,
+      "quantity": 20,
+      "pages": 330,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. আলি মুহাম্মাদ সাল্লাবি",
+          "nameEn": "Dr. Ali Muhammad Sallabi"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>হাসান ইবনু আলি—খুলাফায়ে রাশিদিনের শেষ খলিফা। নবিজির প্রিয় দৌহিত্র। যখন খিলাফতের শুভ্র-ধবল আঙিনায় রক্তের দগদগে দাগ, তখন তিনি উম্মাহর ঐক্যের জন্য বেছে নিয়েছিলেন সমঝোতার পথ। উম্মাহকে দেখিয়েছিলেন সুন্নাহর সরল সরণি।</p><p>রাসুল সাল্লাল্লাহু আলাইহি ওয়াসাল্লাম তাঁর এই প্রিয় দৌহিত্র সম্পর্কে বলেছেন, ‘আমার এই ছেলে ভবিষ্যতে নেতা হবে। অচিরেই তার মাধ্যমে আল্লাহ মুসলিমদের বিরাট দুটি দলকে সমঝোতায় পৌঁছাবেন।</p><p>রাসূলের বাণীকে সত্য করে সমঝোতার এক মহান কীর্তি স্থাপন করেন উম্মাহর এই মহান ইমাম। প্রতারকদের হাতে শহীদ হয়ে পারি জমান ওপারে; কিন্তু উম্মাহর আস্থা ও বিশ্বাসে টল আসতে দেননি। তার মাধ্যমে আবার ফিরে আসে চারপাশে আল্লাহর দীন ছড়িয়ে পড়ার মাহেন্দ্রক্ষণ।</p><p>মহান এই খলিফার জীবনী জানতে পড়ুন—হাসান ইবনু আলি : জীবন ও শাসন।</p>",
+      "seoDescription": "হাসান ইবনু আলি রা. : জীবন ও শাসন — নবিজির প্রিয় দৌহিত্র ও খুলাফায়ে রাশিদিনের শেষ খলিফার জীবন, আপস ও উম্মাহর ঐক্যের গল্প।",
+      "image": "book-hasan-ibnu-ali-ra-jibon-o-shashon-b64f.webp",
+      "pdf": "hasan-ibnu-ali-ra-jibon-o-shashon-43a3.pdf",
+      "coverSource": "drive: হাসান ইবনু আলি রা. জীবন ও শাসন front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/hasan-ibn-ali-jibon-o-shason-2/",
+        "https://www.rokomari.com/book/202345",
+        "https://drive.google.com/drive/folders/18cO276hLDhBEbZhWjWwOc8ivt0m7YSkt?usp=sharing"
+      ]
+    },
+    {
+      "name": "Time Management (English)",
+      "nameEn": "Time Management (English)",
+      "slug": "time-management-english",
+      "mrp": 270,
+      "discountPercent": 23,
+      "discountAmount": 62,
+      "quantity": 20,
+      "pages": 144,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "ইসমাইল কামদার",
+          "nameEn": "Ismail Kamdar"
+        }
+      ],
+      "categories": [
+        "প্রোডাক্টিভিটি",
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>Time Management is one of the most important things to be successful and happy, both in professional and personal life. This book will make yourself expert to manage your time effectively, so that you can get maximum benefit from your daily life.</p>",
+      "seoDescription": "Time Management — Ismail Kamdar's practical Islamic guide to planning, priorities and productive use of time in this life and for the next.",
+      "image": "book-time-management-english-2534.webp",
+      "pdf": "time-management-english-d437.pdf",
+      "coverSource": "drive: Time Management (English) front.png",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/time-management-english/",
+        "https://www.rokomari.com/book/174241",
+        "https://drive.google.com/drive/folders/1luyEa3izYCcgeVzgepnZAywnhnnUt7yY?usp=sharing"
+      ]
+    },
+    {
+      "name": "সেলফ কনফিডেন্স",
+      "nameEn": "Self Confidence (Bangla)",
+      "slug": "self-confidence-bangla",
+      "mrp": 250,
+      "discountPercent": 23,
+      "discountAmount": 58,
+      "quantity": 20,
+      "pages": 148,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "ইসমাইল কামদার",
+          "nameEn": "Ismail Kamdar"
+        }
+      ],
+      "categories": [
+        "প্রোডাক্টিভিটি",
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>আমরা মুসলিম। মুসলিম হিসেবে আমরা কিছু মৌলিক বিশ্বাস এবং আদর্শ ধারণ করি। আমাদের এই বিশ্বাস মোতাবেকই আমরা আমাদের জীবন পরিচালনা করি। তাই আত্মবিশ্বাস অর্জনের যেসব পদ্ধতি আছে, তার চেয়ে আমাদের অনুসৃত পদ্ধতি ভিন্ন হবে। আমরা তা নিরূপণ ও অনুসরণ করব আমাদের আদর্শের আলোকে।</p><p>সেক্যুলার চিন্তাবিদরা মানুষকে সবচেয়ে গুরুত্বপূর্ণ অস্তিত্বশীল সত্তা মনে করেন। মানুষের যাবতীয় চাহিদা পূরণ করাটাকেই তারা জীবনের মূল উদ্দেশ্য মনে করেন। অন্যদিকে ইসলামি দৃষ্টিকোণ থেকে ব্যাখ্যা করলে আমরা কেবলই আল্লাহর দাস। তাঁর দেওয়া বিধান অনুসরণ করে তাঁর সন্তুষ্টি অর্জন করাটাই হলো আমাদের জীবনের আসল উদ্দেশ্য।</p><p>জীবন সম্পর্কে আমাদের এই ধারণা আত্মবিশ্বাসের ব্যাপারে আমাদের দৃষ্টিভঙ্গিতেও প্রভাব ফেলে। ‘আমরা নিজেরাই নিজেদের চালানোর জন্য যথেষ্ট’—এ ধরনের ভাবনা আমরা লালন করি না। বরং আমরা আল্লাহর দাস। তাই নিজেদের যোগ্যতার ওপর আমাদের যে বিশ্বাসটুকু আছে, সেটা সৃষ্টিকর্তা হিসেবে আল্লাহর ওপর আমাদের বিশ্বাস থেকে আসে। আমরা এই বিশ্বাসটুকু পাই তিনি আমাদের যেভাবে সৃষ্টি করেছেন, তা থেকে এবং তাঁর করা ওয়াদা থেকে।</p><p>ইসলামি দৃষ্টিকোণ থেকে বিবেচনা করলে আত্মবিশ্বাস থাকাটা আরো বেশি শক্তিশালী ব্যাপার মনে হয়। কারণ, এক্ষেত্রে আমরা শুধু আমাদের নিজস্ব ক্ষমতার ওপর নির্ভর করছি না। আমাদের আত্মবিশ্বাসের শক্তিকে আরো বেশি বলীয়ান করছে আল্লাহর ওয়াদা। তিনি ওয়াদা করেছেন আমরা কল্পনাও করতে পারব না, এমনসব উপায়ে তিনি আমাদের সাহায্য করবেন। তাই আমাদের লক্ষ্য অর্জন করতে গিয়ে এমন অলৌকিক কিছুও ঘটতে পারে, যা অন্য কারো ক্ষেত্রে হয়তো হবে না।</p>",
+      "seoDescription": "সেলফ কনফিডেন্স — মুসলিম পরিচয় থেকে আত্মবিশ্বাস গড়ে তোলার উপায় নিয়ে ইসমাইল কামদারের সহজ ও কার্যকর বই।",
+      "image": "book-self-confidence-bangla-13c9.webp",
+      "pdf": "self-confidence-bangla-da73.pdf",
+      "coverSource": "drive: সেলফ কনফিডেন্স (বাংলা) front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/self-confidence-bangla/",
+        "https://www.rokomari.com/book/213852",
+        "https://drive.google.com/drive/folders/1HLzFJCai3RqF9JlXsf67YUZar8_WtSsl?usp=sharing"
+      ]
+    },
+    {
+      "name": "Self Confidence (English)",
+      "nameEn": "Self Confidence (English)",
+      "slug": "self-confidence-english",
+      "mrp": 480,
+      "discountPercent": 23,
+      "discountAmount": 110,
+      "quantity": 20,
+      "pages": 144,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "ইসমাইল কামদার",
+          "nameEn": "Ismail Kamdar"
+        }
+      ],
+      "categories": [
+        "প্রোডাক্টিভিটি",
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>From this book the readers would be able to learn : To work efficiently and productively; Improve interpersonal relationships; Deal with doubts, criticisms and negativity; Live lives without fear of wath others will say; Achieve confidence to chase dreams and goals and many more.</p>",
+      "seoDescription": "Self Confidence — Ismail Kamdar shows Muslims how to build real self-confidence from faith, with practical steps for work and life.",
+      "image": "book-self-confidence-english-22ff.webp",
+      "pdf": "self-confidence-english-df32.pdf",
+      "coverSource": "drive: Self Confidence (English) front.jpg",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/self-confidence-hardcover/",
+        "https://www.rokomari.com/book/153491",
+        "https://drive.google.com/drive/folders/1dQNrHzSnnYcNQrm3Gud3DLlcNzuf3aEK?usp=sharing"
+      ]
+    },
+    {
+      "name": "নবিজীবনে নেতৃত্বের শিক্ষা",
+      "nameEn": "Nobijibone Netritter Shikkha",
+      "slug": "nobijibone-netritter-shikkha",
+      "mrp": 340,
+      "discountPercent": 23,
+      "discountAmount": 78,
+      "quantity": 20,
+      "pages": 184,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [
+        "নাজমুল হাসান"
+      ],
+      "authors": [
+        {
+          "name": "মির্জা ইয়াওয়ার বেইগ",
+          "nameEn": "Mirza Yawar Baig"
+        }
+      ],
+      "categories": [
+        "প্রোডাক্টিভিটি",
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>সেক্যুলার রাজনীতিতে নেতৃবৃন্দের যে আনুগত্যের কথা বলা হয়, সেখানে মানুষকেই মানুষের প্রভু-উপাস্য বানিয়ে নেওয়া হয়; কারণ সেখানে মানুষই চূড়ান্ত, মানুষই সর্বোচ্চ, মানুষই সার্বভৌম—তাহার ওপরে নাই। পক্ষান্তরে ইসলামে নেতৃত্ব একটি ইবাদাত। নেতৃত্ব দেওয়া ও নেতৃত্বের আনুগত্য—উভয়টিই ইবাদাত। ইসলামে নেতৃবৃন্দের আনুগত্যকে সম্পৃক্ত করা হয়েছে আল্লাহর ইবাদাতের সঙ্গে—আর তা ততক্ষণ কার্যকর থাকবে, যতক্ষণ নেতৃবৃন্দ সৃষ্টিকে স্রষ্টার বিধানমতে পরিচালনা করবেন। তাই এখানে নেতৃত্ব অর্থ হলো, নিজে স্রষ্টার ইবাদাত করা এবং সকলের জন্য তাঁর ইবাদাতকে সহজ করে দেওয়া।</p><p>একটি জাতির উত্থানপতনের সঙ্গে নেতৃত্বের সংযোগ-সম্পর্ক অত্যন্ত গভীর। নেতৃত্বের অধঃপতন একটি জাতির পতন যেমন অনিবার্য করে তোলে, তেমনি নেতৃত্বের সংকটই একটি জাতির উত্থানকে করে বিলম্বিত। নেতৃত্বের লোভ ধনসম্পদ ও অর্থবিত্তের লোভের চেয়েও ভয়ংকর। ইসলামের ইতিহাসে মুসলিম জাতির যে উত্থানপতন দেখা যায়, তাতেও নেতৃত্বই মূল অনুঘটক। নেতৃবৃন্দের কারণেই জাতি মুখ থুবড়ে পড়েছে, আবার তাদের অবদানেই মাথা উঁচু করে দাঁড়িয়েছে।</p><p>মুসলিম জাতির সামনে নেতৃত্বের শিক্ষাগ্রহণের জন্য যে বিশুদ্ধ উৎস রয়েছে, তা অন্য কোনো জাতির নেই। আসমানি উৎস—স্বয়ং আল্লাহর নবি মুহাম্মাদ (সা.) এর বাস্তব জীবন। তাঁর জীবনের পরতে পরতে নেতৃত্বের যে শিক্ষা রয়েছে তাকে মুক্তা আহরণকারীদের মতো নিপুণতার সঙ্গে এই বইয়ে তুলে এনেছেন সমকালীন প্রথিতযশা লিডারশিপ ট্রেইনার মির্জা ইয়াওয়ার বেইগ। আশা করি আপনাকে জীবনে আরও এক ধাপ এগিয়ে নিতে বইটি অসামান্য ভূমিকা রাখবে ইনশাআল্লাহ।</p>",
+      "seoDescription": "নবিজীবনে নেতৃত্বের শিক্ষা — রাসুলুল্লাহ ﷺ-এর জীবন থেকে নেতৃত্ব, দলগঠন ও সিদ্ধান্ত নেওয়ার শিক্ষা নিয়ে মির্জা ইয়াওয়ার বেইগের বই।",
+      "image": "book-nobijibone-netritter-shikkha-47ec.webp",
+      "pdf": "nobijibone-netritter-shikkha-1637.pdf",
+      "coverSource": "drive: নবিজীবনে নেতৃত্বের শিক্ষা front.jpg",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/nobijibone-netritter-shikkha/",
+        "https://www.rokomari.com/book/433290",
+        "https://drive.google.com/drive/folders/1BGDgUiOfetCOmeRpnQegmCYpXqfIriSR?usp=sharing"
+      ]
+    },
+    {
+      "name": "Leadership Lessons From The Life Of Rasoolullah",
+      "nameEn": "Leadership Lessons From The Life Of Rasoolullah",
+      "slug": "leadership-lessons-from-the-life-of-rasoolullah",
+      "mrp": 695,
+      "discountPercent": 23,
+      "discountAmount": 160,
+      "quantity": 20,
+      "pages": 255,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "মির্জা ইয়াওয়ার বেইগ",
+          "nameEn": "Mirza Yawar Baig"
+        }
+      ],
+      "categories": [
+        "প্রোডাক্টিভিটি",
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>Leadership Lessons From The Life of Rasoolullah</p><p>is your gateway to understanding the profound leadership qualities of Prophet Muhammad ﷺ. This book offers actionable strategies for personal and professional success, deeply rooted in Islamic values and the Sunnah.</p>",
+      "seoDescription": "Leadership Lessons From The Life Of Rasoolullah — Mirza Yawar Baig draws practical lessons on leading people from the life of the Prophet ﷺ.",
+      "image": "book-leadership-lessons-from-the-life-of-rasoolullah-13c7.webp",
+      "pdf": "leadership-lessons-from-the-life-of-rasoolullah-ac90.pdf",
+      "coverSource": "drive: Leadership Lessons From The Life Of Rasoolullah front.jpg",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/leadership-lessons-from-the-life-of-rasoolullah-hardcover/",
+        "https://www.rokomari.com/book/116686",
+        "https://drive.google.com/drive/folders/1-56sEsCgfXqVKLRtRCn9tqsBhvmqWXwD?usp=sharing"
+      ]
+    },
+    {
+      "name": "ইসলামিক ম্যানেজমেন্ট",
+      "nameEn": "Islamic Management",
+      "slug": "islamic-management",
+      "mrp": 190,
+      "discountPercent": 0,
+      "discountAmount": 0,
+      "quantity": 20,
+      "pages": 180,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "নেসিউর জ্যাবনন",
+          "nameEn": "Nesiur Jabnon"
+        }
+      ],
+      "categories": [
+        "প্রোডাক্টিভিটি",
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>ইসলামের শিক্ষা মানুষকে এই জীবনে সফলতার জন্য প্রয়োজনীয় সব দিকনির্দেশনাই যথাযথভাবে দেয়—এই নিগূঢ় বিশ্বাসকে কেন্দ্র করে লেখা হয়েছে বইটি। অন্য কথায়, ইসলাম আমাদের যে নির্দেশনা দিয়েছে তা একেবারেই নিখুঁত। এর যথাযথ প্রয়োগ এই জীবনে এবং পরকালেও আমাদের সাফল্য এনে দেবে। ইসলামের শিক্ষাকে যদি আমরা একটা সামগ্রিক পরিকল্পনা হিসেবে দেখি, তবে সেখান থেকে আমরা ম্যানেজারিয়াল শিক্ষার অনেক গুরুত্বপূর্ণ উপাত্ত আহরণ করতে পারি।</p><p>সাইয়েদ কুতুব শহিদ তার তাফসির ‘ফী যিলালিল কুরআনে’ গনিমত ভাগ-বাটোয়ারার ফিক্‌হ নিয়ে আলোচনা করতে গিয়ে বলেছিলেন যে, আগে গনিমত প্রাপ্তির উপায় নিয়ে আলোচনা হোক, গনিমত অর্জিত হোক, তারপর ভাগ-বাটোয়ারার আলোচনা করা যাবে। সালাফদের ফিক্‌হের কিতাবে এগুলো তো সব বলাই আছে। মুসলিমদের এখন ম্যানেজমেন্ট নিয়ে অধিক পরিমাণ অধ্যয়নের সময় হয়েছে। আশা করা যায় খুব শীঘ্রই তারা গোটা পৃথিবীকে আবার নেতৃত্ব দেবে ইনশাআল্লাহ।</p>",
+      "seoDescription": "ইসলামিক ম্যানেজমেন্ট — ইসলামের শিক্ষার আলোকে ব্যবস্থাপনা, পরিকল্পনা ও প্রতিষ্ঠান পরিচালনার মূলনীতি নিয়ে নেসিউর জ্যাবননের বই।",
+      "image": "book-islamic-management-3aa1.webp",
+      "pdf": "islamic-management-55ea.pdf",
+      "coverSource": "drive: ইসলামিক ম্যানেজমেন্ট front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/islamic-management/",
+        "https://www.rokomari.com/book/223093",
+        "https://drive.google.com/drive/folders/1Grlrr3F0k5bx_a4JZluVPVbjRGHac1t6?usp=sharing"
+      ]
+    },
+    {
+      "name": "7 Steps to Success in Deen & Dunya",
+      "nameEn": "7 Steps to Success in Deen and Dunya",
+      "slug": "7-steps-to-success-in-deen-and-dunya",
+      "mrp": 360,
+      "discountPercent": 23,
+      "discountAmount": 83,
+      "quantity": 20,
+      "pages": 184,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "মারুফ ইউসুফ",
+          "nameEn": "Maruf Yusuf"
+        }
+      ],
+      "categories": [
+        "প্রোডাক্টিভিটি",
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>Somehow, most people treat reality – our everyday life – as something mundane and boring. So, most people escape by “killing time” in the form of alternate realities.</p><p>For some, it is drugs and alcohol. For some, it is entertainment. For some, it is something else; anything but the reality itself.</p><p>In this book, we will look into this “broken” reality and see if we missed something. Is there a way to live where you thrive instead of survive? Is there a way to live so you don’t have to escape your everyday life? Is there a way to live so you love what you do and do what you love and make a good living doing that?</p><p>It sound too good to be true? Could you hold on to this thought? We will come back to this. I feel you. I have been there. I promise it will be worthwhile.</p>",
+      "seoDescription": "7 Steps to Success in Deen & Dunya — Maruf Yusuf's entrepreneur's manifesto on purpose, planning and growth for success in both worlds.",
+      "image": "book-7-steps-to-success-in-deen-and-dunya-7420.webp",
+      "pdf": "7-steps-to-success-in-deen-and-dunya-a39c.pdf",
+      "coverSource": "drive: 7 STEPS TO SUCCESS In Deen & Dunya (English) front cover.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/7-steps-to-success-in-deen-dunya/",
+        "https://www.rokomari.com/book/382071",
+        "https://drive.google.com/drive/folders/1YjE5ba7dSmZUnyTGc6N90FaU10e8Zkse?usp=sharing"
+      ]
+    },
+    {
+      "name": "সেভেন স্টেপস টু সাকসেস ইন দীন এন্ড দুনিয়া",
+      "nameEn": "Seven Steps to Success in Deen and Dunya (Bangla)",
+      "slug": "seven-steps-to-success-in-deen-and-dunya-bangla",
+      "mrp": 330,
+      "discountPercent": 23,
+      "discountAmount": 76,
+      "quantity": 20,
+      "pages": 188,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [
+        "আশিক আরমান নিলয়"
+      ],
+      "authors": [
+        {
+          "name": "মারুফ ইউসুফ",
+          "nameEn": "Maruf Yusuf"
+        }
+      ],
+      "categories": [
+        "প্রোডাক্টিভিটি",
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>দুর্ভাগ্যবশত, বেশিরভাগ মানুষ বাস্তবতা – আমাদের দৈনন্দিন জীবনকে – সাধারণ এবং বিরক্তিকর কিছু হিসাবে দেখে। তাই, বেশিরভাগ মানুষ বিকল্প বাস্তবতার আড়ালে “সময় নষ্ট” করে পালাতে চায়।</p><p>কারো জন্য এটা মাদক ও অ্যালকোহল। কারো জন্য এটা বিনোদন। কারো জন্য এটা অন্য কিছু; বাস্তবতা ছাড়া অন্য কিছু।</p><p>সেভেন স্টেপস টু সাকসেস বইয়ে, আমরা এই “ভাঙ্গা” বাস্তবতার গভীরে যাব এবং দেখব আমরা কিছু হারিয়েছি কিনা। এমন কি কোনো উপায় আছে যেখানে আপনি কেবল টিকে না থেকে উন্নতি করতে পারবেন? এমন কি কোনো উপায় আছে যেখানে আপনাকে আপনার দৈনন্দিন জীবন থেকে পালাতে হবে না? এমন কি কোনো উপায় আছে যেখানে আপনি যা করেন তা ভালোবাসবেন এবং যা ভালোবাসেন তা করবেন এবং তা থেকে ভালো উপার্জনও করবেন?</p><p>এটা শুনতে অবিশ্বাস্য লাগছে, তাই না? আপনি কি এই চিন্তাটি ধরে রাখতে পারবেন? আমরা এতে ফিরে আসব। আমি আপনার অনুভূতি বুঝি। আমিও এই পরিস্থিতির মধ্য দিয়ে গেছি। আমি প্রতিশ্রুতি দিচ্ছি, এটা সার্থক হবে।</p><p>সেভেন স্টেপস টু সাকসেস বইটি আপনার প্রত্যাশা, সহজাত প্রবৃত্তি , ছন্দ অ আপনার মদ্ধে নিহিত দক্ষতা-ক্ষমতা উদ্ঘাটন করতেও সহায়তা করবে, ইনশাআল্লাহ্‌।</p><p>বইটির ইংরেজি ভার্শন ও পাচ্ছেন আমাদের কাছে।</p>",
+      "seoDescription": "সেভেন স্টেপস টু সাকসেস ইন দীন এন্ড দুনিয়া — উদ্যোক্তা মারুফ ইউসুফের লেখা দীন ও দুনিয়ায় সফলতার সাতটি ধাপ, বাংলা অনুবাদে।",
+      "image": "book-seven-steps-to-success-in-deen-and-dunya-bangla-9a1c.webp",
+      "pdf": "seven-steps-to-success-in-deen-and-dunya-bangla-8812.pdf",
+      "coverSource": "drive: সেভেন স্টেপস টু সাকসেস ইন দীন এন্ড দুনিয়া.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/seven-steps-to-success-in-deen-and-dunya/",
+        "https://www.rokomari.com/book/512953",
+        "https://drive.google.com/drive/folders/1TWMISozXodwcPVJETphmerHO5oQSC-wh?usp=sharing"
+      ]
+    },
+    {
+      "name": "বিসিএস নাকি বিদেশে উচ্চশিক্ষা",
+      "nameEn": "BCS Naki Bideshe Ucchoshikkha",
+      "slug": "bcs-naki-bideshe-ucchoshikkha",
+      "mrp": 300,
+      "discountPercent": 23,
+      "discountAmount": 69,
+      "quantity": 20,
+      "pages": 168,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. মোহাম্মদ সরোয়ার হোসেন",
+          "nameEn": "Dr. Mohammad Sarwar Hossain"
+        }
+      ],
+      "categories": [
+        "প্রোডাক্টিভিটি"
+      ],
+      "description": "<p>বইয়ের ব্যাক-রাইটআপ: দীর্ঘ প্রস্তুতির পরও বিসিএস প্রতিযোগিতায় ব্যর্থ হওয়ার সম্ভাবনা কমপক্ষে ৯৯%। এত অনিশ্চয়তা সত্ত্বেও আমাদের সমাজে বিসিএস জব নিয়ে এক ধরনের উন্মাদনা গড়ে উঠেছে। অন্যদিকে, উচ্চশিক্ষার মাধ্যমে দেশ-বিদেশে ক্যারিয়ার গঠন করা বিসিএস জবের তুলনায় অনেক সহজ হওয়া সত্ত্বেও শিক্ষার্থী ও অভিভাবকরা এ বিষয়ে সচেতন নন।</p><p>বিদেশে উচ্চশিক্ষার্থে মূলত বিজ্ঞান ও প্রকৌশল গ্রাজুয়েটরাই এগিয়ে থাকেন, যদিও তারা মোট গ্রাজুয়েটদের মাত্র ১১%। অন্যদিকে, অন্যান্য বিভাগের ৮৯% গ্রাজুয়েট দেশেও আশানুরূপ চাকরি পাচ্ছেন না, আবার বিদেশে উচ্চশিক্ষার সুযোগও নিতে পারছেন না। এর মূল কারণ হলো ‘তথ্যঘাটতি’। কীভাবে নিজেকে উচ্চশিক্ষার জন্য প্রস্তুত করতে হবে এবং কোন দেশে কী ধরনের সুযোগ রয়েছে—এসব বিষয়ে আলোচনা প্রায় অনুপস্থিত। এই বইয়ে তথ্য-উপাত্ত এবং কিছু কেইস স্টাডির মাধ্যমে বিষয়টি আলোকপাত করার চেষ্টা করা হয়েছে, যাতে সব অনুষদের গ্রাজুয়েটদের জন্য, এমনকি জাতীয় বিশ্ববিদ্যালয়, ডিপ্লোমা (কারিগরি), আলিয়া এবং কওমি মাদরাসার শিক্ষার্থীদের জন্যও উচ্চশিক্ষার সুযোগ সৃষ্টি হয়।</p><p>বর্ধিত সংস্করণে বেশ কিছু নতুন বিষয় অন্তর্ভুক্ত করা হয়েছে। স্কলারশিপের জন্য কীভাবে সিভি ও মোটিভেশন লেটার তৈরি করতে হয়, তা সম্পর্কে বিস্তারিত আলোচনা করা হয়েছে। গবেষণা আসলে কী এবং কীভাবে প্রস্তুতি নিতে হয়, সেই বিষয়ে আলোকপাত করা হয়েছে। পাশাপাশি, শিক্ষার্থীদের অনুপ্রাণিত করতে কিছু সফলতার গল্পও অন্তর্ভুক্ত করা হয়েছে।</p>",
+      "seoDescription": "বিসিএস নাকি বিদেশে উচ্চশিক্ষা — ক্যারিয়ার বেছে নেওয়ার আগে তরুণদের জন্য ড. মোহাম্মদ সরোয়ার হোসেনের বাস্তব অভিজ্ঞতানির্ভর দিকনির্দেশনা।",
+      "image": "book-bcs-naki-bideshe-ucchoshikkha-f8ee.webp",
+      "pdf": "bcs-naki-bideshe-ucchoshikkha-a826.pdf",
+      "coverSource": "drive: বিসিএস নাকি বিদেশে উচ্চশিক্ষা cover.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/bcs-naki-bideshe-ucchoshikkha/",
+        "https://www.rokomari.com/book/470741",
+        "https://drive.google.com/drive/folders/10d-uFyETnLWf42JuVnzogc6wezV3h3nG?usp=sharing"
+      ]
+    },
+    {
+      "name": "সন্তান : স্বপ্নের পরিচর্যা",
+      "nameEn": "Sontan Shopner Porichorja",
+      "slug": "sontan-shopner-porichorja",
+      "mrp": 190,
+      "discountPercent": 23,
+      "discountAmount": 44,
+      "quantity": 20,
+      "pages": 96,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "মির্জা ইয়াওয়ার বেইগ",
+          "nameEn": "Mirza Yawar Baig"
+        }
+      ],
+      "categories": [
+        "বিয়ে ও সংসার"
+      ],
+      "description": "<p>বইটি পড়ে নিজের সন্তান লালন-পালনের বিভিন্ন ভুল গুলো চোখে পড়বে পাশাপাশি শুধরে নেওয়ার মওকা পাওয়া যাবে। এবং অনাগত সন্তানদের লালন-পালনের বিষয়গুলো খুব সহজেই বুঝে আসবে। বিবাহিত অবিবাহিত প্রতি পাঠকের জন্য বইটি খুব উপকারী।</p>",
+      "seoDescription": "সন্তান : স্বপ্নের পরিচর্যা — সন্তান লালন-পালনের সাধারণ ভুলগুলো চিনে শুধরে নেওয়ার উপায় নিয়ে মির্জা ইয়াওয়ার বেইগের ছোট্ট বই।",
+      "image": "book-sontan-shopner-porichorja-3a9b.webp",
+      "pdf": "sontan-shopner-porichorja-7c34.pdf",
+      "coverSource": "drive: সন্তান স্বপ্নের পরিচর্যা front.jpg",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/sontan-swapner-porichorja/",
+        "https://www.rokomari.com/book/150425",
+        "https://drive.google.com/drive/folders/14ap9xGFQ37xmfQRc3aL9u0A0OgLZa7QQ?usp=sharing"
+      ]
+    },
+    {
+      "name": "বিয়ে : স্বপ্ন থেকে অষ্টপ্রহর",
+      "nameEn": "Biye Shopno Theke Oshtoprohor",
+      "slug": "biye-shopno-theke-oshtoprohor",
+      "mrp": 133,
+      "discountPercent": 23,
+      "discountAmount": 31,
+      "quantity": 20,
+      "pages": 62,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "মির্জা ইয়াওয়ার বেইগ",
+          "nameEn": "Mirza Yawar Baig"
+        }
+      ],
+      "categories": [
+        "বিয়ে ও সংসার"
+      ],
+      "description": "<p>বইটিতে দাম্পত্য জীবনের বাস্তবতা ও চ্যালেঞ্জ , দাম্পত্য জীবনের আগে, বিয়ের সময় এবং বিয়ের পর কীভাবে সম্পর্ক মজবুত রাখা যায় তা নিয়ে পরামর্শ দেওয়া হয়েছে।</p><p>একই সাথে প্রেম, দায়িত্ব, সহযোগিতা এবং বোঝাপড়ার গুরুত্ব সম্পর্কে আলোচনা করা হয়েছে। যারা সফল ও সুখী বিবাহ জীবন চান, তাদের জন্য এটি খুবই প্রয়োজনীয় একটি বই।</p>",
+      "seoDescription": "বিয়ে : স্বপ্ন থেকে অষ্টপ্রহর — দাম্পত্য জীবনের বাস্তবতা, চ্যালেঞ্জ ও সুখী সংসার গড়ার পরামর্শ নিয়ে মির্জা ইয়াওয়ার বেইগের বই।",
+      "image": "book-biye-shopno-theke-oshtoprohor-93a6.webp",
+      "pdf": "biye-shopno-theke-oshtoprohor-ab14.pdf",
+      "coverSource": "drive: বিয়ে  স্বপ্ন থেকে অষ্টপ্রহর front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/biye-shopno-theke-oshto-prohor/",
+        "https://www.rokomari.com/book/75614",
+        "https://drive.google.com/drive/folders/1-k9-MDBj7Tfd-IczNdtbBD7mB2kaIUUW?usp=sharing"
+      ]
+    },
+    {
+      "name": "ভালোবাসার চাদর",
+      "nameEn": "Bhalobashar Chador",
+      "slug": "bhalobashar-chador",
+      "mrp": 295,
+      "discountPercent": 23,
+      "discountAmount": 68,
+      "quantity": 20,
+      "pages": 192,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [
+        "আব্দ আল আহাদ"
+      ],
+      "authors": [
+        {
+          "name": "ড. আবু আমিনাহ বিলাল ফিলিপস",
+          "nameEn": "Dr. Abu Ameenah Bilal Philips"
+        },
+        {
+          "name": "মুহাম্মদ বিন মুস্তাফা আল-জিবালী",
+          "nameEn": "Muhammad ibn Mustafa al-Jibaly"
+        }
+      ],
+      "categories": [
+        "বিয়ে ও সংসার"
+      ],
+      "description": "<p>ভালোবাসা স্থির নয়, এটা পরিবর্তনশীল এবং ঈমানের মতো বাড়ে-কমে। তাই ভালোবাসার যত্ন নিন, ভালোভাবে পরিচর্যা করুন। ঠিকমতো যত্ন করলে বয়স বাড়লেও ভালোবাসা সবুজ ও সতেজ থাকবে। ভালোবাসার যত্নের জন্য গাইডলাইন হলো ‘ভালোবাসার চাদর’।</p>",
+      "seoDescription": "ভালোবাসার চাদর — স্বামী-স্ত্রীর ভালোবাসার যত্ন, অধিকার ও দায়িত্ব নিয়ে ড. বিলাল ফিলিপস ও মুহাম্মদ আল-জিবালীর বই।",
+      "image": "book-bhalobashar-chador-fdea.webp",
+      "pdf": "bhalobashar-chador-fac8.pdf",
+      "coverSource": "drive: ভালোবাসার চাদর front.jpg",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/valobasar-chador/",
+        "https://www.rokomari.com/book/156539",
+        "https://drive.google.com/drive/folders/1BgXd8LiPIFNR2Ay3KedQp1W_olqdSX0w?usp=sharing"
+      ]
+    },
+    {
+      "name": "দুই তিন চার এক (ইসলামে বহুবিবাহ)",
+      "nameEn": "Dui Tin Char Ek (Islame Bohubibaho)",
+      "slug": "dui-tin-char-ek-islame-bohubibaho",
+      "mrp": 130,
+      "discountPercent": 0,
+      "discountAmount": 0,
+      "quantity": 20,
+      "pages": 101,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [
+        "সানজিদা শারমিন"
+      ],
+      "authors": [
+        {
+          "name": "ড. আবু আমিনাহ বিলাল ফিলিপস",
+          "nameEn": "Dr. Abu Ameenah Bilal Philips"
+        }
+      ],
+      "categories": [
+        "বিয়ে ও সংসার"
+      ],
+      "description": "<p>অনেক ভাই মনে করেন আমাদের বোনেরা বহুবিবাহ নিয়ে যে কষ্ট পান, এটা তাদের দ্বিনদারির দুর্বলতার কারণে। কিন্তু বাস্তবতা হলো, একজন নারী যত দ্বিনদারই হোন না কেন, বহুবিবাহ তাদের জন্য কষ্টকর। এটা তাদের জন্য আল্লাহর পক্ষ থেকে একটা পরীক্ষা। তারা যত ভালো গ্রেডে এ পরীক্ষায় পাশ করবেন, দুনিয়া ও আখিরাতে এটা তাদেরই কল্যাণে আসবে।</p><p>একজন নারীর জন্য তার স্বামী হলেন তার সকল আশা-ভরসা-ভালোবাসার কেন্দ্রবিন্দু। সে তার স্বামীকে যত ভালোবাসবে, স্বামীর পাশে অন্য কোনো নারী এলে তার প্রতি সে ততই জেলাস হবে। এমনকি জেলাসির মাত্রা এমনও হতে পারে যে, স্বামী ‘রুপা’ ব্র্যান্ডের গেঞ্জি গায়ে দিলেও তার খারাপ লাগতে পারে, যেহেতু এই গেঞ্জিতে ‘রুপা’ নামটা ঠিক বুকের উপর লেখা থাকে। এক্ষেত্রে প্রথম দ্বিতীয় তৃতীয় তেমন কোনো তফাৎ সৃষ্টি করে না। আল্লাহর রাসূলের (ﷺ) স্ত্রীও অন্যদের প্রতি জেলাস ছিলেন।</p><p>আমাদের অনেক ভাইয়েরা মনে করেন, স্ত্রী যদি দ্বিনদার হন তাহলে তিনি নিজে তার স্বামীকে বিয়ে করিয়ে দেবেন, বাসর সাজিয়ে দেবেন, নব বধুকে ঘরে দিয়ে আসবেন। অন্ততপক্ষে স্বামীর বিয়ের খবর শুনে কোনো কষ্ট পাবেন না। এটা মোটেই বাস্তবতা নয়। হ্যাঁ, যদি কেউ এই লেভেলে উঠতে পারেন, সেটা প্রশংসনীয়, তবে খুবই ব্যতিক্রম।</p><p>তবে হ্যাঁ, একজন দ্বিনদার নারী কখনো কেবল তাঁর নিজের ভালোলাগা-মন্দলাগার জন্য আল্লাহর সীমালঙ্ঘন করবেন না, অন্যের অধীকার খর্ব করবেন না; আল্লাহর দ্বিনের কোনো বিষয়ের প্রতি অন্তরে ঘৃণা পোষণ করবেন না।</p><p>স্বামী যদি কোনো বৈধ কারণ ছাড়া স্ত্রীর ভরণপোষণ বা তাকে নিরাপত্তার দায়িত্ব নিতে অসম্মতি জানায়, তবে স্ত্রীর উচিত প্রথমে স্বামীর সাথে আলাপ আলোচনার মাধ্যমে নিজের অধিকার আদায়ের চেষ্টা করা। কিন্তু স্বামী যদি তার সিদ্ধান্ত পরিত্যাগ না করে, তবে সালিশের দ্বারা বিষয়টা মীমাংসার ব্যবস্থা করা উচিত। যদি তাতেও কোনো কাজ না হয়, তবে স্ত্রী তা নিষ্পত্তির জন্য কোর্টে উত্থাপন করতে পারে অথবা তালাকের দাবি করতে পারে। তবে কোনো কারণে স্বামী যদি স্ত্রীর ভরণপোষণে অক্ষম হয়, যেমন স্বামী যদি কারারুদ্ধ থাকে, শারীরিকভাবে অক্ষম বা দরিদ্র হয়, তবে সেক্ষেত্রে স্ত্রী চাইলে হাসিমুখে এই কষ্ট সহ্য করতে পারে অথবা স্বামীর কাছ থেকে বিদায় নিয়ে যেতে পারে। আর যে মহিলা নিজেই ধনী, সে চাইলে সেচ্ছায় স্বামীকে ভরণপোষণের দায়িত্ব থেকে অব্যাহতি দিতে পারে। সে তখন তার পছন্দমতো খাবার, বেশভূষা ও বাড়িতে থাকতে পারে। স্ত্রী চাইলে বিবাহের শুরু থেকেই, অথবা যেকোনো পর্যায়ে এসে নিজের অধিকার ছেড়ে দিতে পারে। তবে এটা চিরস্থায়ী নয়। কখনো স্ত্রী যদি নিজের ভরণপোষণ করতে অক্ষম হয়ে পড়ে বা এমনটি করতে অনিচ্ছা প্রকাশ করে, তবে স্বামীকে অবশ্যই স্ত্রীর দায়িত্ব নিজ কাঁধে তুলে নিতে হবে, যা আল্লাহ তাআলা তার ওপর অর্পণ করেছেন।</p>",
+      "seoDescription": "দুই তিন চার এক (ইসলামে বহুবিবাহ) — ইসলামে বহুবিবাহের বিধান, প্রজ্ঞা ও প্রচলিত ভুল ধারণা নিয়ে ড. আবু আমিনাহ বিলাল ফিলিপসের বই।",
+      "image": "book-dui-tin-char-ek-islame-bohubibaho-244a.webp",
+      "pdf": "dui-tin-char-ek-islame-bohubibaho-0b39.pdf",
+      "coverSource": "drive: দুই তিন চার এক (ইসলামে বহুবিবাহ) front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/2341/",
+        "https://www.rokomari.com/book/166986",
+        "https://drive.google.com/drive/folders/1I8SLhjq6IWtDUfz714V5UhayFi938p9N?usp=sharing"
+      ]
+    },
+    {
+      "name": "আমানি বার্থ : প্রাকৃতিক পদ্ধতিতে মা হওয়ার উপায়",
+      "nameEn": "Amani Birth",
+      "slug": "amani-birth",
+      "mrp": 495,
+      "discountPercent": 23,
+      "discountAmount": 114,
+      "quantity": 20,
+      "pages": 332,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "আয়িশা আল-হাজ্জার",
+          "nameEn": "Aisha Al-Hajjar"
+        }
+      ],
+      "categories": [
+        "ইসলামে নারী",
+        "বিয়ে ও সংসার"
+      ],
+      "description": "<p>আমানি বার্থ’ সম্পর্কে হবু মা, তার পরিবার আর প্রসবের সবাইকে জানা উচিত। অনেক মেয়ের জন্য লেবার পেইন ভয় লাগে, তাই তারা সিজার পছন্দ করে। কিন্তু এখন অনেক মা সচেতন হয়েছেন এবং নরমাল ডেলিভারির জন্য প্রস্তুতি নিচ্ছেন। দেশে এই বিষয়ে তথ্য কম থাকায়, এই বইটি খুব দরকার।</p>",
+      "seoDescription": "আমানি বার্থ — প্রাকৃতিক পদ্ধতিতে নিরাপদ প্রসব নিয়ে আয়িশা আল-হাজ্জারের বই; হবু মা ও পরিবারের জন্য প্রয়োজনীয় তথ্য ও প্রস্তুতি।",
+      "image": "book-amani-birth-c7e7.webp",
+      "pdf": "amani-birth-a019.pdf",
+      "coverSource": "drive: আমানি বার্থ front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/amani-birth/",
+        "https://drive.google.com/drive/folders/1pcgOjnzn7EoFIknlZc4l5U0dd8WfQzfR?usp=sharing"
+      ]
+    },
+    {
+      "name": "সন্তান প্রতিপালনে এ যুগের চ্যালেঞ্জ",
+      "nameEn": "Sontan Protipalone E Juger Challenge",
+      "slug": "sontan-protipalone-e-juger-challenge",
+      "mrp": 320,
+      "discountPercent": 23,
+      "discountAmount": 74,
+      "quantity": 20,
+      "pages": 204,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. মোহাম্মদ সরোয়ার হোসেন",
+          "nameEn": "Dr. Mohammad Sarwar Hossain"
+        }
+      ],
+      "categories": [
+        "বিয়ে ও সংসার"
+      ],
+      "description": "<p>বিশ্বব্যাপী চলমান স্ক্রিন আসক্তি, এল*জি/বিটি টাইপ মহামারিগুলো মোকাবিলা করে আপনার সন্তানকে কীভাবে বড় করবেন—তার সুন্দর গাইডলাইন পেয়ে যাবেন এই বইতে।</p>",
+      "seoDescription": "সন্তান প্রতিপালনে এ যুগের চ্যালেঞ্জ — স্ক্রিন আসক্তি ও আধুনিক বিভ্রান্তি থেকে সন্তানকে রক্ষার উপায় নিয়ে ড. মোহাম্মদ সরোয়ার হোসেনের বই।",
+      "image": "book-sontan-protipalone-e-juger-challenge-24fd.webp",
+      "pdf": "sontan-protipalone-e-juger-challenge-93b4.pdf",
+      "coverSource": "drive: সন্তান প্রতিপালনে এ যুগের চ্যালেঞ্জ front.jpg",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/sontan-protipalone-e-zuger-challange/",
+        "https://www.rokomari.com/book/332441",
+        "https://drive.google.com/drive/folders/1wGq9Xsdz4z3Kg3txGLbF5hU8DwG-COPs?usp=sharing"
+      ]
+    },
+    {
+      "name": "মা হওয়ার গল্প",
+      "nameEn": "Ma Howar Golpo",
+      "slug": "ma-howar-golpo",
+      "mrp": 380,
+      "discountPercent": 23,
+      "discountAmount": 87,
+      "quantity": 20,
+      "pages": 204,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "রৌদ্রময়ী প্রিনেটাল টিম",
+          "nameEn": "Roudromoyee Prenatal Team"
+        }
+      ],
+      "categories": [
+        "ইসলামে নারী",
+        "বিয়ে ও সংসার"
+      ],
+      "description": "<p>এই বইয়ের উদ্দেশ্য হলো—মায়েদের গর্ভকালীন ও প্রসবকালীন সঠিক জ্ঞান দিতে সাহায্য করা, যেন তারা আতঙ্ক নয়, সচেতনভাবে সিদ্ধান্ত নিতে পারেন।নরমাল ডেলিভারি, সিজার বা অন্যান্য বিষয়ে প্রচলিত ভুল ধারণা ভেঙে, বাস্তব অভিজ্ঞতা ও তথ্যভিত্তিক আলোচনা তুলে ধরা হয়েছে এখানে।</p>",
+      "seoDescription": "মা হওয়ার গল্প — গর্ভকালীন ও প্রসবকালীন সঠিক জ্ঞান আর মায়েদের বাস্তব অভিজ্ঞতা নিয়ে রৌদ্রময়ী প্রিনেটাল টিমের বই।",
+      "image": "book-ma-howar-golpo-780b.webp",
+      "pdf": "ma-howar-golpo-b3ca.pdf",
+      "coverSource": "drive: মা হওয়ার গল্প front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/ma-howar-golpo/",
+        "https://www.rokomari.com/book/350722",
+        "https://drive.google.com/drive/folders/1oc2ZX1wG_yD8jEH5l_OqL7sv35jT71Wz?usp=sharing"
+      ]
+    },
+    {
+      "name": "এক",
+      "nameEn": "Ek",
+      "slug": "ek",
+      "mrp": 395,
+      "discountPercent": 23,
+      "discountAmount": 91,
+      "quantity": 20,
+      "pages": 247,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [
+        "আব্দ আল আহাদ"
+      ],
+      "authors": [
+        {
+          "name": "ড. আবু আমিনাহ বিলাল ফিলিপস",
+          "nameEn": "Dr. Abu Ameenah Bilal Philips"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>বিভিন্ন ধর্মে কুসংস্কার ও অতিমাত্রায় ভক্তির যে প্রবণতা আছে, এই বইতে তার বাস্তব চিত্র তুলে ধরা হয়েছে। আমেরিকায় ১৩ সংখ্যাকে অশুভ মনে করে শুক্রবার ১৩ তারিখে অনেকেই কাজ করতে ভয় পায়।</p><p>এমনকি মহাকাশ অভিযানে ব্যর্থতার ক্ষেত্রেও এটিকে দায়ী করা হয়। অথচ এই ধরনের বিশ্বাস আল্লাহর একচ্ছত্র নিয়ন্ত্রণে অন্য কিছুকে ভাগ বসানো, যা ইসলামে স্পষ্টভাবে নিষিদ্ধ।একইভাবে হিন্দু, বৌদ্ধ ও খ্রিস্টান ধর্মে অনেক সাধু বা গুরুদের অলৌকিক ক্ষমতাসম্পন্ন মনে করে তাদের উপাসনা পর্যন্ত করা হয়।</p><p>অথচ ইসলাম মানুষকে অতিরিক্ত ভক্তি ও মধ্যস্থতাবাদ থেকে দূরে থাকতে বলে। মহানবী (সা.) নিজেই বলেছেন, “আমাকে আল্লাহর বান্দা ও রাসূল বলেই ডাকো।</p><p>সব ধর্মেই একটি সর্বশক্তিমান সত্তার ধারণা আছে। কিন্তু সেই সত্তা কে, কেমন, আর তাঁকে কীভাবে চিনব—এই প্রশ্নগুলো থেকেই সৃষ্টি হয় নানা বিভ্রান্তি। এমনকি মুসলিমদের মধ্যেও গড়ে ওঠে মতপার্থক্য। অথচ সত্য একটাই, সেটিকেই জানতে ও মানতে হবে।</p><p>এক বইয়ে ড. আবু আমিনাহ বিলাল ফিলিপস যুক্তি, তথ্য ও ধর্মীয় প্রমাণের ভিত্তিতে এসব প্রশ্নের উত্তর খুঁজে দিয়েছেন।</p>",
+      "seoDescription": "এক — বিভিন্ন ধর্মে কুসংস্কার ও অতিভক্তির বিপরীতে তাওহিদের সরল বার্তা নিয়ে ড. আবু আমিনাহ বিলাল ফিলিপসের বই।",
+      "image": "book-ek-25f1.webp",
+      "pdf": "ek-5f96.pdf",
+      "coverSource": "drive: এক front.png",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/ek/",
+        "https://www.rokomari.com/book/116697",
+        "https://drive.google.com/drive/folders/1dUeZLNV4Kovm8-H_2y8m-YK7dKWtm7NN?usp=sharing"
+      ]
+    },
+    {
+      "name": "স্রষ্টা ধর্ম জীবন",
+      "nameEn": "Srosta Dhormo Jibon",
+      "slug": "srosta-dhormo-jibon",
+      "mrp": 110,
+      "discountPercent": 0,
+      "discountAmount": 0,
+      "quantity": 20,
+      "pages": 84,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [
+        "মাসুদ শরীফ",
+        "সানজিদা শারমিন",
+        "কবির আনোয়ার"
+      ],
+      "authors": [
+        {
+          "name": "ড. আবু আমিনাহ বিলাল ফিলিপস",
+          "nameEn": "Dr. Abu Ameenah Bilal Philips"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>বইটি পাঠককে স্রষ্টার অস্তিত্ব, সঠিক ধর্মের সৌন্দর্য ও জীবনের প্রকৃত উদ্দেশ্যের দিকে পরিচালিত করে, আখিরাতের সফলতার জন্য অনুপ্রাণিত করে ।</p><p>অনেক নৃতত্ত্ববিদ মনে করেন, ধর্মের শুরু হয়েছিল বহু-ঈশ্বরবাদ দিয়ে। তখন মানুষ প্রকৃতির শক্তিকে দেবতা ভাবত। পরে মঙ্গল ও অমঙ্গলের দুইটি প্রধান দেবতার ধারণা আসে এবং শেষে একেশ্বরবাদের দিকে মানুষ এগোয়।</p><p>তাদের মতে, ধর্ম কোনো আসমানি উৎস নয়, বরং মানুষের অজ্ঞানতা ও কুসংস্কার থেকে তৈরি। তারা বিশ্বাস করেন, বিজ্ঞান একদিন ধর্মকে অপ্রয়োজনীয় করে তুলবে।</p><p>কিন্তু বাস্তবতা হলো—মানুষ জন্মগতভাবে এক সৃষ্টিকর্তায় বিশ্বাসী। বহু আদিম গোষ্ঠীর মাঝেও একজন চূড়ান্ত সত্তায় বিশ্বাসের প্রমাণ পাওয়া যায়, যা প্রমাণ করে ধর্মের মূল স্বর্গীয় উৎসেই।</p><p>তাই স্রষ্টা ধর্ম জীবন বইটি দরকার, কারণ এটি ধর্ম নিয়ে প্রচলিত ভুল ধারণার জবাব দেয় এবং যুক্তি ও প্রমাণের আলোকে দেখায়—ধর্ম কোনো কল্পনা নয়, বরং মানুষের ফিতরতের (জন্মগত স্বভাব) সাথেই মিলে যায়। যারা সত্য অনুসন্ধানে আগ্রহী, তাদের জন্য বইটি হবে এক মূল্যবান সঙ্গী।</p>",
+      "seoDescription": "স্রষ্টা ধর্ম জীবন — স্রষ্টার অস্তিত্ব, সঠিক ধর্ম ও জীবনের উদ্দেশ্য নিয়ে ড. আবু আমিনাহ বিলাল ফিলিপসের ছোট ও সহজ বই।",
+      "image": "book-srosta-dhormo-jibon-dbbf.webp",
+      "pdf": "srosta-dhormo-jibon-0fbd.pdf",
+      "coverSource": "drive: স্রষ্টা ধর্ম জীবন front.jpg",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/srosta-dhormo-jibon/",
+        "https://www.rokomari.com/book/95682",
+        "https://drive.google.com/drive/folders/1AitsTkyCZQt0IspWuBCMZnCw9kNf0JV4?usp=sharing"
+      ]
+    },
+    {
+      "name": "মাযহাব : অতীত, বর্তমান ও ভবিষ্যৎ",
+      "nameEn": "Mazhab Otit Bortoman O Bhobishyot",
+      "slug": "mazhab-otit-bortoman-o-bhobishyot",
+      "mrp": 450,
+      "discountPercent": 23,
+      "discountAmount": 104,
+      "quantity": 20,
+      "pages": 231,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. আবু আমিনাহ বিলাল ফিলিপস",
+          "nameEn": "Dr. Abu Ameenah Bilal Philips"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>উমাইয়া শাসনামলে খিলাফত ধীরে ধীরে রাজতন্ত্রে রূপ নেয়, ফলে শরিয়তের ব্যাপারে আলিমদের ভূমিকা সীমিত হতে থাকে। অনেক সাহাবি ও তাদের ছাত্ররা কেন্দ্র ছেড়ে বিভিন্ন অঞ্চলে ছড়িয়ে পড়েন, যার ফলে ইজতিহাদ বাড়ে এবং ইজমা প্রায় অসম্ভব হয়ে পড়ে। এরপর ফিকহশাস্ত্র প্রাতিষ্ঠানিক রূপ নেয় এবং আব্বাসীয় শাসনামলে বিভিন্ন মাযহাব গড়ে ওঠে। চারটি মাযহাব ছাড়া তখন আরও অনেক মাযহাব ছিল। সেসময় মতবিরোধ থাকলেও পারস্পরিক শ্রদ্ধা ও সহনশীলতা ছিল স্পষ্ট।আজ মাযহাব নিয়ে তর্ক-বিতর্ক খুব বেশি, কিন্তু সঠিক জ্ঞান না থাকায় তা চরমপন্থা বা বিভেদে রূপ নেয়। মাযহাব বইটি ইতিহাস ও প্রেক্ষাপটসহ মাযহাবের সঠিক অবস্থান বুঝতে সাহায্য করবে, যাতে আমরা ভ্রান্তি এড়িয়ে উম্মাহর ঐক্য রক্ষা করতে পারি।</p>",
+      "seoDescription": "মাযহাব : অতীত, বর্তমান ও ভবিষ্যৎ — মাযহাবের উৎপত্তি, বিকাশ ও আজকের প্রেক্ষাপট নিয়ে ড. আবু আমিনাহ বিলাল ফিলিপসের গবেষণা।",
+      "image": "book-mazhab-otit-bortoman-o-bhobishyot-d7df.webp",
+      "pdf": "mazhab-otit-bortoman-o-bhobishyot-51a1.pdf",
+      "coverSource": "drive: মাযহাব front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/mazhab-otit-bortoman-o-vobishot/",
+        "https://www.rokomari.com/book/116692",
+        "https://drive.google.com/drive/folders/1SLJt5AbFMIolwkLACEzORjeVVi228nNm?usp=sharing"
+      ]
+    },
+    {
+      "name": "আকিদাহ আত-তাওহীদ",
+      "nameEn": "Aqidah At-Tawheed",
+      "slug": "aqidah-at-tawheed",
+      "mrp": 450,
+      "discountPercent": 23,
+      "discountAmount": 104,
+      "quantity": 20,
+      "pages": 225,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [
+        "ড. মোহাম্মদ মানজুরে ইলাহী"
+      ],
+      "authors": [
+        {
+          "name": "শায়খ সালিহ আল-ফাওযান",
+          "nameEn": "Shaykh Salih al-Fawzan"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>আকিদাহ আত-তাওহীদ — ইসলামের হৃদয়স্পর্শী একটি বিষয়, যা আমাদের ঈমানের ভিতকে মজবুত করে এবং জীবনের প্রতিটি সিদ্ধান্তে আল্লাহর প্রতি নির্ভরশীল হতে শেখায়। বইটিতে তাওহীদের বিশুদ্ধ ধারণা, শিরক থেকে দূরে থাকার উপায় এবং কুরআন-সুন্নাহর আলোকে সঠিক বিশ্বাসের পথ স্পষ্টভাবে তুলে ধরা হয়েছে। সহজ ও প্রাঞ্জল ভাষায় লেখা হওয়ায় পাঠক অনুভব করবেন যেন একজন প্রিয় শিক্ষক তাঁর হৃদয়ের দরজা খুলে দিচ্ছেন। যারা জীবনের মানে খুঁজছেন, ঈমানকে দৃঢ় করতে চান—তাদের জন্য এটি শুধু একটি বই নয়, বরং আত্মার খাদ্য।</p>",
+      "seoDescription": "আকিদাহ আত-তাওহীদ — ঈমানের ভিত মজবুত করতে তাওহিদ, শিরক ও বিশুদ্ধ আকিদা নিয়ে শায়খ সালিহ আল-ফাওযানের পাঠ্যগ্রন্থ।",
+      "image": "book-aqidah-at-tawheed-2090.webp",
+      "pdf": "aqidah-at-tawheed-da02.pdf",
+      "coverSource": "drive: আকিদাহ আত-তাওহীদ front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/akidah-at-tawheed/",
+        "https://www.rokomari.com/book/101413",
+        "https://drive.google.com/drive/folders/1CBGY_rs8MGBbFC5u63y3ix_-DdpjKaxS?usp=sharing"
+      ]
+    },
+    {
+      "name": "দা ডিভাইন রিয়ালিটি",
+      "nameEn": "The Divine Reality (Bangla)",
+      "slug": "the-divine-reality-bangla",
+      "mrp": 475,
+      "discountPercent": 0,
+      "discountAmount": 0,
+      "quantity": 20,
+      "pages": 324,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [
+        "মাসুদ শরীফ"
+      ],
+      "authors": [
+        {
+          "name": "হামজা জর্জিস",
+          "nameEn": "Hamza Andreas Tzortzis"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>নাস্তিকতা-বিরোধী একাডেমিক গ্রন্থ The Divine Reality—লিখেছেন উস্তাদ হামজা জর্জিস—অত্যন্ত সুচারুভাবে নাস্তিকদের প্রশ্ন, ভ্রান্ত ধারণা ও যুক্তি খণ্ডন করেছে। বাংলাভাষায় এ ধরনের চিন্তাশীল বইয়ের অভাব থাকলেও এই বই সংশয়ে থাকা মুসলিম যুবকদের জন্য প্রাসঙ্গিক ও প্রয়োজনীয়। নাস্তিক প্রভাব ও বিভ্রান্তি থেকে আত্মরক্ষা এবং ইসলামের বুদ্ধিবৃত্তিক শক্তি উপলব্ধিতে এটি হবে এক কার্যকর সহায়ক।</p>",
+      "seoDescription": "দা ডিভাইন রিয়ালিটি — নাস্তিকতার যুক্তির জবাবে স্রষ্টা ও ইসলামের পক্ষে হামজা জর্জিসের একাডেমিক গ্রন্থের বাংলা অনুবাদ।",
+      "image": "book-the-divine-reality-bangla-fa24.webp",
+      "pdf": "the-divine-reality-bangla-d2d4.pdf",
+      "coverSource": "drive: দা ডিভাইন রিয়ালিটি front.jpg",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/the-divine-reality/",
+        "https://www.rokomari.com/book/565858",
+        "https://drive.google.com/drive/folders/1dNr3FCchabU2wv9oRGStAwboKepbfu4b?usp=sharing"
+      ]
+    },
+    {
+      "name": "কিতাবুত্ তাওহিদ",
+      "nameEn": "Kitabut Tawhid",
+      "slug": "kitabut-tawhid",
+      "mrp": 340,
+      "discountPercent": 0,
+      "discountAmount": 0,
+      "quantity": 20,
+      "pages": 320,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "মুহাম্মাদ বিন আবদুল ওয়াহ্হাব",
+          "nameEn": "Muhammad ibn Abd al-Wahhab"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>‘কিতাবুত্ তাওহিদ’ বইটি মহান আল্লাহর তাওহিদের ওপর এককালজয়ী গ্রন্থ। অনেকগুলো অধ্যায় রয়েছে এই বইয়ে, যেগুলোর প্রতিটিতে একাধিক শিরকি কর্মকাণ্ডের বিস্তারিত বর্ণনা রয়েছে। আশা করি বইটি মনোযোগের সঙ্গে আপনারা পাঠ করবেন এবং শিরকমুক্ত জীবন গঠনে প্রত্যয়ী হবেন। এই বইয়ের লেখক, ব্যাখ্যাকার, সংকলক, অনুবাদক, সম্পাদক এবং এই বই প্রকাশের বিভিন্ন পর্যায়ে যারা যত সহযোগিতা করেছেন, মহান আল্লাহ তা কবুল করে নিন। তাদের প্রত্যেককে উত্তম বিনিময় দান করুন। তাদেরকে শিরকমুক্ত তাওহিদের নির্মল আলোকচ্ছটায় আলোকিত জীবন গঠনের তাওফিক দান করুন।</p><p>সিয়ান পাবলিকেশন থেকে কালজয়ী এ গ্রন্থের বাংলা অনুবাদ প্রকাশ করতে পেরে আমরা মহান আল্লাহর প্রতি আন্তরিক কৃতজ্ঞতা জ্ঞাপন করছি। হে আল্লাহ, আমাদের মাফ করে দিন, ক্ষমা করে দিন, কবুল করে নিন।</p>",
+      "seoDescription": "কিতাবুত্ তাওহিদ — আল্লাহর একত্ববাদ ও শিরকের প্রকারভেদ নিয়ে মুহাম্মাদ বিন আবদুল ওয়াহ্হাবের কালজয়ী গ্রন্থ, সহজ বাংলায়।",
+      "image": "book-kitabut-tawhid-25c4.webp",
+      "pdf": "kitabut-tawhid-7214.pdf",
+      "coverSource": "drive: কিতাবু্ত্‌ তাওহীদ front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/kitabut-tauhid-2/",
+        "https://www.rokomari.com/book/227482",
+        "https://drive.google.com/drive/folders/1C1-Km36FYyzNmL4Z-pMCa1-kEqTtOn5q?usp=sharing"
+      ]
+    },
+    {
+      "name": "তাঁর পরিচয়",
+      "nameEn": "Tar Porichoy",
+      "slug": "tar-porichoy",
+      "mrp": 330,
+      "discountPercent": 0,
+      "discountAmount": 0,
+      "quantity": 20,
+      "pages": 332,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [
+        "সানজিদা শারমিন"
+      ],
+      "authors": [
+        {
+          "name": "উম্মে আবদুর রহমান সাকিনা হার্শফেল্ডার",
+          "nameEn": "Umm Abdur Rahman Sakina Hirschfelder"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>আমরা ইসলাম বলতে সাধারণত বিধি-নিষেধ বুঝি। কিন্তু তার আগে দরকার ছিল মূল বিষয়টা—আল্লাহর প্রতি ঈমান।আল্লাহকে না চিনে যদি তাঁর আদেশ মানি, সেটা কি সত্যিকারের আনুগত্য হয়?এই বইয়ের লক্ষ্য—আল্লাহর পরিচয় করিয়ে দেওয়া, যেন আমরা কেবল জানি না, বরং জীবনে তা কাজে লাগাতে পারি।</p>",
+      "seoDescription": "তাঁর পরিচয় — আল্লাহকে জানা ও ভালোবাসার মধ্য দিয়ে দীন বোঝার আহ্বান নিয়ে উম্মে আবদুর রহমান সাকিনা হার্শফেল্ডারের বই।",
+      "image": "book-tar-porichoy-b668.webp",
+      "pdf": "tar-porichoy-2a27.pdf",
+      "coverSource": "drive: তাঁর পরিচয় front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/tar-porichoy-2/",
+        "https://www.rokomari.com/book/220890",
+        "https://drive.google.com/drive/folders/1Xc6IG74xcn_4rMvELcOlBkHkBWhZF5H2?usp=sharing"
+      ]
+    },
+    {
+      "name": "সভ্যতার সংকট",
+      "nameEn": "Sobhotar Songkot",
+      "slug": "sobhotar-songkot",
+      "mrp": 350,
+      "discountPercent": 23,
+      "discountAmount": 80,
+      "quantity": 20,
+      "pages": 173,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. আবু আমিনাহ বিলাল ফিলিপস",
+          "nameEn": "Dr. Abu Ameenah Bilal Philips"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>মৌখিকভাবে সকল মুসলিম যদিও স্বীকার করে যে, ইসলাম ধর্মের মূল ভিত্তি হলো কুরআন-সুন্নাহ; কিন্তু তাদেরকে সঠিক অর্থে কুরআন-সুন্নাহর দিকে ফিরে আসার আহ্বান জানানো হলে তারা নানান অজুহাত দিতে আরম্ভ করে। সবচেয়ে বেশি যে কথা বলা হয় তা হলো, “আমাদের অঞ্চলে এ ধরনের নিয়মের প্রচলন নেই”। এ ধরনের অসার যুক্তিতেই এসব মুসলিমদের মগজধোলাই হয়ে আছে।</p><p>ছেলেমেয়েরা একটু বড় হলে যদি তারা কোনো আচার-প্রথা নিয়ে প্রশ্ন তোলে, তাহলে মুরব্বিরা এই বলে তাদেরকে তিরস্কার করে যে, “তোমাদের পূর্বপুরুষরা যেহেতু কাজটিকে ভালো মনে করেছেন, সেহেতু তোমাদেরও এটা করা উচিত”, অথবা, “তুমি কী মনে করো তোমাদের বাপদাদারা সবাই ভুল ছিল?” মাক্কার মুশরিকদেরকে যখন ইসলামের দিকে আহ্বান করা হতো, তারাও একই রকম কথা বলত!</p><p>আল্লাহ কুরআনে বলছেন,</p><p>“যখন তাদেরকে বলা হয়, ‘আল্লাহ যা নাযিল করেছেন তার দিকে ও রসূলের দিকে আসো’, তারা বলে, ‘আমরা আমাদের পিতৃপুরুষদের যার ওপর পেয়েছি, তা-ই আমাদের জন্য যথেষ্ট।’ তাদের পিতৃপুরুষরা কিছুই জানত না এবং হিদায়াতপ্রাপ্ত ছিল না তবুও?” [আল-মা’ইদাহ, ০৫ : ১০৪]</p><p>মুসলিমরা যদি তাদের সভ্যতাকে পুনঃপ্রতিষ্ঠা করতে চায় এবং বিশ্ববাসীর কাছে নিজেদের জীবনব্যবস্থাকে পশ্চিমা সভ্যতার বিকল্প হিসেবে প্রমাণ করতে চায়, তাহলে সংস্কৃতি কিংবা আচার-প্রথা নামক এ জাহেলি জঞ্জালকে অবশ্যই বর্জন করতে হবে। কারণ পশ্চিমা সভ্যতার সাংস্কৃতিক আগ্রাসনকে মোকাবেলা করার ক্ষমতা কেবল বিশুদ্ধ ও নির্ভেজাল ইসলামেরই আছে।…</p>",
+      "seoDescription": "সভ্যতার সংকট — কুরআন-সুন্নাহ থেকে দূরে সরে যাওয়া মুসলিম সমাজের সংকট ও উত্তরণের পথ নিয়ে ড. বিলাল ফিলিপসের বই।",
+      "image": "book-sobhotar-songkot-7a86.webp",
+      "pdf": "sobhotar-songkot-19c6.pdf",
+      "coverSource": "drive: সভ্যতার সংকট front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/sobbotar-songkot/",
+        "https://www.rokomari.com/book/117181",
+        "https://drive.google.com/drive/folders/1AUO3JwTTJJnbYayZGyEram2p-XEvNT8g?usp=sharing"
+      ]
+    },
+    {
+      "name": "কালিমায়ে তাইয়েবা বিশ্লেষণ ও ইমান ভঙ্গের কারণ",
+      "nameEn": "Kalimaye Taiyeba Bishleshon O Iman Bhonger Karon",
+      "slug": "kalimaye-taiyeba-bishleshon-o-iman-bhonger-karon",
+      "mrp": 395,
+      "discountPercent": 23,
+      "discountAmount": 91,
+      "quantity": 20,
+      "pages": 292,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "মুহাম্মদ বিন সাঈদ আল-কাহতানি",
+          "nameEn": "Muhammad ibn Said al-Qahtani"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>তাওহিদ মানুষের শুধু এ-স্বীকৃতি প্রদানের নাম নয় যে, আল্লাহ ব্যতীত কোনো স্রষ্টা নেই এবং আল্লাহ প্রতিটি বস্তুর মালিক ও প্রতিপালক। কারণ, এতটুকু স্বীকৃতি আরবের মূর্তিপূজারীদের মধ্যেও ছিল, অথচ তারা ছিল মুশরিক।</p><p>মূলত তাওহিদের জন্য উক্ত স্বীকৃতির পাশাপাশি এমন কিছু বিষয় থাকাও আবশ্যক, যার অসিলায় গুনাহ থেকে বিরত থাকা যায় এবং একই গুনাহে বারবার পতিত হওয়া থেকে রক্ষা পাওয়া সম্ভব হয়; যেমন, আল্লাহকে ভালোবাসা, তাঁর আনুগত্যে পূর্ণ আত্মসমর্পণ করা এবং সর্বোপরি সকল আচরণ-উচ্চারণের মাধ্যমে একমাত্র তাঁর সন্তুষ্টি কামনা করা।</p><p>‘লা-ইলাহা ইল্লাল্লাহ’র সাক্ষ্যদান বাস্তবায়নের দাবি হচ্ছে, একমাত্র আল্লাহর জন্যই মানুষকে ভালোবাসা এবং আল্লাহর জন্যই তাদের সাথে বিদ্বেষ পোষণ করা, আল্লাহর জন্যই বন্ধুত্ব করা এবং একমাত্র আল্লাহর জন্যই শত্রুতা করা; সর্বোপরি তাগুতকে প্রত্যাখ্যান করা এবং তাওহিদের বিপরীত সকল প্রকার শিরক থেকে বেঁচে থাকা।</p><p>মুসলিম উম্মাহর মাঝে আজ দেখা দিয়েছে আত্মপরিচয়ের বিস্মৃতি। মুসলিমরা দিকভ্রান্তের মতো শিরকের অলিগলিতে ছুটে বেড়াচ্ছে। এ অন্ধকার থেকে বের হয়ে জীবনের সঠিক পথ পেতে এবং পরকালীন উন্নতি অর্জন করতে প্রত্যেক মুসলিমের জন্য অবশ্যকর্তব্য হলো—কালিমায়ে তাইয়েবার বিশ্লেষণ ও তাৎপর্য সম্পর্কে জানা। তাদের উদ্দেশ্যেই আমাদের এই প্রয়াস।</p>",
+      "seoDescription": "কালিমায়ে তাইয়েবা বিশ্লেষণ ও ইমান ভঙ্গের কারণ — কালিমার অর্থ, শর্ত ও ইমান নষ্ট করে এমন বিষয় নিয়ে মুহাম্মদ বিন সাঈদ আল-কাহতানির বই।",
+      "image": "book-kalimaye-taiyeba-bishleshon-o-iman-bhonger-karon-7dfc.webp",
+      "pdf": "kalimaye-taiyeba-bishleshon-o-iman-bhonger-karon-bc24.pdf",
+      "coverSource": "drive: কালিমায়ে তাইয়েবা-front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/kalimaye-taiyeba/",
+        "https://drive.google.com/drive/folders/1CYxdF_5WFR2yGfBWwJB7Hn_xtMj368zT?usp=sharing"
+      ]
+    },
+    {
+      "name": "ইমান-কুফর ও তাকফির",
+      "nameEn": "Iman Kufr O Takfir",
+      "slug": "iman-kufr-o-takfir",
+      "mrp": 395,
+      "discountPercent": 23,
+      "discountAmount": 91,
+      "quantity": 20,
+      "pages": 284,
+      "edition": null,
+      "binding": "হার্ডকভার",
+      "translators": [
+        "মাওলানা শফিউল্লাহ ফুআদ"
+      ],
+      "authors": [
+        {
+          "name": "হযরত মাওলানা মুফতী মুহাম্মদ শফী (রহ.)",
+          "nameEn": "Mufti Muhammad Shafi"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>কুফরের একটি প্রকার হলো, রাসুলের উক্তি ও কর্ম স্বীকার করার পর সেগুলোর এমন ব্যাখ্যা করা, যা কুরআন-হাদিসের অকাট্য বর্ণনা ও উম্মাহর সর্বসম্মত ব্যাখ্যার বিপরীত। পরিভাষায় একে ‘যান্দাকা’ বলা হয়। এ প্রকারের কুফরি নামাজ-রোজা প্রভৃতি আমল সম্পাদনকারী ও তথাকথিত ধর্মীয় পণ্ডিতদের থেকে প্রকাশ পাওয়ার কারণে অধিকাংশ মানুষ তাদেরকে মুসলমান মনে করে। ফলে তারা মুসলমানদের আস্তিনের সাপ হয়ে তাঁদের ইমান-আকিদা ধ্বংস করার সুযোগ পায়। তাই এ বইয়ে ‘যান্দাকা’ কুফর হওয়া বিষয়ে ইমামগণের পর্যাপ্ত সাক্ষ্য তুলে ধরা হয়েছে।</p><p>তবে তাদেরকে কাফের আখ্যাদানের ক্ষেত্রে দুটো প্রতিবন্ধকতা ছিল-</p><p>১. আলেমগণের সিদ্ধান্তমতে, কুরআন-হাদিসের মর্মের ব্যাখ্যাসাপেক্ষ প্রত্যাখ্যান দ্বারা কেউ কাফের হয় না।</p><p>২. আহলে কিবলাকে কাফের আখ্যা দেওয়া উম্মাহর সর্বসম্মত সিদ্ধান্ত অনুযায়ী নিষিদ্ধ।</p><p>তাই যুগের ইমাম আল্লামা আনওয়ার শাহ কাশ্মিরি রাহিমাহুল্লাহর ‘ইকফারুল মুলহিদিন’ গ্রন্থের আলোকে মুফতি মুহাম্মদ শফি রাহিমাহুল্লাহ এ বইয়ে প্রতিবন্ধকতা দুটোর সরল নিরসন অথচ দলিলসমৃদ্ধ ব্যাখ্যা-বিশ্লেষণ করেছেন।</p><p>‘পরিশিষ্ট’ পর্বে আধুনিক ইরতিদাদের বিভিন্ন চিত্র ফুটে উঠেছে। অধুনা কিছু কুফরি ষড়যন্ত্রের স্পষ্ট বিবরণ সম্বলিত আলোচনাও সন্নিবেশিত হয়েছে। তাই ইরতিদাদের দিকে গড্ডলিকাপ্রবাহের মতো ছুটে চলা উম্মাহকে সঠিক পথে ফিরিয়ে আনবার পর্যাপ্ত নির্দেশনা পাবেন পাঠক ইনশাআল্লাহ।</p>",
+      "seoDescription": "ইমান-কুফর ও তাকফির — কাকে কাফির বলা যায় আর কাকে নয়, এ নিয়ে মুফতি মুহাম্মাদ শফী রহ.-এর ভারসাম্যপূর্ণ আলোচনা।",
+      "image": "book-iman-kufr-o-takfir-2b8a.webp",
+      "pdf": "iman-kufr-o-takfir-dafc.pdf",
+      "coverSource": "drive: ইমান কুফর ও তাকফির front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/imaan-kufr-o-takfir/",
+        "https://www.rokomari.com/book/455342",
+        "https://drive.google.com/drive/folders/1D8SkAxemreOBmLy36pKdDCRfvrQVjCkz?usp=sharing"
+      ]
+    },
+    {
+      "name": "আল্লাহ্‌ (ইসলামি আকিদা সিরিজ-০১)",
+      "nameEn": "Allah (Islami Akida Series 01)",
+      "slug": "allah-islami-akida-series-01",
+      "mrp": 750,
+      "discountPercent": 23,
+      "discountAmount": 172,
+      "quantity": 20,
+      "pages": null,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. উমার সুলায়মান আল আশকার",
+          "nameEn": "Dr. Umar Sulaiman al-Ashqar"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>সৃষ্টির আদিকাল থেকেই মানুষ একজন পরম স্রষ্টার অস্তিত্ব অনুভব করেছে। কেউ তাঁকে খুঁজেছে যুক্তিতে, কেউ অনুভবে, কেউ কল্পনায়। তবে সেই স্রষ্টাকে বোঝার পথে মানুষের চিন্তা ও দর্শনে তৈরি হয়েছে নানা ভিন্নতা। ইসলাম এই বিভ্রান্তির ভিড় চিরে ঘোষণা করে, স্রষ্টা একজন, তিনি অদ্বিতীয়, তিনি আল্লাহ। ইসলাম আল্লাহকে উপস্থাপন করে তাঁর মহিমান্বিত গুণাবলির মাধ্যমে। এসব গুণাবলি মানুষকে আল্লাহর নিকটবর্তী করে। কিন্তু সময়ের স্রোতে ইসলামের মূল বিশ্বাসের সংঘর্ষে এসেছে নানা বিজাতীয় দর্শন। এর ফলে আল্লাহ সম্পর্কে স্পষ্ট ধারণার জায়গায় ধীরে ধীরে জন্ম নিয়েছে বিভ্রান্তি ও বিশ্বাসগত সংশয়।</p><p>এই গ্রন্থে ড. উমর আল-আশকার ইসলামের মৌলিক উৎসগুলো থেকে সকল ভুল ধারণা চিহ্নিত করেছেন। তিনি দেখিয়েছেন, আল্লাহর গুণাবলি সম্পর্কিত কুরআন ও হাদিসের বাণীগুলো বোঝার একমাত্র সঠিক মানদণ্ড হলো সালাফদের অনুসৃত পথ। তাওহিদকে কেবল একটি তাত্ত্বিক ধারণা হিসেবে নয়, বরং ইসলামের হৃদস্পন্দন হিসেবে উপস্থাপন করা হয়েছে এ গ্রন্থে।</p>",
+      "seoDescription": "আল্লাহ্‌ (ইসলামি আকিদা সিরিজ-০১) — কুরআন-সুন্নাহর আলোকে আল্লাহর পরিচয়, নাম ও গুণাবলি নিয়ে ড. উমার সুলায়মান আল-আশকারের বই।",
+      "image": "book-allah-islami-akida-series-01-94b2.webp",
+      "pdf": "allah-islami-akida-series-01-9eb1.pdf",
+      "coverSource": "wafilife.com product cover",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/allah-akida-series-01/"
+      ]
+    },
+    {
+      "name": "ফেরেশতা (ইসলামি আকিদা সিরিজ-০২)",
+      "nameEn": "Feresta (Islami Akida Series 02)",
+      "slug": "feresta-islami-akida-series-02",
+      "mrp": 270,
+      "discountPercent": 23,
+      "discountAmount": 62,
+      "quantity": 20,
+      "pages": null,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. উমার সুলায়মান আল আশকার",
+          "nameEn": "Dr. Umar Sulaiman al-Ashqar"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>মাতৃগর্ভে জন্ম নেওয়ার মুহূর্ত থেকে শুরু করে মৃত্যু, এমনকি তারপরও—মানুষের জীবনের প্রতিটি ধাপে ফেরেশতাদের এক বিশেষ ভূমিকা রয়েছে। তাঁরা সবসময় মানুষের পাশে থেকে তাকে রক্ষা করেন এবং তার প্রতিটি কাজের হিসাব লিখে রাখেন।</p><p>ফেরেশতারাই মানুষের জান কবজ করেন; কবরের জীবনে তাঁরাই নিয়ে আসেন শান্তি অথবা শাস্তি। শেষ দিনে একজন ফেরেশতার শিঙার ফুৎকারেই কিয়ামত হবে। হাশরের ময়দানে বিচারের প্রতিটি ধাপে ফেরেশতারা উপস্থিত থাকবেন এবং শেষ পর্যন্ত মানুষকে জান্নাত কিংবা জাহান্নামের ঠিকানায় পৌঁছে দেবেন।</p><p>এই গ্রন্থে ড. উমর আল-আশকার ইসলামের মৌলিক উৎসগুলো থেকে ফেরেশতাদের এক পূর্ণাঙ্গ পরিচয় তুলে ধরেছেন। ফেরেশতাদের সৃষ্টি, মহাবিশ্বে তাঁদের দায়িত্ব এবং মানুষের সাথে তাঁদের সম্পর্ক কেমন—এসব প্রশ্নের উত্তর আপনি এই বইটিতে খুব সহজভাবে পাবেন।</p>",
+      "seoDescription": "ফেরেশতা (ইসলামি আকিদা সিরিজ-০২) — ফেরেশতাদের সৃষ্টি, বৈশিষ্ট্য ও মানুষের জীবনে তাঁদের ভূমিকা নিয়ে ড. উমার আল-আশকারের বই।",
+      "image": "book-feresta-islami-akida-series-02-1ee9.webp",
+      "pdf": "feresta-islami-akida-series-02-6339.pdf",
+      "coverSource": "wafilife.com product cover",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/feresta-akida-series-01/"
+      ]
+    },
+    {
+      "name": "নবি-রাসুল ও আসমানি কিতাব (ইসলামি আকিদা সিরিজ-০৩)",
+      "nameEn": "Nobi Rasul O Asmani Kitab (Islami Akida Series 03)",
+      "slug": "nobi-rasul-o-asmani-kitab-islami-akida-series-03",
+      "mrp": 650,
+      "discountPercent": 23,
+      "discountAmount": 150,
+      "quantity": 20,
+      "pages": null,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. উমার সুলায়মান আল আশকার",
+          "nameEn": "Dr. Umar Sulaiman al-Ashqar"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>সৃষ্টির আদিলগ্ন থেকেই শয়তান মানবজাতির বিরুদ্ধে চক্রান্তে লিপ্ত। তবে আল্লাহ মানুষকে পথহীন রাখেননি। একমাত্র আল্লাহর দাসত্বের আহ্বান ও জীবন পরিচালনার সঠিক বিধান পৌঁছে দিতে তিনি যুগে যুগে নবী-রাসুল পাঠিয়েছেন।</p><p>ওমর সুলাইমান আল-আশকার তাঁর ‘ইসলামি আকিদা সিরিজ’ (১-৭ খণ্ড)-এর ‘নবি-রাসুল ও আসমানি কিতাব’ গ্রন্থে উল্লেখ করেছেন যে, পূর্ববর্তী উম্মতের আলেমরা এই ‘আসমানি আমানত’ যথাযথভাবে সংরক্ষণ করতে ব্যর্থ হওয়ায় তা বিকৃত হয় এবং আংশিকভাবে হারিয়ে যায়। এরপর আল্লাহ সমগ্র মানবজাতির জন্য ইসলামসহ তাঁর সর্বশেষ রাসুল মুহাম্মদ (সাল্লাল্লাহু আলাইহি ওয়া সাল্লাম)-কে পাঠান এবং এই চূড়ান্ত দীন সংরক্ষণের দায়িত্ব তিনি নিজেই গ্রহণ করেন।</p>",
+      "seoDescription": "নবি-রাসুল ও আসমানি কিতাব (ইসলামি আকিদা সিরিজ-০৩) — নবুওয়াত, রিসালাত ও আসমানি কিতাবের প্রতি ঈমান নিয়ে ড. উমার আল-আশকারের বই।",
+      "image": "book-nobi-rasul-o-asmani-kitab-islami-akida-series-03-8e65.webp",
+      "pdf": "nobi-rasul-o-asmani-kitab-islami-akida-series-03-ee75.pdf",
+      "coverSource": "wafilife.com product cover",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/nobi-rasul-akida-series-03/"
+      ]
+    },
+    {
+      "name": "তাকদির (ইসলামি আকিদা সিরিজ-০৪)",
+      "nameEn": "Taqdir (Islami Akida Series 04)",
+      "slug": "taqdir-islami-akida-series-04",
+      "mrp": 270,
+      "discountPercent": 23,
+      "discountAmount": 62,
+      "quantity": 20,
+      "pages": null,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. উমার সুলায়মান আল আশকার",
+          "nameEn": "Dr. Umar Sulaiman al-Ashqar"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>তাকদির কি কেবলই দার্শনিক আর তাত্ত্বিকদের জটিল বিতর্কের বিষয়, নাকি আমাদের প্রাত্যহিক জীবনের প্রতিটি স্পন্দনের সাথেও এর গভীর যোগসূত্র রয়েছে? তাকদিরের অর্থ কি এই যে, মানুষ ভাগ্যের হাতে স্রেফ এক অসহায় পুতুল?</p><p>বস্তুত তাকদির নিয়ে আমাদের বিশ্বাস ও দৃষ্টিভঙ্গিই আমাদের সামগ্রিক জীবনধারাকে নিয়ন্ত্রণ করে। তাকদিরের ইসলামি বোধ মানুষকে প্রচণ্ড আত্মবিশ্বাসী ও কর্মঠ করে তোলে। মহাবিশ্বের সব কিছুই আল্লাহর সার্বভৌম ইচ্ছার অধীন, আবার সেই গণ্ডির ভেতরেই মানুষকে দেওয়া হয়েছে স্বাধীন ইচ্ছাশক্তি ও কাজ করার ক্ষমতা।</p><p>এই গ্রন্থে ড. উমর আল-আশকার ইসলামের মৌলিক উৎসগুলো থেকে স্পষ্টভাবে বিষয়টি ব্যাখ্যা করেছেন। সালাফদের গবেষণার আলোকে তিনি উম্মাহর ঐতিহাসিক বিতর্কগুলো তুলে ধরেছেন, বিশুদ্ধ ও সঠিক পথটিও উন্মোচিত করেছেন। তাকদিরের জ্ঞান অর্জন প্রতিটি মুসলিমের জন্য অপরিহার্য; এটি ইহকালে যেমন মানসিক প্রশান্তি জোগায়, তেমনি পরকালেও বয়ে আনে আল্লাহর অফুরন্ত রহমত ও কল্যাণ।</p>",
+      "seoDescription": "তাকদির (ইসলামি আকিদা সিরিজ-০৪) — তাকদিরে বিশ্বাস, মানুষের ইচ্ছা ও দায়িত্ব নিয়ে সংশয় দূর করার মতো সহজ আলোচনা।",
+      "image": "book-taqdir-islami-akida-series-04-e68a.webp",
+      "pdf": "taqdir-islami-akida-series-04-3703.pdf",
+      "coverSource": "wafilife.com product cover",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/taqdir-akida-series-04/"
+      ]
+    },
+    {
+      "name": "মৃত্যু থেকে পুনরুত্থান (ইসলামি আকিদা সিরিজ-০৫)",
+      "nameEn": "Mrittu Theke Punorutthan (Islami Akida Series 05)",
+      "slug": "mrittu-theke-punorutthan-islami-akida-series-05",
+      "mrp": 650,
+      "discountPercent": 23,
+      "discountAmount": 150,
+      "quantity": 20,
+      "pages": null,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. উমার সুলায়মান আল আশকার",
+          "nameEn": "Dr. Umar Sulaiman al-Ashqar"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>মৃত্যুর পর ঠিক কী ঘটে? মহাপ্রলয় বা কিয়ামত কবে হবে? ধর্ম-বর্ণ বা বিশ্বাস নির্বিশেষে এই প্রশ্নগুলো প্রতিটি মানুষকেই ভাবিত করে। অনেকেই এর উত্তর খুঁজতে গিয়ে নানা তত্ত্ব দাঁড় করিয়েছেন; কেউ বুনেছেন অলীক কল্পনা, কেউবা তলিয়ে গেছেন নিহিলিজমে। কিন্তু মানুষের মনগড়া কোনো ধারণা দিয়ে সেই অদৃশ্য জগত সম্পর্কে নিশ্চিত হওয়া অসম্ভব। জীবনের অন্যান্য জটিল সমীকরণের মতো এখানেও ইসলাম আমাদের সঠিক সমাধান দেয়। আল্লাহ কুরআন এবং রাসুল সা.-এর মাধ্যমে আমাদের এই পরম সত্যগুলো অবহিত করেছেন।</p><p>এই গ্রন্থে ড. উমর আল-আশকার ইসলামের মৌলিক উৎসগুলো থেকে পাঠকের সামনে তুলে ধরেছেন মৃত্যু, বিদেহী আত্মার পরিণতি, কবরের সওয়াল-জওয়াব এবং বারজাখি জীবনের শাস্তি বা প্রশান্তির স্বরূপ। এ ছাড়া বইটিতে আলোচিত হয়েছে কিয়ামতের সেই সব আলামত, যা ইঙ্গিত দেয় যে শেষ বিচারের দিন ঘনিয়ে আসছে। সব মিলিয়ে বইটি পরকালীন জীবনের এক প্রামাণ্য চিত্রায়ন উপস্থাপন করে।</p>",
+      "seoDescription": "মৃত্যু থেকে পুনরুত্থান (ইসলামি আকিদা সিরিজ-০৫) — মৃত্যু, কবর, কিয়ামতের আলামত ও পুনরুত্থান নিয়ে ড. উমার আল-আশকারের বই।",
+      "image": "book-mrittu-theke-punorutthan-islami-akida-series-05-0eec.webp",
+      "pdf": "mrittu-theke-punorutthan-islami-akida-series-05-e80e.pdf",
+      "coverSource": "wafilife.com product cover",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/mrittu-theke-punorudhar/"
+      ]
+    },
+    {
+      "name": "পুনরুত্থান থেকে অনন্ত জীবন (ইসলামি আকিদা সিরিজ-০৬)",
+      "nameEn": "Punorutthan Theke Ononto Jibon (Islami Akida Series 06)",
+      "slug": "punorutthan-theke-ononto-jibon-islami-akida-series-06",
+      "mrp": 630,
+      "discountPercent": 23,
+      "discountAmount": 145,
+      "quantity": 20,
+      "pages": null,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. উমার সুলায়মান আল আশকার",
+          "nameEn": "Dr. Umar Sulaiman al-Ashqar"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>পুনরুত্থান দিবসে বিশ্বাস ইসলামি আকিদার অবিচ্ছেদ্য অংশ। যুগে যুগে সকল নবী-রাসুল এই ধ্রুব সত্যের দাওয়াতই দিয়েছেন। দৃশ্যত দুর্বোধ্য এই পৃথিবীর জীবনের প্রকৃত অর্থ কেবল পরকালের বিশ্বাসেই খুঁজে পাওয়া সম্ভব। এই বিশ্বাস মানুষের ব্যক্তিসত্তাকে যেমন সংযত করে, তেমনি টানে সামাজিক অনাচার ও লোভের লাগাম। কারণ, বিশ্বাসী জানে, দিনশেষে তাকে অবশ্যই প্রতিটি কাজের জবাবদিহি করতে হবে।</p><p>এই গ্রন্থে ড. উমর আল-আশকার ইসলামের মৌলিক উৎসগুলো থেকে মহাপ্রলয়ের প্রতিটি দৃশ্য জীবন্ত করে তুলেছেন। শিঙার ফুঁৎকার, মহাবিশ্বের অন্তিম লগ্ন, হাশরের ময়দানের ভয়াবহতা এবং জান্নাত-জাহান্নামের চূড়ান্ত ফয়সালা—মহাকালের প্রতিটি ধাপ তিনি বিশ্বাসযোগ্য দলিলে উপস্থাপন করেছেন। ঈমানের ভিত মজবুত করতে প্রতিটি মুমিনের সংগ্রহে এই বইটি থাকা অপরিহার্য।</p>",
+      "seoDescription": "পুনরুত্থান থেকে অনন্ত জীবন (ইসলামি আকিদা সিরিজ-০৬) — হাশর, হিসাব, মিজান ও শাফাআত নিয়ে কুরআন-সুন্নাহভিত্তিক আলোচনা।",
+      "image": "book-punorutthan-theke-ononto-jibon-islami-akida-series-06-e932.webp",
+      "pdf": "punorutthan-theke-ononto-jibon-islami-akida-series-06-fed2.pdf",
+      "coverSource": "wafilife.com product cover",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/punoruthan-theke-ononto-jibon/"
+      ]
+    },
+    {
+      "name": "জান্নাত ও জাহান্নাম (ইসলামি আকিদা সিরিজ-০৭)",
+      "nameEn": "Jannat O Jahannam (Islami Akida Series 07)",
+      "slug": "jannat-o-jahannam-islami-akida-series-07",
+      "mrp": 650,
+      "discountPercent": 23,
+      "discountAmount": 150,
+      "quantity": 20,
+      "pages": null,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. উমার সুলায়মান আল আশকার",
+          "nameEn": "Dr. Umar Sulaiman al-Ashqar"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>মুমিনের দৃষ্টিতে জান্নাতে প্রবেশের অনুমতি লাভ করা এবং জাহান্নামের শাস্তি থেকে নিরাপদ থাকা—মানবজীবনের সর্বোচ্চ ও পরম আকাঙ্ক্ষিত সাফল্য। পার্থিব জীবনের প্রতিটি আমল, নৈতিক আচরণ এবং বিশ্বাসের প্রতিফলন পরকালে প্রতিদান হিসেবে প্রকাশিত হবে। এ বিষয়গুলো যেহেতু গায়েবের জগতের অন্তর্ভুক্ত, তাই এগুলো আকীদা ও ঈমানের মৌলিক ও কেন্দ্রীয় উপাদান হিসেবে বিবেচিত। একজন মুমিনের চিন্তা, নৈতিকতা, সিদ্ধান্ত গ্রহণ এবং জীবনদৃষ্টিকে এই বিশ্বাস গভীরভাবে প্রভাবিত করে।</p><p>এই গ্রন্থে ড. উমর আল-আশকার ইসলামের মৌলিক উৎসগুলো থেকে এসব বিষয়ের গুরুত্বপূর্ণ দিকগুলো আলোচনা করেছেন। এই গ্রন্থের বর্ণনাভঙ্গি পাঠকের মধ্যে আখিরাতের চেতনা জাগ্রত করবে। জান্নাত ও জাহান্নামের বাস্তবতা, তাদের স্থায়িত্ব, এবং মানুষের চূড়ান্ত পরিণতির প্রশ্ন—এসব বিষয় পাঠককে দায়িত্বশীল জীবনযাপনের দিকে উদ্বুদ্ধ করবে। পাঠক কেবল তাত্ত্বিক জ্ঞান অর্জন করবে না; বরং জীবনের লক্ষ্য, কর্মপদ্ধতি এবং নৈতিক অবস্থান পুনর্মূল্যায়নের প্রেরণা লাভ করবে।</p>",
+      "seoDescription": "জান্নাত ও জাহান্নাম (ইসলামি আকিদা সিরিজ-০৭) — জান্নাতের নিয়ামত ও জাহান্নামের শাস্তির বিবরণ নিয়ে ড. উমার আল-আশকারের বই।",
+      "image": "book-jannat-o-jahannam-islami-akida-series-07-f7d1.webp",
+      "pdf": "jannat-o-jahannam-islami-akida-series-07-716c.pdf",
+      "coverSource": "wafilife.com product cover",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/jannat-jahannam/"
+      ]
+    },
+    {
+      "name": "আনপ্রটেক্টেড",
+      "nameEn": "Unprotected (Bangla)",
+      "slug": "unprotected-bangla",
+      "mrp": 360,
+      "discountPercent": 23,
+      "discountAmount": 83,
+      "quantity": 20,
+      "pages": 220,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [
+        "আশিক আরমান নিলয়",
+        "সানজিদা সিদ্দীক কথা"
+      ],
+      "authors": [
+        {
+          "name": "মিরিয়াম গ্রসম্যান",
+          "nameEn": "Miriam Grossman"
+        }
+      ],
+      "categories": [
+        "ইসলামে নারী",
+        "আধুনিক ফিতনা"
+      ],
+      "description": "<p>আনপ্রটেক্টেড বইটি আধুনিক “যৌন স্বাধীনতা” ভাবনার নামে নারীদের শারীরিক, মানসিক ও সামাজিকভাবে কীভাবে ক্ষতিগ্রস্ত করা হচ্ছে, তা বাস্তব উদাহরণসহ তুলে ধরে। লেখক একজন চিকিৎসক হিসেবে নিজ অভিজ্ঞতা থেকে দেখিয়েছেন, কীভাবে সমাজ নারীদের যৌনতা ব্যবহার করে কিন্তু সঠিক নিরাপত্তা, মূল্যবোধ ও সচেতনতা দেয় না। বইটি বিশেষ করে নারীদের জন্য সতর্কবার্তা, যাতে তারা তথাকথিত স্বাধীনতার নামে নিজেদের ক্ষতির পথে না ঠেলে দেয়। যৌনতা, নারীর মর্যাদা ও সমাজের দ্বিচারিতা বুঝতে এটি একটি গুরুত্বপূর্ণ বই।</p>",
+      "seoDescription": "আনপ্রটেক্টেড — যৌন স্বাধীনতার নামে তরুণীদের শারীরিক ও মানসিক ক্ষতি নিয়ে মনোরোগ চিকিৎসক মিরিয়াম গ্রসম্যানের বইয়ের বাংলা অনুবাদ।",
+      "image": "book-unprotected-bangla-420e.webp",
+      "pdf": "unprotected-bangla-2b30.pdf",
+      "coverSource": "drive: আনপ্রটেক্টেড front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/unprotected/",
+        "https://www.rokomari.com/book/228437",
+        "https://drive.google.com/drive/folders/1o14VatykRQKfJOwWA0tZCbUEies2HFAc?usp=sharing"
+      ]
+    },
+    {
+      "name": "সফলতার কান্না",
+      "nameEn": "Sofolotar Kanna",
+      "slug": "sofolotar-kanna",
+      "mrp": 450,
+      "discountPercent": 23,
+      "discountAmount": 104,
+      "quantity": 20,
+      "pages": 288,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [
+        "তাবাসসুম মোসলেহ"
+      ],
+      "authors": [
+        {
+          "name": "সিলভিয়া অ্যান হিউলেট",
+          "nameEn": "Sylvia Ann Hewlett"
+        }
+      ],
+      "categories": [
+        "ইসলামে নারী",
+        "আধুনিক ফিতনা"
+      ],
+      "description": "<p>কর্মজীবী নারীদের জন্য এই বইটা খুবই দরকারি, কারণ এতে নারীদের জীবনের গুরুত্বপূর্ণ অনেক বিষয় সহজভাবে বোঝানো হয়েছে। যেমন, সন্তান সম্পর্কিত স্বাস্থ্য তথ্য দিয়ে কৃত্রিম বন্ধ্যাত্ব চিকিৎসা সম্পর্কে স্পষ্ট ধারণা দেয় এবং ৪২ বছর বয়সেও ‘মিরাকল বেবি’ আসলেই সম্ভব কি না তা বুঝতে সাহায্য করে। এছাড়া ক্যারিয়ারের বিভিন্ন সুযোগ এবং পরিবারের সাহায্য নিয়ে নতুন তথ্য আছে, যা নারীদের জীবনে অনেক সাহায্য করে। এইসব তথ্য নারীদের নিজেদের বড় সিদ্ধান্ত নেওয়ার ক্ষেত্রে সহজতা ও আত্মবিশ্বাস দেয়।</p>",
+      "seoDescription": "সফলতার কান্না — ক্যারিয়ারের দৌড়ে কর্মজীবী নারীর বিয়ে, মাতৃত্ব ও পরিবার নিয়ে সিলভিয়া অ্যান হিউলেটের গবেষণার বাংলা অনুবাদ।",
+      "image": "book-sofolotar-kanna-5df5.webp",
+      "pdf": "sofolotar-kanna-767d.pdf",
+      "coverSource": "drive: সফলতার কান্না front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/sofolotar-kanna/",
+        "https://www.rokomari.com/book/257237",
+        "https://drive.google.com/drive/folders/1H1LvQ7y1cv098P98PHMQvmiVQvtELAkJ?usp=sharing"
+      ]
+    },
+    {
+      "name": "সারেন্ডার্ড ওয়াইফ",
+      "nameEn": "Surrendered Wife (Bangla)",
+      "slug": "surrendered-wife-bangla",
+      "mrp": 480,
+      "discountPercent": 23,
+      "discountAmount": 110,
+      "quantity": 20,
+      "pages": 296,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [
+        "আশিক আরমান নিলয়",
+        "সানজিদা সিদ্দীক কথা"
+      ],
+      "authors": [
+        {
+          "name": "লরা ডয়েল",
+          "nameEn": "Laura Doyle"
+        }
+      ],
+      "categories": [
+        "ইসলামে নারী",
+        "বিয়ে ও সংসার"
+      ],
+      "description": "<p>আমি অন্য নারীদের সঙ্গে বিষয়টি নিয়ে কথা বলি এবং বোঝার চেষ্টা করি—তাদের দাম্পত্য জীবনে সুখী হওয়ার পেছনে কোন বিষয়গুলো সবচেয়ে গুরত্বপূর্ণ ভূমিকা পালন করেছে। তখনো জানতাম না যে, এরই মাধ্যমে আমি আত্মসমর্পণের পথে হাঁটি-হাঁটি-পা-পা করে চলতে শুরু করেছি। পরে এটাই হয়েছিল আমাদের দাম্পত্য জীবনে প্রশান্তি তৈরি করা এবং আমার হারানো আত্মমর্যাদা ফিরিয়ে আনার মাধ্যম। আজ আমি একজন আত্মসমর্পণকারী স্ত্রী হিসেবে নিজের পরিচয় দিই। একজন নারী হিসেবে যেরকম দাম্পত্য জীবনের স্বপ্ন আমি দেখেছিলাম, ঠিক সেরকম একটা জীবনই পেতে শুরু করি এরপর থেকে। এই একই ব্যাপার আপনার ক্ষেত্রেও ঘটবে, যদি আপনি এ-বইয়ের মূলনীতিগুলো অনুসরণ করেন।</p>",
+      "seoDescription": "সারেন্ডার্ড ওয়াইফ — দাম্পত্যে আস্থা, সম্মান ও ঘনিষ্ঠতা ফিরিয়ে আনার উপায় নিয়ে লরা ডয়েলের আলোচিত বইয়ের বাংলা অনুবাদ।",
+      "image": "book-surrendered-wife-bangla-8c37.webp",
+      "pdf": "surrendered-wife-bangla-ce80.pdf",
+      "coverSource": "drive: সারেন্ডার্ড ওয়াইফ front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/surrendered-wife/",
+        "https://www.rokomari.com/book/269756",
+        "https://drive.google.com/drive/folders/1Mb8v6XUYjX859JhLjuJhtq1XBkkIgflJ?usp=sharing"
+      ]
+    },
+    {
+      "name": "আফগান-তালেবান : সন্ত্রাস ও শান্তির আদর্শিক লড়াই",
+      "nameEn": "Afghan Taleban Sontrash O Shantir Adorshik Lorai",
+      "slug": "afghan-taleban-sontrash-o-shantir-adorshik-lorai",
+      "mrp": 330,
+      "discountPercent": 23,
+      "discountAmount": 76,
+      "quantity": 20,
+      "pages": 213,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "মাওলানা সামিউল হক হক্কানি",
+          "nameEn": "Maulana Samiul Haq Haqqani"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>এ বইটি গবেষণামূলক একাডেমিক কোনো কাজ নয়। এটি একজন প্রভাবশালী ব্যক্তির গল্প, যিনি লাখ লাখ মানুষের জীবনকে স্পর্শ করেছেন এবং আফগানিস্তান ও পাকিস্তানের একটি অর্থোডক্স বা শেকড়মুখী আন্দোলনের আধ্যাত্মিক নেতৃত্ব দিয়েছেন, যা কেবল সে অঞ্চলেরই নয়; বরং সারা বিশ্বের ইতিহাসের গতিপথ পরিবর্তন করে দিয়েছে। মাওলানা সামিউল হককে মানুষ যখন ‘তালেবানের পিতা’ বলে অভিহিত করে, তখন তিনি গর্বিত বোধ করেন। যদিও পশ্চিম-অনুরাগী অনেকের মতে, এই উপাধি একজন আলিম হিসেবে তার গ্রহণযোগ্যতাকে প্রশ্নবিদ্ধ করে।</p><p>পরিতাপের বিষয় হলো, তালেবানরা অশিক্ষিত, অসভ্য এবং নিষ্ঠুর বলে বিষাক্ত যেসব বয়ান তৈরি করা হয়েছিল, তা আজও অব্যাহত রয়েছে। আর এ কারণেই মাওলানা সামিউল হকের এ বইটির জরুরত অনস্বীকার্য; বিশেষত সেসব মানুষের জন্য, যারা পাশ্চাত্যের গৎবাঁধা জাতিবাদী ও ইসলামবিদ্বেষী বয়ানের পরিবর্তে ভিন্ন এক দৃষ্টিভঙ্গি সম্পর্কে জানতে চান।পৃথিবীর অন্যতম ও প্রভাবশালী একজন আলিম তালেবানকে কীভাবে দেখেন এবং কীভাবে তালিবানরা সন্ত্রাসের বিপক্ষে ও শান্তির পক্ষে নিরন্তর লড়াই করে গেছেন—সেসব জানার একটি গুরুত্বপূর্ণ উৎস হতে পারে বইটি।</p>",
+      "seoDescription": "আফগান-তালেবান : সন্ত্রাস ও শান্তির আদর্শিক লড়াই — আফগানিস্তান ও তালেবান আন্দোলনের প্রেক্ষাপট নিয়ে মাওলানা সামিউল হক হক্কানির বই।",
+      "image": "book-afghan-taleban-sontrash-o-shantir-adorshik-lorai-473f.webp",
+      "pdf": "afghan-taleban-sontrash-o-shantir-adorshik-lorai-2229.pdf",
+      "coverSource": "drive: আফগান তালেবান-front-cover.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/afgan-taleban/",
+        "https://drive.google.com/drive/folders/1CZ3ym4X48GOsYltBid-tgvHsw73Z44L8?usp=sharing"
+      ]
+    },
+    {
+      "name": "সাম্রাজ্যবাদ ও মিশনারি তৎপরতা",
+      "nameEn": "Samrajjobad O Missionary Totporota",
+      "slug": "samrajjobad-o-missionary-totporota",
+      "mrp": 460,
+      "discountPercent": 23,
+      "discountAmount": 106,
+      "quantity": 20,
+      "pages": 312,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [
+        "মু. নাঈম সিদ্দিকী"
+      ],
+      "authors": [
+        {
+          "name": "ড. মুস্তফা খালিদি",
+          "nameEn": "Dr. Mustafa Khalidi"
+        },
+        {
+          "name": "ড. উমর ফররুখ",
+          "nameEn": "Dr. Umar Farrukh"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>পশ্চিমা সাম্রাজ্যবাদ দীর্ঘদিন ধরে প্রাচ্যের আকাশে গভীর কালো ছায়ার মতো বিস্তৃত হয়েছে—নীরবে ও ধীরে। শিক্ষা, চিকিৎসা, সমাজসেবার নামে তারা এসেছে—ধর্মের কথা বলেছে, কিন্তু সে-ধর্ম তাদের; সংস্কৃতির আলো ছড়িয়েছে, কিন্তু সে-আলো পাশ্চাত্যের। মিশনারিরা তাদের কলমে এঁকেছে ইসলামের বিকৃত এক ছবি, যার মধ্য দিয়ে ম্লান হয়েছে ইসলামি জীবন ও বিশ্বাসের দীপ্তি, হীনমন্যতায় পর্যবসিত হয়েছে মুসলিম সমাজ।</p><p>শুধু শব্দের কারসাজিতেই সীমাবদ্ধ থাকেনি মিশনারিরা—তারা বিদ্যালয় গড়েছে, হাসপাতাল খুলেছে, দাতব্য প্রতিষ্ঠানের ছদ্মবেশে ঢুকেছে মুসলিম জীবনের গভীরে। পশ্চিমা ভাবধারার বিষাক্ত প্রবাহ ধীরে ধীরে ঢেলে দেওয়া হয়েছে মুসলিম মানসে। মুছে ফেলা হয়েছে আত্মপরিচয়ের অনিবার্য রেখা।</p><p>এই বই সেই প্রবাহের বিরুদ্ধে একটি ছোট্ট প্রয়াস—একটি উদাত্ত আহ্বান। এই আহ্বান সচেতনতার, আত্মপরিচয় রক্ষার এবং ঐক্যবদ্ধ হওয়ার। পশ্চিমা মানবতাবাদের মুখোশ সরিয়ে তাদের আধিপত্য বিস্তারের পথচিত্র তুলে ধরা হয়েছে এখানে। একইসঙ্গে, জায়োনিজমের বিপদের কথাও বলা হয়েছে—যা শুধু মুসলিমদের জন্য নয়, বরং সমগ্র বিশ্বের ভারসাম্যের জন্যও বিপদজনক।</p>",
+      "seoDescription": "সাম্রাজ্যবাদ ও মিশনারি তৎপরতা — ধর্মপ্রচারের আড়ালে পশ্চিমা সাম্রাজ্যবাদের এজেন্ডা নিয়ে ড. মুস্তফা খালিদি ও ড. উমর ফররুখের বই।",
+      "image": "book-samrajjobad-o-missionary-totporota-4d1d.webp",
+      "pdf": "samrajjobad-o-missionary-totporota-f468.pdf",
+      "coverSource": "drive: সাম্রাজ্যবাদ ও মিশনারি তৎপরতা-front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/samrajjobad-o-missionary-totporota/",
+        "https://www.rokomari.com/book/456657",
+        "https://drive.google.com/drive/folders/1DO9Ne7UvESbIccu2pMp5UmPuADRpnGMe?usp=sharing"
+      ]
+    },
+    {
+      "name": "শহীদদের শেষ মুহূর্তগুলো (১ম খণ্ড)",
+      "nameEn": "Shohidder Shesh Muhurtogulo (Part 1)",
+      "slug": "shohidder-shesh-muhurtogulo-part-1",
+      "mrp": 480,
+      "discountPercent": 23,
+      "discountAmount": 110,
+      "quantity": 20,
+      "pages": 320,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. মোহাম্মদ সরোয়ার হোসেন",
+          "nameEn": "Dr. Mohammad Sarwar Hossain"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>বইয়ের ব্যাক-রাইটআপ: জুলাইয়ের গণঅভ্যুত্থানে ১,৫০০-এর বেশি ছাত্র-জনতা প্রাণ দিয়েছেন। অন্ধত্ব ও পঙ্গুত্বসহ আহত হয়েছেন অন্তত ১৯,০০০ মানুষ। এই বইতে ২৬ জন শহীদের জীবনের শেষ মুহূর্তগুলো প্রত্যক্ষদর্শীদের তথ্যের আলোকে লিপিবদ্ধ করা হয়েছে। শহীদদের দুর্লভ ছবি ও ভিডিও ক্লিপ QR কোডের মাধ্যমে সংযুক্ত করা হয়েছে। এত প্রাণ ও রক্তের বিসর্জনের অনুপ্রেরণা কী ছিল শহীদদের?</p><p>প্রাকৃতিক দুর্যোগ ও কলোনাইজারদের বিরুদ্ধে লড়াই করে টিকে থাকা এই ব-দ্বীপের সংখ্যাগরিষ্ঠ মুসলিম জনগোষ্ঠী কয়েক শত বছর ধরে রক্ত ও প্রাণ বিসর্জন দিয়ে আসছে। এই জনপদের মানুষ যুগের পর যুগ ইংরেজদের শোষণ ও দমন-পীড়নের বিরুদ্ধে প্রতিরোধ গড়ে তুলেছে—বুলেটের বিপরীতে বাঁশের লাঠি হাতে নিয়ে ইতিহাস রচনা করেছে। অসংখ্য প্রাণ ও রক্তের বিনিময়ে ১৯৪৭ সালে ধর্মের ভিত্তিতে ভারত ও পাকিস্তানের জন্ম হয়। মুসলিম পরিচয় শুধুই রাষ্ট্রগঠনের ভিত্তি ছিল না; এটি একটি ঐতিহাসিক প্রতিরোধের চেতনার প্রতিফলন।</p><p>এত ত্যাগের বিনিময়ে মানুষের চাওয়া ছিল সামান্যই; ইনসাফ (মুসলিম হিসেবে অধিকার, সুবিচার, সুশাসন) প্রতিষ্ঠার মাধ্যমে এমন এক সমাজ, যেখানে তারা স্বাধীনভাবে জীবন-জীবিকা গড়তে পারবে এবং নিজেদের মানোন্নয়নে আত্মপ্রকাশ করতে সক্ষম হবে। কিন্তু নতুন দেশেও সাধারণ মুসলমানদের স্বপ্নভঙ্গ ঘটে। ক্ষমতা-কেন্দ্রিক রাজনীতির কারণে ভৌগোলিকভাবে বিচ্ছিন্ন, ভারতবেষ্টিত পূর্ব পাকিস্তানের (বর্তমান বাংলাদেশ) মানুষ জীবন-জীবিকার ক্ষেত্রে নানাভাবে বৈষম্যের শিকার হয়। এরই ফলশ্রুতিতে, অনেক মানুষের আত্মত্যাগের মাধ্যমে ১৯৭১ সালে এই জনপদ নতুন দেশ হিসেবে স্বাধীনতা অর্জন করে।</p><p>ইনসাফের দাবিতেই জুলাই গণঅভ্যুত্থানে আবু সাঈদরা বুলেটের সামনে বুক চিতিয়ে দাঁড়িয়ে রচনা করেন নতুন এক অধ্যায়। হাজারো ছাত্র-জনতার রক্ত ও প্রাণের বিনিময়ে ৫ আগস্টে আবারও জেগে ওঠে এক নতুন স্বপ্ন। এত ত্যাগের পরও কি সেই স্বপ্ন, সেই ইনসাফ ভিত্তিক কাঙ্ক্ষিত সমাজব্যবস্থা আবারও অধরাই থেকে যাবে?</p>",
+      "seoDescription": "শহীদদের শেষ মুহূর্তগুলো (১ম খণ্ড) — চব্বিশের গণঅভ্যুত্থানে শহীদদের শেষ সময়ের প্রামাণ্য বিবরণ, সংকলন ড. মোহাম্মদ সরোয়ার হোসেন।",
+      "image": "book-shohidder-shesh-muhurtogulo-part-1-d53a.webp",
+      "pdf": "shohidder-shesh-muhurtogulo-part-1-6c07.pdf",
+      "coverSource": "drive: ২৪ গণঅভ্যুত্থান ইতিহাসের প্রামাণ্য সংকলন  শহীদদের শেষ মুহূর্তগুলো front cover.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/sohidder-sesh-muhurtogulo/",
+        "https://www.rokomari.com/book/459434",
+        "https://drive.google.com/drive/folders/1GQeB_smbGL78KOHZxIaNtBRgSjf13BzG?usp=sharing"
+      ]
+    },
+    {
+      "name": "ইহুদিবাদের বিরুদ্ধে সংগ্রাম",
+      "nameEn": "Ihudibader Biruddhe Songram",
+      "slug": "ihudibader-biruddhe-songram",
+      "mrp": 140,
+      "discountPercent": 23,
+      "discountAmount": 32,
+      "quantity": 20,
+      "pages": 80,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "সাইয়েদ কুতুব (রহঃ)",
+          "nameEn": "Sayyid Qutb"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>তুফানুল আকসা’র পরবর্তী সময়ে হামাসের মুখপাত্র আবু উবায়দা যখন ফিলিস্তিনের মুক্তিসংগ্রামকে জিহাদ বলে আখ্যা দিলেন তখন এই জিহাদের সাথে সারা দুনিয়ার সকল মত ও পথের মানুষ সংহতি প্রকাশ করে। জুলুমের বিরুদ্ধে এই জিহাদ একটি গ্লোবাল ফেনোমেনা হিসেবে আবির্ভূত হয়।</p><p>‘ইহুদিবাদের বিরুদ্ধে সংগ্রাম’ বইতে সাইয়েদ কুতুব শহীদ রহ. এই পথনির্দেশই দিয়েছিলেন বহু বছর আগে। তার স্বভাবসুলভ দূরদর্শিতায় তিনি মুসলিম উম্মাহর প্রকৃত সংকটটি আঁচ করতে পেরেছিলেন। তিনি বলছেন, এই সংগ্রামে বিজয়ের একমাত্র পথ ইমান আর জিহাদ। তিনি আহ্বান জানিয়েছেন মুসলিম উম্মাহকে ঐক্যবদ্ধ হওয়ার, নিজেদের শেকড়ে ফিরে যাওয়ার। না হয় নিপীড়নবাদী ইহুদিবাবাদী ও সাম্রাজ্যবাদী গোষ্ঠীর অত্যাচার থেকে সবুজ ও সুন্দর এই পৃথিবীকে কখনোই মুক্ত করা যাবে না। জুলুমের বিরুদ্ধে জিহাদের গ্লোবাল ফেনোমেনাকে বাস্তবায়ন করা যাবে না।</p><p>কুতুব রহ. আরও দেখিয়েছেন, অতীত থেকে বর্তমান—ব্রিটিশ উপনিবেশবাদ থেকে আধুনিক আমেরিকা আর রাশিয়ার রাজনৈতিক মঞ্চ—সবখানেই ইহুদিরা ইসলামের শেকড়ে আঘাত হেনেছে, মুসলিম উম্মাহকে দুর্বল করে দেওয়ার ষড়যন্ত্র বুনে চলেছে। এই হীন সাম্রাজ্যবাদী ষড়যন্ত্র ভেঙে ফেলতে হলে কী করতে হবে? সাইয়েদ কুতুব রহ. তার উত্তর দিয়েছেন—একটা দৃঢ় কর্মপন্থা, যেখানে ঐক্য আর সংগ্রামই একমাত্র অস্ত্র।</p>",
+      "seoDescription": "ইহুদিবাদের বিরুদ্ধে সংগ্রাম — ইমান ও ঐক্যের পথে ফিলিস্তিন মুক্তির রূপরেখা নিয়ে সাইয়েদ কুতুবের প্রবন্ধের বাংলা অনুবাদ।",
+      "image": "book-ihudibader-biruddhe-songram-0534.webp",
+      "pdf": "ihudibader-biruddhe-songram-2b05.pdf",
+      "coverSource": "drive: ইহুদিবাদের বিরুদ্ধে সংগ্রাম front cover.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/ihudibader-biruddhe-songram/",
+        "https://www.rokomari.com/book/467178",
+        "https://drive.google.com/drive/folders/1yAdVJbQdcgLiHuvsUI4QtaKY8EQ-Nfrg?usp=sharing"
+      ]
+    },
+    {
+      "name": "মুসলিম বিশ্বের সংকট ও ফিলিস্তিন",
+      "nameEn": "Muslim Bisher Songkot O Filistin",
+      "slug": "muslim-bisher-songkot-o-filistin",
+      "mrp": 180,
+      "discountPercent": 23,
+      "discountAmount": 41,
+      "quantity": 20,
+      "pages": 280,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "সাইয়েদ আবুল হাসান আলী নদভী (রহ.)",
+          "nameEn": "Sayyid Abul Hasan Ali Nadwi"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>মুসলিম বিশ্বের সংকট ও ফিলিস্তিন গ্রন্থটি এক রক্তাক্ত ইতিহাসের ভাষ্য। এতে ফুটে উঠেছে মুসলিম বিশ্বের গৌরবোজ্জ্বল অতীত, বিপর্যস্ত বর্তমান এবং অনিশ্চিত ভবিষ্যতের বাস্তব চিত্র। লেখক অত্যন্ত দরদের সঙ্গে দেখিয়েছেন, কীভাবে মুসলিম সমাজ একসময় জ্ঞান, ইনসাফ ও আদর্শের আলোয় উদ্ভাসিত ছিল।অথচ আজ তা জুলুম, দুর্নীতি ও বিভেদের অন্ধকারে নিমজ্জিত। মঙ্গোল আক্রমণে বাগদাদের পতন থেকে শুরু করে আধুনিক ফিলিস্তিন সংকট—সবই ইতিহাসের নির্মম পুনরাবৃত্তি। সত্যের পথ থেকে সরে গিয়ে মুসলিম বিশ্ব আজ স্বার্থপরতা ও রাজনৈতিক তোষামোদের শিকার।</p>",
+      "seoDescription": "মুসলিম বিশ্বের সংকট ও ফিলিস্তিন — মুসলিম উম্মাহর দুর্বলতা ও ফিলিস্তিন প্রশ্ন নিয়ে সাইয়েদ আবুল হাসান আলী নদভী রহ.-এর আলোচনা।",
+      "image": "book-muslim-bisher-songkot-o-filistin-240a.webp",
+      "pdf": "muslim-bisher-songkot-o-filistin-106b.pdf",
+      "coverSource": "drive: মুসলিম বিশ্বের সংকট ও ফিলিস্তিন front cover.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/muslim-bissher-songkot-o-filistin/",
+        "https://drive.google.com/drive/folders/1-WZqFh81_OW5BO37ZRH3FucGBhJAKswA?usp=sharing"
+      ]
+    },
+    {
+      "name": "কাদিয়ান থেকে তেলআবিব",
+      "nameEn": "Kadian Theke Tel Aviv",
+      "slug": "kadian-theke-tel-aviv",
+      "mrp": 440,
+      "discountPercent": 23,
+      "discountAmount": 101,
+      "quantity": 20,
+      "pages": 272,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "মাওলানা সামিউল হক হক্কানি",
+          "nameEn": "Maulana Samiul Haq Haqqani"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>এংলো-ইসরায়েলি ভূরাজনীতিতে কাদিয়ানিদের ভূমিকা</p><p>কাদিয়ানিজমকে অনেকেই কেবল একটি ধর্মতাত্ত্বিক মতবাদ হিসেবে বিবেচনা করে থাকেন। কিন্তু এই গ্রন্থে এই মতবাদের অন্তরালে থাকা প্রকৃত সত্যকে তুলে ধরা হয়েছে। দেখানো হয়েছে ঔপনিবেশিক শাসন, সাম্রাজ্যবাদী কূটকৌশল এবং জায়নবাদী রাজনীতিতে কাদিয়ানিদের সক্রিয় ভূমিকা কতটা সুদূরপ্রসারী ছিল । লেখক এখানে কেবল মতবাদ খণ্ডনের প্রথাগত পথে অগ্রসর হননি; বরং মুসলিম উম্মাহর বিরুদ্ধে পরিচালিত একটি সুপরিকল্পিত ভূ-রাজনৈতিক প্রক্রিয়ার নীলনকশা হাজির করেছেন। বিশ্লেষণ করেছেন দলিলনির্ভরভাবে।</p><p>কাদিয়ান থেকে তেলআবিব বইটিতে উনিশ শতকের ব্রিটিশ ভারতে কাদিয়ানিজমের উদ্ভব থেকে শুরু করে বিংশ শতকে ইসরায়েল রাষ্ট্র প্রতিষ্ঠার পটভূমি পর্যন্ত কাদিয়ানিদের কর্মতৎপরতার একটি সুসংহত ঐতিহাসিক ধারাবিবরণী পাওয়া যায়। প্রাসঙ্গিক দলিল-তথ্য ব্যবহার করে লেখক বিশ্লেষণ করেছেন—কীভাবে ঔপনিবেশিক শক্তি নিজেদের রাজনৈতিক উদ্দেশ্য সাধনে কাদিয়ানিজমকে একটি কার্যকর হাতিয়ার হিসেবে ব্যবহার করেছিল; মুসলিম সমাজে জিহাদের চেতনাকে দুর্বল করার পেছনে এর অন্তর্নিহিত লক্ষ্য কী ছিল; জায়নবাদী আন্দোলনের সাথে এর সম্পর্ক কতটা নিবিড় এবং ইসরায়েল রাষ্ট্র প্রতিষ্ঠায় এর প্রত্যক্ষ ও পরোক্ষ ভূমিকা কী ছিল।</p><p>গ্রন্থটিতে দেখানো হয়েছে, ইসলামের মৌলিক বিশ্বাস, মুসলিম উম্মাহর ঐক্য ও সমন্বয়ের সামনে কাদিয়ানিজম কেবল একটি ধর্মতাত্ত্বিক চ্যালেঞ্জ নয়, বরং সাম্রাজ্যবাদী রাজনীতির অংশ হিসেবে একটি গভীরতর ঐতিহাসিক বাস্তবতা। ইসলাম ও মুসলিম উম্মাহর বিরুদ্ধে গড়ে ওঠা বৈশ্বিক ষড়যন্ত্রের ঐতিহাসিক প্রেক্ষাপট অনুধাবনের জন্য এ গ্রন্থটি পাঠ করা জরুরি।</p><p>বইটি এবারের বইমেলায় প্রকাশিত হয়েছে নতুন বই হিসেবে পাঠক অনেক আনন্দের সাথে বইটি পাঠ করেছে।</p>",
+      "seoDescription": "কাদিয়ান থেকে তেলআবিব — কাদিয়ানিবাদের উত্থান, ঔপনিবেশিক রাজনীতি ও ইসরায়েলের সঙ্গে সম্পর্ক নিয়ে মাওলানা সামিউল হক হক্কানির বই।",
+      "image": "book-kadian-theke-tel-aviv-3a5c.webp",
+      "pdf": "kadian-theke-tel-aviv-e2e0.pdf",
+      "coverSource": "drive: কাদিয়ান থেকে তেলআবিব.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/qadian-to-tel-aviv/",
+        "https://drive.google.com/drive/folders/1V9fE8JyeOslObW45-sapXkSKh_GpXkTh?usp=sharing"
+      ]
+    },
+    {
+      "name": "মুসলমানদের অভ্যন্তরীণ বিভক্তি : মিথ ও বাস্তবতা",
+      "nameEn": "Musolmander Obhyontorin Bibhokti Myth O Bastobota",
+      "slug": "musolmander-obhyontorin-bibhokti-myth-o-bastobota",
+      "mrp": 186,
+      "discountPercent": 23,
+      "discountAmount": 43,
+      "quantity": 20,
+      "pages": 95,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "সাইয়েদ মানাজির আহসান গিলানি",
+          "nameEn": "Sayyid Manazir Ahsan Gilani"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>মেনি ইসলামিজম: ফ্যাক্ট অর ফিকশন</p><p>ইসলামের ইতিহাসে প্রাথমিক শতাব্দীগুলোতে রাজনৈতিক মতভিন্নতা কিছুটা ধর্মীয় রূপ-রঙ পরিগ্রহ করেছিল। রাজনৈতিক মতভিন্নতার ভিত্তিতে বিভিন্ন দল-উপদল সৃষ্টি হয়েছিল। বাস্তবে সেগুলো ছিল রাজনৈতিক পার্টি; কিন্তু যুগের বিশেষ রুচি ও পরিবেশ অনুযায়ী সেসব রাজনৈতিক পার্টিকে মানুষ ধর্মীয় দল হিসেবে মূল্যায়ন ও গ্রহণ করেছে।আজ পৃথিবীতে অসংখ্য গোত্র, বর্ণ ও ভাষার প্রায় ৭৮৭ কোটি ৫০ লাখ মুসলমান আছে। কিন্তু যদি খোঁজ নেওয়া হয়, দশ-বিশটি তো দূরের কথা, তাদের মাঝে প্রকৃত মতাদর্শিক দ্বন্দ্ব তিন-চারটিও পাওয়া যাবে না।</p><p>কিন্তু মানুষের মাঝে এ নিয়ে আজ বহু ভুল ভাবনা সৃষ্টি হয়েছে। মানুষ এখন ভাবে, ইসলাম অনেক কিসিমের—আরবের ইসলাম, ইরানের ইসলাম, ভারতের ইসলাম অথবা বাংলাদেশের ইসলাম। এভাবেই সমাজে জন্ম নিয়েছে মেনি ইসলামজের ধারণা। কিন্তু প্রাচীন ইতিহাসের বইয়ে মুসলমানদের দল-উপদলের যে দ্বান্দ্বিক ফিরিস্তি রয়েছে, সেসবের অস্তিত্ব কি বইয়ের পাতার বাইরের দুনিয়ায় আজ খুঁজে পাওয়া যায়?</p><p>মুসলমানদের সাম্প্রদায়িকতার অবাস্তব এসব ধারণা ও আলোচনা মূলত কিছু লেখক ও ওয়ায়েজদের ভারসাম্যহীন বক্তব্য থেকে উদ্ভূত। ইসলামের সঙ্গে আদৌ সেসবের কোনো সম্পর্ক আছে কি-না, পাঠক এ সলমানদের অভ্যন্তরীণ বিভক্তি : মিথ ও বাস্তবতা বইটি পাঠ করে জানতে পারবেন বলে আমরা বিশ্বাস করি ।</p><p>বইটি এবারের বইমেলায় প্রকাশিত হয়েছে নতুন বই হিসেবে পাঠক অনেক আনন্দের সাথে বইটি পাঠ করেছে।</p>",
+      "seoDescription": "মুসলমানদের অভ্যন্তরীণ বিভক্তি : মিথ ও বাস্তবতা — উম্মাহর মতভেদের ইতিহাস ও বাস্তবতা নিয়ে সাইয়েদ মানাজির আহসান গিলানির বই।",
+      "image": "book-musolmander-obhyontorin-bibhokti-myth-o-bastobota-00b4.webp",
+      "pdf": "musolmander-obhyontorin-bibhokti-myth-o-bastobota-91ed.pdf",
+      "coverSource": "drive: মুসলমানদের অভ্যন্তরীণ বিভক্তি-মিথ ও বস্তবতা.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/internal-divisions-among-muslims-myths-and-realities/",
+        "https://drive.google.com/drive/folders/1HgFN-T0oaqdiaUuZhX1IGcecX3vIffsr?usp=sharing"
+      ]
+    },
+    {
+      "name": "সমতার আড়ালে সমকামিতা মিশন",
+      "nameEn": "Somotar Arale Somokamita Mission",
+      "slug": "somotar-arale-somokamita-mission",
+      "mrp": 750,
+      "discountPercent": 23,
+      "discountAmount": 172,
+      "quantity": 20,
+      "pages": 750,
+      "edition": null,
+      "binding": "হার্ডকভার",
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. মোহাম্মদ সরোয়ার হোসেন",
+          "nameEn": "Dr. Mohammad Sarwar Hossain"
+        }
+      ],
+      "categories": [
+        "আধুনিক ফিতনা"
+      ],
+      "description": "<p>মানব সভ্যতার উল্টো পথে যাত্রার অন্যতম প্রমাণ হলো এলজিবিটি তথা সমকামিতাবাদকে বৈশ্বিক এজেন্ডা হিসেবে অগ্রাধিকার দেওয়া। এই বইতে বিশদভাবে বিশ্লেষণ করা হয়েছে কীভাবে বিশ্ব রাজনীতি, শিক্ষা, আইন, স্বাস্থ্য ও সামাজিক কাঠামোয় প্রভাব ফেলছে।</p><p>এই আচরণ কি আসলেই অধিকারের বিষয়?</p><p>এই অধিকার হিসেবে স্বীকৃতি দিলে রাষ্ট্রীয় নীতিতে কী পরিবর্তন আসে?</p><p>এর কোনো বৈজ্ঞানিক ভিত্তি কি আছে?</p><p>কেন বিশ্ববিদ্যালয়ের প্রফেসর, এনজিও এবং জাতিসংঘ এটি বৈশ্বিক এজেন্ডায় পরিণত করেছে?</p><p>পরিবার ও সমাজবিরোধী প্রভাব থাকা সত্ত্বেও এই আন্দোলন প্রচারের পেছনের মূল কারণ কী?</p><p>বাংলাদেশে এই অধিকার আন্দোলনের সূচনা ও বর্তমান অবস্থা কেমন?</p><p>📚 বইটিতে গবেষণাভিত্তিক জার্নাল, আন্তর্জাতিক প্রতিবেদন ও ভিডিও রেফারেন্স QR কোডের মাধ্যমে যুক্ত করা হয়েছে। ফলে পাঠক সহজেই সরাসরি সোর্সে পৌঁছাতে পারবেন।</p><p># কেন পড়বেন এই বই?</p><p>নির্ভরযোগ্য গবেষণাধর্মী বিশ্লেষণ</p><p>বাস্তব রেফারেন্স ও ডকুমেন্টের সংকলন</p><p>বাংলাদেশসহ বৈশ্বিক প্রেক্ষাপটে আন্দোলনের অগ্রগতির চিত্র</p><p>এই বই “সমতার আড়ালে সমকামিতা মিশন” আপনাকে এই প্রসঙ্গে সঠিক ধারণা দিতে এবং বিশ্বব্যাপী এর পেছনের নীতি-প্রক্রিয়া বুঝতে সহায়তা করবে।</p><p>ড. মোহাম্মদ সরোয়ার হোসেন স্যার আরও একটি বই আছে পরিবার নিয়ে সন্তান প্রতিপালনে এ যুগের চ্যালেঞ্জ।</p>",
+      "seoDescription": "সমতার আড়ালে সমকামিতা মিশন — সমতার স্লোগানের আড়ালে এলজিবিটি আন্দোলনের বৈজ্ঞানিক ও সামাজিক বিশ্লেষণ, লেখক ড. মোহাম্মদ সরোয়ার হোসেন।",
+      "image": "book-somotar-arale-somokamita-mission-8672.webp",
+      "pdf": "somotar-arale-somokamita-mission-5d53.pdf",
+      "coverSource": "drive: সমতার আড়ালে সমকামিতা মিশন-front.jpg",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/somotar-arale-somokamita-mission/",
+        "https://www.rokomari.com/book/447613",
+        "https://drive.google.com/drive/folders/1DnhyZ1xoOk6B-K2XKQnzKRO8lGWuzRO-?usp=sharing"
+      ]
+    },
+    {
+      "name": "জেন্ডার প্রতারণা",
+      "nameEn": "Gender Protarona",
+      "slug": "gender-protarona",
+      "mrp": 425,
+      "discountPercent": 23,
+      "discountAmount": 98,
+      "quantity": 20,
+      "pages": 256,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. মোহাম্মদ সরোয়ার হোসেন",
+          "nameEn": "Dr. Mohammad Sarwar Hossain"
+        }
+      ],
+      "categories": [
+        "আধুনিক ফিতনা"
+      ],
+      "description": "<p>মানুষ জন্মগতভাবে কেবল নারী অথবা পুরুষ। কিন্তু বর্তমানে ‘জে ন্ডা র’ (G e n d e r) নামক মনস্তাত্ত্বিক পরিভাষার আড়ালে এই ধ্রুব সত্যকে অস্বীকার করার এক বিশ্বব্যাপী ষড়যন্ত্র চলছে।</p><p>শব্দের মারপ্যাঁচে স ম কা মি তা এজেন্ডা বাংলাদেশের রাষ্ট্রীয় পলিসি, শিক্ষা ব্যবস্থা, এমনকি ধর্মীয় প্ল্যাটফর্মগুলোতেও অনুপ্রবেশ করেছে। পশ্চিমা বিশ্ব আমাদের সমাজে এ ল জি বি টি এজেন্ডা চাপিয়ে দিতে ‘ফ্যাসিবাদী’ ভূমিকা গ্রহণ করেছে। এমনকি জুলাই গণঅভ্যুত্থানের পর অর্জিত নতুন বাংলাদেশেও পশ্চিমাদের প্রেসক্রিপশনে স ম কা মি তা-বান্ধব সংস্কারের পাঁয়তারা চলছে। বইটিতে যা থাকছে:</p><p>• জে ন্ডা র পরিভাষার আড়ালে লুকিয়ে থাকা প্রতারণার ব্যবচ্ছেদ</p><p>• বাংলাদেশের স ম কা মি তা র অন্ধকার জগত এবং নারী সমকামিতার চিত্র</p><p>• শিক্ষার্থীদের মাঝে এইডস-এর ঝুঁকি এবং স ম কা মি তা র জেরে খুনের রোমহর্ষক কেইস স্টাডি</p><p>•ট্রা ন্স জে ন্ডা র দের অনুশোচনার গল্প</p><p>•ঈমান-বিধ্বংসী এই জে ন্ডা র ফিতনা থেকে সন্তান ও পরিবারকে রক্ষার বাস্তবমুখী গাইডলাইন</p><p>আমাদের পরিবার এবং ভবিষ্যৎ প্রজন্মকে ঈমান-বিধ্বংসী এই সামাজিক ও নৈতিক বিপর্যয় থেকে রক্ষা করতে হলে এই আদর্শিক যুদ্ধ সম্পর্কে জানা এখন সময়ের দাবি।</p>",
+      "seoDescription": "জেন্ডার প্রতারণা — 'জেন্ডার' মতবাদের বৈজ্ঞানিক দুর্বলতা ও সমাজে এর প্রভাব নিয়ে ড. মোহাম্মদ সরোয়ার হোসেনের গবেষণাধর্মী বই।",
+      "image": "book-gender-protarona-311d.webp",
+      "pdf": "gender-protarona-1dd0.pdf",
+      "coverSource": "drive: Gender-protarona.png",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/gender-protarona/",
+        "https://www.rokomari.com/book/555489",
+        "https://drive.google.com/drive/folders/1Io_CENnGylPHFyWuQjzQbierHMTWM-35?usp=sharing"
+      ]
+    },
+    {
+      "name": "দি ইম্পসিবল স্টেইট",
+      "nameEn": "The Impossible State (Bangla)",
+      "slug": "the-impossible-state-bangla",
+      "mrp": 460,
+      "discountPercent": 23,
+      "discountAmount": 106,
+      "quantity": 20,
+      "pages": 310,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [
+        "আবদুল মোনায়েম খান"
+      ],
+      "authors": [
+        {
+          "name": "ওয়ায়েল বি. হাল্লাক",
+          "nameEn": "Wael B. Hallaq"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ",
+        "আধুনিক ফিতনা"
+      ],
+      "description": "<p>দি ইম্পসিবল স্টেইট নামটি দেখে অনেকে হয়তো ভাবতে পারেন, মুসলিমদের হয়তো কোনো মুক্তির পথ নেই; তারা নিজেদের মতো করে সমাজ ও জগত নির্মাণ করতে পারবে না। কিন্তু আমি কখনোই এমন কথা বলতে চাইনি। আমরা যে পৃথিবীতে বাস করি বা আমাদের সন্তানেরা যেখানে বাস করবে বলে আমরা স্বপ্ন দেখি, সেখানে ইসলামি শাসনের কোনো ভবিষ্যৎ নেই, এটা সম্পূর্ণ অবান্তর ধারণা।</p><p>এই বইয়ের আহ্বান হলো, মুসলিম, খ্রিস্টান, কনফুসীয়সহ সবাই যেন নিজেদের বিশ্বকে ভিন্ন আঙ্গিকে ও নতুন পদ্ধতিতে বুঝতে শেখে। যেসব রাজনৈতিক পথ ও পন্থা আমাদেরকে এক সংকটময় ও বিধ্বংসী আধুনিকতাবাদের দিকে নিয়ে গেছে, বইটি সেসব পথ ও পন্থার মুখাবরণ উন্মোচন করেছে, সমালোচনা করেছে।</p><p>আধুনিকতাবাদের এই সংকট আজ আমাদের সমাজ, আমাদের পারস্পরিক বন্ধন, এমনকি আমাদের মনোজগৎ ও অন্তরাত্মাকেও ক্ষতবিক্ষত করেছে। আর আমরা যে গভীর সংকটে আজ ভুগছি, তাকে সঠিকভাবে চিহ্নিত করতে না পারলে তা থেকে উত্তরণের রাস্তা পাওয়ার আশা করাও অসম্ভব। বর্তমান দুনিয়ায় আমরা আসলে কারা, আমাদের পরিচয় কী এবং কোন বস্তুটি আমাদেরকে এই অচলাবস্থায় এনে দাঁড় করিয়েছে—এই বইটি পাঠককে সে বিষয়গুলো নিয়ে নতুনভাবে ভাবার আহবান জানায়।</p><p>—ওয়ায়েল হাল্লাক</p><p>দি ইম্পসিবল স্টেইট বইটি এবারের বইমেলায় প্রকাশিত হয়েছে নতুন বই হিসেবে পাঠক অনেক আনন্দের সাথে বইটি পাঠ করেছে।</p>",
+      "seoDescription": "দি ইম্পসিবল স্টেইট — আধুনিক রাষ্ট্র কেন শরিয়াহর সঙ্গে খাপ খায় না, তা নিয়ে অধ্যাপক ওয়ায়েল বি. হাল্লাকের বইয়ের বাংলা অনুবাদ।",
+      "image": "book-the-impossible-state-bangla-2380.webp",
+      "pdf": "the-impossible-state-bangla-ce99.pdf",
+      "coverSource": "drive: দি ইম্পসিবল স্টেইট front cover.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/the-impossible-state-paperback/",
+        "https://www.rokomari.com/book/510618",
+        "https://drive.google.com/drive/folders/1RcB2chFn1hfmLyiNqeNCg35rdQSlmMT2?usp=sharing"
+      ]
+    },
+    {
+      "name": "শেষ পর্যন্তও",
+      "nameEn": "Shesh Porjontoo",
+      "slug": "shesh-porjontoo",
+      "mrp": 170,
+      "discountPercent": 23,
+      "discountAmount": 39,
+      "quantity": 20,
+      "pages": 116,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "সানজিদা সিদ্দীক কথা",
+          "nameEn": "Sanjida Siddique Kotha"
+        }
+      ],
+      "categories": [
+        "ইসলামী সাহিত্য"
+      ],
+      "description": "<p>মিতুর খুব ঘুম পাচ্ছে, কিন্তু ঘুমানো যাবে না—নতুন বউ ঘুমিয়ে পড়লে কেমন দেখায়! ঘরভর্তি ফুলের গন্ধ, কিন্তু দোলনচাঁপার মিষ্টি ঘ্রাণ হারিয়ে গেছে গাঁদা আর রজনীগন্ধার তীব্রতায়। মিতুর ইচ্ছা, সবকিছু সরিয়ে শুধু নিজের পছন্দটাই থাকুক। কিন্তু সব ইচ্ছা কি পূরণ হয়? মিতুর বিয়ের স্বপ্ন ছিল ছোট, সাধারণ আয়োজনে শান্ত জীবন শুরু করার। কিন্তু বাস্তবতা তার বিপরীত। মিতুর মনে বিশ্বাস, সাধারণ বিয়েতেই লুকিয়ে থাকে অসাধারণ সুখের সূত্র—যা সে নিজেও ঠিক বুঝে না।এই উপন্যাস আমাদের চেনা জীবনের ছোট ছোট অনুভূতি, না-পাওয়া, ইচ্ছা আর বাস্তবতার টানাপোড়েনকে তুলে ধরেছে নিখুঁতভাবে।বইটি কেবল একটি গল্প নয়—এ আমাদের মতো অসংখ্য মিতুর জীবন, যাদের স্বপ্ন-বাস্তবতার মধ্যকার দূরত্বের গল্প। পাঠক নিজেকে এ গল্পে খুঁজে পাবেন, অনুভব করবেন—জীবনের গভীরতা কতটা নিঃশব্দ আর স্পর্শকাতর হতে পারে।</p>",
+      "seoDescription": "শেষ পর্যন্তও — নতুন বউ মিতুর সংসার, ভালোবাসা ও ধৈর্যের গল্প নিয়ে সানজিদা সিদ্দীক কথার পারিবারিক উপন্যাস।",
+      "image": "book-shesh-porjontoo-cacd.webp",
+      "pdf": "shesh-porjontoo-6347.pdf",
+      "coverSource": "drive: শেষ পর্যন্তও front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/shesh-porjonto/",
+        "https://www.rokomari.com/book/213850",
+        "https://drive.google.com/drive/folders/1briCORdRUywZFmZ7yQ9jfkExbRKc9FdD?usp=sharing"
+      ]
+    },
+    {
+      "name": "যাপিত দিনের গান",
+      "nameEn": "Japito Diner Gan",
+      "slug": "japito-diner-gan",
+      "mrp": 170,
+      "discountPercent": 23,
+      "discountAmount": 39,
+      "quantity": 20,
+      "pages": 112,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "সানজিদা সিদ্দীক কথা",
+          "nameEn": "Sanjida Siddique Kotha"
+        }
+      ],
+      "categories": [
+        "ইসলামী সাহিত্য"
+      ],
+      "description": "<p>আমি একবার উড়ে যাওয়া চড়ুইয়ের বুক ছিঁড়ে দেখেছিলাম—সেখানে ছিল অরুর চোখের জল, একটুখানি মেঘ। আমি চড়ুইটাকে নিজের মতোই মনে করেছিলাম। আবার এক ভোরে কচি পাতার কাঁপা বুক ছুঁয়ে বলেছিলাম, “আমি ঠিক তোমাদের মতো”—আমার ভেতরেও কচি সবুজ রং আছে।এই উপন্যাস এমনই এক যাত্রা, যেখানে অনুভূতি, স্মৃতি আর আত্মঅনুসন্ধান একসাথে মিশে গেছে। চেনা শব্দে অচেনা ব্যথা ফুটে উঠেছে।নিজের ভেতরের হাহাকারকে নতুন করে চিনতে সাহায্য করবে এই উপন্যাস, নিঃশব্দে।</p>",
+      "seoDescription": "যাপিত দিনের গান — অরুর জীবন, স্মৃতি আর না-বলা কথার গল্প নিয়ে সানজিদা সিদ্দীক কথার কোমল গদ্যের উপন্যাস।",
+      "image": "book-japito-diner-gan-0627.webp",
+      "pdf": "japito-diner-gan-af90.pdf",
+      "coverSource": "drive: যাপিত দিনের গান front.jpg",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/zapito-diner-gaan/",
+        "https://www.rokomari.com/book/228444",
+        "https://drive.google.com/drive/folders/1EN3oq2zAvB3XzoOPxYmvpaOjkv5_QSsD?usp=sharing"
+      ]
+    },
+    {
+      "name": "হাদিস বোঝার মূলনীতি",
+      "nameEn": "Hadis Bojhar Mulniti",
+      "slug": "hadis-bojhar-mulniti",
+      "mrp": 395,
+      "discountPercent": 23,
+      "discountAmount": 91,
+      "quantity": 20,
+      "pages": 224,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [
+        "জিয়াউর রহমান মুন্সী"
+      ],
+      "authors": [
+        {
+          "name": "ড. আবু আমিনাহ বিলাল ফিলিপস",
+          "nameEn": "Dr. Abu Ameenah Bilal Philips"
+        }
+      ],
+      "categories": [
+        "আল হাদিস"
+      ],
+      "description": "<p>ভুল জ্ঞান মানুষকে জাহিলিয়াতের দিকে ঠেলে দেয়। হাদিসের মতো গভীর বিষয়ের সঠিক বোঝাপড়া ছাড়া শুধু অনুবাদ পড়ে অনেকেই বিভ্রান্ত হয়, তর্কে জড়িয়ে পড়ে এবং মূল উদ্দেশ্য থেকে সরে যায়। হাদিস বোঝার জন্য আগে কিছু মূলনীতি জানা জরুরি, না হলে জ্ঞান বিভ্রান্তির কারণ হতে পারে।এই জন্যই এই বইটি দরকার, কারণ এটি সহজভাবে হাদিস বোঝার মূলনীতি শেখায় এবং ভুল ব্যাখ্যার ফাঁদ থেকে আমাদের রক্ষা করতে সাহায্য করে ইনশা আল্লাহ।</p>",
+      "seoDescription": "হাদিস বোঝার মূলনীতি — হাদিসের সংকলন, যাচাই ও সঠিক বোঝাপড়ার মূলনীতি নিয়ে ড. আবু আমিনাহ বিলাল ফিলিপসের বই।",
+      "image": "book-hadis-bojhar-mulniti-a173.webp",
+      "pdf": "hadis-bojhar-mulniti-6ef6.pdf",
+      "coverSource": "drive: হাদিস বোঝার মূলনীতি front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/hadith-bujhar-mulniti/",
+        "https://www.rokomari.com/book/153935",
+        "https://drive.google.com/drive/folders/1K1enyjdgUI_4l4F6mQ4HOApUjO9TL4gF?usp=sharing"
+      ]
+    },
+    {
+      "name": "স্বপ্নের ব্যাখ্যা",
+      "nameEn": "Shopner Bekkha",
+      "slug": "shopner-bekkha",
+      "mrp": 290,
+      "discountPercent": 23,
+      "discountAmount": 67,
+      "quantity": 20,
+      "pages": 164,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [
+        "সানজিদা শারমিন",
+        "মুহাম্মাদ ইফাত মান্নান"
+      ],
+      "authors": [
+        {
+          "name": "ড. আবু আমিনাহ বিলাল ফিলিপস",
+          "nameEn": "Dr. Abu Ameenah Bilal Philips"
+        },
+        {
+          "name": "মুহাম্মদ বিন মুস্তাফা আল-জিবালী",
+          "nameEn": "Muhammad ibn Mustafa al-Jibaly"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>স্বপ্নের ব্যাখ্যা দেওয়া যে ইসলামে একটি অনুমোদিত কাজ, তা কেউই অস্বীকার করতে পারে না। কেননা, স্বয়ং নবি (সা.) তাঁর নিজের এবং সাহাবিদের স্বপ্নের ব্যাখ্যা দিয়েছেন। উপরন্তু আমরা জানি, অতীতের অনেক নির্ভরযোগ্য মুসলিম আলিম স্বপ্নের ব্যাখ্যা বলে দিতেন। তবে, জ্ঞানের অন্যান্য সকল শাখার মতো এটার মূলনীতিগুলোও হতে হবে নবি (সা.)-এর নির্দেশনা অনুযায়ী। কারও ব্যক্তিগত খেয়াল-খুশির অনুবর্তী হতে পারবে না। সেই কারণে আমি হাদিসের প্রধান প্রধান গ্রন্থসমূহ যেমন: সহিহ বুখারি, সহিহ মুসলিম, সুনানু আবি দাউদ, সুনানু তিরমিজি, সুনানু দারিমি, সুনানু ইবন মাজাহ এবং মুসনাদু আহমাদ থেকে স্বপ্নের ওপর নির্ভরযোগ্য বর্ণনাসমূহকে একত্রিত করার প্রয়াস চালিয়েছি। স্বপ্নের ওপর প্রায় পাঁচশ হাদিস থেকে আমি জ্ঞানের এই শাখার ইসলামি মূলনীতিগুলোকে বের করে আনার চেষ্টা করেছি। পাশাপাশি সহজে খুজে পাওয়ার জন্য এ গুলোকে বিষয়বস্তু অনুযায়ী সাজিয়েছি।</p><p>আমি আশা করি, এই বইয়ের বিষয়বস্তু স্বপ্ন ও স্বপ্নের ব্যাখ্যা বিষয়ে একটি নির্ভরযোগ্য মাধ্যম হিসেবে ভূমিকা রাখবে এবং মুসলিমদের মধ্যে এ বিষয়ে জাল ও অনির্ভরযোগ্য বইয়ের যে ব্যাপক ছড়াছড়ি, সেগুলোর একটি বিকল্প স্বীকৃত উৎসে পরিণত হবে।</p>",
+      "seoDescription": "স্বপ্নের ব্যাখ্যা — কুরআন-সুন্নাহর আলোকে স্বপ্নের প্রকারভেদ ও ব্যাখ্যার নিয়ম নিয়ে ড. বিলাল ফিলিপস ও মুহাম্মদ আল-জিবালীর বই।",
+      "image": "book-shopner-bekkha-7cd6.webp",
+      "pdf": "shopner-bekkha-fede.pdf",
+      "coverSource": "drive: স্বপ্নের ব্যাখ্যা front.jpg",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/shawpner-bekkha/",
+        "https://www.rokomari.com/book/287477",
+        "https://drive.google.com/drive/folders/1qCfTH2EmMj0w5Ncc0BL0XFd8HuuZ37JN?usp=sharing"
+      ]
+    },
+    {
+      "name": "মুসলিম ঐতিহ্যে রুকইয়া সংস্কৃতি",
+      "nameEn": "Muslim Oitihye Ruqyah Songskriti",
+      "slug": "muslim-oitihye-ruqyah-songskriti",
+      "mrp": 380,
+      "discountPercent": 23,
+      "discountAmount": 87,
+      "quantity": 20,
+      "pages": 238,
+      "edition": null,
+      "binding": "হার্ডকভার",
+      "translators": [
+        "মাসুদ শরীফ"
+      ],
+      "authors": [
+        {
+          "name": "ড. আবু আমিনাহ বিলাল ফিলিপস",
+          "nameEn": "Dr. Abu Ameenah Bilal Philips"
+        }
+      ],
+      "categories": [
+        "ইসলামি আমল ও আমলের সহায়িকা"
+      ],
+      "description": "<p>ড. আবু আমিনাহ বিলাল ফিলিপসের রচিত এই বইটির মূল অংশ প্রথমে পিএইচডি থিসিস হিসেবে ১৯৯৪ সালে ওয়েলস বিশ্ববিদ্যালয়ে উপস্থাপিত হয়। বইটিতে পুথিগত জ্ঞানের সাথে একেবারে সরাসরি মাঠপর্যায়ের গবেষণার যথাযথ সমন্বয় ঘটেছে; মুসলিম সমাজে তত্ত্বগতভাবে রুকইয়ার অবস্থান এবং প্রয়োগিক অনুশীলনকে মেথডলজিক্যালি মূল্যায়ন করা হয়েছে।</p><p>রুকইয়া চর্চার ক্ষেত্রে মুসলিম জাতির বিভিন্ন দেশের মানুষের মধ্যে বিভিন্ন রকম চর্চা পাওয়া যায়। এ কারণে এর একটি বাস্তব চিত্র তুলে আনার জন্য একটি শ্রমসাধ্য অসাধারণ কাজ করেছেন বইটির লেখক ড. বিলাল। তিনি মাঠপর্যায়ের গবেষণার জন্য সাতটি ভিন্ন ভিন্ন দেশের গুরুত্বপূর্ণ অনেক এক্সরসিস্টের (রাকি) সাক্ষাৎকার গ্রহণ করেছেন। এসব সাক্ষাৎকারের ফলাফল বইয়ের মূল অংশেই বিশ্লেষণ করা হয়েছে।</p><p>একইসাথে সাক্ষাৎকারগুলো বইয়ের একটি বড় পরিশিষ্টে অন্তর্ভুক্ত করা হয়েছে। পশ্চিমা সেক্যুলার একাডেমিয়াতে স্রষ্টা, তাঁর অদৃশ্য সৃষ্টি জিন এবং সকল অতিপ্রাকৃতিক শক্তির কার্যকারিতা যেখানে একদম অস্বীকার করা হয়, সেখানে ড. বিলালের এই কাজটি একটি ভিন্ন মাত্রার প্রভাব সৃষ্টি করেছে। তাত্ত্বিক ও প্রায়োগিকভাবে রুকইয়া বিষয়টিকে বোঝার জন্য এই বই একটি অনন্য অবদান—যা জ্ঞানপিপাসু সাধারণ মানুষ ও জ্ঞানীগুণীদের লাইব্রেরিতে একটি অমূল্য সংযোজন হয়ে থাকবে। ইনশা আল্লাহ।</p>",
+      "seoDescription": "মুসলিম ঐতিহ্যে রুকইয়া সংস্কৃতি — রুকইয়া ও ঝাড়ফুঁকের সুন্নাহসম্মত পদ্ধতি ও প্রচলিত ভুল নিয়ে ড. বিলাল ফিলিপসের গবেষণা।",
+      "image": "book-muslim-oitihye-ruqyah-songskriti-a1d7.webp",
+      "pdf": "muslim-oitihye-ruqyah-songskriti-68d4.pdf",
+      "coverSource": "drive: মুসলিম ঐতিহ্যে রুকইয়া সংস্কৃতি fron.jpg",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/muslim-oitijye-rukya-songskriti/",
+        "https://www.rokomari.com/book/378114",
+        "https://drive.google.com/drive/folders/1wzewirg6yh96_aRVKCjgPHbspBAZiJvG?usp=sharing"
+      ]
+    },
+    {
+      "name": "নিহিলিজম ও ইসলাম",
+      "nameEn": "Nihilism O Islam",
+      "slug": "nihilism-o-islam",
+      "mrp": 220,
+      "discountPercent": 23,
+      "discountAmount": 51,
+      "quantity": 20,
+      "pages": 144,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [
+        "ইরফান সাদিক"
+      ],
+      "authors": [
+        {
+          "name": "ইউসুফ পন্ডার্স",
+          "nameEn": "Yusuf Ponders"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ",
+        "আধুনিক ফিতনা"
+      ],
+      "description": "<p>নিহিলিজম: অর্থহীনতার আবর্তে জীবন ও জগৎ</p><p>নিহিলিজম বা অর্থহীনতার অন্ধকার মানুষের জীবনে একবার যদি ভর করে, তার সকল মূল্যবোধ, সকল মহত্ত্ব ধ্বংস হয়ে যায়। ব্যক্তি যখন জীবনের অর্থ হারায়, তখন সে আপন স্বরূপও হারায়। ক্রমে সে আত্মবিনাশী প্রবৃত্তির কাছে আত্মসমর্পণ করে—আমোদ-প্রমোদ, অনাচার, কিংবা নেশার নিঃসীম অন্ধকারে ডুবে যায়। আজকের যুবসমাজ যেন সেই শূন্যতার গভীর অতলান্তে তলিয়ে যাচ্ছে। এই অনর্থবাদী দর্শন না বুঝলে এর করালগ্রাস থেকে মুক্তি পাওয়াও সম্ভব নয়।</p><p>জীবন ও জগতের কোনো অর্থময়তা খুঁজে না পাওয়ার নামই নিহিলিজম। তবে, এটি কি নিছকই এক দার্শনিক তত্ত্ব, নাকি অন্তরের গভীরের লুক্কায়িত ব্যাধি—সেই প্রশ্নের উত্তরই সন্ধান করেছে এই গ্রন্থ। এখানে দেখানো হয়েছে এই অন্ধকার থেকে উত্তরণের পথ।</p><p>লেখক জন্মসূত্রে খ্রিস্টান পরিবারে প্রতিপালিত; ব্যক্তিজীবনে অর্থহীনতার ভারে ক্লান্ত হয়ে একসময় তিনি আত্মার মুক্তির সন্ধান করেন। এবং ইসলামের স্নিগ্ধ আশ্রয়ে তিনি খুঁজে পান জীবনের নবজাগরণ। এ গ্রন্থে তার চিন্তাযাত্রার কথা তিনি লিখেছেন; দর্শনের ছাত্র হিসেবে তিনি কঠিন তত্ত্বকেও প্রকাশ করেছেন সহজ ও বোধগম্য ভাষায়—যেখানে চিন্তার গহন জগৎও হয়ে উঠেছে সরল ও সুখদ।</p><p>এ গ্রন্থ সেইসব পথহারা প্রাণের জন্য, যারা শূন্যতার বেদনার মাঝে দাঁড়িয়ে জীবনের অর্থ খুঁজে ফিরছে।</p>",
+      "seoDescription": "নিহিলিজম ও ইসলাম — অর্থহীনতার দর্শন নিহিলিজমের জবাবে জীবনের অর্থ খুঁজে পাওয়ার পথ নিয়ে ইউসুফ পন্ডার্সের বই।",
+      "image": "book-nihilism-o-islam-d8a3.webp",
+      "pdf": "nihilism-o-islam-d8ec.pdf",
+      "coverSource": "drive: নিহিলিজম ও ইসলাম-front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/nihilism-o-islam/",
+        "https://www.rokomari.com/book/456659",
+        "https://drive.google.com/drive/folders/1DNdjvoCXY8Et3YAQUE09fqj0crCcnJsg?usp=sharing"
+      ]
+    },
+    {
+      "name": "যাকাত : হ্যান্ডবুক",
+      "nameEn": "Zakat Handbook",
+      "slug": "zakat-handbook",
+      "mrp": 150,
+      "discountPercent": 23,
+      "discountAmount": 34,
+      "quantity": 20,
+      "pages": 104,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [
+        "মাস’ঊদ শারীফ"
+      ],
+      "authors": [],
+      "categories": [
+        "বিনিয়োগ ও অর্থনীতি"
+      ],
+      "description": "<p>যাকাত দিলে আমরা ঠকি না; এতে সম্পদ কমে না, বরং বাড়ে। যাকাত আমাদের সম্পদ পবিত্র করে।</p><p>শয়তান আমাদের দারিদ্রের ভয় দেখায়; বলে সম্পদ জমাও, ভবিষ্যতটা নিশ্চিত করো। আল্লাহ আমাদের বলেছেন তোমরা যত দেবে তার চেয়ে অনেকগুণ বেশি পাবে।</p><p>দারিদ্র, অসচ্ছলতা, কৃপণতা ও সম্পদের ডান্ডা-বেড়ি থেকে মুক্তির জন্য হাতিয়ার হচ্ছে যাকাত । তাই যাকাত কী এবং কীভাবে দিতে হবে তা জানা জরুরী।</p><p>যাকাত হ্যান্ডবুক ছোট্ট পুস্তিকা মাত্র। ব্যবসায় কত টাকা বিনিয়োগ আছে; কত টাকা বেতন, সংসার চালিয়ে উদ্বৃত্ত অর্থ, জমি-জমা, ফল-ফসল, গবাদি পশু থাকলে, খনিজ সম্পদ কিংবা কোনো গুপ্তধন পেয়ে গেলে ইত্যাদির যাকাতের অঙ্ক কীভাবে কষতে হবে – এসব বিষয়ে মৌলিক ধারণা রাখার জন্য বইটি একটি চমৎকার সংগ্রহ।</p>",
+      "seoDescription": "যাকাত : হ্যান্ডবুক — কার ওপর যাকাত ফরজ, কীভাবে হিসাব করবেন ও কাকে দেবেন—যাকাতের প্রয়োজনীয় মাসআলা সহজ ভাষায়।",
+      "image": "book-zakat-handbook-2817.webp",
+      "pdf": "zakat-handbook-5468.pdf",
+      "coverSource": "drive: যাকাত  হ্যান্ডবুক front.png",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/zakat-handbook/",
+        "https://www.rokomari.com/book/116696",
+        "https://drive.google.com/drive/folders/1xzQwry-tj13axliKDm-Rm2ViN1kJMGnZ?usp=sharing"
+      ]
+    },
+    {
+      "name": "যাকাতের আধুনিক প্রয়োগ",
+      "nameEn": "Zakater Adhunik Proyog",
+      "slug": "zakater-adhunik-proyog",
+      "mrp": 640,
+      "discountPercent": 23,
+      "discountAmount": 147,
+      "quantity": 20,
+      "pages": 388,
+      "edition": null,
+      "binding": "হার্ডকভার",
+      "translators": [],
+      "authors": [
+        {
+          "name": "মুফতি আব্দুল্লাহ মাসুম (সিএসএএ)",
+          "nameEn": "Mufti Abdullah Masum"
+        }
+      ],
+      "categories": [
+        "বিনিয়োগ ও অর্থনীতি"
+      ],
+      "description": "<p>আমাদের সমাজে যাকাতদাতার সংখ্যা বাস্তবে যেমন হওয়া দরকার, সেভাবে কিন্তু নেই। আবার যারা যাকাত দিচ্ছেন, তাদের অনেকেই সঠিক নিয়ম মেনে তা আদায় করছেন না। আমার জানামতে—যদিও এর ওপর সুনির্দিষ্ট কোনো জরিপ নেই; তবে এক যুগেরও অধিক সময় ধরে যেহেতু আমি ফাতোয়া বিভাগে কাজ করছি, সেই সুবাদে নানা মানুষের সাথে কথা বলার মাধ্যমে এ অভিজ্ঞতাটুকু অর্জিত হয়েছে।</p><p>যাকাত প্রসঙ্গে আমাদের সমাজে বিদ্যমান বেশ কিছু সমস্যা সামনে রেখে বইটি রচনা করা হয়েছে। বিশেষত আধুনিক যুগের নতুন ধরণের নানা রকম অর্থ ও সম্পদের ওপর যাকাতের প্রয়োগ ও হিসাব এই বইয়ের প্রধানতম আলোচ্য বিষয়।</p><p>প্রাচীন ফকিহগণের ভাষ্যের পাশাপাশি সমকালীন ফকিহগণের মত উল্লেখ করা হয়েছে। বিভিন্ন শরিয়া বোর্ডের সিদ্ধান্ত উল্লেখ করা হয়েছে। কোথাও মতভেদ হলে, যে মতের মাধ্যমে দরিদ্রদের উপকার ও কল্যাণ অধিক নিশ্চিত হয়, যে মতের মাঝে অধিক সতর্কতা বিদ্যমান—সেই মত গ্রহণ করার প্রস্তাব করা হয়েছে। তবে যাকাতদাতাদের স্বার্থও লক্ষ রাখা হয়েছে। প্রচলিত কোনো মাসআলার কারণে তাদের জন্য কঠিন অবস্থা সৃষ্টি হয়ে থাকলে, সেক্ষেত্রে অন্যান্য নির্ভরযোগ্য মত প্রস্তাব করা হয়েছে।</p><p>প্রিয় পাঠক, আধুনিক মাসআলায় সমকালীন ফকিহগণের নানা বৈচিত্র্যময় মত থাকবে, এটিই স্বাভাবিক। এক্ষেত্রে দলিল প্রমাণের আলোকে যে মত অগ্রগণ্য বলে মনে হয়, যে মতের অনুসরণে অধিক সতর্কতা বিদ্যমান, যে মতের মাধ্যমে কঠিন পরিস্থিতি তৈরি হয় না, সে মত গ্রহণ করার প্রস্তাব করা হয়েছে। তবে অন্য মতের প্রতি যথাযথ শ্রদ্ধা ও সম্মান বজায় রাখা হয়েছে।</p><p>মোট ছয়টি অধ্যায় ও একটি পরিশিষ্টে গ্রন্থটি সাজানো। এতে যাকাত, উশর, সাদাকাতুল ফিতর—এ তিনটি বিষয় মৌলিকভাবে আলোচিত হয়েছে। আশা করছি করছি বইটির মাধ্যমে পাঠকগণ সংশ্লিষ্ট বিষয়ে প্রয়োজনীয় অনেক গুরুত্বপূর্ণ বিষয়ে জানতে পারবেন ইনশা আল্লাহ্।</p>",
+      "seoDescription": "যাকাতের আধুনিক প্রয়োগ — শেয়ার, ব্যবসা, সঞ্চয় ও আধুনিক সম্পদে যাকাত হিসাবের নিয়ম নিয়ে মুফতি আব্দুল্লাহ মাসুমের গবেষণা।",
+      "image": "book-zakater-adhunik-proyog-a1da.webp",
+      "pdf": "zakater-adhunik-proyog-daa7.pdf",
+      "coverSource": "drive: যাকাতের আধুনিক প্রয়োগ front.jpg",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/zakater-adhunik-proyog/",
+        "https://www.rokomari.com/book/335575",
+        "https://drive.google.com/drive/folders/190eC_rzsqd8_D3Jmxjibtlkw7xGBM5CI?usp=sharing"
+      ]
+    },
+    {
+      "name": "হজ-উমরাহ বিশ্বকোষ",
+      "nameEn": "Hajj Umrah Bishwakosh",
+      "slug": "hajj-umrah-bishwakosh",
+      "mrp": 4000,
+      "discountPercent": 23,
+      "discountAmount": 920,
+      "quantity": 20,
+      "pages": 416,
+      "edition": null,
+      "binding": "হার্ডকভার",
+      "translators": [
+        "আশরাফুল হক"
+      ],
+      "authors": [
+        {
+          "name": "সামি ইবনু আবদুল্লাহ আল-মাঘলুস",
+          "nameEn": "Sami ibn Abdullah al-Maghlouth"
+        }
+      ],
+      "categories": [
+        "ইসলামি আমল ও আমলের সহায়িকা"
+      ],
+      "description": "<p>পবিত্র কাবার কালো গিলাফ স্পর্শ করা প্রত্যেক মুমিনের হৃদয়ের গভীরতম এক আকুতি। আর এ আকুতি পূরণে প্রতিবছর পৃথিবীর বিভিন্ন প্রান্ত থেকে লক্ষ লক্ষ মানুষ ছুটে আসেন পবিত্র মক্কা নগরীতে।</p><p>২০২৩ সালে কেবল বাংলাদেশ থেকেই কাবা জিয়ারতে গিয়েছেন প্রায় ছয় লক্ষাধিক মানুষ। কিন্তু দুনিয়াজুড়ে মুসলিম জাতির অবস্থা দেখলে কি মনে হয়, এ সফর আমাদের জীবনে ইতিবাচক কোনো পরিবর্তন আনতে পেরেছে?</p><p>হজ বা উমরাহর এই সফরের মাধ্যমে আপনার জীবনে ইতিবাচক পরিবর্তন আনতে হলে এ সফরকে বানাতে হবে একটি সমৃদ্ধ জ্ঞানের সফর। অন্যথায়, হাত দিয়ে হয়তো হাজরে আসওয়াদ স্পর্শ করবেন, কিন্তু হৃদয় দিয়ে কিছু অনুভব করতে পারবেন না। জমজমের পানি আপনার গলা ঠান্ডা করবে কিন্তু অন্তরকে শীতল করবে না। কাবাঘর আপনার চোখকে তৃপ্ত করবে কিন্তু হৃদয়ে প্রশান্তি আনবে না।</p><p>লক্ষ লক্ষ টাকা ব্যয়ে আয়োজিত আপনার এই সফরকে আসমানি ও ঐতিহাসিক জ্ঞানের আলোয় আলোকিত করতেই সিয়ান পাবলিকেশন নিয়ে এসেছে ‘হজ-উমরাহ বিশ্বকোষ’। এই গ্রন্থে রয়েছে সূচনাকাল থেকে নিয়ে বর্তমান পর্যন্ত পবিত্র কাবাঘর ও মসজিদে নববির নির্মাণ ও সম্প্রসারণের ইতিহাস এবং নির্মাণশৈলীর সচিত্র ধারাবর্ণনা।</p><p>রয়েছে মক্কা নগরী ও মদিনা মুনাওয়ারায় অবস্থিত সকল পবিত্র ও বরকতময় স্থানের রঙিন মানচিত্র; ইতিহাস, ঐতিহ্য এবং সেসব স্থানের করণীয় বর্জনীয় সম্পর্কে বিস্তারিত আলোচনা। আরও আছে যুগে যুগে পৃথিবীর নানা প্রান্ত থেকে হজ যাতায়াতের মানচিত্র, ঐতিহাসিক রুটম্যাপ এবং পর্যালোচনা; সাথে দেওয়া হয়েছে হজ ও উমরাহ আদায়ের সংশ্লিষ্ট সকল মাসআলার যথাযথ বর্ণনা।</p><p>আপনার কষ্টার্জিত টাকা ব্যয় করে আয়োজিত হজ-উমরাহর সফর হয়ে উঠুক সমৃদ্ধ ও শুদ্ধ; জ্ঞানের আলোয় আলোকিত। আপনার জীবন হয়ে উঠুক আল্লাহর রঙে রঞ্জিত, আল্লাহর রাসুলের সুন্নাহর অনুসরণে পরিচালিত।</p><p>হজ-উমরাহ যাত্রী আপনার পরিচিত ও আপনজনদের জন্য ‘হজ-উমরা বিশ্বকোষ’ গ্রন্থটি হতে পারে শ্রেষ্ঠ উপহার।</p>",
+      "seoDescription": "হজ-উমরাহ বিশ্বকোষ — মানচিত্র ও ছবিসহ হজ-উমরাহর ইতিহাস, স্থান ও বিধিবিধানের সচিত্র বিশ্বকোষ, লেখক সামি আল-মাঘলুস।",
+      "image": "book-hajj-umrah-bishwakosh-5470.webp",
+      "pdf": "hajj-umrah-bishwakosh-70bb.pdf",
+      "coverSource": "drive: হজ-উমরাহ বিশ্বকোষ front.png",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/hajj-umrah-atlas/",
+        "https://www.rokomari.com/book/399069",
+        "https://drive.google.com/drive/folders/1oUd1xVlchzYveei3_As4pMpZ5RaXDKnt?usp=sharing"
+      ]
+    },
+    {
+      "name": "কোথাও নিঝুম হয়েছে কেউ",
+      "nameEn": "Kothao Nijhum Hoyeche Keu",
+      "slug": "kothao-nijhum-hoyeche-keu",
+      "mrp": 395,
+      "discountPercent": 23,
+      "discountAmount": 91,
+      "quantity": 20,
+      "pages": 300,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "সাবের চৌধুরী",
+          "nameEn": "Saber Chowdhury"
+        }
+      ],
+      "categories": [
+        "ইসলামী সাহিত্য"
+      ],
+      "description": "<p>একটা জীবনকে যাপন করে ফেলা সহজ কথা নয়। এখানে আছে ঘটনার ঘনঘটা, ব্যস্ততার ঝড়ো সময়, সুমধুর অবসর, সুস্পষ্ট দুপুর আর বিষাদের সন্ধ্যামালা। এইসবে জড়িয়ে ছড়িয়ে আমাদের গল্পগুলো বেড়ে উঠে নিজস্ব নিয়মে। স্বভাবতই সে গল্পের গতি একরৈখিক নয়; বহুমাত্রায়, বিবিধ ব্যঞ্জনায় গল্পগুলো বড় বিচিত্র রকম, কি বিষয়ে, কি বিন্যাসে। সেই থেকে আসে শব্দ, বাক্য, বেদনা ও বিষাদ, আসে চিন্তা, অভিজ্ঞতা, আনন্দের অনুভব। সাবের চৌধুরী তার অদ্ভুত সুন্দর ভাষায় আমাদেরকে শুনিয়েছেন জীবন থেকে তুলে আনা তেমনই কিছু গল্পকথা। কিন্তু বিস্ময় এই—একে জীবনগল্প বলে চট করে একক পরিচয়ে সীমিত করা যায় না। কারণ, তিনি গল্পের ছলে বিবৃত করেছেন চিন্তার কথা, চিন্তার পাটাতনে দাঁড়িয়ে ছড়িয়েছেন গল্পের সুবাস। নানা দিক থেকে আলো ফেলে উজ্জ্বল করে তুলতে চেয়েছেন জীবনের নানান প্রান্তর। এখানে সাহিত্যের আনন্দ আছে, ভাবনার খোরাক আছে, আছে মধুর আবেশে নিমজ্জিত হওয়ার নির্দোষ প্ররোচণা।</p>",
+      "seoDescription": "কোথাও নিঝুম হয়েছে কেউ — জীবন, মৃত্যু ও যাপিত দিনের অনুভূতি নিয়ে আলিম-লেখক সাবের চৌধুরীর গদ্যগ্রন্থ।",
+      "image": "book-kothao-nijhum-hoyeche-keu-8f65.webp",
+      "pdf": "kothao-nijhum-hoyeche-keu-58a4.pdf",
+      "coverSource": "drive: কোথাও নিঝুম হয়েছে কেউ front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/kothao-nijhum-hoyeche-keu/",
+        "https://www.rokomari.com/book/432939",
+        "https://drive.google.com/drive/folders/1UPf1rbvHhbVQqlGv4L97cMv6pzXNATIb?usp=sharing"
+      ]
+    },
+    {
+      "name": "তত্ত্ব ছেড়ে জীবনে",
+      "nameEn": "Totto Chere Jibone",
+      "slug": "totto-chere-jibone",
+      "mrp": 250,
+      "discountPercent": 23,
+      "discountAmount": 58,
+      "quantity": 20,
+      "pages": 208,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [],
+      "categories": [
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>বইটি শুধু জ্ঞান নয়, জীবনে তার বাস্তব প্রয়োগের দিশা দেয়। ইসলামের আলোকে প্রতিদিনের সিদ্ধান্ত, আচার ও মানসিকতা গড়ে তোলে আখিরাতের সফলতার জন্য।</p><p>ঘর পরিষ্কার করার সময় একটি জং ধরা ব্লেড খুঁজে পায় এক শিশু। তা হাতে নিয়ে মায়ের ধবধবে হাতে ব্লেড চালিয়ে দেয়—রক্ত দেখে মুগ্ধ হয়ে বলে, “মা তুমি মরো।” মা ছিলেন ঢাকার এক সরকারি কলেজের শিক্ষিকা।</p><p>ভাগ্য ভালো—গুরুতর কিছু হয়নি।জানতে পারা গেল, শিশুটি টিভিতে সিরিয়াল কিলারের খুন দেখে সেটি অনুকরণ করেছে। পরে বাবা এসে বাচ্চাটিকে মারধর করে, অথচ সে জানেই না—তার অপরাধ কী!</p><p>সে শুধু অনুকরণ করেছে তার বাবা-মায়ের দেখা পছন্দের চরিত্রকে।বই শুধু দেখায় না—ভাবতে শেখায়। বই গড়ে তোলে নৈতিকতা, বিশ্লেষণক্ষমতা ও সহানুভূতি। যেখানে স্ক্রিন কেবল দেখায় দৃশ্য, বই শেখায় উপলব্ধি।</p><p>তাই, সন্তানদের হাতে শুধু ডিভাইস নয়—বই তুলে দিন, ভবিষ্যৎ গড়ার সবচেয়ে শক্তিশালী হাতিয়ার হিসেবে।</p>",
+      "seoDescription": "তত্ত্ব ছেড়ে জীবনে — ইসলামের জ্ঞানকে কেবল তত্ত্বে না রেখে প্রতিদিনের জীবনে প্রয়োগের দিশা দেয় এমন একটি বই।",
+      "image": "book-totto-chere-jibone-1688.webp",
+      "pdf": null,
+      "coverSource": "drive: তত্ত্ব ছেড়ে জীবনে front.jpg",
+      "pdfSource": null,
+      "sources": [
+        "https://seanpublication.com/product/totto-chere-jibona/",
+        "https://drive.google.com/drive/folders/1CMzRHlSZjNeCWMTETIW4_6ayrn3RnH3X?usp=sharing"
+      ]
+    },
+    {
+      "name": "ডার্ক ডকট্রিন",
+      "nameEn": "Dark Doctrine",
+      "slug": "dark-doctrine",
+      "mrp": 340,
+      "discountPercent": 23,
+      "discountAmount": 78,
+      "quantity": 20,
+      "pages": 176,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "আবু সুফিয়ান",
+          "nameEn": "Abu Sufiyan"
+        }
+      ],
+      "categories": [
+        "ইসলামি ইতিহাস ও ঐতিহ্য"
+      ],
+      "description": "<p>ডার্ক ডকট্রিন বইটি কোনো রূপকথার গল্প নয়। এটি ২০০৯ থেকে ২০২৪ সাল পর্যন্ত শেখ হাসিনার জমানার এক নির্মম সত্যের দলিল। একটি রাষ্ট্র কীভাবে তার নাগরিকদের বিরুদ্ধে রাষ্ট্রযন্ত্রকে ব্যবহার করে, কীভাবে তথাকথিত ‘সন্ত্রাসের বিরুদ্ধে যুদ্ধের’ নামে জনগণকে নিরাপত্তাহীন করে তোলে, আর কীভাবেই বা ‘অপরাধী’ বানানোর নীলনকশায় গড়ে তোলে ভয়ের সংস্কৃতি—বইটিতে রয়েছে তার বিশদ বর্ণনা।</p><p>আমি বিশ্বাস করি, এই বই বাংলাদেশের ভবিষ্যতের জন্য একটি সতর্কবার্তা। পাঠকদের প্রতি আমার অনুরোধ, বইটি পড়ার সময় নিজ নিজ বিচার ও মানবিক বোধ এবং প্রশ্ন করার মনোভাবকে জাগ্রত রাখুন। কারণ, এই বইয়ের মূল উদ্দেশ্য হলো প্রশ্ন তোলা—আপনি যেটি সত্য ভাবছেন, সেটি আদৌ সত্য কি না। আমরা যারা রাষ্ট্রের অপতৎপরতার মুখোমুখি দাঁড়াতে চাই, তাদের জন্য সত্য জানা শুধু অধিকার নয়—দায়িত্বও। এই বই সেই দায়িত্ব পালনের এক ক্ষুদ্র প্রয়াস।- আবু সুফিয়ান</p>",
+      "seoDescription": "ডার্ক ডকট্রিন — বাংলাদেশে জঙ্গিবাদ-নাটকের নেপথ্যের ঘটনা ও প্রোপাগান্ডা নিয়ে আবু সুফিয়ানের অনুসন্ধানী বই।",
+      "image": "book-dark-doctrine-702d.webp",
+      "pdf": "dark-doctrine-a816.pdf",
+      "coverSource": "drive: ডার্ক ডকট্রিন front cover.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/dark-doctrine/",
+        "https://drive.google.com/drive/folders/1Gh-Pc4ayZkIO0AXi_4YbbthcWIblrmV3?usp=sharing"
+      ]
+    },
+    {
+      "name": "নট ফর সেল",
+      "nameEn": "Not For Sale",
+      "slug": "not-for-sale",
+      "mrp": 180,
+      "discountPercent": 23,
+      "discountAmount": 41,
+      "quantity": 20,
+      "pages": 96,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "রেহনুমা বিনত আনিস",
+          "nameEn": "Rehnuma Bint Anis"
+        }
+      ],
+      "categories": [
+        "ইসলামী সাহিত্য"
+      ],
+      "description": "<p>কিছু বই মানুষকে হাসায়, কিছু বই সবাইকে কাঁদায়। কিছু বই আবার খুলে দেয় অন্তর্দৃষ্টি। চোখের সামনে মেলে ধরে নতুন এক পৃথিবী। পাপ-পঙ্কিলতাকে পাশ কাটিয়ে মানুষ তখন অর্জন করে এগিয়ে চলার শক্তি। ধীরে ধীরে সে বুঝতে শেখে, বস্তুবাদী এ জগতে সবকিছু বিক্রি হবার নয়। নিজের মাকে বিক্রি করা যায় না! নিজের বোনকে কখনো পণ্য ভাবা যায় না! তেমনই একটি বই—নট ফর সেল।</p>",
+      "seoDescription": "নট ফর সেল — জীবনের ছোট ছোট ঘটনা থেকে অন্তর্দৃষ্টির গল্প নিয়ে রেহনুমা বিনত আনিসের পাঠকপ্রিয় বই।",
+      "image": "book-not-for-sale-ee74.webp",
+      "pdf": "not-for-sale-3503.pdf",
+      "coverSource": "drive: নট ফর সেল front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/not-for-sell/",
+        "https://www.rokomari.com/book/116693",
+        "https://drive.google.com/drive/folders/16BgVJMWWCBqpxKQ1GmFGqgB2IZ2co0nj?usp=sharing"
+      ]
+    },
+    {
+      "name": "চয়ন",
+      "nameEn": "Choyon",
+      "slug": "choyon",
+      "mrp": 220,
+      "discountPercent": 0,
+      "discountAmount": 0,
+      "quantity": 20,
+      "pages": 214,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "আবু তাসমিয়া আহমদ রফিক (সম্পাদক)",
+          "nameEn": "Abu Tasmia Ahmad Rafiq"
+        }
+      ],
+      "categories": [
+        "আত্মশুদ্ধি ও অনুপ্রেরণা"
+      ],
+      "description": "<p>আজ আমরা এমন সমাজে বাস করি যেখানে গৃহিণী নারীকে তুচ্ছ ভাবা হয়, আবার চাকরিজীবী হলেও অনেকে হারিয়ে ফেলেন পরিবার, সন্তান ও দ্বীন–দুনিয়ার ভারসাম্য। আমরা বিশ্বাস করি সম্মান আসে ডিগ্রি বা চাকরি থেকে, অথচ আসল সম্মান একমাত্র আল্লাহর দান। চয়ন বইটি আমাদের ভুল ভাঙিয়ে দেয়—দুনিয়ার মোহে হারিয়ে না গিয়ে আখিরাতের কথা ভাবতে শেখায়। ইসলামের সত্যিকারের চেতনা, পথভ্রষ্টতার কারণ এবং জান্নাতের পথে ফিরিয়ে আনার দিকনির্দেশ এতে তুলে ধরা হয়েছে। জীবনের বেছে নেওয়ার পথ অনেক, কিন্তু সঠিক গন্তব্যে পৌঁছায় একটাই পথ—ইসলামের পথ। এই বই সেই পথ চিনিয়ে দিতে ইনশা আল্লাহ সহায়ক হবে।</p>",
+      "seoDescription": "চয়ন — নারীর মর্যাদা, সংসার ও জীবনের নানা বিষয় নিয়ে বাছাই করা লেখার সংকলন, সম্পাদনা আবু তাসমিয়া আহমদ রফিক।",
+      "image": "book-choyon-c976.webp",
+      "pdf": "choyon-6d7c.pdf",
+      "coverSource": "drive: Choyon-front-cover.png",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/choyon/",
+        "https://www.rokomari.com/book/116691",
+        "https://drive.google.com/drive/folders/1wBzGsH1g07aF7rCT68uqhl0o9ILQPaUD?usp=sharing"
+      ]
+    },
+    {
+      "name": "বিশ্বাসের পথে যাত্রা",
+      "nameEn": "Bishwaser Pothe Jatra",
+      "slug": "bishwaser-pothe-jatra",
+      "mrp": 350,
+      "discountPercent": 23,
+      "discountAmount": 80,
+      "quantity": 20,
+      "pages": 224,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "মির্জা ইয়াওয়ার বেইগ",
+          "nameEn": "Mirza Yawar Baig"
+        }
+      ],
+      "categories": [
+        "ইসলামী সাহিত্য"
+      ],
+      "description": "<p>এই বইটি একধরনের আত্মজীবনী, যেখানে লেখক মির্জা ইয়াওয়ার বেইগ তাঁর ভ্রান্তি থেকে সঠিক পথে ফিরে আসার বাস্তব অভিজ্ঞতা তুলে ধরেছেন। এটি শুধুমাত্র ব্যক্তিগত গল্প নয়—বরং ঈমানের পথে চলতে গিয়ে মানুষ যেসব সন্দেহ ও বাধার মুখে পড়ে, সেগুলো কীভাবে অতিক্রম করা যায় তা তুলে ধরা হয়েছে।আত্মজীবনীমূলক গ্রন্থ রচনার ঐতিহ্য বহু আলিম রেখে গেছেন, যেমন: আবুল হাসান আলী নাদওয়ী, আব্দুল মাজিদ দারিয়াবাদী, মঞ্জুর নুমানী ও মুহাম্মাদ আসাদ। এছাড়া ইমাম গাজালীর ‘আল মুনকিয মিনাল দালাল’ অন্যতম অনন্য রচনা, যেখানে তিনি সংশয় কাটিয়ে হিদায়াতের পথে ফিরে আসার আত্মিক সংগ্রাম বর্ণনা করেছেন।</p>",
+      "seoDescription": "বিশ্বাসের পথে যাত্রা — ভ্রান্তি থেকে সঠিক বিশ্বাসে ফেরার নিজের গল্প নিয়ে মির্জা ইয়াওয়ার বেইগের আত্মজৈবনিক বই।",
+      "image": "book-bishwaser-pothe-jatra-6b1c.webp",
+      "pdf": "bishwaser-pothe-jatra-953b.pdf",
+      "coverSource": "drive: বিশ্বাসের পথে যাত্রা front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/bishwaser-pothe-yatra/",
+        "https://www.rokomari.com/book/213848",
+        "https://drive.google.com/drive/folders/1L-mxa6E3HaXPdKGawQSDERHCiO6UxXfB?usp=sharing"
+      ]
+    },
+    {
+      "name": "পৃথিবীর পথে পথে",
+      "nameEn": "Prithibir Pothe Pothe",
+      "slug": "prithibir-pothe-pothe",
+      "mrp": 380,
+      "discountPercent": 23,
+      "discountAmount": 87,
+      "quantity": 20,
+      "pages": 232,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "রেহনুমা বিনত আনিস",
+          "nameEn": "Rehnuma Bint Anis"
+        }
+      ],
+      "categories": [
+        "ইসলামী সাহিত্য"
+      ],
+      "description": "<p>ভ্রমণের মাধ্যমে মানুষের জ্ঞান এবং অভিজ্ঞতা বিস্তৃত হয়, নিজের অসহায়ত্বের অনুভূতি এবং আল্লাহর ওপর নির্ভরশীলতা বাড়ে; বিশ্বাসে অবিচলতা আসে। বিভিন্ন স্থানে বিভিন্ন প্রকার মানুষের সাথে মেলামেশার ফলে মানুষের মানসিকতার পরিধি বিস্তৃত হয়, এবং মানুষ জাতীয়তাবাদের ক্ষুদ্রতা থেকে উত্তরণ করে বিশ্ব ভ্রাতৃত্বের স্বাদ আস্বাদন করতে সক্ষম হয়।</p><p>যেখানে সৎ উপার্জনের সংস্থান সম্ভব না হয়, পরিবারকে সৎ পথে পরিচালনা করা সম্ভব না হয়, নিজের এবং পরিবারের নিরাপত্তা নিশ্চিত করা সম্ভব না হয়, অথবা অন্যায়-অত্যাচার-উৎপীড়ন সহ্য করা অপরিহার্য হয়ে যায়, সেখানে প্রয়োজন হলে দেশ ত্যাগ করতে বলা হয়েছে। কারণ, ‘সবাই ঘুস খেত বলে আমিও খেতাম; সংসার চালাতে পারতাম না বলে ঘুস খেতাম; পরিবারের প্রয়োজন মেটাতে ঘুস খেতাম’—এমন বাহানাগুলো আল্লাহর সামনে গ্রহণযোগ্য হবে না।</p><p>অসহায়ত্বের শিকার হয়েই হোক, বা শিক্ষাগ্রহণের মানসেই হোক, দেশত্যাগী এই মানুষগুলো সাধারণত দেশকে বড়ই ভালোবাসে। বিদেশ-বিভুঁইয়ে এসব মানুষের নানারকম সুখ-দুঃখের কাহিনি নিয়ে আমার এবারের উপস্থাপনা— পৃথিবীর পথে পথে । জীবনের এই জীবন্ত সব ঘটনাগুলোকে আমি চেষ্টা করেছি গভীরভাবে উপলব্ধি করতে এবং সহজভাবে তুলে ধরতে। ভাবনার দুয়ার উন্মোচিত করাই আমার মূল লক্ষ্য। আপনাদের ভালো লাগাই আমার শ্রমের সার্থকতা নির্দেশ করে।</p><p>পৃথিবীর পথে পথে বইটি লেখিকার দীর্ঘদিনের ভ্রমণ অভিজ্ঞতার ফসল। সেই ফসলের কিছুটা আপনিও উপভোগ করতে পরে ফেলুন সুন্দর এই বইটি।</p>",
+      "seoDescription": "পৃথিবীর পথে পথে — দেশ-বিদেশ ভ্রমণের অভিজ্ঞতা আর তা থেকে পাওয়া শিক্ষা নিয়ে রেহনুমা বিনত আনিসের ভ্রমণকাহিনি।",
+      "image": "book-prithibir-pothe-pothe-349f.webp",
+      "pdf": "prithibir-pothe-pothe-7f91.pdf",
+      "coverSource": "drive: পৃথিবীর পথে পথে front.png",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/prithibir-pothe-pothe/",
+        "https://www.rokomari.com/book/291829",
+        "https://drive.google.com/drive/folders/10bpmgHMWBEkvRVDVqFR-YzgLGqs-gu_-?usp=sharing"
+      ]
+    },
+    {
+      "name": "ওপারে",
+      "nameEn": "Opare",
+      "slug": "opare",
+      "mrp": 200,
+      "discountPercent": 23,
+      "discountAmount": 46,
+      "quantity": 20,
+      "pages": 120,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "রেহনুমা বিনত আনিস",
+          "nameEn": "Rehnuma Bint Anis"
+        }
+      ],
+      "categories": [
+        "ইসলামী সাহিত্য"
+      ],
+      "description": "<p>সুখের খোঁজে মানুষ এপার-ওপার ছুটে বেড়ায়, কিন্তু কোথায় সেই প্রকৃত সুখ? এ জীবনের সফর আসলে এক সাময়িক সওদা—ফিরে যেতে হবে ওপারে, সদাই নিয়ে।এই চেতনায়, হারিয়ে যাওয়া আত্মাকে ফিরিয়ে আনতে ও আখিরাতের সত্যিকারের যাত্রার কথা মনে করিয়ে দিতে হৃদয় ছোঁয়া বই ‘ওপারে’।</p>",
+      "seoDescription": "ওপারে — দুনিয়ার এপার-ওপার ছুটে প্রকৃত সুখ কোথায়, সেই প্রশ্নে আখিরাতমুখী জীবনের গল্প নিয়ে রেহনুমা বিনত আনিসের বই।",
+      "image": "book-opare-f5fd.webp",
+      "pdf": "opare-4a89.pdf",
+      "coverSource": "drive: ওপারে front.png",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/opare/",
+        "https://www.rokomari.com/book/164762",
+        "https://drive.google.com/drive/folders/1E6A11mymtZUp1aXSjAmk9k721ApqyOWR?usp=sharing"
+      ]
+    },
+    {
+      "name": "বৃষ্টিমুখর রৌদ্রমুখর",
+      "nameEn": "Brishtimukhor Roudromukhor",
+      "slug": "brishtimukhor-roudromukhor",
+      "mrp": 345,
+      "discountPercent": 23,
+      "discountAmount": 79,
+      "quantity": 20,
+      "pages": null,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "আব্দুল্লাহ মাহমুদ নজীব",
+          "nameEn": "Abdullah Mahmud Najib"
+        }
+      ],
+      "categories": [
+        "ইসলামী সাহিত্য"
+      ],
+      "description": "<p>ধর্ম, প্রকৃতি ও সাহিত্যের অপূর্ব সংমিশ্রণে রচিত প্রবন্ধগল্প গ্রন্থ । লেখক আব্দুল্লাহ মাহমুদ নজীব এখানে আমাদের চেনা প্রকৃতির দৃশ্যপট—ফুল, পাখি, ঋতু, বৃষ্টি, আলো, রোদ—এই সবকিছুর মাঝেই কুরআন-সুন্নাহর নিদর্শন খুঁজে দেখিয়েছেন এক অনন্য দৃষ্টিভঙ্গিতে।এই বইতে পাঠক শুধু প্রাকৃতিক সৌন্দর্য বা সাহিত্যরসই পাবেন না, বরং সেই রূপ-রস-গন্ধের মাঝে একজন ঈমানদার কীভাবে আল্লাহর উপস্থিতি ও আয়াতকে অনুভব করেন, তা কাব্যিক ভাষায় ধরা দিয়েছে।লেখার ভেতর নজরুল, রবীন্দ্রনাথ, জীবনানন্দ, জসীম উদদীন থেকে শুরু করে ওয়ার্ডসওয়ার্থ, শেক্সপিয়র ও ডিকিন্সনের আলো-ছায়া দেখা যায়; আবার আরবি সাহিত্যের ইমরুল কাইস বা যাইদ সাবিতেরও ছোঁয়া মিলেছে। কিন্তু এ কোনো সাহিত্য-সংকলন নয়—এ এক বিশ্বাসভিত্তিক দৃষ্টিভঙ্গির অভিজ্ঞান।যারা সাহিত্যের ছন্দে ভাসতে ভালোবাসেন, আর তাতে যদি ঈমানের আলো মেশানো যায়—তাদের জন্য এই বই হবে এক মুগ্ধকর যাত্রা।</p>",
+      "seoDescription": "বৃষ্টিমুখর রৌদ্রমুখর — ধর্ম, প্রকৃতি ও সাহিত্যের মিশেলে আব্দুল্লাহ মাহমুদ নজীবের প্রবন্ধ ও গল্পের সংকলন।",
+      "image": "book-brishtimukhor-roudromukhor-a469.webp",
+      "pdf": "brishtimukhor-roudromukhor-1c09.pdf",
+      "coverSource": "drive: বৃষ্টিমুখর রৌদ্রমুখর front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/bristimukhor-roudromukhor/",
+        "https://www.rokomari.com/book/158705",
+        "https://drive.google.com/drive/folders/1ZWkejsQpWxSnKkGp1hV3dRXmN1m_Uxfd?usp=sharing"
+      ]
+    },
+    {
+      "name": "ইসলামি জাগরণ : নীতি ও নির্দেশনা",
+      "nameEn": "Islami Jagoron Niti O Nirdeshona",
+      "slug": "islami-jagoron-niti-o-nirdeshona",
+      "mrp": 395,
+      "discountPercent": 23,
+      "discountAmount": 91,
+      "quantity": 20,
+      "pages": 240,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [
+        "সানজিদা শারমিন"
+      ],
+      "authors": [
+        {
+          "name": "শায়খ মুহাম্মাদ বিন সালিহ আল উসাইমিন",
+          "nameEn": "Shaykh Muhammad ibn Salih al-Uthaymin"
+        }
+      ],
+      "categories": [
+        "ইসলামি আদর্শ ও মতবাদ"
+      ],
+      "description": "<p>পৃথিবীর সর্বত্রই আজ ইসলামি জাগরণের সুবাতাস বইতে শুরু করেছে। এই পুনর্জাগরণের মূলে রয়েছে অদম্য উৎসাহী ও পরিশ্রমী একদল মুসলিম দায়ি। অন্ধকার দূর করে আলোর বার্তা ছড়িয়ে দিতে তারা আপ্রাণ চেষ্টা চালিয়ে যাচ্ছে।</p><p>জগতের অন্যান্য আন্দোলনের মতো তাদের জাগরণের এ আন্দোলনও বাধার সম্মুখীন হচ্ছে। ভিন্ন ধর্ম ও আদর্শের অনেকেই ইসলামের উত্থানকে ভয় পায়, চায় তাকে নির্বাপিত করে দিতে। তারা জানে, একটি শক্তিশালী ইসলামি জাগরণ বদলে দিতে পারে বর্তমান পৃথিবীর পুরো প্রেক্ষাপট। তাই যাবতীয় বাধা কাটিয়ে উঠতে শায়খ মুহাম্মাদ বিন সালিহ আল উসাইমিন দায়িদের উদ্দেশে দিয়েছেন জরুরি বহু পরামর্শ ও দিকনির্দেশনা। সেগুলোকে কাজে লাগিয়ে তরুণরা তাদের দাওয়াতকে করে তুলতে পারে আরও সফল, আরও কার্যকর।</p><p>শায়েখ মুহাম্মাদ বিন সালিহ আল উসাইমিনের এ গ্রন্থটি হতে পারে মুসলিম দায়িদের উজ্জ্বল আলোকবর্তিকা—উম্মাহর সোনালি ভবিষ্যতের পাথেয়।</p>",
+      "seoDescription": "ইসলামি জাগরণ : নীতি ও নির্দেশনা — দীনি পুনর্জাগরণের সঠিক পথ ও ভারসাম্য নিয়ে শায়খ মুহাম্মাদ বিন সালিহ আল-উসাইমিনের দিকনির্দেশনা।",
+      "image": "book-islami-jagoron-niti-o-nirdeshona-6e5c.webp",
+      "pdf": "islami-jagoron-niti-o-nirdeshona-366a.pdf",
+      "coverSource": "drive: ইসলামি জাগরণ-front.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/islami-jagoran-niti-o-nirdeshona/",
+        "https://www.rokomari.com/book/435240",
+        "https://drive.google.com/drive/folders/1CilTkz6q81jSq2L9gyLTimEhN1jR-P_b?usp=sharing"
+      ]
+    },
+    {
+      "name": "সালাতের দুআ (যা রাসূল সাল্লাল্লাহু আলাইহি ওয়া সাল্লাম থেকে প্রমাণিত)",
+      "nameEn": "Salater Dua",
+      "slug": "salater-dua",
+      "mrp": 140,
+      "discountPercent": 23,
+      "discountAmount": 32,
+      "quantity": 20,
+      "pages": 96,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "মুফতি আবু উমামা কুতুবুদ্দিন মাহমুদ (অনুবাদক)",
+          "nameEn": "Mufti Abu Umama Qutbuddin Mahmud"
+        }
+      ],
+      "categories": [
+        "দোয়া, দরূদ ও যিকর"
+      ],
+      "description": "<p>(যা রাসূল সাল্লাল্লাহু আলাইহি ওয়া সাল্লাম থেকে প্রমাণিত)</p><p>দুআ ইবাদতের মগজ। বান্দা আল্লাহর দরবারে বিনীত হলে আল্লাহ কখনোই বান্দাকে ফিরিয়ে দেন না। কুরআনে আল্লাহ যেমন অনেক দুআ শিখিয়ে দিয়েছেন, রাসুলুল্লাহ সাল্লাল্লাহু আলাইহি ওয়া সাল্লামও তার উম্মতদেরকে নানান বিষয়ের দুআ ও আমলের তরিকা শিক্ষা দিয়েছেন।</p><p>ইসলামের মৌলিক স্তম্ভগুলির একটি সালাত। মুমিন এবং কাফেরের মধ্যকার বাহ্যিক পার্থক্যও স্পষ্ট হয় সালাতের মধ্য দিয়ে। আল্লাহ তার বান্দাদের জন্য সালাত ফরজ বা আবশ্যক পর্যন্ত করে দিয়েছেন। কবুলের জন্য সালাতের ভেতরেও নবীজির হাদিস দ্বারা প্রমাণিত বেশকিছু দুআ আছে। পাক-পবিত্রতা থেকে শুরু করে, সালাত, মাজলিস, জানাযা প্রভৃতির জন্য হাদিস শরিফে দুআ আর দরুদের বিশাল ভাণ্ডার রয়েছে। আমরা যেগুলো জানি, তার বাইরেও আছে আরও অনেক দুআ।</p><p>সব দুআ কি হাদিস দ্বারা প্রমাণিত? এই প্রশ্নের জবাবে ‘সালাতের দুআ : যা রাসূল সাল্লাল্লাহু আলাইহি ওয়া সাল্লাম থেকে প্রমাণিত’ বইটি আপনাকে বিশেষ গাইড দেবে। সালাতের যেসব দুআ নবীজি সাল্লাল্লাহু আলাইহি ওয়া সাল্লাম কর্তৃক প্রমাণিত, সে সমস্ত সন্নিবেশিত হয়েছে এই পুস্তিকাটিতে। প্রতিটি দুআর সঙ্গে দেওয়া হয়েছে একাধিক হাদিসের মজবুত রেফারেন্স। ফলে বইটি বিশেষ শক্তি নিয়ে হয়ে উঠেছে আপনার নিত্য সঙ্গী।</p>",
+      "seoDescription": "সালাতের দুআ — রাসুলুল্লাহ ﷺ থেকে প্রমাণিত সালাতের ভেতরে ও পরে পড়ার দুআগুলো অর্থসহ, সংকলন আবু উমামা কুতুবুদ্দীন মাহমূদ।",
+      "image": "book-salater-dua-290c.webp",
+      "pdf": "salater-dua-6d66.pdf",
+      "coverSource": "https://seanpublication.com/wp-content/uploads/2025/05/SP-Dua-book-cover.png",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/salater-dua-2/",
+        "https://www.rokomari.com/book/201586"
+      ]
+    },
+    {
+      "name": "ওয়া ইয়্যাকা নাস্তাঈন (সকাল-সন্ধ্যা এবং নিরাপত্তা লাভের দুআ)",
+      "nameEn": "Wa Iyyaka Nastain",
+      "slug": "wa-iyyaka-nastain",
+      "mrp": 170,
+      "discountPercent": 23,
+      "discountAmount": 39,
+      "quantity": 20,
+      "pages": 148,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "ড. ফারহাত হাশমি",
+          "nameEn": "Dr. Farhat Hashmi"
+        }
+      ],
+      "categories": [
+        "দোয়া, দরূদ ও যিকর"
+      ],
+      "description": "<p>সকাল-সন্ধ্যা এবং নিরাপত্তা লাভের দুআ (ওয়া ইয়্যাকা নাস্তাঈন)</p><p>দুঃখ-কষ্ট লাঘবের দু’আসমূহ—</p><p>اَللّٰهُمَّ لَا سَهْلَ إِلَّا مَا جَعَلْتَهُ سَهْلًا وَّأَنْتَ تَجْعَلُ الحُزْنَ إِذاَ شِئتَ سَهْلًا</p><p>হে আল্লাহ, আপনি যা সহজসাধ্য করেছেন তা ছাড়া কোনো কিছুই সহজসাধ্য নয়, যখন আপনি ইচ্ছা করেন দুশ্চিন্তাকেও সহজ করে দেন।</p><p>দুআ হলো ইবাদতের মগজ। আমরা নানান কারণে যে কোন প্রসঙ্গে আল্লাহর শরণাপন্ন হই—হতে হয়। তাসবিহ-তাহলিলের মাধ্যমে আল্লাহর কাছে সাওয়াব ও নিরাপত্তা কামনা করি।</p><p>জিন শয়তান, মানুষ শয়তান—অনিষ্টের যত দিক; সেসব থেকে আমরা আল্লাহর আশ্রয় চাই। বিপদ থেকে মুক্তির দোয়া করি। স্বাভাবিক জীবনে অস্বাভাবিক কিছু আঁচ করতে পারলে তার থেকে উত্তরণে জন্য আল্লাহর সাহায্য চাই।</p><p>সকাল-সন্ধ্যা এবং নিরাপত্তা লাভের দুআ (ওয়া ইয়্যাকা নাস্তাঈন ) বইতে এমন সব সহিহ দোয়া সংকলন করা হয়েছে, যা পড়লে মানুষকে বিপদ, ভয়, অসুস্থতা ও মানসিক অশান্তি থেকে বাঁচাবে। কুরআন ও সহিহ হাদীসের আলোকে প্রতিদিনের জীবনে আমলযোগ্য এই দোয়াগুলো আত্মার শান্তি ও নিরাপত্তা দিবে ।</p>",
+      "seoDescription": "ওয়া ইয়্যাকা নাস্তাঈন — সকাল-সন্ধ্যার আজকার এবং বিপদ-আপদ থেকে নিরাপত্তা লাভের সহিহ দুআর সংকলন, ড. ফারহাত হাশমি।",
+      "image": "book-wa-iyyaka-nastain-0d1e.webp",
+      "pdf": "wa-iyyaka-nastain-de85.pdf",
+      "coverSource": "drive: ওয়া ইয়্যাকা নাস্তাঈন সকাল-সন্ধ্যা এবং নিরাপত্তা লাভের দুআ front.jpg",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/waya-iyaka-nastain/",
+        "https://drive.google.com/drive/folders/18Y3fNgLerndC780MD7pLRAFgXvrOLbEJ?usp=sharing"
+      ]
+    },
+    {
+      "name": "মায়েদের রমাদান",
+      "nameEn": "Mayeder Romadan",
+      "slug": "mayeder-romadan",
+      "mrp": 360,
+      "discountPercent": 23,
+      "discountAmount": 83,
+      "quantity": 20,
+      "pages": null,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "রৌদ্রময়ী প্রিনেটাল টিম",
+          "nameEn": "Roudromoyee Prenatal Team"
+        }
+      ],
+      "categories": [
+        "ইসলামে নারী",
+        "ইসলামি আমল ও আমলের সহায়িকা"
+      ],
+      "description": "<p>মাতৃত্বের কঠিন সময়গুলো ইবাদতের অন্তরায় নয় বরং এই পথচলাটাই আল্লাহর সন্তুষ্টি অর্জনের অন্যতম মাধ্যম।</p><p>‘মায়েদের রমাদান’ বইটি গর্ভবতী, প্রসূতি ও ছোট শিশুর মায়েদের জন্য একটি পূর্ণাঙ্গ ও ব্যবহারিক গাইড। রমাদান মাস সংযম ও ইবাদতের মাস হলেও একজন মায়ের জন্য শারীরিক ও মানসিকভাবে এই সময়টি বেশ চ্যালেঞ্জিং।</p><p>বইটি যেসব সমস্যার সমাধান দেবে:</p><p>দ্বিধাদ্বন্দ্ব দূরীকরণ: গর্ভাবস্থায় বা দুগ্ধদানকালে রোজা রাখা নিয়ে যে সংশয় থাকে, তার সঠিক সমাধান।</p><p>শারীরিক ও মানসিক যত্ন: ক্লান্তি ও সংসারের চাপের মাঝে কীভাবে ইবাদতে মনোযোগ দেওয়া যায়।</p><p>বিশেষজ্ঞ পরামর্শ: অভিজ্ঞ চিকিৎসক ও পুষ্টিবিদদের দেওয়া ডায়েট প্ল্যান এবং গর্ভকালীন ও প্রসব-পরবর্তী পরিচর্যা।</p><p>প্যারেন্টিং টিপস: রোজা রেখেও হাসিমুখে সন্তানের যত্ন নেওয়ার কৌশল।</p><p>কেবল একটি বই নয়, বরং মায়েদের উদ্বেগ কমিয়ে রমাদানকে সুশৃঙ্খল ও প্রশান্তিময় করার একটি মাধ্যম।</p>",
+      "seoDescription": "মায়েদের রমাদান — গর্ভাবস্থা ও ছোট সন্তান সামলেও রমাদানে ইবাদতের পরিকল্পনা নিয়ে রৌদ্রময়ী প্রিনেটাল টিমের বই।",
+      "image": "book-mayeder-romadan-cb14.webp",
+      "pdf": "mayeder-romadan-e2b5.pdf",
+      "coverSource": "https://seanpublication.com/wp-content/uploads/2026/02/Ma.webp",
+      "pdfSource": "wafilife.com look-inside (Wafilife mark replaced with the Amolbooks logo)",
+      "sources": [
+        "https://seanpublication.com/product/mayeder-romadan/",
+        "https://www.rokomari.com/book/539668"
+      ]
+    },
+    {
+      "name": "এটা কী?",
+      "nameEn": "Eta Ki",
+      "slug": "eta-ki",
+      "mrp": 110,
+      "discountPercent": 23,
+      "discountAmount": 25,
+      "quantity": 20,
+      "pages": null,
+      "edition": null,
+      "binding": "পেপারব্যাক",
+      "translators": [],
+      "authors": [
+        {
+          "name": "ইয়াসমিন নাহার",
+          "nameEn": "Yasmin Nahar"
+        },
+        {
+          "name": "সানজিদা শারমিন",
+          "nameEn": "Sanjida Sharmin"
+        }
+      ],
+      "categories": [
+        "শিশু-কিশোর"
+      ],
+      "description": "",
+      "seoDescription": "এটা কী? — ছোট্ট শিশুদের জন্য চারপাশের জিনিস চেনানোর রঙিন ছবির বই, লেখক ইয়াসমিন নাহার ও সানজিদা শারমিন।",
+      "image": "book-eta-ki-7664.webp",
+      "pdf": null,
+      "coverSource": "https://seanpublication.com/wp-content/uploads/2025/05/CCI03032020_0004.jpg",
+      "pdfSource": null,
+      "sources": [
+        "https://seanpublication.com/product/eta-ki/",
+        "https://www.rokomari.com/book/116701"
+      ]
+    },
+    {
+      "name": "ঘুড়ি",
+      "nameEn": "Ghuri",
+      "slug": "ghuri",
+      "mrp": 180,
+      "discountPercent": 23,
+      "discountAmount": 41,
+      "quantity": 20,
+      "pages": 81,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "সানজিদা সিদ্দীক কথা",
+          "nameEn": "Sanjida Siddique Kotha"
+        }
+      ],
+      "categories": [
+        "শিশু-কিশোর"
+      ],
+      "description": "<p>প্রিয় ঘুড়ি,</p><p>কেমন আছ? ভালোই থাকবে নিশ্চয়। আমাদের এখানে অনেক তুষার পড়ছে। এই যে আমি তোমাকে লিখছি, এখনো চারপাশ তুষারে সাদা হয়ে আছে। এমনকি জানালার কাঁচও খোলা যাচ্ছে না। আর তোমার ছোটো বোন নিনিতা ব্যাক ইয়ার্ডে তুষার হাতে মুঠ করে নিয়ে গোল গোল করে বল বানিয়ে স্তূপ করার চেষ্টা করছে। আজকে আর লিখলাম না। আমার মনটা বিশেষ ভালো নেই। তোমার দাদাভাই আর দাদিমাকে বোলো না। আমি হয়তো সামনের মাসে দেশে আসব ইনশা আল্লাহ। তাদের জন্য সারপ্রাইজ থাক। বিদায় নিচ্ছি।</p>",
+      "seoDescription": "ঘুড়ি — চিঠির আদলে লেখা এক শিশুর অনুভূতি আর বন্ধুত্বের গল্প নিয়ে সানজিদা সিদ্দীক কথার কিশোর উপন্যাস।",
+      "image": "book-ghuri-3d80.webp",
+      "pdf": null,
+      "coverSource": "drive: ঘুড়ি.png",
+      "pdfSource": null,
+      "sources": [
+        "https://seanpublication.com/product/ghuri/",
+        "https://drive.google.com/drive/folders/1kN-lCWdlJjTfOiiIdzDUcRA5IQEYZD0a?usp=sharing"
+      ]
+    },
+    {
+      "name": "ভীতুর ডিম",
+      "nameEn": "Bhitur Dim",
+      "slug": "bhitur-dim",
+      "mrp": 180,
+      "discountPercent": 23,
+      "discountAmount": 41,
+      "quantity": 20,
+      "pages": 80,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "সানজিদা সিদ্দীক কথা",
+          "nameEn": "Sanjida Siddique Kotha"
+        }
+      ],
+      "categories": [
+        "শিশু-কিশোর"
+      ],
+      "description": "<p>আমাকে সবাই ভীতুর ডিম ডাকলেও আমি যে একটা সাহসের ডিম এইটা জানে শুধু ডিগবাজী। কেউ যদি খুব ভীতু হয় তাকে সবাই ভীতুর ডিম ডাকে, এইটাই নিয়ম। আচ্ছা ভীতু কী কোন পাখি যে তার ডিম হবে? বড়দের অনেক কথা বার্তাই খুব বোকা বোকা, যদিও বড়রা তা বোঝে না।</p><p>সেইদিন আম্মু আমাকে বললেন,</p><p>“এই নাভান যা তো রান্নাঘরের বাতিটা নিভিয়ে আয়।‘</p>",
+      "seoDescription": "ভীতুর ডিম — ভয় জয় করে সাহসী হয়ে ওঠার মজার গল্প নিয়ে সানজিদা সিদ্দীক কথার কিশোর উপন্যাস।",
+      "image": "book-bhitur-dim-6d7d.webp",
+      "pdf": "bhitur-dim-c72e.pdf",
+      "coverSource": "drive: ভিতুর-ডিম front cover.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/vitur-dim/",
+        "https://drive.google.com/drive/folders/1XhlsRhSFwkca_3VuRcTO2oEqXDjVpiIB?usp=sharing"
+      ]
+    },
+    {
+      "name": "বুবুনী কোথায়",
+      "nameEn": "Bubuni Kothay",
+      "slug": "bubuni-kothay",
+      "mrp": 180,
+      "discountPercent": 23,
+      "discountAmount": 41,
+      "quantity": 20,
+      "pages": 80,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "সানজিদা সিদ্দীক কথা",
+          "nameEn": "Sanjida Siddique Kotha"
+        }
+      ],
+      "categories": [
+        "শিশু-কিশোর"
+      ],
+      "description": "<p>শিশির বললো,</p><p>-স্কুল বন্ধ করে দিলে আমরা বাসা থেকে বের হবো কীভাবে?</p><p>-চুপ কর গাধা। বাবা-মা’কে বোঝাতে হবে। নইলে নানান জায়গায় ছাত্রদের মেরে ভর্তা বানায় কবরে পাঠায় দিবে আর তোরা আম্মুর কোলে বসে চিকেন ফ্রাই খাবি।</p><p>শিশির চুপ করে গেলো।</p><p>-শোন, আমাদের সবার বাসাই তো আজিমপুরে, স্কুলের আশেপাশে। স্কুল বন্ধ হয়ে গেলেও আমরা সবাই সবার বাসা থেকে কবরস্থানের সামনে একত্র হবো। তারপর সব ছাত্ররা যেখানে আন্দোলন করছে সেখানে চলে যাবো।</p><p>এইবার তোরা হাত তোল দেখি, কে কে যাবি আমার সাথে?</p><p>প্রথমে কেউই হাত তুললো না, সবার আগে হাত তুললো মৃদুল। লেদু বকর মৃদুলের পিঠে একটা চাপড় দিয়ে বললো,</p><p>-সাবাস বাঘের বাচ্চা!</p>",
+      "seoDescription": "বুবুনী কোথায় — হারিয়ে যাওয়া বুবুনীকে খুঁজতে শিশিরদের রোমাঞ্চকর গল্প নিয়ে সানজিদা সিদ্দীক কথার কিশোর উপন্যাস।",
+      "image": "book-bubuni-kothay-8826.webp",
+      "pdf": "bubuni-kothay-28aa.pdf",
+      "coverSource": "drive: বুবুনী কোথায়.jpg",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/bubuni-kothay/",
+        "https://drive.google.com/drive/folders/1HKph2OVuWnJg96IL7_mxYAwNBkdc5_yW?usp=sharing"
+      ]
+    },
+    {
+      "name": "শিশু-কিশোরদের কুরআন-এক্টিভিটি বুক",
+      "nameEn": "Quran Activity Book",
+      "slug": "quran-activity-book",
+      "mrp": 990,
+      "discountPercent": 23,
+      "discountAmount": 228,
+      "quantity": 20,
+      "pages": 138,
+      "edition": null,
+      "binding": null,
+      "translators": [],
+      "authors": [
+        {
+          "name": "তাবাসসুম মোসলেহ",
+          "nameEn": "Tabassum Mosleh"
+        }
+      ],
+      "categories": [
+        "শিশু-কিশোর"
+      ],
+      "description": "<p>আসন্ন রমাদানে আপনার ছোট্ট সোনামণিকে কুরআনের গভীর সৌন্দর্যের সাথে পরিচয় করিয়ে দিন, “শিশু-কিশোরদের কুরআন – এক্টিভিটি” বইটির মাধ্যমে। শিশুদের মনস্তত্ত্ব বিবেচনায় তৈরি এই বইটি ঈমান, জ্ঞান ও চরিত্র গঠনের এক অনন্য সমন্বয়।</p><p>কীভাবে একটি শিশু এই বই থেকে উপকৃত হবে ⍰</p><p>➺ প্রাণবন্ত ও সচিত্র উপস্থাপনাঃ রঙিন, আকর্ষণীয় ও অর্থবহ ডিজাইন শিশুদের মনোযোগ ধরে রাখবে এবং শেখাকে করে তুলবে আনন্দময়।</p><p>➺ সহজ ও বয়সোপযোগী ভাষাঃ কুরআনের ১১টি সূরার তাফসির অত্যন্ত সাবলীল ভাষায় উপস্থাপিত হয়েছে; যাতে শিশুরা আল্লাহর বাণীর মূল বার্তা সহজেই হৃদয়ে ধারণ করতে পারে।</p><p>➺ ভাবনা ও আলোচনাঃ প্রতিটি সূরার শেষে আছে সহজ কিছু প্রশ্ন, যা শিশুদের কুরআনের বিষয় নিয়ে ভাবতে ও পরিবারে আলোচনা করতে সাহায্য করবে।</p><p>➺ সৃজনশীল কার্যক্রম সংযুক্ত</p><p>✔ আয়াতের শব্দে শব্দে অর্থ শিখে ফেলা</p><p>✔ শেখা বিষয় নিয়ে চিত্রাঙ্কন</p><p>✔ আয়াতের বার্তা নিয়ে ছোট ছোট কাজ</p><p>এগুলো বইটিকে শুধু পাঠ্য নয়, বরং একটি অংশগ্রহণমূলক শেখার অভিজ্ঞতায় রূপ দিয়েছে।</p><p>কৃতজ্ঞতা, হেদায়েত, আল্লাহর প্রতি ভালোবাসা, উত্তম চরিত্র- এসব মূল্যবোধ কোমলভাবে উপস্থাপন করা হয়েছে।</p><p>এই বই কেবল তথ্য দেয় না; বরং কুরআনকে জীবনের পথনির্দেশক হিসেবে চিনতে শেখায় এবং আল্লাহর প্রতি ভালোবাসা জাগ্রত করে।</p>",
+      "seoDescription": "শিশু-কিশোরদের কুরআন-এক্টিভিটি বুক — খেলা, রং ও কাজের মধ্য দিয়ে শিশুদের কুরআনের সঙ্গে পরিচয় করানোর অ্যাক্টিভিটি বই।",
+      "image": "book-quran-activity-book-f658.webp",
+      "pdf": "quran-activity-book-f663.pdf",
+      "coverSource": "page 1 of the publisher sample PDF",
+      "pdfSource": "publisher Drive sample PDF (recompressed, links removed)",
+      "sources": [
+        "https://seanpublication.com/product/quran-activity-book/",
+        "https://drive.google.com/drive/folders/1THvdgDYNgSlABk2h84YxPatPLF02m5Aq?usp=drive_link"
+      ]
+    }
+  ]
+}
