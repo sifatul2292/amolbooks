@@ -120,28 +120,37 @@ All answers end with "— amolbooks.com". They are free-form messages inside Met
 customer-service window, which the customer opens by tapping or writing: Meta does not charge them.
 Not sent to the courier automatically (staff still press "send to courier").
 
-**`review_request`** (review request 14 days after delivery; owner, 2026-11-13; not submitted yet)
+**`order_feedback`** (review request 14 days after delivery; submitted 2026-11-14 on WhatsApp account
+1647000126524022, Utility, Bengali, in review). Set `WHATSAPP_TEMPLATE_REVIEW_REQUEST=order_feedback`.
 
 ```
 আসসালামু আলাইকুম {{1}},
-আমল বুকস থেকে আপনার বই ({{2}}) হাতে পেয়েছেন প্রায় দুই সপ্তাহ হলো। কেমন লাগছে?
-আপনার সৎ মতামত অন্য পাঠকদের বই বাছতে সাহায্য করবে। নিচের "রিভিউ দিন" বাটনে চাপ দিন।
+আমল বুকস থেকে আপনার অর্ডার #{{2}} ডেলিভারি হয়েছে।
+বই: {{3}}
+বই কেমন লাগছে? এই অর্ডার নিয়ে আপনার মতামত জানাতে নিচের "মতামত দিন" বাটনে চাপ দিন। কোনো সমস্যা হলে "সমস্যা আছে" চাপুন।
 — amolbooks.com
 ```
 
-Footer (optional): `মেসেজ বন্ধ করতে STOP লিখুন`. Buttons, in exactly this order (2026-11-14: the
-first one opens the shop, owner wanted a button that takes them to amolbooks):
-1. **Visit website**, text **রিভিউ দিন**, URL type **Dynamic**: `https://amolbooks.com/rate/{{1}}`,
+No footer. Buttons, in exactly this order (the first one opens the shop):
+1. **Visit website**, text **মতামত দিন**, URL type **Dynamic**: `https://amolbooks.com/rate/{{1}}`,
    sample `https://amolbooks.com/rate/AbCdEfGh12345678`.
 2. **Quick reply** (Custom): **এখনো পড়িনি**
 3. **Quick reply** (Custom): **সমস্যা আছে**
 
-Sample body values: `রহিম`, `প্রোডাক্টিভ মুসলিম, দ্য বারাকাহ ইফেক্ট ও আরও ২টি বই`. {{2}} is the
-order's books, kept short: one name, two names ("ক ও খ"), or two names and "ও আরও Nটি বই"; the text
-says "কেমন লাগছে?" so it reads right for one book or several, and the review page lists every book
-(one card each, reviewed one by one). Keep it plain (no discount or book offer in the
-text) so it stays Utility; check the category Meta shows before switching it on. (An older order
-message may still carry a **ভালো লাগছে** tap; it is still answered.)
+Sample body values: `রহিম`, `1024`, `প্রোডাক্টিভ মুসলিম, দ্য বারাকাহ ইফেক্ট ও আরও ২টি বই`. {{2}} is the
+order number, {{3}} the order's books, kept short: one name, two names ("ক ও খ"), or two names and
+"ও আরও Nটি বই"; "বই কেমন লাগছে?" reads right for one book or several, and the review page lists every
+book (one card each, reviewed one by one).
+
+Why this wording (Meta's template categorization rules): a feedback request is Utility only when it
+names the specific order and has no promotional or persuasive line. The first version,
+**`review_request`** (no order number, "আপনার সৎ মতামত অন্য পাঠকদের বই বাছতে সাহায্য করবে", a STOP
+footer), was moved to Marketing by Meta on 2026-11-14; it is still approved as Marketing but no longer
+matches the code (2 values instead of 3), so do not use it. Keep this one plain: no discount, coupon,
+book suggestion or "help other readers" line. If Meta also moves it to Marketing it still works (it
+costs more per message); do not keep resubmitting Utility versions, since Meta limits accounts that
+repeatedly mark marketing as utility (that can hit the order messages too). (An older order message
+may still carry a **ভালো লাগছে** tap; it is still answered.)
 
 `ReviewRequestService` (api/src/pages/review-request) looks at each delivered order once, 14 days
 after delivery (Delivered status date, else the courier's "delivered" update), between 7 and 9 pm
@@ -151,7 +160,7 @@ the last 30 days, numbers that wrote "stop", chats with an open inbox request, s
 (`REVIEW_REQUEST_SKIP_NUMBERS`), orders with only gifts. Each order keeps the outcome in
 `reviewRequest` (sent / failed / skipped with the reason / holdout).
 
-**রিভিউ দিন** opens the review page in the shop (header, menu, cart): the order's books to rate,
+**মতামত দিন** opens the review page in the shop (header, menu, cart): the order's books to rate,
 then login with an SMS code, then "আপনার জন্য আরও বই" — up to 4 books to buy next (best sellers
 by the same author, else publisher, else category; published, in stock, never bought on that
 number), each opening its book page, plus "সব বই দেখুন". After login the customer lands in their
@@ -192,29 +201,31 @@ gets an SMS code and is logged in to their shop account (made for them if they h
 account then has their name, number, the order's address, their orders by that number, and the
 review ("অনুমোদনের অপেক্ষায়" until approved) in the customer dashboard (/account/profile).
 
-**`review_approved`** (review published; owner, 2026-11-13; not submitted yet)
+**`review_published`** (review published; submitted 2026-11-14 on WhatsApp account 1647000126524022,
+Utility, Bengali, in review). Set `WHATSAPP_TEMPLATE_REVIEW_APPROVED=review_published`.
 
 ```
 আসসালামু আলাইকুম {{1}},
-"{{2}}" বই নিয়ে আপনার রিভিউ আমল বুকসে প্রকাশিত হয়েছে। মতামতের জন্য ধন্যবাদ!
-
-আরও কোনো বই লাগবে?
+আপনার অর্ডার #{{2}} থেকে কেনা "{{3}}" বই নিয়ে আপনার রিভিউ আমল বুকসে প্রকাশিত হয়েছে। রিভিউটি দেখতে নিচের "রিভিউ দেখুন" বাটনে চাপ দিন। ধন্যবাদ।
 — amolbooks.com
 ```
 
-Footer (optional): `মেসেজ বন্ধ করতে STOP লিখুন`. Buttons, in exactly this order:
-1. **Visit website**, text **রিভিউ দেখুন**, URL type **Dynamic**: `https://amolbooks.com/rate/{{1}}`,
-   sample `https://amolbooks.com/rate/AbCdEfGh12345678` (the same page: the published review with a
-   link to the book, and books to buy next).
-2. **Quick reply** (Custom): **হ্যাঁ, বই লাগবে**
-3. **Quick reply** (Custom): **এখন না**
+No footer. One button: **Visit website**, text **রিভিউ দেখুন**, URL type **Dynamic**:
+`https://amolbooks.com/rate/{{1}}`, sample `https://amolbooks.com/rate/AbCdEfGh12345678` (the same
+page: the published review with a link to the book, and "আপনার জন্য আরও বই" to buy next).
+Sample body values: `রহিম`, `1024`, `প্রোডাক্টিভ মুসলিম`.
 
-Sample body values: `রহিম`, `প্রোডাক্টিভ মুসলিম`. It asks about more books, so Meta will most likely
-file it as **Marketing** (a higher price per message than Utility); that is expected.
+Why this wording: the first version, **`review_approved`** ("মতামতের জন্য ধন্যবাদ! আরও কোনো বই
+লাগবে?" + quick replies **হ্যাঁ, বই লাগবে** / **এখন না**), is a cross-sell, so Meta approved it as
+Marketing. Utility needs a plain update about the customer's own order: order number, the book, a
+link, no "need more books?" line or buttons (the book suggestions stay on the page the link opens).
+`review_approved` is still approved but no longer matches the code (2 values instead of 3): do not
+use it. If Meta moves `review_published` to Marketing too, keep it (it still works) rather than
+resubmitting again.
 
 When staff approve a review written from the WhatsApp link (admin panel → Reviews), the customer
-gets this once per order, with the book's page (where the review now shows). Not for numbers that
-wrote "stop". A tap:
+gets this once per order. Not for numbers that wrote "stop". Taps on older messages that still
+have the buttons keep working:
 - **হ্যাঁ, বই লাগবে**: "tell us which books here" plus one book suggestion (same rules as above);
   the chat shows "📚 Wants new books" in the WhatsApp Inbox (and the Orders page) until staff press
   Mark done. Make a new order for them (the reviewed order is delivered). An open "problem" on the
@@ -288,9 +299,9 @@ WHATSAPP_SMS_WAIT_SECONDS=120
 WHATSAPP_AUTO_REPLY=inbox
 # books offered on "আরও বই নিবো" and in the price list (website slugs, comma-separated); empty = built-in list
 WHATSAPP_BOOK_LIST=
-# review request 14 days after delivery: the approved template's name (empty = off)
+# review request 14 days after delivery: the approved template's name, order_feedback (empty = off)
 WHATSAPP_TEMPLATE_REVIEW_REQUEST=
-# "Your review is published" + more books? (template review_approved, above); empty = off
+# "Your review is published" (template review_published, above); empty = off
 WHATSAPP_TEMPLATE_REVIEW_APPROVED=
 # optional: days after delivery (14) and send hours in Dhaka time (19-21 = 7:00 to 8:59 pm)
 # most review requests a day (Dhaka day); the Customer Manager page can change it (that wins)

@@ -100,23 +100,23 @@ let server;
   assert.equal(WhatsappService.isStopWord('বই বন্ধ হয়ে গেছে'), false);
   assert.equal(WhatsappService.reviewLink('AbCdEfGh12345678'), 'https://amolbooks.com/rate/AbCdEfGh12345678');
   assert.deepEqual(
-    WhatsappService.templateParams('review_request', { name: 'রহিম', orderedItems: [{ name: 'বই ক' }], reviewRequest: { token: 'AbCdEfGh12345678' } }),
-    ['রহিম', 'বই ক'],
+    WhatsappService.templateParams('review_request', { name: 'রহিম', orderId: '1024', orderedItems: [{ name: 'বই ক' }], reviewRequest: { token: 'AbCdEfGh12345678' } }),
+    ['রহিম', '1024', 'বই ক'],
   );
-  assert.equal(WhatsappService.templateSummary('review_request', ['রহিম', 'বই ক']), 'Review request: বই ক');
+  assert.equal(WhatsappService.templateSummary('review_request', ['রহিম', '1024', 'বই ক']), 'Review request #1024: বই ক');
   // Several books: a short line in the message (the page lists them all).
-  const many = (n) => ({ name: 'রহিম', orderedItems: ['বই ক', 'বই খ', 'বই গ', 'বই ঘ'].slice(0, n).map((name) => ({ name })) });
-  assert.deepEqual(WhatsappService.templateParams('review_request', many(2)), ['রহিম', 'বই ক ও বই খ']);
-  assert.deepEqual(WhatsappService.templateParams('review_request', many(3)), ['রহিম', 'বই ক, বই খ ও আরও ১টি বই']);
-  assert.deepEqual(WhatsappService.templateParams('review_request', many(4)), ['রহিম', 'বই ক, বই খ ও আরও ২টি বই']);
-  // The "রিভিউ দিন" / "রিভিউ দেখুন" button opens amolbooks.com/rate/<code>, then two quick replies.
+  const many = (n) => ({ name: 'রহিম', orderId: '1024', orderedItems: ['বই ক', 'বই খ', 'বই গ', 'বই ঘ'].slice(0, n).map((name) => ({ name })) });
+  assert.deepEqual(WhatsappService.templateParams('review_request', many(2)), ['রহিম', '1024', 'বই ক ও বই খ']);
+  assert.deepEqual(WhatsappService.templateParams('review_request', many(3)), ['রহিম', '1024', 'বই ক, বই খ ও আরও ১টি বই']);
+  assert.deepEqual(WhatsappService.templateParams('review_request', many(4)), ['রহিম', '1024', 'বই ক, বই খ ও আরও ২টি বই']);
+  // The "মতামত দিন" / "রিভিউ দেখুন" button opens amolbooks.com/rate/<code>, then two quick replies.
   assert.deepEqual(
     WhatsappService.reviewButtons('review_request', { _id: 'o1', reviewRequest: { token: 'AbCdEfGh12345678' } }),
     [{ url: 'AbCdEfGh12345678' }, 'review_unread:o1', 'review_problem:o1'],
   );
   assert.deepEqual(
     WhatsappService.reviewButtons('review_approved', { _id: 'o1', reviewRequest: { token: 'AbCdEfGh12345678' } }),
-    [{ url: 'AbCdEfGh12345678' }, 'review_more:o1', 'review_nomore:o1'],
+    [{ url: 'AbCdEfGh12345678' }],
   );
   assert.deepEqual(ReviewRequestService.phoneVariants('8801711111111'), ['01711111111', '+8801711111111', '8801711111111']);
   assert.equal(ReviewRequestService.bucket('8801711111111'), ReviewRequestService.bucket('8801711111111'));
@@ -234,7 +234,7 @@ let server;
   await reviews.tick(now);
   assert.equal(calls.length, 0);
   assert.equal((await get(A)).reviewRequest, undefined);
-  process.env.WHATSAPP_TEMPLATE_REVIEW_REQUEST = 'review_request';
+  process.env.WHATSAPP_TEMPLATE_REVIEW_REQUEST = 'order_feedback';
   // Outside the send hours: nothing.
   await reviews.tick(new Date('2026-11-27T08:00:00Z'));
   assert.equal(calls.length, 0);
@@ -268,15 +268,15 @@ let server;
   assert.equal(sentA.reviewRequest.deliveredAt.toISOString(), A.deliveryDate.toISOString());
   const callA = calls.find((call) => call.body.to === '8801700000001');
   assert.deepEqual(callA.body.template, {
-    name: 'review_request', language: { code: 'bn' }, components: [
+    name: 'order_feedback', language: { code: 'bn' }, components: [
       { type: 'body', parameters: [
-        { type: 'text', text: 'Test customer — not a real order' }, { type: 'text', text: 'পড়া বই' },
+        { type: 'text', text: 'Test customer — not a real order' }, { type: 'text', text: A.orderId }, { type: 'text', text: 'পড়া বই' },
       ] },
       { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: sentA.reviewRequest.token }] },
       { type: 'button', sub_type: 'quick_reply', index: '1', parameters: [{ type: 'payload', payload: 'review_unread:' + A._id }] },
       { type: 'button', sub_type: 'quick_reply', index: '2', parameters: [{ type: 'payload', payload: 'review_problem:' + A._id }] },
     ],
-  }, 'Gift left out of the books; "রিভিউ দিন" opens the review page, then two quick replies');
+  }, 'Gift left out of the books; order number sent; "মতামত দিন" opens the review page, then two quick replies');
   assert.equal(sentA.whatsappMessages[0].kind, 'review_request');
   const sentCount = calls.length;
   assert.equal(sentCount, 4, 'A, B, the catch-up order and the refused one');
@@ -623,9 +623,9 @@ let server;
   assert.deepEqual((await reviews.linksFor({ _id: 'nope' })).data, []);
   assert.ok(!linksA.some((row) => row.order === String(B._id)), "Not another account's orders");
 
-  // 13. Staff approve → "your review is published" on WhatsApp, with "need more books?" buttons.
+  // 13. Staff approve → "your review is published" on WhatsApp (order number, book, link).
   assert.equal(await reviews.notifyApproved(String(reviewB._id)), 'skipped', 'Off until the template is set');
-  process.env.WHATSAPP_TEMPLATE_REVIEW_APPROVED = 'review_approved';
+  process.env.WHATSAPP_TEMPLATE_REVIEW_APPROVED = 'review_published';
   assert.equal(await reviews.notifyApproved(String(reviewB._id)), 'skipped', 'Not approved yet');
   // ReviewService's approval (false → true) is what calls it.
   const { ReviewService } = require('../api/dist/pages/review/review.service');
@@ -638,18 +638,18 @@ let server;
   const sentBefore = calls.length;
   assert.equal(await reviews.notifyApproved(String(reviewB._id)), 'sent');
   const published = calls[calls.length - 1].body;
-  assert.equal(published.template.name, 'review_approved');
+  assert.equal(published.template.name, 'review_published');
   assert.deepEqual(published.template.components[0].parameters.map((p) => p.text),
-    ['Test customer — not a real order', 'পড়া বই']);
+    ['Test customer — not a real order', B.orderId, 'পড়া বই']);
   assert.deepEqual(published.template.components[1], { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: (await get(B)).reviewRequest.token }] }, '"রিভিউ দেখুন" opens the review page');
-  assert.deepEqual(published.template.components.slice(2).map((c) => c.parameters[0].payload), ['review_more:' + B._id, 'review_nomore:' + B._id]);
+  assert.equal(published.template.components.length, 2, 'Utility version: the link only, no "need more books?" buttons');
   assert.equal(calls.length, sentBefore + 1);
   assert.equal((await get(B)).reviewRequest.approved.slug, 'pora-boi');
   assert.equal(await reviews.notifyApproved(String(reviewB._id)), 'skipped', 'Once per order');
   // A number that said "stop" gets none.
   await Review.updateOne({ 'order._id': A._id }, { $set: { status: true } });
   assert.equal(await reviews.notifyApproved(String((await Review.findOne({ 'order._id': A._id }).lean())._id)), 'skipped');
-  // Taps: "এখন না" thanks them; "হ্যাঁ, বই লাগবে" offers a book and flags the inbox (an open problem stays first).
+  // Taps on older messages that still have the buttons: "এখন না" thanks them; "হ্যাঁ, বই লাগবে" offers a book and flags the inbox (an open problem stays first).
   await tap('8801700000002', 'review_nomore:' + B._id, 'এখন না');
   assert.match(lastText(), /কখনো বই লাগলে এখানেই লিখবেন/);
   assert.equal((await get(B)).reviewRequest.approvedReply, 'nomore');

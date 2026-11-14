@@ -513,7 +513,7 @@ export class ReviewRequestService implements OnModuleInit, OnModuleDestroy {
 
   /**
    * Staff approved a review written from the WhatsApp link: one message per order ("your review is
-   * published, see it here", template review_approved) that also asks if they need more books.
+   * published, see it here", template review_published; the page it opens shows more books).
    * Not for numbers that said "stop". Off until WHATSAPP_TEMPLATE_REVIEW_APPROVED is set.
    */
   async notifyApproved(reviewId: string): Promise<'sent' | 'failed' | 'skipped'> {

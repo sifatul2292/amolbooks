@@ -247,8 +247,8 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
 
   /** Inbox summary of an order message (the template text itself lives at Meta). */
   static templateSummary(kind: WhatsappOrderKind, params: string[]): string {
-    if (kind === 'review_request') return `Review request: ${params[1]}`;
-    if (kind === 'review_approved') return `Review published: ${params[1]}`;
+    if (kind === 'review_request') return `Review request #${params[1]}: ${params[2]}`;
+    if (kind === 'review_approved') return `Review published #${params[1]}: ${params[2]}`;
     return kind === 'order_placed'
       ? `Order message #${params[1]}: ${params[2]} · ৳${params[3]}`
       : `Courier message #${params[1]}: ${params[2]} ${params[3]}`;
@@ -473,20 +473,26 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
    * exactly these (scripts/WHATSAPP_ORDERS.md has the texts).
    */
   static templateParams(kind: WhatsappOrderKind, order: any, courierData?: any): string[] {
-    // Review request: {{1}} name, {{2}} the books. Its "রিভিউ দিন" button opens the review page
+    // Review request (template order_feedback): {{1}} name, {{2}} order number, {{3}} the books.
+    // Meta files a feedback request as Utility only when it names the order (2026-11-14: the first
+    // version without it was moved to Marketing). Its "মতামত দিন" button opens the review page
     // (reviewButtons).
     if (kind === 'review_request') {
       return [
         WhatsappService.customerName(order),
+        String(order?.orderId || ''),
         WhatsappService.reviewBooksSummary(order),
       ].map(WhatsappService.cleanParam);
     }
-    // Review published: {{1}} name, {{2}} the book. Its "রিভিউ দেখুন" button opens the same page
-    // (the published review, a link to the book, more books).
+    // Review published (template review_published, Utility): {{1}} name, {{2}} order number,
+    // {{3}} the book. Its only button, "রিভিউ দেখুন", opens the same page (the published review, a
+    // link to the book, more books). No "need more books?" question or buttons: Meta files any
+    // cross-sell as Marketing (the first version, review_approved, was).
     if (kind === 'review_approved') {
       const approved = order?.reviewRequest?.approved || {};
       return [
         WhatsappService.customerName(order),
+        String(order?.orderId || ''),
         String(approved.name || WhatsappService.itemsSummary(order)),
       ].map(WhatsappService.cleanParam);
     }
@@ -552,11 +558,12 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
   /**
    * The review templates' buttons, in template order (scripts/WHATSAPP_ORDERS.md): first a "Visit
    * website" button whose address ends in the order's review code (amolbooks.com/rate/{{1}}),
-   * then two quick replies — এখনো পড়িনি / সমস্যা আছে, or হ্যাঁ, বই লাগবে / এখন না.
+   * then, for the review request only, two quick replies — এখনো পড়িনি / সমস্যা আছে. The review
+   * published message has the link only (taps on older ones, হ্যাঁ, বই লাগবে / এখন না, still work).
    */
   static reviewButtons(kind: WhatsappOrderKind, order: any): TemplateButton[] {
     const id = String(order?._id || '');
-    const replies = kind === 'review_request' ? ['unread', 'problem'] : ['more', 'nomore'];
+    const replies = kind === 'review_request' ? ['unread', 'problem'] : [];
     return [
       { url: String(order?.reviewRequest?.token || '') },
       ...replies.map((action) => `review_${action}:${id}`),
