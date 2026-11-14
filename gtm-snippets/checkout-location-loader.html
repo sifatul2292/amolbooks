@@ -1,0 +1,33 @@
+<script>
+/* Checkout district picker (owner, 2026-11-14: the delivery charge should follow the customer's
+   district, not a choice they can get wrong). On /checkout it loads
+   /api/storefront-page/checkout-location.js (gtm-snippets/delivery-zone-core.js +
+   gtm-snippets/checkout-location.js). The storefront moves between pages without reloading, so
+   page changes are watched here. */
+(function () {
+  'use strict';
+  if (window.__abCheckoutLocationLoader) return;
+  window.__abCheckoutLocationLoader = true;
+  var host = location.hostname;
+  var local = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(host) ||
+    /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host) || /\.trycloudflare\.com$/.test(host);
+  function check() {
+    if (window.__abCheckoutLocationLoading || !/^\/checkout(?:\/|$)/.test(location.pathname)) return;
+    window.__abCheckoutLocationLoading = true;
+    var script = document.createElement('script');
+    script.src = (local ? location.origin + '/api' : 'https://apisub.amolbooks.com/api') + '/storefront-page/checkout-location.js';
+    script.async = true;
+    document.head.appendChild(script);
+  }
+  ['pushState', 'replaceState'].forEach(function (name) {
+    var original = history[name];
+    history[name] = function () {
+      var result = original.apply(this, arguments);
+      setTimeout(check, 0);
+      return result;
+    };
+  });
+  window.addEventListener('popstate', check);
+  check();
+})();
+</script>

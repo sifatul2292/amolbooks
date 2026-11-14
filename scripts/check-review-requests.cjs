@@ -101,9 +101,23 @@ let server;
   assert.equal(WhatsappService.reviewLink('AbCdEfGh12345678'), 'https://amolbooks.com/rate/AbCdEfGh12345678');
   assert.deepEqual(
     WhatsappService.templateParams('review_request', { name: 'রহিম', orderedItems: [{ name: 'বই ক' }], reviewRequest: { token: 'AbCdEfGh12345678' } }),
-    ['রহিম', 'বই ক', 'https://amolbooks.com/rate/AbCdEfGh12345678'],
+    ['রহিম', 'বই ক'],
   );
-  assert.equal(WhatsappService.templateSummary('review_request', ['রহিম', 'বই ক', 'link']), 'Review request: বই ক · link');
+  assert.equal(WhatsappService.templateSummary('review_request', ['রহিম', 'বই ক']), 'Review request: বই ক');
+  // Several books: a short line in the message (the page lists them all).
+  const many = (n) => ({ name: 'রহিম', orderedItems: ['বই ক', 'বই খ', 'বই গ', 'বই ঘ'].slice(0, n).map((name) => ({ name })) });
+  assert.deepEqual(WhatsappService.templateParams('review_request', many(2)), ['রহিম', 'বই ক ও বই খ']);
+  assert.deepEqual(WhatsappService.templateParams('review_request', many(3)), ['রহিম', 'বই ক, বই খ ও আরও ১টি বই']);
+  assert.deepEqual(WhatsappService.templateParams('review_request', many(4)), ['রহিম', 'বই ক, বই খ ও আরও ২টি বই']);
+  // The "রিভিউ দিন" / "রিভিউ দেখুন" button opens amolbooks.com/rate/<code>, then two quick replies.
+  assert.deepEqual(
+    WhatsappService.reviewButtons('review_request', { _id: 'o1', reviewRequest: { token: 'AbCdEfGh12345678' } }),
+    [{ url: 'AbCdEfGh12345678' }, 'review_unread:o1', 'review_problem:o1'],
+  );
+  assert.deepEqual(
+    WhatsappService.reviewButtons('review_approved', { _id: 'o1', reviewRequest: { token: 'AbCdEfGh12345678' } }),
+    [{ url: 'AbCdEfGh12345678' }, 'review_more:o1', 'review_nomore:o1'],
+  );
   assert.deepEqual(ReviewRequestService.phoneVariants('8801711111111'), ['01711111111', '+8801711111111', '8801711111111']);
   assert.equal(ReviewRequestService.bucket('8801711111111'), ReviewRequestService.bucket('8801711111111'));
   assert.deepEqual(ReviewRequestService.dhakaTime(new Date('2026-11-13T13:30:00Z')), { day: '2026-11-13', hour: 19 });
@@ -198,7 +212,8 @@ let server;
   const A = await seed({ phoneNo: '01700000001' });
   const B = await seed({ phoneNo: '+8801700000002', orderStatus: 8, deliveryDate: undefined, courierStatus: { status: 'delivered', receivedAt: ago(14.5) },
     courierStatusHistory: [{ eventKey: 'x', notificationType: 'delivery_status', status: 'delivered', receivedAt: ago(15) }] });
-  const sameNumber = await seed({ phoneNo: '8801700000001', deliveryDate: ago(15), createdAt: ago(17) });
+  // Older than A: newest orders go first, so A is asked and this one is skipped (number just asked).
+  const sameNumber = await seed({ phoneNo: '8801700000001', deliveryDate: ago(15), createdAt: ago(19) });
   const cancelled = await seed({ phoneNo: '01700000003', orderStatus: 6 });
   const returned = await seed({ phoneNo: '01700000004', orderStatus: 8, deliveryDate: undefined, courierStatus: { status: 'returned', receivedAt: ago(15) } });
   const tooNew = await seed({ phoneNo: '01700000005', deliveryDate: ago(10) });
@@ -256,13 +271,12 @@ let server;
     name: 'review_request', language: { code: 'bn' }, components: [
       { type: 'body', parameters: [
         { type: 'text', text: 'Test customer — not a real order' }, { type: 'text', text: 'পড়া বই' },
-        { type: 'text', text: 'https://amolbooks.com/rate/' + sentA.reviewRequest.token },
       ] },
-      { type: 'button', sub_type: 'quick_reply', index: '0', parameters: [{ type: 'payload', payload: 'review_liked:' + A._id }] },
+      { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: sentA.reviewRequest.token }] },
       { type: 'button', sub_type: 'quick_reply', index: '1', parameters: [{ type: 'payload', payload: 'review_unread:' + A._id }] },
       { type: 'button', sub_type: 'quick_reply', index: '2', parameters: [{ type: 'payload', payload: 'review_problem:' + A._id }] },
     ],
-  }, 'Gift left out of the books; three buttons in order');
+  }, 'Gift left out of the books; "রিভিউ দিন" opens the review page, then two quick replies');
   assert.equal(sentA.whatsappMessages[0].kind, 'review_request');
   const sentCount = calls.length;
   assert.equal(sentCount, 4, 'A, B, the catch-up order and the refused one');
@@ -270,6 +284,28 @@ let server;
   await reviews.tick(new Date(now.getTime() + 20 * 60 * 1000));
   await reviews.sendDue(now);
   assert.equal(calls.length, sentCount);
+
+  // Daily limit (owner, 2026-11-14: "send out about 50 messages a day, we can increase it later on").
+  assert.equal(reviews.config().dailyLimit, 50, 'Default 50 a day');
+  assert.deepEqual(['80', '', 5000, -3, 'x'].map((v) => ReviewRequestService.limitValue(v, 50)), [80, 50, 1000, 0, 50]);
+  const limitSetting = (dailyLimit) => ({ findOne: () => ({ select: () => ({ lean: async () => ({ dailyLimit }) }) }) });
+  const sentNow = await reviews.sentToday(now);
+  assert.equal(sentNow, 3, "Today's sends (the refused one failed)");
+  const waiting = await seed({ phoneNo: '01700000077', deliveryDate: ago(14.1), createdAt: ago(16) });
+  assert.equal((await reviews.sendDue(now, 100, 0)).capped, true, 'No sends left: stops before asking');
+  assert.equal((await get(waiting)).reviewRequest, undefined);
+  const full = new ReviewRequestService(Order, Product, Review, Chat, whatsapp, limitSetting(sentNow));
+  full.logger = silent;
+  await full.tick(now);
+  assert.equal((await get(waiting)).reviewRequest, undefined, 'Limit reached today: waits');
+  assert.equal(full.doneDay, '2026-11-27', 'Done for the day');
+  const roomForOne = new ReviewRequestService(Order, Product, Review, Chat, whatsapp, limitSetting(sentNow + 1));
+  roomForOne.logger = silent;
+  await roomForOne.tick(now);
+  assert.equal((await get(waiting)).reviewRequest.status, 'sent', 'Room for one more: sent');
+  assert.equal((await roomForOne.settings(now)).data.dailyLimit, sentNow + 1, 'Setting wins over the default');
+  await Order.deleteOne({ _id: waiting._id });
+  calls.length = sentCount;
 
   // 6. Taps on the buttons (webhook), free answers in the 24-hour window.
   const tap = (from, payload, text, type = 'button') => whatsapp.receiveWebhook({ entry: [{ changes: [{ value: {
@@ -333,6 +369,10 @@ let server;
   assert.equal(page.rewardOffered, true);
   assert.equal(page.reward, '', 'Coupon only after a review');
   assert.deepEqual(page.books.map((item) => [item.name, item.author, item.review]), [['পড়া বই', 'লেখক ক', null]], 'Gift not on the page');
+  // More books under the reviews: published, in stock, not bought on this number, shop price.
+  assert.deepEqual(page.more.map((item) => [item.slug, item.price, item.listPrice, item.author]), [['porer boi 2', 240, 300, 'লেখক ক']]);
+  assert.deepEqual((await reviews.moreForUser({ _id: 'not-an-id' })).data, []);
+  assert.deepEqual((await reviews.suggestBooks(sentA, '8801700000001', 4)).map((item) => item.slug), ['porer boi 2'], 'No book twice, none bought before');
   await assert.rejects(reviews.page('short'), (e) => e.getStatus() === 404);
   await assert.rejects(reviews.page('ZZZZZZZZZZZZZZZZ'), (e) => e.getStatus() === 404);
   const bad = (body) => assert.rejects(reviews.submit(token, body, 'localhost'), (e) => e.getStatus() === 400);
@@ -371,6 +411,14 @@ let server;
   saved = await get(A);
   assert.equal(saved.reviewRequest.reviews, 1);
   assert.ok(saved.reviewRequest.reviewedAt);
+  // The same book in another order on this number: shown as reviewed before, not asked again.
+  const repeat = await seed({ phoneNo: '01700000001', reviewRequest: { status: 'sent', token: 'SameNumberTok123', at: new Date() } });
+  const again = (await reviews.page('SameNumberTok123')).data;
+  assert.deepEqual([again.books[0].review.earlier, again.books[0].review.rating], [true, 3], 'Reviewed in an earlier order');
+  await Order.deleteOne({ _id: repeat._id });
+  const shown = read('gtm-snippets/order-review.js');
+  assert.match(shown, /if \(book\.review && book\.review\.earlier\) \{/, 'Page shows it without a form');
+  assert.match(shown, /return book\.review && !book\.review\.earlier; \}\)\.length;/, 'Earlier reviews do not count as just sent');
   // 60 days later the link is closed.
   await Order.updateOne({ _id: A._id }, { $set: { 'reviewRequest.at': new Date(Date.now() - 61 * DAY) } });
   await assert.rejects(reviews.submit(token, { product: String(read1._id), rating: 5, review: 'দেরিতে' }, 'localhost'), (e) => e.getStatus() === 400);
@@ -592,8 +640,9 @@ let server;
   const published = calls[calls.length - 1].body;
   assert.equal(published.template.name, 'review_approved');
   assert.deepEqual(published.template.components[0].parameters.map((p) => p.text),
-    ['Test customer — not a real order', 'পড়া বই', 'https://amolbooks.com/product-details/pora-boi']);
-  assert.deepEqual(published.template.components.slice(1).map((c) => c.parameters[0].payload), ['review_more:' + B._id, 'review_nomore:' + B._id]);
+    ['Test customer — not a real order', 'পড়া বই']);
+  assert.deepEqual(published.template.components[1], { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: (await get(B)).reviewRequest.token }] }, '"রিভিউ দেখুন" opens the review page');
+  assert.deepEqual(published.template.components.slice(2).map((c) => c.parameters[0].payload), ['review_more:' + B._id, 'review_nomore:' + B._id]);
   assert.equal(calls.length, sentBefore + 1);
   assert.equal((await get(B)).reviewRequest.approved.slug, 'pora-boi');
   assert.equal(await reviews.notifyApproved(String(reviewB._id)), 'skipped', 'Once per order');
@@ -619,6 +668,15 @@ let server;
   const inboxHtml = read('gtm-snippets/whatsapp-inbox.html');
   assert.ok(inboxHtml.includes("'📚 Wants new books'") && inboxHtml.includes("const books = ask.kind === 'books';"));
   assert.ok(read('api/upload/static/custom-orders.html').includes("review_approved: 'Review published'"));
+  // Buy more along the way (owner, 2026-11-14): shelves on the review page and the account overview.
+  const shelfPage = read('gtm-snippets/order-review.js');
+  const dashboardPage = read('gtm-snippets/customer-dashboard.js');
+  assert.match(shelfPage, /loginBox\(\) \+ moreBooks\(\);/, 'Review page shows more books under the reviews');
+  assert.match(shelfPage, /note\('এই লিংকের মেয়াদ শেষ'[^;]*\) \+ moreBooks\(\);/, 'Also when the link has expired');
+  assert.match(dashboardPage, /call\('\/order-review\/mine\/books'\)/, 'Account loads more books');
+  assert.match(dashboardPage, /'<\/section>' \+\s*moreShelf\(\) \+/, 'Account overview shows them after recent orders');
+  assert.match(dashboardPage, /class="abd-again"/, 'Delivered books can be bought again');
+  assert.match(read('api/src/pages/review-request/review-request.controller.ts'), /@Get\('mine\/books'\)\s+@UseGuards\(UserJwtAuthGuard\)/, 'Account books need the customer login');
   assert.match(read('scripts/WHATSAPP_ORDERS.md'), /WHATSAPP_TEMPLATE_REVIEW_APPROVED=/);
 
   // 14. Local preview only: the storefront's live-API calls stay on this machine.
@@ -656,6 +714,14 @@ let server;
   }
   // Icons are inline drawings: no icon font to wait for (owner: "these takes a lot of time to load").
   assert.ok(dashboard.includes('<svg class="abd-ic"') && !/class="fa |fa-[a-z]/.test(dashboard), 'Dashboard uses no icon font');
+  // Wishlist is called উইশলিস্ট everywhere (not উপহার তালিকা); empty wishlist / notifications get a note.
+  assert.match(main, /function rewriteWishlistTexts\(\)/);
+  assert.match(main, /MyWishlist: 'উইশলিস্ট'/);
+  assert.match(main, /YourWishlist2: 'টি বই আছে'/);
+  assert.match(main, /\\u09DF\|\\u09AF\\u09BC/, 'Both forms of য় are matched');
+  assert.ok(!dashboard.includes("'My Gift List': 'উপহার তালিকা'") && dashboard.includes("'My Gift List': 'উইশলিস্ট'"), 'Dashboard heading map');
+  assert.ok(!read('gtm-snippets/customer-account-mobile.html').includes("label: 'উপহার তালিকা'"), 'Account menu label');
+  assert.ok(dashboard.includes('function polishNativePages()') && dashboard.includes('এখনো কোনো নোটিফিকেশন নেই') && dashboard.includes('আপনার উইশলিস্ট এখনো খালি'), 'Empty notes');
   // Old "11 হাজার পাঠক ..." book grid script is stripped from the storefront page, and only it.
   const shudhuiPattern = eval(main.match(/const legacyShudhuiSectionScriptPattern =\s*(\/[^\n]+\/g);/)[1]);
   const sample = "<p>a</p>\n<script>\n(function(){\n  var TAG_ID='69a3b7f20d6f5e6e2633656c';\n  var API='x';\n  var TAG_API='y';\n  var SECTION_ID='__shudhui-section';\n  inject();\n})();\n</script>\n<script>keep()</script>";

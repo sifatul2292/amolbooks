@@ -5,6 +5,7 @@ import {
   NotFoundException,
   OnModuleDestroy,
   OnModuleInit,
+  Optional,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as crypto from 'crypto';
@@ -26,6 +27,9 @@ const ASK_AGAIN_DAYS = 30;
 /** The review page link works this long after the request. */
 const LINK_DAYS = 60;
 const BATCH = 100;
+const DEFAULT_DAILY_LIMIT = 50;
+const MAX_DAILY_LIMIT = 1000;
+const SETTING_KEY = 'review-request';
 const SITE_URL = 'https://amolbooks.com';
 // Cancelled, refunded, returned orders and failed / partial deliveries get no request.
 const CLOSED_STATUSES = [6, 7, 9];
@@ -59,6 +63,7 @@ export class ReviewRequestService implements OnModuleInit, OnModuleDestroy {
   private running = false;
   /** Dhaka date (YYYY-MM-DD) whose requests are all done. */
   private doneDay = '';
+  private limitCache: { at: number; value: number } | null = null;
 
   constructor(
     @InjectModel('Order') private readonly orderModel: Model<any>,
@@ -66,6 +71,8 @@ export class ReviewRequestService implements OnModuleInit, OnModuleDestroy {
     @InjectModel('Review') private readonly reviewModel: Model<any>,
     @InjectModel('WhatsappChat') private readonly chatModel: Model<any>,
     private readonly whatsapp: WhatsappService,
+    // The daily limit staff set on the Customer Manager page (review-request-setting.schema.ts).
+    @Optional() @InjectModel('ReviewRequestSetting') private readonly settingModel?: Model<any>,
   ) {}
 
   onModuleInit() {
@@ -98,7 +105,78 @@ export class ReviewRequestService implements OnModuleInit, OnModuleDestroy {
         .map((phone) => WhatsappService.toWhatsappNumber(phone))
         .filter(Boolean) as string[],
       rewardCoupon: String(env.REVIEW_REWARD_COUPON || '').trim().slice(0, 40),
+      // Most review requests sent in one day (Dhaka); staff can change it on the Customer Manager
+      // page, which wins over this default.
+      dailyLimit: ReviewRequestService.limitValue(env.REVIEW_REQUEST_DAILY_LIMIT, DEFAULT_DAILY_LIMIT),
     };
+  }
+
+  static limitValue(value: any, fallback: number): number {
+    const number = Math.round(Number(value));
+    return value !== undefined && value !== null && value !== '' && Number.isFinite(number)
+      ? Math.min(MAX_DAILY_LIMIT, Math.max(0, number))
+      : fallback;
+  }
+
+  /** The day's limit: the Customer Manager setting, else REVIEW_REQUEST_DAILY_LIMIT, else 50. */
+  async dailyLimit(): Promise<number> {
+    if (this.limitCache && Date.now() - this.limitCache.at < 60 * 1000) return this.limitCache.value;
+    let value = this.config().dailyLimit;
+    try {
+      const saved: any = await this.settingModel?.findOne({ key: SETTING_KEY }).select('dailyLimit').lean();
+      if (saved && saved.dailyLimit !== undefined && saved.dailyLimit !== null) {
+        value = ReviewRequestService.limitValue(saved.dailyLimit, value);
+      }
+    } catch (error) {
+      this.logger.warn(`Review request limit not read: ${error?.message || error}`);
+    }
+    this.limitCache = { at: Date.now(), value };
+    return value;
+  }
+
+  /** Review requests sent today (Dhaka day). */
+  async sentToday(now = new Date()): Promise<number> {
+    const start = new Date(`${ReviewRequestService.dhakaTime(now).day}T00:00:00+06:00`);
+    return this.orderModel.countDocuments({ 'reviewRequest.status': 'sent', 'reviewRequest.at': { $gte: start } });
+  }
+
+  /** What the Customer Manager page shows and changes. */
+  async settings(now = new Date()) {
+    const config = this.config();
+    const [dailyLimit, sentToday, saved] = await Promise.all([
+      this.dailyLimit(),
+      this.sentToday(now),
+      this.settingModel?.findOne({ key: SETTING_KEY }).select('updatedByName updatedAt').lean().catch(() => null),
+    ]);
+    return {
+      success: true,
+      data: {
+        dailyLimit,
+        sentToday,
+        maxDailyLimit: MAX_DAILY_LIMIT,
+        active: this.whatsapp.isActive('review_request'),
+        approvedActive: this.whatsapp.isActive('review_approved'),
+        days: config.days,
+        hours: config.hours,
+        updatedByName: (saved as any)?.updatedByName || '',
+        updatedAt: (saved as any)?.updatedAt || null,
+      },
+    };
+  }
+
+  async setDailyLimit(value: any, admin: any) {
+    const number = Number(value);
+    if (!Number.isInteger(number) || number < 0 || number > MAX_DAILY_LIMIT) {
+      throw new BadRequestException(`Daily limit must be a whole number from 0 to ${MAX_DAILY_LIMIT}`);
+    }
+    if (!this.settingModel) throw new BadRequestException('Settings are not available');
+    await this.settingModel.updateOne(
+      { key: SETTING_KEY },
+      { $set: { dailyLimit: number, updatedByName: String(admin?.name || admin?.username || '').slice(0, 80) } },
+      { upsert: true },
+    );
+    this.limitCache = null;
+    return this.settings();
   }
 
   static dhakaTime(now: Date): { day: string; hour: number } {
@@ -114,8 +192,14 @@ export class ReviewRequestService implements OnModuleInit, OnModuleDestroy {
     if (hour < from || hour >= to || this.doneDay === day) return;
     this.running = true;
     try {
-      const result = await this.sendDue(now);
-      if (!result.more) this.doneDay = day;
+      // At most the day's limit (owner: about 50 a day to start); the rest of the day waits.
+      const left = (await this.dailyLimit()) - (await this.sentToday(now));
+      if (left <= 0) {
+        this.doneDay = day;
+        return;
+      }
+      const result = await this.sendDue(now, BATCH, left);
+      if (!result.more || result.capped) this.doneDay = day;
     } finally {
       this.running = false;
     }
@@ -125,7 +209,7 @@ export class ReviewRequestService implements OnModuleInit, OnModuleDestroy {
    * Orders delivered `days` ago (up to CATCH_UP_DAYS more) that were never looked at: ask each one,
    * or record why not. `more` = another batch is waiting.
    */
-  async sendDue(now = new Date(), limit = BATCH) {
+  async sendDue(now = new Date(), limit = BATCH, maxSends = Infinity) {
     const config = this.config();
     const to = new Date(now.getTime() - config.days * DAY_MS);
     const from = new Date(to.getTime() - CATCH_UP_DAYS * DAY_MS);
@@ -141,12 +225,19 @@ export class ReviewRequestService implements OnModuleInit, OnModuleDestroy {
           { 'courierStatus.status': 'delivered', 'courierStatus.receivedAt': range },
         ],
       })
-      .sort({ createdAt: 1 })
+      // Newest first: with a daily limit, each day's deliveries are asked at the 14-day mark; the
+      // catch-up days (server down) come after them.
+      .sort({ createdAt: -1 })
       .limit(limit + 1)
       .select('orderId phoneNo name orderedItems orderStatus deliveryDate courierStatus.status courierStatus.receivedAt courierStatusHistory createdAt')
       .lean();
     const counts: Record<AskResult, number> = { sent: 0, failed: 0, skipped: 0, holdout: 0, busy: 0 };
+    let capped = false;
     for (const order of orders.slice(0, limit)) {
+      if (counts.sent >= maxSends) {
+        capped = true;
+        break;
+      }
       const deliveredAt = ReviewRequestService.deliveredAt(order);
       // A later courier update moved receivedAt; the real delivery is outside the window.
       if (!deliveredAt || deliveredAt > to) continue;
@@ -156,7 +247,7 @@ export class ReviewRequestService implements OnModuleInit, OnModuleDestroy {
         this.logger.warn(`Review request for order ${order.orderId} failed: ${error?.message || error}`);
       }
     }
-    return { ...counts, more: orders.length > limit };
+    return { ...counts, more: orders.length > limit, capped };
   }
 
   /** When the books arrived: the Delivered status date, else the courier's "delivered" update. */
@@ -312,6 +403,15 @@ export class ReviewRequestService implements OnModuleInit, OnModuleDestroy {
    * the same category, that is published, in stock and not bought on this number before.
    */
   async suggestBook(order: any, wa: string): Promise<any | null> {
+    return (await this.suggestBooks(order, wa, 1))[0] || null;
+  }
+
+  /**
+   * Up to `limit` such books (owner, 2026-11-14: "they can purchase more products along the way"):
+   * best sellers by the same author first, then publisher, then category; no book twice.
+   */
+  async suggestBooks(order: any, wa: string, limit = 4): Promise<any[]> {
+    const picked: any[] = [];
     try {
       const past: any[] = await this.orderModel
         .find({ phoneNo: { $in: ReviewRequestService.phoneVariants(wa) } })
@@ -344,17 +444,51 @@ export class ReviewRequestService implements OnModuleInit, OnModuleDestroy {
         categories.length ? { 'category._id': { $in: categories } } : null,
       ].filter(Boolean);
       for (const tier of tiers) {
-        const product = await this.productModel
-          .findOne({ ...base, ...tier })
+        if (picked.length >= limit) break;
+        const products: any[] = await this.productModel
+          .find({ ...base, ...tier, _id: { $nin: [...base._id.$nin, ...picked.map((product) => product._id)] } })
           .sort({ totalSold: -1, _id: -1 })
-          .select('name slug salePrice discountType discountAmount')
+          .limit(limit - picked.length)
+          .select('name slug salePrice discountType discountAmount images author.name')
           .lean();
-        if (product?.slug && WhatsappService.shopPrice(product) > 0) return product;
+        products.forEach((product) => {
+          if (product?.slug && WhatsappService.shopPrice(product) > 0) picked.push(product);
+        });
       }
     } catch (error) {
       this.logger.warn(`Book suggestion failed: ${error?.message || error}`);
     }
-    return null;
+    return picked.slice(0, limit);
+  }
+
+  /** Suggested books as the shop pages show them (review page, customer dashboard). */
+  static shelf(products: any[]) {
+    return products.map((product) => ({
+      name: String(product.name || ''),
+      slug: String(product.slug || ''),
+      image: String((product.images || [])[0] || ''),
+      author: (product.author || []).map((author: any) => author?.name).filter(Boolean).join(', '),
+      price: WhatsappService.shopPrice(product),
+      listPrice: Math.floor(Math.max(0, Number(product.salePrice) || 0)),
+    }));
+  }
+
+  /** More books for the customer behind a review link (shown under the reviews). */
+  private async moreFor(order: any) {
+    const wa = WhatsappService.toWhatsappNumber(order?.phoneNo) || String(order?.phoneNo || '');
+    return ReviewRequestService.shelf(await this.suggestBooks(order, wa, 4));
+  }
+
+  /** More books for a logged-in customer, from their latest order (customer dashboard). */
+  async moreForUser(user: any) {
+    const id = String(user?._id || '');
+    if (!Types.ObjectId.isValid(id)) return { success: true, data: [] };
+    const order: any = await this.orderModel
+      .findOne({ user: new Types.ObjectId(id), orderStatus: { $nin: [...CLOSED_STATUSES, 10] } }) // not cancelled / returned / trash
+      .sort({ createdAt: -1 })
+      .select('phoneNo orderedItems')
+      .lean();
+    return { success: true, data: order ? await this.moreFor(order) : [] };
   }
 
   /** Review page links of a logged-in customer's orders that are still open (60 days). */
@@ -485,10 +619,30 @@ export class ReviewRequestService implements OnModuleInit, OnModuleDestroy {
       .select('product._id rating review status images')
       .lean();
     const reviewed = new Map(reviews.map((review) => [String(review.product?._id), review]));
+    // A book this customer already reviewed from an earlier order (same number) is not asked again.
+    const earlier = new Map<string, any>();
+    const ids = books.map((item: any) => item._id).filter((id: any) => Types.ObjectId.isValid(String(id)));
+    const wa = WhatsappService.toWhatsappNumber(order.phoneNo);
+    if (wa && ids.length) {
+      const others: any[] = await this.orderModel
+        .find({ _id: { $ne: order._id }, phoneNo: { $in: ReviewRequestService.phoneVariants(wa) } })
+        .select('_id')
+        .limit(200)
+        .lean();
+      if (others.length) {
+        const old: any[] = await this.reviewModel
+          .find({ 'order._id': { $in: others.map((other) => other._id) }, 'product._id': { $in: ids } })
+          .select('product._id rating review status')
+          .lean();
+        old.forEach((review) => earlier.set(String(review.product?._id), review));
+      }
+    }
     const reward = this.config().rewardCoupon;
     return {
       success: true,
       data: {
+        // Books to buy next, under the reviews (also when the link has expired).
+        more: await this.moreFor(order),
         orderId: String(order.orderId || ''),
         name: String(order.name || '').trim().slice(0, 60),
         expired: ReviewRequestService.expired(order),
@@ -499,6 +653,7 @@ export class ReviewRequestService implements OnModuleInit, OnModuleDestroy {
         books: books.map((item: any) => {
           const product = byId.get(String(item._id)) || {};
           const review = reviewed.get(String(item._id));
+          const before = review ? null : earlier.get(String(item._id));
           return {
             product: String(item._id),
             name: String(product.name || item.name || ''),
@@ -509,7 +664,9 @@ export class ReviewRequestService implements OnModuleInit, OnModuleDestroy {
             hints: reviewHints({ name: product.name || item.name, description: product.description, shortDescription: product.shortDescription, category: product.category }),
             review: review
               ? { rating: review.rating, review: review.review, images: review.images || [], approved: review.status === true }
-              : null,
+              : before
+                ? { rating: before.rating, review: before.review, images: [], approved: before.status === true, earlier: true }
+                : null,
           };
         }),
       },

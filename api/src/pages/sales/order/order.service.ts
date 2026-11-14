@@ -1,5 +1,6 @@
 import { orderPhoneAliases, unbookedOrderFilter } from '../../guest-orders/guest-orders.policy';
 import { hasFreeDelivery } from '../../../shared/utils/package-free-delivery.util';
+import { DeliveryZoneService } from '../../../shared/delivery-zone/delivery-zone.service';
 import {
   BadRequestException,
   ConflictException,
@@ -135,6 +136,8 @@ export class OrderService {
     private readonly staffActivityService?: StaffActivityService,
     @Optional()
     private readonly whatsappService?: WhatsappService,
+    @Optional()
+    private readonly deliveryZoneService?: DeliveryZoneService,
   ) {
     this.checkAndUpdateCourierStatus();
     this.scheduleManualMetaPurchaseRetries();
@@ -238,7 +241,7 @@ export class OrderService {
       ObjectId.isValid(addOrderDto.incompleteOrderId)
         ? await this.incompleteOrderModel
             .findById(addOrderDto.incompleteOrderId)
-            .select('attribution adminNote adminNoteBy adminNotes orderedItems')
+            .select('attribution adminNote adminNoteBy adminNotes orderedItems deliveryLocation')
             .lean()
         : null;
 
@@ -258,6 +261,14 @@ export class OrderService {
       convertedIncomplete?.attribution || addOrderDto.attribution,
     );
     mData = this.normalizeAdminOrderData(mData);
+    // The district the customer picked before leaving the checkout goes with the order (district
+    // chip, city, Meta town).
+    if (convertedIncomplete?.deliveryLocation?.district && !mData.deliveryLocation) {
+      mData.deliveryLocation = convertedIncomplete.deliveryLocation;
+      if (!String(mData.city || '').trim()) {
+        mData.city = convertedIncomplete.deliveryLocation.districtEn;
+      }
+    }
     mData.orderedItems = await this.attachCostSnapshots(mData.orderedItems);
     const staffActor = await this.staffActor(admin);
     // A note carried over from Incomplete Orders keeps its original author.
@@ -1706,11 +1717,14 @@ export class OrderService {
       // window Meta ingests instead of being rejected outright.
       const eventTimeSeconds = this.metaEventTime(claimedOrder.createdAt);
       const contentIds = contents.map((item: any) => item.id);
-      const city = this.metaLocationName(
-        claimedOrder.city ||
-          claimedOrder.area?.name ||
-          claimedOrder.zone?.name,
-      );
+      // The district picked at checkout (DeliveryZoneService) is the best town for Meta.
+      const city =
+        claimedOrder.deliveryLocation?.metaCity ||
+        this.metaLocationName(
+          claimedOrder.city ||
+            claimedOrder.area?.name ||
+            claimedOrder.zone?.name,
+        );
       const region = this.metaLocationName(claimedOrder.division?.name);
       const tagiooUserData: any = {
         address: { country_code: 'BD' },
@@ -2393,9 +2407,12 @@ export class OrderService {
     if (nameParts.length > 1) {
       userData.ln = this.metaHash(nameParts.slice(1).join(''));
     }
-    const city = this.metaLocationName(
-      order.city || order.area?.name || order.zone?.name,
-    );
+    // The district picked at checkout (DeliveryZoneService) is the best town for Meta.
+    const city =
+      order.deliveryLocation?.metaCity ||
+      this.metaLocationName(
+        order.city || order.area?.name || order.zone?.name,
+      );
     const region = this.metaLocationName(order.division?.name);
     if (city) userData.ct = this.metaHash(city);
     if (region) userData.st = this.metaHash(region);
@@ -5275,8 +5292,19 @@ export class OrderService {
     );
 
     // Only trust resolved package/product records, never a client-supplied free-delivery flag.
-    const deliveryCharge = hasFreeDelivery(finalData)
-      ? 0 : Number(orderData?.deliveryCharge || 0);
+    const freeDelivery = hasFreeDelivery(finalData);
+    // The district the customer picked at checkout sets the charge (inside / outside Dhaka city,
+    // by weight); orders sent without one keep the charge they came with.
+    const deliveryLocation = await this.deliveryZoneService?.forOrder(
+      orderData,
+      finalData,
+      freeDelivery,
+    );
+    const deliveryCharge = freeDelivery
+      ? 0
+      : deliveryLocation
+        ? deliveryLocation.charge
+        : Number(orderData?.deliveryCharge || 0);
 
     // Grand Total
     // Note: orderData?.deliveryCharge already includes weight-based charge from frontend
@@ -5292,12 +5320,15 @@ export class OrderService {
     const newOrderData = {
       name: orderData?.name,
       phoneNo: orderData?.phoneNo,
-      shippingAddress: orderData?.shippingAddress,
+      shippingAddress: deliveryLocation
+        ? deliveryLocation.shippingAddress
+        : orderData?.shippingAddress,
       division: orderData?.division,
       note: orderData?.note,
       area: orderData?.area,
       zone: orderData?.zone,
-      city: orderData?.city,
+      city: deliveryLocation ? deliveryLocation.city : orderData?.city,
+      deliveryLocation: deliveryLocation?.record,
       orderFrom: orderData?.orderFrom || 'Website',
       orderOrigin: orderData?.orderOrigin || 'website',
       manualOrderSource: orderData?.manualOrderSource,
@@ -5996,11 +6027,59 @@ export class OrderService {
     'checkoutDate',
     'user',
     'attribution',
+    'deliveryLocation',
   ];
 
   // Only fill in values that actually carry information. A later post must never
   // blank out an address/name the customer already typed, and a 0 total from an
   // empty-cart snapshot must never replace a real total.
+  // The district the customer picked at checkout (gtm-snippets/checkout-location.js): kept only
+  // when it is a district we know, described, and as the row's city (English, e.g. "Feni").
+  private applyIncompleteDeliveryLocation(input: any): void {
+    if (!input || !Object.prototype.hasOwnProperty.call(input, 'deliveryLocation')) return;
+    const record = this.deliveryZoneService?.describe(
+      input.deliveryLocation,
+      input.shippingAddress,
+    );
+    if (record) {
+      input.deliveryLocation = record;
+      input.city = record.districtEn;
+    } else {
+      delete input.deliveryLocation;
+    }
+  }
+
+  // An abandoned checkout with a district keeps that district's delivery charge (the storefront
+  // may have saved it before the district was set); the total follows. Free delivery (0) stays.
+  private async syncIncompleteDeliveryCharge(id: any): Promise<void> {
+    if (!this.deliveryZoneService || !id) return;
+    try {
+      const row: any = await this.incompleteOrderModel
+        .findById(id)
+        .select('deliveryLocation deliveryCharge grandTotal orderedItems status')
+        .lean();
+      if (!row?.deliveryLocation?.district || row.status === 'converted') return;
+      const current = Number(row.deliveryCharge || 0);
+      const charge = await this.deliveryZoneService.chargeForSaved(
+        row.deliveryLocation,
+        row.orderedItems,
+        current,
+      );
+      if (charge == null || charge === current) return;
+      await this.incompleteOrderModel.updateOne(
+        { _id: id },
+        {
+          $set: {
+            deliveryCharge: charge,
+            grandTotal: Number(row.grandTotal || 0) - current + charge,
+          },
+        },
+      );
+    } catch (error) {
+      this.logger.warn(`Incomplete order charge not synced: ${error?.message || error}`);
+    }
+  }
+
   private buildIncompleteOrderMergePatch(
     addIncompleteOrderDto: AddIncompleteOrderDto,
   ): Record<string, any> {
@@ -6033,6 +6112,7 @@ export class OrderService {
       if (incompleteInput.phoneNo) {
         incompleteInput.phoneNo = this.checkoutLocalPhone(incompleteInput.phoneNo);
       }
+      this.applyIncompleteDeliveryLocation(incompleteInput);
       incompleteInput.attribution = this.normalizeAttribution({
         ...(incompleteInput.attribution || {}),
         clientUserAgent:
@@ -6065,6 +6145,7 @@ export class OrderService {
               { $set: patch },
             );
           }
+          if (patch.deliveryLocation) await this.syncIncompleteDeliveryCharge(existing._id);
           return {
             success: true,
             message: 'Incomplete order saved successfully',
@@ -6075,6 +6156,7 @@ export class OrderService {
 
       const newData = new this.incompleteOrderModel(incompleteInput);
       const saveData = await newData.save();
+      if (incompleteInput.deliveryLocation) await this.syncIncompleteDeliveryCharge(saveData._id);
 
       // Auto-run fraud check the moment an abandoned checkout arrives, so the
       // result is already populated when admin opens the Incomplete Orders page.
@@ -6303,6 +6385,7 @@ export class OrderService {
     if (incompleteInput.phoneNo) {
       incompleteInput.phoneNo = this.checkoutLocalPhone(incompleteInput.phoneNo);
     }
+    this.applyIncompleteDeliveryLocation(incompleteInput);
     if (incompleteInput.attribution || req) {
       incompleteInput.attribution = this.normalizeAttribution({
         ...(incompleteInput.attribution || {}),
@@ -6314,7 +6397,7 @@ export class OrderService {
           (req ? this.utilsService.getClientIp(req) : undefined),
       });
     }
-    return this.updateIncompleteOrderFields(
+    const result = await this.updateIncompleteOrderFields(
       id,
       incompleteInput,
       [
@@ -6335,9 +6418,12 @@ export class OrderService {
         'orderedItems',
         'note',
         'attribution',
+        'deliveryLocation',
       ],
       false,
     );
+    if (incompleteInput.deliveryLocation) await this.syncIncompleteDeliveryCharge(id);
+    return result;
   }
 
   async updateIncompleteOrderByAdmin(

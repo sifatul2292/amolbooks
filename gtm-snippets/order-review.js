@@ -91,7 +91,23 @@
     '#ab-rate .note{text-align:center;padding:18px}' +
     '#ab-rate .note a.shop{display:inline-block;margin-top:10px;background:#ea2929;color:#fff;border-radius:10px;padding:10px 18px;text-decoration:none;font-weight:700}' +
     '#ab-rate .skeleton{height:160px;border-radius:12px;background:#f1f1f1;margin-bottom:14px}' +
-    '#ab-rate [hidden]{display:none!important}';
+    '#ab-rate [hidden]{display:none!important}' +
+    // More books (owner, 2026-11-14: "they can purchase more products from amolbooks along the way").
+    '#ab-rate .more h2{font-size:1.15rem;line-height:1.3;margin:0 0 2px;font-weight:700}' +
+    '#ab-rate .more .sub{color:#666;font-size:.92rem;margin:0 0 12px}' +
+    '#ab-rate .shelf{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}' +
+    '@media (min-width:560px){#ab-rate .shelf{grid-template-columns:repeat(4,minmax(0,1fr))}}' +
+    '#ab-rate .pick{display:flex;flex-direction:column;gap:4px;text-decoration:none;color:inherit;border:1px solid #ececec;border-radius:10px;padding:8px;background:#fff;min-width:0}' +
+    '#ab-rate .pick:hover{border-color:#cfe6d8;box-shadow:0 2px 8px rgba(0,0,0,.07)}' +
+    '#ab-rate .pick img,#ab-rate .pick .blank{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:6px;background:#f1f1f1;display:block}' +
+    '#ab-rate .pick .cover-wrap{position:relative;display:block;overflow:hidden;border-radius:6px}' +
+    '#ab-rate .pick b{font-size:.9rem;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:4px}' +
+    '#ab-rate .pick small{color:#666;font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '#ab-rate .pick .price{font-weight:700;color:#168747;font-size:.95rem}' +
+    '#ab-rate .pick .price s{color:#999;font-weight:400;font-size:.8rem;margin-left:4px}' +
+    '#ab-rate .pick .buy{margin-top:auto;text-align:center;background:#ea2929;color:#fff;border-radius:8px;padding:7px 6px;font-weight:700;font-size:.88rem}' +
+    '#ab-rate .more .all{display:inline-block;margin-top:12px;color:#168747;font-weight:700;text-decoration:none}' +
+    '#ab-rate .done a{color:#168747;font-weight:700}';
 
   function api(path, method, body) {
     return fetch(API + '/order-review/' + encodeURIComponent(token) + path, {
@@ -139,14 +155,15 @@
    */
   function loginBox() {
     var data = state.data;
-    var sent = data.books.filter(function (book) { return book.review; }).length;
+    // Reviews written on this page (earlier orders' reviews do not count as "just sent").
+    var sent = data.books.filter(function (book) { return book.review && !book.review.earlier; }).length;
     if (loggedIn()) {
       return '<section class="card login" id="abr-login" aria-label="প্রোফাইল"><strong>✓ আপনি লগইন করেছেন</strong>' +
         '<p>আপনার অর্ডার আর রিভিউ প্রোফাইলে আছে। রিভিউ প্রকাশ হলে WhatsApp-এ জানিয়ে দেবো।</p>' +
         '<div class="row"><a class="green link" href="/account/profile">আমার প্রোফাইলে যান</a></div></section>';
     }
     if (!sent || !data.phoneHint) return '';
-    var left = data.books.length - sent;
+    var left = data.books.filter(function (book) { return !book.review; }).length;
     var login = state.login;
     var html = '<section class="card login" id="abr-login" aria-label="প্রোফাইলে লগইন">' +
       '<strong>✓ রিভিউ জমা হয়েছে! এবার আপনার প্রোফাইলে লগইন করুন</strong>' +
@@ -234,6 +251,25 @@
 
   /* ---------- Reviews ---------- */
 
+  // Books to buy next (ReviewRequestService.suggestBooks): same author, publisher or subject.
+  function moreBooks() {
+    var more = state.data && state.data.more;
+    if (!more || !more.length) return '';
+    return '<section class="card more" aria-labelledby="abr-more"><h2 id="abr-more">আপনার জন্য আরও বই</h2>' +
+      '<p class="sub">আপনার পড়া বইয়ের লেখক, প্রকাশনী বা বিষয়ের জনপ্রিয় বই</p><div class="shelf">' +
+      more.map(function (book) {
+        var price = Number(book.price || 0);
+        var list = Number(book.listPrice || 0);
+        return '<a class="pick" href="/product-details/' + encodeURIComponent(book.slug) + '">' +
+          // Cover in its own box: the shop's "একটু পড়ে দেখুন" ribbon (homepage-redesign.html) sits on it.
+          '<span class="cover-wrap">' + (book.image ? '<img src="' + esc(book.image) + '" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">' : '<span class="blank"></span>') + '</span>' +
+          '<b>' + esc(book.name) + '</b>' + (book.author ? '<small>' + esc(book.author) + '</small>' : '') +
+          '<span class="price">৳' + bn(price) + (list > price ? '<s>৳' + bn(list) + '</s>' : '') + '</span>' +
+          '<span class="buy">দেখুন ও কিনুন</span></a>';
+      }).join('') +
+      '</div><a class="all" href="/product-list">সব বই দেখুন →</a></section>';
+  }
+
   function stars(index, rating) {
     var html = '<fieldset class="stars" data-index="' + index + '"><legend>রেটিং</legend>';
     for (var n = 1; n <= 5; n++) {
@@ -250,12 +286,18 @@
     var head = '<div class="book-head">' +
       (book.image ? '<img class="cover" src="' + esc(book.image) + '" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">' : '<span class="cover"></span>') +
       '<div><p class="book-title">' + title + '</p>' + (book.author ? '<p class="book-author">' + esc(book.author) + '</p>' : '') + '</div></div>';
+    // Reviewed from an earlier order (same number): shown, not asked again, not editable here.
+    if (book.review && book.review.earlier) {
+      return '<article class="card book" data-index="' + index + '">' + head +
+        '<div class="done"><p>✓ এই বইয়ের রিভিউ আগের অর্ডারে দিয়েছেন — ' + '★'.repeat(book.review.rating) + '</p>' +
+        '<p class="quote">' + esc(book.review.review) + '</p></div></article>';
+    }
     if (book.review && !editing) {
       return '<article class="card book" data-index="' + index + '">' + head +
         '<div class="done"><p>✓ রিভিউ পাঠানো হয়েছে — ' + '★'.repeat(book.review.rating) + '</p>' +
         '<p class="quote">' + esc(book.review.review) + '</p>' +
         (book.review.approved
-          ? '<p>সাইটে প্রকাশিত হয়েছে। ধন্যবাদ!</p>'
+          ? '<p>সাইটে প্রকাশিত হয়েছে। ধন্যবাদ!' + (book.slug ? ' <a href="/product-details/' + encodeURIComponent(book.slug) + '">বইয়ের পাতায় দেখুন</a>' : '') + '</p>'
           : '<p>প্রকাশের আগে আমরা একবার দেখে নিই।</p><button type="button" data-act="edit" data-index="' + index + '">রিভিউ বদলাতে চান?</button>') +
         '</div></article>';
     }
@@ -315,7 +357,7 @@
     if (!data) { app.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div>'; return; }
     saveDrafts();
     if (data.expired) {
-      app.innerHTML = note('এই লিংকের মেয়াদ শেষ', 'বইয়ের পাতায় গিয়েও রিভিউ দিতে পারেন। নতুন বই দেখতে নিচে চাপুন।');
+      app.innerHTML = note('এই লিংকের মেয়াদ শেষ', 'বইয়ের পাতায় গিয়েও রিভিউ দিতে পারেন। নতুন বই দেখতে নিচে চাপুন।') + moreBooks();
       return;
     }
     var first = String(data.name || '').split(' ')[0];
@@ -326,7 +368,7 @@
       '<div class="card"><label class="small" for="abr-name">রিভিউতে আপনার নাম যেভাবে দেখাবে</label>' +
       '<input type="text" id="abr-name" maxlength="60" autocomplete="name" value="' + esc(state.name) + '"></div>' +
       data.books.map(function (book, index) { return bookCard(book, index, index === editIndex); }).join('') +
-      loginBox();
+      loginBox() + moreBooks();
     if (state.login.phase !== 'idle' && !loggedIn()) startTick();
   }
 

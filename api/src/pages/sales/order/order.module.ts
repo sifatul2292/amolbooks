@@ -16,10 +16,12 @@ import { SettingSchema } from '../../customization/setting/schema/setting.schema
 import { AdminSchema } from '../../../schema/admin.schema';
 import { StockMovementSchema } from '../../../schema/stock-movement.schema';
 import { StaffActivityModule } from '../../staff-activity/staff-activity.module';
+import { DeliveryZoneModule } from '../../../shared/delivery-zone/delivery-zone.module';
 
 @Module({
   imports: [
     StaffActivityModule,
+    DeliveryZoneModule,
     MongooseModule.forFeature([
       { name: 'Order', schema: OrderSchema },
       { name: 'IncompleteOrder', schema: IncompleteOrderSchema },

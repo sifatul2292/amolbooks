@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   NotFoundException,
   OnApplicationBootstrap,
+  Optional,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -29,6 +30,67 @@ export const FOLLOW_UP_DAYS = {
   not_interested: 90,
 };
 const INDEX_REFRESH_MS = 60 * 1000;
+// Feedback (WhatsApp review request) filters on the list (owner, 2026-11-14: "I want to see who
+// responded to the feedback message").
+export const FEEDBACK_FILTERS = ['asked', 'responded', 'awaiting', 'published', 'problem', 'none'];
+
+/** The order's review request, as Customer Manager shows it (null when it was not sent). */
+const FEEDBACK_PROJECTION = {
+  $cond: [
+    { $in: ['$reviewRequest.status', ['sent', 'failed']] },
+    {
+      at: '$reviewRequest.at',
+      order: '$_id',
+      orderId: '$orderId',
+      status: '$reviewRequest.status',
+      reply: '$reviewRequest.reply',
+      repliedAt: '$reviewRequest.repliedAt',
+      approvedAt: '$reviewRequest.approved.at',
+      approvedReply: '$reviewRequest.approvedReply',
+      message: messageStatus('review_request'),
+      approvedMessage: messageStatus('review_approved'),
+    },
+    null,
+  ],
+};
+function messageStatus(kind: string) {
+  return {
+    $arrayElemAt: [
+      {
+        $map: {
+          input: {
+            $filter: { input: { $ifNull: ['$whatsappMessages', []] }, as: 'm', cond: { $eq: ['$$m.kind', kind] } },
+          },
+          as: 'm',
+          in: '$$m.status',
+        },
+      },
+      0,
+    ],
+  };
+}
+
+/**
+ * Where the customer is with the feedback request: problem (tapped "সমস্যা আছে") first, then
+ * published review, review waiting for approval, a reply tap, read, asked; failed when WhatsApp
+ * did not take it.
+ */
+export function feedbackState(feedback: any): string {
+  if (!feedback) return '';
+  if (feedback.status === 'failed') return 'failed';
+  if (feedback.reply === 'problem') return 'problem';
+  if (feedback.reviewCount > 0 && feedback.approvedCount >= feedback.reviewCount) return 'published';
+  if (feedback.reviewCount > 0) return 'awaiting';
+  if (feedback.reply) return 'replied';
+  if (feedback.message === 'read') return 'read';
+  return 'asked';
+}
+const RESPONDED = ['problem', 'published', 'awaiting', 'replied'];
+function feedbackActivity(row: any): number {
+  const f = row.feedback;
+  if (!f) return 0;
+  return Math.max(...[f.reviewedAt, f.repliedAt, f.at].map((value) => new Date(value || 0).getTime() || 0));
+}
 
 interface CustomerIndex {
   builtAt: number;
@@ -74,7 +136,28 @@ export class CustomerManagerService implements OnApplicationBootstrap {
     @InjectModel('Product') private readonly products: Model<any>,
     private readonly orderService: OrderService,
     private readonly utils: UtilsService,
+    @Optional() @InjectModel('Review') private readonly reviews?: Model<any>,
   ) {}
+
+  /** Reviews written per order (only orders that had a review request carry `order._id`). */
+  private async reviewsByOrder(orderIds?: any[]): Promise<Map<string, any>> {
+    if (!this.reviews) return new Map();
+    const match: any = { 'order._id': { $exists: true } };
+    if (orderIds) match['order._id'] = { $in: orderIds };
+    const rows = await this.reviews.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: '$order._id',
+          count: { $sum: 1 },
+          approved: { $sum: { $cond: [{ $eq: ['$status', true] }, 1, 0] } },
+          rating: { $avg: '$rating' },
+          at: { $max: '$createdAt' },
+        },
+      },
+    ]);
+    return new Map(rows.map((row: any) => [String(row._id), row]));
+  }
 
   // Build the customer index after startup so the first page load is fast.
   onApplicationBootstrap() {
@@ -224,7 +307,7 @@ export class CustomerManagerService implements OnApplicationBootstrap {
   }
 
   private async buildIndex(orderCount: number): Promise<CustomerIndex> {
-    const [groups, products] = await Promise.all([
+    const [groups, products, reviewed] = await Promise.all([
       this.orders
         .aggregate([
           ...this.base(false),
@@ -248,6 +331,7 @@ export class CustomerManagerService implements OnApplicationBootstrap {
                   null,
                 ],
               },
+              feedback: FEEDBACK_PROJECTION,
             },
           },
           { $sort: { crmDelivered: -1, createdAt: -1, _id: -1 } },
@@ -269,6 +353,8 @@ export class CustomerManagerService implements OnApplicationBootstrap {
               },
               // Latest saved courier (FraudSpy) ratio for this phone.
               courier: { $max: '$courier' },
+              // Latest feedback request (the object starts with its date).
+              feedback: { $max: '$feedback' },
               items: {
                 $push: {
                   $cond: ['$crmDelivered', '$orderedItems', '$$REMOVE'],
@@ -280,6 +366,7 @@ export class CustomerManagerService implements OnApplicationBootstrap {
         ])
         .allowDiskUse(true),
       this.products.find({}).select('category.name').lean(),
+      this.reviewsByOrder().catch(() => new Map<string, any>()),
     ]);
     // Older order snapshots may lack categories; fall back to the catalog.
     const catalog = new Map<string, string[]>();
@@ -297,8 +384,22 @@ export class CustomerManagerService implements OnApplicationBootstrap {
         );
       }
       const overall = group.courier?.overall;
+      let feedback = null;
+      if (group.feedback) {
+        const written = reviewed.get(String(group.feedback.order)) || {};
+        feedback = {
+          ...group.feedback,
+          order: String(group.feedback.order),
+          reviewCount: written.count || 0,
+          approvedCount: written.approved || 0,
+          rating: written.rating ? Math.round(written.rating * 10) / 10 : 0,
+          reviewedAt: written.at || null,
+        };
+        feedback.state = feedbackState(feedback);
+      }
       return {
         phone: group._id,
+        feedback,
         name: group.name || '',
         shippingAddress: group.shippingAddress || '',
         city: group.city || '',
@@ -373,6 +474,9 @@ export class CustomerManagerService implements OnApplicationBootstrap {
       throw new BadRequestException('Invalid frequency');
     if (query.ratio && !['good', 'mid', 'low'].includes(query.ratio))
       throw new BadRequestException('Invalid ratio');
+    const feedbackFilter = query.feedback || '';
+    if (feedbackFilter && !FEEDBACK_FILTERS.includes(feedbackFilter))
+      throw new BadRequestException('Invalid feedback filter');
     const status = query.status || '';
     if (
       status &&
@@ -388,6 +492,8 @@ export class CustomerManagerService implements OnApplicationBootstrap {
         (a.contact?.nextFollowUp || '9999').localeCompare(
           b.contact?.nextFollowUp || '9999',
         ),
+      // Latest feedback activity first: a review, a reply tap, else the request itself.
+      feedback: (a, b) => feedbackActivity(b) - feedbackActivity(a),
     };
     const sort = sorts[query.sort] || sorts.recent;
     const exporting = query.export === '1';
@@ -429,6 +535,18 @@ export class CustomerManagerService implements OnApplicationBootstrap {
           contact.nextFollowUp <= today,
       );
 
+    // Feedback quick filters: counted over every other filter, then applied.
+    const feedbackCounts = { asked: 0, responded: 0, awaiting: 0, published: 0, problem: 0 };
+    const feedbackMatch = (row: any) => {
+      const f = row.feedback;
+      if (feedbackFilter === 'none') return !f;
+      if (!f) return false;
+      if (feedbackFilter === 'responded') return RESPONDED.includes(f.state);
+      if (feedbackFilter === 'awaiting') return f.reviewCount > f.approvedCount;
+      if (feedbackFilter === 'published') return f.approvedCount > 0;
+      if (feedbackFilter === 'problem') return f.state === 'problem';
+      return true; // asked
+    };
     const filtered = [];
     for (const row of index.rows) {
       if (
@@ -452,6 +570,15 @@ export class CustomerManagerService implements OnApplicationBootstrap {
       if (query.ratio === 'mid' && (row.ratio < 50 || row.ratio >= 80))
         continue;
       if (query.ratio === 'low' && row.ratio >= 50) continue;
+      const f = row.feedback;
+      if (f) {
+        feedbackCounts.asked++;
+        if (RESPONDED.includes(f.state)) feedbackCounts.responded++;
+        if (f.reviewCount > f.approvedCount) feedbackCounts.awaiting++;
+        if (f.approvedCount > 0) feedbackCounts.published++;
+        if (f.state === 'problem') feedbackCounts.problem++;
+      }
+      if (feedbackFilter && !feedbackMatch(row)) continue;
       filtered.push({ ...row, contact: contacts.get(row.phone) });
     }
 
@@ -511,6 +638,23 @@ export class CustomerManagerService implements OnApplicationBootstrap {
         ratio: row.ratio,
         courierRatio: row.courierRatio,
         books: row.books.slice(0, 3),
+        feedback: row.feedback
+          ? {
+              state: row.feedback.state,
+              at: row.feedback.at,
+              orderId: row.feedback.orderId,
+              message: row.feedback.message || '',
+              reply: row.feedback.reply || '',
+              repliedAt: row.feedback.repliedAt || null,
+              reviewCount: row.feedback.reviewCount,
+              approvedCount: row.feedback.approvedCount,
+              rating: row.feedback.rating,
+              reviewedAt: row.feedback.reviewedAt,
+              approvedAt: row.feedback.approvedAt || null,
+              approvedMessage: row.feedback.approvedMessage || '',
+              approvedReply: row.feedback.approvedReply || '',
+            }
+          : null,
         ...(row.contact
           ? {
               latestContact: {
@@ -531,6 +675,7 @@ export class CustomerManagerService implements OnApplicationBootstrap {
         pageSize,
         summary,
         tabs,
+        feedbackCounts,
         followUpRules: FOLLOW_UP_DAYS,
         updatedAt: new Date(index.builtAt),
       },
@@ -630,6 +775,7 @@ export class CustomerManagerService implements OnApplicationBootstrap {
       throw new NotFoundException('No delivered orders for this customer');
     const overall = allOrders.find((order: any) => order.fraudChecker?.overall)
       ?.fraudChecker.overall;
+    const feedback = await this.feedbackHistory(phone).catch(() => []);
     return {
       success: true,
       data: {
@@ -666,9 +812,71 @@ export class CustomerManagerService implements OnApplicationBootstrap {
         orders,
         allOrders: allOrders.map(({ fraudChecker, ...order }: any) => order),
         history,
+        feedback,
         followUpRules: FOLLOW_UP_DAYS,
       },
     };
+  }
+
+  /**
+   * The customer's WhatsApp feedback requests, newest first: sent / delivered / read, the button
+   * they tapped, the reviews they wrote (Super Admin can approve them here, which sends the
+   * "review published" message) and that message's status.
+   */
+  private async feedbackHistory(phone: string) {
+    const orders: any[] = await this.orders
+      .find({ ...this.phoneCandidates(phone), 'reviewRequest.status': { $in: ['sent', 'failed'] } })
+      .select('orderId reviewRequest.status reviewRequest.at reviewRequest.reply reviewRequest.repliedAt reviewRequest.approved reviewRequest.approvedReply reviewRequest.approvedReplyAt reviewRequest.error whatsappMessages.kind whatsappMessages.status whatsappMessages.at whatsappMessages.error')
+      .sort({ 'reviewRequest.at': -1 })
+      .limit(20)
+      .lean();
+    if (!orders.length) return [];
+    const reviews: any[] = this.reviews
+      ? await this.reviews
+          .find({ 'order._id': { $in: orders.map((order) => order._id) } })
+          .select('order._id product rating review status images createdAt user.name')
+          .sort({ createdAt: 1 })
+          .lean()
+      : [];
+    const message = (order: any, kind: string) =>
+      (order.whatsappMessages || []).find((entry: any) => entry?.kind === kind) || null;
+    return orders.map((order) => {
+      const request = message(order, 'review_request');
+      const approved = message(order, 'review_approved');
+      const rr = order.reviewRequest || {};
+      const written = reviews.filter((review) => String(review.order?._id) === String(order._id));
+      const item = {
+        order: String(order._id),
+        orderId: order.orderId,
+        at: rr.at,
+        status: rr.status,
+        message: request?.status || '',
+        error: request?.error || rr.error || '',
+        reply: rr.reply || '',
+        repliedAt: rr.repliedAt || null,
+        approvedAt: rr.approved?.at || null,
+        approvedBook: rr.approved?.name || '',
+        approvedMessage: approved?.status || '',
+        approvedReply: rr.approvedReply || '',
+        approvedReplyAt: rr.approvedReplyAt || null,
+        reviews: written.map((review) => ({
+          _id: String(review._id),
+          product: review.product,
+          rating: review.rating,
+          review: review.review,
+          status: review.status === true,
+          images: review.images || [],
+          name: review.user?.name || '',
+          createdAt: review.createdAt,
+        })),
+      } as any;
+      item.state = feedbackState({
+        ...item,
+        reviewCount: written.length,
+        approvedCount: written.filter((review) => review.status === true).length,
+      });
+      return item;
+    });
   }
 
   async searchPurchasedBooks(query: string) {

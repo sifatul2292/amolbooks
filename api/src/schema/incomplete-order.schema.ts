@@ -28,6 +28,23 @@ export const IncompleteOrderSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    // District (and Dhaka area) picked at checkout before leaving (shared/delivery-zone); carried
+    // into the order when staff convert this row.
+    deliveryLocation: {
+      type: {
+        district: String,
+        districtName: String,
+        districtEn: String,
+        metaCity: String,
+        area: String,
+        areaName: String,
+        zone: String,
+        mismatch: String,
+        confirmed: Boolean,
+      },
+      required: false,
+      _id: false,
+    },
     // The checkout sends division/area/zone alongside the typed address. Mongoose
     // used to drop them (not in the schema), so a row where the customer picked a
     // location but had not typed the street yet showed no address at all.

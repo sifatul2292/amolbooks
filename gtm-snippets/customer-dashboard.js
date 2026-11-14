@@ -87,7 +87,7 @@
   function view() { return VIEWS[location.pathname.replace(/\/+$/, '') || '/account'] || ''; }
   function onAccount() { return /^\/account(?:\/|$)/.test(location.pathname); }
   // English headings on the storefront's own account pages.
-  var HEADINGS = { 'My Notifications': 'নোটিফিকেশন', 'My Transactions': 'আমার লেনদেন', 'My Following Authors': 'অনুসরণ করা লেখক', 'My Gift List': 'উপহার তালিকা' };
+  var HEADINGS = { 'My Notifications': 'নোটিফিকেশন', 'My Transactions': 'আমার লেনদেন', 'My Following Authors': 'অনুসরণ করা লেখক', 'My Gift List': 'উইশলিস্ট' };
   function translateHeadings() {
     Array.prototype.forEach.call(document.querySelectorAll('app-account .account-right h3'), function (h) {
       var bengali = HEADINGS[String(h.textContent || '').trim()];
@@ -128,6 +128,21 @@
     '.abd-nav .abd-out{color:#a61b1b}.abd-nav .abd-out .abd-ic{color:#a61b1b}',
     '.abd-title{font-size:1.4rem;line-height:1.3;margin:2px 0 14px;font-weight:700}',
     '.abd-card{background:#fff;border:1px solid #e6ece8;border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(16,40,26,.05)}',
+    // Books to buy next and "আবার কিনুন" (owner, 2026-11-14: buy more along the way).
+    '.abd-shelf{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px}',
+    '.abd-pick{display:flex;flex-direction:column;gap:4px;text-decoration:none!important;color:inherit;border:1px solid #e6ece8;border-radius:12px;padding:8px;background:#fff;min-width:0}',
+    '.abd-pick:hover{border-color:#bfe0cc;box-shadow:0 2px 8px rgba(16,40,26,.08)}',
+    '.abd-pick img,.abd-pick .abd-blank{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px;background:#f1f4f2;display:block}',
+    '.abd-pick .abd-pick-cover{position:relative;display:block;overflow:hidden;border-radius:8px}',
+    '.abd-pick b{font-size:.9rem;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:4px;color:#1d2a22}',
+    '.abd-pick small{color:#5b6b62;font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+    '.abd-pick .abd-price{font-weight:700;color:#168747}',
+    '.abd-pick .abd-price s{color:#98a39c;font-weight:400;font-size:.8rem;margin-left:4px}',
+    '.abd-pick .abd-buy{margin-top:auto;text-align:center;background:#ea2929;color:#fff;border-radius:8px;padding:7px 6px;font-weight:700;font-size:.88rem}',
+    '.abd-again{display:inline-block;margin-top:4px;margin-left:8px;color:#ea2929!important;font-weight:700;font-size:.85rem;text-decoration:none}',
+    '.abd-again:hover{text-decoration:underline}',
+    '@media (max-width:991px){.abd-shelf{grid-template-columns:repeat(3,minmax(0,1fr))!important}}',
+    '@media (max-width:640px){.abd-shelf{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px}}',
     '.abd-card h2{font-size:1.1rem;margin:0;font-weight:700}',
     '.abd-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}',
     '.abd-head a,.abd-link{color:#168747;font-weight:600;text-decoration:none;font-size:.95rem;background:none;border:0;font-family:inherit;cursor:pointer;padding:0}',
@@ -197,6 +212,7 @@
     '.abd-empty{text-align:center;padding:26px 12px;color:#5d6b63}',
     '.abd-empty b{display:block;color:#1f2a24;font-size:1.05rem;margin-bottom:4px}',
     '.abd-empty .abd-btn{margin-top:12px}',
+    '.abd-is-empty .wishlist-area,app-wish-list.abd-is-empty .section-top p{display:none!important}',
     '.abd-skeleton{height:110px;border-radius:14px;background:#eef2ef;margin-bottom:12px}',
     // Small laptops / large tablets in landscape: a narrower menu.
     '@media (min-width:992px) and (max-width:1199px){',
@@ -277,6 +293,8 @@
         }).then(function (j) { state.orders = Array.isArray(j.data) ? j.data : []; }, function () { state.orders = state.orders || []; }),
         call('/review/get-Review-by-user').then(function (j) { state.reviews = Array.isArray(j.data) ? j.data : []; }, function () { state.reviews = state.reviews || []; }),
         call('/user/get-user-address').then(function (j) { state.addresses = Array.isArray(j.data) ? j.data : []; }, function () { state.addresses = state.addresses || []; }),
+        // Books to buy next, from their latest order (ReviewRequestService.moreForUser).
+        call('/order-review/mine/books').then(function (j) { state.more = Array.isArray(j.data) ? j.data : []; }, function () { state.more = state.more || []; }),
         // Review page links of their orders (ReviewRequestService.linksFor): "রিভিউ দিন" opens the order's page.
         call('/order-review/mine').then(function (j) {
           state.links = {};
@@ -344,10 +362,12 @@
       var list = Number(item.regularPrice || 0);
       var price = item.isGift ? ' · উপহার'
         : paid ? ' · ' + money(paid) + (list > paid ? '<s>' + money(list) + '</s>' : '') : '';
+      // A delivered book can be bought again from its page.
+      var again = order.orderStatus === 5 && !item.isGift && link ? '<a class="abd-again" href="' + link + '">আবার কিনুন</a>' : '';
       return '<li class="abd-item">' +
         (item.image ? '<img class="abd-cover" src="' + esc(image(item.image)) + '" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">' : '<span class="abd-cover"></span>') +
         '<div class="abd-item-text">' + (link ? '<a href="' + link + '">' + esc(item.name) + '</a>' : '<b>' + esc(item.name) + '</b>') +
-        '<small>' + bn(item.quantity || 1) + ' কপি' + price + '</small>' + badge + '</div></li>';
+        '<small>' + bn(item.quantity || 1) + ' কপি' + price + '</small>' + badge + again + '</div></li>';
     }).join('') + '</ul>';
     var active = step !== undefined && order.orderStatus !== 5;
     return '<article class="abd-order">' +
@@ -374,6 +394,23 @@
       (approved ? (link ? ' · <a class="abd-link" href="' + link + '">বইয়ের পাতায় দেখুন</a>' : '') : ' · প্রকাশ হলে WhatsApp-এ জানিয়ে দেবো') + '</small></div></article>';
   }
 
+  // Books to buy next: same author, publisher or subject as their latest order, not bought before.
+  function moreShelf() {
+    var more = state.more || [];
+    if (!more.length) return '';
+    return '<section class="abd-card"><div class="abd-head"><h2>আপনার জন্য আরও বই</h2><a href="/product-list">সব বই →</a></div>' +
+      '<div class="abd-shelf">' + more.map(function (book) {
+        var price = Number(book.price || 0);
+        var list = Number(book.listPrice || 0);
+        return '<a class="abd-pick" href="/product-details/' + encodeURIComponent(book.slug) + '">' +
+          // Cover in its own box: the shop's "একটু পড়ে দেখুন" ribbon (homepage-redesign.html) sits on it.
+          '<span class="abd-pick-cover">' + (book.image ? '<img src="' + esc(image(book.image)) + '" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">' : '<span class="abd-blank"></span>') + '</span>' +
+          '<b>' + esc(book.name) + '</b>' + (book.author ? '<small>' + esc(book.author) + '</small>' : '') +
+          '<span class="abd-price">' + money(price) + (list > price ? '<s>' + money(list) + '</s>' : '') + '</span>' +
+          '<span class="abd-buy">দেখুন ও কিনুন</span></a>';
+      }).join('') + '</div></section>';
+  }
+
   function addressRow(address) {
     var parts = [address.address, address.zone && address.zone.name, address.area && address.area.name, address.division && address.division.name].filter(Boolean);
     return '<div class="abd-address"><b>' + esc(address.name || userName()) + (address.setDefaultAddress ? ' ' + pill('done', 'ডিফল্ট') : '') + '</b>' +
@@ -391,6 +428,49 @@
 
   function empty(title, text, href, label) {
     return '<div class="abd-empty"><b>' + esc(title) + '</b>' + esc(text) + (href ? '<br><a class="abd-btn solid" href="' + href + '">' + esc(label) + '</a>' : '') + '</div>';
+  }
+
+  // The storefront's own wishlist and notification pages (owner, 2026-11-14): Bengali digits in the
+  // wishlist count, and a friendly note instead of a blank box when either list is empty. Waits a
+  // moment after the page opens so the note never flashes before the list has loaded.
+  var EMPTY_AFTER = 1200;
+  function polishNativePages() {
+    var settled = Date.now() - (place.since || 0) > EMPTY_AFTER;
+    var wish = document.querySelector('app-account .account-right app-wish-list');
+    if (wish) {
+      var line = wish.querySelector('.section-top p');
+      if (line) bengaliDigits(line);
+      var items = wish.querySelectorAll('.wishlist-area .delete').length;
+      markEmpty(wish, settled && !items, 'আপনার উইশলিস্ট এখনো খালি',
+        'পছন্দের বইয়ের ♡ চাপুন, পরে কেনার জন্য এখানে জমা থাকবে।', '/product-list', 'বই দেখুন');
+    }
+    var notes = document.querySelector('app-account .account-right app-notification');
+    if (notes) {
+      var any = Array.prototype.some.call(notes.querySelectorAll('.produt-area'), function (area) {
+        return area.children.length > 0 || String(area.textContent || '').trim() !== '';
+      });
+      markEmpty(notes, settled && !any, 'এখনো কোনো নোটিফিকেশন নেই', 'অর্ডার আর অফারের খবর এলে এখানে দেখাবে।', '', '');
+    }
+  }
+  function bengaliDigits(node) {
+    // Change the text in place: Angular keeps these text nodes and updates them when the list changes.
+    var walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+    for (var text = walker.nextNode(); text; text = walker.nextNode()) {
+      if (/\d/.test(text.data)) text.data = bn(text.data);
+    }
+  }
+  function markEmpty(host, isEmpty, title, text, href, label) {
+    var box = host.querySelector('.abd-native-empty');
+    if (isEmpty && !box) {
+      box = document.createElement('div');
+      box.className = 'abd-native-empty';
+      box.innerHTML = empty(title, text, href, label);
+      var top = host.querySelector('.section-top');
+      if (top) top.insertAdjacentElement('afterend', box); else host.appendChild(box);
+    } else if (!isEmpty && box) {
+      box.remove();
+    }
+    if (host.classList.contains('abd-is-empty') !== isEmpty) host.classList.toggle('abd-is-empty', isEmpty);
   }
 
   /* ---------- views ---------- */
@@ -412,6 +492,7 @@
       '<a class="abd-stat" href="/account/review" data-route><b>' + bn(c.reviews) + '</b><span>রিভিউ' + (c.pending ? ' (' + bn(c.pending) + 'টি অপেক্ষায়)' : '') + '</span></a></div>' +
       '<section class="abd-card"><div class="abd-head"><h2>সাম্প্রতিক অর্ডার</h2>' + (c.orders > 2 ? '<a href="/account/orders" data-route>সব অর্ডার →</a>' : '') + '</div>' +
       (orders.length ? orders.map(orderCard).join('') : empty('এখনো কোনো অর্ডার নেই', 'পছন্দের বই খুঁজে অর্ডার করুন।', '/', 'বই দেখুন')) + '</section>' +
+      moreShelf() +
       '<div class="abd-two">' +
       '<section class="abd-card"><div class="abd-head"><h2>আমার রিভিউ</h2>' + (c.reviews ? '<a href="/account/review" data-route>সব রিভিউ →</a>' : '') + '</div>' +
       (reviews.length ? reviews.map(reviewRow).join('') : empty('এখনো রিভিউ দেননি', 'বই পড়ে মতামত জানালে অন্য পাঠকরা উপকৃত হন।')) + '</section>' +
@@ -540,7 +621,12 @@
     document.documentElement.classList.toggle('ab-dash-on', !!shell);
     document.documentElement.classList.toggle('ab-dash-own', !!shell && own);
     if (!shell) return;
-    if (!own) translateHeadings();
+    if (place.sincePath !== location.pathname) {
+      place.sincePath = location.pathname;
+      place.since = Date.now();
+      setTimeout(place, EMPTY_AFTER + 100);
+    }
+    if (!own) { translateHeadings(); polishNativePages(); }
     if (!side) {
       side = document.createElement('aside');
       side.id = 'ab-dash-side';

@@ -147,6 +147,60 @@ let connection;
   assert.equal(await total({ q: '1911', refresh: '1' }), 1, 'Refresh picks them up at once');
   assert.deepEqual((await service.searchPurchasedBooks('catalog')).data, [{ name: 'Catalog Seerah' }]);
 
+  // Feedback (WhatsApp review requests; owner, 2026-11-14: "I want to see who responded to the
+  // feedback message"): the latest request per customer, its state, counts, filters and the popup.
+  const { ReviewSchema } = require('../api/dist/schema/review.schema');
+  const Reviews = connection.model('Review', ReviewSchema);
+  const fb = new CustomerManagerService(Orders, Contacts, Products, {}, {}, Reviews);
+  const asked = (phone, rr, extra = {}) => order(phone, 20, { reviewRequest: { at: new Date(Date.now() - 6 * day), ...rr }, ...extra });
+  const fbOrders = [
+    asked('01611000001', { status: 'sent' }, { whatsappMessages: [{ kind: 'review_request', status: 'delivered' }] }),
+    asked('01611000002', { status: 'sent' }, { whatsappMessages: [{ kind: 'review_request', status: 'read' }] }),
+    asked('01611000003', { status: 'sent', reply: 'liked', repliedAt: new Date() }),
+    asked('01611000004', { status: 'sent', reply: 'problem', repliedAt: new Date() }),
+    asked('01611000005', { status: 'sent' }),
+    asked('01611000006', { status: 'sent', approved: { name: 'Fixture Book', at: new Date() } },
+      { whatsappMessages: [{ kind: 'review_request', status: 'read' }, { kind: 'review_approved', status: 'sent' }] }),
+    asked('01611000007', { status: 'skipped', reason: 'asked_recently' }),
+    // Asked twice: the older request was answered, the newer one not yet (the newer one shows).
+    asked('01611000008', { status: 'sent', reply: 'liked', at: new Date(Date.now() - 40 * day) }),
+    asked('01611000008', { status: 'sent', at: new Date(Date.now() - 2 * day) }),
+  ];
+  const inserted = await Orders.collection.insertMany(fbOrders);
+  const orderOf = (i) => inserted.insertedIds[i];
+  await Reviews.collection.insertMany([
+    { order: { _id: orderOf(4) }, product: { _id: new mongoose.Types.ObjectId(), name: 'Fixture Book' }, rating: 4, review: 'ভালো বই', status: false, createdAt: new Date() },
+    { order: { _id: orderOf(5) }, product: { _id: new mongoose.Types.ObjectId(), name: 'Fixture Book' }, rating: 5, review: 'খুব ভালো', status: true, createdAt: new Date() },
+  ]);
+  const fbList = (q = {}) => fb.list({ q: '161100', refresh: '1', ...q }, owner);
+  let fbData = (await fbList()).data;
+  assert.deepEqual(fbData.feedbackCounts, { asked: 7, responded: 4, awaiting: 1, published: 1, problem: 1 });
+  assert.deepEqual(Object.fromEntries(fbData.rows.map((r) => [r.phone, r.feedback && r.feedback.state])), {
+    '01611000001': 'asked', '01611000002': 'read', '01611000003': 'replied', '01611000004': 'problem',
+    '01611000005': 'awaiting', '01611000006': 'published', '01611000007': null, '01611000008': 'asked',
+  });
+  const row6 = fbData.rows.find((r) => r.phone === '01611000006').feedback;
+  assert.deepEqual([row6.rating, row6.reviewCount, row6.approvedCount, row6.approvedMessage, row6.message], [5, 1, 1, 'sent', 'read']);
+  assert.equal(fbData.rows.find((r) => r.phone === '01611000003').feedback.reply, 'liked');
+  const fbPhones = async (feedback) => (await fbList({ feedback })).data.rows.map((r) => r.phone).sort();
+  assert.deepEqual(await fbPhones('responded'), ['01611000003', '01611000004', '01611000005', '01611000006']);
+  assert.deepEqual(await fbPhones('awaiting'), ['01611000005']);
+  assert.deepEqual(await fbPhones('published'), ['01611000006']);
+  assert.deepEqual(await fbPhones('problem'), ['01611000004']);
+  assert.deepEqual(await fbPhones('none'), ['01611000007']);
+  assert.equal((await fbPhones('asked')).length, 7);
+  await assert.rejects(fb.list({ feedback: 'x' }, owner), /Invalid feedback filter/);
+  const byActivity = (await fbList({ sort: 'feedback' })).data.rows.map((r) => r.phone);
+  assert.equal(byActivity[byActivity.length - 1], '01611000007', 'Not asked comes last');
+  assert.ok(byActivity.indexOf('01611000005') < byActivity.indexOf('01611000001'), 'A review today before an older request');
+  const popup = (await fb.detail('01611000006')).data.feedback;
+  assert.deepEqual(popup.map((f) => [f.state, f.message, f.approvedMessage, f.approvedBook, f.reviews.length, f.reviews[0].status]),
+    [['published', 'read', 'sent', 'Fixture Book', 1, true]]);
+  assert.deepEqual((await fb.detail('01611000008')).data.feedback.map((f) => [f.state, f.reply]), [['asked', ''], ['replied', 'liked']], 'Popup lists every request, newest first');
+  assert.deepEqual((await fb.detail('01611000007')).data.feedback, [], 'A skipped request is not listed');
+  assert.ok(page.includes('<th>Feedback</th>') && page.includes("data-feedback=\"' + value + '\"") && page.includes('/api/order-review/admin/settings'), 'Page: feedback column, quick filters, daily limit');
+  assert.ok(page.includes("request('/api/review/update', { method: 'PUT'"), 'Page: approve uses the Reviews route (sends the published message)');
+
   // Speed at production size: ~15,000 orders from 10,000 phones.
   await connection.dropDatabase();
   await Promise.all([Orders.init(), Contacts.init()]);
@@ -166,7 +220,7 @@ let connection;
   assert.equal(first.total, new Set(docs.filter((d) => d.orderStatus === 5).map((d) => d.phoneNo)).size, 'Every phone with a delivered order');
   assert.ok(worst < 250, 'Cached list requests stay fast (' + worst.toFixed(1) + 'ms)');
   console.log('Speed (15,000 orders / 10,000 customers): first build ' + first.ms.toFixed(0) + 'ms, filtered/paged requests ' + Math.min(...cached.map((r) => r.ms)).toFixed(1) + '–' + worst.toFixed(1) + 'ms');
-  console.log('Customer Manager redesign: delivered-only customers, order/courier ratios, every filter, tab counts, not-interested + automatic follow-ups, export permission, freshness and popup page pass');
+  console.log('Customer Manager redesign: delivered-only customers, order/courier ratios, every filter, tab counts, not-interested + automatic follow-ups, export permission, freshness, popup page and feedback (states, counts, filters, popup) pass');
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

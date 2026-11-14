@@ -4,6 +4,8 @@ import { Model } from 'mongoose';
 import * as crypto from 'crypto';
 
 export type WhatsappOrderKind = 'order_placed' | 'order_shipped' | 'review_request' | 'review_approved';
+/** A template button: a quick reply's payload, or the variable end of a "Visit website" address. */
+export type TemplateButton = string | { url: string };
 /** What the order message's second button means: "একই ডেলিভারি চার্জে আরও বই নিবো" (order_confirm_v2) or "পরিবর্তন চাই" (order_confirm). */
 export type WhatsappSecondButton = 'more' | 'change';
 
@@ -245,8 +247,8 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
 
   /** Inbox summary of an order message (the template text itself lives at Meta). */
   static templateSummary(kind: WhatsappOrderKind, params: string[]): string {
-    if (kind === 'review_request') return `Review request: ${params[1]} · ${params[2]}`;
-    if (kind === 'review_approved') return `Review published: ${params[1]} · ${params[2]}`;
+    if (kind === 'review_request') return `Review request: ${params[1]}`;
+    if (kind === 'review_approved') return `Review published: ${params[1]}`;
     return kind === 'order_placed'
       ? `Order message #${params[1]}: ${params[2]} · ৳${params[3]}`
       : `Courier message #${params[1]}: ${params[2]} ${params[3]}`;
@@ -444,6 +446,23 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
     return parts.length ? parts.join(', ') : 'আপনার বই';
   }
 
+  /**
+   * The books for the review message, short enough for one line whatever the order size (owner,
+   * 2026-11-14: "let's say that customer bought 3-4 books"): "বই ক", "বই ক ও বই খ",
+   * "বই ক, বই খ ও আরও ২টি বই". The review page lists every book.
+   */
+  static reviewBooksSummary(order: any): string {
+    const names: string[] = [];
+    (Array.isArray(order?.orderedItems) ? order.orderedItems : []).forEach((item: any) => {
+      const name = String(item?.name || item?.product?.name || '').trim();
+      if (name && !names.includes(name)) names.push(name);
+    });
+    if (!names.length) return 'আপনার বই';
+    if (names.length === 1) return names[0];
+    if (names.length === 2) return `${names[0]} ও ${names[1]}`;
+    return `${names[0]}, ${names[1]} ও আরও ${WhatsappService.bengaliNumber(names.length - 2)}টি বই`;
+  }
+
   static customerName(order: any): string {
     const name = String(order?.name || '').trim();
     return name || 'প্রিয় গ্রাহক';
@@ -454,21 +473,21 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
    * exactly these (scripts/WHATSAPP_ORDERS.md has the texts).
    */
   static templateParams(kind: WhatsappOrderKind, order: any, courierData?: any): string[] {
-    // Review request: {{1}} name, {{2}} the books, {{3}} the review page.
+    // Review request: {{1}} name, {{2}} the books. Its "রিভিউ দিন" button opens the review page
+    // (reviewButtons).
     if (kind === 'review_request') {
       return [
         WhatsappService.customerName(order),
-        WhatsappService.itemsSummary(order),
-        WhatsappService.reviewLink(order?.reviewRequest?.token),
+        WhatsappService.reviewBooksSummary(order),
       ].map(WhatsappService.cleanParam);
     }
-    // Review published: {{1}} name, {{2}} the book, {{3}} its page (the review shows there).
+    // Review published: {{1}} name, {{2}} the book. Its "রিভিউ দেখুন" button opens the same page
+    // (the published review, a link to the book, more books).
     if (kind === 'review_approved') {
       const approved = order?.reviewRequest?.approved || {};
       return [
         WhatsappService.customerName(order),
         String(approved.name || WhatsappService.itemsSummary(order)),
-        WhatsappService.productLink(approved.slug),
       ].map(WhatsappService.cleanParam);
     }
     if (kind === 'order_placed') {
@@ -506,15 +525,11 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
     const params = WhatsappService.templateParams(kind, order, courierData);
     const chat: WhatsappChatEntry = { wa: to, direction: 'out', kind: 'order', type: 'template', text: WhatsappService.templateSummary(kind, params), orderId: String(order.orderId || '') };
     try {
-      // The review template has three quick replies in this order: ভালো লাগছে, এখনো পড়িনি, সমস্যা আছে.
       const buttons = kind === 'order_placed' && config.confirmButtons
         ? [`confirm:${order._id}`, `${config.secondButton}:${order._id}`]
-        : kind === 'review_request'
-          ? ['liked', 'unread', 'problem'].map((action) => `review_${action}:${order._id}`)
-          // The published template's two quick replies: হ্যাঁ, বই লাগবে / এখন না.
-          : kind === 'review_approved'
-            ? ['more', 'nomore'].map((action) => `review_${action}:${order._id}`)
-            : undefined;
+        : kind === 'review_request' || kind === 'review_approved'
+          ? WhatsappService.reviewButtons(kind, order)
+          : undefined;
       const messageId = await this.sendTemplate(to, template, params, buttons);
       update = { 'whatsappMessages.$.status': 'sent', 'whatsappMessages.$.messageId': messageId, 'whatsappMessages.$.updatedAt': new Date() };
       Object.assign(chat, { messageId, status: 'sent' });
@@ -534,14 +549,33 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
     return update['whatsappMessages.$.status'];
   }
 
-  /** POST /{phone-number-id}/messages with a template; returns Meta's message id. */
-  async sendTemplate(to: string, template: string, params: string[], buttonPayloads?: string[]): Promise<string> {
+  /**
+   * The review templates' buttons, in template order (scripts/WHATSAPP_ORDERS.md): first a "Visit
+   * website" button whose address ends in the order's review code (amolbooks.com/rate/{{1}}),
+   * then two quick replies — এখনো পড়িনি / সমস্যা আছে, or হ্যাঁ, বই লাগবে / এখন না.
+   */
+  static reviewButtons(kind: WhatsappOrderKind, order: any): TemplateButton[] {
+    const id = String(order?._id || '');
+    const replies = kind === 'review_request' ? ['unread', 'problem'] : ['more', 'nomore'];
+    return [
+      { url: String(order?.reviewRequest?.token || '') },
+      ...replies.map((action) => `review_${action}:${id}`),
+    ];
+  }
+
+  /**
+   * POST /{phone-number-id}/messages with a template; returns Meta's message id. Buttons in template
+   * order: a string is a quick reply's payload, { url } the end of a "Visit website" button's address.
+   */
+  async sendTemplate(to: string, template: string, params: string[], buttons?: TemplateButton[]): Promise<string> {
     const config = this.config();
     const components: any[] = params.length
       ? [{ type: 'body', parameters: params.map((text) => ({ type: 'text', text })) }]
       : [];
-    (buttonPayloads || []).forEach((payload, index) => {
-      components.push({ type: 'button', sub_type: 'quick_reply', index: String(index), parameters: [{ type: 'payload', payload }] });
+    (buttons || []).forEach((button, index) => {
+      components.push(typeof button === 'string'
+        ? { type: 'button', sub_type: 'quick_reply', index: String(index), parameters: [{ type: 'payload', payload: button }] }
+        : { type: 'button', sub_type: 'url', index: String(index), parameters: [{ type: 'text', text: button.url }] });
     });
     return this.post(to, { type: 'template', template: { name: template, language: { code: config.language }, components } });
   }

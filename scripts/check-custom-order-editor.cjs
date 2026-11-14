@@ -48,4 +48,14 @@ assert.match(packageService, /discountAmount: regularPrice - draft\.sellingPrice
 assert.match(packageService, /new Set\(productIds\)[\s\S]*?products\.length !== productIds\.length/, 'Bundle draft validation rejects duplicate or missing products');
 assert.match(service, /OrderStatus\.CANCEL[\s\S]*?OrderStatus\.REFUND[\s\S]*?OrderStatus\.RETURN[\s\S]*?OrderStatus\.HOLD/, 'Invalid order statuses are excluded from insights');
 
+// Saving an edit keeps the list where it was: same page, filters and scroll (no page reload).
+assert.match(page, /window\.refreshOrdersInPlace = function \(\) \{[\s\S]*?loadOrders\(\{ quiet: true \}\)/, 'Dashboard refreshes the current page in place');
+assert.match(page, /function loadOrders\(options\) \{[\s\S]*?if \(!quiet\) renderSkeletons\(\);[\s\S]*?if \(scrollSpots\) restoreScroll\(scrollSpots\);/, 'Quiet refresh keeps rows and scroll');
+assert.match(editor, /if \(typeof root\.refreshOrdersInPlace === 'function'\) \{[\s\S]*?close\(\);\s*root\.refreshOrdersInPlace\(\);[\s\S]*?return;\s*\}\s*setStatus\('Changes saved\. Refreshing the order list…', 'success'\); root\.setTimeout\(function \(\) \{ root\.location\.reload\(\); \}, 450\);/, 'Editor refreshes in place, reloads only elsewhere');
+assert.match(editor, /pageScroll = \{ x: root\.scrollX, y: root\.scrollY \}/, 'Editor remembers the page position when it opens');
+assert.match(editor, /if \(pageScroll\) \{ root\.scrollTo\(pageScroll\.x, pageScroll\.y\); pageScroll = null; \}/, 'Editor puts the page back when it closes');
+// Locally the dashboard talks to the API that serves it (the editor does too); production keeps the live API.
+assert.equal((page.match(/var API = \/\^\(localhost\|127\\\.0\\\.0\\\.1\)\$\/\.test\(window\.location\.hostname\) \? window\.location\.origin : 'https:\/\/apisub\.amolbooks\.com';/g) || []).length, 2, 'Local API is the page origin');
+assert.ok(!page.includes("'http://localhost:3000' : 'https://apisub.amolbooks.com'"), 'No hard-coded local API port');
+
 console.log('Custom order editor checks passed');

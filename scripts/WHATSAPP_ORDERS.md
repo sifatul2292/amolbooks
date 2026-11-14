@@ -124,15 +124,24 @@ Not sent to the courier automatically (staff still press "send to courier").
 
 ```
 আসসালামু আলাইকুম {{1}},
-আমল বুকস থেকে আপনার বই ({{2}}) হাতে পেয়েছেন প্রায় দুই সপ্তাহ হলো। বইটি কেমন লাগছে?
-আপনার সৎ মতামত অন্য পাঠকদের বই বাছতে সাহায্য করবে। রিভিউ দিতে: {{3}}
+আমল বুকস থেকে আপনার বই ({{2}}) হাতে পেয়েছেন প্রায় দুই সপ্তাহ হলো। কেমন লাগছে?
+আপনার সৎ মতামত অন্য পাঠকদের বই বাছতে সাহায্য করবে। নিচের "রিভিউ দিন" বাটনে চাপ দিন।
 — amolbooks.com
 ```
 
-Footer (optional): `মেসেজ বন্ধ করতে STOP লিখুন`. Three **Quick reply** buttons (type "Custom"), in
-this order: **ভালো লাগছে**, **এখনো পড়িনি**, **সমস্যা আছে**. Sample values: `রহিম`,
-`প্রোডাক্টিভ মুসলিম`, `https://amolbooks.com/rate/AbCdEfGh12345678`. Keep it plain (no discount or
-book offer in the text) so it stays Utility; check the category Meta shows before switching it on.
+Footer (optional): `মেসেজ বন্ধ করতে STOP লিখুন`. Buttons, in exactly this order (2026-11-14: the
+first one opens the shop, owner wanted a button that takes them to amolbooks):
+1. **Visit website**, text **রিভিউ দিন**, URL type **Dynamic**: `https://amolbooks.com/rate/{{1}}`,
+   sample `https://amolbooks.com/rate/AbCdEfGh12345678`.
+2. **Quick reply** (Custom): **এখনো পড়িনি**
+3. **Quick reply** (Custom): **সমস্যা আছে**
+
+Sample body values: `রহিম`, `প্রোডাক্টিভ মুসলিম, দ্য বারাকাহ ইফেক্ট ও আরও ২টি বই`. {{2}} is the
+order's books, kept short: one name, two names ("ক ও খ"), or two names and "ও আরও Nটি বই"; the text
+says "কেমন লাগছে?" so it reads right for one book or several, and the review page lists every book
+(one card each, reviewed one by one). Keep it plain (no discount or book offer in the
+text) so it stays Utility; check the category Meta shows before switching it on. (An older order
+message may still carry a **ভালো লাগছে** tap; it is still answered.)
 
 `ReviewRequestService` (api/src/pages/review-request) looks at each delivered order once, 14 days
 after delivery (Delivered status date, else the courier's "delivered" update), between 7 and 9 pm
@@ -142,15 +151,34 @@ the last 30 days, numbers that wrote "stop", chats with an open inbox request, s
 (`REVIEW_REQUEST_SKIP_NUMBERS`), orders with only gifts. Each order keeps the outcome in
 `reviewRequest` (sent / failed / skipped with the reason / holdout).
 
+**রিভিউ দিন** opens the review page in the shop (header, menu, cart): the order's books to rate,
+then login with an SMS code, then "আপনার জন্য আরও বই" — up to 4 books to buy next (best sellers
+by the same author, else publisher, else category; published, in stock, never bought on that
+number), each opening its book page, plus "সব বই দেখুন". After login the customer lands in their
+account (/account/profile): orders with progress, "আবার কিনুন" on delivered books, their reviews,
+and the same "আপনার জন্য আরও বই" shelf.
+
 What a tap does (free answers inside the 24-hour window the tap opens):
-- **ভালো লাগছে**: the review link again, the coupon line when `REVIEW_REWARD_COUPON` is set, and one
-  book suggestion (best seller by the same author, else publisher, else category; published, in
-  stock, never bought on that number) unless the customer already ordered again.
+- **ভালো লাগছে** (older messages only): the review link again, the coupon line when
+  `REVIEW_REWARD_COUPON` is set, and one book suggestion (same rules) unless the customer already
+  ordered again.
 - **এখনো পড়িনি**: the review link ("open for 60 days"). No reminder later.
 - **সমস্যা আছে**: "tell us here, a photo helps" plus the link; the chat shows "⚠ Has a problem" in
   the WhatsApp Inbox (and the order on the Orders page) until staff press Mark done.
 - A customer who writes only "stop" / "বন্ধ" gets no more review requests or suggestions (order
   messages still go out).
+
+**Daily limit and Customer Manager** (owner, 2026-11-14: "send out about 50 messages a day … from
+this customer manager page, I want to see who responded"): at most 50 requests a day by default
+(`REVIEW_REQUEST_DAILY_LIMIT`, or the "Daily limit" box on Customer Manager, Super Admin / Admin,
+up to 1,000; it wins over the env value and needs no restart). Newest deliveries go first, so
+each day's buyers are asked at the 14-day mark; orders that do not fit within the 3 catch-up days
+are not asked. Customer Manager shows a "Feedback requests" strip (on/off, today's count / limit,
+quick filters All asked · Responded · Reviews to approve · Published · Problems), a Feedback column
+(Asked · delivered/read, Replied "…", ★ Review to approve, Review published + published message
+status, Problem, Not delivered), a "Latest feedback first" sort, and a Feedback tab in the customer
+popup with every request, tap and review; a Super Admin can "Approve & publish" a review there
+(same route as admin → Reviews, so the customer gets the `review_approved` message).
 
 Reviews from the page are saved like any customer review: pending until approved in the admin
 panel's Reviews, one per book per order (editable until approved), marked as a verified purchase.
@@ -169,16 +197,20 @@ review ("অনুমোদনের অপেক্ষায়" until approved
 ```
 আসসালামু আলাইকুম {{1}},
 "{{2}}" বই নিয়ে আপনার রিভিউ আমল বুকসে প্রকাশিত হয়েছে। মতামতের জন্য ধন্যবাদ!
-দেখুন: {{3}}
 
 আরও কোনো বই লাগবে?
 — amolbooks.com
 ```
 
-Footer (optional): `মেসেজ বন্ধ করতে STOP লিখুন`. Two **Quick reply** buttons, in this order:
-**হ্যাঁ, বই লাগবে**, **এখন না**. Sample values: `রহিম`, `প্রোডাক্টিভ মুসলিম`,
-`https://amolbooks.com/product-details/productive%20muslim`. It asks about more books, so Meta will
-most likely file it as **Marketing** (a higher price per message than Utility); that is expected.
+Footer (optional): `মেসেজ বন্ধ করতে STOP লিখুন`. Buttons, in exactly this order:
+1. **Visit website**, text **রিভিউ দেখুন**, URL type **Dynamic**: `https://amolbooks.com/rate/{{1}}`,
+   sample `https://amolbooks.com/rate/AbCdEfGh12345678` (the same page: the published review with a
+   link to the book, and books to buy next).
+2. **Quick reply** (Custom): **হ্যাঁ, বই লাগবে**
+3. **Quick reply** (Custom): **এখন না**
+
+Sample body values: `রহিম`, `প্রোডাক্টিভ মুসলিম`. It asks about more books, so Meta will most likely
+file it as **Marketing** (a higher price per message than Utility); that is expected.
 
 When staff approve a review written from the WhatsApp link (admin panel → Reviews), the customer
 gets this once per order, with the book's page (where the review now shows). Not for numbers that
@@ -261,6 +293,8 @@ WHATSAPP_TEMPLATE_REVIEW_REQUEST=
 # "Your review is published" + more books? (template review_approved, above); empty = off
 WHATSAPP_TEMPLATE_REVIEW_APPROVED=
 # optional: days after delivery (14) and send hours in Dhaka time (19-21 = 7:00 to 8:59 pm)
+# most review requests a day (Dhaka day); the Customer Manager page can change it (that wins)
+REVIEW_REQUEST_DAILY_LIMIT=50
 REVIEW_REQUEST_DAYS=14
 REVIEW_REQUEST_HOURS=19-21
 # optional: coupon code made in admin → Coupons, shown after a review (any rating); empty = no reward

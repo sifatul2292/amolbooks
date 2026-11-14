@@ -252,6 +252,31 @@
                                         "value": "none"
                                     }
                                 ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "name",
+                                        "value": "city"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "value",
+                                        "value": "{{dlv - user_data.city}}"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "transformation",
+                                        "value": "none"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "store",
+                                        "value": "none"
+                                    }
+                                ]
                             }
                         ]
                     },
@@ -668,6 +693,31 @@
                                         "type": "TEMPLATE",
                                         "key": "value",
                                         "value": "{{dlv - user_data.country}}"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "transformation",
+                                        "value": "none"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "store",
+                                        "value": "none"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "name",
+                                        "value": "city"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "value",
+                                        "value": "{{dlv - user_data.city}}"
                                     },
                                     {
                                         "type": "TEMPLATE",

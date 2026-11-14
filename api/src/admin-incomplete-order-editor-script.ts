@@ -194,14 +194,19 @@ export const ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT = String.raw`
       if (error.name !== 'AbortError') box.innerHTML = '<div class="ie-empty">' + String(error.message || 'Search failed') + '</div>';
     });
   }
+  // Locking the page behind the dialog moves it to the top; put the list back where it was
+  // (owner, 2026-11-14: after editing an order the list must stay at the same place).
+  var pageScroll = null;
   function close() {
     byId('ie-overlay').classList.remove('open'); byId('ie-overlay').setAttribute('aria-hidden', 'true'); document.body.style.overflow = '';
-    if (lastFocus && lastFocus.focus) lastFocus.focus();
+    if (pageScroll) { root.scrollTo(pageScroll.x, pageScroll.y); pageScroll = null; }
+    if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
   }
   function open(id, mode) {
     if (!id) return; currentId = id; currentMode = mode === 'order' ? 'order' : 'incomplete'; currentOrder = null; lastFocus = document.activeElement; items = []; couponDiscount = 0; byId('ie-discount').value = ''; renderItems(); setStatus('Loading order…');
     byId('ie-title').textContent = currentMode === 'order' ? 'Edit order' : 'Edit incomplete order';
     byId('ie-subtitle').textContent = currentMode === 'order' ? 'Changes apply immediately to this order.' : 'Changes will be used when this order is added or sent to courier.';
+    if (!byId('ie-overlay').classList.contains('open')) pageScroll = { x: root.scrollX, y: root.scrollY };
     byId('ie-overlay').classList.add('open'); byId('ie-overlay').setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
     var path = currentMode === 'order' ? '/api/order/' : '/api/order/incomplete/';
     fetch(API + path + encodeURIComponent(id), { headers: headers() }).then(parseResponse).then(function (payload) {
@@ -253,7 +258,18 @@ export const ADMIN_INCOMPLETE_ORDER_EDITOR_SCRIPT = String.raw`
     var button = byId('ie-save'); button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…'; setStatus('');
     var path = currentMode === 'order' ? '/api/order/update-order-admin/' : '/api/order/update-incomplete-order-admin/';
     fetch(API + path + encodeURIComponent(currentId), { method: 'PUT', headers: headers(), body: JSON.stringify(payload) })
-      .then(parseResponse).then(function () { setStatus('Changes saved. Refreshing the order list…', 'success'); root.setTimeout(function () { root.location.reload(); }, 450); })
+      .then(parseResponse).then(function () {
+        // The order dashboard refreshes its rows in place: same page, filters and scroll position
+        // (owner, 2026-11-14: saving used to reload the page and jump back to page 1). Other pages reload.
+        if (typeof root.refreshOrdersInPlace === 'function') {
+          button.disabled = false; button.innerHTML = '<i class="fas fa-save"></i> Save changes'; setStatus('');
+          close();
+          root.refreshOrdersInPlace();
+          if (typeof root.showToast === 'function') root.showToast('Order updated', 'success');
+          return;
+        }
+        setStatus('Changes saved. Refreshing the order list…', 'success'); root.setTimeout(function () { root.location.reload(); }, 450);
+      })
       .catch(function (error) { setStatus(error.message || 'Could not save changes.', 'error'); button.disabled = false; button.innerHTML = '<i class="fas fa-save"></i> Save changes'; });
   }
 

@@ -7,6 +7,7 @@ import {
   NotFoundException,
   Param,
   Post,
+  Put,
   Query,
   Req,
   ServiceUnavailableException,
@@ -29,12 +30,18 @@ import { ReviewRequestService } from './review-request.service';
 
 const SNIPPETS_DIR = join(__dirname, '..', '..', '..', '..', 'gtm-snippets');
 /** Page scripts the storefront loads only where needed (small loaders are in the storefront snippets). */
-const PAGE_SCRIPTS = ['order-review.js', 'customer-dashboard.js'];
+const PAGE_SCRIPTS = ['order-review.js', 'customer-dashboard.js', 'checkout-location.js'];
+/** Served with these files first: the checkout's district picker uses the delivery zone rules the API uses too. */
+const PAGE_SCRIPT_PARTS: Record<string, string[]> = {
+  'checkout-location.js': ['delivery-zone-core.js', 'checkout-location.js'],
+};
 
 /**
  * Serves the storefront's larger page scripts: the review page (/pages/order-review, loaded by
- * gtm-snippets/order-review-loader.html) and the customer dashboard (/account/..., loaded by
- * gtm-snippets/customer-dashboard-loader.html). Read on each request, so a deploy needs no restart.
+ * gtm-snippets/order-review-loader.html), the customer dashboard (/account/..., loaded by
+ * gtm-snippets/customer-dashboard-loader.html) and the checkout's district picker (/checkout,
+ * loaded by gtm-snippets/checkout-location-loader.html). Read on each request, so a deploy needs no
+ * restart.
  */
 @Controller('storefront-page')
 export class StorefrontPageController {
@@ -45,7 +52,7 @@ export class StorefrontPageController {
   script(@Param('file') file: string) {
     if (!PAGE_SCRIPTS.includes(String(file || ''))) throw new NotFoundException();
     try {
-      return readFileSync(join(SNIPPETS_DIR, file), 'utf8');
+      return (PAGE_SCRIPT_PARTS[file] || [file]).map((part) => readFileSync(join(SNIPPETS_DIR, part), 'utf8')).join('\n;\n');
     } catch {
       throw new ServiceUnavailableException();
     }
@@ -73,6 +80,24 @@ export class ReviewRequestController {
     return this.reviewRequests.stats(days);
   }
 
+  /** Daily limit, today's count and whether the messages are on (Customer Manager page). */
+  @Version(VERSION_NEUTRAL)
+  @Get('admin/settings')
+  @UseGuards(AdminJwtAuthGuard, AdminRolesGuard)
+  @AdminMetaRoles(...Object.values(AdminRoles))
+  @Header('Cache-Control', 'no-store')
+  settings() {
+    return this.reviewRequests.settings();
+  }
+
+  @Version(VERSION_NEUTRAL)
+  @Put('admin/settings')
+  @UseGuards(AdminJwtAuthGuard, AdminRolesGuard)
+  @AdminMetaRoles(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  saveSettings(@Body() body: any, @Req() request: any) {
+    return this.reviewRequests.setDailyLimit(body?.dailyLimit, request.user || request.admin);
+  }
+
   /** The logged-in customer's open review links (dashboard "রিভিউ দিন" opens that order's page). */
   @Version(VERSION_NEUTRAL)
   @Get('mine')
@@ -80,6 +105,15 @@ export class ReviewRequestController {
   @Header('Cache-Control', 'no-store')
   mine(@GetTokenUser() user: any) {
     return this.reviewRequests.linksFor(user);
+  }
+
+  /** Books to buy next for the logged-in customer (dashboard overview shelf). */
+  @Version(VERSION_NEUTRAL)
+  @Get('mine/books')
+  @UseGuards(UserJwtAuthGuard)
+  @Header('Cache-Control', 'no-store')
+  mineBooks(@GetTokenUser() user: any) {
+    return this.reviewRequests.moreForUser(user);
   }
 
   @Version(VERSION_NEUTRAL)

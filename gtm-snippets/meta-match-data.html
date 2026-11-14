@@ -115,11 +115,14 @@
     var nameParts = String(details.name || '').trim().split(/\s+/).filter(Boolean);
     var phone = normalizedPhone(details.phone);
     var email = String(details.email || '').trim();
+    /* Town: the district picked at checkout (checkout-location.js), letters only as Meta asks. */
+    var city = String(details.city || '').toLowerCase().replace(/[^a-z]/g, '');
     var pending = {
       ph: phone ? sha256(phone) : null,
       em: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? sha256(email) : null,
       fn: nameParts[0] ? sha256(nameParts[0]) : null,
-      ln: nameParts.length > 1 ? sha256(nameParts.slice(1).join('')) : null
+      ln: nameParts.length > 1 ? sha256(nameParts.slice(1).join('')) : null,
+      ct: city ? sha256(city) : null
     };
     var keys = Object.keys(pending).filter(function (key) { return pending[key]; });
     return Promise.all(keys.map(function (key) { return pending[key]; })).then(function (hashes) {
@@ -145,7 +148,7 @@
     var fbp = readCookie('_fbp');
     if (fbp && !userData.fbp) userData.fbp = fbp;
     var customer = savedCustomer();
-    ['ph', 'em', 'fn', 'ln'].forEach(function (key) {
+    ['ph', 'em', 'fn', 'ln', 'ct'].forEach(function (key) {
       if (!userData[key] && customer[key]) userData[key] = customer[key];
     });
     if (!userData.country) userData.country = COUNTRY_BD;
@@ -159,7 +162,7 @@
   /* Checkout events carry this visitor's saved hashes for the Data Tags (and
      from there the server Meta tags). They are cleared straight after, because
      GA4's purchase tag sends user_data to Google as raw user-provided data. */
-  var CHECKOUT_FIELDS = { ph: 'phone_number', em: 'email_address', fn: 'first_name', ln: 'last_name' };
+  var CHECKOUT_FIELDS = { ph: 'phone_number', em: 'email_address', fn: 'first_name', ln: 'last_name', ct: 'city' };
   window.__amolPushWithCustomer = function (message) {
     window.dataLayer = window.dataLayer || [];
     var customer = savedCustomer();

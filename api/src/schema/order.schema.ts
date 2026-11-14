@@ -31,6 +31,25 @@ export const OrderSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    // District (and Dhaka area) picked at checkout; it set the delivery charge (shared/delivery-zone).
+    deliveryLocation: {
+      type: {
+        district: String,
+        districtName: String,
+        districtEn: String,
+        metaCity: String,
+        area: String,
+        areaName: String,
+        zone: String,
+        mismatch: String,
+        confirmed: Boolean,
+        weightGram: Number,
+        clientCharge: Number,
+        charge: Number,
+      },
+      required: false,
+      _id: false,
+    },
     orderSmsSent: {
       type: Boolean,
       required: false,

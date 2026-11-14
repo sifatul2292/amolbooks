@@ -160,6 +160,47 @@
     .b-no_answer { background: #fef3c7; color: #92400e; }
     .b-not_interested { background: #f1f5f9; color: #64748b; }
     .b-dont_contact { background: #1e293b; color: #fff; }
+    /* Feedback: WhatsApp review requests (owner, 2026-11-14: see who responded; about 50 a day) */
+    .feedback-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; background: #fff; border: 1px solid var(--g100); border-radius: 14px; padding: 12px 16px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(15,23,42,.04); }
+    .fb-head { display: flex; align-items: center; gap: 10px; min-width: 230px; }
+    .fb-icon { width: 34px; height: 34px; border-radius: 10px; background: #dcfce7; color: #15803d; display: grid; place-items: center; font-size: 16px; flex-shrink: 0; }
+    .fb-head strong { display: block; font-size: 13px; color: var(--g900); }
+    .fb-head small { display: block; font-size: 11.5px; color: var(--g500); }
+    .fb-head small.off { color: #b45309; font-weight: 600; }
+    .fb-limit { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; color: var(--g700); }
+    .fb-limit b { font-size: 14px; color: var(--g900); }
+    .fb-meter { width: 90px; height: 6px; border-radius: 6px; background: var(--g100); overflow: hidden; display: inline-block; }
+    .fb-meter i { display: block; height: 100%; background: #22c55e; }
+    .fb-limit label { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+    .fb-limit input { width: 72px; padding: 6px 8px; border: 1px solid var(--g200); border-radius: 8px; font-size: 12.5px; }
+    .fb-limit button { border: none; background: var(--p); color: #fff; border-radius: 8px; padding: 7px 12px; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .fb-limit button:disabled { opacity: .6; cursor: default; }
+    .fb-note { font-size: 11.5px; color: var(--g500); }
+    .fb-note.error { color: #b91c1c; }
+    .fb-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+    .fb-chip { border: 1px solid var(--g200); background: #fff; border-radius: 100px; padding: 6px 12px; font-size: 12px; font-weight: 700; color: var(--g700); cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+    .fb-chip .n { background: var(--g100); border-radius: 100px; padding: 1px 7px; font-size: 11px; }
+    .fb-chip.todo .n { background: #fef3c7; color: #92400e; }
+    .fb-chip.warn .n { background: #fee2e2; color: #991b1b; }
+    .fb-chip.active { background: var(--p); border-color: var(--p); color: #fff; }
+    .fb-chip.active .n { background: rgba(255,255,255,.25); color: #fff; }
+    .fb { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .fb-asked { background: var(--g100); color: #475569; }
+    .fb-read { background: #e0f2fe; color: #075985; }
+    .fb-replied { background: #dbeafe; color: #1e40af; }
+    .fb-awaiting { background: #fef3c7; color: #92400e; }
+    .fb-published { background: #d1fae5; color: #065f46; }
+    .fb-problem { background: #fee2e2; color: #991b1b; }
+    .fb-failed { background: #fff1f2; color: #9f1239; }
+    .fb-item { border: 1px solid var(--g100); border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; font-size: 12.5px; }
+    .fb-item .top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+    .fb-steps { display: grid; gap: 3px; font-size: 12px; color: var(--g700); }
+    .fb-review { border-top: 1px dashed var(--g200); padding-top: 6px; display: grid; gap: 4px; }
+    .fb-review .stars { color: #f59e0b; letter-spacing: 1px; }
+    .fb-review p { margin: 0; white-space: pre-wrap; color: var(--g900); }
+    .fb-approve { justify-self: start; border: none; background: #16a34a; color: #fff; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .fb-approve:disabled { opacity: .6; cursor: default; }
+    @media(max-width:900px) { .fb-chips { margin-left: 0; } }
     .fu { font-size: 11.5px; font-weight: 600; white-space: nowrap; }
     .fu.overdue { color: #dc2626; }
     .fu.today { color: #d97706; }
@@ -356,6 +397,12 @@
         <button class="stat-card c4" data-tab="never"><div class="stat-icon"><i class="fas fa-phone-slash"></i></div><div class="stat-info"><label>Never contacted</label><div class="val" id="stat-never">—</div><small id="stat-followed">&nbsp;</small></div></button>
       </div>
 
+      <section class="feedback-bar" aria-label="Feedback requests">
+        <div class="fb-head"><span class="fb-icon"><i class="fab fa-whatsapp"></i></span><div><strong>Feedback requests</strong><small id="fb-status">Loading…</small></div></div>
+        <div class="fb-limit" id="fb-limit"></div>
+        <div class="fb-chips" id="fb-chips" role="group" aria-label="Show customers by feedback"></div>
+      </section>
+
       <div class="status-tabs" id="tabs" role="tablist"></div>
 
       <div class="filter-bar" id="filter-bar">
@@ -411,6 +458,7 @@
             <button class="dropdown-item" data-set="sort" data-value="orders">Most delivered orders</button>
             <button class="dropdown-item" data-set="sort" data-value="ratio">Best order ratio</button>
             <button class="dropdown-item" data-set="sort" data-value="followup">Next follow-up first</button>
+            <button class="dropdown-item" data-set="sort" data-value="feedback">Latest feedback first</button>
           </div>
         </div>
         <select class="per-page-select" id="page-size" aria-label="Customers per page">
@@ -426,7 +474,7 @@
         <div class="table-wrap">
           <table>
             <thead><tr>
-              <th>Customer</th><th>Phone</th><th>Address</th><th>Last purchase</th><th>Delivered</th><th>Total spent</th><th>Order ratio</th><th>Courier ratio</th><th>Status</th><th>Next follow-up</th><th>Actions</th>
+              <th>Customer</th><th>Phone</th><th>Address</th><th>Last purchase</th><th>Delivered</th><th>Total spent</th><th>Order ratio</th><th>Courier ratio</th><th>Feedback</th><th>Status</th><th>Next follow-up</th><th>Actions</th>
             </tr></thead>
             <tbody id="rows"></tbody>
           </table>
@@ -498,9 +546,11 @@
           <div class="seg" role="tablist">
             <button type="button" class="active" data-pane="orders">Orders</button>
             <button type="button" data-pane="contacts">Contact history</button>
+            <button type="button" data-pane="feedback">Feedback</button>
           </div>
           <div class="list" id="pane-orders"></div>
           <div class="list" id="pane-contacts" hidden></div>
+          <div class="list" id="pane-feedback" hidden></div>
         </div>
       </div>
     </div>
@@ -574,9 +624,9 @@
       LABELS.never = 'Never contacted'; LABELS.due = 'Follow-up due';
       const TABS = [['', 'All'], ['never', 'Never contacted'], ['due', 'Follow-up due'], ['interested', 'Interested'], ['follow_up', 'Follow up later'], ['no_answer', 'No answer'], ['ordered', 'Ordered'], ['not_interested', 'Not interested'], ['dont_contact', "Don't contact"]];
       const ORDER_STATUS = { 0: 'Pending', 1: 'Pending', 2: 'Confirmed', 3: 'Processing', 4: 'Shipping', 5: 'Completed', 6: 'Cancelled', 7: 'Refunded', 8: 'Courier', 9: 'Returned', 10: 'Trash' };
-      const SORT_LABELS = { recent: 'Latest purchase', spent: 'Highest spending', orders: 'Most orders', ratio: 'Best ratio', followup: 'Next follow-up' };
-      const FILTERS = ['q', 'status', 'lastFrom', 'lastTo', 'product', 'category', 'minSpent', 'maxSpent', 'minOrderValue', 'frequency', 'ratio', 'sort', 'pageSize', 'page'];
-      const DEFAULTS = { q: '', status: '', lastFrom: '', lastTo: '', product: '', category: '', minSpent: '', maxSpent: '', minOrderValue: '', frequency: '', ratio: '', sort: 'recent', pageSize: '20', page: '1' };
+      const SORT_LABELS = { recent: 'Latest purchase', spent: 'Highest spending', orders: 'Most orders', ratio: 'Best ratio', followup: 'Next follow-up', feedback: 'Latest feedback' };
+      const FILTERS = ['q', 'status', 'feedback', 'lastFrom', 'lastTo', 'product', 'category', 'minSpent', 'maxSpent', 'minOrderValue', 'frequency', 'ratio', 'sort', 'pageSize', 'page'];
+      const DEFAULTS = { q: '', status: '', feedback: '', lastFrom: '', lastTo: '', product: '', category: '', minSpent: '', maxSpent: '', minOrderValue: '', frequency: '', ratio: '', sort: 'recent', pageSize: '20', page: '1' };
       // Filters live in the address bar, so a reload or shared link keeps them.
       const state = Object.assign({}, DEFAULTS);
       new URLSearchParams(location.search).forEach((value, key) => { if (key in DEFAULTS) state[key] = value; });
@@ -646,7 +696,7 @@
         } catch (error) {
           if (error.name === 'AbortError' || controller !== listController) return;
           $('notice').textContent = error.message;
-          if (!data) $('rows').innerHTML = '<tr class="empty-row"><td colspan="11">Could not load customers. Press Refresh to try again.</td></tr>';
+          if (!data) $('rows').innerHTML = '<tr class="empty-row"><td colspan="12">Could not load customers. Press Refresh to try again.</td></tr>';
         } finally {
           if (controller === listController) $('refresh').classList.remove('spin');
         }
@@ -659,11 +709,12 @@
         $('stat-due').textContent = s.due.toLocaleString();
         $('stat-never').textContent = s.never.toLocaleString();
         $('stat-followed').textContent = s.followedUp.toLocaleString() + ' already contacted';
+        renderFeedbackBar();
         $('tabs').innerHTML = TABS.map(([value, label]) => {
           const count = value ? data.tabs[value] || 0 : data.tabs.all;
           return '<button class="status-tab' + (state.status === value ? ' active' : '') + '" role="tab" aria-selected="' + (state.status === value) + '" data-tab="' + value + '">' + esc(label) + '<span class="tab-count">' + count.toLocaleString() + '</span></button>';
         }).join('');
-        $('rows').innerHTML = data.rows.length ? data.rows.map(rowHtml).join('') : '<tr class="empty-row"><td colspan="11"><i class="fas fa-users-slash" style="font-size:22px;display:block;margin-bottom:8px;color:#cbd5e1"></i>No customers match these filters.</td></tr>';
+        $('rows').innerHTML = data.rows.length ? data.rows.map(rowHtml).join('') : '<tr class="empty-row"><td colspan="12"><i class="fas fa-users-slash" style="font-size:22px;display:block;margin-bottom:8px;color:#cbd5e1"></i>No customers match these filters.</td></tr>';
         const size = data.pageSize, page = data.page, total = data.total, pages = Math.max(1, Math.ceil(total / size));
         $('range').textContent = total ? 'Showing ' + ((page - 1) * size + 1).toLocaleString() + ' – ' + Math.min(page * size, total).toLocaleString() + ' of ' + total.toLocaleString() + ' customers' : 'No customers';
         let pager = '<button class="page-btn" data-page="' + (page - 1) + '"' + (page <= 1 ? ' disabled' : '') + ' aria-label="Previous page"><i class="fas fa-chevron-left"></i></button>';
@@ -675,6 +726,83 @@
         $('pager').innerHTML = pager;
         $('footnote').textContent = 'Only customers with at least one delivered order. Order ratio = delivered ÷ all orders from this phone (✗ = cancelled / returned). Courier ratio = the saved courier check across all couriers. Updated ' + new Date(data.updatedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + '.';
       }
+      /* ── Feedback (WhatsApp review requests, api/src/pages/review-request) ── */
+      const REPLY_LABELS = { liked: 'ভালো লাগছে', unread: 'এখনো পড়িনি', problem: 'সমস্যা আছে', more: 'হ্যাঁ, বই লাগবে', nomore: 'এখন না' };
+      const MESSAGE_LABELS = { sending: 'Sending', sent: 'Sent', delivered: 'Delivered', read: 'Read', failed: 'Not delivered' };
+      const FEEDBACK_STATES = { asked: 'Asked', read: 'Read', replied: 'Replied', awaiting: 'Review to approve', published: 'Review published', problem: 'Problem', failed: 'Not delivered' };
+      const FEEDBACK_CHIPS = [['asked', 'All asked', ''], ['responded', 'Responded', ''], ['awaiting', 'Reviews to approve', 'todo'], ['published', 'Published', ''], ['problem', 'Problems', 'warn']];
+      let feedbackSettings = null, feedbackNote = '';
+      const canSetLimit = () => ['super_admin', 'admin'].includes(role());
+      const hoursText = (h) => { const t = (n) => (n % 12 || 12) + (n >= 12 ? ' pm' : ' am'); return h ? t(h[0]).replace(/ [ap]m$/, '') + '–' + t(h[1]) : ''; };
+      function feedbackCell(f) {
+        if (!f) return '<span class="muted">Not asked</span>';
+        const rated = (f.state === 'awaiting' || f.state === 'published') && f.rating ? '★' + f.rating + ' ' : '';
+        let sub = fmtDate(f.at) + (f.message ? ' · ' + (MESSAGE_LABELS[f.message] || f.message) : '');
+        if (f.state === 'replied' || f.state === 'problem') sub = '“' + (REPLY_LABELS[f.reply] || f.reply) + '” · ' + fmtDate(f.repliedAt);
+        else if (f.state === 'awaiting') sub = f.reviewCount + (f.reviewCount > 1 ? ' reviews' : ' review') + ' · ' + fmtDate(f.reviewedAt);
+        else if (f.state === 'published') sub = 'Published message: ' + (MESSAGE_LABELS[f.approvedMessage] || 'not sent');
+        return '<span class="fb fb-' + esc(f.state) + '">' + esc(rated + (FEEDBACK_STATES[f.state] || f.state)) + '</span><span class="cell-sub">' + esc(sub) + '</span>';
+      }
+      function renderFeedbackBar() {
+        const s = feedbackSettings, counts = (data && data.feedbackCounts) || {};
+        $('fb-status').textContent = !s ? 'Loading…' : s.active
+          ? 'On · ' + s.days + ' days after delivery, ' + hoursText(s.hours) + (s.approvedActive ? ' · published message on' : ' · published message off')
+          : 'Off until the WhatsApp template is approved and its name is set on the server';
+        $('fb-status').classList.toggle('off', !!s && !s.active);
+        if (s) {
+          const pct = s.dailyLimit ? Math.min(100, Math.round((s.sentToday / s.dailyLimit) * 100)) : 100;
+          $('fb-limit').innerHTML = '<span>Today</span><b>' + s.sentToday + ' / ' + s.dailyLimit + '</b><span class="fb-meter" aria-hidden="true"><i style="width:' + pct + '%"></i></span>' +
+            (canSetLimit()
+              ? '<label for="fb-limit-input">Daily limit</label><input id="fb-limit-input" type="number" inputmode="numeric" min="0" max="' + s.maxDailyLimit + '" step="1" value="' + s.dailyLimit + '"><button type="button" id="fb-limit-save">Save</button>'
+              : '<span class="muted">Daily limit ' + s.dailyLimit + '</span>') +
+            (feedbackNote ? '<span class="fb-note' + (/^Could not|must/.test(feedbackNote) ? ' error' : '') + '" role="status">' + esc(feedbackNote) + '</span>' : '');
+        }
+        $('fb-chips').innerHTML = FEEDBACK_CHIPS.map(([value, label, tone]) => '<button type="button" class="fb-chip ' + tone + (state.feedback === value ? ' active' : '') + '" data-feedback="' + value + '" aria-pressed="' + (state.feedback === value) + '">' + esc(label) + '<span class="n">' + (counts[value] || 0).toLocaleString() + '</span></button>').join('') +
+          (state.feedback ? '<button type="button" class="fb-chip" data-feedback="">Show all</button>' : '');
+      }
+      async function loadFeedbackSettings() {
+        try { feedbackSettings = await request('/api/order-review/admin/settings'); } catch (error) { feedbackNote = 'Could not load feedback settings: ' + error.message; }
+        renderFeedbackBar();
+      }
+      async function saveDailyLimit() {
+        const input = $('fb-limit-input'), button = $('fb-limit-save');
+        button.disabled = true;
+        try {
+          feedbackSettings = await request('/api/order-review/admin/settings', { method: 'PUT', body: JSON.stringify({ dailyLimit: Number(input.value) }) });
+          feedbackNote = 'Saved: up to ' + feedbackSettings.dailyLimit + ' a day.';
+        } catch (error) { feedbackNote = 'Could not save: ' + error.message; }
+        renderFeedbackBar();
+      }
+      function feedbackPane(list) {
+        if (!list || !list.length) return '<p class="empty-note">No feedback request yet. It goes out on WhatsApp ' + ((feedbackSettings && feedbackSettings.days) || 14) + ' days after delivery.</p>';
+        const approver = role() === 'super_admin';
+        return list.map((f) => {
+          const steps = [
+            'Asked ' + fmtDate(f.at) + (f.message ? ' · ' + (MESSAGE_LABELS[f.message] || f.message) : '') + (f.error ? ' · ' + f.error : ''),
+            f.reply ? 'Tapped “' + (REPLY_LABELS[f.reply] || f.reply) + '” · ' + fmtDate(f.repliedAt) : 'No button tapped',
+            f.approvedAt ? 'Published message (' + (f.approvedBook || 'book') + '): ' + (MESSAGE_LABELS[f.approvedMessage] || 'not sent') + (f.approvedReply ? ' · tapped “' + (REPLY_LABELS[f.approvedReply] || f.approvedReply) + '”' : '') : '',
+          ].filter(Boolean);
+          const reviews = (f.reviews || []).map((r) => '<div class="fb-review"><div><span class="stars" aria-label="' + r.rating + ' stars">' + '★'.repeat(r.rating) + '</span> <b>' + esc((r.product && r.product.name) || 'Book') + '</b> ' +
+            (r.status ? '<span class="fb fb-published">Published</span>' : '<span class="fb fb-awaiting">Waiting for approval</span>') + '</div><p>' + esc(r.review) + '</p>' +
+            (r.status ? '' : approver ? '<button type="button" class="fb-approve" data-approve="' + esc(r._id) + '">Approve &amp; publish</button>' : '<span class="muted">A Super Admin approves it (here or in Reviews).</span>') + '</div>').join('');
+          return '<div class="fb-item"><div class="top"><strong>Order #' + esc(f.orderId) + '</strong><span class="fb fb-' + esc(f.state) + '">' + esc(FEEDBACK_STATES[f.state] || f.state) + '</span></div>' +
+            '<div class="fb-steps">' + steps.map((t) => '<div>' + esc(t) + '</div>').join('') + '</div>' + (reviews || '<div class="muted">No review written yet.</div>') + '</div>';
+        }).join('');
+      }
+      // Same route as the admin panel's Reviews page: publishing sends the "review published" WhatsApp
+      // message (ReviewService.updateReviewById → ReviewRequestService.notifyApproved).
+      async function approveReview(button) {
+        const review = (current && current.feedback || []).flatMap((f) => f.reviews || []).find((r) => r._id === button.dataset.approve);
+        if (!review) return;
+        button.disabled = true; button.textContent = 'Publishing…';
+        try {
+          await request('/api/review/update', { method: 'PUT', body: JSON.stringify({ _id: review._id, status: true, product: review.product, rating: review.rating }) });
+          button.textContent = feedbackSettings && feedbackSettings.approvedActive ? 'Published · customer gets the WhatsApp message' : 'Published (WhatsApp message is off)';
+          loadDetail(current.phone, true);
+          load({ refresh: true }); // the list is cached; an approval does not add an order
+        } catch (error) { button.disabled = false; button.textContent = 'Approve & publish'; alert('Could not publish: ' + error.message); }
+      }
+
       function rowHtml(c) {
         const s = contactStatus(c.latestContact), blocked = s === 'dont_contact';
         return '<tr class="st-' + esc(s) + '" data-phone="' + esc(c.phone) + '">' +
@@ -686,6 +814,7 @@
           '<td><span class="num">' + money(c.totalSpent) + '</span></td>' +
           '<td>' + storeRatio(c) + '</td>' +
           '<td>' + courierRatio(c.courierRatio) + '</td>' +
+          '<td>' + feedbackCell(c.feedback) + '</td>' +
           '<td>' + statusBadge(c.latestContact) + (c.latestContact && c.latestContact.contactedByName ? '<span class="cell-sub">by ' + esc(c.latestContact.contactedByName) + ' · ' + fmtDate(c.latestContact.createdAt) + '</span>' : '') + '</td>' +
           '<td>' + followupCell(c.latestContact) + '</td>' +
           '<td><div class="row-actions">' + (blocked ? '' : '<a class="btn-action btn-call" href="tel:' + esc(c.phone) + '" title="Call" aria-label="Call ' + esc(c.name) + '"><i class="fas fa-phone"></i></a><a class="btn-action btn-wa" href="https://wa.me/' + waNumber(c.phone) + '" target="_blank" rel="noopener noreferrer" title="WhatsApp" aria-label="WhatsApp ' + esc(c.name) + '"><i class="fab fa-whatsapp"></i></a>') + '<button class="btn-action btn-open" type="button"><i class="fas fa-pen-to-square"></i> Log</button></div></td></tr>';
@@ -875,6 +1004,7 @@
           const label = o.crmDelivered ? 'Delivered' : ORDER_STATUS[o.orderStatus] || (o.courierStatus && o.courierStatus.status) || 'Order';
           return '<div class="order-line"><div class="top"><strong>#' + esc(o.orderId) + ' · ' + money(o.grandTotal) + '</strong><span class="st ' + cls + '">' + esc(label) + '</span></div><div class="items">' + esc((o.orderedItems || []).map((i) => (i.name || 'Book') + (i.quantity > 1 ? ' ×' + i.quantity : '')).join(', ')) + '</div><div class="when">' + fmtDate(o.createdAt) + ' · ' + daysAgo(o.createdAt) + '</div></div>';
         }).join('') || '<p class="empty-note">No orders.</p>';
+        $('pane-feedback').innerHTML = feedbackPane(c.feedback);
         $('pane-contacts').innerHTML = c.history.length ? c.history.map((h) => '<div class="timeline-item"><span class="badge b-' + esc(h.outcome) + '">' + esc(LABELS[h.outcome] || h.outcome) + '</span>' + (h.note ? '<p>' + esc(h.note) + '</p>' : '') + '<small>' + esc(h.channel) + ' · ' + esc(h.contactedByName || 'Staff') + ' · ' + fmtDate(h.createdAt) + (h.nextFollowUp ? ' · follow-up ' + fmtDate(h.nextFollowUp) : '') + '</small></div>').join('') : '<p class="empty-note">Not contacted yet.</p>';
         if (!keepForm) { $('template').value = 'related'; updateMessage(); }
         $('create-order').onclick = openOrder;
@@ -888,7 +1018,7 @@
       $('cm-next').onclick = () => { const n = neighbours(); if (n.next) openCustomer(n.next); };
       document.querySelectorAll('.seg [data-pane]').forEach((b) => (b.onclick = () => {
         document.querySelectorAll('.seg [data-pane]').forEach((x) => x.classList.toggle('active', x === b));
-        $('pane-orders').hidden = b.dataset.pane !== 'orders'; $('pane-contacts').hidden = b.dataset.pane !== 'contacts';
+        ['orders', 'contacts', 'feedback'].forEach((pane) => { $('pane-' + pane).hidden = b.dataset.pane !== pane; });
       }));
       function updateMessage() {
         if (!current) return;
@@ -1015,7 +1145,7 @@
         if (listController) listController.abort();
         localStorage.removeItem('co_admin_token'); localStorage.removeItem('profit_admin_token');
         data = null;
-        $('rows').innerHTML = '<tr class="empty-row"><td colspan="11">Sign in to view customers.</td></tr>';
+        $('rows').innerHTML = '<tr class="empty-row"><td colspan="12">Sign in to view customers.</td></tr>';
         $('login').hidden = false;
       };
       $('login-form').onsubmit = async (event) => {
@@ -1028,13 +1158,20 @@
           if (!response.ok || !value) throw new Error((Array.isArray(payload.message) ? payload.message.join(' ') : payload.message) || 'Sign in failed');
           localStorage.setItem('co_admin_token', value);
           $('password').value = ''; $('login').hidden = true;
-          load({ skeleton: true });
+          load({ skeleton: true }); loadFeedbackSettings();
         } catch (error) { $('login-status').textContent = error.message; }
         finally { $('login-button').disabled = false; }
       };
       document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeDropdowns(); });
+      document.addEventListener('click', (event) => {
+        const chip = event.target.closest('[data-feedback]');
+        if (chip) { apply({ feedback: chip.dataset.feedback }); return; }
+        if (event.target.closest('#fb-limit-save')) { saveDailyLimit(); return; }
+        const approve = event.target.closest('[data-approve]');
+        if (approve && !approve.disabled) approveReview(approve);
+      });
 
-      if (token()) load({ skeleton: true }); else $('login').hidden = false;
+      if (token()) { load({ skeleton: true }); loadFeedbackSettings(); } else $('login').hidden = false;
     })();
   </script>
 </body>

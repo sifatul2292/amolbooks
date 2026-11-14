@@ -637,6 +637,8 @@ ${storefrontPurchaseExternalIdHelper}
     'customer-dashboard-loader.html',
     // "Order updates will come on WhatsApp" at checkout, only while WhatsApp messages are on.
     'checkout-whatsapp-note.html',
+    // District picker at checkout: sets the inside/outside Dhaka delivery charge; loads only there.
+    'checkout-location-loader.html',
     'commerce-events.html',
     'mobile-browsing.html',
     // Tidies autofilled +880 numbers in the checkout phone box (the box used to cut them).
@@ -923,10 +925,56 @@ ${storefrontPurchaseExternalIdHelper}
       if (patchedHtml !== indexHtml) {
         writeFileSync(storefrontIndexPath, patchedHtml, 'utf8');
       }
+      patchStorefrontTranslations();
       logger.log('Static storefront patch installed');
     } catch (error) {
       logger.warn(`Static storefront patch skipped: ${error.message}`);
     }
+  }
+
+  // The compiled storefront's Bengali texts call the wishlist "উপহার তালিকা" (gift list); the shop
+  // calls it উইশলিস্ট (owner, 2026-11-14: "fix the wishlist wording"). Rewrite those texts in the
+  // served translation file, like index.html above. Only wishlist texts change; "ফ্রি উপহার" etc. stay.
+  function patchStorefrontTranslations() {
+    try {
+      rewriteWishlistTexts();
+    } catch (error) {
+      logger.warn(`Storefront translation patch skipped: ${error.message}`);
+    }
+  }
+  function rewriteWishlistTexts() {
+    const bnPath = join(__dirname, '..', '..', 'ui', 'dist', 'angular-ui', 'browser', 'assets', 'i18n', 'bn.json');
+    const original = readFileSync(bnPath, 'utf8');
+    const data = JSON.parse(original);
+    const ln = data && data.ln;
+    if (!ln || typeof ln !== 'object') return;
+    const byKey: Record<string, string> = {
+      WishList: 'উইশলিস্ট',
+      Wishlist: 'উইশলিস্ট',
+      MyWishlist: 'উইশলিস্ট',
+      Wishlist1: 'উইশলিস্টে রাখুন',
+      AddtoWish: 'উইশলিস্টে রাখুন',
+      wishlistSuccessfully: 'উইশলিস্টে যোগ হয়েছে',
+      WishlistSuccessfull: 'উইশলিস্টে যোগ হয়েছে',
+      RemovedSuccessfull: 'উইশলিস্ট থেকে সরানো হয়েছে',
+      YourWishlist1: 'আপনার উইশলিস্টে',
+      YourWishlist2: 'টি বই আছে',
+    };
+    for (const [key, text] of Object.entries(byKey)) {
+      if (typeof ln[key] === 'string') ln[key] = text;
+    }
+    for (const [key, value] of Object.entries(ln)) {
+      if (typeof value === 'string' && value.includes('উপহার তালিকা')) {
+        // য় is stored either as one character or as য + nukta; match both.
+        ln[key] = value.replace(/উপহার তালিকা(?:\u09DF|\u09AF\u09BC)/g, 'উইশলিস্টে').replace(/উপহার তালিকা/g, 'উইশলিস্ট');
+      }
+    }
+    // Keep the file's own layout (indented or one line, line endings), so only the texts change.
+    const indent = /^\{\s*\n( +)"/.exec(original);
+    const eol = original.includes('\r\n') ? '\r\n' : '\n';
+    const patched = JSON.stringify(data, null, indent ? indent[1].length : undefined).replace(/\n/g, eol) +
+      (original.endsWith('\n') ? eol : '');
+    if (patched !== original) writeFileSync(bnPath, patched, 'utf8');
   }
 
   function sendStorefrontIndex(

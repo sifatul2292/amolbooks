@@ -12,6 +12,7 @@ import { GuestOrdersModule } from '../guest-orders/guest-orders.module';
 import { ReviewLoginService } from './review-login.service';
 import { ReviewRequestController, StorefrontPageController } from './review-request.controller';
 import { ReviewRequestService } from './review-request.service';
+import { ReviewRequestSettingSchema } from './review-request-setting.schema';
 
 /**
  * WhatsApp review request 14 days after delivery, its review page and the page's SMS-code login
@@ -38,6 +39,7 @@ import { ReviewRequestService } from './review-request.service';
       { name: 'WhatsappChat', schema: WhatsappChatSchema },
       { name: 'User', schema: UserSchema },
       { name: 'Address', schema: AddressSchema },
+      { name: 'ReviewRequestSetting', schema: ReviewRequestSettingSchema },
     ]),
   ],
   controllers: [ReviewRequestController, StorefrontPageController],

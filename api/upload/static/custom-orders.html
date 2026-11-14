@@ -434,6 +434,12 @@
     .wa-badge { display: inline-flex; align-items: center; gap: 2px; margin-top: 3px; padding: 1px 6px; border-radius: 999px; font-size: 10.5px; font-weight: 700; line-height: 1.5; white-space: nowrap; background: #e9f7ee; color: #1a7f45; }
     .wa-badge i { font-size: 11px; }
     a.wa-badge { text-decoration: none; }
+    /* District picked at checkout (it set the delivery charge) and an address that names another place. */
+    .zone-line { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+    .zone-chip, .zone-flag { display: inline-flex; align-items: center; padding: 1px 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; line-height: 1.6; white-space: nowrap; }
+    .zone-chip.zone-in { background: #e6f1fd; color: #1d63c9; }
+    .zone-chip.zone-out { background: #f1ecfd; color: #5b21b6; }
+    .zone-flag { background: #fdecec; color: #b91c1c; }
     a.wa-badge[href]:hover { filter: brightness(0.94); }
     .wa-badge.is-sent { background: #f1f3f2; color: #5b6b62; }
     .wa-badge.is-read { background: #e6f1fd; color: #1d63c9; }
@@ -2309,7 +2315,9 @@
   'use strict';
 
   /* ── Config ── */
-  var API = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://apisub.amolbooks.com';
+  // Locally the API serves this page itself (any port), so use the page's own address; the order
+  // editor does the same. Production keeps the live API.
+  var API = /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname) ? window.location.origin : 'https://apisub.amolbooks.com';
   var ADMIN_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://adminsub.amolbooks.com';
   var allOrders = [];
   var allOrdersById = {};
@@ -2535,6 +2543,29 @@
     if (t) h.administrator = t;
     return h;
   }
+
+  // The window and every scrolled box around the order table (the table scrolls sideways too).
+  function scrollPositions() {
+    var spots = [{ el: null, top: window.scrollY, left: window.scrollX }];
+    for (var el = document.getElementById('ordersBody'); el && el !== document.documentElement; el = el.parentElement) {
+      if (el.scrollTop || el.scrollLeft) spots.push({ el: el, top: el.scrollTop, left: el.scrollLeft });
+    }
+    return spots;
+  }
+  function restoreScroll(spots) {
+    spots.forEach(function (spot) {
+      if (!spot.el) window.scrollTo(spot.left, spot.top);
+      else { spot.el.scrollTop = spot.top; spot.el.scrollLeft = spot.left; }
+    });
+  }
+  // Called by incomplete-order-editor.js after "Save changes": the same page, filters and position,
+  // with the edited order's new details, and the counts above the table updated.
+  window.refreshOrdersInPlace = function () {
+    if (isInsightsView || isStockView) return window.refreshCurrentView();
+    loadOrders({ quiet: true });
+    loadTodayStats();
+    loadStatusCounts();
+  };
 
   window.refreshCurrentView = function () {
     if (isInsightsView) return loadCustomerBundleInsights();
@@ -3020,7 +3051,7 @@
         discount:1, orderStatus:1, paymentStatus:1, paymentType:1,
         createdAt:1, checkoutDate:1, shippingAddress:1, courierData:1, courierStatus:1,
         courierLink:1, fraudChecker:1, admin:1, user:1, deliveryDate:1, orderedItems:1,
-        division:1, area:1, zone:1,
+        division:1, area:1, zone:1, deliveryLocation:1,
         note:1, adminNote:1, adminNoteBy:1, adminNotes:1, city:1, status:1, email:1,
         orderOrigin:1, orderFrom:1, manualOrderSource:1, attribution:1, courierSchedule:1, whatsappMessages:1, customerConfirmation:1, customerRequest:1, orderSmsSkippedAt:1,
       },
@@ -3038,8 +3069,12 @@
   }
 
   /* ── Load Orders ── */
-  function loadOrders() {
-    renderSkeletons();
+  // options.quiet: refresh the rows in place (no loading skeleton) and keep the scroll position,
+  // e.g. after an order was edited (owner, 2026-11-14: stay on the same page and position).
+  function loadOrders(options) {
+    var quiet = !!(options && options.quiet);
+    var scrollSpots = quiet ? scrollPositions() : null;
+    if (!quiet) renderSkeletons();
     var url = API + (isIncompleteView ? '/api/order/get-all-incomplete-orders' : '/api/order/get-all');
     if (state.search) url += '?q=' + encodeURIComponent(state.search);
     fetch(url, { method: 'POST', headers: authHeaders(), body: JSON.stringify(buildRequestBody()) })
@@ -3063,6 +3098,7 @@
       renderStats(count, grandTotal);
       renderTable(orders, count);
       renderPagination(count);
+      if (scrollSpots) restoreScroll(scrollSpots);
     })
     .catch(function(err){
       if (err.message === 'Unauthorized') return;
@@ -3528,7 +3564,10 @@
 
       document.getElementById('modalAddress').textContent = rowAddress(order);
       var dc = Number(order.deliveryCharge||0);
-      document.getElementById('modalShippingMethod').textContent = order.shippingMethod||order.deliveryZone||(dc<=60?'ঢাকার ভিতরে':'ঢাকার বাইরে');
+      var loc = order.deliveryLocation;
+      document.getElementById('modalShippingMethod').textContent = loc && loc.zone
+        ? (loc.zone === 'inside' ? 'ঢাকা সিটির ভেতর' : 'ঢাকা সিটির বাইরে') + ' · ' + zoneText(order) + (loc.mismatch ? ' (ঠিকানায় ' + loc.mismatch + ')' : '')
+        : order.shippingMethod||order.deliveryZone||(dc<=60?'ঢাকার ভিতরে':'ঢাকার বাইরে');
 
       var _pt=(order.paymentType||'').toLowerCase().replace(/_/g,'');
       var ptLabel=_pt==='cashondelivery'||_pt==='cod'?'Cash on Delivery':_pt==='bkash'?'bKash':_pt==='nagad'?'Nagad':_pt==='card'?'Card':(order.paymentType||'Cash on Delivery');
@@ -4000,7 +4039,7 @@
           '<td class="col-no"><span class="order-no">'+esc(o.orderId||o._id.slice(-6))+'</span></td>',
           '<td>'+phoneCell(o.phoneNo)+'</td>',
           '<td class="col-name"><div class="cell-clamp" title="'+esc(o.name||'')+'">'+esc(o.name||'—')+'</div></td>',
-          '<td class="col-address"><div class="cell-clamp" title="'+esc(rowAddress(o))+'">'+esc(rowAddress(o))+'</div></td>',
+          '<td class="col-address"><div class="cell-clamp" title="'+esc(rowAddress(o))+'">'+esc(rowAddress(o))+'</div>'+zoneChip(o)+'</td>',
           '<td>'+fmtDate(o.createdAt||o.checkoutDate)+'</td>',
           '<td><strong style="color:var(--p);font-size:13.5px">৳'+Number(o.grandTotal||0).toLocaleString()+'</strong></td>',
           '<td>'+incompleteCourierCell(o)+'</td>',
@@ -4027,7 +4066,7 @@
         '<td class="col-no"><a href="'+ADMIN_URL+'/sales/order-details/'+o._id+'" target="_blank" class="order-no">#'+esc(o.orderId||o._id.slice(-6))+'</a></td>',
         '<td>'+phoneCell(o.phoneNo)+whatsappBadge(o)+customerConfirmBadge(o)+'</td>',
         '<td class="col-name"><div class="cell-clamp" title="'+esc(o.name||'')+'">'+esc(o.name||'—')+'</div></td>',
-        '<td class="col-address"><div class="cell-clamp" title="'+esc(rowAddress(o))+'">'+esc(rowAddress(o))+'</div></td>',
+        '<td class="col-address"><div class="cell-clamp" title="'+esc(rowAddress(o))+'">'+esc(rowAddress(o))+'</div>'+zoneChip(o)+'</td>',
         '<td>'+fmtDate(o.createdAt||o.checkoutDate)+'</td>',
         '<td><strong style="color:var(--p);font-size:13.5px">৳'+Number(o.grandTotal||0).toLocaleString()+'</strong></td>',
         '<td>'+courierCell+'</td>',
@@ -4112,6 +4151,27 @@
     }).join('');
   }
 
+  /* District the customer picked at checkout (api/src/shared/delivery-zone): it set the inside /
+     outside Dhaka charge. Flagged when the typed address names another place. */
+  function zoneText(order) {
+    var loc = order && order.deliveryLocation;
+    if (!loc || !loc.districtName) return '';
+    return loc.areaName ? loc.areaName + ', ' + loc.districtName : loc.districtName;
+  }
+  function zoneChip(order) {
+    var place = zoneText(order);
+    if (!place) return '';
+    var loc = order.deliveryLocation;
+    var inside = loc.zone === 'inside';
+    var html = '<div class="zone-line"><span class="zone-chip '+(inside ? 'zone-in' : 'zone-out')+'" title="'+
+      (inside ? 'Inside Dhaka city charge' : 'Outside Dhaka city charge')+'">'+esc(place)+' · '+(inside ? 'ঢাকা সিটি' : 'বাইরে')+'</span>';
+    if (loc.mismatch) {
+      html += '<span class="zone-flag" title="'+esc('The address names '+loc.mismatch+' but the customer picked '+place+
+        (loc.confirmed ? ' (and confirmed it)' : '')+'. Check before sending to the courier.')+'">ঠিকানা মিলছে না: '+esc(loc.mismatch)+'</span>';
+    }
+    return html + '</div>';
+  }
+
   /* Row address: typed street first, then whatever location the customer had
      picked. An abandoned checkout often has one but not the other. */
   function rowAddress(order) {
@@ -4120,7 +4180,8 @@
       order.area && (order.area.name || order.area),
       order.zone && (order.zone.name || order.zone),
       order.division && (order.division.name || order.division),
-      order.city,
+      // The district picked at checkout is also the order's city; its chip shows it.
+      order.deliveryLocation && order.deliveryLocation.districtName ? '' : order.city,
     ].filter(function(value){ return value && typeof value === 'string' && value.trim(); })
      .map(function(value){ return value.trim(); });
     var parts = (street ? [street] : []).concat(place);
@@ -5372,7 +5433,9 @@
 /* ── AI Assist ── */
 (function() {
   /* API base — this IIFE is separate from the one above, so it needs its own. */
-  var API = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://apisub.amolbooks.com';
+  // Locally the API serves this page itself (any port), so use the page's own address; the order
+  // editor does the same. Production keeps the live API.
+  var API = /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname) ? window.location.origin : 'https://apisub.amolbooks.com';
   var bnDigits = {'০':'0','১':'1','২':'2','৩':'3','৪':'4','৫':'5','৬':'6','৭':'7','৮':'8','৯':'9'};
 
   /* This script is deliberately self-contained. The page's main auth helpers
@@ -5889,6 +5952,6 @@
   });
 })();
 </script>
-<script src="/incomplete-order-editor.js?v=20260724-1" defer></script>
+<script src="/incomplete-order-editor.js?v=20261114-1" defer></script>
 <script>if(window.innerWidth>768){var el=document.getElementById("dateRow");if(el)el.style.display="flex";}</script></body>
 </html>

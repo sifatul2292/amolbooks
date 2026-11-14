@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { OrderSchema } from '../../schema/order.schema';
 import { ProductSchema } from '../../schema/product.schema';
+import { ReviewSchema } from '../../schema/review.schema';
 import { CustomerContactSchema } from './customer-manager.schema';
 import { CustomerManagerService } from './customer-manager.service';
 import { CustomerManagerController } from './customer-manager.controller';
@@ -14,6 +15,8 @@ import { CustomerManagerController } from './customer-manager.controller';
       { name: 'Order', schema: OrderSchema },
       { name: 'Product', schema: ProductSchema },
       { name: 'CustomerContact', schema: CustomerContactSchema },
+      // Feedback (WhatsApp review requests): reviews written from the request's page.
+      { name: 'Review', schema: ReviewSchema },
     ]),
   ],
   controllers: [CustomerManagerController],
