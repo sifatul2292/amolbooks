@@ -263,6 +263,10 @@
     tangail: 'বাসাইল|Basail;ভুয়াপুর|Bhuanpur;দেলদুয়ার|Delduar;ঘাটাইল|Ghatail;গোপালপুর|Gopalpur;মধুপুর|Madhupur;মির্জাপুর|Mirzapur;নাগরপুর|Nagarpur;সখিপুর|Sakhipur;কালিহাতী|Kalihati;ধনবাড়ী|Dhanbari',
     thakurgaon: 'রাণীশংকৈল|Ranishankail;হরিপুর|Haripur;বালিয়াডাঙ্গী|Baliadangi',
   };
+  // Upazilas named like another district (so left out above): "Bogra sherpur" is Sherpur upazila of
+  // Bogura, not Sherpur district. district -> districts it has an upazila named like. From the same
+  // data (scripts/build-delivery-zone-upazilas.cjs lists them).
+  var NAMED_LIKE_DISTRICT = { bogura: ['sherpur'], nilphamari: ['kishoreganj'], pabna: ['faridpur'] };
   var UPAZILAS = [];
   Object.keys(UPAZILA_TEXT).forEach(function (id) {
     UPAZILA_TEXT[id].split(';').forEach(function (pair) {
@@ -385,6 +389,12 @@
     var others = Object.keys(m.districts).filter(function (id) { return id !== 'dhaka'; });
     if (others.length) {
       others.sort(function (a, b) { return m.districts[b] - m.districts[a]; });
+      // Two districts named and one is also an upazila of the other ("Bogra sherpur", "Nilphamari
+      // kishoreganj"): it is that upazila, whichever comes last.
+      var upazilaNames = others.filter(function (id) {
+        return others.some(function (other) { return (NAMED_LIKE_DISTRICT[other] || []).indexOf(id) !== -1; });
+      });
+      if (upazilaNames.length) others = others.filter(function (id) { return upazilaNames.indexOf(id) === -1; });
       // The last one named may be the division ("kaligonj, Lalmonirhat, rongpur").
       var inside = others.filter(function (id) { return inDivision(id, others[0]); });
       return { district: inside.length ? inside[0] : others[0], area: '' };

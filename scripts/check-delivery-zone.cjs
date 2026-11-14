@@ -49,6 +49,18 @@ assert.deepEqual(detect('Kotwali, Dhaka'), ['dhaka', '', null]);
 assert.deepEqual(detect('Old Dhaka, Kotwali'), ['dhaka', 'kotwali', 'inside']);
 // No false matches inside longer words: Bholahat is an upazila of Chapai Nawabganj, not Bhola.
 assert.deepEqual(detect('Bholahat road'), ['chapainawabganj', '', 'outside']);
+// Upazilas named like another district: with their own district named, they are that upazila.
+assert.deepEqual(detect('Bogra sherpur'), ['bogura', '', 'outside']);
+assert.deepEqual(detect('বগুড়া শেরপুর'), ['bogura', '', 'outside']);
+assert.deepEqual(detect('Bogura, Sherpur upazila'), ['bogura', '', 'outside']);
+assert.deepEqual(detect('Sherpur, Bogura'), ['bogura', '', 'outside']);
+assert.deepEqual(detect('Nilphamari kishoreganj'), ['nilphamari', '', 'outside']);
+assert.deepEqual(detect('Pabna, Faridpur'), ['pabna', '', 'outside']);
+// ...but on their own, or with an unrelated district, they stay the district.
+assert.deepEqual(detect('Sherpur sadar, Sherpur'), ['sherpur', '', 'outside']);
+assert.deepEqual(detect('Jhenaigati, Sherpur'), ['sherpur', '', 'outside']);
+assert.deepEqual(detect('Kishoreganj'), ['kishoreganj', '', 'outside']);
+assert.deepEqual(detect('Faridpur, Bhanga'), ['faridpur', '', 'outside']);
 assert.deepEqual(detect('Titas gas office, Kasba road'), ['', '', null], 'Everyday words are not upazilas');
 
 // Addresses as customers wrote them (owner's order list, 2026-11-14: 100 orders, all right), with

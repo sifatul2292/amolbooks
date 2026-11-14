@@ -44,5 +44,7 @@ for (const u of upas) {
 const total = Object.values(out).reduce((n, l) => n + l.length, 0);
 console.error('kept', total, 'skipped', skipped.length);
 console.error(skipped.join('\n'));
+// Upazilas named like another district: NAMED_LIKE_DISTRICT in the core (kept by hand).
+console.error('named like a district:', skipped.filter((line) => line.endsWith('district name')).join('; '));
 const lines = Object.keys(out).sort().map((id) => `    ${id}: '${out[id].join(';').replace(/'/g, "\\'")}',`);
 fs.writeFileSync(path.join(G, 'upazilas-block.txt'), lines.join('\n') + '\n');
