@@ -1,0 +1,150 @@
+<!-- Thank-you page (/checkout/order-success/<id>): the order's books, delivery charge and total
+     (owner, 2026-11-16). The checkout no longer has a district box; the API reads the place from the
+     typed address and sets the delivery charge when the order is placed, so the final amount is shown
+     here, with a line saying so when the charge differs from the one the customer picked. Reads the
+     same order the page itself loads (GET /api/order/<id>); text goes in as text, never as HTML.
+     Built from section / ul / li / em / strong / small / aside only: the older thank-you script in
+     index.html rewrites the smallest p, div or span that mentions "ডেলিভারি", and must not find these. -->
+<style>
+  .ab-order-summary { display: block; margin: 14px auto 22px; max-width: 520px; padding: 14px 16px; border: 1px solid #d9e6dc; border-radius: 10px; background: #fff; color: #1d2b22; text-align: left; font: 500 16px/1.5 hind-siliguri, sans-serif; }
+  .ab-order-summary h2 { margin: 0 0 8px; font: 700 18px/1.4 hind-siliguri, sans-serif; color: #175c36; }
+  .ab-order-summary ul { margin: 0; padding: 0; list-style: none; }
+  .ab-order-summary li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 6px 0; }
+  .ab-order-summary .ab-os-items li { border-bottom: 1px dashed #e3ebe5; }
+  .ab-order-summary em { min-width: 0; overflow-wrap: anywhere; font-style: normal; }
+  .ab-order-summary small { color: #5b6b60; font-size: 14px; }
+  .ab-order-summary strong { flex: none; white-space: nowrap; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .ab-order-summary li.ab-os-total { margin-top: 4px; padding-top: 10px; border-top: 2px solid #175c36; font-weight: 700; font-size: 18px; }
+  .ab-order-summary li.ab-os-total strong { font-weight: 700; }
+  .ab-order-summary aside { display: block; margin: 10px 0 0; font-size: 15px; color: #47584d; }
+  .ab-order-summary aside.ab-os-note { padding: 9px 11px; border: 1px solid #f0d28a; border-radius: 8px; background: #fff8e6; color: #5a3b00; }
+</style>
+<script>
+(function () {
+  'use strict';
+  if (window.__abOrderSuccessSummary) return;
+  window.__abOrderSuccessSummary = true;
+
+  var PAGE = /^\/checkout\/order-success\/([a-f0-9]{24})\/?$/i;
+  var local = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname);
+  var API = (local ? location.origin : 'https://apisub.amolbooks.com') + '/api/order/';
+  var asked = {};  // order id -> true once requested
+  var orders = {}; // order id -> order
+
+  function bn(value) {
+    return String(value).replace(/\d/g, function (d) { return '০১২৩৪৫৬৭৮৯'[d]; });
+  }
+  function money(value) {
+    var amount = Math.round(Number(value) || 0);
+    return '৳' + bn(amount.toLocaleString('en-US'));
+  }
+  function el(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+  function row(label, amount, className) {
+    var line = el('li', className || '');
+    line.appendChild(el('em', '', label));
+    line.appendChild(el('strong', '', amount));
+    return line;
+  }
+
+  // The numbers of one order, from the fields the order itself stores.
+  function totals(order) {
+    var items = (Array.isArray(order.orderedItems) ? order.orderedItems : []).map(function (item) {
+      var quantity = Math.max(1, Number(item && item.quantity) || 1);
+      var unit = Number(item && (item.unitPrice != null ? item.unitPrice : item.salePrice)) || 0;
+      return { name: String((item && item.name) || 'বই'), quantity: quantity, amount: unit * quantity, gift: !(unit > 0) };
+    });
+    var books = items.reduce(function (sum, item) { return sum + item.amount; }, 0);
+    var delivery = Math.max(0, Number(order.deliveryCharge) || 0);
+    var total = Number(order.grandTotal);
+    if (!isFinite(total)) total = books + delivery;
+    // Coupon / order discounts: whatever the stored total leaves out.
+    var discount = Math.max(0, Math.round(books + delivery - total));
+    var place = order.deliveryLocation || {};
+    var zone = place.zone === 'inside' ? 'ঢাকা সিটির ভেতর' : place.zone === 'outside' ? 'ঢাকা সিটির বাইরে' : '';
+    var picked = Number(place.clientCharge);
+    var changed = zone && isFinite(picked) && picked > 0 && delivery > 0 && picked !== delivery;
+    return {
+      items: items, books: books, delivery: delivery, discount: discount, total: total, zone: zone,
+      changedFor: changed ? String(place.areaName || place.districtName || '') : '',
+      cash: !/online|eps|bkash|nagad|card/i.test(String(order.paymentType || '')) && String(order.paymentStatus || '') !== 'paid',
+    };
+  }
+
+  function build(order) {
+    var t = totals(order);
+    var card = el('section', 'ab-order-summary');
+    card.setAttribute('aria-label', 'অর্ডারের বিবরণ');
+    card.setAttribute('data-order', String(order._id || ''));
+    card.appendChild(el('h2', '', 'আপনার অর্ডার'));
+    var list = el('ul', 'ab-os-items');
+    t.items.forEach(function (item) {
+      var line = el('li');
+      var name = el('em', '', item.name + ' ');
+      name.appendChild(el('small', '', '× ' + bn(item.quantity)));
+      line.appendChild(name);
+      line.appendChild(el('strong', '', item.gift ? 'ফ্রি উপহার' : money(item.amount)));
+      list.appendChild(line);
+    });
+    card.appendChild(list);
+    var sums = el('ul', 'ab-os-sums');
+    sums.appendChild(row('বইয়ের মূল্য', money(t.books)));
+    sums.appendChild(row('ডেলিভারি চার্জ' + (t.zone ? ' (' + t.zone + ')' : ''), t.delivery > 0 ? money(t.delivery) : 'ফ্রি'));
+    if (t.discount > 0) sums.appendChild(row('ছাড়', '−' + money(t.discount)));
+    sums.appendChild(row('সর্বমোট', money(t.total), 'ab-os-total'));
+    card.appendChild(sums);
+    if (t.changedFor) {
+      card.appendChild(el('aside', 'ab-os-note', 'আপনার ঠিকানা (' + t.changedFor + ') অনুযায়ী ডেলিভারি চার্জ ' + money(t.delivery) + ' ধরা হয়েছে।'));
+    }
+    if (t.cash) card.appendChild(el('aside', 'ab-os-pay', 'বই হাতে পেয়ে ' + money(t.total) + ' পরিশোধ করবেন।'));
+    return card;
+  }
+
+  function load(id) {
+    asked[id] = true;
+    fetch(API + id, { credentials: 'omit', headers: { Accept: 'application/json' } })
+      .then(function (response) { return response.ok ? response.json() : null; })
+      .then(function (result) {
+        var order = result && result.data;
+        if (order && Array.isArray(order.orderedItems)) { orders[id] = order; place(); }
+      })
+      .catch(function () { asked[id] = false; }); // asked again on the next page change
+  }
+
+  function place() {
+    var match = PAGE.exec(location.pathname);
+    var existing = document.querySelector('.ab-order-summary');
+    if (!match) { if (existing) existing.remove(); return; }
+    var id = match[1].toLowerCase();
+    if (!asked[id]) load(id);
+    var order = orders[id];
+    var host = document.querySelector('app-order-success .order-success-card');
+    if (!order || !host) return;
+    if (existing && existing.getAttribute('data-order') === String(order._id || '') && host.contains(existing)) return;
+    if (existing) existing.remove();
+    var card = build(order);
+    // Right under the "অর্ডার কনফার্ম হয়েছে" heading, before the long thank-you message.
+    var message = host.querySelector('.success-content > .success-message');
+    var buttons = host.querySelector('.action-buttons');
+    if (message) message.parentNode.insertBefore(card, message);
+    else if (buttons) host.insertBefore(card, buttons);
+    else host.appendChild(card);
+  }
+
+  var queued = false;
+  function queue() {
+    if (queued) return;
+    queued = true;
+    setTimeout(function () { queued = false; place(); }, 80);
+  }
+  new MutationObserver(queue).observe(document.documentElement, { childList: true, subtree: true });
+  window.addEventListener('popstate', queue);
+  window.addEventListener('ab-route', queue);
+  window.__abOrderSuccessTotals = totals; // for scripts/check-order-success-summary.cjs
+  place();
+}());
+</script>

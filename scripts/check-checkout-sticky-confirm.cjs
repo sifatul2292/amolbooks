@@ -13,7 +13,7 @@ new Function(script.replace(/^\(function \(\) \{/, 'return (function () { return
 
 const list = main.slice(main.indexOf('const storefrontSnippetFiles = ['), main.indexOf('];', main.indexOf('const storefrontSnippetFiles = [')));
 assert.match(list, /'checkout-sticky-confirm\.html'/, 'The snippet is injected into storefront pages');
-assert.ok(list.indexOf("'checkout-sticky-confirm.html'") > list.indexOf("'checkout-location-loader.html'"), 'After the district picker');
+assert.ok(list.indexOf("'checkout-sticky-confirm.html'") > list.indexOf("'checkout-phone.html'"), 'After the checkout phone snippet');
 
 assert.match(script, /var LABEL = 'অর্ডার কনফার্ম করুন';/);
 assert.match(script, /location\.pathname === '\/checkout'/, 'Only on the checkout page (not order-success)');

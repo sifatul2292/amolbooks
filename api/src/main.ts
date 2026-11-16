@@ -637,8 +637,13 @@ ${storefrontPurchaseExternalIdHelper}
     'customer-dashboard-loader.html',
     // "Order updates will come on WhatsApp" at checkout, only while WhatsApp messages are on.
     'checkout-whatsapp-note.html',
-    // District picker at checkout: sets the inside/outside Dhaka delivery charge; loads only there.
-    'checkout-location-loader.html',
+    // District picker at checkout: OFF for now (owner, 2026-11-16: the box and the locked delivery
+    // choice were friction). The customer picks inside / outside Dhaka as before; the API reads the
+    // place from the typed address and sets the order's charge (DeliveryZoneService.forOrder), and
+    // the thank-you page shows the final total (order-success-summary.html). To bring the box
+    // back, list 'checkout-location-loader.html' here again.
+    // Thank-you page: the order's books, delivery charge and total.
+    'order-success-summary.html',
     'commerce-events.html',
     'mobile-browsing.html',
     // Tidies autofilled +880 numbers in the checkout phone box (the box used to cut them).

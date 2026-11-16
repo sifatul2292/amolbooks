@@ -37,6 +37,8 @@ export interface DeliveryLocationRecord {
  * saved-address checkout uses); anything else is replaced. Orders without a district (older
  * checkout pages, other order forms) are left as before. Owner, 2026-11-16: outside Dhaka city, an
  * order with books under ৳294 pays at least ৳100 (smallOrderCharge in the same rules file).
+ * Owner, later 2026-11-16: the district box is off the checkout for now; when the order carries no
+ * district, the place is read from the typed address (fromAddress) and the charge set the same way.
  */
 @Injectable()
 export class DeliveryZoneService {
@@ -120,9 +122,11 @@ export class DeliveryZoneService {
    * check; staff turn it into an order by phone). Null when it is not a district we know.
    */
   describe(input: any, address?: string): Omit<DeliveryLocationRecord, 'weightGram' | 'clientCharge' | 'charge'> | null {
-    if (!input || typeof input !== 'object') return null;
     try {
       const zone = this.rules();
+      const read = !input || typeof input !== 'object' || !input.district;
+      if (read) input = this.fromAddress(address);
+      if (!input) return null;
       const district = String(input.district || '').slice(0, 40);
       const districtEntry = zone.district(district);
       if (!districtEntry) return null;
@@ -136,13 +140,28 @@ export class DeliveryZoneService {
         area,
         areaName: areaEntry ? areaEntry[1] : '',
         zone: zone.zoneFor(district, area),
-        mismatch: zone.mismatch({ district, area }, String(address || '')),
+        // Read from the address itself: nothing to disagree with.
+        mismatch: read ? '' : zone.mismatch({ district, area }, String(address || '')),
         confirmed: input.confirmed === true,
       };
     } catch (error) {
       this.logger.warn(`Delivery district skipped: ${error?.message || error}`);
       return null;
     }
+  }
+
+  /**
+   * The place an address names, when it is clear enough to charge by: another district, a Dhaka
+   * outskirt, or a named Dhaka city area. "Dhaka" alone (city or district?) and addresses that
+   * name no place give null, and the customer's own choice stands.
+   */
+  fromAddress(address: any): { district: string; area: string; confirmed: false } | null {
+    const zone = this.rules();
+    const found = zone.detect(String(address || ''));
+    if (!found || !found.district) return null;
+    const area = String(found.area || '');
+    if (!zone.zoneFor(found.district, area)) return null;
+    return { district: String(found.district), area, confirmed: false };
   }
 
   /**
@@ -157,17 +176,21 @@ export class DeliveryZoneService {
     /** The books' price after product discounts: under ৳294 outside Dhaka city pays at least ৳100. */
     productTotal?: number,
   ): Promise<{ charge: number; record: DeliveryLocationRecord; shippingAddress: string; city: string } | null> {
-    const input = orderData?.deliveryLocation;
-    if (!input || typeof input !== 'object') return null;
     try {
       const zone = this.rules();
+      const address = String(orderData?.shippingAddress || '');
+      // Owner, 2026-11-16: no district box at checkout any more. The customer picks inside /
+      // outside Dhaka as before, and the order's charge follows the address they typed.
+      let input = orderData?.deliveryLocation;
+      const read = !input || typeof input !== 'object' || !input.district;
+      if (read) input = this.fromAddress(address);
+      if (!input) return null;
       const district = String(input.district || '').slice(0, 40);
       const districtEntry = zone.district(district);
       if (!districtEntry) return null;
       const areaEntry = district === 'dhaka' ? zone.area(String(input.area || '').slice(0, 40)) : null;
       const area = areaEntry ? areaEntry[0] : '';
       const where = zone.zoneFor(district, area);
-      const address = String(orderData?.shippingAddress || '');
       const clientCharge = Number(orderData?.deliveryCharge || 0);
       let charge = clientCharge;
       let weightGram = 0;
@@ -189,13 +212,14 @@ export class DeliveryZoneService {
           `Delivery charge ${clientCharge} -> ${charge} for ${district}${area ? '/' + area : ''} (${weightGram} g)`,
         );
       }
-      const mismatch = zone.mismatch({ district, area }, address);
+      const mismatch = read ? '' : zone.mismatch({ district, area }, address);
       return {
         charge,
         // The order's city: the district in English, for staff pages, payment and Meta.
         city: districtEntry[2],
         // Not added to an address that names another place: staff see the flag and call instead.
-        shippingAddress: mismatch ? address : zone.withLocation(address, { district, area }),
+        // Read from the address: it already names the place, leave it as typed.
+        shippingAddress: read || mismatch ? address : zone.withLocation(address, { district, area }),
         record: {
           district,
           districtName: districtEntry[1],

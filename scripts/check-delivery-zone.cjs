@@ -324,11 +324,54 @@ const orders = read('api/src/pages/sales/order/order.service.ts');
 const orderModule = read('api/src/pages/sales/order/order.module.ts');
 const schema = read('api/src/schema/order.schema.ts');
 const dashboard = read('api/upload/static/custom-orders.html');
-assert.match(main, /'checkout-location-loader\.html',/, 'Loader is a storefront snippet');
+// Owner, 2026-11-16: the district box is off the checkout for now; the order's charge is read from
+// the typed address by the API, and the thank-you page shows the final total.
+const snippetList = main.slice(main.indexOf('const storefrontSnippetFiles = ['), main.indexOf('];', main.indexOf('const storefrontSnippetFiles = [')));
+assert.doesNotMatch(snippetList, /^\s*'checkout-location-loader\.html',/m, 'The district box is not loaded on the checkout');
+assert.match(snippetList, /^\s*'order-success-summary\.html',/m, 'The thank-you summary is loaded instead');
+assert.match(service, /if \(read\) input = this\.fromAddress\(address\);/, 'No district sent: the place is read from the address');
+assert.match(service, /if \(!zone\.zoneFor\(found\.district, area\)\) return null;/, '"Dhaka" alone or no place named: the customer\'s choice stands');
+assert.match(service, /shippingAddress: read \|\| mismatch \? address : zone\.withLocation/, 'A read address is left as typed');
+assert.match(orders, /Object\.prototype\.hasOwnProperty\.call\(input, 'deliveryLocation'\) \|\| hasAddress/, 'Abandoned checkouts get the place from the address too');
+{
+  // The service itself, with the shop's rules and no database: what an address does to the charge.
+  const { DeliveryZoneService } = require('../api/dist/shared/delivery-zone/delivery-zone.service');
+  const svc = new DeliveryZoneService({ findOne: () => ({ lean: async () => shipping }) }, { find: () => ({ select: () => ({ lean: async () => [] }) }) });
+  const order = (address, charge, extra) => svc.forOrder({ shippingAddress: address, deliveryCharge: charge, ...(extra || {}) }, [], false, 500);
+  (async () => {
+    let r = await order('Station road, Feni', 60);
+    assert.equal(r.charge, 75, 'Picked inside Dhaka, address in Feni: outside charge');
+    assert.equal(r.record.clientCharge, 60);
+    assert.equal(r.city, 'Feni');
+    assert.equal(r.shippingAddress, 'Station road, Feni');
+    r = await order('House 5, Mirpur 10, Dhaka', 75);
+    assert.equal(r.charge, 60, 'Picked outside, address names a Dhaka city area: inside charge');
+    r = await order('Savar, Dhaka', 60);
+    assert.equal(r.charge, 75, 'Dhaka outskirts are outside');
+    assert.equal(await order('House 5, Dhaka', 75), null, '"Dhaka" alone: nothing decided, the picked charge stays');
+    assert.equal(await order('বাসা ১২, রোড ৩', 60), null, 'No place named: the picked charge stays');
+    r = await order('ফেনী সদর', 75);
+    assert.equal(r.charge, 75, 'Already right: unchanged');
+    r = await svc.forOrder({ shippingAddress: 'Feni', deliveryCharge: 60 }, [], false, 200);
+    assert.equal(r.charge, 100, 'Small order outside Dhaka: at least ৳100');
+    r = await svc.forOrder({ shippingAddress: 'Feni', deliveryCharge: 0 }, [], true, 200);
+    assert.equal(r.charge, 0, 'Free delivery stays free');
+    r = await order('Mirpur 10', 60, { deliveryLocation: { district: 'feni', area: '' } });
+    assert.equal(r.charge, 75, 'A district sent by the checkout (box turned on again) still wins');
+    assert.equal(svc.describe(undefined, 'College road, Comilla').districtEn, 'Cumilla', 'Abandoned checkout: place read from the address');
+    assert.equal(svc.describe(undefined, 'House 5, Dhaka'), null);
+  })().catch((error) => { console.error(error); process.exitCode = 1; });
+}
 assert.match(loader, /\/storefront-page\/checkout-location\.js/, 'Loader loads the picker on /checkout');
 assert.match(pages, /'checkout-location\.js': \['delivery-zone-core\.js', 'checkout-location\.js'\]/, 'Picker is served with the shared rules first');
 assert.match(picker, /input\[type="radio"\]\[value="' \+ \(where === 'inside' \? '1' : '2'\) \+ '"\]/, 'District sets the inside / outside choice');
 assert.match(picker, /\.ab-dl-locked\{pointer-events:none\}/, 'Charge choice cannot be changed by hand');
+// A tap on the locked choice is answered (Clarity 2026-11-16: customers tapped it and left).
+assert.match(picker, /document\.addEventListener\('click', deliveryTap, true\);/, 'Taps on the locked delivery choice are heard');
+assert.match(picker, /if \(!where\) \{\s*showError\('ডেলিভারি চার্জ জানতে আগে আপনার জেলার নাম লিখুন।/, 'No district yet: the tap leads to the district box');
+assert.match(picker, /change\.textContent = 'জেলা বদলান';/, 'District chosen: the other option explains itself and offers to change the district');
+assert.match(picker, /hint\.textContent = '\(আপনার জেলা অনুযায়ী ঠিক হয়\)';/, 'The heading no longer asks to select one');
+assert.match(picker, /ab-delivery-waived'\)\) return; \/\/ free delivery/, 'Free delivery orders are left alone');
 assert.match(picker, /if \(!state\.district \|\| !zone\(\)\) \{\s*stop\(\);/, 'No order without a district');
 assert.match(picker, /role="combobox"/, 'District is a search box, not a dropdown');
 assert.match(picker, /found\.area \|\| \(state\.district === 'dhaka' && state\.area \? state\.area : CITY_OTHER\)/, 'Dhaka alone in the address counts as Dhaka city');

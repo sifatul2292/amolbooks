@@ -6037,7 +6037,9 @@ export class OrderService {
   // The district the customer picked at checkout (gtm-snippets/checkout-location.js): kept only
   // when it is a district we know, described, and as the row's city (English, e.g. "Feni").
   private applyIncompleteDeliveryLocation(input: any): void {
-    if (!input || !Object.prototype.hasOwnProperty.call(input, 'deliveryLocation')) return;
+    // With the district box off the checkout (2026-11-16) the place is read from the address.
+    const hasAddress = typeof input?.shippingAddress === 'string' && input.shippingAddress.trim().length > 0;
+    if (!input || !(Object.prototype.hasOwnProperty.call(input, 'deliveryLocation') || hasAddress)) return;
     const record = this.deliveryZoneService?.describe(
       input.deliveryLocation,
       input.shippingAddress,

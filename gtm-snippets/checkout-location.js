@@ -218,6 +218,9 @@
     'app-checkout [formcontrolname="deliveryOptions"].ab-dl-locked{pointer-events:none}',
     'app-checkout [formcontrolname="deliveryOptions"].ab-dl-locked .mat-mdc-radio-button:not(.mat-mdc-radio-checked){opacity:.45}',
     'app-checkout .ab-dl-note{margin:6px 0 0;color:#4b5563;font-size:13px;line-height:1.4}',
+    'app-checkout .ab-dl-why{margin:8px 0 0;padding:10px 12px;border:1px solid #f0c36d;border-radius:8px;background:#fff7e6;color:#6b4300;font-size:14px;line-height:1.5}',
+    'app-checkout .ab-dl-why button{display:inline-block;min-height:40px;margin:6px 0 0;padding:0 14px;border:1px solid #b7791f;border-radius:6px;background:#fff;color:#6b4300;font:inherit;font-size:14px;font-weight:600;cursor:pointer}',
+    'app-checkout .ab-delivery-waived .ab-dl-why{display:none}',
     'app-checkout .ab-delivery-waived .ab-dl-note{visibility:hidden}',
   ].join('');
 
@@ -466,6 +469,10 @@
     }
     var text = where ? 'ঠিকানার জেলা দেখে চার্জ ঠিক করা হয়েছে।' : 'ঠিকানার নিচে জেলা লিখলে চার্জ নিজে থেকেই ঠিক হবে।';
     if (note.textContent !== text) note.textContent = text;
+    deliveryHeading(group);
+    // The "why can't I change it" answer belongs to one district: gone when the district changes.
+    var why = group.parentElement.querySelector(':scope > .ab-dl-why');
+    if (why && why.getAttribute('data-for') !== selectedKey()) why.remove();
     group.querySelectorAll('input[type="radio"]').forEach(function (radio) { if (radio.tabIndex !== -1) radio.tabIndex = -1; });
     if (!where) return null;
     var radio = group.querySelector('input[type="radio"][value="' + (where === 'inside' ? '1' : '2') + '"]');
@@ -481,6 +488,69 @@
     var field = root.querySelector('#ab-dl-input');
     field.classList.remove('ab-dl-invalid');
     field.removeAttribute('aria-invalid');
+  }
+  // The page's heading says "(যেকোনো একটি সিলেক্ট করুন)", but the choice follows the district and cannot
+  // be tapped: customers tapped it again and again and some left (Clarity recordings, 2026-11-16).
+  function deliveryHeading(group) {
+    // <h4> ডেলিভারি চার্জ <span>(যেকোনো একটি সিলেক্ট করুন)</span></h4>, a few levels above the choice.
+    var scope = group.parentElement;
+    for (var level = 0; scope && level < 4; level++, scope = scope.parentElement) {
+      var headings = scope.querySelectorAll('h1,h2,h3,h4,h5,h6');
+      for (var i = 0; i < headings.length; i++) {
+        var heading = headings[i];
+        if ((heading.textContent || '').indexOf('ডেলিভারি চার্জ') === -1) continue;
+        var hint = heading.querySelector('span');
+        if (hint && hint.textContent.indexOf('সিলেক্ট করুন') !== -1) hint.textContent = '(আপনার জেলা অনুযায়ী ঠিক হয়)';
+        return;
+      }
+    }
+  }
+  // A tap on the locked choice gets an answer. No district yet: go to the district box. District
+  // chosen and the other option tapped: say why it is fixed and offer to change the district.
+  function deliveryTap(event) {
+    if (!onCheckout()) return;
+    var group = deliveryGroup();
+    if (!group || !group.classList.contains('ab-dl-locked') || !box()) return;
+    if (group.parentElement.classList.contains('ab-delivery-waived')) return; // free delivery: nothing to choose
+    var x = event.clientX;
+    var y = event.clientY;
+    var area = group.getBoundingClientRect();
+    if (!(x >= area.left && x <= area.right && y >= area.top && y <= area.bottom)) return;
+    var where = zone();
+    if (!where) {
+      showError('ডেলিভারি চার্জ জানতে আগে আপনার জেলার নাম লিখুন। জেলা বেছে নিলে চার্জ নিজে থেকেই বসে যাবে।');
+      return;
+    }
+    var tapped = null;
+    group.querySelectorAll('input[type="radio"]').forEach(function (radio) {
+      var row = (radio.closest('mat-radio-button') || radio).getBoundingClientRect();
+      if (y >= row.top && y <= row.bottom) tapped = radio;
+    });
+    if (!tapped || tapped.checked) return;
+    var why = group.parentElement.querySelector(':scope > .ab-dl-why');
+    if (!why) {
+      why = document.createElement('div');
+      why.className = 'ab-dl-why';
+      why.setAttribute('role', 'status');
+      why.appendChild(document.createElement('span'));
+      var change = document.createElement('button');
+      change.type = 'button';
+      change.textContent = 'জেলা বদলান';
+      change.addEventListener('click', function () {
+        var root = box();
+        var field = root && root.querySelector('#ab-dl-input');
+        if (!field) return;
+        root.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        setTimeout(function () { field.focus({ preventScroll: true }); field.select(); }, 250);
+      });
+      why.appendChild(change);
+      var note = group.parentElement.querySelector(':scope > .ab-dl-note');
+      (note || group).insertAdjacentElement('afterend', why);
+    }
+    var place = selected() ? selected().label : Z.label({ district: state.district, area: state.area });
+    why.setAttribute('data-for', selectedKey());
+    why.querySelector('span').textContent = 'আপনার জেলা “' + place + '”, তাই ' +
+      (where === 'inside' ? 'ঢাকা সিটির ভেতরের' : 'ঢাকা সিটির বাইরের') + ' চার্জ প্রযোজ্য। অন্য জায়গায় নিতে চাইলে জেলা বদলে দিন। ';
   }
   function showError(text) {
     var root = box();
@@ -523,6 +593,7 @@
     }
   }
   document.addEventListener('click', guard, true);
+  document.addEventListener('click', deliveryTap, true);
   document.addEventListener('submit', guard, true);
   // Keyboard changes to the locked choice go back to the district's choice.
   document.addEventListener('change', function (event) {
