@@ -452,6 +452,15 @@ let server;
   assert.equal(stats.skipped.opted_out, 1);
   assert.equal(stats.skipped.delivered_too_long_ago, 1);
   assert.ok(stats.recent.length > 0 && stats.recent.length <= 50);
+  // The owner lists who reviewed, with the phone number, the order and the review itself.
+  const reviewers = (await reviews.stats(30, 'reviewed')).data;
+  assert.equal(reviewers.show, 'reviewed');
+  assert.equal(reviewers.recent.length, 1, 'only the order with a review');
+  assert.ok(reviewers.recent[0].orderId && reviewers.recent[0].phone && /^8801\d{9}$/.test(reviewers.recent[0].wa));
+  assert.equal(reviewers.recent[0].reviewList.length, 1);
+  assert.ok(reviewers.recent[0].reviewList[0].text && reviewers.recent[0].reviewList[0].rating >= 1);
+  assert.deepEqual((await reviews.stats(30, 'problem')).data.recent.map((row) => row.reply), ['problem']);
+  assert.equal((await reviews.stats(30, 'nonsense')).data.show, '', 'unknown filter shows all');
 
   // 10. Login on the review page: SMS code to the order's number → the customer's shop account.
   const { GuestOrdersService } = require('../api/dist/pages/guest-orders/guest-orders.service');

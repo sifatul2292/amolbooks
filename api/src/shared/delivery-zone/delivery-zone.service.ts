@@ -35,7 +35,8 @@ export interface DeliveryLocationRecord {
  * "inside Dhaka city" or "outside", the same as the checkout shows. The charge the checkout sent is
  * kept when it is right for the district (its weight tier, or the zone's base charge that the
  * saved-address checkout uses); anything else is replaced. Orders without a district (older
- * checkout pages, other order forms) are left as before.
+ * checkout pages, other order forms) are left as before. Owner, 2026-11-16: outside Dhaka city, an
+ * order with books under ৳294 pays at least ৳100 (smallOrderCharge in the same rules file).
  */
 @Injectable()
 export class DeliveryZoneService {
@@ -92,15 +93,20 @@ export class DeliveryZoneService {
    * that is right for the district (weight tier or base), else the district's weight tier. Null
    * when there is nothing to decide (no zone, no charge set, free delivery).
    */
-  async chargeForSaved(location: any, orderedItems: any[], current: number): Promise<number | null> {
+  async chargeForSaved(location: any, orderedItems: any[], current: number, productTotal?: number): Promise<number | null> {
     try {
       const zone = this.rules();
       const where = zone.zoneFor(location?.district, location?.area || '');
       if (!where || !(current > 0)) return null;
       const shipping = await this.shippingCharge();
       const weight = await this.weightOf((orderedItems || []).map((item) => ({ id: item?._id, quantity: item?.quantity })));
-      const expected = zone.chargeFor(where, weight, shipping);
-      const base = Number((where === 'inside' ? shipping?.deliveryInDhaka : shipping?.deliveryOutsideDhaka) || 0);
+      const expected = zone.chargeFor(where, weight, shipping, productTotal);
+      // The base charge too, raised for a small order outside Dhaka (books under ৳294 pay ৳100).
+      const base = zone.smallOrderCharge(
+        where,
+        Number((where === 'inside' ? shipping?.deliveryInDhaka : shipping?.deliveryOutsideDhaka) || 0),
+        productTotal,
+      );
       if (expected == null || !(expected > 0) || current === expected || current === base) return current;
       return expected;
     } catch (error) {
@@ -148,6 +154,8 @@ export class DeliveryZoneService {
     orderData: any,
     items: any[],
     freeDelivery: boolean,
+    /** The books' price after product discounts: under ৳294 outside Dhaka city pays at least ৳100. */
+    productTotal?: number,
   ): Promise<{ charge: number; record: DeliveryLocationRecord; shippingAddress: string; city: string } | null> {
     const input = orderData?.deliveryLocation;
     if (!input || typeof input !== 'object') return null;
@@ -166,9 +174,11 @@ export class DeliveryZoneService {
       if (where && !freeDelivery) {
         const shipping = await this.shippingCharge();
         weightGram = await this.cartWeight(items);
-        const expected = zone.chargeFor(where, weightGram, shipping);
-        const base = Number(
-          (where === 'inside' ? shipping?.deliveryInDhaka : shipping?.deliveryOutsideDhaka) || 0,
+        const expected = zone.chargeFor(where, weightGram, shipping, productTotal);
+        const base = zone.smallOrderCharge(
+          where,
+          Number((where === 'inside' ? shipping?.deliveryInDhaka : shipping?.deliveryOutsideDhaka) || 0),
+          productTotal,
         );
         if (expected != null && expected > 0 && clientCharge !== expected && clientCharge !== base) {
           charge = expected;

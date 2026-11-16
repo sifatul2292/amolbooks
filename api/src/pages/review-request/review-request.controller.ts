@@ -76,8 +76,8 @@ export class ReviewRequestController {
   @Get('admin/stats')
   @UseGuards(AdminJwtAuthGuard, AdminRolesGuard)
   @AdminMetaRoles(...Object.values(AdminRoles))
-  stats(@Query('days') days: any) {
-    return this.reviewRequests.stats(days);
+  stats(@Query('days') days: any, @Query('show') show: any) {
+    return this.reviewRequests.stats(days, show);
   }
 
   /** Daily limit, today's count and whether the messages are on (Customer Manager page). */

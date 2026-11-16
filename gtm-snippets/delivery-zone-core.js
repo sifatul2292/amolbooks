@@ -484,8 +484,21 @@
     if (!isFinite(n) || n <= 0) return 0;
     return n <= 20 ? Math.round(n * 1000) : Math.round(n); // small numbers are kilograms
   }
-  function chargeFor(zone, totalWeight, shipping) {
+  // Small orders outside Dhaka city (owner, 2026-11-16): books worth under ৳294 pay at least ৳100
+  // delivery. Free delivery (0) stays free; inside Dhaka city is unchanged. productTotal = the
+  // books' price after product discounts; left out (older callers) = no change.
+  var SMALL_ORDER = { below: 294, outside: 100 };
+  function smallOrderCharge(zone, charge, productTotal) {
+    var c = Number(charge || 0);
+    var total = Number(productTotal);
+    if (zone !== 'outside' || !(c > 0) || productTotal == null || productTotal === '' || !isFinite(total) || total >= SMALL_ORDER.below) return c;
+    return Math.max(c, SMALL_ORDER.outside);
+  }
+  function chargeFor(zone, totalWeight, shipping, productTotal) {
     if (!shipping || (zone !== 'inside' && zone !== 'outside')) return null;
+    return smallOrderCharge(zone, weightCharge(zone, totalWeight, shipping), productTotal);
+  }
+  function weightCharge(zone, totalWeight, shipping) {
     var rules = (zone === 'inside' ? shipping.insideDhakaRules : shipping.outsideDhakaRules) || [];
     var w = Number(totalWeight || 0);
     var match = rules.slice().sort(function (a, b) { return Number(a.fromGram || 0) - Number(b.fromGram || 0); })
@@ -527,7 +540,7 @@
   return {
     DISTRICTS: DISTRICTS, DHAKA_CITY: DHAKA_CITY, DHAKA_OUTER: DHAKA_OUTER, UPAZILAS: UPAZILAS,
     norm: norm, district: district, area: area, detect: detect, zoneFor: zoneFor,
-    mismatch: mismatch, weightGram: weightGram, chargeFor: chargeFor, label: label, withLocation: withLocation,
+    mismatch: mismatch, weightGram: weightGram, chargeFor: chargeFor, smallOrderCharge: smallOrderCharge, SMALL_ORDER: SMALL_ORDER, label: label, withLocation: withLocation,
     metaCity: metaCity, editDistance: editDistance,
   };
 });

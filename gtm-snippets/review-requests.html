@@ -357,8 +357,54 @@
       }
       /* Review requests: six summary cards, the reasons, one table. */
       .filters {
-        grid-template-columns: minmax(0, 200px) auto;
+        grid-template-columns: minmax(0, 200px) minmax(0, 200px) auto;
         justify-content: start;
+      }
+      button.stat {
+        text-align: left;
+        font: inherit;
+      }
+      button.stat.on {
+        border-color: var(--purple);
+        box-shadow: 0 0 0 2px #e4d8fd;
+      }
+      .contact {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 3px 9px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .contact:hover {
+        border-color: var(--purple);
+      }
+      td a.link {
+        color: #5b21b6;
+        font-weight: 600;
+      }
+      tr.has-review td {
+        border-bottom: 0;
+      }
+      tr.review td {
+        white-space: normal;
+        padding: 0 10px 14px;
+        line-height: 1.5;
+      }
+      tr.review .stars {
+        color: #f59e0b;
+        letter-spacing: 1px;
+      }
+      tr.review p {
+        margin-top: 4px;
+        white-space: pre-wrap;
+        max-width: 760px;
+      }
+      @media (max-width: 600px) {
+        .filters {
+          grid-template-columns: minmax(0, 1fr);
+        }
       }
       .stats {
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -439,22 +485,31 @@
               <option value="180">Last 6 months</option>
             </select>
           </div>
+          <div>
+            <label for="show">Customers</label>
+            <select id="show">
+              <option value="">All requests</option>
+              <option value="reviewed">Wrote a review</option>
+              <option value="replied">Tapped a button</option>
+              <option value="problem">Had a problem</option>
+            </select>
+          </div>
           <button class="primary" id="apply">Show</button>
         </form>
 
         <div class="stats">
           <div class="card stat"><span class="stat-icon">✉</span><div><small>Sent</small><strong id="sent">—</strong><small id="sent-note"></small></div></div>
-          <div class="card stat"><span class="stat-icon">👆</span><div><small>Tapped a button</small><strong id="tapped">—</strong><small id="tapped-note"></small></div></div>
-          <div class="card stat"><span class="stat-icon">★</span><div><small>Wrote a review</small><strong id="reviewed">—</strong><small id="reviewed-note"></small></div></div>
+          <button type="button" class="card stat" data-show="replied" title="List these customers"><span class="stat-icon">👆</span><div><small>Tapped a button</small><strong id="tapped">—</strong><small id="tapped-note"></small></div></button>
+          <button type="button" class="card stat" data-show="reviewed" title="List these customers"><span class="stat-icon">★</span><div><small>Wrote a review</small><strong id="reviewed">—</strong><small id="reviewed-note"></small></div></button>
           <div class="card stat"><span class="stat-icon">↻</span><div><small>Ordered again in 30 days</small><strong id="reorders">—</strong><small id="reorders-note"></small></div></div>
-          <div class="card stat"><span class="stat-icon">!</span><div><small>Had a problem</small><strong id="problems">—</strong><small>see the WhatsApp Inbox</small></div></div>
+          <button type="button" class="card stat" data-show="problem" title="List these customers"><span class="stat-icon">!</span><div><small>Had a problem</small><strong id="problems">—</strong><small>see the WhatsApp Inbox</small></div></button>
           <div class="card stat"><span class="stat-icon">⊘</span><div><small>Said stop (all time)</small><strong id="opted">—</strong><small>get no more of these</small></div></div>
         </div>
 
         <section class="card table-card">
           <div class="table-title">
             <div>
-              <h2>Latest requests</h2>
+              <h2 id="table-heading">Latest requests</h2>
               <p class="muted" id="skipped-note">Orders not asked, and why</p>
             </div>
           </div>
@@ -465,6 +520,7 @@
                 <tr>
                   <th>Order</th>
                   <th>Customer</th>
+                  <th>Phone</th>
                   <th>Asked</th>
                   <th>Message</th>
                   <th>Reply</th>
@@ -473,7 +529,7 @@
                 </tr>
               </thead>
               <tbody id="rows">
-                <tr><td colspan="7" class="empty">Loading…</td></tr>
+                <tr><td colspan="8" class="empty">Loading…</td></tr>
               </tbody>
             </table>
           </div>
@@ -527,6 +583,9 @@
         const REPLY = { liked: ['ভালো লাগছে', 'good'], unread: ['এখনো পড়িনি', ''], problem: ['সমস্যা আছে', 'bad'] };
         const MESSAGE = { sending: 'sending', sent: 'sent', delivered: 'delivered', read: 'read', failed: 'not delivered' };
 
+        const HEADINGS = { '': 'Latest requests', reviewed: 'Customers who wrote a review', replied: 'Customers who tapped a button', problem: 'Customers who had a problem' };
+        const EMPTY = { '': 'No review requests in this period yet.', reviewed: 'Nobody wrote a review in this period yet.', replied: 'Nobody tapped a button in this period yet.', problem: 'Nobody reported a problem in this period.' };
+
         function token() {
           return localStorage.getItem('co_admin_token') || '';
         }
@@ -573,6 +632,9 @@
           $('reasons').innerHTML = reasons
             .map((key) => '<li class="pill">' + esc(REASONS[key] || key) + ': ' + num(data.skipped[key]) + '</li>')
             .join('');
+          const show = data.show || '';
+          $('table-heading').textContent = HEADINGS[show] || HEADINGS[''];
+          document.querySelectorAll('button.stat').forEach((card) => card.classList.toggle('on', card.dataset.show === show));
           $('rows').innerHTML = data.recent.length
             ? data.recent
                 .map((row) => {
@@ -582,31 +644,47 @@
                     row.status === 'holdout' ? '<span class="pill">holdout</span>' :
                     row.status === 'failed' ? '<span class="pill bad" title="' + esc(row.reason) + '">not sent</span>' :
                     '<span class="pill">' + esc(REASONS[row.reason] || row.reason || row.status) + '</span>';
+                  const written = (row.reviewList || [])
+                    .map(
+                      (review) =>
+                        '<tr class="review"><td></td><td colspan="7"><span class="stars" aria-label="' + esc(review.rating) + ' stars">' + '★'.repeat(Math.max(0, Math.min(5, review.rating))) + '</span> ' +
+                        (review.slug ? '<a class="link" href="https://amolbooks.com/product-details/' + encodeURIComponent(review.slug) + '" target="_blank" rel="noopener">' + esc(review.book || 'Book') + '</a>' : '<b>' + esc(review.book || 'Book') + '</b>') +
+                        ' <span class="pill' + (review.published ? ' good' : '') + '">' + (review.published ? 'Published' : 'Waiting for approval') + '</span>' +
+                        '<p>' + esc(review.text) + '</p></td></tr>'
+                    )
+                    .join('');
+                  const phone = row.phone
+                    ? '<a class="link" href="tel:' + esc(row.phone) + '">' + esc(row.phone) + '</a>' +
+                      (row.wa ? '<a class="contact" href="whatsapp-inbox.html?wa=' + encodeURIComponent(row.wa) + '" target="_blank" rel="noopener">Chat</a>' +
+                        '<a class="contact" href="https://wa.me/' + encodeURIComponent(row.wa) + '" target="_blank" rel="noopener noreferrer">WhatsApp</a>' : '')
+                    : '';
                   return (
-                    '<tr><td><a href="custom-orders.html?q=' + encodeURIComponent(row.orderId) + '" target="_blank" rel="noopener">#' + esc(row.orderId) + '</a></td>' +
+                    '<tr' + (written ? ' class="has-review"' : '') + '><td><a class="link" href="custom-orders.html?q=' + encodeURIComponent(row.orderId) + '" target="_blank" rel="noopener" title="Open this order">#' + esc(row.orderId) + '</a></td>' +
                     '<td>' + esc(row.name) + '</td>' +
+                    '<td>' + phone + '</td>' +
                     '<td>' + esc(when(row.at)) + ' ' + asked + '</td>' +
                     '<td>' + esc(MESSAGE[row.message] || row.message || '') + '</td>' +
                     '<td>' + (reply ? '<span class="pill ' + reply[1] + '">' + esc(reply[0]) + '</span>' : '') + '</td>' +
                     '<td class="num">' + (row.reviews ? num(row.reviews) : '') + '</td>' +
-                    '<td>' + (row.suggested ? '<a href="https://amolbooks.com/product-details/' + encodeURIComponent(row.suggested) + '" target="_blank" rel="noopener">' + esc(row.suggested) + '</a>' : '') + '</td></tr>'
+                    '<td>' + (row.suggested ? '<a href="https://amolbooks.com/product-details/' + encodeURIComponent(row.suggested) + '" target="_blank" rel="noopener">' + esc(row.suggested) + '</a>' : '') + '</td></tr>' +
+                    written
                   );
                 })
                 .join('')
-            : '<tr><td colspan="7" class="empty">No review requests in this period yet.</td></tr>';
+            : '<tr><td colspan="8" class="empty">' + esc(EMPTY[show] || EMPTY['']) + '</td></tr>';
         }
         async function load() {
           if (!token()) {
             $('login').hidden = false;
-            $('rows').innerHTML = '<tr><td colspan="7" class="empty">Sign in to see review requests.</td></tr>';
+            $('rows').innerHTML = '<tr><td colspan="8" class="empty">Sign in to see review requests.</td></tr>';
             return;
           }
           $('apply').disabled = true;
           $('status').textContent = '';
           try {
-            render(await request('/api/order-review/admin/stats?days=' + encodeURIComponent($('days').value)));
+            render(await request('/api/order-review/admin/stats?days=' + encodeURIComponent($('days').value) + ($('show').value ? '&show=' + encodeURIComponent($('show').value) : '')));
           } catch (error) {
-            $('rows').innerHTML = '<tr><td colspan="7" class="empty">' + esc(error.message) + '</td></tr>';
+            $('rows').innerHTML = '<tr><td colspan="8" class="empty">' + esc(error.message) + '</td></tr>';
           } finally {
             $('apply').disabled = false;
           }
@@ -617,10 +695,17 @@
           load();
         };
         $('days').onchange = load;
+        $('show').onchange = load;
+        document.querySelectorAll('button.stat').forEach((card) => {
+          card.onclick = () => {
+            $('show').value = $('show').value === card.dataset.show ? '' : card.dataset.show;
+            load();
+          };
+        });
         $('menu').onclick = () => $('navigation').classList.toggle('open');
         $('logout').onclick = () => {
           localStorage.removeItem('co_admin_token');
-          $('rows').innerHTML = '<tr><td colspan="7" class="empty">Sign in to see review requests.</td></tr>';
+          $('rows').innerHTML = '<tr><td colspan="8" class="empty">Sign in to see review requests.</td></tr>';
           $('login').hidden = false;
         };
         $('login-form').onsubmit = async (event) => {

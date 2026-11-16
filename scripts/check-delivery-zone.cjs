@@ -290,6 +290,17 @@ assert.equal(zone.chargeFor('outside', 500, shipping), 75);
 assert.equal(zone.chargeFor('outside', 1500, shipping), 95);
 assert.equal(zone.chargeFor('outside', 99999, shipping), 75, 'No matching tier: base charge');
 assert.equal(zone.chargeFor(null, 500, shipping), null);
+// Small orders outside Dhaka city (owner, 2026-11-16): books under ৳294 pay at least ৳100.
+assert.equal(zone.chargeFor('outside', 500, shipping, 293), 100);
+assert.equal(zone.chargeFor('outside', 500, shipping, 150.5), 100);
+assert.equal(zone.chargeFor('outside', 500, shipping, 294), 75, '৳294 itself pays the normal charge');
+assert.equal(zone.chargeFor('outside', 500, shipping, 1200), 75);
+assert.equal(zone.chargeFor('inside', 500, shipping, 100), 60, 'Inside Dhaka city is unchanged');
+assert.equal(zone.chargeFor('outside', 1500, { ...shipping, outsideDhakaRules: [{ fromGram: 0, toGram: 2000, cost: 120 }] }, 100), 120, 'A heavier tier above ৳100 stays');
+assert.equal(zone.chargeFor('outside', 500, shipping, undefined), 75, 'No product total: as before');
+assert.equal(zone.chargeFor('outside', 500, shipping, null), 75);
+assert.equal(zone.smallOrderCharge('outside', 0, 100), 0, 'Free delivery stays free');
+assert.equal(zone.smallOrderCharge('outside', 75, 100), 100);
 assert.equal(zone.weightGram(1.2), 1200);
 assert.equal(zone.weightGram(350), 350);
 
@@ -329,6 +340,55 @@ assert.match(service, /mismatch \? address : zone\.withLocation/, 'District not 
 assert.match(service, /city: districtEntry\[2\],/, 'District in English is the order city');
 assert.match(service, /metaCity: zone\.metaCity\(district\),/, 'Order keeps the Meta town');
 assert.match(orders, /this\.deliveryZoneService\?\.forOrder\(/, 'New orders get the district charge');
+assert.match(orders, /freeDelivery,\s+cartSubTotal - cartDiscountAmount,\s+\);/, 'New orders pass the books total for the small-order charge');
+// The checkout shows it too: package-free-delivery.html patches the Angular checkout class (the
+// only place that can reach it on the live build), run here on a stand-in component.
+{
+  const snippet = read('gtm-snippets/package-free-delivery.html').match(/<script>([\s\S]*?)<\/script>/)[1];
+  const numbers = /total >= (\d+)\) return charge;\s+return Math\.max\(charge, (\d+)\);/.exec(snippet);
+  assert.deepEqual([Number(numbers[1]), Number(numbers[2])], [zone.SMALL_ORDER.below, zone.SMALL_ORDER.outside], 'Checkout and API use the same numbers');
+  const patch = new Function('freeDeliveryOffer', 'checkoutOffer', 'schedule',
+    snippet.slice(snippet.indexOf('function patchCheckout'), snippet.indexOf('// Production Angular')) + ';return patchCheckout;')((carts) => (carts[0].free ? 'set' : ''), '', () => {});
+  class Checkout {
+    constructor() { this.formData = { value: { deliveryOptions: '2' } }; this.carts = [{}]; this.cartSubTotal = 300; this.cartDiscountAmount = 50; this.savar = false; }
+    shouldUseOutsideDhakaCharge() { return this.savar; }
+    calculateDeliveryCharge() { return this.formData.value.deliveryOptions === '1' && !this.savar ? 60 : 75; }
+    previewDeliveryChargeOutsideDhaka() { return 75; }
+    get grandTotal() { return this.cartSubTotal - this.cartDiscountAmount + this.calculateDeliveryCharge(); }
+  }
+  patch(Checkout.prototype); // as on the live site: the class, before the page makes the component
+  const component = new Checkout();
+  patch(component); // and again on the instance when it can be found: wrapped once only
+  assert.equal(component.calculateDeliveryCharge(), 100, 'Books ৳250, outside: ৳100');
+  // The note under the delivery choice: ৳44 more (294 - 250) for the normal ৳75.
+  {
+    const made = [];
+    const node = () => ({ attrs: {}, children: [], textContent: '', setAttribute(k, v) { this.attrs[k] = v; }, getAttribute(k) { return this.attrs[k]; }, appendChild(c) { this.children.push(c); }, remove() { made.length = 0; } });
+    const group = { insertAdjacentElement(_, el) { made.push(el); } };
+    const host = { querySelector: (q) => (q.includes('deliveryOptions') ? group : made[0] || null) };
+    const setNote = new Function('document', 'smallOrderNote',
+      snippet.slice(snippet.indexOf('function bn('), snippet.indexOf('function update()')) + ';return setSmallOrderNote;');
+    setNote({ createElement: node }, '44|75|100')(host);
+    assert.equal(made[0].children[0].textContent, 'আর ৳৪৪ টাকার বই নিলে ডেলিভারি চার্জ মাত্র ৳৭৫');
+    assert.match(made[0].children[1].textContent, /৳১০০/);
+    setNote({ createElement: node }, '')(host);
+    assert.equal(made.length, 0, 'Note goes away when the ৳100 no longer applies');
+  }
+  assert.equal(component.previewDeliveryChargeOutsideDhaka(), 100, 'The "outside" label shows ৳100 too');
+  assert.equal(component.grandTotal, 350);
+  component.formData.value.deliveryOptions = '1';
+  assert.equal(component.calculateDeliveryCharge(), 60, 'Inside Dhaka city unchanged');
+  component.savar = true; // Savar etc. on the saved-address checkout
+  assert.equal(component.calculateDeliveryCharge(), 100);
+  component.savar = false;
+  component.formData.value.deliveryOptions = '2';
+  component.carts = [{ free: true }];
+  assert.equal(component.calculateDeliveryCharge(), 0, 'Free delivery stays free');
+  component.carts = [{}];
+  component.cartSubTotal = 344; // 344 - 50 = 294
+  assert.equal(component.calculateDeliveryCharge(), 75, 'Books ৳294: normal charge');
+  assert.equal(component.previewDeliveryChargeOutsideDhaka(), 75);
+}
 assert.match(orders, /deliveryLocation: deliveryLocation\?\.record,/, 'Orders store the district');
 assert.match(orders, /city: deliveryLocation \? deliveryLocation\.city : orderData\?\.city,/, 'Order city is the district');
 assert.equal((orders.match(/deliveryLocation\?\.metaCity \|\|/g) || []).length, 2, 'Both server Meta Purchase paths use the district as ct');
@@ -354,7 +414,7 @@ assert.match(picker, /args\[0\] = this\.__abOrderPost \? withPlace\(body\) : wit
 assert.match(picker, /INCOMPLETE_URL\.test\(url\)\) \{[\s\S]*?withPlaceIncomplete\(init\.body\)/, 'The save on tab close (keepalive fetch) carries the district');
 assert.match(picker, /request\.open\('PUT', incomplete\.base \+ '\/api\/order\/update-incomplete-order-by-id\/'/, 'A district picked later updates the saved incomplete order');
 assert.match(orders, /if \(incompleteInput\.deliveryLocation\) await this\.syncIncompleteDeliveryCharge\(id\);/, 'Saved incomplete orders get the district charge');
-assert.match(service, /async chargeForSaved\(location: any, orderedItems: any\[\], current: number\)/, 'Charge check for saved incomplete orders');
+assert.match(service, /async chargeForSaved\(location: any, orderedItems: any\[\], current: number, productTotal\?: number\)/, 'Charge check for saved incomplete orders');
 // The check never moves a saved row off a charge that is right for its district.
 const INCOMPLETE_URL = /^(.*?)\/api\/order\/(?:add-incomplete-order-by-(?:user|anonymous)|update-incomplete-order-by-id\/([^/?#]+))(?:[?#]|$)/;
 assert.deepEqual(INCOMPLETE_URL.exec('https://apisub.amolbooks.com/api/order/update-incomplete-order-by-id/abc123').slice(1), ['https://apisub.amolbooks.com', 'abc123']);

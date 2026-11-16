@@ -750,7 +750,8 @@ export class ReviewRequestService implements OnModuleInit, OnModuleDestroy {
   /* ---------------- Numbers for staff ---------------- */
 
   /** Requests in the last `days` days: sent, read, taps, reviews, and reorders within 30 days. */
-  async stats(daysParam: any) {
+  async stats(daysParam: any, showParam?: any) {
+    const show = ['reviewed', 'replied', 'problem'].includes(String(showParam)) ? String(showParam) : '';
     const days = Math.min(180, Math.max(1, Math.round(Number(daysParam) || 30)));
     const now = Date.now();
     const since = new Date(now - days * DAY_MS);
@@ -809,6 +810,24 @@ export class ReviewRequestService implements OnModuleInit, OnModuleDestroy {
     const sentReorders = await reordered(groups.sent);
     const holdoutReorders = await reordered(groups.holdout);
     const optedOut = await this.chatModel.countDocuments({ followUpOptOut: true });
+    // The table: the latest 50, or only the customers who reviewed / tapped / had a problem.
+    const listed = orders
+      .filter((order) => {
+        const request = order.reviewRequest || {};
+        if (show === 'reviewed') return request.reviews > 0;
+        if (show === 'replied') return !!request.reply;
+        if (show === 'problem') return request.reply === 'problem';
+        return true;
+      })
+      .slice(0, 50);
+    const reviewedIds = listed.filter((order) => order.reviewRequest?.reviews > 0).map((order) => order._id);
+    const written: any[] = reviewedIds.length
+      ? await this.reviewModel
+          .find({ 'order._id': { $in: reviewedIds } })
+          .select('order._id product.name product.slug rating review status reviewDate')
+          .sort({ reviewDate: 1 })
+          .lean()
+      : [];
     return {
       success: true,
       data: {
@@ -827,9 +846,21 @@ export class ReviewRequestService implements OnModuleInit, OnModuleDestroy {
         holdout: groups.holdout.length,
         holdoutReorders: holdoutReorders.count,
         optedOut,
-        recent: orders.slice(0, 50).map((order) => ({
+        show,
+        recent: listed.map((order) => ({
           orderId: String(order.orderId || ''),
           name: String(order.name || ''),
+          phone: String(order.phoneNo || ''),
+          wa: String(order.reviewRequest?.wa || WhatsappService.toWhatsappNumber(order.phoneNo) || ''),
+          reviewList: written
+            .filter((review) => String(review.order?._id) === String(order._id))
+            .map((review) => ({
+              book: String(review.product?.name || ''),
+              slug: String(review.product?.slug || ''),
+              rating: Number(review.rating) || 0,
+              text: String(review.review || ''),
+              published: review.status === true,
+            })),
           at: order.reviewRequest?.at || null,
           status: order.reviewRequest?.status || '',
           reason: order.reviewRequest?.reason || '',

@@ -5308,6 +5308,7 @@ export class OrderService {
 
     // Grand Total
     // Note: orderData?.deliveryCharge already includes weight-based charge from frontend
+      cartSubTotal - cartDiscountAmount,
     // So we don't add weightBasedDeliveryCharge again to avoid double counting
     const grandTotal =
       cartSubTotal +
@@ -6056,7 +6057,7 @@ export class OrderService {
     try {
       const row: any = await this.incompleteOrderModel
         .findById(id)
-        .select('deliveryLocation deliveryCharge grandTotal orderedItems status')
+        .select('deliveryLocation deliveryCharge grandTotal subTotal discount orderedItems status')
         .lean();
       if (!row?.deliveryLocation?.district || row.status === 'converted') return;
       const current = Number(row.deliveryCharge || 0);
@@ -6073,6 +6074,8 @@ export class OrderService {
             deliveryCharge: charge,
             grandTotal: Number(row.grandTotal || 0) - current + charge,
           },
+        // Books' price after product discounts (small orders outside Dhaka pay at least ৳100).
+        Number(row.subTotal) > 0 ? Number(row.subTotal) - (Number(row.discount) || 0) : undefined,
         },
       );
     } catch (error) {
