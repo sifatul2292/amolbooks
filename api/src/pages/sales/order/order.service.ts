@@ -5299,6 +5299,7 @@ export class OrderService {
       orderData,
       finalData,
       freeDelivery,
+      cartSubTotal - cartDiscountAmount,
     );
     const deliveryCharge = freeDelivery
       ? 0
@@ -5308,7 +5309,6 @@ export class OrderService {
 
     // Grand Total
     // Note: orderData?.deliveryCharge already includes weight-based charge from frontend
-      cartSubTotal - cartDiscountAmount,
     // So we don't add weightBasedDeliveryCharge again to avoid double counting
     const grandTotal =
       cartSubTotal +
@@ -6065,6 +6065,8 @@ export class OrderService {
         row.deliveryLocation,
         row.orderedItems,
         current,
+        // Books' price after product discounts (small orders outside Dhaka pay at least ৳100).
+        Number(row.subTotal) > 0 ? Number(row.subTotal) - (Number(row.discount) || 0) : undefined,
       );
       if (charge == null || charge === current) return;
       await this.incompleteOrderModel.updateOne(
@@ -6074,8 +6076,6 @@ export class OrderService {
             deliveryCharge: charge,
             grandTotal: Number(row.grandTotal || 0) - current + charge,
           },
-        // Books' price after product discounts (small orders outside Dhaka pay at least ৳100).
-        Number(row.subTotal) > 0 ? Number(row.subTotal) - (Number(row.discount) || 0) : undefined,
         },
       );
     } catch (error) {
