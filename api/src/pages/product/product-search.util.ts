@@ -27,11 +27,14 @@ export interface SearchCandidate {
   category?: any;
   publisher?: any;
   author?: any;
+  /** Copies sold: related books (relatedSearch) put best sellers first. Optional. */
+  totalSold?: any;
 }
 
 interface PreparedCandidate {
   id: any;
   order: number;
+  sold: number;
   // Folded text of every searchable field, and of the name alone.
   all: string;
   allCompact: string;
@@ -258,6 +261,7 @@ export function prepareCandidates(docs: SearchCandidate[]): PreparedCandidate[] 
     return {
       id: doc._id,
       order,
+      sold: Number(doc.totalSold) || 0,
       all,
       allCompact: all.replace(/ /g, ''),
       name,
@@ -343,4 +347,146 @@ export function rankSearch(candidates: PreparedCandidate[], query: string): any[
       a.candidate.order - b.candidate.order,
   );
   return scored.map((entry) => entry.candidate.id);
+}
+
+/* ---------------- Related books (owner, 2026-11-16) ----------------
+ * "Whatever people search, show related books": when rankSearch finds nothing, the customer still
+ * gets books. In 30 days 117 of 389 searched terms ended on an empty page: half-typed or badly
+ * misspelled titles ("পোডাক্টেট মুসলিম", "দি বারাকা"), topics ("parenting", "জীবনী বই") and books
+ * the shop does not have ("rich dad"). relatedSearch scores every book by the typed words it
+ * shares (exact, close spelling, same beginning) and by the topic the words point to, and fills
+ * the list with best sellers; with nothing shared at all it returns best sellers only. Weak
+ * likenesses are dropped (a wrong "similar" book is worse than a best seller).
+ * Server only: the header dropdown and the results page both read this through product/get-all.
+ */
+
+// Words that say nothing about the book (folded forms are computed below).
+const RELATED_STOP_WORDS = [
+  'বই', 'বইটি', 'বইয়ের', 'এর', 'ও', 'এবং', 'কি', 'কী', 'হবে', 'আছে', 'নিয়ে', 'জন্য', 'একটি', 'হযরত', 'সাঃ', 'সা', 'রাঃ',
+  'সাথে', 'কথা', 'হে', 'তারিখে', 'পাঠানো', 'নেবে', 'পর', 'সব', 'আর', 'আমরা', 'আপনি', 'না', 'সিরিজ',
+  'সাল্লাল্লাহু', 'আলাইহি', 'ওয়াসাল্লাম', 'পাবলিকেশন', 'প্রকাশনী', 'প্রকাশন', 'দি', 'দ্য', 'দ্যা', 'অব',
+  'the', 'of', 'and', 'for', 'book', 'books', 'boi', 'er', 'in', 'to', 'a', 'an',
+];
+
+// A typed word → words the shop's books use for that topic.
+const RELATED_TOPICS: [string[], string[]][] = [
+  [['parenting', 'parent', 'kids', 'kid', 'child', 'children', 'baby', 'প্যারেন্টিং', 'প্যারেনটিং', 'প্যারেনটিংস', 'বাচ্চা', 'শিশু'], ['সন্তান', 'শিশু', 'ছোটদের', 'প্যারেন্টিং']],
+  [['জীবনী', 'jiboni', 'biography', 'sirat', 'seerah', 'seerat', 'সিরাত', 'সীরাত'], ['সীরাত', 'নবিজি', 'নবীজি', 'রাসুল', 'মুহাম্মাদ']],
+  [['bibaho', 'biye', 'marriage', 'wedding', 'বিয়ে', 'বিবাহ', 'দাম্পত্য', 'সংসার'], ['বিয়ে', 'বিবাহ', 'দাম্পত্য', 'সংসার']],
+  [['arabic', 'arbi', 'আরবি'], ['আরবি', 'শব্দে কুরআন']],
+  [['business', 'ব্যবসা', 'উদ্যোক্তা', 'উদ্দোক্তা', 'উদ্দক্তা', 'entrepreneur', 'startup'], ['ব্যবসা', 'বিজনেস', 'উদ্যোক্তা']],
+  [['rich', 'money', 'millionaire', 'millioner', 'wealth', 'টাকা', 'ধনী', 'সম্পদ', 'রিচ'], ['সম্পদ', 'রিজিক', 'বিজনেস', 'বিলিয়ন']],
+  [['namaz', 'namaj', 'salat', 'salah', 'নামাজ', 'নামায', 'সালাত'], ['সালাত', 'নামাজ', 'খুশু']],
+  [['dua', 'doa', 'দোয়া', 'দুআ', 'দোআ', 'zikr', 'jikir', 'যিকির'], ['দুআ', 'যিকর']],
+  [['habit', 'productivity', 'productive', 'dopamine', 'ডোপামিন', 'time', 'অলসতা', 'motivation'], ['প্রোডাক্টিভ', 'টাইম', 'অলসতা', 'মাইন্ডসেট']],
+  [['women', 'woman', 'nari', 'নারী', 'মহিলা', 'hijab', 'হিজাব'], ['নারী', 'হিজাব', 'মুসলিমাহ']],
+  [['history', 'itihas', 'ইতিহাস'], ['ইতিহাস']],
+  [['tafsir', 'তাফসির', 'তাফসীর', 'fatiha', 'ফাতিহা', 'surah', 'সূরা'], ['তাফসীর', 'কুরআন', 'সূরা']],
+  [['hadis', 'hadith', 'হাদিস', 'হাদীস'], ['হাদিস', 'রিয়াদুস']],
+  [['ramadan', 'ramjan', 'roja', 'রমজান', 'রমাদান', 'রোজা'], ['রমাদান', 'রমজান']],
+  [['aqida', 'akida', 'iman', 'ঈমান', 'আকিদা', 'আকীদা'], ['ঈমান', 'আকিদা']],
+];
+
+let relatedStop: Set<string> | null = null;
+let relatedTopics: { words: Set<string>; terms: string[] }[] | null = null;
+function relatedTables() {
+  if (!relatedStop) {
+    relatedStop = new Set(RELATED_STOP_WORDS.flatMap((word) => foldSearchText(word).split(' ')).filter(Boolean));
+    relatedTopics = RELATED_TOPICS.map(([words, terms]) => ({
+      words: new Set(words.flatMap((word) => foldSearchText(word).split(' ')).filter(Boolean)),
+      terms: terms.map((term) => foldSearchText(term)).filter(Boolean),
+    }));
+  }
+  return { stop: relatedStop, topics: relatedTopics };
+}
+
+export interface RelatedResult {
+  ids: any[];
+  /** similar: books sharing a word or topic with the search; popular: nothing shared, the shop's first books. */
+  kind: 'similar' | 'popular';
+}
+
+/**
+ * Books to show when rankSearch found nothing. `candidates` are in the requested order (it breaks
+ * ties and supplies the "popular" list).
+ */
+export function relatedSearch(candidates: PreparedCandidate[], query: string, limit = 12): RelatedResult {
+  const folded = foldSearchText(query);
+  const { stop, topics } = relatedTables();
+  // Best sellers first; without sales numbers, the requested order.
+  const bestSellers = candidates.slice().sort((a, b) => b.sold - a.sold || a.order - b.order);
+  const popular = (): RelatedResult => ({ ids: bestSellers.slice(0, limit).map((c) => c.id), kind: 'popular' });
+  if (!folded) return { ids: [], kind: 'popular' };
+  const typed = folded.split(' ').filter(Boolean);
+  // Numbers count from two digits ("500", "৯৯"), words from three letters.
+  const words = typed.filter((word) => !stop.has(word) && letters(word).length >= (/^\d+$/.test(word) ? 2 : 3));
+  const topicTerms = [...new Set(topics.filter((topic) => typed.some((word) => topic.words.has(word))).flatMap((topic) => topic.terms))];
+  if (!words.length && !topicTerms.length) return popular();
+
+  const scored: { candidate: PreparedCandidate; score: number }[] = [];
+  for (const candidate of candidates) {
+    let score = 0;
+    for (const word of words) {
+      const latin = /^[a-z]+$/.test(word);
+      const chars = letters(word);
+      // The word itself: at the start of a book's word. A short word (up to four letters) must be
+      // nearly the whole word ("রিচ" is not "পরিচয়", "পড়ো" is not "প্রোডাক্টিভ"); Latin from four letters.
+      const short = chars.length <= 4;
+      const starts = (token: string) =>
+        token.startsWith(word) && (!short || letters(token).length - chars.length <= 3);
+      const exact = latin && chars.length < 4 ? undefined
+        : candidate.tokens.find((token) => starts(token) && candidate.nameTokens.has(token)) ||
+          candidate.tokens.find(starts) ||
+          (!latin && !short && candidate.all.includes(word) ? word : undefined);
+      if (exact !== undefined) {
+        const inName = candidate.nameTokens.has(exact) || (!latin && !short && candidate.name.includes(word));
+        score += inName ? 6 : 3;
+        continue;
+      }
+      // Close spellings: Bengali words from four letters, Latin from six (short Banglish words
+      // are close to too many others).
+      if (chars.length < (latin ? 6 : 4)) continue;
+      // One letter more than the strict search allows, also against the start of a longer word
+      // ("উদ্দোক্তা" → "উদ্যোক্তার").
+      const max = allowedTypos(chars.length) + 1;
+      let best = max + 1;
+      let bestToken = '';
+      for (const token of candidate.tokens) {
+        const tokenChars = letters(token);
+        if (tokenChars.length < 3) continue;
+        let distance = editDistance(chars, tokenChars, max);
+        if (distance > max && tokenChars.length > chars.length) distance = editDistance(chars, tokenChars.slice(0, chars.length), max);
+        if (distance < best) {
+          best = distance;
+          bestToken = token;
+        }
+      }
+      // Never more than a quarter of the word wrong.
+      if (best <= max && best * 4 <= chars.length) {
+        score += (candidate.nameTokens.has(bestToken) ? 4 : 2) - (best > 1 ? 1 : 0);
+        continue;
+      }
+      // The same beginning (first four letters) of a title word: a half-typed title.
+      if (chars.length >= 5) {
+        const start = chars.slice(0, 4).join('');
+        if ([...candidate.nameTokens].some((token) => token.startsWith(start))) score += 1;
+      }
+    }
+    for (const term of topicTerms) {
+      if (candidate.name.includes(term)) score += 3;
+      else if (candidate.all.includes(term)) score += 1;
+    }
+    // 3 = the word itself somewhere, a close spelling in the title, or the topic in the title.
+    if (score >= 3) scored.push({ candidate, score });
+  }
+  if (!scored.length) return popular();
+  scored.sort((a, b) => b.score - a.score || b.candidate.sold - a.candidate.sold || a.candidate.order - b.candidate.order);
+  const ids = scored.slice(0, limit).map((entry) => entry.candidate.id);
+  // A short list is filled with best sellers (at least eight books to look at).
+  const have = new Set(ids.map(String));
+  for (const candidate of bestSellers) {
+    if (ids.length >= Math.min(limit, 8)) break;
+    if (!have.has(String(candidate.id))) ids.push(candidate.id);
+  }
+  return { ids, kind: 'similar' };
 }

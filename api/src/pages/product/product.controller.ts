@@ -129,7 +129,8 @@ export class ProductController {
     const result: any = await this.productService.getAllProducts(filterProductDto, searchString);
     // Shop searches feed the admin "Customer Searches" page; the response never waits for it.
     if (searchString) {
-      void this.searchInsights?.record(searchString, Number(result?.count ?? result?.data?.length ?? 0), req);
+      // Related books shown for an empty search still count as "found no books" in the report.
+      void this.searchInsights?.record(searchString, result?.related ? 0 : Number(result?.count ?? result?.data?.length ?? 0), req);
     }
     return result;
   }

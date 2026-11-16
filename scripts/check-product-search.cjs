@@ -58,6 +58,41 @@ let connection;
     { _id: 'f', name: 'আধুনিক বিজ্ঞান', translatorName: 'মাসুদ শরীফ' },
   ];
   const prepared = prepareCandidates(books);
+
+  // 2b. Related books when nothing matches (owner, 2026-11-16: whatever people search, show related books).
+  {
+    const { relatedSearch } = search;
+    const shop = prepareCandidates([
+      { _id: 'pm', name: 'প্রোডাক্টিভ মুসলিম', totalSold: 900 },
+      { _id: 'q5', name: '৫০০ শব্দে কুরআনের ৭৫%', totalSold: 1200 },
+      { _id: 'mm', name: 'ইসলামি অর্থনীতি ও সফল উদ্যোক্তার মাইন্ডম্যাপ', totalSold: 500 },
+      { _id: 'be', name: 'দ্য বারাকাহ ইফেক্ট', totalSold: 140 },
+      { _id: 'sg', name: 'সম্পদ গড়ার কৌশল', totalSold: 50 },
+      { _id: 'sn', name: 'সন্তান গড়ার ১১০ টিপস', totalSold: 3 },
+      { _id: 'rr', name: 'রউফুর রহীম (নবিজীবনের বিশুদ্ধ সীরাত)', totalSold: 2 },
+      { _id: 'pr', name: 'পরিচয়', totalSold: 1 },
+      { _id: 'po', name: 'পড়ো', totalSold: 1 },
+    ]);
+    const first = (q) => relatedSearch(shop, q).ids[0];
+    for (const q of ['পোডাক্টেট মুসলিম', 'দি বারাকা', 'উদ্দোক্তা', 'parenting', 'রাসূল সাঃ এর জীবনী বই', 'rich dad']) {
+      assert.deepEqual(rankSearch(shop, q), [], q + ': the search itself finds nothing');
+    }
+    assert.equal(first('পোডাক্টেট মুসলিম'), 'pm', 'A badly misspelled title still leads to the book');
+    assert.equal(first('দি বারাকা'), 'be');
+    assert.equal(first('উদ্দোক্তা'), 'mm', 'Close spelling against the start of a longer word');
+    assert.equal(first('parenting'), 'sn', 'A topic word finds the books on that topic');
+    assert.equal(first('রাসূল সাঃ এর জীবনী বই'), 'rr');
+    assert.equal(first('rich dad'), 'sg', 'A book the shop does not have: books on the same subject');
+    assert.equal(relatedSearch(shop, 'রিচ ড্যাড').ids.includes('pr') && relatedSearch(shop, 'রিচ ড্যাড').ids.indexOf('pr') < 2, false, '"রিচ" is not "পরিচয়"');
+    assert.equal(relatedSearch(shop, 'উদ্দোক্তা').kind, 'similar');
+    assert.equal(relatedSearch(shop, 'উদ্দোক্তা').ids.length, 8, 'A short list is filled with best sellers');
+    assert.deepEqual(relatedSearch(shop, 'উদ্দোক্তা').ids.slice(1, 3), ['q5', 'pm'], 'Best sellers follow, most sold first');
+    const nothing = relatedSearch(shop, 'মাছ চাষ');
+    assert.equal(nothing.kind, 'popular', 'Nothing in common: best sellers');
+    assert.deepEqual(nothing.ids.slice(0, 3), ['q5', 'pm', 'mm']);
+    assert.deepEqual(relatedSearch(shop, '   ').ids, [], 'An empty search shows nothing');
+    assert.equal(relatedSearch(shop, 'delivery', 4).ids.length, 4, 'The limit is kept');
+  }
   const ids = (query) => rankSearch(prepared, query);
   assert.deepEqual(ids('আত্মার ঔষুধ'), ['a'], 'Owner example 1: ঔষুধ finds ওষুধ');
   assert.deepEqual(ids('আধুনিল ফিতনা'), ['b'], 'Owner example 2: one wrong letter');
@@ -184,8 +219,15 @@ let connection;
   assert.deepEqual(result.data.map((p) => p.name), ['আধুনিক ফিতনা']);
   result = await run('ইবনুল কায়িম');
   assert.deepEqual(result.data.map((p) => p.name), ['আত্মার ওষুধ'], 'Author with another spelling');
+  assert.equal(result.related, undefined, 'A real match is not marked as related');
+  // Nothing matches: related books (here the shop's published books) and the answer says so.
   result = await run('xyzqwe');
-  assert.deepEqual(result.data, []);
+  assert.equal(result.related, 'popular');
+  assert.ok(result.data.length > 0 && result.count === result.data.length, 'Related books instead of an empty page');
+  assert.ok(result.data.every((p) => p.name && !/draft/i.test(p.name)), 'Only books the filter allows');
+  result = await run('ফিতনা নিয়ে কোনো নতুন কিতাব');
+  assert.equal(result.related, 'similar');
+  assert.match(result.data[0].name, /ফিতনা/, 'Books sharing a word with the search come first');
   assert.equal(service.searchCandidateCache.size, 2, 'Candidates cached per filter and sort (two sorts used)');
   // If the tolerant search cannot run, the old exact search still answers.
   service.searchCandidateCache = null;

@@ -6235,8 +6235,62 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       }),
     }, CATALOG_API_BASE).then(function (result) {
       var products = result && Array.isArray(result.data) ? result.data : [];
-      return products.filter(function (product) { return product && product.slug && product.name; });
+      products = products.filter(function (product) { return product && product.slug && product.name; });
+      // 'similar' / 'popular': the search itself found nothing and the API sent related books.
+      products.related = result && result.related ? String(result.related) : '';
+      return products;
     });
+  }
+
+  // What the customer is told when the books shown are related ones, not matches (owner,
+  // 2026-11-16: whatever people search, show related books).
+  function searchRelatedText(query, kind) {
+    return '“' + query + '” নামে কোনো বই পাইনি। ' +
+      (kind === 'popular' ? 'আমাদের জনপ্রিয় বইগুলো দেখুন।' : 'কাছাকাছি বইগুলো দেখুন।');
+  }
+
+  // Results page (/product-list?searchQuery=): the same note above the book list.
+  var searchRelatedNote = { query: null, kind: '' };
+  function mountSearchRelatedNote() {
+    var query = '';
+    if (location.pathname === '/product-list') {
+      try { query = String(new URLSearchParams(location.search).get('searchQuery') || '').trim(); } catch (_) {}
+    }
+    var host = document.querySelector('app-product-list');
+    var note = document.querySelector('.ab-search-related-note');
+    if (!query || !host) {
+      if (note) note.remove();
+      if (!query) searchRelatedNote = { query: null, kind: '' };
+      return;
+    }
+    if (searchRelatedNote.query !== query) {
+      searchRelatedNote = { query: query, kind: '' };
+      if (note) note.remove();
+      fetchJson('/product/get-all?q=' + encodeURIComponent(query), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filter: { status: 'publish' }, pagination: { pageSize: 1, currentPage: 0 }, sort: { createdAt: -1 }, select: { name: 1 } }),
+      }, CATALOG_API_BASE).then(function (result) {
+        if (searchRelatedNote.query !== query) return;
+        searchRelatedNote.kind = result && result.related ? String(result.related) : '';
+        if (searchRelatedNote.kind) scheduleMount();
+      });
+      return;
+    }
+    if (!searchRelatedNote.kind) {
+      if (note) note.remove();
+      return;
+    }
+    var text = searchRelatedText(query, searchRelatedNote.kind);
+    if (!note || note.parentNode !== host) {
+      if (note) note.remove();
+      note = document.createElement('p');
+      note.className = 'ab-search-related-note';
+      note.setAttribute('role', 'status');
+      note.style.cssText = 'margin:12px 16px;padding:12px 14px;border:1px solid #f0d28a;border-radius:8px;background:#fff8e6;color:#5a3b00;font:600 16px/1.6 hind-siliguri,sans-serif;';
+      host.insertBefore(note, host.firstChild);
+    }
+    if (note.textContent !== text) note.textContent = text;
   }
 
   function searchAuthorHtml(author) {
@@ -6290,7 +6344,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     '</div>';
   }
 
-  function renderSearchProducts(products, input, popular, authors, publishers) {
+  function renderSearchProducts(products, input, popular, authors, publishers, related, query) {
     var results = searchResults(input);
     if (!results) return;
     authors = authors || [];
@@ -6301,6 +6355,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     }
     rememberCartProducts(products);
     results.innerHTML = (popular ? '<p class="ab-sticky-search-state">জনপ্রিয় বই</p>' : '') +
+      (related ? '<p class="ab-sticky-search-state">' + escapeHtml(searchRelatedText(query, related)) + '</p>' : '') +
       authors.map(searchAuthorHtml).join('') +
       publishers.map(searchPublisherHtml).join('') +
       products.map(stickySearchProductHtml).join('');
@@ -6340,7 +6395,9 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
           seen[key] = true;
           return true;
         }).slice(0, SEARCH_BOOK_LIMIT);
-        renderSearchProducts(products, input, popular && !value, authors, publishers);
+        // Related books are named as such only when nothing else matched (no author, publisher or their books).
+        var related = value && !authors.length && !publishers.length ? found[0].related : '';
+        renderSearchProducts(products, input, popular && !value, authors, publishers, related, value);
       });
     });
   }
@@ -9415,6 +9472,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     mountStickyCommerce();
     mountStickyProductActions();
     repairBottomNavIcons();
+    mountSearchRelatedNote();
     if (location.pathname.indexOf('/checkout') === 0) syncCheckoutCartStorage();
     repairCheckoutJourney();
     if (cartPageOpen()) {

@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { renderProductSeo } from './product-seo.utils';
-import { prepareCandidates, rankSearch } from './product-search.util';
+import { prepareCandidates, rankSearch, relatedSearch } from './product-search.util';
 import { Model, Types } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { UtilsService } from '../../shared/utils/utils.service';
@@ -43,7 +43,7 @@ const ObjectId = Types.ObjectId;
 // Spelling-tolerant search (product-search.util.ts): the searchable fields of
 // every product a filter allows, in the requested order, kept two minutes.
 const SEARCH_FIELDS =
-  'name nameEn seoKeywords translatorName category.name publisher.name author.name';
+  'name nameEn seoKeywords translatorName category.name publisher.name author.name totalSold';
 const SEARCH_CANDIDATE_LIMIT = 6000;
 const SEARCH_CANDIDATE_TTL_MS = 2 * 60 * 1000;
 const SEARCH_RESULT_LIMIT = 500;
@@ -466,12 +466,15 @@ export class ProductService {
     }
   }
 
-  /** Search result ids in order, or null to use the old exact search. */
+  /**
+   * Search result ids in order, or null to use the old exact search. When nothing matches, the
+   * books related to the search instead (relatedSearch), with `related` saying which kind.
+   */
   private async rankedSearchIds(
     baseFilter: any,
     sort: any,
     searchQuery: string,
-  ): Promise<any[] | null> {
+  ): Promise<{ ids: any[]; related: '' | 'similar' | 'popular' } | null> {
     try {
       const key = JSON.stringify(baseFilter || {}) + '|' + JSON.stringify(sort || {});
       let entry = this.searchCandidateCache.get(key);
@@ -487,7 +490,10 @@ export class ProductService {
         if (this.searchCandidateCache.size >= 50) this.searchCandidateCache.clear();
         this.searchCandidateCache.set(key, entry);
       }
-      return rankSearch(entry.list, searchQuery).slice(0, SEARCH_RESULT_LIMIT);
+      const ids = rankSearch(entry.list, searchQuery).slice(0, SEARCH_RESULT_LIMIT);
+      if (ids.length) return { ids, related: '' };
+      const related = relatedSearch(entry.list, searchQuery);
+      return { ids: related.ids, related: related.ids.length ? related.kind : '' };
     } catch (error) {
       this.logger.warn(`Spelling-tolerant search failed, using exact search: ${error?.message}`);
       return null;
@@ -617,8 +623,12 @@ export class ProductService {
     // requested sort; close spellings only when nothing matches). Falls back to
     // the old exact search if the catalogue is too large or the lookup fails.
     let searchOrder: any[] | null = null;
+    // 'similar' / 'popular' when the search itself found nothing and related books are shown.
+    let searchRelated = '';
     if (searchQuery) {
-      searchOrder = await this.rankedSearchIds(mFilter, sort || { createdAt: -1 }, searchQuery);
+      const ranked = await this.rankedSearchIds(mFilter, sort || { createdAt: -1 }, searchQuery);
+      searchOrder = ranked ? ranked.ids : null;
+      searchRelated = ranked ? ranked.related : '';
     }
     if (searchOrder) {
       mFilter = { $and: [mFilter, { _id: { $in: searchOrder } }] };
@@ -913,6 +923,7 @@ export class ProductService {
             filterGroup: allFilterGroups,
           },
         } as ResponsePayload;
+        if (searchRelated) (response as any).related = searchRelated;
         await this.cacheManager.set(cacheKey, response, { ttl: 30 });
         return response;
       } else {
@@ -923,6 +934,7 @@ export class ProductService {
           count: dataAggregates.length,
           filterGroup: allFilterGroups,
         } as ResponsePayload;
+        if (searchRelated) (response as any).related = searchRelated;
         await this.cacheManager.set(cacheKey, response, { ttl: 30 });
         return response;
       }
