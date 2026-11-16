@@ -1,0 +1,145 @@
+<!-- Checkout, phones: a sticky "অর্ডার কনফার্ম করুন" bar (owner, 2026-11-16). The checkout is long on a
+     phone (form, books, delivery, payment) and the order button sits at the very end. Scrolling down
+     shows this bar in place of the bottom navigation; scrolling up brings the navigation back. The bar
+     presses the page's own order button, so every check that button has (required fields, the district
+     picker, the address warning) still runs; a field that stops the order is scrolled into view.
+     Hidden while a text box has focus (it would sit on the keyboard) and on wide screens (no bottom
+     navigation there). It stays up when the page's own button comes into view. -->
+<style>
+  #ab-checkout-confirm-bar {
+    position: fixed; z-index: 10020; right: 0; bottom: 0; left: 0;
+    padding: 8px 12px max(8px, env(safe-area-inset-bottom));
+    border-top: 1px solid #12482a; background: #175c36;
+    box-shadow: 0 -4px 14px rgb(20 45 28 / .18);
+    opacity: 0; pointer-events: none; transform: translateY(115%);
+    transition: transform .18s ease-out, opacity .18s linear;
+  }
+  #ab-checkout-confirm-bar.is-visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+  #ab-checkout-confirm-bar button {
+    display: block; width: 100%; min-height: 48px; padding: 0 14px;
+    border: 0; border-radius: 8px; background: #ffc83d; color: #173a22;
+    font: 700 18px/1.2 hind-siliguri, sans-serif; cursor: pointer; touch-action: manipulation;
+  }
+  #ab-checkout-confirm-bar button:active { background: #f2b61f; }
+  #ab-checkout-confirm-bar button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+  #ab-checkout-confirm-bar button:disabled { opacity: .7; cursor: default; }
+  /* One bottom surface at a time: the navigation steps aside while the bar is up. */
+  body:has(#ab-checkout-confirm-bar.is-visible) app-header .bottom-nav { visibility: hidden !important; pointer-events: none !important; }
+  @media (prefers-reduced-motion: reduce) { #ab-checkout-confirm-bar { transition: none; } }
+</style>
+<script>
+(function () {
+  'use strict';
+  if (window.__abCheckoutStickyConfirm) return;
+  window.__abCheckoutStickyConfirm = true;
+
+  var LABEL = 'অর্ডার কনফার্ম করুন';
+  var lastY = 0;
+  var wanted = false; // the last scroll went down
+  var queued = false;
+
+  function onCheckout() { return location.pathname === '/checkout' || location.pathname === '/checkout/'; }
+  function submitButton() { return document.querySelector('app-checkout form button[type="submit"]'); }
+  // The bar stands in for the bottom navigation, so it exists only where that is shown (phones).
+  function navShown() {
+    var nav = document.querySelector('app-header .bottom-nav');
+    return !!nav && getComputedStyle(nav).display !== 'none';
+  }
+  function typing() {
+    var active = document.activeElement;
+    if (!active || !active.closest || !active.closest('app-checkout')) return false;
+    var tag = active.tagName;
+    if (tag === 'TEXTAREA') return true;
+    return tag === 'INPUT' && !/^(radio|checkbox|button|submit)$/i.test(active.type || '');
+  }
+
+  function bar() {
+    var node = document.getElementById('ab-checkout-confirm-bar');
+    if (node) return node;
+    node = document.createElement('div');
+    node.id = 'ab-checkout-confirm-bar';
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = LABEL;
+    button.addEventListener('click', confirmOrder);
+    node.appendChild(button);
+    document.body.appendChild(node);
+    return node;
+  }
+
+  // What stops the order, if anything: an empty required field, or the district picker's message.
+  function blocker() {
+    var field = document.querySelector('app-checkout form input.ng-invalid, app-checkout form textarea.ng-invalid');
+    if (field) return field;
+    var picker = document.getElementById('ab-delivery-location');
+    if (picker) {
+      var shown = picker.querySelector('.ab-dl-error:not([hidden]), .ab-dl-warn:not([hidden])');
+      if (shown && shown.offsetParent) return picker;
+    }
+    return null;
+  }
+
+  function confirmOrder() {
+    var submit = submitButton();
+    if (!submit) return;
+    var button = bar().querySelector('button');
+    // The page's own button: its checks, its order request, its double-tap handling.
+    submit.click();
+    setTimeout(function () {
+      if (!onCheckout()) return;
+      var stop = blocker();
+      if (stop) {
+        wanted = false;
+        update();
+        stop.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        if (stop.focus && /^(INPUT|TEXTAREA)$/.test(stop.tagName)) { try { stop.focus({ preventScroll: true }); } catch (_) { /* older browsers */ } }
+        return;
+      }
+      // Nothing stopped it: the order is being sent. No second tap meanwhile.
+      button.disabled = true;
+      setTimeout(function () { button.disabled = false; }, 4000);
+    }, 120);
+  }
+
+  function update() {
+    queued = false;
+    var node = document.getElementById('ab-checkout-confirm-bar');
+    var submit = onCheckout() ? submitButton() : null;
+    if (!submit || !navShown()) {
+      if (node) node.classList.remove('is-visible');
+      if (!onCheckout()) wanted = false;
+      return;
+    }
+    // Stays up at the page's own button too (owner, 2026-11-16: it vanished at the end of the page).
+    var show = wanted && !typing();
+    node = node || bar();
+    node.classList.toggle('is-visible', show);
+    node.setAttribute('aria-hidden', show ? 'false' : 'true');
+    node.querySelector('button').tabIndex = show ? 0 : -1;
+  }
+  function queue() {
+    if (queued) return;
+    queued = true;
+    (window.requestAnimationFrame || setTimeout)(update);
+  }
+
+  window.addEventListener('scroll', function () {
+    var y = window.pageYOffset || document.documentElement.scrollTop || 0;
+    // Small moves (a finger resting, the address bar sliding) change nothing.
+    if (Math.abs(y - lastY) < 8) return;
+    wanted = y > lastY && y > 80;
+    lastY = y;
+    queue();
+  }, { passive: true });
+  document.addEventListener('focusin', queue, true);
+  document.addEventListener('focusout', queue, true);
+  window.addEventListener('resize', queue);
+  window.addEventListener('popstate', queue);
+  window.addEventListener('ab-route', queue);
+  // Leaving the checkout inside the app (no page load): take the bar down.
+  setInterval(function () {
+    var node = document.getElementById('ab-checkout-confirm-bar');
+    if (node && node.classList.contains('is-visible') && !onCheckout()) queue();
+  }, 700);
+}());
+</script>

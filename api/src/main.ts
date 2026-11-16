@@ -643,6 +643,8 @@ ${storefrontPurchaseExternalIdHelper}
     'mobile-browsing.html',
     // Tidies autofilled +880 numbers in the checkout phone box (the box used to cut them).
     'checkout-phone.html',
+    // Phones: sticky "অর্ডার কনফার্ম করুন" bar on the checkout while scrolling down.
+    'checkout-sticky-confirm.html',
     'pagespeed-accessibility.html',
     'pagespeed-runtime.html',
   ];

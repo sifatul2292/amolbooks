@@ -1,3 +1,11 @@
+## Checkout: sticky "অর্ডার কনফার্ম করুন" bar on phones (2026-11-16, branch claude/staff-performance; committed and pushed 2026-11-16 to claude/staff-performance and codex/rollback-sunday-20260927; not deployed)
+
+Owner: on the checkout, scrolling down should show a sticky order button where the bottom navigation is; scrolling up shows the navigation again. (Clarity the same day: the phone checkout is long and the order button is at the very end.)
+
+- New `gtm-snippets/checkout-sticky-confirm.html` (listed in `main.ts` after `checkout-phone.html`): bar `#ab-checkout-confirm-bar`, yellow button on the nav's green. Shown while the last scroll went down (past 80px); hidden on scroll up and while a text box has focus (keyboard); it stays up when the page's own order button comes into view (owner asked, same day), off `/checkout`, and where the bottom navigation is not shown (wide screens). `body:has(...is-visible)` hides the bottom navigation meanwhile.
+- The bar only presses the page's own submit button, so required fields, the district picker and the address warning all still run; it never sends an order itself. If something stops the order, that field is scrolled into view and focused; otherwise the bar's button is disabled for 4 s (no double tap).
+- Checked: `node scripts/check-checkout-sticky-confirm.cjs` (wiring + safety rules). Local site at 375px: down → bar, up → navigation, at the real button → bar stays; tap with an empty form → no order, "This field is required" shown, name box scrolled to and focused; 1280px → no bar. The book-pair offer popup sits above the bar. NOT tested: a real order placed through the bar, and a real phone / Facebook in-app browser (80% of visitors).
+
 ## Search: related books when nothing matches (2026-11-16, branch claude/staff-performance; committed and pushed 2026-11-16 to claude/staff-performance and codex/rollback-sunday-20260927; not deployed)
 
 Owner: "whatever people search, show related books". Live Customer Searches, 30 days: 591 searches, 389 terms, 141 terms logged as "found no books"; 117 of them still find nothing with the current live search (half-typed or badly misspelled titles, topics like "parenting" / "জীবনী বই", books the shop does not have like "rich dad", and non-book text like "delivery").
