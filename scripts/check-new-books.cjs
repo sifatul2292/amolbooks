@@ -34,8 +34,9 @@ for (const set of fs.readdirSync(base)) {
     assert.match(b.slug, /^[a-z0-9]+(-[a-z0-9]+)*$/, `${where}: slug`);
     assert.match(String(b.nameEn), /^[\x20-\x7e]+$/, `${where}: English name`);
     assert.ok(Number.isInteger(b.mrp) && b.mrp > 0, `${where}: cover price`);
-    assert.ok(b.discountPercent >= 0 && b.discountPercent < 50, `${where}: discount`);
-    if (b.discountAmount !== undefined) assert.ok(Number.isInteger(b.discountAmount) && b.discountAmount >= 0 && b.discountAmount < b.mrp / 2, `${where}: discount in Taka`);
+    // The owner's own titles give an exact Taka discount instead of a percentage.
+    if (b.discountAmount === undefined) assert.ok(b.discountPercent >= 0 && b.discountPercent < 50, `${where}: discount`);
+    else assert.ok(Number.isInteger(b.discountAmount) && b.discountAmount >= 0 && b.discountAmount < b.mrp / 2, `${where}: discount in Taka`);
     assert.ok(Number.isInteger(b.quantity) && b.quantity >= 0, `${where}: quantity`);
     assert.ok(b.categories.length >= 1 && b.categories.length <= 2, `${where}: one or two categories`);
     for (const c of b.categories) assert.ok(CATEGORIES.has(c.normalize('NFD')), `${where}: category "${c}" exists`);
@@ -60,7 +61,7 @@ for (const set of fs.readdirSync(base)) {
     }
     if (b.description) {
       // Readable HTML only: paragraphs and "•" lists, no escaped tags or leftover info lines.
-      assert.doesNotMatch(b.description.replace(/<\/?(?:p|ul|li)>/g, ''), /[<>]|&lt;|&gt;|&nbsp;/, `${where}: description is plain paragraphs/lists`);
+      assert.doesNotMatch(b.description.replace(/<\/?(?:p|ul|li|strong)>|<br>/g, ''), /[<>]|&lt;|&gt;|&nbsp;/, `${where}: description is plain paragraphs/lists`);
       assert.doesNotMatch(b.description, /<(?:p|li)>(?:অনুবাদক?|সম্পাদনা|সম্পাদক|(?:মোট )?পৃষ্[ঠট]া|কভার|সাইজ)\s*[:ঃ-]/, `${where}: no translator/page/cover lines`);
     }
     if (b.binding) assert.ok(['পেপারব্যাক', 'হার্ডকভার'].includes(b.binding), `${where}: binding`);

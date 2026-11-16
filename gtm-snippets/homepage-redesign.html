@@ -335,7 +335,11 @@ app-product-card-one .heart.active {
       title: 'জনপ্রিয়তার শীর্ষে',
       // Owner's picks (2026-11-08): a pinned book sits two places after its anchor, which on
       // phones (two rows filled column by column) is right beside it.
-      pins: [{ slug: 'secrets-of-wealth-and-provision', after: 'the-barakah-effect' }]
+      // Owner (2026-11-16): every Amol Books title is always on this shelf (see productsForShelf).
+      pins: [
+        { slug: 'secrets-of-wealth-and-provision', after: 'the-barakah-effect' },
+        { slug: 'the-power-of-dua', after: 'secrets-of-wealth-and-provision' }
+      ]
     },
     // Every shelf shows 12 cards unless it sets `size` (owner, 2026-11-09: rows must be full;
     // 12 fills 6 across, 4 across and the two-row phone strip).
@@ -378,7 +382,7 @@ app-product-card-one .heart.active {
       id: 'prayer',
       title: 'নামাজ, দুআ ও যিকির',
       categories: ['দোয়া, দরূদ ও যিকর', 'ইসলামি আমল ও আমলের সহায়িকা'],
-      picks: ['amolbissokosh', 'moner moto salat', 'khushu-khuju-96', 'haia-alas-salah', 'Islame Namajer Gurutto', 'salat-o-sokal-sondhar-dua', 'duwa bishhokosh', 'hisnulmuslim', 'muslimer-surokkha-hard-cover', 'istighfar', 'dorud-o-salam', 'mohimannito-jumua', 'jharfuker-dua']
+      picks: ['the-power-of-dua', 'amolbissokosh', 'moner moto salat', 'khushu-khuju-96', 'haia-alas-salah', 'Islame Namajer Gurutto', 'salat-o-sokal-sondhar-dua', 'duwa bishhokosh', 'hisnulmuslim', 'muslimer-surokkha-hard-cover', 'istighfar', 'dorud-o-salam', 'mohimannito-jumua', 'jharfuker-dua']
     },
     {
       id: 'character',
@@ -535,9 +539,15 @@ app-product-card-one .heart.active {
         return { pin: pin, product: products.find(function (product) { return product.slug === pin.slug; }) };
       }).filter(function (entry) { return entry.product; });
       var pinnedSlugs = pinned.map(function (entry) { return entry.product.slug; });
-      var top = products.filter(function (product) { return pinnedSlugs.indexOf(product.slug) === -1; })
-        .sort(function (a, b) { return number(b.totalSold) - number(a.totalSold); })
-        .slice(0, (shelf.size || 12) - pinned.length);
+      var bySales = function (a, b) { return number(b.totalSold) - number(a.totalSold); };
+      // Every Amol Books title is on the shelf and comes first (owner, 2026-11-16), by sales;
+      // best sellers fill the rest. More own titles than cards grows the shelf by rows of 12.
+      var own = products.filter(function (product) { return isOwnBook(product) && pinnedSlugs.indexOf(product.slug) === -1; });
+      var size = Math.max(shelf.size || 12, Math.ceil((own.length + pinned.length) / 12) * 12);
+      var others = products.filter(function (product) { return !isOwnBook(product) && pinnedSlugs.indexOf(product.slug) === -1; })
+        .sort(bySales)
+        .slice(0, Math.max(0, size - pinned.length - own.length));
+      var top = own.sort(bySales).concat(others);
       pinned.forEach(function (entry) {
         var anchor = top.findIndex(function (product) { return product.slug === entry.pin.after; });
         top.splice(anchor === -1 ? Math.min(5, top.length) : Math.min(anchor + 2, top.length), 0, entry.product);
@@ -807,10 +817,37 @@ app-product-card-one .heart.active {
         select: CATALOGUE_SELECT
       })
     });
+    var ownBooks = requestOwnBooks();
     return request.then(function (response) {
       if (!response.ok) throw new Error('Catalogue unavailable');
       return response.json();
+    }).then(function (result) {
+      return ownBooks.then(function (own) {
+        var products = result && Array.isArray(result.data) ? result.data : [];
+        var have = {};
+        products.forEach(function (product) { have[product.slug] = true; });
+        var added = own.filter(function (product) { return product && !have[product.slug]; });
+        return added.length ? Object.assign({}, result, { data: products.concat(added) }) : result;
+      });
     });
+  }
+  /* The catalogue holds the 180 best sellers, so new Amol Books titles (no sales yet) would miss
+     the popular shelf. They are asked for alongside it; a failure only leaves them out. */
+  function requestOwnBooks() {
+    return fetch(API_BASE + '/product/get-all', {
+      method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filter: { status: 'publish', quantity: { $gt: 0 }, 'publisher.name': 'আমল বুকস' },
+        pagination: { pageSize: 60, currentPage: 0 },
+        sort: { totalSold: -1 },
+        select: CATALOGUE_SELECT
+      })
+    }).then(function (response) {
+      if (!response.ok) throw new Error('Own books unavailable');
+      return response.json();
+    }).then(function (result) {
+      return result && Array.isArray(result.data) ? result.data : [];
+    }).catch(function () { return []; });
   }
   /* The catalogue holds the 180 best sellers, so shelf picks that have not sold yet are
      fetched by slug after the page shows (see loadShelfPicks). `shelfPicks` marks a full result. */
@@ -855,14 +892,14 @@ app-product-card-one .heart.active {
   function fetchProducts() {
     if (cataloguePromise) return cataloguePromise;
     try {
-      var cached = JSON.parse(sessionStorage.getItem('ab-home-catalogue-v4') || 'null');
+      var cached = JSON.parse(sessionStorage.getItem('ab-home-catalogue-v5') || 'null');
       if (cached && Array.isArray(cached.data) && cached.data.length) {
         cataloguePromise = Promise.resolve(cached);
         return cataloguePromise;
       }
     } catch (error) { /* Fetch when storage is unavailable. */ }
     cataloguePromise = withRetries(requestCatalogue, [700, 2000]).then(function (result) {
-      try { sessionStorage.setItem('ab-home-catalogue-v4', JSON.stringify(result)); } catch (error) { /* Cache is optional. */ }
+      try { sessionStorage.setItem('ab-home-catalogue-v5', JSON.stringify(result)); } catch (error) { /* Cache is optional. */ }
       return result;
     }).catch(function (error) {
       cataloguePromise = null;
@@ -875,7 +912,7 @@ app-product-card-one .heart.active {
     if (result && result.shelfPicks) return Promise.resolve(result);
     if (shelfPicksPromise) return shelfPicksPromise;
     shelfPicksPromise = withRetries(function () { return addShelfPicks(result); }, [700, 2000]).then(function (full) {
-      try { sessionStorage.setItem('ab-home-catalogue-v4', JSON.stringify(full)); } catch (error) { /* Cache is optional. */ }
+      try { sessionStorage.setItem('ab-home-catalogue-v5', JSON.stringify(full)); } catch (error) { /* Cache is optional. */ }
       cataloguePromise = Promise.resolve(full);
       return full;
     }).catch(function () {
