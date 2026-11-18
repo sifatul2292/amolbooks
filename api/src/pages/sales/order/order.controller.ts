@@ -309,6 +309,7 @@ export class OrderController {
   @Version(VERSION_NEUTRAL)
   @Put('/update/:id')
   @UsePipes(ValidationPipe)
+  @UseGuards(AdminJwtAuthGuard)
   // @AdminMetaRoles(AdminRoles.SUPER_ADMIN)
   // @UseGuards(AdminRolesGuard)
   // @AdminMetaPermissions(AdminPermissions.EDIT)
@@ -319,7 +320,7 @@ export class OrderController {
     @Body() updateOrderDto: UpdateOrderDto,
     @Headers('administrator') adminToken: string,
   ): Promise<ResponsePayload> {
-    // Unguarded route: a valid admin token is used only for staff attribution.
+    // Admin authentication protects order totals and payment state; the same token records staff attribution.
     return await this.orderService.updateOrderById(
       id,
       updateOrderDto,

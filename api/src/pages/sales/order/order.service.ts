@@ -790,6 +790,7 @@ export class OrderService {
       await this.utilsService.generateInvoicePdf(saveData);
 
       // 5) Send SMS and Email for Cash on Delivery
+      // (online payment orders get them once the payment is confirmed: PaymentService)
       // With WhatsApp order messages on, the SMS waits and goes out only when the WhatsApp
       // message is not delivered in time (owner, 2026-11-10; WhatsappService.settleOrderSms).
       if (saveData['paymentType'] === 'cash_on_delivery') {
@@ -4841,9 +4842,17 @@ export class OrderService {
     updateOrderDto: any,
   ): Promise<ResponsePayload> {
     try {
-      await this.orderModel.findByIdAndUpdate(id, {
-        $set: updateOrderDto,
-      });
+      // Public checkout route: it may store the payment session key only. Before, any
+      // field could be set here (e.g. paymentStatus: 'paid').
+      const sslSessionId =
+        typeof updateOrderDto?.sslSessionId === 'string'
+          ? updateOrderDto.sslSessionId.slice(0, 200)
+          : '';
+      if (sslSessionId) {
+        await this.orderModel.findByIdAndUpdate(id, {
+          $set: { sslSessionId },
+        });
+      }
 
       return {
         success: true,

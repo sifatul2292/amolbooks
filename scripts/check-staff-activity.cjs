@@ -593,10 +593,10 @@ const waitFor = async (check, label, ms = 3000) => {
   assert.equal(response.body.data.updatedByName, 'Karim Admin');
   const P = await seed();
   assert.equal((await call('PUT', '/api/order/update/' + P._id, karim, { adminNote: 'Through HTTP' })).status, 200);
-  assert.equal(nameOf((await get(Order, P)).adminNoteBy), 'Karim Admin', 'The unguarded update route reads the administrator header');
+  assert.equal(nameOf((await get(Order, P)).adminNoteBy), 'Karim Admin', 'The authenticated update route records the administrator');
   response = await call('PUT', '/api/order/update/' + P._id, null, { adminNote: 'No login' });
   assert.equal(response.status, 401, 'A note change without a login is refused over HTTP');
-  assert.match(response.body.message, /Login expired/);
+  assert.equal(response.body.message, 'Unauthorized', 'The admin guard rejects anonymous order updates before the writer');
   assert.equal((await get(Order, P)).adminNote, 'Through HTTP');
   assert.equal((await call('POST', '/api/order/send-to-courier/' + P._id, sumi)).status, 201);
   assert.equal(nameOf((await get(Order, P)).courierSentBy), 'Sumi Sales');

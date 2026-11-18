@@ -90,6 +90,16 @@ JWT_PRIVATE_KEY_ADMIN=<admin-jwt-secret>
 PRODUCTION_BUILD=true            # true => local MongoDB; false/absent => Atlas test cluster
 POSTHOG_API_KEY=<posthog-key>
 POSTHOG_HOST=<posthog-host>
+# EPS live gateway (credentials supplied privately by EPS)
+EPS_BASE_URL=https://pgapi.eps.com.bd
+EPS_USERNAME=<eps-user>
+EPS_PASSWORD=<eps-password>
+EPS_HASH_KEY=<eps-hash-key>
+EPS_STORE_ID=<eps-store-id>
+EPS_MERCHANT_ID=<eps-merchant-id>
+EPS_ENABLED=true
+EPS_RETURN_BASE_URL=https://apisub.amolbooks.com
+STOREFRONT_URL=https://www.amolbooks.com
 # Also expected in production per ops history:
 GREENWEBSMS_TOKEN=<sms-token>    # OTP + order SMS via bdbulksms.net; missing => SMS silently fails
 STEADFAST_WEBHOOK_TOKEN=<random-webhook-secret>

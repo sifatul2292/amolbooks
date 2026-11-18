@@ -1,0 +1,256 @@
+<!-- Online payment (EPS: bKash / Nagad / Rocket / card), 2026-11-05. Only acts when the API says EPS is switched on (GET /payment/eps/config); otherwise the checkout stays exactly as before.
+  Checkout: the compiled "পেমেন্ট করুন" option (old SSLCommerz picture) gets a clear Bengali label and wallet/card names. If EPS cannot open the payment page, the shopper goes to the "not paid" page with a pay-again button instead of a silent button reset (which led to duplicate orders).
+  After paying: EPS -> API (/payment/eps/return, which re-checks the payment with EPS) -> /checkout/order-success/<id>?payment=paid (green "paid" note, guest cart emptied like after a cash-on-delivery order) or /payment/fail?order=<id>&state=failed|cancelled|pending|review|init_failed (Bengali message, pay again, help line; "pending" re-checks by itself).
+  API_BASE: production https://apisub.amolbooks.com/api, localhost uses its own origin. -->
+<style>
+html.ab-eps-on app-checkout .ab-eps-method > :not(.ab-eps-label) { display:none !important; }
+.ab-eps-brand { display:block; width:100%; max-width:420px; height:auto; margin-top:4px; }
+.ab-eps-label { display:flex; flex-direction:column; gap:4px; text-align:left; font-family:hind-siliguri,sans-serif; color:#23372b; }
+.ab-eps-label .ab-eps-title { font-weight:700; font-size:15px; line-height:1.4; }
+.ab-eps-label .ab-eps-sub { font-size:14px; line-height:1.45; color:#23372b; }
+.ab-eps-logos { display:flex; flex-wrap:wrap; gap:5px; margin-top:2px; }
+.ab-eps-logos span { display:inline-block; padding:2px 7px; border-radius:5px; font:700 12px/1.5 Arial,sans-serif; letter-spacing:.2px; color:#fff; }
+.ab-eps-logos .bkash { background:#e2136e; }
+.ab-eps-logos .nagad { background:#ec1c24; }
+.ab-eps-logos .rocket { background:#8c3494; }
+.ab-eps-logos .card { background:#1a1f71; }
+.ab-eps-paid { display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap; margin:0 auto 18px; padding:10px 16px; max-width:420px; border-radius:10px; background:#e8f5ec; border:1px solid #9fd2b0; color:#175c36; font:600 16px/1.6 hind-siliguri,sans-serif; }
+.ab-eps-paid[data-state="pending"] { background:#fff7e6; border-color:#e8c98a; color:#7a5200; }
+html.ab-eps-result .payment-success-main > :not(.ab-eps-result-box) { display:none !important; }
+.ab-eps-result-box { max-width:520px; margin:0 auto; padding:24px 18px; text-align:center; font:17px/1.8 hind-siliguri,sans-serif; color:#23372b; background:#fff; }
+.ab-eps-result-box .ab-eps-icon { width:64px; height:64px; margin:0 auto 10px; border-radius:50%; display:flex; align-items:center; justify-content:center; font:700 34px/1 Arial,sans-serif; color:#fff; background:#a32727; }
+.ab-eps-result-box[data-state="pending"] .ab-eps-icon, .ab-eps-result-box[data-state="review"] .ab-eps-icon { background:#c99525; }
+.ab-eps-result-box h1 { margin:0 0 8px; font:700 24px/1.5 hind-siliguri,sans-serif; }
+.ab-eps-result-box p { margin:0 0 12px; }
+.ab-eps-result-box .ab-eps-order { display:inline-block; margin-bottom:12px; padding:4px 12px; border-radius:7px; background:#edf5ef; font-weight:600; }
+.ab-eps-actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:8px; }
+.ab-eps-actions button, .ab-eps-actions a { display:inline-flex; align-items:center; justify-content:center; min-height:46px; padding:8px 18px; border-radius:8px; border:1px solid #175c36; font:600 16px/1.5 hind-siliguri,sans-serif; cursor:pointer; text-decoration:none; color:#175c36; background:#fff; }
+.ab-eps-actions .ab-eps-primary { background:#175c36; color:#fff; }
+.ab-eps-actions button:disabled { opacity:.6; cursor:wait; }
+.ab-eps-actions button:focus-visible, .ab-eps-actions a:focus-visible { outline:3px solid #c99525; outline-offset:3px; }
+.ab-eps-note { margin-top:12px !important; font-size:15px; color:#4a5d52; }
+.ab-eps-error { margin-top:10px !important; color:#882121; }
+.ab-eps-error:empty { display:none; }
+/* Phones: the shared checkout style boxes each (inline) radio button inside its card, which drew
+   stray lines around taller labels; the payment cards already have their own border. */
+@media (max-width:767px) {
+  html.ab-eps-on body.ab-checkout-enhanced app-checkout mat-radio-group[formcontrolname="paymentMethod"] mat-radio-button { display:block !important; padding:0 !important; border:0 !important; background:transparent !important; }
+  html.ab-eps-on body.ab-checkout-enhanced app-checkout mat-radio-group[formcontrolname="paymentMethod"] .method-data { border-top:0 !important; padding:.5rem .25rem !important; }
+}
+@media (max-width:480px) { .ab-eps-result-box { padding:22px 14px; } .ab-eps-result-box h1 { font-size:21px; } .ab-eps-actions > * { flex:1 1 100%; } }
+</style>
+<script>
+(function () {
+  'use strict';
+  if (window.__abCheckoutPayment) return;
+  window.__abCheckoutPayment = true;
+
+  var LOCAL = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname);
+  var API_BASE = LOCAL ? location.origin + '/api' : 'https://apisub.amolbooks.com/api';
+  var HELP_PHONE = '+880 1893-058682';
+  var CONFIG_KEY = 'ab-eps-enabled-v1';
+  var root = document.documentElement;
+  var enabled = null;
+
+  function esc(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function money(value) { return '৳' + Math.max(0, Number(value) || 0).toLocaleString('en-BD'); }
+  function query(name) { try { return new URLSearchParams(location.search).get(name) || ''; } catch (_) { return ''; } }
+  function validId(id) { return /^[a-f0-9]{24}$/i.test(String(id || '')); }
+  function api(path, method) {
+    return fetch(API_BASE + path, { method: method || 'GET', headers: { Accept: 'application/json' }, cache: 'no-store' })
+      .then(function (response) {
+        return response.json().catch(function () { return {}; }).then(function (body) {
+          if (!response.ok || !body || body.success === false) {
+            var error = new Error(body && body.message || 'request failed');
+            error.status = response.status;
+            throw error;
+          }
+          return body.data;
+        });
+      });
+  }
+
+  // After a paid online order the guest cart is emptied, as the checkout does for cash on
+  // delivery. Done before the storefront starts, so the header shows an empty cart.
+  if (/^\/checkout\/order-success\//.test(location.pathname) && query('payment') === 'paid') {
+    try {
+      Object.keys(localStorage).forEach(function (key) {
+        if (/^Amolbooks_(LOCAL_)?USER_CART_/.test(key)) localStorage.removeItem(key);
+      });
+    } catch (_) {}
+  }
+
+  // ---- Is EPS switched on? (cached for the visit) ----
+  try { var cached = sessionStorage.getItem(CONFIG_KEY); if (cached === '1' || cached === '0') enabled = cached === '1'; } catch (_) {}
+  if (enabled) root.classList.add('ab-eps-on');
+  api('/payment/eps/config').then(function (data) {
+    enabled = Boolean(data && data.enabled);
+    try { sessionStorage.setItem(CONFIG_KEY, enabled ? '1' : '0'); } catch (_) {}
+    root.classList.toggle('ab-eps-on', enabled);
+    schedule();
+  }).catch(function () {});
+
+  // ---- Checkout: label the online option ----
+  function labelOnlineOption() {
+    if (!enabled) return;
+    var input = document.querySelector('app-checkout mat-radio-group[formcontrolname="paymentMethod"] input[value="online_payment"]');
+    if (!input) return;
+    var button = input.closest('mat-radio-button, .mat-mdc-radio-button');
+    var data = button && button.querySelector('.method-data');
+    if (!data || data.querySelector('.ab-eps-label')) return;
+    data.classList.add('ab-eps-method');
+    var label = document.createElement('span');
+    label.className = 'ab-eps-label';
+    label.innerHTML =
+      '<span class="ab-eps-title">অনলাইন পেমেন্ট</span>' +
+      '<span class="ab-eps-sub">বিকাশ / নগদ / কার্ডে এখনই টাকা দিন</span>' +
+      '<img class="ab-eps-brand" src="' + API_BASE + '/storefront-assets/eps-pay-with.png" alt="Pay with EPS: Visa, Mastercard, American Express, bKash, Nagad and Rocket" width="420" height="93">';
+    data.appendChild(label);
+  }
+
+  // If EPS cannot open its payment page the compiled checkout only resets its button; the
+  // order is already saved by then, so send the shopper to the pay-again page instead.
+  var lastOrder = null;
+  var open = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function (method, url) {
+    var target = String(url || '');
+    if (/\/api\/order\/add-order/.test(target)) {
+      this.addEventListener('load', function () {
+        try { var body = JSON.parse(this.responseText); if (body && body.data && validId(body.data._id)) lastOrder = body.data; } catch (_) {}
+      });
+    } else if (/\/api\/payment\/init-ssl/.test(target)) {
+      this.addEventListener('loadend', function () {
+        if (!enabled || !lastOrder) return;
+        var ok = false;
+        try { var body = JSON.parse(this.responseText); ok = this.status < 400 && body && body.success && body.data && body.data.GatewayPageURL; } catch (_) {}
+        if (!ok) location.href = '/payment/fail?order=' + encodeURIComponent(lastOrder._id) + '&state=init_failed';
+      });
+    }
+    return open.apply(this, arguments);
+  };
+
+  // ---- Thank-you page after paying ----
+  var paidShownFor = '';
+  function paidNote() {
+    var match = location.pathname.match(/^\/checkout\/order-success\/([a-f0-9]{24})/i);
+    var card = document.querySelector('.order-success-card');
+    if (!match || !card || query('payment') !== 'paid' || paidShownFor === match[1] + location.search) return;
+    paidShownFor = match[1] + location.search;
+    var note = document.createElement('div');
+    note.className = 'ab-eps-paid';
+    note.setAttribute('role', 'status');
+    note.dataset.state = 'pending';
+    note.textContent = 'পেমেন্ট যাচাই করা হচ্ছে…';
+    var content = card.querySelector('.success-content');
+    card.insertBefore(note, content || card.firstChild);
+    api('/payment/eps/status/' + match[1]).then(function (data) {
+      if (data && data.paymentStatus === 'paid') {
+        note.dataset.state = 'paid';
+        note.textContent = '✓ পেমেন্ট সম্পন্ন — ' + money(data.paidAmount != null ? data.paidAmount : data.amount) + ' পরিশোধিত' +
+          (data.paidWith ? ' (' + data.paidWith + ')' : '');
+      } else {
+        location.replace('/payment/fail?order=' + encodeURIComponent(match[1]) + '&state=' + encodeURIComponent(stateOf(data)));
+      }
+    }).catch(function () { note.remove(); });
+  }
+
+  // ---- "Not paid" page (/payment/fail) ----
+  var TEXT = {
+    failed: { icon: '!', title: 'পেমেন্ট সম্পন্ন হয়নি', body: 'আপনার অর্ডারটি আমাদের কাছে আছে, কিন্তু টাকা পরিশোধ হয়নি। আবার চেষ্টা করতে পারেন, অথবা আমরা ফোন করে অর্ডারটি নিশ্চিত করব।', retry: true },
+    cancelled: { icon: '!', title: 'পেমেন্ট বাতিল করা হয়েছে', body: 'আপনার অর্ডারটি আমাদের কাছে আছে, কিন্তু টাকা পরিশোধ হয়নি। চাইলে এখনই আবার পেমেন্ট করুন, অথবা আমরা ফোন করে অর্ডারটি নিশ্চিত করব।', retry: true },
+    init_failed: { icon: '!', title: 'পেমেন্ট পেজ খোলা যায়নি', body: 'আপনার অর্ডারটি আমাদের কাছে আছে। একটু পরে আবার পেমেন্ট করুন, অথবা আমরা ফোন করে অর্ডারটি নিশ্চিত করব।', retry: true },
+    pending: { icon: '…', title: 'পেমেন্ট যাচাই করা হচ্ছে', body: 'টাকা কেটে গিয়ে থাকলে চিন্তা করবেন না — পেমেন্ট নিশ্চিত হলেই এই পেজ নিজে থেকে বদলে যাবে।', retry: false },
+    review: { icon: '…', title: 'পেমেন্টটি আমরা যাচাই করছি', body: 'আপনার পেমেন্টের তথ্য মিলিয়ে দেখা হচ্ছে। আমাদের টিম শিগগিরই আপনার সাথে যোগাযোগ করবে।', retry: false },
+  };
+  function stateOf(data) {
+    var gateway = data && data.paymentGatewayStatus;
+    if (data && data.paymentStatus === 'paid') return 'paid';
+    return TEXT[gateway] ? gateway : gateway === 'initiated' ? 'pending' : 'failed';
+  }
+
+  var resultFor = '';
+  var pollTimer = null;
+  function resultPage() {
+    if (location.pathname !== '/payment/fail') return;
+    var main = document.querySelector('.payment-success-main');
+    var key = location.search;
+    if (!main || resultFor === key) return;
+    var state = query('state');
+    if (!state && !query('order')) return; // not an EPS return: leave the old page alone
+    resultFor = key;
+    root.classList.add('ab-eps-result');
+    var box = main.querySelector('.ab-eps-result-box') || main.appendChild(document.createElement('div'));
+    box.className = 'ab-eps-result-box';
+    var orderId = query('order');
+    render(box, TEXT[state] ? state : 'failed', null);
+    if (!validId(orderId)) return;
+    var tries = 0;
+    var check = function () {
+      api('/payment/eps/status/' + orderId).then(function (data) {
+        var current = stateOf(data);
+        if (current === 'paid') { location.replace('/checkout/order-success/' + orderId + '?payment=paid'); return; }
+        render(box, current, data);
+        if (current === 'pending' && ++tries < 24) pollTimer = setTimeout(check, 5000);
+        else if (current === 'pending') box.querySelector('.ab-eps-note').textContent = 'যাচাই শেষ হতে সময় লাগছে। আমরা নিশ্চিত হয়ে আপনাকে জানাব। দরকার হলে কল করুন: ' + HELP_PHONE;
+      }).catch(function () {});
+    };
+    clearTimeout(pollTimer);
+    check();
+  }
+
+  function render(box, state, data) {
+    var text = TEXT[state] || TEXT.failed;
+    var orderId = query('order');
+    box.dataset.state = state;
+    box.innerHTML =
+      '<div class="ab-eps-icon" aria-hidden="true">' + esc(text.icon) + '</div>' +
+      '<h1>' + esc(text.title) + '</h1>' +
+      (data && data.orderId ? '<div class="ab-eps-order">অর্ডার নম্বর: ' + esc(data.orderId) + ' · ' + esc(money(data.amount)) + '</div>' : '') +
+      '<p>' + esc(text.body) + '</p>' +
+      '<div class="ab-eps-actions">' +
+      (text.retry && validId(orderId) ? '<button type="button" class="ab-eps-primary" data-ab-eps-retry>আবার পেমেন্ট করুন</button>' : '') +
+      '<a href="/">হোমে ফিরে যান</a></div>' +
+      '<p class="ab-eps-error" role="alert"></p>' +
+      '<p class="ab-eps-note">সাহায্য দরকার? কল করুন: <a href="tel:+8801893058682">' + esc(HELP_PHONE) + '</a></p>';
+    var retry = box.querySelector('[data-ab-eps-retry]');
+    if (retry) retry.addEventListener('click', function () { payAgain(retry, box, orderId); });
+  }
+
+  function payAgain(button, box, orderId) {
+    var error = box.querySelector('.ab-eps-error');
+    button.disabled = true;
+    button.textContent = 'পেমেন্ট পেজ খোলা হচ্ছে…';
+    error.textContent = '';
+    api('/payment/eps/retry/' + orderId, 'POST').then(function (data) {
+      var next = data && (data.paid ? data.redirectUrl : data.GatewayPageURL);
+      if (next && /^https?:\/\//i.test(next)) { location.href = next; return; }
+      throw new Error('no page');
+    }).catch(function (failure) {
+      button.disabled = false;
+      button.textContent = 'আবার পেমেন্ট করুন';
+      error.textContent = failure && failure.status === 429
+        ? 'অনেকবার চেষ্টা হয়েছে। এক মিনিট পরে আবার চেষ্টা করুন।'
+        : 'এখন পেমেন্ট পেজ খোলা যাচ্ছে না। একটু পরে আবার চেষ্টা করুন, অথবা কল করুন: ' + HELP_PHONE;
+    });
+  }
+
+  // ---- Keep up with the single-page app ----
+  var pending = false;
+  function run() {
+    pending = false;
+    labelOnlineOption();
+    paidNote();
+    resultPage();
+    if (location.pathname !== '/payment/fail') { root.classList.remove('ab-eps-result'); resultFor = ''; clearTimeout(pollTimer); }
+  }
+  // setTimeout, not requestAnimationFrame: that one pauses while the tab is in the background.
+  function schedule() { if (!pending) { pending = true; setTimeout(run, 40); } }
+  new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true });
+  window.addEventListener('popstate', schedule);
+  schedule();
+})();
+</script>

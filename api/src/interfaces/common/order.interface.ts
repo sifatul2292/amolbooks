@@ -65,6 +65,24 @@ export interface Order {
   paymentStatus: string;
   orderStatus: number;
   sslSessionId: string;
+  paymentGateway?: string;
+  paymentGatewayStatus?: string;
+  paymentGatewayMessage?: string;
+  paymentCheckedAt?: Date;
+  epsMerchantTransactionId?: string;
+  epsTransactionId?: string;
+  epsAttempts?: {
+    merchantTransactionId: string;
+    transactionId?: string;
+    amount: number;
+    status?: string;
+    createdAt: Date;
+  }[];
+  paidAmount?: number;
+  paidAt?: Date;
+  paymentFinancialEntity?: string;
+  orderSmsSent?: boolean;
+  customerCancelledAt?: Date;
   hasOrderTimeline?: boolean;
   processingDate?: Date;
   shippingDate?: Date;

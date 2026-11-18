@@ -650,6 +650,8 @@ ${storefrontPurchaseExternalIdHelper}
     'checkout-phone.html',
     // Phones: sticky "অর্ডার কনফার্ম করুন" bar on the checkout while scrolling down.
     'checkout-sticky-confirm.html',
+    // EPS online payment: checkout label, paid note on the thank-you page, "not paid" page.
+    'checkout-payment.html',
     'pagespeed-accessibility.html',
     'pagespeed-runtime.html',
   ];

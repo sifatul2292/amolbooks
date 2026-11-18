@@ -331,6 +331,28 @@ export const OrderSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    // Online payment (EPS). paymentStatus becomes 'paid' only after the server has
+    // re-checked the payment with EPS; failed/cancelled orders stay 'unpaid'.
+    paymentGateway: { type: String, required: false },
+    // initiated | pending | paid | failed | cancelled | init_failed | review
+    paymentGatewayStatus: { type: String, required: false },
+    paymentGatewayMessage: { type: String, required: false },
+    paymentCheckedAt: { type: Date, required: false },
+    epsMerchantTransactionId: { type: String, required: false },
+    epsTransactionId: { type: String, required: false },
+    epsAttempts: [
+      {
+        _id: false,
+        merchantTransactionId: { type: String, required: true },
+        transactionId: { type: String, required: false },
+        amount: { type: Number, required: true },
+        status: { type: String, required: false },
+        createdAt: { type: Date, required: true },
+      },
+    ],
+    paidAmount: { type: Number, required: false },
+    paidAt: { type: Date, required: false },
+    paymentFinancialEntity: { type: String, required: false },
     grandTotal: {
       type: Number,
       required: false,
@@ -592,6 +614,8 @@ OrderSchema.index(
   { 'courierSchedule.status': 1, 'courierSchedule.at': 1 },
   { name: 'courier_schedule', partialFilterExpression: { 'courierSchedule.status': { $exists: true } } },
 );
+
+OrderSchema.index({ 'epsAttempts.merchantTransactionId': 1 }, { sparse: true });
 
 OrderSchema.index({ customerCancelledAt: 1, customerRestockCompletedAt: 1 }, {
   name: 'customer_cancellation_recovery',
