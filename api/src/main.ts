@@ -689,7 +689,11 @@ ${storefrontPurchaseExternalIdHelper}
         '<!-- GTM/Tagioo loads after first paint. -->'
       );
 
-    let patchedTrackingHtml = trackingHtml;
+    // The legacy COD fallback must not interrupt a slower online gateway request.
+    let patchedTrackingHtml = trackingHtml.replace(
+      "if(successId&&window.location.pathname.indexOf('/checkout')===0",
+      "if(req&&req.paymentType==='cash_on_delivery'&&successId&&window.location.pathname.indexOf('/checkout')===0"
+    );
     if (!patchedTrackingHtml.includes(storefrontAnalyticsBlockerMarker)) {
       patchedTrackingHtml = patchedTrackingHtml.includes(
         storefrontLocalAnalyticsGuardMarker

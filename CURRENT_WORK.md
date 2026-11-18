@@ -1,3 +1,10 @@
+## EPS checkout interrupted by legacy COD redirect (2026-11-19)
+
+- Owner's order 15658 was saved as `online_payment`, `unpaid`, with an initialized EPS attempt for BDT 108. An existing tracking interceptor scheduled an unconditional thank-you redirect 1.2 seconds after order creation, interrupting EPS initialization/session-key persistence. No payment was received on that attempt at investigation time.
+- Minimal fix in `api/src/main.ts`: the existing served-HTML patch now limits that tracking fallback to explicit `cash_on_delivery` requests. Online checkout continues through its normal gateway initialization and verified return. Compiled storefront files are not edited as source. COD and the staff's manual online-to-COD conversion workflow are preserved.
+- `scripts/check-checkout-payment-redirect.cjs` executes the actual tracking handler with simulated time: reproduces the old online redirect, proves the patched online handler schedules no competing redirect even beyond 1.2 seconds, preserves pending purchase data, preserves COD fallback and verifies repeated patching is safe. Passed against the live served HTML and local compiled template.
+- API build passed. Lint is still blocked by existing ESLint ignores-all-files configuration. Patch authored in the verified rollback-sunday checkout; release artifact will apply only this fix/test/docs onto deployed EPS ref `6d61da1d`, preserving the newer deployed source and all unrelated local changes. Production activation and gateway-page verification follow separately.
+
 ## EPS live payment release preparation (2026-11-19)
 
 - Owner authorized enabling EPS online payment, with production safety emphasized. Hostinger console confirms `/home/amolbooks` runs PM2 `amolbooks-api` from `api/dist/main.js`, Node 20.20.0, deployed marker `dfed9a2679c24d1c924586afc30a56900d5b767c`. Source/snippets match that marker. No EPS environment entries exist; public `/api/payment/eps/config` returns 404. No live files or data changed during preparation.
