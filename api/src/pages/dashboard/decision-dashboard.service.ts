@@ -50,6 +50,7 @@ export class DecisionDashboardService {
     @InjectModel('MetaAdSpend') private readonly metaSpendModel: Model<any>,
     @InjectModel('AnalyticsAction') private readonly analyticsActionModel: Model<any>,
     private readonly configService: ConfigService,
+    @InjectModel('SpecialPackage') private readonly specialPackageModel: Model<any>,
   ) {}
 
   async getDecisionAnalytics(startDate: string, endDate: string): Promise<any> {
@@ -82,6 +83,21 @@ export class DecisionDashboardService {
           .lean()
       : [];
     const productMap = new Map(products.map((product: any) => [String(product._id), product]));
+    const packageIds = productIds.filter((id) => !productMap.has(id));
+    const packages = packageIds.length
+      ? await this.specialPackageModel
+          .find({ _id: { $in: packageIds } })
+          .select('_id name products')
+          .populate('products.product', 'costPrice')
+          .lean()
+      : [];
+    // Legacy package lines store the package ID, not an individual product ID.
+    packages.forEach((specialPackage: any) => {
+      productMap.set(String(specialPackage._id), {
+        ...specialPackage,
+        costPrice: this.packageCatalogCost(specialPackage),
+      });
+    });
 
     const phones = Array.from(new Set(orders.map((order) => order.phoneNo).filter(Boolean)));
     const customerHistory = await this.getCustomerHistory(phones, selected.end);
@@ -639,6 +655,17 @@ export class DecisionDashboardService {
         realizedAdAllocation > 0 ? 'allocated' : 'actual',
       ),
     };
+  }
+
+  private packageCatalogCost(specialPackage: any): number | undefined {
+    if (!specialPackage.products?.length) return undefined;
+    let total = 0;
+    for (const item of specialPackage.products) {
+      const cost = this.optionalNumber(item.product?.costPrice);
+      if (cost === undefined) return undefined;
+      total += cost * Math.max(1, this.number(item.quantity, 1));
+    }
+    return total;
   }
 
   private orderCogs(

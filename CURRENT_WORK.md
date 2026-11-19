@@ -1,3 +1,12 @@
+## Sunday profit fix and storefront recovery (2026-11-19)
+
+- The profit fix was mistakenly released from the obsolete prod-release branch. Its source lacks the Sunday storefront-document renderer expected by production nginx; rebuilding that source caused the homepage to return `Cannot GET /api/storefront-document/`. Use the Sunday branch for recovery and future work.
+- Ported only special-package COGS resolution, DashboardModule registration and the isolated regression fixture. Legacy package cost is the sum of component cost × quantity, then multiplied by ordered package count; saved snapshots win and genuinely missing component costs remain unavailable.
+- Recovery release on `codex/rollback-sunday-20260927` is based on the existing EPS checkout redirect release `f2de01ea`, which descends from the latest Sunday/staff source `dfed9a26`. This preserves the real storefront renderer, recent storefront/order work and verified EPS payment integration. Do not merge the obsolete prod-release branch.
+- Deploy with `AMOL_DEPLOY_BRANCH=codex/rollback-sunday-20260927 bash scripts/vps-safe-pull.sh`, build the API and restart only `amolbooks-api`. Existing unrelated local changes remain untouched. Direct SSH access with the default Mac key is rejected, so live activation requires the owner running the supplied command.
+
+- Validation: exact recovery source passes the Nest build, package-contribution regression, real Nest storefront-document HTTP checks (including the homepage), and COD/EPS checkout-redirect checks. Lint remains blocked by the pre-existing ignored-source configuration. Production is still returning the homepage 404 until this recovery is activated.
+
 ## EPS checkout interrupted by legacy COD redirect (2026-11-19)
 
 - Owner's order 15658 was saved as `online_payment`, `unpaid`, with an initialized EPS attempt for BDT 108. An existing tracking interceptor scheduled an unconditional thank-you redirect 1.2 seconds after order creation, interrupting EPS initialization/session-key persistence. No payment was received on that attempt at investigation time.

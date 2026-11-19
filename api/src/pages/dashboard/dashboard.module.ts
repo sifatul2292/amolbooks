@@ -12,6 +12,7 @@ import { DecisionDashboardService } from './decision-dashboard.service';
 import { AnalyticsActionSchema } from './schema/analytics-action.schema';
 import { MetaAdSpendSchema } from '../meta-ads/schema/meta-ad-spend.schema';
 import { MetaTrackingHealthService } from './meta-tracking-health.service';
+import { SpecialPackageSchema } from '../../schema/special-package.schema';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { MetaTrackingHealthService } from './meta-tracking-health.service';
       { name: 'ManualSale', schema: ManualSaleSchema },
       { name: 'MetaAdSpend', schema: MetaAdSpendSchema },
       { name: 'AnalyticsAction', schema: AnalyticsActionSchema },
+      { name: 'SpecialPackage', schema: SpecialPackageSchema },
     ]),
   ],
   providers: [
