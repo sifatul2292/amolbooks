@@ -15,6 +15,7 @@
 .ab-gift-cart-caption { margin:0 0 14px!important; color:var(--ab-gift-ink); font:400 17px/1.5 var(--ab-gift-font); }
 .ab-gift-cart-caption strong { color:var(--ab-gift-border); }
 body.ab-cart-enhanced .ab-gift-cart-footer [data-ab-cart-continue] { color:var(--ab-product-accent)!important; background:var(--ab-gift-paper)!important; border-color:var(--ab-product-accent)!important; }
+.ab-gift-cart-buttons > * { grid-area:auto!important; }
 .ab-gift-cart-buttons { display:grid; grid-template-columns:minmax(100px,.8fr) minmax(0,2fr); align-items:center; gap:10px; }
 body.ab-cart-enhanced app-cart-information .cart-area-bottom.ab-gift-cart-footer { display:block!important; }
 body.ab-cart-enhanced .ab-gift-cart-footer > * { margin-bottom:14px!important; }
@@ -206,13 +207,21 @@ body.ab-checkout-enhanced.ab-gift-checkout app-checkout .confirm-order button[ty
  function renderCart(){
   var obsolete=document.getElementById('ab-gift-cart');if(obsolete)obsolete.remove();
   var footer=document.querySelector('app-cart-information .cart-area-bottom,app-cart .cart-area-bottom');
-  if(!footer||footer.querySelector('.ab-gift-cart-buttons'))return;
-  var order=footer.querySelector('button.order,a[href*="/checkout"]');if(!order)return;
+  if(!footer)return;
+  var order=footer.querySelector('button.order,a[href*="/checkout"]:not([data-ab-gift-start])');if(!order)return;
   footer.classList.add('ab-gift-cart-footer');
-  var prompt=document.createElement('div');prompt.className='ab-gift-cart-caption';prompt.innerHTML=caption();
-  var buttons=document.createElement('div');buttons.className='ab-gift-cart-buttons';
-  buttons.innerHTML='<a class="ab-gift-start" data-ab-gift-start href="/checkout?gift=1">Gift Order</a>';
-  var parent=order.parentNode;parent.insertBefore(prompt,order);parent.insertBefore(buttons,order);buttons.appendChild(order);
+  var buttons=footer.querySelector('.ab-gift-cart-buttons'),prompt=footer.querySelector('.ab-gift-cart-caption');
+  if(!buttons){
+   prompt=document.createElement('div');prompt.className='ab-gift-cart-caption';prompt.innerHTML=caption();
+   buttons=document.createElement('div');buttons.className='ab-gift-cart-buttons';
+   buttons.innerHTML='<a class="ab-gift-start" data-ab-gift-start href="/checkout?gift=1">Gift Order</a>';
+   buttons.appendChild(order);
+  }
+  // Native and fallback footers share one action layout; retain the native button bindings.
+  if(buttons.parentNode!==footer)footer.appendChild(buttons);
+  if(prompt&&prompt.parentNode!==footer)footer.insertBefore(prompt,buttons);
+  var more=footer.querySelector('[data-ab-cart-continue],button[routerlink="/product-list"],a[routerlink="/product-list"]');
+  if(more&&more.parentNode!==footer)footer.insertBefore(more,prompt||buttons);
  }
  function field(label,attr,placeholder,extra){return '<label><span class="ab-gift-sr">'+label+'</span><input '+attr+' placeholder="'+placeholder+'" '+(extra||'')+'></label>';}
  function renderGiftForm(host,left){

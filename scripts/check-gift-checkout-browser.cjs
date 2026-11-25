@@ -6,6 +6,7 @@ const vm = require('node:vm');
 const { chromium } = require('playwright');
 const ts = require('../api/node_modules/typescript');
 const root = path.resolve(__dirname, '..');
+const ORIGIN = process.env.GIFT_TEST_LOCAL === '1' ? 'http://localhost:3002' : 'https://gift.amolbooks.test';
 const assets = path.join(root, 'ui/dist/angular-ui/browser');
 const sourceHtml = fs.readFileSync(path.join(assets, 'index.html'), 'utf8');
 function runtimeScript(file, name) {
@@ -23,6 +24,19 @@ const book = { _id:'000000000000000000000001', name:'উপহারের ব�
 let orderBody, gatewayBody, orderRequestCount=0;
 const requested = new Set();
 const errors = [];
+async function checkDesktopCart(page,width) {
+  const gift=page.locator('app-cart-information .ab-gift-cart-buttons [data-ab-gift-start]');
+  assert.equal(await gift.isVisible(),true,'Desktop Gift Order is visible');
+  assert.equal(await gift.innerText(),'Gift Order','Normal checkout never relabels the gift link');
+  const boxes=await page.locator('app-cart-information .ab-gift-cart-buttons').evaluate(el=>[...el.children].map(node=>{const r=node.getBoundingClientRect();return {x:r.x,right:r.right,y:r.y,bottom:r.bottom,width:r.width,height:r.height};}));
+  assert.ok(boxes[0].width>=120&&boxes[1].width>=120&&boxes[0].height>=44&&boxes[1].height>=44,'Both actions have usable hit areas');
+  assert.ok(boxes[0].right<=boxes[1].x&&Math.abs(boxes[0].y-boxes[1].y)<2,'Gift and regular checkout are side by side, without overlap');
+  assert.equal(await page.locator('app-cart-information .section-left > .select-items-area:visible').count(),1,'One visible cart header');
+  const productBoxes=await page.locator('app-cart-information .cart-card:not(.ab-cart-gift-row)').first().evaluate(row=>({text:row.querySelector('.cart-text-info').getBoundingClientRect().toJSON(),quantity:row.querySelector('.quantity-area').getBoundingClientRect().toJSON()}));
+  assert.ok(productBoxes.text.right<=productBoxes.quantity.x,'Quantity controls never cover the book title or price');
+
+  if(width===1113)await page.screenshot({path:path.join(root,'tmp/gift-checkout/cart-1113.png'),fullPage:true});
+}
 async function main() {
   const browser = await chromium.launch({ channel:'chrome', headless:true });
   try {
@@ -52,10 +66,10 @@ async function main() {
         else if (/area/.test(p)) data = [{ _id:'000000000000000000000011', name:'ঢাকা' }];
         else if (/zone/.test(p)) data = [];
         else if (/add-order-by-/.test(p)) { orderRequestCount++; orderBody = request.postDataJSON(); data = { _id:'000000000000000000000020', orderId:'FIXTURE' }; }
-        else if (/payment\/init-ssl/.test(p)) { gatewayBody = request.postDataJSON(); data = { sessionkey:'fixture', GatewayPageURL:'https://gift.amolbooks.test/fixture-gateway' }; }
+        else if (/payment\/init-ssl/.test(p)) { gatewayBody = request.postDataJSON(); data = { sessionkey:'fixture', GatewayPageURL:ORIGIN + '/fixture-gateway' }; }
         return route.fulfill({ contentType:'application/json', body:JSON.stringify({ success:true, data, count:Array.isArray(data) ? data.length : 1 }) });
       }
-      if (url.hostname === 'gift.amolbooks.test') {
+      if (url.origin === ORIGIN) {
         if (/^\/(?:cart|checkout(?:\/order-success\/[a-f0-9]{24})?)\/?$/.test(p)) return route.fulfill({ contentType:'text/html; charset=utf-8', body:html });
         if (p === '/fixture-gateway') return route.fulfill({ contentType:'text/html', body:'<h1>Payment gateway fixture</h1>' });
         const file = path.join(assets, p);
@@ -69,7 +83,34 @@ async function main() {
     });
     const page = await context.newPage();
     page.on('pageerror', error => errors.push(error.message));
-    await page.goto('https://gift.amolbooks.test/checkout?gift=1');
+    if(process.env.GIFT_TEST_LOCAL==='1'){
+      await page.setViewportSize({width:1113,height:1035});
+      await page.goto(ORIGIN+'/cart');
+      await page.locator('.cart-card.ab-live-cart-page-item').first().waitFor();
+      for(const width of [768,1024,1113,1440]){
+        await page.setViewportSize({width,height:1035});
+        await page.waitForTimeout(150);
+        await checkDesktopCart(page,width);
+        assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+      }
+      await page.setViewportSize({width:1113,height:1035});
+      await page.locator('.cart-card:not(.ab-cart-gift-row) [data-ab-cart-op="plus"]').first().click();
+      await page.waitForFunction(()=>document.querySelector('#ab-cart-summary-inline').textContent.includes('360'));
+      await page.locator('.cart-card:not(.ab-cart-gift-row) [data-ab-cart-op="minus"]').first().click();
+      await page.waitForFunction(()=>document.querySelector('#ab-cart-summary-inline').textContent.includes('180'));
+      await page.locator('.ab-gift-cart-buttons button.order').click();
+      await page.waitForURL(ORIGIN+'/checkout');
+      assert.equal(await page.locator('input[value="cash_on_delivery"]').isVisible(),true);
+      await page.goto(ORIGIN+'/cart');
+      await page.locator('.ab-gift-cart-buttons [data-ab-gift-start]').click();
+      await page.waitForURL('**/checkout?gift=1');
+      await page.locator('#ab-gift-sender').waitFor();
+      assert.equal(await page.locator('input[value="cash_on_delivery"]').isVisible(),false);
+      assert.deepEqual(errors,[]);
+      console.log('Local cart checks passed: generated rows, one header, desktop gift/normal actions, quantity totals and 768/1024/1113/1440px layouts.');
+      return;
+    }
+    await page.goto(ORIGIN + '/checkout?gift=1');
     await page.locator('#ab-gift-sender').waitFor();
     await page.waitForTimeout(1500);
     await page.locator('#ab-gift-confirm-bar [data-ab-gift-confirm]').click();
@@ -147,7 +188,7 @@ async function main() {
     assert.equal(orderBody.grandTotal, 270);
     assert.equal(gatewayBody.total_amount, orderBody.grandTotal);
     console.log('Order / gateway total:', orderBody.grandTotal, gatewayBody.total_amount);
-    await page.goto('https://gift.amolbooks.test/checkout');
+    await page.goto(ORIGIN + '/checkout');
     await page.locator('.payment-method-area').waitFor();
     assert.equal(await page.locator('input[value="cash_on_delivery"]').isVisible(), true, 'Ordinary checkout retains COD');
     assert.equal(await page.locator('input[value="cash_on_delivery"]').isChecked(), true, 'Ordinary checkout retains its default COD selection');
@@ -155,16 +196,34 @@ async function main() {
     assert.equal(await page.locator('[data-ab-gift-wrap]').count(),0,'Wrapping is unavailable in ordinary checkout');
     await page.waitForFunction(()=>{const rows=[...document.querySelectorAll('.summery-list')];return rows.length===2&&rows.every(row=>row.textContent.includes('240'));});
     assert.equal(await page.locator('.ab-gift-fee').count(), 0,'Saved gift wrapping adds no charge in ordinary checkout');
-    await page.goto('https://gift.amolbooks.test/cart');
+    await page.goto(ORIGIN + '/cart');
     await page.locator('.ab-gift-cart-buttons').waitFor({state:'attached'});
     assert.equal(await page.locator('#ab-gift-cart').count(), 0, 'No unwanted cart card');
     assert.equal(await page.locator('[data-ab-gift-wrap]').count(), 0, 'Gift wrap is checkout-only');
     await page.waitForFunction(() => document.querySelector('#ab-cart-sticky-checkout [data-ab-cart-sticky-checkout]')?.textContent==='অর্ডার করতে এগিয়ে যান');
-    for (const width of [320,375,414,768,1440]) {
+    for (const width of [320,375,414,768,1024,1113,1440]) {
       await page.setViewportSize({width,height:900});
       await page.waitForTimeout(120);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `Cart fits ${width}`);
+      if(width>=768){
+        await checkDesktopCart(page,width);
+      }
+
     }
+    await page.setViewportSize({width:1113,height:1035});
+    await page.locator('app-cart-information .cart-card:not(.ab-cart-gift-row) [data-ab-cart-op="plus"]').first().click();
+    await page.waitForFunction(()=>document.querySelector('#ab-cart-summary-inline').textContent.includes('360'));
+    await page.locator('app-cart-information .cart-card:not(.ab-cart-gift-row) [data-ab-cart-op="minus"]').first().click();
+    await page.waitForFunction(()=>document.querySelector('#ab-cart-summary-inline').textContent.includes('180'));
+    await page.locator('app-cart-information .ab-gift-cart-buttons button.order').click();
+    await page.waitForURL(ORIGIN + '/checkout');
+    assert.equal(await page.locator('input[value="cash_on_delivery"]').isVisible(),true,'Desktop regular action keeps COD checkout');
+    await page.goto(ORIGIN + '/cart');
+    await page.locator('app-cart-information .ab-gift-cart-buttons [data-ab-gift-start]').click();
+    await page.waitForURL('**/checkout?gift=1');
+    await page.locator('#ab-gift-sender').waitFor();
+    assert.equal(await page.locator('input[value="cash_on_delivery"]').isVisible(),false,'Desktop gift action opens online-only checkout');
+    await page.goto(ORIGIN + '/cart');
     await page.setViewportSize({width:375,height:900});
     await page.screenshot({ path:path.join(root,'tmp/gift-checkout/cart-375.png'), fullPage:true });
     await page.locator('#ab-cart-sticky-checkout [data-ab-gift-start]').click();
@@ -174,7 +233,7 @@ async function main() {
     assert.match(await page.locator('.ab-gift-wrap:visible').innerText(),/গিফট কভারে মুড়িয়ে দিন[\s\S]*৳৩০[\s\S]*কভারে মুড়িয়ে প্রাপকের কাছে/,'The wrap option explains the physical gift cover and fee');
     assert.equal(await page.locator('[data-ab-gift-recipient="name"]').inputValue(), 'Gift Recipient', 'Recipient draft survives navigation');
     assert.equal(await page.locator('[data-ab-gift-field="senderName"]').inputValue(), 'Gift Sender', 'Draft survives payment retry');
-    await page.goto('https://gift.amolbooks.test/checkout/order-success/000000000000000000000020?payment=paid');
+    await page.goto(ORIGIN + '/checkout/order-success/000000000000000000000020?payment=paid');
     await page.locator('.ab-order-summary').waitFor();
     await page.locator('.ab-eps-paid[data-state="paid"]').waitFor();
     assert.ok((await page.locator('.ab-order-summary').innerText()).includes('গিফট র‍্যাপ'));
