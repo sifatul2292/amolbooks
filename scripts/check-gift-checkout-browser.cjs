@@ -15,7 +15,7 @@ function runtimeScript(file, name) {
 }
 const productScript = runtimeScript('storefront-product-sections-script.ts', 'STOREFRONT_PRODUCT_SECTIONS_SCRIPT');
 const priceScript = runtimeScript('storefront-price-script.ts', 'STOREFRONT_PRICE_SCRIPT');
-const snippets = ['gift-checkout.html', 'package-free-delivery.html', 'cart-page-navigation.html', 'checkout-payment.html', 'checkout-sticky-confirm.html'].map(file => fs.readFileSync(path.join(root, 'gtm-snippets', file), 'utf8')).join('\n');
+const snippets = ['gift-checkout.html', 'package-free-delivery.html', 'cart-page-navigation.html', 'checkout-payment.html', 'checkout-sticky-confirm.html', 'order-success-summary.html'].map(file => fs.readFileSync(path.join(root, 'gtm-snippets', file), 'utf8')).join('\n');
 const bundleTags = [...sourceHtml.matchAll(/<script src="((?:runtime|polyfills|main)\.[^"]+)"[^>]*><\/script>/g)].map(match => match[0]).join('');
 const stylesheet = sourceHtml.match(/<link rel="stylesheet" href="styles[^"]+">/)[0];
 const html = '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="/">' + stylesheet + snippets + '</head><body><app-root></app-root>' + bundleTags + '<script>' + productScript + '</script><script>' + priceScript + '</script></body></html>';
@@ -39,7 +39,9 @@ async function main() {
       if (p.startsWith('/api/')) {
         requested.add(p);
         let data = [];
-        if (/payment\/eps\/config/.test(p)) data = { enabled:true };
+        if (/payment\/eps\/status\//.test(p)) data = {paymentStatus:'paid',paidAmount:270,paidWith:'bKash'};
+        else if (p === '/api/order/000000000000000000000020') data = { ...orderBody,_id:'000000000000000000000020',orderId:'FIXTURE',paymentStatus:'paid',giftWrapCharge:30,deliveryCharge:60,grandTotal:270,orderedItems:[{name:book.name,quantity:1,unitPrice:180}] };
+        else if (/payment\/eps\/config/.test(p)) data = { enabled:true };
         else if (/product\/get-products-by-ids|product\/get-by-ids/.test(p)) data = [book];
         else if (/product\/get-by-slug/.test(p)) data = book;
         else if (/shipping-charge/.test(p)) data = { deliveryInDhaka:60, deliveryOutsideDhaka:100 };
@@ -54,7 +56,7 @@ async function main() {
         return route.fulfill({ contentType:'application/json', body:JSON.stringify({ success:true, data, count:Array.isArray(data) ? data.length : 1 }) });
       }
       if (url.hostname === 'gift.amolbooks.test') {
-        if (/^\/(?:cart|checkout)\/?$/.test(p)) return route.fulfill({ contentType:'text/html; charset=utf-8', body:html });
+        if (/^\/(?:cart|checkout(?:\/order-success\/[a-f0-9]{24})?)\/?$/.test(p)) return route.fulfill({ contentType:'text/html; charset=utf-8', body:html });
         if (p === '/fixture-gateway') return route.fulfill({ contentType:'text/html', body:'<h1>Payment gateway fixture</h1>' });
         const file = path.join(assets, p);
         if (file.startsWith(assets + path.sep) && fs.existsSync(file) && fs.statSync(file).isFile()) {
@@ -77,6 +79,16 @@ async function main() {
     assert.equal(await page.locator('input[formcontrolname="name"]').count(), 1);
     assert.equal(await page.locator('input[value="cash_on_delivery"]').isVisible(), false, 'Gift checkout hides COD');
     assert.equal(await page.locator('input[value="online_payment"]').isChecked(), true);
+    // Repeated Angular total reads must not rescan an unchanged address on every keystroke.
+    await page.evaluate(()=>{const original=window.AbDeliveryZone.detect;window.giftAddressScans=0;window.AbDeliveryZone.detect=function(text){window.giftAddressScans++;return original(text);};});
+    const typedAddress='dsfsdfsjssdfsdjfsdfsdsf sdfgdfgsdfsdfgsdfgsdfg';
+    await page.locator('[data-ab-gift-recipient="address"]').pressSequentially(typedAddress,{delay:10});
+    const scansAfterAddress=await page.evaluate(()=>window.giftAddressScans);
+    assert.ok(scansAfterAddress<=typedAddress.length+1,'Each address value is detected at most once');
+    await page.locator('[data-ab-gift-field="message"]').pressSequentially('Happy birthday to you!',{delay:10});
+    assert.equal(await page.evaluate(()=>window.giftAddressScans),scansAfterAddress,'Editing the message reuses the detected location');
+    assert.equal(await page.locator('[data-ab-gift-recipient="address"]').inputValue(),typedAddress,'Typing preserves every character');
+    assert.equal(await page.locator('#ab-gift-remaining').innerText(),'98 Character(s) Remaining');
     await page.locator('[data-ab-gift-field="senderName"]').fill('Gift Sender');
     await page.locator('[data-ab-gift-field="senderPhone"]').fill('01700000001');
     await page.locator('[data-ab-gift-field="message"]').fill('ঈদের শুভেচ্ছা');
@@ -162,6 +174,14 @@ async function main() {
     assert.match(await page.locator('.ab-gift-wrap:visible').innerText(),/গিফট কভারে মুড়িয়ে দিন[\s\S]*৳৩০[\s\S]*কভারে মুড়িয়ে প্রাপকের কাছে/,'The wrap option explains the physical gift cover and fee');
     assert.equal(await page.locator('[data-ab-gift-recipient="name"]').inputValue(), 'Gift Recipient', 'Recipient draft survives navigation');
     assert.equal(await page.locator('[data-ab-gift-field="senderName"]').inputValue(), 'Gift Sender', 'Draft survives payment retry');
+    await page.goto('https://gift.amolbooks.test/checkout/order-success/000000000000000000000020?payment=paid');
+    await page.locator('.ab-order-summary').waitFor();
+    await page.locator('.ab-eps-paid[data-state="paid"]').waitFor();
+    assert.ok((await page.locator('.ab-order-summary').innerText()).includes('গিফট র‍্যাপ'));
+    assert.equal(await page.locator('.ab-os-total strong').innerText(),'৳২৭০');
+    assert.equal(await page.locator('.ab-os-pay').count(),0,'Paid gift has no pay-on-delivery instruction');
+    assert.equal(await page.evaluate(()=>sessionStorage.getItem('amol_gift_checkout_v1')),null,'Success clears the gift draft');
+    await page.screenshot({path:path.join(root,'tmp/gift-checkout/thank-you-375.png'),fullPage:true});
     assert.deepEqual(errors, [], 'No JavaScript errors during the complete gift flow');
     console.log('Gift browser checks passed: real Angular lazy checkout, gift/COD states, wrapping, payment handoff, cart entry and responsive layouts.');
   } finally { await browser.close(); }

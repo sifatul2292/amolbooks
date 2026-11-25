@@ -123,7 +123,15 @@ body.ab-checkout-enhanced.ab-gift-checkout app-checkout .confirm-order button[ty
   if(control&&control.value!=='online_payment')control.setValue('online_payment');
   value.selectedPaymentMethod='online_payment';
  }
- function recipientLocation(){var Z=rules();return Z&&Z.detect(draft.recipient.address||'')||{};}
+ // Angular reads delivery totals repeatedly; detect only when the address or rules change.
+ var detectedAddress, detectedRules, detectedLocation={};
+ function recipientLocation(){
+  var Z=rules(), address=String(draft.recipient.address||'');
+  if(address!==detectedAddress||Z!==detectedRules){
+   detectedAddress=address;detectedRules=Z;detectedLocation=Z&&Z.detect(address)||{};
+  }
+  return detectedLocation;
+ }
  function applyRecipient(value){
   if(!giftMode()||!value.formData)return;
   ['name','phoneNo','alternativePhoneNo','country','address'].forEach(function(key){

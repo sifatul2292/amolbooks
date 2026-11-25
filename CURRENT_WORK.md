@@ -1,3 +1,11 @@
+## Gift checkout typing lag and thank-you preview (2026-11-25)
+
+- Reproduced a client-side performance issue in the real Angular checkout: repeated delivery-total reads rescanned the same recipient address during typing and gift-message edits. Under 4× CPU throttling, a short unknown-address/message sequence triggered 1,336 detections, ~7.8 s of detection work and 106 long tasks. This is a browser-code issue, not local-server latency.
+- Cached the detected place until the address text or loaded rules change. The identical profile now makes 46 detections (~0.3 s detection work, zero long tasks); displayed delivery pricing still updates for Dhaka/Feni and backend pricing remains authoritative. No field/submission behavior changed.
+- Extended the real Angular browser check to cover typed characters, message edits with zero additional address scans, address-change pricing, gift payment/ordinary COD, wrapping, duplicate submission, and the paid gift thank-you page with a separate wrapping row and cleared draft.
+- Added opt-in `GIFT_SUCCESS_PREVIEW=1` to the existing read-only dev preview. Port 3004 shows the actual thank-you page for TEST-GIFT-001 using the order calculator/schema fixture in memory (৳315 books + ৳60 delivery + ৳30 wrapping = ৳405). It has a visible demo banner and sample paid confirmation; no real order/payment is created. Separate origin preserves the current cart; external tracking is blocked by a preview-only CSP and API writes stay blocked. URL: `http://localhost:3004/checkout/order-success/000000000000000000000030?payment=paid`.
+- Verification: API build, gift backend/browser checks, thank-you summary/free-delivery regressions, real preview mobile layout, paid status/charge breakdown, write rejection and scoped diff checks pass. Lint remains blocked by existing ignores. Follow-up targets the same Sunday rollback branch; VPS activation remains a separate step.
+
 ## Gift-order GitHub release (2026-11-25)
 
 - Prepared the gift checkout, gift-only ৳30 wrapping, summary/order actions, API validation/pricing, invoice/thank-you breakdown and custom-order-panel details for `codex/rollback-sunday-20260927`. No generated `api/dist`/UI files, uploads, dependency trees, credentials or unrelated ISBN draft are included.

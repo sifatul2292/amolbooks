@@ -50,6 +50,30 @@ app.use('/api/guest-orders', (req,res) => {
     });
   request.on('error',()=>res.status(503).json({success:false,message:'পরীক্ষার অর্ডার API চালু নেই'}));request.end(body);
 });
+// Opt-in thank-you demonstration on a separate port/origin; never forwards these fixtures.
+const giftSuccessPreview = process.env.GIFT_SUCCESS_PREVIEW === '1';
+const giftDemoId = '000000000000000000000030';
+if (giftSuccessPreview) {
+  // Keep sample purchase data on this origin; external tracking scripts/pixels cannot run.
+  app.use((_req,res,next) => {
+    res.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https://apisub.amolbooks.com https://www.amolbooks.com; connect-src 'self'; frame-src 'none'; form-action 'self'");
+    next();
+  });
+  let example;
+  async function sampleGift() {
+    if (!example) {
+      const order = await require('./dev-gift-order-panel.cjs').fixture();
+      example = { ...order, paymentStatus:'paid', paymentGateway:'eps', paidAmount:order.grandTotal };
+    }
+    return example;
+  }
+  app.get('/api/order/' + giftDemoId, async (_req,res,next) => {
+    try { res.set('Cache-Control','no-store').json({success:true,data:await sampleGift()}); } catch(error) { next(error); }
+  });
+  app.get('/api/payment/eps/status/' + giftDemoId, async (_req,res,next) => {
+    try { const order=await sampleGift();res.set('Cache-Control','no-store').json({success:true,data:{paymentStatus:'paid',amount:order.grandTotal,paidAmount:order.grandTotal,paidWith:'bKash (demo)'}}); } catch(error) { next(error); }
+  });
+}
 app.use('/api', proxy);
 app.use('/storefront-catalog', proxy);
 const ui = path.join(root, 'ui/dist/angular-ui/browser');
@@ -58,6 +82,9 @@ app.get('*', (req, res, next) => {
   let html = fs.readFileSync(path.join(ui, 'index.html'), 'utf8');
   html = html.replace(/<!-- amol-storefront-snippets:start -->[\s\S]*?<!-- amol-storefront-snippets:end -->/g, '');
   const snippets = snippetNames.map(name => fs.readFileSync(path.join(root, 'gtm-snippets', name), 'utf8')).join('\n');
+  if (giftSuccessPreview && req.path === '/checkout/order-success/' + giftDemoId) {
+    html = html.replace('<body>', '<body><aside id="ab-gift-success-preview" style="position:sticky;top:0;z-index:20000;padding:12px;text-align:center;background:#fff3cc;color:#654600;font:600 14px/1.5 sans-serif">LOCAL GIFT DEMO · TEST-GIFT-001 · Sample paid confirmation · No real order or payment was made</aside>');
+  }
   // Match production: presentation styles must precede the first Angular paint.
   res.type('html').send(html.replace('</head>', snippets + '</head>'));
 });
