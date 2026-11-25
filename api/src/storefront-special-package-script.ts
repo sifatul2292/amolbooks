@@ -1039,6 +1039,7 @@ export const STOREFRONT_SPECIAL_PACKAGE_SCRIPT = `
       event.stopPropagation();
       event.stopImmediatePropagation();
       if (event.type === 'click') {
+        styleOnce();
         openPdfDialog(
           target.getAttribute('data-ab-pdf-file'),
           target.getAttribute('data-ab-pdf-title') || 'বইয়ের নমুনা'

@@ -2,6 +2,7 @@ import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  IsIn,
   IsBoolean,
   IsNotEmpty,
   IsNotEmptyObject,
@@ -15,6 +16,10 @@ import { Type } from 'class-transformer';
 import { PaginationDto } from './pagination.dto';
 
 export class AddCartDto {
+  @IsOptional()
+  @IsIn(['abdullah-jahangir'])
+  collectionSource?: string;
+
   @IsOptional()
   @IsString()
   product: string;
@@ -61,6 +66,10 @@ export class OptionCartDto {
 
 export class UpdateCartDto {
   @IsOptional()
+  @IsIn(['abdullah-jahangir'])
+  collectionSource?: string;
+
+  @IsOptional()
   @IsString()
   product: string;
 
@@ -97,6 +106,10 @@ export class UpdateCartQty {
 }
 
 export class CartItemDto {
+  @IsOptional()
+  @IsIn(['abdullah-jahangir'])
+  collectionSource?: string;
+
   @IsOptional()
   @IsString()
   product: string;

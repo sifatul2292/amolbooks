@@ -12,7 +12,8 @@
     border-top: 1px solid #12482a; background: #175c36;
     box-shadow: 0 -4px 14px rgb(20 45 28 / .18);
     opacity: 0; pointer-events: none; transform: translateY(115%);
-    transition: transform .18s ease-out, opacity .18s linear;
+    /* Navigation hides in this same frame: an animated entrance leaves a white gap. */
+    transition: none;
   }
   #ab-checkout-confirm-bar.is-visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
   #ab-checkout-confirm-bar button {
@@ -124,9 +125,10 @@
   }
 
   window.addEventListener('scroll', function () {
-    var y = window.pageYOffset || document.documentElement.scrollTop || 0;
-    // Small moves (a finger resting, the address bar sliding) change nothing.
-    if (Math.abs(y - lastY) < 8) return;
+    var maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    var y = Math.max(0, Math.min(maxY, window.pageYOffset || document.documentElement.scrollTop || 0));
+    // Ignore finger jitter and browser overscroll when switching the bottom surface.
+    if (Math.abs(y - lastY) < 24) return;
     wanted = y > lastY && y > 80;
     lastY = y;
     queue();

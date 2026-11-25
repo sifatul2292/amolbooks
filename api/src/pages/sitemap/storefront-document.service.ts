@@ -57,7 +57,7 @@ export const STOREFRONT_SEO_NAVIGATION = `<script>
   function pageKey(){
     if(location.pathname!=='/product-list')return location.pathname;
     var query=new URLSearchParams(location.search),params=[];
-    ['publisher','publisherId','categories'].forEach(function(name){var value=query.get(name);if(value)params.push(name+'='+encodeURIComponent(value));});
+    ['publisher','publisherId','categories','collection'].forEach(function(name){var value=query.get(name);if(value)params.push(name+'='+encodeURIComponent(value));});
     return location.pathname+(params.length?'?'+params.join('&'):'');
   }
   var titleDescriptor=Object.getOwnPropertyDescriptor(Document.prototype,'title');
@@ -174,7 +174,13 @@ export class StorefrontDocumentService {
         return capture;
       },
     };
-    if (path.startsWith('product-details/')) {
+    if (path === 'product-list' && query.collection === 'abdullah-jahangir') {
+      const collection = JSON.parse(readFileSync(join(__dirname, '../../../..', 'gtm-snippets/assets/abdullah-jahangir-books.v1.json'), 'utf8'));
+      const title = `${collection.author} — নির্বাচিত ৬টি বই`;
+      const canonical = `${ORIGIN}/product-list?collection=abdullah-jahangir`;
+      const links = collection.books.map((book: any) => `<li><a href="${ORIGIN}/product-details/${escapeHtml(book.slug)}">${escapeHtml(book.name)}</a></li>`).join('');
+      page = `<html><head><title>${escapeHtml(title)} | Amolbooks</title><meta name="description" content="${escapeHtml(collection.description)}"><link rel="canonical" href="${canonical}"><meta property="og:title" content="${escapeHtml(title)}"><meta property="og:url" content="${canonical}"><meta name="robots" content="index, follow"></head><body><main><h1>${escapeHtml(title)}</h1><p>${escapeHtml(collection.description)}</p><ul>${links}</ul></main></body></html>`;
+    } else if (path.startsWith('product-details/')) {
       await this.products.getProductOgHtml(
         path.slice('product-details/'.length),
         capture,

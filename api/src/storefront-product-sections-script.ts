@@ -5578,7 +5578,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     return offers.some(function (offer) {
       if (!offer.enabled || !(Number(offer.quantity) >= 1)) return false;
       var quantity = (items || []).reduce(function (sum, item) {
-        if (item && item.specialPackage) return sum;
+        if (item && (item.specialPackage || item.collectionSource === 'abdullah-jahangir')) return sum;
         var product = (products || []).find(function (p) { return String(p._id) === cartPageProductId(item); });
         var slug = product && product.slug || item.slug || item.product && item.product.slug;
         return slug === offer.bookSlug ? sum + Math.max(1, Number(item.selectedQty || item.quantity) || 1) : sum;
@@ -5912,17 +5912,20 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     });
   }
 
-  function syncAuthenticatedCartUi() {
+  function syncAuthenticatedCartUi(requireSaved) {
     var authorization = cartAuthorization();
     if (!authorization) return syncGuestCartUi();
     return fetchJson('/cart/get-carts-by-user', {
       headers: { Authorization: authorization },
     }, RECOMMENDATION_API_BASE).then(function (result) {
+      if (requireSaved && (!result || result.success === false || !Array.isArray(result.data))) throw new Error('Cart unavailable');
       var carts = result && Array.isArray(result.data) ? result.data : [];
       authenticatedCartItemsOverride = carts.map(function (cart) {
         var product = cart && cart.product;
         var specialPackage = cart && cart.specialPackage;
         return {
+          _id: cart && cart._id,
+          collectionSource: cart && cart.collectionSource,
           product: product && product._id || product,
           specialPackage: specialPackage && specialPackage._id || specialPackage,
           selectedQty: Math.max(1, Number(cart && cart.selectedQty) || 1),
@@ -6637,6 +6640,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         .then(function (result) {
           var accountItems = (result && Array.isArray(result.data) ? result.data : []).map(function (cart) {
             return {
+              collectionSource: cart && cart.collectionSource,
               product: cart && cart.product,
               specialPackage: cart && cart.specialPackage,
               cartType: Number(cart && cart.cartType) || 0,
@@ -7691,17 +7695,17 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     }
   }
 
-  function addProductToCart(productId, button) {
+  function addProductToCart(productId, button, requireSaved, collectionSource) {
     if (!productId) return Promise.resolve();
     var authorization = cartAuthorization();
     if (isLocalPreviewHost()) {
-      addGuestProductToCart(productId, button);
+      addGuestProductToCart(productId, button, collectionSource);
       pushProductPageAddToCartTracking(productId);
       if (authorization) {
         fetchJson('/cart/add-to-cart', {
           method: 'POST',
           headers: { Authorization: authorization, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ product: productId, selectedQty: 1, cartType: 0 }),
+          body: JSON.stringify({ product: productId, selectedQty: 1, cartType: 0, collectionSource: collectionSource }),
         }, RECOMMENDATION_API_BASE);
       }
       return Promise.resolve();
@@ -7715,10 +7719,11 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       return fetchJson('/cart/add-to-cart', {
         method: 'POST',
         headers: { Authorization: authorization, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ product: productId, selectedQty: 1, cartType: 0 }),
+        body: JSON.stringify({ product: productId, selectedQty: 1, cartType: 0, collectionSource: collectionSource }),
       }, RECOMMENDATION_API_BASE).then(function (result) {
         if (!result || result.success === false) {
-          addGuestProductToCart(productId, button);
+          if (requireSaved) throw new Error('Cart add failed');
+          addGuestProductToCart(productId, button, collectionSource);
           pushProductPageAddToCartTracking(productId);
           return;
         }
@@ -7726,7 +7731,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         window.dispatchEvent(new CustomEvent('amol-cart-added', { detail: { product: productId } }));
         pushProductPageAddToCartTracking(productId);
         pulseStickyCart();
-        return syncAuthenticatedCartUi();
+        return syncAuthenticatedCartUi(requireSaved);
       }).finally(function () {
         if (!button) return;
         button.textContent = button.getAttribute('data-ab-action-label') === 'cart'
@@ -7735,10 +7740,101 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         button.disabled = false;
       });
     }
-    addGuestProductToCart(productId, button);
+    addGuestProductToCart(productId, button, collectionSource);
     pushProductPageAddToCartTracking(productId);
     return Promise.resolve();
   }
+
+  function bookSelectionState(scope) {
+    var items = !isLocalPreviewHost() && cartAuthorization() ? productAccountCartItems : storedGuestCartItems();
+    var rows = items.filter(function (item) {
+      return !item.specialPackage && Number(item.cartType || 0) === 0 && scope.indexOf(cartPageProductId(item)) !== -1;
+    });
+    return {
+      productIds: rows.map(cartPageProductId),
+      signature: rows.map(function (item) { return cartPageProductId(item) + ':' + Math.max(1, Number(item.selectedQty) || 1); }).sort().join('|'),
+    };
+  }
+
+  // Curated book pages use the same cache, guest cart and authenticated cart mutations.
+  window.AmolBookSelection = {
+    price: finalPrice,
+    checkout: goToCheckout,
+    state: function (scope) {
+      var ready = !isLocalPreviewHost() && cartAuthorization() ? syncAuthenticatedCartUi(true) : Promise.resolve();
+      return ready.then(function () { return bookSelectionState(scope); });
+    },
+    decorateOrder: function (data) {
+      var items = storedGuestCartItems();
+      if (Array.isArray(data.cartData)) data.cartData = data.cartData.map(function (item) {
+        var saved = items.find(function (row) { return cartPageProductId(row) === cartPageProductId(item); });
+        return saved && saved.collectionSource === 'abdullah-jahangir'
+          ? Object.assign({}, item, { collectionSource: saved.collectionSource }) : item;
+      });
+      return data;
+    },
+    add: function (products, scope) {
+      if (!Array.isArray(products) || !products.length || products.length > 6 || products.some(function (product) {
+        return !product || !/^[a-f0-9]{24}$/i.test(String(product._id || ''));
+      })) return Promise.reject(new Error('Invalid selection'));
+      scope = scope || products.map(function (product) { return String(product._id); });
+      if (!Array.isArray(scope) || scope.length > 6 || scope.some(function (id) { return !/^[a-f0-9]{24}$/i.test(id); }) || products.some(function (product) { return scope.indexOf(String(product._id)) === -1; })) return Promise.reject(new Error('Invalid collection'));
+      var selectedIds = products.map(function (product) { return String(product._id); });
+      rememberCartProducts(products);
+      var signedIn = !isLocalPreviewHost() && !!cartAuthorization();
+      var ready = signedIn ? syncAuthenticatedCartUi(true) : Promise.resolve();
+      suppressAddedCartModalUntil = Date.now() + 30000;
+      return ready.then(function () {
+        return products.reduce(function (pending, product) {
+          return pending.then(function () {
+            if (productIdIsInCart(product._id)) {
+              if (signedIn) {
+                var existing = productAccountCartItems.find(function (row) { return cartPageProductId(row) === String(product._id); });
+                if (!existing || !existing._id) throw new Error('Cart unavailable');
+                return fetchJson('/cart/update/' + encodeURIComponent(existing._id), {
+                  method: 'PUT', headers: { Authorization: cartAuthorization(), 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ collectionSource: 'abdullah-jahangir' }),
+                }, RECOMMENDATION_API_BASE).then(function (result) {
+                  if (!result || result.success === false) throw new Error('Cart update failed');
+                  return syncAuthenticatedCartUi(true);
+                });
+              }
+              var items = storedGuestCartItems();
+              items.forEach(function (row) { if (cartPageProductId(row) === String(product._id)) row.collectionSource = 'abdullah-jahangir'; });
+              setGuestCartItems(items);
+              return;
+            }
+            return addProductToCart(product._id, null, true, 'abdullah-jahangir');
+          });
+        }, Promise.resolve());
+      }).then(function () {
+        // Reconcile only this collection when its own purchase action is used.
+        if (!signedIn) {
+          var items = storedGuestCartItems().filter(function (item) {
+            var id = cartPageProductId(item);
+            return item.specialPackage || Number(item.cartType || 0) !== 0 || scope.indexOf(id) === -1 || selectedIds.indexOf(id) !== -1;
+          });
+          setGuestCartItems(items);
+          updateNativeCartCount(items);
+          return syncGuestCartUi();
+        }
+        var stale = productAccountCartItems.filter(function (item) {
+          var id = cartPageProductId(item);
+          return !item.specialPackage && Number(item.cartType || 0) === 0 && scope.indexOf(id) !== -1 && selectedIds.indexOf(id) === -1;
+        });
+        return stale.reduce(function (pending, item) {
+          return pending.then(function () {
+            return fetchJson('/cart/delete/' + encodeURIComponent(item._id), {
+              method: 'DELETE', headers: { Authorization: cartAuthorization() },
+            }, RECOMMENDATION_API_BASE).then(function (result) {
+              if (!result || result.success === false) throw new Error('Cart update failed');
+            });
+          });
+        }, Promise.resolve()).then(function () { return syncAuthenticatedCartUi(true); });
+      }).then(function () { return bookSelectionState(scope); }).finally(function () { suppressAddedCartModalUntil = 0; });
+    },
+  };
+  window.dispatchEvent(new Event('amol-book-selection-ready'));
 
   function addGuestSpecialPackageToCart(packageId, button) {
     var items = storedGuestCartItems();
@@ -7893,7 +7989,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     });
   }
 
-  function addGuestProductToCart(productId, button) {
+  function addGuestProductToCart(productId, button, collectionSource) {
     if (!productId) return;
     var cachedProduct = cartProductCache[String(productId)];
     var key = cartStorageKey();
@@ -7901,7 +7997,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     try { items = JSON.parse(localStorage.getItem(key) || '[]') || []; } catch (_) { items = []; }
     var index = items.findIndex(function (item) { return item && item.product === productId && !item.selectedVariation; });
     if (index === -1) {
-      items.push({ product: productId, selectedQty: 1, cartType: 0 });
+      items.push({ product: productId, selectedQty: 1, cartType: 0, collectionSource: collectionSource });
     } else {
       items[index].selectedQty = Math.max(1, Number(items[index].selectedQty) || 1) + 1;
     }
@@ -8603,7 +8699,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         var threshold = Number(cartOfferConfig.giftMinAmount) || 0;
         var giftSlug = cartOfferConfig.giftProduct && cartOfferConfig.giftProduct.slug;
         var paidProducts = products.filter(function (product) {
-          return product && String(product.slug || '') !== String(giftSlug || '');
+          return product && String(product.slug || '') !== String(giftSlug || '') && !(items || []).some(function (item) { return item.collectionSource === 'abdullah-jahangir' && cartPageProductId(item) === String(product._id); });
         });
         var total = cartTotalFromProducts(items, paidProducts);
         var earned = cartOfferConfig.giftEnabled && ((threshold > 0 && total >= threshold) || cartHasBookGift(items, products));
@@ -8732,7 +8828,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
 
   function cartItemsSignature(items) {
     return (items || []).map(function (item) {
-      return cartPageProductId(item) + ':' + Math.max(1, Number(item && item.selectedQty) || 1);
+      return cartPageProductId(item) + ':' + Math.max(1, Number(item && item.selectedQty) || 1) + ':' + (item.collectionSource || '');
     }).filter(Boolean).sort().join('|');
   }
 
@@ -9048,11 +9144,13 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
     var anchor = cartOfferAnchor();
     if (!anchor) return;
     var threshold = Number(cartOfferConfig.giftMinAmount) || 0;
-    var calculatedTotal = cartTotalFromProducts(items || [], products || []);
+    var eligibleItems = (items || []).filter(function (item) { return item.collectionSource !== 'abdullah-jahangir'; });
+    if (!eligibleItems.length) { clearCartOffer(); renderCartGiftRow(false); return; }
+    var calculatedTotal = cartTotalFromProducts(eligibleItems, products || []);
     var hasCartProducts = (items || []).length && (items || []).every(function (item) {
       return (products || []).some(function (product) { return String(product._id) === cartPageProductId(item); });
     });
-    var total = hasCartProducts || isLocalPreviewHost() ? calculatedTotal : cartDisplayedTotal();
+    var total = hasCartProducts || eligibleItems.length !== (items || []).length || isLocalPreviewHost() ? calculatedTotal : cartDisplayedTotal();
     if (!total) return;
     var remaining = Math.max(0, Math.ceil(threshold - total));
     var progress = document.getElementById('ab-cart-offer-progress');
@@ -9821,7 +9919,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   function handleMenuTap(event) {
     var target = event.target;
     if (!target || !target.closest) return false;
-    if (target.closest('#ab-added-cart-modal')) return false;
+    if (target.closest('#ab-added-cart-modal, #ab-pdf-dialog')) return false;
     /* The header search dropdown lives inside app-header; its add buttons are
        not menu buttons (claiming them here swallowed the add). */
     if (target.closest('.ab-sticky-search-wrap, input, textarea, select, [data-ab-cart-op], .ab-add-cart-button, .ab-native-cart-add, .ab-search-add')) return false;

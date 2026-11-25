@@ -44,6 +44,14 @@ async function main() {
     app.enableVersioning({type:VersioningType.URI});
     await app.listen(0, '127.0.0.1');
     const base = await app.getUrl();
+    const collection = await fetch(base+'/api/storefront-document/product-list?collection=abdullah-jahangir');
+    assert.equal(collection.status,200);
+    const collectionHtml = await collection.text();
+    assert.match(collectionHtml,/rel="canonical" href="https:\/\/www.amolbooks.com\/product-list\?collection=abdullah-jahangir"/);
+    assert.match(collectionHtml,/ড. খোন্দকার আব্দুল্লাহ জাহাঙ্গীর/);
+    const collectionConfig = require('../gtm-snippets/assets/abdullah-jahangir-books.v1.json');
+    for (const book of collectionConfig.books) assert.ok(collectionHtml.includes('/product-details/'+book.slug));
+
     const home = await fetch(base+'/api/storefront-document/');
     assert.equal(home.status, 200);
     const homeHtml = await home.text();

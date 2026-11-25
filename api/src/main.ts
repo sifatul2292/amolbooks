@@ -623,6 +623,7 @@ ${storefrontPurchaseExternalIdHelper}
     'catalogue-local-requests.html',
     'cart-page-navigation.html',
     'gift-checkout.html',
+    'abdullah-jahangir-books.html',
     'product-detail-polish.html',
     'author-books-grid.html',
     'publisher-banner.html',

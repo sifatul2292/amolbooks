@@ -738,6 +738,7 @@ export class CartService {
           const productData = await this.productModel.findById(item.product);
           const jProductData = JSON.parse(JSON.stringify(productData));
           const pCartItem = {
+            collectionSource: item.collectionSource,
             product: {
               _id: jProductData._id,
               name: jProductData.name,

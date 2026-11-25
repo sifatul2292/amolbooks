@@ -13,6 +13,7 @@ export const CartSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    collectionSource: { type: String, enum: ['abdullah-jahangir'], required: false },
     selectedQty: {
       type: Number,
       required: true,

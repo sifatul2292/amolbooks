@@ -5421,7 +5421,11 @@ export class OrderService {
         return null;
       }
 
-      const giftEligibleSubTotal = finalData.reduce((acc, t) => {
+      const collectionSlugs = ['rahe-belayat', 'hadiser-name-jaliyati', 'quran-sunnahr-aloke-poshak-porda-o-deho-sojja', 'quran-sunnahr-aloke-islami-aqidah', 'ehyaus-sunan', 'al-fiqhul-akbar'];
+      const eligibleCart = finalData.filter((item) => !(item.collectionSource === 'abdullah-jahangir' && collectionSlugs.includes(item.product?.slug)));
+      const eligibleIds = new Set(eligibleCart.map((item) => String(item.product?._id)));
+      const giftProducts = products.filter((product) => eligibleIds.has(String(product._id)));
+      const giftEligibleSubTotal = eligibleCart.reduce((acc, t) => {
         if (String(t.product?._id) === giftId) return acc; // exclude gift's own price
         return (
           acc +
@@ -5437,7 +5441,7 @@ export class OrderService {
         eligible = true;
       }
       if (!eligible && cfg.giftBuyXProductSlug && cfg.giftBuyXQty) {
-        const match = products.find((p) => p.slug === cfg.giftBuyXProductSlug);
+        const match = giftProducts.find((p) => p.slug === cfg.giftBuyXProductSlug);
         if (match && Number(match.quantity) >= Number(cfg.giftBuyXQty)) {
           eligible = true;
         }
@@ -5446,7 +5450,7 @@ export class OrderService {
       if (!eligible) {
         eligible = (cfg.giftBookOffers || []).some((offer) =>
           offer.enabled && Number(offer.quantity) >= 1 &&
-          products.filter((p) => p.slug === offer.bookSlug && String(p._id) !== giftId)
+          giftProducts.filter((p) => p.slug === offer.bookSlug && String(p._id) !== giftId)
             .reduce((sum, p) => sum + Number(p.quantity || 0), 0) >= Number(offer.quantity),
         );
       }

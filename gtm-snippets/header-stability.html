@@ -1,5 +1,10 @@
 <!-- All Pages. Keeps the header still while the page loads: the store menu is drawn in the same task Angular creates the menu row, and late labels/icons have their space from the first paint. Navigation only; no API calls. -->
 <style>
+/* Angular's scroll class still rescales these elements and swaps the header's
+   compositor layer at 100px, although the header now stays in normal flow. */
+app-header .header-main { transform: none !important; will-change: auto !important; transition: none !important; }
+app-header .header-main .logo img { transform: none !important; transition: none !important; }
+app-header .header-main .header-middle-top { transform: none !important; }
 /* Fallback if the script below cannot run: hide Angular's own menu until the
    index.html "Custom Nav Rewrite" replaces it, and show it anyway after 3s. */
 app-header .main-nav .nav-list:not([data-amol-nav]) {

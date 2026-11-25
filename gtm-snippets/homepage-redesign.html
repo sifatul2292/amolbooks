@@ -149,6 +149,17 @@ app-home .super-deal-section { margin-top: 0 !important; }
 .ab-home-goal strong { font-size: var(--text-sm); font-weight: 500; }
 .ab-home-goal-arrow { color: var(--color-focus); }
 
+.ab-home-collection { margin-block: var(--space-xl); }
+.ab-home-collection-link { display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; gap: var(--space-lg); padding: var(--space-lg); border: 1px solid #cbdccf; border-inline-start: 4px solid #175c36; border-radius: var(--radius-md); background: #faf7ef; }
+.ab-home-collection-link:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 3px; }
+.ab-home-collection-link h2 { margin: 0 0 var(--space-xs) !important; color: #173a2b; font: 600 var(--text-md)/1.45 var(--font-display); }
+.ab-home-collection-link p { margin: 0 !important; color: var(--color-muted); font-size: var(--text-sm); }
+.ab-home-collection-covers { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); align-items: end; gap: var(--space-md); width: min(100%, 680px); margin-inline: auto; }
+.ab-home-collection-covers > span { display: block; width: 100%; max-width: 100px; aspect-ratio: 2 / 2.8; margin-inline: auto; }
+.ab-home-collection-covers img { display: block; width: 100%; height: 100%; object-fit: contain; box-shadow: 2px 5px 9px rgb(30 51 41 / 12%); }
+.ab-home-collection-cta { color: #175c36; font-size: var(--text-base); font-weight: 600; white-space: nowrap; }
+@media (max-width: 40rem) { .ab-home-collection-link { grid-template-columns: minmax(0, 1fr); gap: var(--space-md); padding: var(--space-md); } .ab-home-collection-covers { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-md); } }
+
 .ab-book-quiz { margin-block: var(--space-xl); }
 /* Book finder: a deep-green card so it stands apart from the white book shelves. */
 .ab-book-quiz-card { position: relative; overflow: hidden; padding: var(--space-xl) var(--space-lg); border-radius: var(--radius-lg); background: radial-gradient(circle at 100% 0%, rgba(243, 195, 74, 0.22), transparent 42%), linear-gradient(140deg, #0f4a2c, #175c36 55%, #1d6b40); color: #fff; box-shadow: 0 14px 34px rgba(15, 74, 44, 0.22); }
@@ -412,13 +423,18 @@ app-product-card-one .heart.active {
     });
   }
   function ensureHeaderTicker() {
-    if (document.getElementById('ab-header-ticker')) return;
+    var collection = location.pathname === '/product-list' && new URLSearchParams(location.search).get('collection') === 'abdullah-jahangir';
+    var current = document.getElementById('ab-header-ticker');
+    if (current && current.dataset.collection === String(collection)) return;
+    if (current) current.remove();
     var header = document.querySelector('app-header > header');
     if (!header) return;
     var offerGap = '\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0•\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0';
     var deliveryGap = '\u00a0\u00a0\u00a0\u00a0•\u00a0\u00a0\u00a0\u00a0';
     var message = '৳৭৯৯+ অর্ডারে ৭২ পৃষ্ঠার নোটবুক ফ্রি' + offerGap + 'ঢাকায় ডেলিভারি ৳৬০' + deliveryGap + 'ঢাকার বাইরে ৳৭৫';
+    if (collection) message = 'ড. আব্দুল্লাহ জাহাঙ্গীর (রহ.)-এর নির্বাচিত ৬টি বই' + offerGap + 'ঢাকায় ডেলিভারি ৳৬০' + deliveryGap + 'ঢাকার বাইরে ৳৭৫';
     var ticker = document.createElement('div');
+    ticker.dataset.collection = String(collection);
     ticker.id = 'ab-header-ticker';
     ticker.setAttribute('role', 'region');
     ticker.setAttribute('aria-label', message);
@@ -502,7 +518,7 @@ app-product-card-one .heart.active {
   }
   function decorateCovers() {
     document.querySelectorAll('a[href*="/product-details/"]').forEach(function (link) {
-      if (link.closest('.ab-sticky-search-item')) return;
+      if (link.closest('.ab-sticky-search-item, #ab-jahangir-books')) return;
       var image = link.querySelector('img');
       if (!image) return;
       var host = image.closest('.product-image, .ab-home-card-media, .ab-library-image-wrap') || image.parentElement;
@@ -1046,6 +1062,19 @@ app-product-card-one .heart.active {
       button.disabled = false;
     });
   }
+  function loadCollectionCovers(root) {
+    var covers = root.querySelector('.ab-home-collection-covers');
+    var base = localHost ? location.origin + '/api' : 'https://apisub.amolbooks.com/api';
+    fetch(base + '/storefront-assets/abdullah-jahangir-books.v1.json', { credentials: 'omit' }).then(function (response) {
+      if (!response.ok) throw new Error('Collection unavailable');
+      return response.json();
+    }).then(function (collection) {
+      if (!Array.isArray(collection.books) || collection.books.length !== 6 || collection.books.some(function (book) { return !book.cover; })) throw new Error('Missing covers');
+      covers.innerHTML = collection.books.map(function (book) {
+        return '<span><img src="' + escapeHtml(book.cover) + '" alt="' + escapeHtml(book.name) + '" width="100" height="140" loading="lazy" decoding="async"></span>';
+      }).join('');
+    }).catch(function () { covers.remove(); });
+  }
   function render(products) {
     var nativeHome = document.querySelector('app-home');
     if (!nativeHome || !nativeHome.parentNode || !products.length || location.pathname !== '/' || new URLSearchParams(location.search).get('home') === 'legacy' || document.getElementById(ROOT_ID)) return;
@@ -1063,13 +1092,14 @@ app-product-card-one .heart.active {
     });
     var authorsHtml = nameStripHtml('ab-home-authors', 'জনপ্রিয় লেখক', uniqueEntities(products, 'author'), 'author', '/author-list');
     var publishersHtml = nameStripHtml('ab-home-publishers', 'জনপ্রিয় প্রকাশনী', uniqueEntities(products, 'publisher'), 'publisher', '/publisher-list');
+    var jahangirCollection = '<section class="ab-home-shell ab-home-collection" aria-labelledby="ab-home-jahangir-title"><a class="ab-home-collection-link" href="/product-list?collection=abdullah-jahangir"><div><h2 id="ab-home-jahangir-title">ড. খোন্দকার আব্দুল্লাহ জাহাঙ্গীর (রহ.)-এর সেরা বই</h2><p>নির্বাচিত ৬টি বই একসঙ্গে, অথবা পছন্দমতো বেছে নিন।</p></div><div class="ab-home-collection-covers"><span></span><span></span><span></span><span></span><span></span><span></span></div><span class="ab-home-collection-cta">বইগুলো দেখুন <span aria-hidden="true">→</span></span></a></section>';
     var goalsHtml = '<section class="ab-home-goals" aria-labelledby="ab-home-goals-title"><div class="ab-home-shell"><div class="ab-home-section-head"><h2 id="ab-home-goals-title">আপনার প্রয়োজন অনুযায়ী</h2><a class="ab-home-all-link" href="/category-list">সব বিষয়</a></div><div class="ab-home-goal-grid">' + goalLinks + '</div></div></section>';
     renderedCards = 0;
     var root = document.createElement('main');
     root.id = ROOT_ID;
     root.innerHTML = shelfData.map(function (entry, index) {
       var shelfHtml = sectionHtml('ab-home-' + entry.shelf.id, entry.shelf.title, entry.products, '/product-list', entry.packages.map(function (item) { return packageCard(item, 'ab-home-' + entry.shelf.id); }).join(''));
-      return shelfHtml + (index === 1 ? quizHtml() : '') + (index === 4 ? goalsHtml : '') + (index === 6 ? authorsHtml : '') + (index === 8 ? publishersHtml : '');
+      return shelfHtml + (index === 1 ? jahangirCollection + quizHtml() : '') + (index === 4 ? goalsHtml : '') + (index === 6 ? authorsHtml : '') + (index === 8 ? publishersHtml : '');
     }).join('') +
       '<nav class="ab-home-shell ab-home-trust" aria-label="অর্ডার সহায়তা"><a href="/pages/how-to-order-website">কীভাবে অর্ডার করবেন <span aria-hidden="true">→</span></a><a href="/pages/delivery-policy">ডেলিভারি নীতি <span aria-hidden="true">→</span></a><a href="/pages/return-&-refund-policy">ফেরত ও পরিবর্তন <span aria-hidden="true">→</span></a></nav>';
     nativeHome.parentNode.insertBefore(root, nativeHome);
@@ -1079,6 +1109,7 @@ app-product-card-one .heart.active {
     mountedPath = location.pathname;
     decorateCovers();
     showEntityImages(root);
+    loadCollectionCovers(root);
     var quizStarted = false;
     root.querySelector('.ab-book-quiz-form').addEventListener('change', function () {
       if (quizStarted) return;

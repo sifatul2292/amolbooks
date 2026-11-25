@@ -162,6 +162,18 @@ let app, browser;
   assert.equal(await gift([book('unrelated')]), null);
   assert.equal((await gift([book('unrelated')], 750)).isGift, true);
   assert.equal((await gift([book('legacy book', 2)])).isGift, true);
+  const collectionBook = book('rahe-belayat');
+  const collectionLine = { product: { _id: collectionBook._id, slug:collectionBook.slug, salePrice:2004 }, selectedQty:1, collectionSource:'abdullah-jahangir' };
+  assert.equal(await orderService.evaluateGiftLine([collectionBook], [collectionLine]), null, 'Collection books do not earn a threshold notebook');
+  assert.equal((await orderService.evaluateGiftLine([collectionBook], [{...collectionLine,collectionSource:undefined}])).isGift, true, 'Ordinary purchases retain the configured offer');
+  const unrelatedBook = {...book(),_id:'000000000000000000000001'};
+  assert.equal((await orderService.evaluateGiftLine([collectionBook,unrelatedBook], [collectionLine,{product:{_id:unrelatedBook._id,slug:unrelatedBook.slug,salePrice:315},selectedQty:1}])).isGift,true,'An unrelated qualifying book keeps its own offer');
+  context.cartOfferConfig.giftEnabled = true;
+  assert.equal(context.cartHasBookGift([{product:'book',selectedQty:1,collectionSource:'abdullah-jahangir'}],[{_id:'book',slug:'productive muslim'}]),false);
+  const { CartSchema } = require('../api/dist/schema/cart.schema');
+  const CartFixture = mongoose.model('CollectionCartFixture',CartSchema);
+  assert.equal(new CartFixture({product:collectionBook._id,user:unrelatedBook._id,selectedQty:1,collectionSource:'abdullah-jahangir'}).toObject().collectionSource,'abdullah-jahangir','Account-cart schema persists collection source');
+
   const existing = [
     book(),
     { _id: config.giftProduct._id, salePrice: 100, quantity: 1 },
