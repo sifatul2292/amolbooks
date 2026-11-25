@@ -438,6 +438,17 @@ async function main() {
     await payment.reconcileEpsPayments();
     assert.match((await Order.findById(earlier._id).lean()).paymentGatewayMessage, /Paid twice/);
 
+    // Gift wrapping is part of the saved payable total, including EPS retries.
+    const wrappedGift = await newOrder({ isGiftOrder:true, giftWrap:true, giftWrapCharge:30, grandTotal:405,
+      gift:{ senderName:'Gift Sender', senderPhone:'01711000222', message:'শুভেচ্ছা' } });
+    assert.equal((await init(wrappedGift)).status, 201);
+    const giftAttempt = await mtidOf(wrappedGift);
+    assert.equal(eps.state.tx.get(giftAttempt).body.totalAmount, 405, 'EPS charges the saved total with wrapping');
+    eps.state.tx.get(giftAttempt).status = 'Failed';
+    await call(`/eps/return/${giftAttempt}/fail`);
+    assert.equal((await call(`/eps/retry/${wrappedGift._id}`, {})).status, 201);
+    assert.equal(eps.state.tx.get(await mtidOf(wrappedGift)).body.totalAmount, 405, 'Retry keeps the wrapping fee');
+
     // 10. One login reused; an expired token logs in again once.
     assert.equal(eps.state.tokenCalls, 1, 'EPS token is cached');
     eps.state.tokens.clear();

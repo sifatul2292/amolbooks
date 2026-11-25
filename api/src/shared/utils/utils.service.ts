@@ -351,17 +351,18 @@ export class UtilsService {
 
     // Totals and Note Section (Keeping within left and right margins)
     const subtotalY = y + 30;
+    const wrapRowHeight = orderData.giftWrapCharge ? 20 : 0;
     doc.fontSize(10).font('Helvetica-Bold');
     doc.text('Note:', doc.page.margins.left + 20, subtotalY);
 
     const totalsStartX = doc.page.margins.left + 290;
     const totalsWidth = 210;
     const borderMiddleX = totalsStartX + 120;
-    doc.rect(totalsStartX, subtotalY - 5, totalsWidth, 85).stroke();
+    doc.rect(totalsStartX, subtotalY - 5, totalsWidth, 85 + wrapRowHeight).stroke();
 
     doc
       .moveTo(borderMiddleX, subtotalY - 5)
-      .lineTo(borderMiddleX, subtotalY + 80)
+      .lineTo(borderMiddleX, subtotalY + 80 + wrapRowHeight)
       .stroke();
 
     const drawLabelValue = (label, value, x, y, labelWidth, valueWidth) => {
@@ -397,11 +398,15 @@ export class UtilsService {
       labelWidth,
       valueWidth,
     );
+    if (orderData.giftWrapCharge) {
+      drawLabelValue('Gift Wrap:', `${orderData.giftWrapCharge} TK`,
+        totalsStartX + 10, subtotalY + 60, labelWidth, valueWidth);
+    }
     drawLabelValue(
       'Grand Total:',
       `${orderData.grandTotal} TK`,
       totalsStartX + 10,
-      subtotalY + 60,
+      subtotalY + 60 + wrapRowHeight,
       labelWidth,
       valueWidth,
     );

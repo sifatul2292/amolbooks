@@ -202,6 +202,11 @@ export class PaymentService implements OnApplicationBootstrap {
     }
     if (body.tran_id) {
       try {
+        const order: any = await this.orderModel.findOne({ orderId: String(body.tran_id) })
+          .select('isGiftOrder giftWrap grandTotal');
+        if (order?.isGiftOrder || order?.giftWrap) {
+          body = { ...body, total_amount: order.grandTotal };
+        }
         const response = await this.sslService.sslInit(body);
         return {
           success: true,

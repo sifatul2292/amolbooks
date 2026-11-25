@@ -49,3 +49,8 @@ assert.equal(t.changedFor, '');
 t = totals({ orderedItems: [{ name: 'বই', quantity: 1, unitPrice: 300 }], deliveryCharge: 75, grandTotal: 375, paymentType: 'online_payment', paymentStatus: 'paid' });
 assert.equal(t.cash, false, 'A paid online order is not asked to pay on delivery');
 console.log('Thank-you order summary: totals, charge note and wiring pass');
+
+const wrappedGift = totals({ orderedItems:[{ name:'বই', quantity:1, unitPrice:200 }], deliveryCharge:60, giftWrapCharge:30, grandTotal:270 });
+assert.equal(wrappedGift.wrapping, 30);
+assert.equal(wrappedGift.discount, 20, 'Wrapping does not swallow the coupon discount');
+assert.equal(wrappedGift.books + wrappedGift.delivery + wrappedGift.wrapping - wrappedGift.discount, wrappedGift.total);

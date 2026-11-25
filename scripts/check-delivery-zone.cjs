@@ -390,8 +390,8 @@ assert.match(orders, /freeDelivery,\s+cartSubTotal - cartDiscountAmount,\s+\);/,
   const snippet = read('gtm-snippets/package-free-delivery.html').match(/<script>([\s\S]*?)<\/script>/)[1];
   const numbers = /total >= (\d+)\) return charge;\s+return Math\.max\(charge, (\d+)\);/.exec(snippet);
   assert.deepEqual([Number(numbers[1]), Number(numbers[2])], [zone.SMALL_ORDER.below, zone.SMALL_ORDER.outside], 'Checkout and API use the same numbers');
-  const patch = new Function('freeDeliveryOffer', 'checkoutOffer', 'schedule',
-    snippet.slice(snippet.indexOf('function patchCheckout'), snippet.indexOf('// Production Angular')) + ';return patchCheckout;')((carts) => (carts[0].free ? 'set' : ''), '', () => {});
+  const patch = new Function('freeDeliveryOffer', 'checkoutOffer', 'schedule', 'window',
+    snippet.slice(snippet.indexOf('function patchCheckout'), snippet.indexOf('// Production Angular')) + ';return patchCheckout;')((carts) => (carts[0].free ? 'set' : ''), '', () => {}, {});
   class Checkout {
     constructor() { this.formData = { value: { deliveryOptions: '2' } }; this.carts = [{}]; this.cartSubTotal = 300; this.cartDiscountAmount = 50; this.savar = false; }
     shouldUseOutsideDhakaCharge() { return this.savar; }

@@ -232,15 +232,19 @@ export const STOREFRONT_PRICE_SCRIPT = `
       var ul = list.querySelector('ul');
       if (!ul || ul.children.length < 4) return;
 
-      var subtotalRow = ul.children[0];
-      var discountRow = ul.children[1];
-      var shippingRow = ul.children[2];
-      var totalRow = ul.children[3];
+      var rows = Array.prototype.filter.call(ul.children, function (row) {
+        return !row.classList.contains('ab-gift-fee');
+      });
+      var subtotalRow = rows[0];
+      var discountRow = rows[1];
+      var shippingRow = rows[2];
+      var totalRow = rows[3];
       var subtotal = moneyFrom(subtotalRow.lastElementChild);
       var discount = moneyFrom(discountRow.lastElementChild);
       var shipping = moneyFrom(shippingRow.lastElementChild);
       var grandTotal = moneyFrom(totalRow.lastElementChild);
-      var actual = grandTotal - shipping;
+      var wrapFee = moneyFrom(ul.querySelector('.ab-gift-fee strong')) || 0;
+      var actual = grandTotal - shipping - wrapFee;
 
       if (!isFinite(actual)) actual = subtotal - discount;
       if (!isFinite(actual)) return;

@@ -87,6 +87,8 @@
     return null;
   }
   function patchCheckout(component) {
+    var proto = Object.getOwnPropertyDescriptor(component, 'grandTotal') ? component : Object.getPrototypeOf(component);
+    (window.__amolCheckoutPatches || []).forEach(function (patch) { patch(proto); });
     if (component.calculateDeliveryCharge.__abPackageFreeDelivery) return;
     var original = component.calculateDeliveryCharge;
     component.calculateDeliveryCharge = function () {

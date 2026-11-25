@@ -6699,7 +6699,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
       bar = document.createElement('div');
       bar.id = 'ab-cart-sticky-checkout';
       bar.setAttribute('aria-label', 'অর্ডার সম্পন্ন করুন');
-      bar.innerHTML = '<button type="button" data-ab-cart-sticky-checkout="true">অর্ডার করতে এগিয়ে যান →</button>';
+      bar.innerHTML = '<button type="button" data-ab-cart-sticky-checkout="true">অর্ডার করতে এগিয়ে যান</button>';
       document.body.appendChild(bar);
     }
     bar.hidden = !cartPageOpen();
@@ -6708,7 +6708,8 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
   function updateCartCheckoutCtas(total) {
     var label = 'অর্ডার করতে এগিয়ে যান · ' + money(total) + ' →';
     document.querySelectorAll('#ab-cart-sticky-checkout [data-ab-cart-sticky-checkout], app-cart-information .cart-area-bottom a[href*="/checkout"], app-cart-information .cart-area-bottom button.order').forEach(function (button) {
-      updateNodeText(button, label);
+      var compact = button.hasAttribute('data-ab-cart-sticky-checkout') && window.__amolGiftCheckout;
+      updateNodeText(button, compact ? 'অর্ডার করতে এগিয়ে যান' : label);
     });
   }
 
@@ -8552,7 +8553,7 @@ export const STOREFRONT_PRODUCT_SECTIONS_SCRIPT = `
         var spans = row.querySelectorAll('span');
         var target = row.querySelector('.ab-actual-order-value') || spans[spans.length - 1] || row;
         if (/প্রকৃত অর্ডার মূল্য|Subtotal/i.test(text) || (/মোট টাকা/.test(text) && !/সর্বমোট টাকা/.test(text))) updateNodeText(target, money(subtotal));
-        if (/Total|সর্বমোট টাকা/i.test(text)) updateNodeText(target, money(subtotal + shipping));
+        if (/Total|সর্বমোট টাকা/i.test(text)) updateNodeText(target, money(subtotal + shipping + (area.querySelector('.ab-gift-fee') ? 30 : 0)));
       });
     });
   }

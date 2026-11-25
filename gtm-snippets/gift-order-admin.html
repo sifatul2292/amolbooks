@@ -1,0 +1,49 @@
+<style id="ab-gift-order-admin-style">
+.ab-admin-gift-badge { display:block; width:max-content; margin-top:5px; padding:3px 8px; border:1px solid #d8bde4; border-radius:5px; background:#fbf2ff; color:#752c89; font-size:11px; font-weight:700; white-space:nowrap; }
+#ab-admin-gift-detail { margin:14px 0; padding:14px; border:1px solid #dec7e8; border-radius:8px; background:#fdf7ff; color:#37223e; }
+#ab-admin-gift-detail h3 { margin:0 0 10px; font-size:15px; }
+#ab-admin-gift-detail dl { display:grid; grid-template-columns:110px minmax(0,1fr); gap:8px; margin:0; font-size:13px; line-height:1.5; }
+#ab-admin-gift-detail dt { color:#725879; }
+#ab-admin-gift-detail dd { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; }
+@media(max-width:500px) { #ab-admin-gift-detail dl { grid-template-columns:minmax(0,1fr); gap:4px; } #ab-admin-gift-detail dd { margin-bottom:8px; } }
+</style>
+<script id="ab-gift-order-admin">
+(function(){
+ 'use strict';
+ if(window.AmolGiftOrderAdmin)return;
+ function money(value){return '৳'+Math.max(0,Number(value)||0).toLocaleString('en-BD');}
+ function row(list,label,value){if(!value)return;var dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=String(value);list.appendChild(dt);list.appendChild(dd);}
+ function totalRow(id,label,value,before){
+  var current=document.getElementById(id);
+  if(!value){if(current)current.remove();return;}
+  if(!current){current=document.createElement('div');current.id=id;current.className='mt-item';current.appendChild(document.createTextNode(label));current.appendChild(document.createElement('span'));before.parentNode.insertBefore(current,before);}
+  current.querySelector('span').textContent=value;
+ }
+ window.AmolGiftOrderAdmin={
+  badge:function(order){return order&&order.isGiftOrder===true?'<span class="ab-admin-gift-badge">Gift Order</span>':'';},
+  render:function(order){
+   var old=document.getElementById('ab-admin-gift-detail');if(old)old.remove();
+   var recipient=document.getElementById('modalCustomerName');
+   var label=recipient&&recipient.parentNode.querySelector('.mic-lbl');if(label)label.textContent=order.isGiftOrder?'Recipient':'Customer';
+   if(order.isGiftOrder){
+    var payment=document.getElementById('modalPaymentType');if(payment&&order.paymentType==='online_payment')payment.textContent='Online Payment (EPS)';
+    var panel=document.createElement('section');panel.id='ab-admin-gift-detail';
+    var title=document.createElement('h3');title.textContent='Gift Order · Fulfilment Details';panel.appendChild(title);
+    var details=document.createElement('dl'),gift=order.gift||{};
+    row(details,'Sender',gift.senderName);row(details,'Sender phone',gift.senderPhone);
+    row(details,'Recipient alt. phone',gift.recipientAlternativePhone);row(details,'Occasion',gift.occasion);
+    row(details,'Occasion date',gift.occasionDate);row(details,'Gift message',gift.message);
+    row(details,'Gift cover',order.giftWrap?'Wrap in a gift cover · '+money(order.giftWrapCharge):'Not requested');
+    panel.appendChild(details);
+    var anchor=document.querySelector('#productsModal .modal-info-grid');if(anchor)anchor.insertAdjacentElement('afterend',panel);
+   }
+   var grand=document.getElementById('modalGrandTotal');if(!grand)return;
+   var wrap=Number(order.giftWrapCharge)||0;
+   totalRow('ab-admin-gift-wrap','Gift Wrap',wrap>0?money(wrap):'',grand.parentNode);
+   var discount=Number(order.subTotal||0)+Number(order.deliveryCharge||0)+wrap-Number(order.grandTotal||0);
+   var delivery=document.getElementById('modalDelivery');
+   totalRow('ab-admin-gift-discount','Discount',order.isGiftOrder&&discount>0?'−'+money(discount):'',delivery.parentNode);
+  }
+ };
+}());
+</script>

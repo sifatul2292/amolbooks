@@ -106,6 +106,17 @@ export const OrderSchema = new mongoose.Schema(
         required: false,
       },
     },
+    isGiftOrder: { type: Boolean, default: false },
+    giftWrap: { type: Boolean, default: false },
+    giftWrapCharge: { type: Number, default: 0 },
+    gift: {
+      senderName: { type: String, maxlength: 100 },
+      senderPhone: { type: String, maxlength: 20 },
+      occasion: { type: String, maxlength: 60 },
+      occasionDate: { type: String, maxlength: 10 },
+      recipientAlternativePhone: { type: String, maxlength: 20 },
+      message: { type: String, maxlength: 120 },
+    },
     paymentType: {
       type: String,
       required: false,

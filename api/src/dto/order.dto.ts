@@ -8,6 +8,7 @@ import {
   IsNotEmptyObject,
   IsNumber,
   IsObject,
+  MaxLength,
   IsOptional,
   IsString,
   ValidateNested,
@@ -16,7 +17,53 @@ import { Type } from 'class-transformer';
 import { PaginationDto } from './pagination.dto';
 import { OrderStatus } from '../enum/order.enum';
 
+export class GiftOrderDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  senderName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(20)
+  senderPhone: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  occasion?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  occasionDate?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  recipientAlternativePhone?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  message?: string;
+}
+
 export class AddOrderDto {
+  @IsOptional()
+  @IsBoolean()
+  isGiftOrder?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  giftWrap?: boolean;
+
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => GiftOrderDto)
+  gift?: GiftOrderDto;
+
   @IsNotEmpty()
   @IsString()
   name: string;

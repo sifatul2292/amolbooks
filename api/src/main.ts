@@ -106,6 +106,10 @@ async function bootstrap() {
   app.use(storefrontSeoRouting);
 
   app.use('/api/storefront-images', storefrontImages(join(__dirname, '..', 'upload/images')));
+  app.use('/api/storefront-assets/delivery-zone-core.js', (req, res) => {
+    if (!['GET', 'HEAD'].includes(req.method)) return res.sendStatus(405);
+    return res.type('js').sendFile(join(__dirname, '../..', 'gtm-snippets/delivery-zone-core.js'));
+  });
   app.use('/api/storefront-assets', express.static(join(__dirname, '../..', 'gtm-snippets/assets'), { maxAge: '1y', immutable: true }));
 
   app.use(customerManagerPages(join(__dirname, '../..')));
@@ -618,6 +622,7 @@ ${storefrontPurchaseExternalIdHelper}
     'review-reliability.html',
     'catalogue-local-requests.html',
     'cart-page-navigation.html',
+    'gift-checkout.html',
     'product-detail-polish.html',
     'author-books-grid.html',
     'publisher-banner.html',

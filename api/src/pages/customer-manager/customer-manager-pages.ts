@@ -72,6 +72,13 @@ export function customerManagerPages(root: string) {
           /<nav class="sidebar-nav">[\s\S]*?<\/nav>/,
           () => `<nav class="sidebar-nav">${renderAdminNav('orders')}</nav>`,
         );
+        // Gift orders use the same order list, with their saved fulfilment details.
+        const giftDetails = readFileSync(join(root, 'gtm-snippets', 'gift-order-admin.html'), 'utf8');
+        page = page.replace('</head>', giftDetails + '</head>')
+          .replace('orderId:1, name:1, phoneNo:1,', 'isGiftOrder:1, giftWrap:1, giftWrapCharge:1, gift:1, orderId:1, name:1, phoneNo:1,')
+          .replace("esc(o.orderId||o._id.slice(-6))+'</a></td>',", "esc(o.orderId||o._id.slice(-6))+'</a>'+window.AmolGiftOrderAdmin.badge(o)+'</td>',")
+          .replace("var overlay=document.getElementById('productsModal');", "window.AmolGiftOrderAdmin.render(order);\n      var overlay=document.getElementById('productsModal');");
+
         // "Sent by" / note-author labels on the order rows.
         try {
           const attribution = readFileSync(

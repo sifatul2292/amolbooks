@@ -30,6 +30,17 @@ export interface Order {
   courierLink: string;
   shippingAddress: string;
   paymentType: string;
+  isGiftOrder?: boolean;
+  giftWrap?: boolean;
+  giftWrapCharge?: number;
+  gift?: {
+    senderName: string;
+    senderPhone: string;
+    occasion?: string;
+    occasionDate?: string;
+    recipientAlternativePhone?: string;
+    message?: string;
+  };
   orderFrom?: string;
   orderOrigin?: 'website' | 'incomplete' | 'admin';
   manualOrderSource?: string;

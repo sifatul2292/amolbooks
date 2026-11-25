@@ -11,7 +11,7 @@ assert.ok(script.includes("var PACKAGE_ID = '"+id+"'"));
 const make=(packageId=id,qty=1,type=1)=>({cartType:type,selectedQty:qty,product:{_id:packageId,salePrice:1000}});
 const cases=[[[],false],[[make()],true],[[make(),make('000000000000000000000001',1,0)],true],[[make(id,0)],false],[[make(id,-1)],false],[[make(id,'NaN')],false],[[make(id,1,0)],false],[[make('000000000000000000000001')],false],[[{cartType:1,specialPackage:id,selectedQty:1,freeDelivery:true}],false]];
 for(const [items,result] of cases){assert.equal(eligible(items),result);assert.equal(client(items),result);}
-const patch=new Function('freeDeliveryOffer','checkoutOffer','schedule',script.slice(script.indexOf('function patchCheckout'),script.indexOf('// Production Angular'))+';return patchCheckout;')(freeDeliveryOffer,'',()=>{});
+const patch=new Function('freeDeliveryOffer','checkoutOffer','schedule','window',script.slice(script.indexOf('function patchCheckout'),script.indexOf('// Production Angular'))+';return patchCheckout;')(freeDeliveryOffer,'',()=>{},{});
 const component={carts:[make()],calculateDeliveryCharge(){return 75;}};
 patch(component);assert.equal(component.calculateDeliveryCharge(),0);
 component.carts=[];assert.equal(component.calculateDeliveryCharge(),75,'Removing bundle restores normal shipping');

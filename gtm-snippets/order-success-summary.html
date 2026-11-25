@@ -60,16 +60,17 @@
     });
     var books = items.reduce(function (sum, item) { return sum + item.amount; }, 0);
     var delivery = Math.max(0, Number(order.deliveryCharge) || 0);
+    var wrapping = Math.max(0, Number(order.giftWrapCharge) || 0);
     var total = Number(order.grandTotal);
-    if (!isFinite(total)) total = books + delivery;
+    if (!isFinite(total)) total = books + delivery + wrapping;
     // Coupon / order discounts: whatever the stored total leaves out.
-    var discount = Math.max(0, Math.round(books + delivery - total));
+    var discount = Math.max(0, Math.round(books + delivery + wrapping - total));
     var place = order.deliveryLocation || {};
     var zone = place.zone === 'inside' ? 'ঢাকা সিটির ভেতর' : place.zone === 'outside' ? 'ঢাকা সিটির বাইরে' : '';
     var picked = Number(place.clientCharge);
     var changed = zone && isFinite(picked) && picked > 0 && delivery > 0 && picked !== delivery;
     return {
-      items: items, books: books, delivery: delivery, discount: discount, total: total, zone: zone,
+      items: items, books: books, delivery: delivery, wrapping: wrapping, discount: discount, total: total, zone: zone,
       changedFor: changed ? String(place.areaName || place.districtName || '') : '',
       cash: !/online|eps|bkash|nagad|card/i.test(String(order.paymentType || '')) && String(order.paymentStatus || '') !== 'paid',
     };
@@ -94,6 +95,7 @@
     var sums = el('ul', 'ab-os-sums');
     sums.appendChild(row('বইয়ের মূল্য', money(t.books)));
     sums.appendChild(row('ডেলিভারি চার্জ' + (t.zone ? ' (' + t.zone + ')' : ''), t.delivery > 0 ? money(t.delivery) : 'ফ্রি'));
+    if (t.wrapping > 0) sums.appendChild(row('গিফট র‍্যাপ', money(t.wrapping)));
     if (t.discount > 0) sums.appendChild(row('ছাড়', '−' + money(t.discount)));
     sums.appendChild(row('সর্বমোট', money(t.total), 'ab-os-total'));
     card.appendChild(sums);

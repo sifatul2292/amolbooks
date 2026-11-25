@@ -8,7 +8,7 @@ const root = path.resolve(__dirname, '..');
 const app = express();
 app.use(express.json());
 const main = fs.readFileSync(path.join(root, 'api/src/main.ts'), 'utf8');
-const snippetNames = [...main.match(/const storefrontSnippetFiles = \[([\s\S]*?)\];/)[1].matchAll(/'([^']+)'/g)].map(match => match[1]);
+const snippetNames = [...main.match(/const storefrontSnippetFiles = \[([\s\S]*?)\];/)[1].matchAll(/^\s*'([^']+\.html)',?\s*$/gm)].map(match => match[1]);
 const scripts = {
   'storefront-price-english-digits.js': ['storefront-price-script', 'STOREFRONT_PRICE_SCRIPT'],
   'storefront-special-package.js': ['storefront-special-package-script', 'STOREFRONT_SPECIAL_PACKAGE_SCRIPT'],
@@ -21,6 +21,7 @@ Object.entries(scripts).forEach(([url, [file, key]]) => app.get('/' + url, (req,
   new Function('exports', ts.transpileModule(source, {compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText)(result);
   res.type('js').send(result[key]);
 }));
+app.get('/api/storefront-assets/delivery-zone-core.js', (req,res) => res.type('js').sendFile(path.join(root,'gtm-snippets/delivery-zone-core.js')));
 app.use('/api/storefront-assets', express.static(path.join(root, 'gtm-snippets/assets')));
 function proxy(req, res) {
   const remotePath = req.originalUrl.replace(/^\/storefront-catalog/, '/api');

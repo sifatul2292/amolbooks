@@ -1,6 +1,7 @@
 import { orderPhoneAliases, unbookedOrderFilter } from '../../guest-orders/guest-orders.policy';
 import { hasFreeDelivery } from '../../../shared/utils/package-free-delivery.util';
 import { DeliveryZoneService } from '../../../shared/delivery-zone/delivery-zone.service';
+import { giftOrderDetails, giftFulfilmentNote } from '../../../shared/utils/gift-order.util';
 import {
   BadRequestException,
   ConflictException,
@@ -695,6 +696,7 @@ export class OrderService {
 
       return response;
     } catch (error) {
+      if (error instanceof BadRequestException) throw error;
       console.log(error);
       throw new InternalServerErrorException(error.message);
     }
@@ -3409,6 +3411,7 @@ export class OrderService {
       subTotal: fOrderData.subTotal,
       discount: fOrderData.discount,
       deliveryCharge: fOrderData.deliveryCharge,
+      giftWrapCharge: fOrderData.giftWrapCharge || 0,
       weightBasedDeliveryCharge: fOrderData.weightBasedDeliveryCharge || 0,
       grandTotal: fOrderData.grandTotal,
       items: fOrderData.orderedItems,
@@ -3496,6 +3499,7 @@ export class OrderService {
         subTotal: fOrderData.subTotal,
         discount: fOrderData.discount,
         deliveryCharge: fOrderData.deliveryCharge,
+        giftWrapCharge: fOrderData.giftWrapCharge || 0,
         weightBasedDeliveryCharge: fOrderData.weightBasedDeliveryCharge || 0,
         grandTotal: fOrderData.grandTotal,
         items: fOrderData.orderedItems.map((item) => ({
@@ -5120,6 +5124,7 @@ export class OrderService {
 
   // New Order Make
   private async newOrderMake(orderData: any) {
+    const giftDetails = giftOrderDetails(orderData);
     let cartItems: any[] = [];
 
     // Card Data Get
@@ -5324,17 +5329,19 @@ export class OrderService {
       deliveryCharge -
       couponDiscount -
       cartDiscountAmount -
-      orderDiscount;
+      orderDiscount +
+      giftDetails.giftWrapCharge;
 
     // New Order Data
     const newOrderData = {
+      ...giftDetails,
       name: orderData?.name,
       phoneNo: orderData?.phoneNo,
       shippingAddress: deliveryLocation
         ? deliveryLocation.shippingAddress
         : orderData?.shippingAddress,
       division: orderData?.division,
-      note: orderData?.note,
+      note: giftFulfilmentNote(giftDetails, orderData?.note),
       area: orderData?.area,
       zone: orderData?.zone,
       city: deliveryLocation ? deliveryLocation.city : orderData?.city,

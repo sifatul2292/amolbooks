@@ -1,0 +1,322 @@
+<!-- Before Angular. Gift checkout shares the native order/payment services and delivery rules. -->
+<style>
+/* Hallmark · pre-emit critique: P5 H5 E4 S5 R5 V4 · reference: supplied Rokomari screenshots */
+:root {
+  --ab-gift-paper:#fff; --ab-gift-pink:#fff2fc; --ab-gift-ink:#303030;
+  --ab-gift-muted:#777; --ab-gift-rule:#dedede; --ab-gift-blue:#286bf2;
+  --ab-gift-border:#1955c7; --ab-gift-purple:#812b91; --ab-gift-red:#d63436;
+  --ab-gift-green:#32bd4a; --ab-gift-heading:#61a400; --ab-gift-error:#b32626;
+  --ab-gift-font:Arial,var(--ab-product-heading,hind-siliguri),sans-serif;
+}
+.ab-gift-start { display:inline-flex!important; align-items:center; justify-content:center; box-sizing:border-box; min-height:48px; padding:10px 18px!important; border:1px solid var(--ab-gift-purple)!important; border-radius:4px!important; background:var(--ab-gift-paper)!important; color:var(--ab-gift-purple)!important; font:500 18px/1.2 var(--ab-gift-font)!important; text-decoration:none!important; white-space:nowrap; cursor:pointer; }
+.ab-gift-start:hover { background:var(--ab-gift-pink)!important; }
+.ab-gift-start:active { transform:translateY(1px); }
+.ab-gift-start:focus-visible,.ab-gift-checkout :is(input,select,textarea,button,a):focus-visible { outline:2px solid var(--ab-gift-border)!important; outline-offset:3px; }
+.ab-gift-cart-caption { margin:0 0 14px!important; color:var(--ab-gift-ink); font:400 17px/1.5 var(--ab-gift-font); }
+.ab-gift-cart-caption strong { color:var(--ab-gift-border); }
+body.ab-cart-enhanced .ab-gift-cart-footer [data-ab-cart-continue] { color:var(--ab-product-accent)!important; background:var(--ab-gift-paper)!important; border-color:var(--ab-product-accent)!important; }
+.ab-gift-cart-buttons { display:grid; grid-template-columns:minmax(100px,.8fr) minmax(0,2fr); align-items:center; gap:10px; }
+body.ab-cart-enhanced app-cart-information .cart-area-bottom.ab-gift-cart-footer { display:block!important; }
+body.ab-cart-enhanced .ab-gift-cart-footer > * { margin-bottom:14px!important; }
+body.ab-cart-enhanced .ab-gift-cart-footer > .ab-gift-cart-buttons { margin-bottom:0!important; }
+body.ab-cart-enhanced app-cart-information .ab-gift-cart-buttons > button.order { margin:0!important; width:100%!important; min-height:48px!important; padding:10px 12px!important; border:0!important; border-radius:4px!important; background:var(--ab-gift-blue)!important; color:var(--ab-gift-paper)!important; box-shadow:none!important; font-size:clamp(13px,2.4vw,18px)!important; }
+body #ab-cart-sticky-checkout .ab-gift-start { width:100%!important; min-width:0!important; min-height:48px!important; }
+body #ab-cart-sticky-checkout .ab-gift-cart-caption { grid-column:1/-1; margin:0!important; font-size:15px; text-align:center; }
+body #ab-cart-sticky-checkout:has(.ab-gift-start) > [data-ab-cart-sticky-checkout] { min-width:0; min-height:48px!important; background:var(--ab-gift-blue)!important; white-space:nowrap; font-size:16px!important; }
+@media(max-width:767px) { .ab-gift-cart-footer .ab-gift-cart-caption,.ab-gift-cart-footer .ab-gift-cart-buttons { display:none!important; } body.ab-cart-enhanced #ab-cart-sticky-checkout:has(.ab-gift-start) { display:grid!important; grid-template-columns:104px minmax(0,1fr); align-items:center; gap:10px; } }
+.ab-gift-sr { position:absolute!important; width:1px!important; height:1px!important; margin:-1px!important; padding:0!important; overflow:hidden!important; clip:rect(0,0,0,0)!important; white-space:nowrap!important; }
+.ab-gift-wrap { display:flex; align-items:flex-start; gap:10px; min-height:44px; margin:14px 0 0; padding:12px; border:1px solid var(--ab-gift-rule); border-radius:8px; background:var(--ab-gift-paper); color:var(--ab-gift-ink)!important; font:500 16px/1.5 var(--ab-gift-font); cursor:pointer; }
+.ab-gift-wrap:hover,.ab-gift-wrap:has(input:checked) { border-color:var(--ab-gift-green); }
+.ab-gift-wrap-copy { flex:1; min-width:0; }
+.ab-gift-wrap-title { display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-weight:600; }
+.ab-gift-wrap-price { color:var(--ab-gift-green); white-space:nowrap; }
+.ab-gift-wrap-description { display:block; margin-top:5px; color:var(--ab-gift-muted); font-size:14px; font-weight:400; line-height:1.65; }
+@media(max-width:360px) { .ab-gift-wrap { padding:10px; font-size:15px; gap:8px; } }
+.ab-gift-wrap input { appearance:none; flex:0 0 18px; width:18px; height:18px; margin:4px 0 0; border:1.5px solid var(--ab-gift-green); border-radius:3px; background:var(--ab-gift-paper); }
+.ab-gift-wrap input:checked { background:var(--ab-gift-green) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3 8 3 3 7-7' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/16px 16px no-repeat; box-shadow:none; }
+.ab-gift-summary-wrap { padding:8px 16px 16px; }
+.ab-gift-fee { display:flex!important; justify-content:space-between; gap:12px; color:var(--ab-gift-ink); }
+html:has(body.ab-gift-checkout),body.ab-gift-checkout { overflow-x:clip; }
+body.ab-checkout-enhanced.ab-gift-checkout { background:var(--ab-gift-paper)!important; }
+body.ab-checkout-enhanced.ab-gift-checkout app-checkout .address-form-area,body.ab-gift-checkout #ab-checkout-delivery-card,body.ab-checkout-enhanced.ab-gift-checkout app-checkout .radio-box-area { display:none!important; }
+body.ab-checkout-enhanced.ab-gift-checkout app-checkout .section-left { min-width:0; }
+#ab-gift-sender { margin:0 0 20px; padding:18px; border-bottom:1px solid var(--ab-gift-rule); background:var(--ab-gift-paper); color:var(--ab-gift-ink); }
+#ab-gift-sender h2 { margin:0 0 14px; color:var(--ab-gift-ink); font:500 22px/1.3 Georgia,serif; }
+.ab-gift-sender-fields,.ab-gift-recipient-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+.ab-gift-sender-fields label,.ab-gift-recipient-fields label { display:block; min-width:0; margin:0; }
+.ab-gift-full { grid-column:1/-1; }
+#ab-gift-sender input,body.ab-gift-checkout #ab-gift-recipient :is(input,select,textarea) { box-sizing:border-box; width:100%; min-width:0; min-height:45px; padding:10px 9px; border:1px solid var(--ab-gift-rule); border-radius:6px; color:var(--ab-gift-ink); background:var(--ab-gift-paper); font:400 16px/1.5 var(--ab-gift-font)!important; }
+body.ab-gift-checkout #ab-gift-recipient :is(input,select,textarea):hover { border-color:var(--ab-gift-border); }
+body.ab-gift-checkout #ab-gift-recipient :is(input,select,textarea):focus { border-color:var(--ab-gift-border); outline:1px solid var(--ab-gift-border)!important; outline-offset:0; }
+body.ab-gift-checkout #ab-gift-recipient :is(input,textarea)::placeholder { color:#9aa0ac; opacity:1; }
+body.ab-gift-checkout #ab-gift-recipient :is(input,select,textarea):user-invalid { border-color:var(--ab-gift-error); }
+#ab-gift-recipient { margin:0 0 20px; padding:11px; background:repeating-linear-gradient(125deg,var(--ab-gift-paper) 0 22px,var(--ab-gift-purple) 22px 38px,var(--ab-gift-paper) 38px 62px,var(--ab-gift-red) 62px 78px,var(--ab-gift-paper) 78px 100px); }
+.ab-gift-letter { background:var(--ab-gift-pink); padding:0 16px 16px; }
+.ab-gift-letter h2 { margin:0 -16px 20px!important; padding:18px 16px!important; border-bottom:1px solid var(--ab-gift-paper); color:var(--ab-gift-heading)!important; font:400 26px/1.3 Georgia,serif!important; }
+body.ab-gift-checkout #ab-gift-recipient [data-ab-gift-recipient="name"],body.ab-gift-checkout #ab-gift-recipient [data-ab-gift-recipient="phoneNo"] { border-color:var(--ab-gift-border); }
+body.ab-gift-checkout #ab-gift-recipient textarea { min-height:72px; resize:vertical; }
+#ab-gift-remaining { display:block; min-height:24px; margin:4px 0 0; color:var(--ab-gift-muted); font:400 15px/1.5 var(--ab-gift-font); }
+.ab-gift-return { display:inline-block; margin-top:10px; color:var(--ab-gift-border); font-size:14px; }
+body.ab-gift-checkout .ab-gift-cod,body.ab-gift-checkout .ab-gift-delivery-heading { display:none!important; }
+body.ab-checkout-enhanced.ab-gift-checkout app-checkout .payment-method-area { box-shadow:none!important; border:0!important; background:var(--ab-gift-paper)!important; }
+body.ab-checkout-enhanced.ab-gift-checkout app-checkout .payment-method-top { padding:16px!important; background:var(--ab-gift-paper)!important; border-bottom:1px solid var(--ab-gift-rule)!important; }
+body.ab-checkout-enhanced.ab-gift-checkout app-checkout .payment-method-top h4 { font-size:22px!important; color:var(--ab-gift-ink)!important; }
+body.ab-checkout-enhanced.ab-gift-checkout app-checkout .payment-method-card:not(.ab-gift-cod) { padding:16px!important; margin:14px 16px!important; border:1px solid var(--ab-gift-border)!important; border-radius:6px!important; background:var(--ab-gift-paper)!important; width:auto!important; }
+body.ab-checkout-enhanced.ab-gift-checkout app-checkout .payment-method-card mat-radio-button,body.ab-checkout-enhanced.ab-gift-checkout app-checkout .payment-method-card .method-data { padding:0!important; border:0!important; background:var(--ab-gift-paper)!important; }
+.ab-gift-payment-note { padding:0 16px; color:var(--ab-gift-muted); font:400 14px/1.5 var(--ab-gift-font); }
+body.ab-checkout-enhanced.ab-gift-checkout app-checkout .summery-area { border:0!important; border-top:10px solid #eee!important; border-radius:0!important; box-shadow:none!important; background:var(--ab-gift-paper)!important; }
+body.ab-checkout-enhanced.ab-gift-checkout app-checkout .summery-main > .summery-title,body.ab-checkout-enhanced.ab-gift-checkout app-checkout .summery-main > .summery-list { display:none!important; }
+.ab-gift-roko-summary { padding:16px; color:var(--ab-gift-ink); font:400 16px/1.6 var(--ab-gift-font); }
+.ab-gift-roko-summary h2 { margin:0 0 10px; padding:0 0 10px; border-bottom:1px solid var(--ab-gift-rule); font:600 22px/1.4 var(--ab-gift-font); }
+.ab-gift-roko-summary dl { margin:0; }
+.ab-gift-roko-summary dl > div { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:9px 0; border-bottom:1px dashed var(--ab-gift-rule); }
+.ab-gift-roko-summary [data-ab-gift-wrap-row][hidden] { display:none!important; }
+.ab-gift-summary-action { padding:0 16px 16px; }
+.ab-gift-summary-action button { display:block; width:100%; min-height:48px; padding:12px 16px; border:0; border-radius:7px; background:var(--ab-gift-blue); color:var(--ab-gift-paper); font:500 18px/1.3 var(--ab-gift-font); cursor:pointer; }
+.ab-gift-summary-action button:disabled { opacity:.65; cursor:wait; }
+.ab-gift-roko-summary dt,.ab-gift-roko-summary dd { margin:0; }
+.ab-gift-roko-summary .ab-gift-payable { font-weight:700; }
+body.ab-checkout-enhanced.ab-gift-checkout app-checkout .confirm-order button[type="submit"] { background:var(--ab-gift-blue)!important; border-radius:7px!important; color:var(--ab-gift-paper)!important; }
+#ab-gift-confirm-bar { display:none; }
+@media(max-width:767px) {
+ body.ab-checkout-enhanced.ab-gift-checkout app-checkout .container { padding:0 0 100px!important; }
+ body.ab-gift-checkout #ab-checkout-journey { margin:10px 16px 18px!important; }
+ body.ab-checkout-enhanced.ab-gift-checkout app-checkout .confirm-order { display:none!important; }
+ body.ab-gift-checkout #ab-checkout-confirm-bar,body.ab-gift-checkout app-header .bottom-nav { display:none!important; }
+ body.ab-gift-checkout #ab-gift-confirm-bar { position:fixed; z-index:10050; left:0; right:0; bottom:0; display:block; padding:12px 16px max(12px,env(safe-area-inset-bottom)); border-top:1px solid var(--ab-gift-rule); background:var(--ab-gift-paper); }
+ body.ab-gift-checkout.ab-gift-typing #ab-gift-confirm-bar { display:none; }
+ #ab-gift-confirm-bar button { width:100%; min-height:50px; border:0; border-radius:7px; background:var(--ab-gift-blue); color:var(--ab-gift-paper); font:500 18px/1.3 var(--ab-gift-font); white-space:nowrap; }
+ #ab-gift-confirm-bar button:disabled { opacity:.65; cursor:wait; }
+}
+@media(min-width:768px) { .ab-gift-recipient-fields { gap:12px; } .ab-gift-letter { padding:0 24px 24px; } .ab-gift-letter h2 { margin-left:-24px!important; margin-right:-24px!important; padding-left:24px!important; } }
+</style>
+<script>
+(function () {
+ 'use strict';
+ if (window.__amolGiftCheckout) return;
+ window.__amolGiftCheckout = true;
+ var local=/^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname)||/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(location.hostname)||/\.trycloudflare\.com$/.test(location.hostname);
+ var API_BASE=local?location.origin+'/api':'https://apisub.amolbooks.com/api';
+ var KEY='amol_gift_checkout_v1', WRAP_FEE=30, draft={}, component=null;
+ try { draft=JSON.parse(sessionStorage.getItem(KEY)||'{}')||{}; } catch (_) {}
+ if(typeof draft!=='object'||Array.isArray(draft)) draft={};
+ if(!draft.recipient||typeof draft.recipient!=='object') draft.recipient={};
+ function giftMode(){return /^\/checkout\/?$/.test(location.pathname)&&new URLSearchParams(location.search).get('gift')==='1';}
+ function checkoutOpen(){return /^\/checkout\/?$/.test(location.pathname);}
+ function save(){try{sessionStorage.setItem(KEY,JSON.stringify(draft));}catch(_){}}
+ function fee(){return giftMode()&&draft.wrap===true?WRAP_FEE:0;}
+ function money(value){return '৳'+Math.max(0,Number(value)||0).toLocaleString('en-US',{maximumFractionDigits:2});}
+ function setText(node,value){if(node&&node.textContent!==value)node.textContent=value;}
+ function rules(){return window.AbDeliveryZone;}
+ var rulesLoading=false;
+ function loadRules(){
+  if(rules()||rulesLoading||!giftMode())return;
+  rulesLoading=true;
+  var script=document.createElement('script');
+  script.src=API_BASE+'/storefront-assets/delivery-zone-core.js';
+  script.onload=schedule;
+  document.head.appendChild(script);
+ }
+ function syncPayment(value){
+  if(!giftMode()||!value.formData)return;
+  var control=value.formData.get('paymentMethod');
+  if(control&&control.value!=='online_payment')control.setValue('online_payment');
+  value.selectedPaymentMethod='online_payment';
+ }
+ function recipientLocation(){var Z=rules();return Z&&Z.detect(draft.recipient.address||'')||{};}
+ function applyRecipient(value){
+  if(!giftMode()||!value.formData)return;
+  ['name','phoneNo','alternativePhoneNo','country','address'].forEach(function(key){
+   var control=value.formData.get(key), next=key==='country'?'bangladesh':key==='alternativePhoneNo'?'':draft.recipient[key]||'';
+   if(control&&control.value!==next)control.setValue(next);
+  });
+  var location=recipientLocation(), Z=rules();
+  if(Z&&Z.zoneFor(location.district,location.area)){
+   var delivery=value.formData.get('deliveryOptions'), selected=Z.zoneFor(location.district,location.area)==='inside'?'1':'2';
+   if(delivery&&delivery.value!==selected)delivery.setValue(selected);
+  }
+ }
+ function validateGift(){
+  var fields=document.querySelectorAll('#ab-gift-sender input,#ab-gift-recipient input,#ab-gift-recipient textarea,#ab-gift-recipient select');
+  if(!fields.length)return false;
+  for(var i=0;i<fields.length;i++){
+   if(fields[i].required&&fields[i].setCustomValidity)fields[i].setCustomValidity(fields[i].value.trim()?'':'Please complete this field.');
+   if(!fields[i].reportValidity())return false;
+  }
+  return true;
+ }
+ function patchCheckout(proto){
+  if(Object.prototype.hasOwnProperty.call(proto,'__abGiftPatched'))return;
+  var total=Object.getOwnPropertyDescriptor(proto,'grandTotal');
+  if(!total||!total.get||typeof proto.addOrder!=='function')return;
+  Object.defineProperty(proto,'__abGiftPatched',{value:true});
+  Object.defineProperty(proto,'grandTotal',{configurable:true,get:function(){return total.get.call(this)+fee();}});
+  var delivery=proto.calculateDeliveryCharge;
+  proto.calculateDeliveryCharge=function(){
+   var Z=rules(), location=recipientLocation(), zone=Z&&Z.zoneFor(location.district,location.area);
+   if(giftMode()&&zone&&this.shippingCharge)return Z.chargeFor(zone,this.totalWeight,this.shippingCharge,this.cartSubTotal-this.cartDiscountAmount);
+   return delivery.apply(this,arguments);
+  };
+  var init=proto.initForm;
+  proto.initForm=function(){
+   var result=init.apply(this,arguments);component=this;this.__abGiftZone=window.Zone&&window.Zone.current;
+   applyRecipient(this);syncPayment(this);schedule();return result;
+  };
+  var confirm=proto.onConfirmOrder;
+  proto.onConfirmOrder=function(){
+   if(giftMode()&&this.isSubmittingOrder)return;
+   if(giftMode()&&!validateGift())return;
+   applyRecipient(this);syncPayment(this);return confirm.apply(this,arguments);
+  };
+  var add=proto.addOrder;
+  proto.addOrder=function(data){
+   if(giftMode()&&!validateGift())return;
+   syncPayment(this);
+   data=Object.assign({},data,{isGiftOrder:giftMode(),giftWrap:giftMode()&&draft.wrap===true});
+   if(giftMode()){
+    data.paymentType='online_payment';
+    data.gift={senderName:(draft.senderName||'').trim(),senderPhone:(draft.senderPhone||'').trim(),message:draft.message||''};
+   }
+   return add.call(this,data);
+  };
+  var loggedIn=proto.getLoggedInUserData;
+  proto.getLoggedInUserData=function(){
+   if(!giftMode())return loggedIn.apply(this,arguments);
+   var self=this;
+   this.subDataOne=this.userDataService.getLoggedInUserData('name addresses email phoneNo username').subscribe(function(response){
+    self.user=response.data;
+    if(!draft.senderName)draft.senderName=self.user&&self.user.name||'';
+    if(!draft.senderPhone)draft.senderPhone=self.user&&self.user.phoneNo||'';
+    save();schedule();
+   },function(error){console.log(error);});
+  };
+ }
+ var patches=window.__amolCheckoutPatches=window.__amolCheckoutPatches||[];patches.push(patchCheckout);
+ function section(id,html){var node=document.createElement('section');node.id=id;node.innerHTML=html;return node;}
+ function wrapHtml(){return '<label class="ab-gift-wrap"><input type="checkbox" data-ab-gift-wrap><span class="ab-gift-wrap-copy"><span class="ab-gift-wrap-title">গিফট কভারে মুড়িয়ে দিন <strong class="ab-gift-wrap-price">+ ৳৩০</strong></span><span class="ab-gift-wrap-description">বইগুলো সুন্দর গিফট কভারে মুড়িয়ে প্রাপকের কাছে পাঠানো হবে।</span></span></label><small class="ab-gift-wrap-status ab-gift-sr" aria-live="polite"></small>'; }
+ function caption(){return '<span aria-hidden="true">🎁</span> প্রিয়জনকে উপহার দিতে <strong>Gift Order</strong> ক্লিক করুন';}
+ function renderCart(){
+  var obsolete=document.getElementById('ab-gift-cart');if(obsolete)obsolete.remove();
+  var footer=document.querySelector('app-cart-information .cart-area-bottom,app-cart .cart-area-bottom');
+  if(!footer||footer.querySelector('.ab-gift-cart-buttons'))return;
+  var order=footer.querySelector('button.order,a[href*="/checkout"]');if(!order)return;
+  footer.classList.add('ab-gift-cart-footer');
+  var prompt=document.createElement('div');prompt.className='ab-gift-cart-caption';prompt.innerHTML=caption();
+  var buttons=document.createElement('div');buttons.className='ab-gift-cart-buttons';
+  buttons.innerHTML='<a class="ab-gift-start" data-ab-gift-start href="/checkout?gift=1">Gift Order</a>';
+  var parent=order.parentNode;parent.insertBefore(prompt,order);parent.insertBefore(buttons,order);buttons.appendChild(order);
+ }
+ function field(label,attr,placeholder,extra){return '<label><span class="ab-gift-sr">'+label+'</span><input '+attr+' placeholder="'+placeholder+'" '+(extra||'')+'></label>';}
+ function renderGiftForm(host,left){
+  if(!host.querySelector('#ab-gift-sender'))left.insertBefore(section('ab-gift-sender','<h2>Gift From</h2><div class="ab-gift-sender-fields">'+field('Sender name','data-ab-gift-field="senderName"','Your Name','required maxlength="100" autocomplete="name"')+field('Sender phone','data-ab-gift-field="senderPhone"','Your Phone','required type="tel" inputmode="tel" pattern="(?:\\+?8801|01)[3-9][0-9]{8}" maxlength="20" autocomplete="tel"')+'</div>'),left.firstChild);
+  var nativeAddress=host.querySelector('.address-form-area');
+  if(!host.querySelector('#ab-gift-recipient')){
+   var gift=section('ab-gift-recipient','<div class="ab-gift-letter"><h2>Gift To</h2><div class="ab-gift-recipient-fields">'+
+    field('Recipient name','data-ab-gift-recipient="name"','Name','required maxlength="100" autocomplete="shipping name"')+
+    field('Recipient phone','data-ab-gift-recipient="phoneNo"','Phone','required type="tel" inputmode="tel" pattern="(?:\\+?8801|01)[3-9][0-9]{8}" maxlength="20" autocomplete="shipping tel"')+
+    '<label class="ab-gift-full"><span class="ab-gift-sr">Recipient address</span><textarea data-ab-gift-recipient="address" required maxlength="500" rows="3" autocomplete="shipping street-address" placeholder="বাসা/ফ্ল্যাট নম্বর, পাড়া-মহল্লার নাম, পরিচিতির এলাকা ও জেলার নাম উল্লেখ করুন"></textarea></label>'+
+    '<label class="ab-gift-full"><span class="ab-gift-sr">Gift message</span><textarea data-ab-gift-field="message" maxlength="120" rows="3" placeholder="Gift Message" aria-describedby="ab-gift-remaining"></textarea></label></div><small id="ab-gift-remaining" aria-live="polite"></small><a href="/checkout" class="ab-gift-return" data-ab-gift-regular>সাধারণ অর্ডারে ফিরুন</a></div>');
+   if(nativeAddress)nativeAddress.parentNode.insertBefore(gift,nativeAddress);else left.appendChild(gift);
+  }
+  host.querySelectorAll('[data-ab-gift-field],[data-ab-gift-recipient]').forEach(function(input){
+   var recipient=input.getAttribute('data-ab-gift-recipient'),key=recipient||input.getAttribute('data-ab-gift-field');
+   var value=String((recipient?draft.recipient[key]:draft[key])||(key==='country'?'bangladesh':''));
+   if(input!==document.activeElement&&input.value!==value)input.value=value;
+  });
+  setText(host.querySelector('#ab-gift-remaining'),(120-String(draft.message||'').length)+' Character(s) Remaining');
+ }
+ function renderSummary(host){
+  host.querySelectorAll('.summery-area').forEach(function(area){
+   var native=area.querySelector('.summery-main')||area;
+   var old=area.querySelector('.ab-gift-summary-wrap');if(old)old.remove();
+   var roko=area.querySelector('.ab-gift-roko-summary');
+   if(giftMode()){
+    if(!roko){roko=document.createElement('section');roko.className='ab-gift-roko-summary';roko.innerHTML='<h2>Checkout Summary</h2><dl><div><dt>Subtotal</dt><dd data-ab-gift-sum="books"></dd></div><div><dt>Delivery Charge</dt><dd data-ab-gift-sum="delivery"></dd></div><div data-ab-gift-wrap-row hidden><dt>Gift Wrap</dt><dd data-ab-gift-sum="wrap"></dd></div><div><dt>Total</dt><dd data-ab-gift-sum="total"></dd></div><div class="ab-gift-payable"><dt>Payable Total</dt><dd data-ab-gift-sum="total"></dd></div></dl>'+wrapHtml();native.appendChild(roko);}
+    if(!area.querySelector('.ab-gift-summary-action')){var action=document.createElement('div');action.className='ab-gift-summary-action';action.innerHTML='<button type="button" data-ab-gift-confirm data-ab-gift-inline>অর্ডার করুন</button>';native.appendChild(action);}
+    roko.querySelector('[data-ab-gift-wrap-row]').hidden=!fee();
+    if(component){
+     var books=component.cartSubTotal-component.cartDiscountAmount-Number(component.couponDiscount||0)-Number(component.orderDiscountTotal||0);
+     roko.querySelectorAll('[data-ab-gift-sum]').forEach(function(node){var key=node.getAttribute('data-ab-gift-sum');setText(node,money(key==='books'?books:key==='delivery'?component.calculateDeliveryCharge():key==='wrap'?fee():component.grandTotal));});
+    }
+   }else{
+    if(roko)roko.remove();var action=area.querySelector('.ab-gift-summary-action');if(action)action.remove();
+   }
+  });
+  host.querySelectorAll('.summery-list ul').forEach(function(list){
+   var row=list.querySelector('.ab-gift-fee');
+   if(fee()&&!row){row=document.createElement('li');row.className='ab-gift-fee';row.innerHTML='<span>Gift Wrap</span><strong>৳30</strong>';list.insertBefore(row,list.lastElementChild);}
+   else if(!fee()&&row)row.remove();
+  });
+ }
+ function renderCheckout(host){
+  var form=host.querySelector('form');if(!form)return;
+  var left=host.querySelector('.section-left')||form;
+  if(giftMode()){
+   loadRules();renderGiftForm(host,left);
+   var mobileSummary=left.querySelector('.summery-area.summery-mbl'), paymentArea=left.querySelector('.payment-method-area');
+   if(window.innerWidth<1024&&mobileSummary&&paymentArea&&(paymentArea.compareDocumentPosition(mobileSummary)&2))left.appendChild(mobileSummary);
+   host.querySelectorAll('.payment-method-area .payment-method-top').forEach(function(heading){
+    var next=heading.nextElementSibling;
+    if((next&&next.classList.contains('radio-box-area'))||/ডেলিভারি|delivery charge/i.test(heading.textContent))heading.classList.add('ab-gift-delivery-heading');
+    else if(next&&next.getAttribute('formcontrolname')==='paymentMethod'){var title=heading.querySelector('h4');if(title)setText(title,'Payment Method');}
+   });
+   host.querySelectorAll('.payment-method-card').forEach(function(card){if(card.querySelector('input[value="cash_on_delivery"]'))card.classList.add('ab-gift-cod');});
+   var payment=host.querySelector('.payment-method-area');
+   if(payment&&!payment.querySelector('.ab-gift-payment-note')){var note=document.createElement('p');note.className='ab-gift-payment-note';note.textContent='বিকাশ / নগদ / রকেট / কার্ড — পরের ধাপে EPS-এ মাধ্যম বেছে নিন।';payment.appendChild(note);}
+   if(!document.getElementById('ab-gift-confirm-bar')){var bar=document.createElement('div');bar.id='ab-gift-confirm-bar';bar.innerHTML='<button type="button" data-ab-gift-confirm></button>';document.body.appendChild(bar);}
+  }else{
+   host.querySelectorAll('#ab-gift-sender,#ab-gift-recipient,.ab-gift-payment-note').forEach(function(node){node.remove();});
+   host.querySelectorAll('.ab-gift-cod').forEach(function(node){node.classList.remove('ab-gift-cod');});
+   var stale=document.getElementById('ab-gift-confirm-bar');if(stale)stale.remove();
+  }
+  renderSummary(host);if(component)syncPayment(component);
+  if(giftMode()&&component){
+   var submit=host.querySelector('.confirm-order button[type="submit"]');
+   document.querySelectorAll('[data-ab-gift-confirm]').forEach(function(button){setText(button,button.hasAttribute('data-ab-gift-inline')?'অর্ডার করুন':'অর্ডার নিশ্চিত করুন '+money(component.grandTotal));button.disabled=Boolean(component.isSubmittingOrder||(submit&&submit.disabled));});
+  }
+ }
+ function update(){
+  if(!document.body)return;
+  document.body.classList.toggle('ab-gift-checkout',giftMode());
+  var active=document.activeElement;document.body.classList.toggle('ab-gift-typing',!!(giftMode()&&active&&active.closest('#ab-gift-sender,#ab-gift-recipient')&&active.matches('input,textarea')));
+  if(location.pathname.indexOf('/checkout/order-success')===0){draft={recipient:{}};try{sessionStorage.removeItem(KEY);}catch(_){}}
+  if(location.pathname==='/cart'){
+   renderCart();var sticky=document.querySelector('#ab-cart-sticky-checkout');
+   if(sticky&&!sticky.querySelector('[data-ab-gift-start]')){
+    var prompt=document.createElement('div');prompt.className='ab-gift-cart-caption';prompt.innerHTML=caption();
+    var button=document.createElement('a');button.href='/checkout?gift=1';button.className='ab-gift-start';button.setAttribute('data-ab-gift-start','');button.textContent='Gift Order';
+    sticky.insertBefore(button,sticky.firstChild);sticky.insertBefore(prompt,sticky.firstChild);
+   }
+  }
+  var host=checkoutOpen()&&document.querySelector('app-checkout');if(host)renderCheckout(host);
+  document.querySelectorAll('[data-ab-gift-wrap]').forEach(function(input){input.checked=draft.wrap===true;});
+  document.querySelectorAll('.ab-gift-wrap-status').forEach(function(node){setText(node,fee()?'গিফট কভারের জন্য ৳৩০ যোগ হয়েছে।':'গিফট কভার বাদ দেওয়া হয়েছে।');});
+ }
+ var scheduled=false;
+ function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(function(){scheduled=false;update();});}
+ function change(event){
+  var input=event.target;
+  if(input.setCustomValidity&&input.closest('#ab-gift-sender,#ab-gift-recipient'))input.setCustomValidity('');
+  if(input.matches('[data-ab-gift-field]'))draft[input.getAttribute('data-ab-gift-field')]=input.value;
+  else if(input.matches('[data-ab-gift-recipient]'))draft.recipient[input.getAttribute('data-ab-gift-recipient')]=input.value;
+  else if(input.matches('[data-ab-gift-wrap]'))draft.wrap=input.checked;
+  else return;
+  save();
+  if(component){var updateForm=function(){applyRecipient(component);};if(component.__abGiftZone)component.__abGiftZone.run(updateForm);else updateForm();}
+  schedule();
+ }
+ document.addEventListener('input',change);document.addEventListener('change',change);
+ document.addEventListener('focusin',schedule);document.addEventListener('focusout',schedule);
+ function navigate(event){
+  var target=event.target.closest&&event.target.closest('[data-ab-gift-start],[data-ab-gift-regular],[data-ab-gift-confirm]');if(!target)return;
+  event.stopImmediatePropagation();if(event.type!=='click')return;
+  if(event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
+  event.preventDefault();
+  if(target.hasAttribute('data-ab-gift-confirm')){var submit=document.querySelector('app-checkout .confirm-order button[type="submit"]');if(submit&&!submit.disabled)submit.click();return;}
+  save();window.location.assign(target.hasAttribute('data-ab-gift-start')?'/checkout?gift=1':'/checkout');
+ }
+ ['pointerup','touchend','click'].forEach(function(type){window.addEventListener(type,navigate,true);});
+ new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
+ window.addEventListener('popstate',schedule);window.addEventListener('resize',schedule);window.addEventListener('amol-cart-added',schedule);update();
+}());
+</script>
