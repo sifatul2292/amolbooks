@@ -41,7 +41,7 @@ const SIGN = '— amolbooks.com';
 type AskResult = 'sent' | 'failed' | 'skipped' | 'holdout' | 'busy';
 
 /**
- * WhatsApp review request (owner, 2026-11-13): 14 days after delivery the customer gets one
+ * WhatsApp review request (owner, 2026-11-13): 30 days after delivery the customer gets one
  * message ("বইটি কেমন লাগছে?") with the review page link and three buttons. A tap opens Meta's
  * free 24-hour reply window, so the answer can carry the link again and, after "ভালো লাগছে", one
  * book suggestion. "সমস্যা আছে" opens a request in the WhatsApp Inbox for staff. Customers who
@@ -52,7 +52,7 @@ type AskResult = 'sent' | 'failed' | 'skipped' | 'holdout' | 'busy';
  * the admin panel) and carry the order, so they are verified purchases.
  *
  * Off until the approved template's name is set (WHATSAPP_TEMPLATE_REVIEW_REQUEST, see
- * scripts/WHATSAPP_ORDERS.md). REVIEW_REQUEST_DAYS (14), REVIEW_REQUEST_HOURS (19-21, Dhaka time),
+ * scripts/WHATSAPP_ORDERS.md). REVIEW_REQUEST_DAYS (30), REVIEW_REQUEST_HOURS (19-21, Dhaka time),
  * REVIEW_REQUEST_HOLDOUT_PERCENT (0), REVIEW_REQUEST_SKIP_NUMBERS (staff numbers),
  * REVIEW_REWARD_COUPON (a coupon code made in the admin panel, shown after a review).
  */
@@ -96,7 +96,7 @@ export class ReviewRequestService implements OnModuleInit, OnModuleDestroy {
     const from = hours ? Math.min(23, Number(hours[1])) : 19;
     const to = hours ? Math.min(24, Number(hours[2])) : 21;
     return {
-      days: Math.max(1, Math.round(Number(env.REVIEW_REQUEST_DAYS) || 14)),
+      days: Math.max(1, Math.round(Number(env.REVIEW_REQUEST_DAYS) || 30)),
       // Dhaka hours [from, to): 19-21 = 7:00 pm to 8:59 pm.
       hours: to > from ? [from, to] : [19, 21],
       holdout: Math.min(50, Math.max(0, Math.round(Number(env.REVIEW_REQUEST_HOLDOUT_PERCENT) || 0))),
@@ -225,7 +225,7 @@ export class ReviewRequestService implements OnModuleInit, OnModuleDestroy {
           { 'courierStatus.status': 'delivered', 'courierStatus.receivedAt': range },
         ],
       })
-      // Newest first: with a daily limit, each day's deliveries are asked at the 14-day mark; the
+      // Newest first: with a daily limit, each day's deliveries are asked at the 30-day mark; the
       // catch-up days (server down) come after them.
       .sort({ createdAt: -1 })
       .limit(limit + 1)

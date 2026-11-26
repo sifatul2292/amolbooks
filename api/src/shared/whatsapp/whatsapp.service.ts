@@ -153,7 +153,7 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
       templates: {
         order_placed: String(env.WHATSAPP_TEMPLATE_ORDER_PLACED || '').trim(),
         order_shipped: String(env.WHATSAPP_TEMPLATE_ORDER_SHIPPED || '').trim(),
-        // 14 days after delivery (ReviewRequestService); empty = no review requests.
+        // 30 days after delivery (ReviewRequestService); empty = no review requests.
         review_request: String(env.WHATSAPP_TEMPLATE_REVIEW_REQUEST || '').trim(),
         // When staff approve a review from the review page; empty = no message.
         review_approved: String(env.WHATSAPP_TEMPLATE_REVIEW_APPROVED || '').trim(),

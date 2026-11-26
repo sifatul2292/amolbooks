@@ -1,4 +1,4 @@
-// WhatsApp review request 14 days after delivery (api/src/pages/review-request, owner 2026-11-13):
+// WhatsApp review request 30 days after delivery (api/src/pages/review-request, owner 2026-11-13):
 // which orders are asked (and why not), the template and its three buttons, the answers to a tap
 // (review link, one book suggestion, "problem" in the inbox), "stop", the review page API (pending
 // verified reviews, one per book per order), the staff numbers, the locked add-by-admin route and
@@ -173,6 +173,10 @@ let server;
   whatsapp.logger = silent;
   const reviews = new ReviewRequestService(Order, Product, Review, Chat, whatsapp);
   reviews.logger = silent;
+  assert.equal(reviews.config().days, 30, 'Default follow-up is 30 days after delivery');
+  process.env.REVIEW_REQUEST_DAYS = '45';
+  assert.equal(reviews.config().days, 45, 'An explicit environment override still works');
+  delete process.env.REVIEW_REQUEST_DAYS;
   reviews.onModuleInit();
   assert.equal(reviews.timer, null, 'REVIEW_REQUEST_DISABLED=1 keeps the timer off');
 
@@ -201,8 +205,8 @@ let server;
     const doc = {
       _id: id, orderId: 'R-' + id.toString().slice(-6), name: 'Test customer — not a real order', phoneNo: '01700000001',
       shippingAddress: 'Test address', paymentType: 'cash_on_delivery', paymentStatus: 'paid', orderStatus: 5,
-      deliveryDate: ago(14.2), subTotal: 300, discount: 0, deliveryCharge: 60, grandTotal: 360,
-      orderedItems: [line(read1), line(gift, { isGift: true })], createdAt: ago(18), updatedAt: ago(14), ...overrides,
+      deliveryDate: ago(30), subTotal: 300, discount: 0, deliveryCharge: 60, grandTotal: 360,
+      orderedItems: [line(read1), line(gift, { isGift: true })], createdAt: ago(34), updatedAt: ago(30), ...overrides,
     };
     await Order.collection.insertOne(doc);
     return doc;
@@ -210,17 +214,18 @@ let server;
   const get = (doc) => Order.findById(doc._id).lean();
   await seed({ phoneNo: '01700000001', orderedItems: [line(boughtBefore)], createdAt: ago(200), deliveryDate: ago(195) }); // bought before (too old)
   const A = await seed({ phoneNo: '01700000001' });
-  const B = await seed({ phoneNo: '+8801700000002', orderStatus: 8, deliveryDate: undefined, courierStatus: { status: 'delivered', receivedAt: ago(14.5) },
-    courierStatusHistory: [{ eventKey: 'x', notificationType: 'delivery_status', status: 'delivered', receivedAt: ago(15) }] });
+  const B = await seed({ phoneNo: '+8801700000002', orderStatus: 8, deliveryDate: undefined, courierStatus: { status: 'delivered', receivedAt: ago(30.5) },
+    courierStatusHistory: [{ eventKey: 'x', notificationType: 'delivery_status', status: 'delivered', receivedAt: ago(31) }] });
   // Older than A: newest orders go first, so A is asked and this one is skipped (number just asked).
-  const sameNumber = await seed({ phoneNo: '8801700000001', deliveryDate: ago(15), createdAt: ago(19) });
+  const sameNumber = await seed({ phoneNo: '8801700000001', deliveryDate: ago(31), createdAt: ago(35) });
   const cancelled = await seed({ phoneNo: '01700000003', orderStatus: 6 });
-  const returned = await seed({ phoneNo: '01700000004', orderStatus: 8, deliveryDate: undefined, courierStatus: { status: 'returned', receivedAt: ago(15) } });
-  const tooNew = await seed({ phoneNo: '01700000005', deliveryDate: ago(10) });
-  const catchUp = await seed({ phoneNo: '01700000006', deliveryDate: ago(16.5), orderStatus: 5 });
-  // A later courier update moved receivedAt into the window; the real delivery was 20 days ago.
-  const lateUpdate = await seed({ phoneNo: '01700000010', orderStatus: 8, deliveryDate: undefined, courierStatus: { status: 'delivered', receivedAt: ago(14.5) },
-    courierStatusHistory: [{ eventKey: 'y', notificationType: 'delivery_status', status: 'delivered', receivedAt: ago(20) }] });
+  const returned = await seed({ phoneNo: '01700000004', orderStatus: 8, deliveryDate: undefined, courierStatus: { status: 'returned', receivedAt: ago(31) } });
+  const tooNew = await seed({ phoneNo: '01700000005', deliveryDate: ago(14) });
+  const justBeforeDue = await seed({ phoneNo: '01700000011', deliveryDate: ago(30 - 1 / DAY) });
+  const catchUp = await seed({ phoneNo: '01700000006', deliveryDate: ago(32.5), orderStatus: 5 });
+  // A later courier update moved receivedAt into the window; the real delivery was 40 days ago.
+  const lateUpdate = await seed({ phoneNo: '01700000010', orderStatus: 8, deliveryDate: undefined, courierStatus: { status: 'delivered', receivedAt: ago(30.5) },
+    courierStatusHistory: [{ eventKey: 'y', notificationType: 'delivery_status', status: 'delivered', receivedAt: ago(40) }] });
   const stopped = await seed({ phoneNo: '01700000007' });
   await Chat.collection.insertOne({ wa: '8801700000007', followUpOptOut: true });
   const openRequest = await seed({ phoneNo: '01700000008' });
@@ -245,12 +250,13 @@ let server;
     const request = (await get(doc)).reviewRequest;
     return request ? [request.status, request.reason || ''] : null;
   };
-  assert.deepEqual(await status(A), ['sent', '']);
+  assert.deepEqual(await status(A), ['sent', ''], 'Eligible exactly 30 days after delivery');
   assert.deepEqual(await status(B), ['sent', ''], 'Courier "delivered" update counts as delivery');
   assert.deepEqual(await status(sameNumber), ['skipped', 'asked_recently']);
   assert.equal(await status(cancelled), null);
   assert.equal(await status(returned), null);
-  assert.equal(await status(tooNew), null);
+  assert.equal(await status(tooNew), null, 'The old 14-day mark no longer sends');
+  assert.equal(await status(justBeforeDue), null, 'No request even one millisecond before day 30');
   assert.deepEqual(await status(catchUp), ['sent', ''], 'Within the 3 catch-up days');
   assert.deepEqual(await status(lateUpdate), ['skipped', 'delivered_too_long_ago']);
   assert.deepEqual(await status(stopped), ['skipped', 'opted_out']);
@@ -291,7 +297,7 @@ let server;
   const limitSetting = (dailyLimit) => ({ findOne: () => ({ select: () => ({ lean: async () => ({ dailyLimit }) }) }) });
   const sentNow = await reviews.sentToday(now);
   assert.equal(sentNow, 3, "Today's sends (the refused one failed)");
-  const waiting = await seed({ phoneNo: '01700000077', deliveryDate: ago(14.1), createdAt: ago(16) });
+  const waiting = await seed({ phoneNo: '01700000077', deliveryDate: ago(30.1), createdAt: ago(32) });
   assert.equal((await reviews.sendDue(now, 100, 0)).capped, true, 'No sends left: stops before asking');
   assert.equal((await get(waiting)).reviewRequest, undefined);
   const full = new ReviewRequestService(Order, Product, Review, Chat, whatsapp, limitSetting(sentNow));
@@ -428,7 +434,7 @@ let server;
   // 8. Holdout and staff numbers.
   process.env.REVIEW_REQUEST_HOLDOUT_PERCENT = '50';
   const holdoutNumbers = ['01711000001', '01711000002', '01711000003', '01711000004', '01711000005', '01711000006', '01711000007', '01711000008'];
-  for (const phone of holdoutNumbers) await seed({ phoneNo: phone, deliveryDate: ago(14.1) });
+  for (const phone of holdoutNumbers) await seed({ phoneNo: phone, deliveryDate: ago(30.1) });
   reviews.doneDay = '';
   const run = await reviews.sendDue(now);
   const expectedHoldout = holdoutNumbers.filter((phone) => ReviewRequestService.bucket(WhatsappService.toWhatsappNumber(phone)) < 50).length;

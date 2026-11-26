@@ -120,7 +120,7 @@ All answers end with "— amolbooks.com". They are free-form messages inside Met
 customer-service window, which the customer opens by tapping or writing: Meta does not charge them.
 Not sent to the courier automatically (staff still press "send to courier").
 
-**`order_feedback`** (review request 14 days after delivery; submitted 2026-11-14 on WhatsApp account
+**`order_feedback`** (review request 30 days after delivery; submitted 2026-11-14 on WhatsApp account
 1647000126524022, Utility, Bengali, in review). Set `WHATSAPP_TEMPLATE_REVIEW_REQUEST=order_feedback`.
 
 ```
@@ -152,10 +152,12 @@ costs more per message); do not keep resubmitting Utility versions, since Meta l
 repeatedly mark marketing as utility (that can hit the order messages too). (An older order message
 may still carry a **ভালো লাগছে** tap; it is still answered.)
 
-`ReviewRequestService` (api/src/pages/review-request) looks at each delivered order once, 14 days
+`ReviewRequestService` (api/src/pages/review-request) looks at each delivered order once, 30 days
 after delivery (Delivered status date, else the courier's "delivered" update), between 7 and 9 pm
 Dhaka time, and sends this message with a private review page link (`amolbooks.com/rate/<code>`,
-no login, open 60 days). Not asked: cancelled/returned/partly delivered orders, numbers asked in
+no login, open 60 days). The default delay is 30 days; when deploying this change,
+set any existing `REVIEW_REQUEST_DAYS=14` override to `30` (or remove it), then rebuild and restart
+the API. Orders with an existing `reviewRequest` are not sent again. Not asked: cancelled/returned/partly delivered orders, numbers asked in
 the last 30 days, numbers that wrote "stop", chats with an open inbox request, staff numbers
 (`REVIEW_REQUEST_SKIP_NUMBERS`), orders with only gifts. Each order keeps the outcome in
 `reviewRequest` (sent / failed / skipped with the reason / holdout).
@@ -181,7 +183,7 @@ What a tap does (free answers inside the 24-hour window the tap opens):
 this customer manager page, I want to see who responded"): at most 50 requests a day by default
 (`REVIEW_REQUEST_DAILY_LIMIT`, or the "Daily limit" box on Customer Manager, Super Admin / Admin,
 up to 1,000; it wins over the env value and needs no restart). Newest deliveries go first, so
-each day's buyers are asked at the 14-day mark; orders that do not fit within the 3 catch-up days
+each day's buyers are asked at the 30-day mark; orders that do not fit within the 3 catch-up days
 are not asked. Customer Manager shows a "Feedback requests" strip (on/off, today's count / limit,
 quick filters All asked · Responded · Reviews to approve · Published · Problems), a Feedback column
 (Asked · delivered/read, Replied "…", ★ Review to approve, Review published + published message
@@ -299,14 +301,14 @@ WHATSAPP_SMS_WAIT_SECONDS=120
 WHATSAPP_AUTO_REPLY=inbox
 # books offered on "আরও বই নিবো" and in the price list (website slugs, comma-separated); empty = built-in list
 WHATSAPP_BOOK_LIST=
-# review request 14 days after delivery: the approved template's name, order_feedback (empty = off)
+# review request 30 days after delivery: the approved template's name, order_feedback (empty = off)
 WHATSAPP_TEMPLATE_REVIEW_REQUEST=
 # "Your review is published" (template review_published, above); empty = off
 WHATSAPP_TEMPLATE_REVIEW_APPROVED=
-# optional: days after delivery (14) and send hours in Dhaka time (19-21 = 7:00 to 8:59 pm)
+# optional: days after delivery (30) and send hours in Dhaka time (19-21 = 7:00 to 8:59 pm)
 # most review requests a day (Dhaka day); the Customer Manager page can change it (that wins)
 REVIEW_REQUEST_DAILY_LIMIT=50
-REVIEW_REQUEST_DAYS=14
+REVIEW_REQUEST_DAYS=30
 REVIEW_REQUEST_HOURS=19-21
 # optional: coupon code made in admin → Coupons, shown after a review (any rating); empty = no reward
 REVIEW_REWARD_COUPON=

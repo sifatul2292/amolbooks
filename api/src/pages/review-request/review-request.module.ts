@@ -15,7 +15,7 @@ import { ReviewRequestService } from './review-request.service';
 import { ReviewRequestSettingSchema } from './review-request-setting.schema';
 
 /**
- * WhatsApp review request 14 days after delivery, its review page and the page's SMS-code login
+ * WhatsApp review request 30 days after delivery, its review page and the page's SMS-code login
  * (WhatsappService is global; the code comes from GuestOrdersService; customer tokens are signed
  * like UserModule's).
  */

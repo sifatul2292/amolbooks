@@ -486,7 +486,7 @@ export const OrderSchema = new mongoose.Schema(
       doneAt: { type: Date },
       doneBy: { type: String },
     },
-    // WhatsApp review request 14 days after delivery (owner, 2026-11-13; ReviewRequestService).
+    // WhatsApp review request 30 days after delivery (owner, 2026-11-13; ReviewRequestService).
     // status: checking -> sent | failed | skipped (reason) | holdout. token = the review page link
     // amolbooks.com/rate/<token>. reply = the customer's tap: liked | unread | problem (kind
     // "problem" also opens customerRequest so staff see it in the WhatsApp Inbox).
