@@ -1,3 +1,10 @@
+## Desktop checkout notebook eligibility correction (2026-11-26)
+
+- Cause: the embedded legacy `ab-co-progress` / `ab-co-giftrow` checkout overlay totals all visible book prices and does not read collection exclusions. Existing responsive CSS suppressed it only below 1024px, leaving false notebook claims on desktop. Backend and the shared gift renderer already exclude marked collection books.
+- Retired those legacy displays at every checkout width through `gtm-snippets/package-free-delivery.html`, retaining the shared eligibility-aware `ab-checkout-gift` row and giving it compact desktop styling. Regular qualifying books still earn a notebook, including in mixed carts; collection books do not contribute. Added a placement repair when a valid gift remains inside the now-hidden desktop/mobile list after a viewport change. No shipping, eligibility threshold, backend order behavior or compiled UI files changed; this snippet adds no API calls or API_BASE change.
+- Expanded the existing real-Angular collection fixture to run the actual legacy widget. Reproduced the desktop failure at 1186px before the fix. Regression coverage includes collection-only carts, ordinary qualifying carts, mixed qualifying carts and desktop/mobile/desktop transitions. Free-delivery wrapper checks pass; API build passes; lint remains blocked by the existing ignored-source configuration. Visually confirmed both false displays absent from the owner's local desktop checkout. No order/payment was submitted.
+- Release branch remains `codex/rollback-sunday-20260927`; VPS activation is pending. Use the same safe-pull/build/restart command supplied for the preceding release.
+
 ## Collection and 30-day follow-up release (2026-11-26)
 
 - Owner authorized publishing all completed work from this chat on `codex/rollback-sunday-20260927`: final collection/review presentation, selected/cart weight explanations, 30-day review-request default, related checks and documentation. Release includes source/snippets only. Generated API/storefront build output, local node_modules, temporary screenshots/databases and unrelated ISBN data remain local and untouched.

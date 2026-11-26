@@ -16,10 +16,13 @@ const books=config.books.map((b,i)=>({...b,weight:weights[i],_id:ids[i],salePric
 const other={_id:'000000000000000000000001',slug:'other-book',name:'Existing book',salePrice:100,discountAmount:0,quantity:20,status:'publish',images:[]};
 function runtime(file,key){const ctx={exports:{}};vm.runInNewContext(ts.transpileModule(fs.readFileSync(path.join(root,'api/src',file),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,ctx);return ctx.exports[key];}
 const source=fs.readFileSync(path.join(assets,'index.html'),'utf8');
+// Include the real legacy checkout overlay: it ignores collection exclusions.
+const legacyCheckout=[...source.matchAll(/<script>([\s\S]*?)<\/script>/g)].find(m=>m[1].includes("var PROGRESS_ID = 'ab-co-progress'"));
+assert.ok(legacyCheckout,'Legacy checkout widget is included in the regression fixture');
 const snippets=['abdullah-jahangir-books.html','gift-checkout.html','package-free-delivery.html','cart-page-navigation.html'].map(f=>fs.readFileSync(path.join(root,'gtm-snippets',f),'utf8')).join('\n');
 const tags=[...source.matchAll(/<script src="((?:runtime|polyfills|main)\.[^"]+)"[^>]*><\/script>/g)].map(m=>m[0]).join('');
 const stylesheet=source.match(/<link rel="stylesheet" href="styles[^"]+">/)[0];
-const html='<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="/">'+stylesheet+snippets+'</head><body><app-root></app-root>'+tags+'<script>'+runtime('storefront-product-sections-script.ts','STOREFRONT_PRODUCT_SECTIONS_SCRIPT')+'</script><script>'+runtime('storefront-special-package-script.ts','STOREFRONT_SPECIAL_PACKAGE_SCRIPT')+'</script><script>'+runtime('storefront-price-script.ts','STOREFRONT_PRICE_SCRIPT')+'</script></body></html>';
+const html='<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="/">'+stylesheet+snippets+'</head><body><app-root></app-root>'+tags+'<script>'+runtime('storefront-product-sections-script.ts','STOREFRONT_PRODUCT_SECTIONS_SCRIPT')+'</script><script>'+runtime('storefront-special-package-script.ts','STOREFRONT_SPECIAL_PACKAGE_SCRIPT')+'</script><script>'+runtime('storefront-price-script.ts','STOREFRONT_PRICE_SCRIPT')+'</script>'+legacyCheckout[0]+'</body></html>';
 function samplePdf(){
  const objects=['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Count 1 /Kids [3 0 R] >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 400] /Contents 4 0 R /Resources << >> >>','<< /Length 0 >>\nstream\n\nendstream'];
  let body='%PDF-1.4\n',offsets=[0];for(let i=0;i<objects.length;i++){offsets.push(Buffer.byteLength(body));body+=(i+1)+' 0 obj\n'+objects[i]+'\nendobj\n';}const start=Buffer.byteLength(body);body+='xref\n0 5\n0000000000 65535 f \n'+offsets.slice(1).map(n=>String(n).padStart(10,'0')+' 00000 n \n').join('')+'trailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n'+start+'\n%%EOF';return Buffer.from(body);
@@ -75,7 +78,17 @@ async function select(page,indices){for(const input of await page.locator('[data
 async function main(){
  const browser=await chromium.launch({channel:'chrome',headless:true});
  try{
-  let t=await setup(browser,{existing:[{product:other._id,selectedQty:2},{product:ids[0],selectedQty:2}]});await ready(t.page);
+  let t=await setup(browser,{existing:ids.map(product=>({product,selectedQty:1,collectionSource:'abdullah-jahangir'}))});
+  await t.page.goto(origin+'/checkout');await t.page.locator('#ab-co-progress').waitFor({state:'attached'});
+  for(const width of [1186,375]){await t.page.setViewportSize({width,height:1035});assert.equal(await t.page.locator('#ab-co-progress').isVisible(),false,'Legacy notebook message is hidden at '+width);assert.equal(await t.page.locator('#ab-co-giftrow').isVisible(),false,'Legacy gift row is hidden at '+width);assert.equal(await t.page.locator('#ab-checkout-gift').count(),0,'Collection books never earn a notebook');}await t.context.close();
+  // Ordinary qualifying items still earn the gift, including in a mixed cart.
+  for(const collection of [false,true]){
+   const existing=[{product:other._id,selectedQty:8}];if(collection)existing.push({product:ids[0],selectedQty:1,collectionSource:'abdullah-jahangir'});
+   t=await setup(browser,{existing});await t.page.goto(origin+'/checkout');await t.page.locator('#ab-checkout-gift').waitFor();
+   for(const width of [1186,375,1186]){await t.page.setViewportSize({width,height:1035});await t.page.locator('#ab-checkout-gift').waitFor({state:'visible'});assert.equal(await t.page.locator('#ab-checkout-gift').isVisible(),true,'Qualifying regular books retain their notebook (mixed='+collection+', width='+width+')');assert.equal(await t.page.locator('#ab-co-giftrow').isVisible(),false,'No duplicate legacy gift row');}
+   await t.context.close();
+  }
+  t=await setup(browser,{existing:[{product:other._id,selectedQty:2},{product:ids[0],selectedQty:2}]});await ready(t.page);
   assert.equal(await t.page.locator('app-header').count(),1);assert.equal(await t.page.locator('app-footer').count(),1);
   assert.equal(await t.page.locator('.aj-hero-price,[data-aj-full-delivery]').count(),0,'Hero price and delivery blocks are removed');
   assert.equal(await t.page.locator('#aj-choose .aj-heading h2').innerText(),'আপনার পছন্দ অনুযায়ী বেছে নিন');

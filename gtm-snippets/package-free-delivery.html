@@ -1,4 +1,14 @@
 <style>
+/* The old checkout overlay counts excluded collection books. Use the shared eligibility-aware gift row at every width. */
+body.ab-checkout-enhanced #ab-co-progress,
+body.ab-checkout-enhanced #ab-co-giftrow { display:none!important; }
+@media(min-width:1024px) {
+ body.ab-checkout-enhanced #ab-checkout-gift { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:12px; padding:14px 16px; border-top:1px solid var(--ab-product-rule); background:var(--ab-product-surface); color:var(--ab-product-ink); font-family:var(--ab-product-heading); }
+ body.ab-checkout-enhanced #ab-checkout-gift img { width:60px; height:76px; object-fit:contain; }
+ body.ab-checkout-enhanced #ab-checkout-gift h3 { margin:0; font-size:16px; line-height:1.4; }
+ body.ab-checkout-enhanced #ab-checkout-gift p { margin:4px 0 0; font-size:13px; line-height:1.5; }
+ body.ab-checkout-enhanced #ab-checkout-gift strong { color:var(--ab-product-accent); font-size:18px; }
+}
 /* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V4 · factual double offer */
 .ab-package-free-delivery { display:block; margin:0; padding:12px; color:#153b26!important; background:#fff0bb; border-top:2px solid #d7a52b; font:600 17px/1.55 hind-siliguri,sans-serif; text-align:center; }
 .ab-package-free-delivery strong { display:block; color:#153b26!important; font:700 20px/1.5 hind-siliguri,sans-serif; }
@@ -238,6 +248,13 @@
     small.textContent = '৳২৯৪-এর কম অর্ডারে ঢাকার বাইরে ডেলিভারি চার্জ ৳' + bn(parts[2]) + '।';
     existing.appendChild(small);
   }
+  function placeCheckoutGift(host) {
+    var gift = host.querySelector('#ab-checkout-gift');
+    if (!gift || gift.offsetParent) return;
+    // The shared row can remain in the hidden desktop list after switching to mobile.
+    var list = Array.prototype.find.call(host.querySelectorAll('.cart-products-list'), function (node) { return node.offsetParent; });
+    if (list) list.appendChild(gift);
+  }
   function update() {
     document.querySelectorAll('.ab-package-banner[data-package-id="' + PACKAGE_ID + '"]').forEach(function (link) {
       if (!link.querySelector('.ab-package-free-delivery')) link.appendChild(notice('ab-package-free-delivery',false));
@@ -249,6 +266,7 @@
     var host = document.querySelector('app-checkout');
     var component = findCheckout(host);
     if (!host) { checkoutOffer = ''; smallOrderNote = ''; return; }
+    placeCheckoutGift(host);
     setSmallOrderNote(host);
     if (component) patchCheckout(component);
     var existing = host.querySelector('.ab-checkout-free-delivery');
@@ -270,6 +288,7 @@
   }
   new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
   window.addEventListener('popstate',schedule);
+  window.addEventListener('resize',schedule);
   window.addEventListener('amol-cart-added',schedule);
   update();
 }());
